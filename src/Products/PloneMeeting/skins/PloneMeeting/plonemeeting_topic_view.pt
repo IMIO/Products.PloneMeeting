@@ -1,0 +1,60 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      metal:use-macro="here/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+
+<tal:comment replace="nothing">This page presents results of the main
+  PloneMeeting topics: lists of meetings, meeting items.</tal:comment>
+<body>
+  <div metal:fill-slot="top_slot">
+    <tal:disable define="dummy python:request.set('disable_border', 1)"/>
+  </div>
+
+  <metal:results fill-slot="main" 
+       tal:define="topicName python: context.REQUEST.get('search', None)"
+       tal:condition="topicName">
+  <script language="javascript">
+  <!--
+  function enableAnnexesMenus(rq, hook) {
+    initializeMenusAXStartingAt(hook);
+  }
+  function askSearchResult(hookId, configUrl, topicId, batchStart,
+                           sortKey, sortOrder, filterKey) {
+    var params = {'topicId': topicId, 'b_start': batchStart-1, 'hookId':hookId};
+    if (sortKey) params['sortKey'] = sortKey;
+    if (sortOrder) params['sortOrder'] = sortOrder;
+    if (filterKey) {
+      var filterWidget = document.getElementById(hookId + '_' + filterKey);
+      if (filterWidget && filterWidget.value) {
+        params['filterKey'] = filterKey;
+        params['filterValue'] = filterWidget.value;
+      }
+    }
+    askAjaxChunk(hookId, 'GET', configUrl, 'plonemeeting_topic_result',
+                 'topicResult', params, null, enableAnnexesMenus);
+  }
+  -->
+  </script>
+  <tal:res define="tool python: context.portal_plonemeeting;
+                   meetingConfig python: tool.getMeetingConfig(context);
+                   topic python: getattr(meetingConfig.topics, topicName);">
+
+    <div tal:replace="structure provider:plone.abovecontenttitle" />
+    <h1 class="documentFirstHeading">
+      <span i18n:translate="" tal:content="topic/Title|topic/getId" ></span>
+      <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
+    </h1>
+    <div class="formHelp" i18n:translate="topic_description" >Topic description.</div>
+    <div id="queryResult"></div>
+    <div>
+      <script language="javascript"
+              tal:content="python: 'askSearchResult(\'queryResult\', \'%s\', \'%s\', 1)' % (meetingConfig.absolute_url(), topic.id)">
+       </script>
+    </div>
+    <div tal:replace="structure provider:plone.belowcontentbody" />
+  </tal:res>
+</metal:results>
+</body>
+</html>

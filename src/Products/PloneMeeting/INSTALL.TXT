@@ -1,0 +1,147 @@
+Installation of PloneMeeting for Plone 3.x
+------------------------------------------
+If you intended to use PloneMeeting with Plone 2.5.x, please see the
+http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/... versions and choose
+a version strictly under 2.0.  Then refer to the INSTALL.TXT file of this tagged version
+
+PloneMeeting allows to manage agendas and decisions of any decision-making
+organism (a city counsil, a board of ministers, a board of
+directors, the general assembly of a non-profit organisation or NGO...)
+
+Caution: at present, we recommand to install PloneMeeting on Linux or Unix
+machines. Installation under Windows hasn't been tested extensively.
+
+2 installation methods are mentionned: 
+- manual installation: the old way
+- automatic installation: best way to manage multiple installations (development/test/production) -> recommended
+
+################################################################################
+# AUTOMATIC INSTALLATION USING BUILDOUT                                        #
+################################################################################
+
+1) Follow the install doc:
+- in english : http://svn.communesplone.org/svn/communesplone/PloneMeeting/buildout/pm355_trunk/INSTALL.txt
+- in french : http://svn.communesplone.org/svn/communesplone/PloneMeeting/buildout/pm355_trunk/INSTALL_fr.txt
+
+During this installation, modify the file buildout.cfg to use a stable version (last one in http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/...
+
+Stable versions since 2.x are useable with Plone 3.x
+
+2) Jump to the common part in the end of the file
+
+################################################################################
+# MANUAL INSTALLATION : old way                                                #
+################################################################################
+
+1) Install Plone 3.3.5
+----------------------
+PloneMeeting since version 2.0 runs on Plone 3.x. The easiest way to install this Plone is to
+download the Plone unified installer at
+http://plone.org/products/plone/releases/3.3.5
+
+2) Install the Appy framework
+-----------------------------
+PloneMeeting also depends on the Appy Framework (see http://appyframework.org).
+
+Download it (version >= 0.5.4) at http://launchpad.net/appy.
+
+Suppose you have installed Plone with the unified installer at /opt/Plone-3.3.5.
+You can unzip appy0.5.4.zip (or newer) in /opt/Plone-3.5.5/Python-2.4.6/lib/python2.4/site-packages/
+
+This framework contains appy.pod, used by PloneMeeting for generating documents
+(PDF, RTF, ODT, etc). If you want to generate documents in another format than
+OpenDocument (ODT), you will need to run OpenOffice in server mode.
+
+3) Create a Zope instance
+-------------------------
+A Zope instance is a web server that will run PloneMeeting.
+Creating a Zope instance is explained at http://appyframework.org/gen.html.
+I suppose that the Zope instance you have been created is in folder <zopeInstance>.
+
+4) Install PloneMeeting
+----------------------
+a) Unzip hubsessions.zip found at http://launchpad.net/hubsessions in 
+   <zopeInstance>/Products
+b) Alternatively, you can also download it from the SVN (for developers):
+   cd <zopeInstance>/Products
+   svn co http://svn.communesplone.org/svn/communesplone/PloneMeeting/trunk PloneMeeting
+
+Note: you MUST have PloneMeeting installed in the 'Products' subfolder of
+your Zope instance. Else, initializing PloneMeeting through an extension profile (which
+is recommanded but not mandatory) will not work.
+
+5) Jump to the common part in the end of the file
+
+################################################################################
+# COMMON PART : adding a plone site and configure it                           #
+################################################################################
+
+1) Create a Plone site with the "PloneMeeting" extension profile
+----------------------------------------------------------------
+We recommand to initialize PloneMeeting through an extension profile that is
+parameterized with correct data. For inspiration, we have created such a profile, named
+"PloneMeeting / Test". So here's what we propose:
+    - create a Plone site with this extension profile
+    - test and explore PloneMeeting with those settings
+    - once you are comfortable with PloneMeeting concepts and if you want to go further,
+      see how this extension profile was built (in
+      <zopeInstance>/Products/PloneMeeting/profiles/default; the file import_data.py is the
+      most important file; classes used to describe data defined in import_data.py are
+      located in <zopeInstance>/Products/PloneMeeting/profiles/__init__.py) and try to create
+      your own profile in a new Plone Product.
+
+Here are the instructions for importing and using the "PloneMeeting / Default" profile.
+
+a) Restart your Zope instance, and create a PloneSite (in the ZMI at <zopeInstanceUrl>/manage,
+   in the Zope root folder, select "Plone site" in the dropdown on the right, and, in the
+   "Extension profiles", select "PloneMeeting / Test". The title you specify for your Plone
+   site will be used in the subjects of the e-mail notifications that PloneMeeting may send.
+
+   This profile creates 2 fictitious "meeting configurations", that define 2 kinds of
+   meetings ("PloneGov assembly" and "PloneMeeting assembly") that are parameterized
+   differently in order to show you some customization possibilities of PloneMeeting.
+
+b) Connect to your Plone site and log in as Zope admin. You will see that PloneMeeting has added
+   2 more tabs: "plonegov assembly" and "plonemeeting assembly". Go to the Plone "site setup".
+   In the section "Add-On Product Configuration", there is a new configlet named
+   "PloneMeeting". If you click on it, you will access the PloneMeeting administration interface,
+   that is fully documented (in english, french, german and spanish). Once you've read carefully what is
+   related to PloneMeeting groups and roles, you can read the remaining of this file.
+
+c) Ah, you've already read everything ? Right! The extension profile has created
+   2 PloneMeeting groups:
+   - vendors
+   - developers
+
+   and 5 users:
+   - pmManager
+   - pmCreator1
+   - pmReviewer1
+   - pmCreator2
+   - pmReviewer2
+
+   They have the same password: "meeting" (without the double quotes).
+
+   * pmManager has the global role "MeetingManager" and is creator, reviewer and observer
+     in the group "developers"
+   * pmCreator1 is creator in group "developers"
+   * pmReviewer1 is reviewer and observer in group "developers"
+   * pmCreator2 is creator in group "vendors"
+   * pmReviewer2 is reviewer and observer in group "vendors".
+
+d) In order to have everything working fine, make the following adjustments to your Plone site:
+   - If you want to test the e-mail notifications, be sure to configure correctly the Plone
+     MailHost (in "Site setup->Mail Settings"); in "Site setup->Portal Settings", set correct
+     values for the fields "Site 'From' name" and "Site 'From' address"; in "Site Setup->Users
+     and Groups administration", define emails under your control for all users created by
+     the profile.
+   - If you want to test document generation, read carefully the section entitled
+     "OpenOffice configuration" in the "PloneMeeting" configlet, and, within each meeting
+     configuration, check the section entitled "Document generation".
+
+e) Now you may try to log in as any of those users; the PloneMeeting interface will show or hide
+   some elements according to the permissions your user has; you will also only see items and
+   meetings that you are allowed to view. Try to create items, meetings, associate items to meetings,
+   generate documents from them, etc. Play with the workflows (propose, validate items; publish,
+   decide meetings, etc). You will learn a lot about the PloneMeeting possibilities
+   by consulting the fully-documented administration pages in the PloneMeeting configlet.

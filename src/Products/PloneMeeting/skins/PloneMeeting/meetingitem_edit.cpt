@@ -1,0 +1,273 @@
+<tal:block metal:define-macro="master"
+           define="errors options/state/getErrors | nothing;
+                   temporary here/isTemporary | nothing;
+                   dummy python:temporary and request.set('disable_border', True);
+                   schematas here/Schemata;
+                   fieldsets python:[key for key in schematas.keys() if (key != 'metadata') and (schematas[key].editableFields(here, visible_only=True))];
+                   default_fieldset python:(not schematas or schematas.has_key('default')) and 'default' or fieldsets[0];
+                   fieldset request/fieldset|options/fieldset|default_fieldset;
+                   fields python:schematas[fieldset].editableFields(here);
+                   dummy python:here.at_isEditable(fields);
+                   portal_type python:here.getPortalTypeName().lower().replace(' ', '_');
+                   type_name here/getPortalTypeName|here/archetype_name;
+                   base_macros here/edit_macros/macros;
+                   edit_template python:'%s_edit' % portal_type;
+                   edit_macros python:path('here/%s/macros | nothing' % edit_template);
+                   header_macro edit_macros/header | header_macro | base_macros/header;
+                   typedescription_macro edit_macros/typedescription | typedescription_macro | base_macros/typedescription;
+                   body_macro edit_macros/body | body_macro | base_macros/body;
+                   footer_macro edit_macros/footer | footer_macro | base_macros/footer;
+                   lockable python:hasattr(here, 'wl_isLocked');
+                   isLocked python:lockable and here.wl_isLocked();
+                   css python:here.getUniqueWidgetAttr(fields, 'helper_css');
+                   js python:here.getUniqueWidgetAttr(fields, 'helper_js');
+                   tool python: context.portal_plonemeeting;
+                   member tool/getUser;
+                   portal context/portal_url/getPortalObject;">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xml:lang="en"
+      lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      metal:use-macro="here/main_template/macros/master"
+      i18n:domain="plone">
+
+  <metal:head fill-slot="top_slot">
+    <tal:block define="macro edit_macros/topslot | nothing" condition="macro">
+    <metal:block use-macro="macro" />
+    </tal:block>
+  </metal:head>
+  <metal:javascript_head fill-slot="javascript_head_slot">
+    <tal:block define="macro here/archetypes_custom_js/macros/javascript_head | nothing"
+               condition="macro">
+      <metal:block use-macro="macro" />
+    </tal:block>
+    <tal:js condition="js"
+            repeat="item js">
+      <script type="text/javascript" charset="iso-8859-1"
+              tal:condition="python:exists('portal/%s' % item)"
+              tal:attributes="src string:$portal_url/$item">
+      </script>
+    </tal:js>
+    <tal:block define="macro edit_macros/javascript_head | nothing"
+                    condition="macro">
+      <metal:block use-macro="macro" />
+    </tal:block>
+  </metal:javascript_head>
+
+  <metal:css fill-slot="css_slot">
+    <tal:css condition="css"
+             repeat="item css">
+      <style type="text/css" media="all"
+             tal:condition="python:exists('portal/%s' % item)"
+             tal:content="structure string:&lt;!-- @import url($portal_url/$item); --&gt;">
+      </style>
+    </tal:css>
+    <tal:block define="macro edit_macros/css | nothing"
+                    condition="macro">
+      <metal:block use-macro="macro" />
+    </tal:block>
+  </metal:css>
+
+  <body>
+    <metal:fill fill-slot="main">
+      <metal:main define-macro="main"
+                  tal:define="meetingConfig python: tool.getMeetingConfig(context);
+                              usedAttrs meetingConfig/getUsedItemAttributes;
+                              bilingual python: 'secondLanguage' in tool.getModelAdaptations();
+                              langs python: tool.getAvailableInterfaceLanguages(True, True);">
+      <div class="portalMessage" tal:condition="context/willInvalidateAdvices"
+           i18n:translate="warning_invalidate_advices" i18n:domain="PloneMeeting"></div>
+      <div tal:define="portal_type portal_type|string:unknowntype">
+      <form name="edit_form" method="post" enctype="multipart/form-data"
+            class="enableUnloadProtection atBaseEditForm"
+            tal:attributes="action python:here.absolute_url()+'/'+template.id;
+                            id string:${portal_type}-base-edit">
+
+        <tal:comment replace="nothing">Title and description(s), mono- or bilingual</tal:comment>
+        <tal:field define="fieldName python: 'title'">
+          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+        </tal:field>
+        <tal:field define="fieldName python: 'description'">
+          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+        </tal:field>
+        <tal:field define="fieldName python: 'detailedDescription';"
+                   condition="python: 'detailedDescription' in usedAttrs">
+          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+        </tal:field>
+        <tal:comment replace="nothing">Proposing group, category, classifier, toDiscuss</tal:comment>
+        <table cellpadding="0" cellspacing="0">
+          <tr valign="top">
+            <td><metal:field use-macro="python:here.widget('proposingGroup', mode='edit')"/></td>
+            <td><metal:field use-macro="python:here.widget('classifier', mode='edit')"/></td>
+            <td><metal:field use-macro="python:here.widget('category', mode='edit')"/></td>
+            <tal:comment replace="nothing">Custom display of field "toDiscuss"</tal:comment>
+            <td tal:condition="context/showToDiscuss">
+              <div id="archetypes-fieldname-toDiscuss" class="field"
+                   tal:define="field python: here.getField('toDiscuss');
+                               reqValue request/toDiscuss|nothing;
+                               value python: test(reqValue, reqValue, str(context.getToDiscuss()))">
+                <input type="radio" id="toDiscuss_no" name="toDiscuss" class="noborder"
+                       tal:attributes="value python:'False'; checked python: value=='False'"/>
+                <label for="toDiscuss_no" class="formQuestion" i18n:domain="PloneMeeting"
+                       i18n:translate="to_discuss_no"></label><br/>
+                <input type="radio" id="toDiscuss_yes" name="toDiscuss" value="on" class="noborder"
+                       tal:attributes="value python:'True'; checked python: value=='True'"/>
+                <label for="toDiscuss_yes" class="formQuestion" i18n:domain="PloneMeeting"
+                       i18n:translate="to_discuss_yes"></label>
+              </div>
+            </td>
+            <td tal:condition="python: context.adapted().maySignItem(member)">
+              <div id="archetypes-fieldname-itemIsSigned" class="field"
+                   tal:define="field python: here.getField('itemIsSigned');
+                               reqValue request/itemIsSigned|nothing;
+                               value python: test(reqValue, reqValue, str(context.getItemIsSigned()))">
+                <input type="radio" id="itemIsSigned_no" name="itemIsSigned" class="noborder"
+                       tal:attributes="value python:'False'; checked python: value=='False'"/>
+                <label for="toDiscuss_no" class="formQuestion" i18n:domain="PloneMeeting"
+                       i18n:translate="item_is_signed_no"></label><br/>
+                <input type="radio" id="itemIsSigned_yes" name="itemIsSigned" value="on" class="noborder"
+                       tal:attributes="value python:'True'; checked python: value=='True'"/>
+                <label for="item_is_signed_yes_yes" class="formQuestion" i18n:domain="PloneMeeting"
+                       i18n:translate="item_is_signed_yes"></label>
+              </div>
+            </td>
+          </tr>
+        </table>
+        <tal:comment replace="nothing">Associated groups, optional advisers and copyGroups</tal:comment>
+        <table cellpadding="0" cellspacing="0">
+          <tr valign="top">
+            <td tal:condition="python: 'associatedGroups' in usedAttrs">
+              <metal:field use-macro="python:here.widget('associatedGroups', mode='edit')"/>
+            </td>
+            <td><metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/></td>
+            <td><metal:field use-macro="python:here.widget('copyGroups', mode='edit')"/></td>
+            <td><metal:field use-macro="python:here.widget('itemSignatories', mode='edit')"/></td>
+          </tr>
+        </table>
+        <tal:comment replace="nothing">Preferred meeting, item keywords, privacy</tal:comment>
+        <table cellpadding="0" cellspacing="0">
+          <tr valign="top">
+            <td><metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/></td>
+            <td><metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/></td>
+            <td><metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/></td>
+            <td><metal:field use-macro="python:here.widget('privacy', mode='edit')"/></td>
+          </tr>
+        </table>
+        <tal:comment replace="nothing">Budget-related information</tal:comment>
+        <tal:budget define="cbChecked  python: (request.get('budgetRelated',None)==True) or context.getBudgetRelated()"
+                    condition="python: 'budgetInfos' in usedAttrs">
+        <script language="javascript">
+          function toggleBudgetInfo(checkbox) {
+            var budgetField = document.getElementById('budgetField');
+            if (checkbox.checked) budgetField.style.display = "block";
+            else budgetField.style.display = "none";
+          }
+        </script>
+        <div id="archetypes-fieldname-budgetRelated" class="field ArchetypesBooleanWidget"
+             tal:define="brField python: here.getField('budgetRelated')">
+          <input type="checkbox" id="budgetRelated" name="budgetRelated:boolean" value="on" class="noborder"
+                 onclick="javascript:toggleBudgetInfo(this)" tal:attributes="checked cbChecked"/>
+          <input type="hidden" name="budgetRelated:boolean:default" value="" originalvalue=""/>
+          <label for="budgetRelated" class="formQuestion" i18n:domain="PloneMeeting"
+                 tal:content="brField/widget/label_msgid" i18n:translate=""></label>
+          <br/>
+        </div>
+        <div id="budgetField" name="budgetField"
+             tal:attributes="style python:test(cbChecked, 'display: block', 'display: none')">
+          <metal:field use-macro="python:here.widget('budgetInfos', mode='edit')"/>
+          <br/>
+        </div>
+        </tal:budget>
+
+        <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
+        <br />
+        <tal:field define="fieldName python: 'decision'">
+          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+        </tal:field>
+        <tal:field define="fieldName python: 'observations'"
+                   condition="python: 'observations' in usedAttrs" >
+          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+        </tal:field>
+        <metal:field use-macro="python:here.widget('itemTags', mode='edit')"/>
+        <table cellpadding="0" cellspacing="0" width="100%">
+          <tr valign="top">
+          </tr>
+          <tr valign="top">
+            <td width="33%"><metal:field use-macro="python:here.widget('usages', mode='edit')"/></td>
+            <td width="34%"><metal:field use-macro="python:here.widget('templateUsingGroups', mode='edit')"/></td>
+            <td width="33%"><metal:field use-macro="python:here.widget('meetingTransitionInsertingMe', mode='edit')"/></td>
+          </tr>
+        </table>
+        <metal:field use-macro="python:here.widget('itemAssembly', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('itemSignatures', mode='edit')"/>
+        <div class="formControls">
+
+          <input type="hidden" name="fieldset" tal:attributes="value fieldset"/>
+          <input type="hidden" name="form.submitted" value="1"/>
+          <input type="hidden" name="add_reference.field:record" value=""/>
+          <input type="hidden" name="add_reference.type:record" value=""/>
+          <input type="hidden" name="add_reference.destination:record" value=""/>
+
+          <tal:env define="env request/controller_state/kwargs">
+            <tal:loop repeat="varname python:('reference_source_url', 'reference_source_field', 'reference_source_fieldset')">
+              <tal:reference define="items python:env.get(varname, request.get(varname))"
+                             condition="items">
+              <input tal:repeat="item items"
+                     type="hidden" name="form_env.reference_source_url:list:record"
+                     tal:attributes="value item;
+                                     name string:form_env.${varname}:list:record"/>
+              </tal:reference>
+            </tal:loop>
+          </tal:env>
+
+          <tal:comment replace="nothing">
+            Turn 'persistent_' variables from controller_state persistent
+          </tal:comment>
+          <tal:env repeat="env request/controller_state/kwargs/items">
+          <input type="hidden" name="key"
+                 tal:define="key python:env[0];
+                             value python:env[1]"
+                 tal:condition="python:key.startswith('persistent_')"
+                 tal:attributes="name string:form_env.${key}:record;
+                                 value value"/>
+          </tal:env>
+
+          <tal:comment replace="nothing">
+            Turn 'persistent_' variables from forms (GET/POST) persistent
+          </tal:comment>
+          <tal:env repeat="env request/form">
+          <input type="hidden" name="key"
+                 tal:define="key env;
+                             value request/?env"
+                 tal:condition="python:key.startswith('persistent_')"
+                 tal:attributes="name string:form_env.${key}:record;
+                                 value value"/>
+          </tal:env>
+
+          <tal:comment replace="nothing">Store referrer to remember where to go back</tal:comment>
+          <input type="hidden" name="last_referer"
+               tal:define="last_referer python:here.session_restore_value('HTTP_REFERER', request.form.get('last_referer', request.get('HTTP_REFERER')))"
+               tal:attributes="value python:(last_referer and '%s/%s' % (here.absolute_url(), template.id) not in last_referer) and last_referer or (here.getParentNode() and here.getParentNode().absolute_url())"/>
+
+          <tal:comment replace="nothing">Buttons</tal:comment>
+          <input class="hsButton" type="submit" name="form_submit"
+                 i18n:attributes="value label_save;"
+                 tal:attributes="disabled python:test(isLocked, 'disabled', None);"/>
+          <input class="hsButton hsCancel" type="submit" name="form.button.cancel"
+                 i18n:attributes="value label_cancel"/>
+        </div>
+      </form>
+      </div>
+      <div tal:replace="structure provider:plone.belowcontentbody" />
+      </metal:main>
+    </metal:fill>
+
+  </body>
+
+</html>
+
+</tal:block>

@@ -1,0 +1,321 @@
+<tal:comment replace="nothing">
+  This macro displays a list of items, meetings or meeting files as a result
+  of a topic call or custom search. It requires REQUEST parameters "topicId" and "isFake".
+</tal:comment>
+<metal:result define-macro="topicResult" i18n:domain="PloneMeeting"
+     tal:define="tool           context/getParentNode;
+                 meetingConfig  python: context;
+                 topic          python: request.get('topicId', '') and context.topics.get(request['topicId']) or portal.events;
+                 isFake         python: request.get('isFake', 'False') == 'True';
+                 dummy          meetingConfig/updateSearchParams;
+                 session        request/SESSION;
+                 isDistant      python: isFake and session.has_key('searchParams') and session['searchParams'].has_key('search_site') and session['searchParams']['search_site'] != '_local';
+                 showColors     python: meetingConfig.getParentNode().showColorsForUser();
+                 resultMetaType python: topic.getProperty('meeting_topic_type', 'MeetingFile');
+                 searchResults  python: meetingConfig.getTopicResults(topic, isFake);
+                 batch searchResults">
+
+  <tal:comment replace="nothing">This macro is normally used to display the
+    results of a topic (="here"). But we also reuse it to display a custom
+    item- or meeting-related search in the catalog. In this case, this macro
+    receives a "fakeTopic" (which is one of the predefined topics of the
+    meeting configuration); query results in the portal_catalog are already
+    given in searchResults.</tal:comment>
+
+  <tal:comment replace="nothing">Show the result.</tal:comment>
+
+  <div tal:condition="searchResults">
+
+    <div metal:use-macro="context/hs_navigate/macros/search"/>
+    <tal:comment replace="nothing">The table containing the result</tal:comment>
+    <table class="listing nosort" cellpadding="0" cellspacing="0" width="100%"
+      tal:define="descrsStyle         python: test((tool.readCookie('pmShowDescriptions') == 'false'), 'none', 'inline');
+                  visibleColumns      python: meetingConfig.getQueryColumns(resultMetaType);
+                  sortKey             request/sortKey | nothing;
+                  sortOrder           request/sortOrder | python:'asc';
+                  showAdvices         python: meetingConfig.getUseAdvices() and ('advices' in visibleColumns) and not isDistant;
+                  showRelatedMeeting  python: (resultMetaType == 'MeetingItem') and not isDistant and (isFake or ('meeting' in visibleColumns));
+                  showToDiscuss       python: not isFake and not isDistant and ('toDiscuss' in visibleColumns);
+                  showItemIsSigned    python: not isFake and not isDistant and ('itemIsSigned' in visibleColumns);
+                  showPrefMeeting     python: not isFake and not isDistant and ('preferredMeeting' in visibleColumns);
+                  showBudgetInfos     python: not isFake and not isDistant and ('budgetInfos' in visibleColumns);
+                  showActions         python: not isFake and not isDistant and (topic.id != 'searchalldecisions') and ('actions' in visibleColumns)">
+    <tr>
+          
+      <tal:comment replace="nothing">Title</tal:comment>
+      <th tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
+        <span i18n:translate="listingheader_title"></span>
+        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+      </th>
+
+      <tal:comment replace="nothing">Creator</tal:comment>
+      <th tal:condition="python: 'creator' in visibleColumns"
+          tal:define="fieldIndex string:Creator">
+        <span i18n:translate="pm_creator"></span>
+        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+      </th>
+
+      <tal:comment replace="nothing">Creation date</tal:comment>
+      <th tal:condition="python: 'creationDate' in visibleColumns"
+          tal:define="fieldIndex string:created">
+        <span i18n:translate="pm_creation_date"></span>
+        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+      </th>
+
+      <tal:comment replace="nothing">State</tal:comment>
+      <th tal:condition="python: 'state' in visibleColumns"
+          tal:define="fieldIndex string:review_state">
+        <span i18n:translate="State"></span>
+        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+      </th>
+
+      <tal:comment replace="nothing">Columns specific to items</tal:comment>
+
+      <tal:comment replace="nothing">toDiscuss</tal:comment>
+      <th tal:condition="showToDiscuss"
+          i18n:translate="nothing" i18n:domain="PloneMeeting">
+          <img src="toDiscussYes.png" title="Item to discuss?" tal:attributes="src string:$portal_url/toDiscussYes.png" i18n:attributes="title PloneMeeting_label_toDiscuss" />
+      </th>
+
+      <tal:comment replace="nothing">Category (or proposing group)</tal:comment>
+      <th tal:condition="python: 'categoryOrProposingGroup' in visibleColumns">
+        <tal:category condition="python: not meetingConfig.getUseGroupsAsCategories()"
+                      define="fieldIndex string:getCategory">
+          <span i18n:translate="MeetingCategory"></span>
+          <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+        </tal:category>
+        <tal:group condition="meetingConfig/getUseGroupsAsCategories"
+                   define="fieldIndex string:getProposingGroup">
+          <span i18n:translate="PloneMeeting_label_proposingGroup"></span>
+          <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+        </tal:group>
+      </th>
+
+      <tal:comment replace="nothing">Proposing group</tal:comment>
+      <th tal:condition="python: 'proposingGroup' in visibleColumns">
+       <tal:group define="fieldIndex string:getProposingGroup">
+        <span i18n:translate="PloneMeeting_label_proposingGroup"></span>
+        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+       </tal:group>
+      </th>
+
+      <tal:comment replace="nothing">Proposing group acronym</tal:comment>
+      <th tal:condition="python: 'proposingGroupAcronym' in visibleColumns"
+          tal:define="fieldIndex string:getProposingGroup">
+        <span i18n:translate="PloneMeeting_label_proposingGroup"></span>
+        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+      </th>
+
+      <tal:comment replace="nothing">Associated groups</tal:comment>
+      <th tal:condition="python: 'associatedGroups' in visibleColumns"
+          i18n:translate="PloneMeeting_label_associatedGroups"></th>
+
+      <tal:comment replace="nothing">Associated groups acronyms</tal:comment>
+      <th tal:condition="python: 'associatedGroupsAcronyms' in visibleColumns"
+          i18n:translate="PloneMeeting_label_associatedGroups"></th>
+
+      <tal:comment replace="nothing">Privacy</tal:comment>
+      <th i18n:translate="PloneMeeting_label_privacy"
+          tal:condition="python: 'privacy' in visibleColumns"></th>
+
+      <tal:comment replace="nothing">Advices</tal:comment>
+      <th i18n:translate="advices" tal:condition="showAdvices"
+          tal:attributes="width python:meetingConfig.getAdvicesIconsWidth()"></th>
+
+      <tal:comment replace="nothing">Related meeting</tal:comment>
+      <th tal:condition="showRelatedMeeting" i18n:translate="Meeting"></th>
+
+      <tal:comment replace="nothing">Preferred meeting</tal:comment>
+      <th tal:condition="showPrefMeeting" i18n:translate="PloneMeeting_label_preferredMeeting"></th>
+
+      <tal:comment replace="nothing">itemIsSigned</tal:comment>
+      <th tal:condition="showItemIsSigned"
+          i18n:translate="nothing" i18n:domain="PloneMeeting">
+          <img src="itemIsSignedYes.png" title="Item is signed?" tal:attributes="src string:$portal_url/itemIsSignedYes.png" i18n:attributes="title PloneMeeting_label_itemIsSigned" />
+      </th>
+
+      <tal:comment replace="nothing">Actions</tal:comment>
+      <th i18n:translate="heading_actions" tal:condition="showActions"></th>
+      </tr>
+
+      <tal:comment replace="nothing">The table content</tal:comment>
+      <tal:results tal:repeat="brain searchResults">
+      <tr tal:define="oddrow repeat/brain/odd;" valign="top"
+          tal:attributes="class python:test(oddrow, 'even', 'odd')">
+
+        <tal:comment replace="nothing">Title</tal:comment>
+        <td class="pmLinks">
+          <tal:comment replace="nothing">For a meeting item, show its title with
+             a color that depends on the color scheme used in the meeting config,
+             and its description.</tal:comment>
+          <tal:forItem condition="python: (resultMetaType == 'MeetingItem') and not isDistant">
+            <tal:wakeUpItem define="meetingItem brain/getObject;
+                                    isPrivacyViewable meetingItem/isPrivacyViewable">
+            <tal:comment replace="nothing">Icon to display</tal:comment>
+            <tal:showTitle replace="structure python: tool.getColoredLink(meetingItem, showColors, highlight=isFake, inMeeting=True)"/>
+            <span tal:condition="python: not meetingItem.fieldIsEmpty('description')"
+                  id="pmDescription" name="pmDescription" class="pmExpanded"
+                  tal:attributes="style python:'display: %s' % descrsStyle">
+              <span tal:condition="isFake"
+                    tal:content="structure python: tool.highlight(meetingItem.Description())"></span>
+              <span tal:condition="not: isFake" tal:replace="structure meetingItem/Description"></span>
+            </span>
+            <tal:comment replace="nothing">Annexes</tal:comment>
+            <table class="no-style-table" cellpadding="0" cellspacing="0" align="right"
+                   tal:define="showAnnexes python: 'annexes' in visibleColumns;
+                               showAnnexesDecision python: 'annexesDecision' in visibleColumns"
+                   tal:condition="python: (showAnnexes or showAnnexesDecision) and isPrivacyViewable">
+              <tr>
+                <tal:comment replace="nothing">Normal annexes</tal:comment>
+                <td tal:condition="showAnnexes">
+                  <metal:annexes use-macro="here/annexes_macros/macros/annexesIcons"/>
+                </td>
+                <tal:comment replace="nothing">Decision-related</tal:comment>
+                <td tal:define="decisionRelated python:True"
+                    tal:condition="python: showAnnexesDecision and member.has_permission('PloneMeeting: Read decision annex', meetingItem)">
+                  <metal:annexes use-macro="here/annexes_macros/macros/annexesIcons"/>
+                </td>
+              </tr>
+            </table>
+            <tal:budget condition="python: showBudgetInfos and isPrivacyViewable and meetingItem.getBudgetRelated()">
+             <br/><div tal:content="meetingItem/getBudgetInfos"></div>
+            </tal:budget>
+            </tal:wakeUpItem>
+          </tal:forItem>
+          <tal:comment replace="nothing">Title for a distant item</tal:comment>
+          <a id="pmNoNewContent" tal:condition="python: (resultMetaType == 'MeetingItem') and isDistant"
+             tal:content="structure python: isFake and tool.highlight(brain.pretty_title_or_id()) or brain.pretty_title_or_id()"
+             tal:attributes="href brain/getURL"></a>
+          <tal:comment replace="nothing">Title for a meeting (uncolored)</tal:comment>
+          <a tal:condition="python: resultMetaType == 'Meeting'"
+             id="pmNoNewContent" tal:content="python: tool.formatDate(brain, prefixed=True)"
+                                 tal:attributes="href brain/getURL"></a>
+          <tal:comment replace="nothing">Title for anything else (ie, an annex)</tal:comment>
+          <a tal:condition="python: resultMetaType not in ('MeetingItem', 'Meeting')"
+             id="pmNoNewContent" tal:content="brain/pretty_title_or_id" tal:attributes="href brain/getURL"></a>
+        </td>
+
+        <tal:comment replace="nothing">Creator</tal:comment>
+        <td tal:condition="python: 'creator' in visibleColumns"
+            tal:content="python: tool.getUserName(brain.Creator)"></td>
+
+        <tal:comment replace="nothing">Creation date</tal:comment>
+        <td tal:condition="python: 'creationDate' in visibleColumns"
+            tal:content="python:tool.restrictedTraverse('@@plone').toLocalizedTime(brain.created,long_format=True)"></td>
+
+        <tal:comment replace="nothing">State</tal:comment>
+        <td tal:condition="python: 'state' in visibleColumns"
+            tal:content="brain/review_state" i18n:translate=""></td>
+
+        <tal:itemOrMeeting condition="python: not isDistant and (resultMetaType in ('MeetingItem', 'Meeting')) and (topic.id != 'searchalldecisions')">
+        <tal:comment replace="nothing">For performance reasons, when displaying all decisions, we avoid waking up
+            Meeting objects as this query needs to wake up all Meeting objects.</tal:comment>
+        <tal:wakeUpObject define="obj brain/getObject">
+
+        <tal:comment replace="nothing">toDiscuss</tal:comment>
+        <td tal:condition="showToDiscuss" align="center" i18n:domain="PloneMeeting">
+          <img tal:condition="obj/getToDiscuss" name="discussNo" 
+               title="to_discuss_yes" i18n:attributes="title"
+               tal:attributes="src string: $portal_url/toDiscussYes.png;"/>
+          <img tal:condition="not: obj/getToDiscuss" name="discussYes"
+               title="to_discuss_no" i18n:attributes="title"
+               tal:attributes="src string: $portal_url/toDiscussNo.png;"/>
+        </td>
+
+        <tal:comment replace="nothing">Category (or proposing group)</tal:comment>
+        <td tal:condition="python: 'categoryOrProposingGroup' in visibleColumns">
+          <span tal:condition="python: obj.getCategory(True)"
+                tal:content="python: obj.getCategory(True).Title()"></span>
+        </td>
+
+        <tal:comment replace="nothing">Proposing group</tal:comment>
+        <td tal:condition="python: 'proposingGroup' in visibleColumns">
+          <span tal:define="group python: getattr(tool, obj.getProposingGroup())"
+                tal:content="group/getName"></span>
+        </td>
+
+        <tal:comment replace="nothing">Proposing group acronym</tal:comment>
+        <td tal:condition="python: 'proposingGroupAcronym' in visibleColumns">
+          <acronym tal:define="group python: getattr(tool, obj.getProposingGroup())"
+                   tal:attributes="title group/Title"
+                   tal:content="group/getAcronym"></acronym>
+        </td>
+
+        <tal:comment replace="nothing">Associated groups</tal:comment>
+        <td tal:condition="python: 'associatedGroups' in visibleColumns">
+          <span tal:repeat="associatedGroup obj/getAssociatedGroups"
+                tal:content="structure python: getattr(tool, associatedGroup).Title() + '&nbsp;&nbsp;'"></span>
+        </td>
+
+        <tal:comment replace="nothing">Associated groups acronyms</tal:comment>
+        <td tal:condition="python: 'associatedGroupsAcronyms' in visibleColumns">
+          <span tal:repeat="associatedGroup obj/getAssociatedGroups">
+            <acronym tal:define="group python: getattr(tool, associatedGroup)"
+                     tal:attributes="title group/Title"
+                     tal:content="group/getAcronym"></acronym>&nbsp;&nbsp;
+          </span>
+        </td>
+
+        <tal:comment replace="nothing">Privacy</tal:comment>
+        <td tal:condition="python: 'privacy' in visibleColumns"
+            tal:content="python: 'ip_%s' % obj.getPrivacy()" i18n:translate=""></td>
+
+        <tal:comment replace="nothing">Advices</tal:comment>
+        <td tal:condition="showAdvices" align="center" tal:define="meetingItem python: obj">
+          <tal:show condition="obj/isPrivacyViewable">
+            <div metal:use-macro="here/advices_macros/macros/advicesIcons"></div>
+          </tal:show>
+        </td>
+
+        <tal:comment replace="nothing">Related meeting</tal:comment>
+        <td tal:condition="showRelatedMeeting" align="center">
+          <tal:tiedMeeting define="meetingBrain python: obj.getMeeting(brain=True)">
+            <a tal:condition="python: meetingBrain and member.has_permission('View', meetingBrain)"
+               tal:content="python: tool.formatDate(meetingBrain.getDate())"
+               tal:attributes="href python: meetingBrain.absolute_url()[:meetingBrain.absolute_url().find('/at_references/')]"></a>
+            <span tal:condition="not: meetingBrain">-</span>
+          </tal:tiedMeeting>
+        </td>
+
+        <tal:comment replace="nothing">Preferred meeting</tal:comment>
+        <td tal:condition="showPrefMeeting" align="center">
+          <tal:pref define="pref obj/getPreferredMeeting; whatever python: pref=='whatever';
+                            meetingBrain python: obj.portal_catalog(UID=obj.getPreferredMeeting())">
+            <tal:whatever condition="whatever" i18n:translate="Any meeting">
+            </tal:whatever>
+            <tal:meeting condition="not: whatever">
+              <a tal:condition="meetingBrain" 
+                 tal:content="python: tool.formatDate(meetingBrain[0])"
+                 tal:attributes="href python: meetingBrain[0].getURL()"
+                 tal:on-error="python: '-'"></a>
+              <span tal:condition="not: meetingBrain">-</span>
+            </tal:meeting>
+          </tal:pref>
+        </td>
+
+        <tal:comment replace="nothing">"itemIsSigned" field</tal:comment>
+        <td align="center" class="ItemIsSigned" tal:condition="python: showItemIsSigned" i18n:domain="PloneMeeting">
+        <tal:defines define="contextType obj/meta_type;
+                             meetingItem python: obj;
+                             ajaxEdit showActions">
+         <metal:itemisSigned use-macro="here/hs_macros/macros/itemIsSigned" />
+        </tal:defines>
+        </td>
+
+        <tal:comment replace="nothing">Actions</tal:comment>
+        <td align="center" tal:condition="showActions">
+          <tal:actions define="itemOrMeeting python: obj; showIcons python:True;">
+            <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions"></div>
+          </tal:actions>
+        </td>
+        </tal:wakeUpObject>
+        </tal:itemOrMeeting>
+      </tr>
+      </tal:results>
+    </table>
+  </div>
+  <span class="discreet" tal:condition="python: not searchResults"
+     tal:content="python: tool.translate('search_%s_empty' % resultMetaType, domain='PloneMeeting')">
+  </span>
+  <div metal:use-macro="context/hs_navigate/macros/search" />
+</metal:result>

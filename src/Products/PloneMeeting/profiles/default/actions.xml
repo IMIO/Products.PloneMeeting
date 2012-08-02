@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<object name="portal_actions" meta_type="Plone Actions Tool"
+        xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+  <action-provider name="portal_actions"/>
+  <object name="document_actions" meta_type="CMF Action Category">
+
+    <!-- Show icon for hiding/showing item descriptions. -->
+    <object name="toggleDescriptions" meta_type="CMF Action" i18n:domain="PloneMeeting">
+      <property name="title" i18n:translate="">show_or_hide_details</property>
+      <property name="description" i18n:translate="">Toggle descriptions of items</property>
+      <property name="url_expr">string:javascript:toggleMeetingDescriptions()</property>
+      <property name="icon_expr">string:$portal_url/collapseDescrs.gif</property>
+      <property name="available_expr">python: object.portal_plonemeeting.showToggleDescriptions(context)</property>
+      <property name="permissions">
+        <element value="View"/>
+      </property>
+      <property name="visible">True</property>
+    </object>
+    <object name="togglePersons" meta_type="CMF Action" i18n:domain="PloneMeeting">
+      <property name="title" i18n:translate="">show_or_hide_persons</property>
+      <property name="description" i18n:translate="">Show or hide persons</property>
+      <property name="url_expr">string:javascript:togglePersons()</property>
+      <property name="icon_expr">string:$portal_url/users.gif</property>
+      <property name="available_expr">python: object.portal_plonemeeting.showTogglePersons(context)</property>
+      <property name="permissions">
+        <element value="View"/>
+      </property>
+      <property name="visible">True</property>
+    </object>
+    <!-- Hide some Plone actions -->
+    <object name="sendto" meta_type="CMF Action">
+      <property name="visible">False</property>
+    </object>
+    <object name="print" meta_type="CMF Action">
+      <property name="visible">False</property>
+    </object>
+  </object>
+
+  <!-- Hide Plone actions "site map" and "accessibility" -->
+  <object name="site_actions" meta_type="CMF Action Category">
+   <object name="sitemap" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
+   <object name="accessibility" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
+  </object>
+
+  <!-- Hide Plone action "change_state". -->
+  <object name="folder_buttons" meta_type="CMF Action Category">
+   <object name="change_state" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
+   <object name="paste_plonemeeting" meta_type="CMF Action" i18n:domain="PloneMeeting">
+    <property name="title" i18n:translate="">Paste PloneMeeting</property>
+    <property name="description" i18n:translate=""></property>
+    <property name="url_expr">string:paste_items:method</property>
+    <property name="icon_expr"></property>
+    <property name="available_expr">object/showPasteMeetingItemAction</property>
+    <property name="permissions">
+     <element value="View"/>
+    </property>
+    <property name="visible">True</property>
+   </object>
+   <object name="copy_plonemeeting" meta_type="CMF Action" i18n:domain="PloneMeeting">
+    <property name="title" i18n:translate="">Copy PloneMeeting</property>
+    <property name="description" i18n:translate=""></property>
+    <property name="url_expr">string:folder_copyitems:method</property>
+    <property name="icon_expr"></property>
+    <property name="available_expr">object/showFolderCopyMeetingItemAction</property>
+    <property name="permissions">
+     <element value="Copy or Move"/>
+    </property>
+    <property name="visible">True</property>
+   </object>
+  </object>
+
+  <!-- Hide some user-related Plone actions -->
+  <object name="user" meta_type="CMF Action Category">
+   <object name="preferences" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
+   <object name="dashboard" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
+   <object name="join" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
+   <object name="undo" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
+   <object name="addFavorite" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
+   <object name="favorites" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
+  </object>
+</object>

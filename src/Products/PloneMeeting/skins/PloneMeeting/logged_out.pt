@@ -1,0 +1,10 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      metal:use-macro="here/main_template/macros/master">
+  <body>
+    <div metal:fill-slot="main" i18n:domain="PloneMeeting">
+      <h1 i18n:translate="">hs_logged_out_title</h1>
+      <p><img src="welcomeImage.jpg" class="image-right" />
+         <span i18n:translate="">hs_logged_out_body</span></p>
+    </div>
+  </body>
+</html>

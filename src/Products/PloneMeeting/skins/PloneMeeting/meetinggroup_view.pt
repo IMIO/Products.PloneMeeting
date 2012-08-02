@@ -1,0 +1,17 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xml:lang="en-US" lang="en-US" 
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="PloneMeeting">
+
+<body>
+  <div metal:define-macro="folderlisting">
+    <dl class="portalMessage info" tal:condition="python: 'deactivate' in [transition['id'] for transition in context.portal_workflow.getTransitionsFor(context)]">
+      <dt>Info</dt>
+      <dd i18n:domain="plone" i18n:translate="meetinggroup_users_transfered_to_observers_plonegroup_if_disabled">If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore. Moreover, this group will be removed from selectable copy groups.</dd>
+    </dl>
+    <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
+  </div>
+</body>
+</html>

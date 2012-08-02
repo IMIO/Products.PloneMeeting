@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<portlets xmlns:i18n="http://xml.zope.org/namespaces/i18n" i18n:domain="plone">
+  <assignment name="portlet_todo" category="context" key="/"
+              manager="plone.leftcolumn" type="plonemeeting.portlets.todo" >
+    <property name="macro">portlet</property>
+    <property name="template">portlet_todo</property>
+  </assignment>
+  <assignment name="portlet_plonemeeting" category="context" key="/"
+              manager="plone.leftcolumn" type="plonemeeting.portlets.plonemeeting" >
+    <property name="macro">portlet</property>
+    <property name="template">portlet_plonemeeting</property>
+  </assignment>
+  <!-- Hide portlets "navigation" and 'calendar" -->
+  <assignment manager="plone.leftcolumn" category="context"
+     key="/" type="portlets.Navigation" name="navigation" remove="True"/>
+  <assignment manager="plone.rightcolumn" category="context" key="/"
+     type="portlets.Calendar" name="calendar" remove="True"/>
+</portlets>

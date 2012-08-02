@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<tool-setup>
+ <required tool_id="portal_plonemeeting"
+           class="Products.PloneMeeting.ToolPloneMeeting.ToolPloneMeeting"/>
+
+ <!-- ##code-section toolset.xml -->
+ <!-- ##/code-section toolset.xml -->
+</tool-setup>

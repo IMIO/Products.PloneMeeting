@@ -1,0 +1,251 @@
+<tal:comment replace="nothing">Requires variable "decisionRelated"</tal:comment>
+<div metal:define-macro="annexesMacro" i18n:domain="PloneMeeting"
+     tal:define="errors options/state/getErrors;
+                 tool python:context.portal_plonemeeting;
+                 member tool/getUser;
+                 meetingConfig python: tool.getMeetingConfig(here);
+                 target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', '');
+                 showColors tool/showColorsForUser;
+                 extractTextFromFiles tool/extractTextFromFiles;
+                 itemNumber python: context.getItemNumber(relativeTo='meeting')">
+
+  <tal:comment replace="nothing">Definition of the predefined titles</tal:comment>
+  <script language="JavaScript">
+    var annexTypeBox = new Object();
+    annexTypeBox["button"] = "idButton1";
+    annexTypeBox["box"] = "idBox1";
+    annexTypeBox["image"] = "idImage1";
+    annexTypeBox["buttonText"] = "idButtonText1";
+    annexTypeBox["hidden"] = "idHidden1";
+    ploneMeetingSelectBoxes["annexTypeBox"] = annexTypeBox;
+  </script>
+  <tal:comment replace="nothing">Item header (title, reference, etc)</tal:comment>
+  <metal:header use-macro="here/hs_macros/macros/itemHeader"/>
+
+  <tal:comment replace="nothing">Form for appending a new annex.</tal:comment>
+  <form name="annexForm"
+        tal:define="appendPerm python: test(decisionRelated, 'PloneMeeting: Write decision annex', 'PloneMeeting: Add annex');
+                    formAction python: test(decisionRelated, 'annexes_decision_form', 'annexes_form')"
+        tal:condition="python: member.has_permission(appendPerm, context)"
+        tal:attributes="action python: context.absolute_url() + '/' + formAction"
+        method="post" enctype="multipart/form-data">
+    <input type="hidden" name="form.submitted" value="1" />
+    <input type="hidden" name="selected_uid" value=""/>
+    <input type="hidden" name="decisionRelated" tal:attributes="value decisionRelated"/>
+
+  <fieldset tal:define="fileTypes python:[ft for ft in meetingConfig.getFileTypes(decisionRelated) if ft.adapted().isSelectable()]">
+    <legend i18n:translate="add_annex">Add an annex</legend>
+
+    <div class="portalMessage" tal:condition="context/willInvalidateAdvices"
+           i18n:translate="warning_invalidate_advices_with_annex" i18n:domain="PloneMeeting"></div>
+
+    <tal:oneFileType condition="python: len(fileTypes) == 1">
+      <tal:comment replace="nothing">In this case we do not display the listbox that allows to choose the file type.</tal:comment>
+      <input type="hidden" tal:attributes="value python: fileTypes[0].id" id="idHidden1" name="annex_type"/>
+    </tal:oneFileType>
+
+    <tal:manyFileTypes condition="python: len(fileTypes) &gt; 1">
+    <tal:comment replace="nothing">Listbox for selecting a file type</tal:comment>
+    <div class="field"
+         tal:define="error errors/annexType|nothing;"
+         tal:attributes="class python:test(error, 'field error', 'field');
+                         style python:test(error, 'height:4.2em', 'height:3.0em')">
+      <label for="annex_type" i18n:translate="">annex_type</label>
+      <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
+      <div tal:content="error"></div>
+      <div class="ploneMeetingSelectContainer">
+        <input type="hidden" tal:attributes="value request/annex_type|nothing" id="idHidden1" name="annex_type">
+
+        <tal:comment replace="nothing">Select button</tal:comment>
+        <div class="ploneMeetingSelectButton ploneMeetingSelectDropdownIcon" id="idButton1"
+             onclick="displayPloneMeetingSelectBox('annexTypeBox')">
+          <span tal:condition="python: (request.has_key('annex_type')) and request['annex_type']">
+            <span tal:define="meetingFileType python:getattr(meetingConfig.meetingfiletypes, request['annex_type']);
+                              num python:str(fileTypes.index(meetingFileType)+1)">
+              <img id="idImage1" tal:attributes="src python: meetingFileType.absolute_url() + '/theIcon';"
+                   alt="" class="ploneMeetingSelectImage" />
+              <span id="idButtonText1" tal:content="python: meetingFileType.getName()" class="ploneMeetingRef"></span>
+            </span>
+          </span>
+          <span tal:condition="python: (not request.has_key('annex_type')) or (not request['annex_type'])">
+            <img id="idImage1" src="pixel.gif" class="ploneMeetingSelectImage"/>
+            <span id="idButtonText1" class="ploneMeetingRef" i18n:translate="">make_a_choice</span>
+          </span>
+        </div>
+
+        <tal:comment replace="nothing">The listbox</tal:comment>
+        <div class="ploneMeetingSelectBox" id="idBox1"
+             tal:define="global num python: 0">
+          <p tal:define='choose python:here.translate("make_a_choice", domain="PloneMeeting")'
+             tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage10\', \'' + tool.forJs(choose) + '\', \'\', \'\');; ploneMeetingSelectOnMouseOutItem(this)'"
+             class="ploneMeetingSelectItem"
+             onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
+             onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
+             onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage10', '--- Choisissez ---', '', ''); ploneMeetingSelectOnMouseOutItem(this)"
+             id="idButtonText10">
+            <img id="idImage10" src="pixel.gif" class="ploneMeetingSelectImage" />
+            <span i18n:translate="">make_a_choice</span>
+          </p>
+          <tal:loop repeat="meetingFileType fileTypes">
+           <p tal:define="global num python: num + 1;
+                          ftName meetingFileType/getName"
+             class="ploneMeetingSelectItem" onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
+             onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
+             onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage1', 'value1', 'predefined_title1'); ploneMeetingSelectOnMouseOutItem(this)"
+             tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage1' + str(num) + '\', \'' + tool.forJs(ftName) + '\', \'' + meetingFileType.getId() + '\', \'' + tool.forJs(meetingFileType.getPredefinedTitle()) + '\');; ploneMeetingSelectOnMouseOutItem(this)'">
+            <img class="ploneMeetingSelectImage"
+                tal:attributes="src python: meetingFileType.absolute_url() + '/theIcon'; id python: 'idImage1' + str(num)"
+                id="idImage1" src="#" alt="" />
+            <span tal:content="ftName" />
+           </p>
+          </tal:loop>
+        </div>
+      </div>
+    </div>
+    </tal:manyFileTypes>
+
+    <tal:comment replace="nothing">Annex title</tal:comment>
+    <div class="field"
+           tal:define="error errors/annexTitle|nothing;
+                       rq_annex_title request/annex_title|nothing"
+           tal:attributes="class python:test(error, 'field error', 'field')">
+        <label for="annex_title" i18n:domain="plone" i18n:translate="label_title">Title</label>
+        <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
+        <div tal:content="error">Validation error output</div>
+        <input type="text" size="50" name="annex_title" id="annex_title"
+               tal:condition="python: len(fileTypes) &gt; 1" tal:attributes="value rq_annex_title" />
+        <input type="text" size="50" name="annex_title" id="annex_title"
+               tal:condition="python: len(fileTypes) == 1"
+               tal:attributes="value python: test(rq_annex_title, rq_annex_title, fileTypes[0].getPredefinedTitle())" />
+      </div>
+
+      <tal:comment replace="nothing">Annex file to upload</tal:comment>
+      <div class="field"
+           tal:define="error errors/annexFile|nothing;"
+           tal:attributes="class python:test(error, 'field error', 'field')">
+        <label for="annex_file" i18n:domain="plone" i18n:translate="File">File</label>
+        <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
+        <div tal:content="error">Validation error output</div>
+        <input type="file" size="30" name="annex_file" id="annex_file" tal:attributes="value request/annex_file/filename|nothing" />
+      </div>
+
+      <tal:ocrQuestions condition="extractTextFromFiles">
+      <table cellpadding="0" cellspacing="0" width="100%">
+        <tr valign="top">
+        <tal:comment replace="nothing">Checkbox for asking OCR</tal:comment>
+        <td width="48%">
+          <input class="noborder" type="checkbox" name="needs_ocr"
+                 tal:attributes="checked python:test(request.get('needs_ocr', None) != None, True, False)"/>
+          <label for="needs_ocr" i18n:domain="PloneMeeting" i18n:translate="needs_ocr"></label>
+          <div class="formHelp" i18n:translate="needs_ocr_descr"></div>
+        </td>
+        <td width="4%"></td>
+        <tal:comment replace="nothing">Select the OCR language</tal:comment>
+        <td width="48%"
+            tal:define="requestValue request/ocr_language|nothing;
+                        selectedValue python:test(requestValue, requestValue, tool.getDefaultOcrLanguage())">
+          <label for="ocr_language" i18n:domain="PloneMeeting" i18n:translate="ocr_language"></label>
+          <div class="formHelp" i18n:translate="ocr_language_descr"></div>
+          <select name="ocr_language">
+            <option tal:repeat="lang tool/getAvailableOcrLanguages" i18n:translate=""
+                    tal:content="python: 'language_%s' % lang"
+                    tal:attributes="value lang;
+                                    selected python: lang == selectedValue" ></option>
+          </select>
+        </td>
+        </tr>
+      </table>
+      </tal:ocrQuestions>
+
+      <tal:comment replace="nothing">Button "OK"</tal:comment>
+      <p><input class="context" type="submit" name="form.button.Select" value="Save" i18n:attributes="value label_save" i18n:domain="plone" /></p>
+  </fieldset>
+  </form>
+
+  <tal:comment replace="nothing">Table that shows the list of current annexes.</tal:comment>
+  <fieldset tal:define="annexes python: here.getAnnexesByType(decisionRelated, makeSubLists=False)">
+   <legend i18n:translate="existing_annexes">Annexes</legend>
+   <div tal:condition="not: annexes" i18n:translate="no_annexes" class="discreet">No annexes</div>
+   <table class="vertical listing" tal:condition="annexes" width="100%" i18n:domain="plone">
+     <tr>
+       <th i18n:translate="">listingheader_title</th>
+       <th i18n:translate="pm_creator" i18n:domain="PloneMeeting"></th>
+       <th i18n:translate="pm_creation_date" i18n:domain="PloneMeeting"></th>
+       <th i18n:translate="">listingheader_size</th>
+       <th i18n:translate="" tal:condition="python:member.has_permission('Delete objects', here)">heading_actions</th>
+     </tr>
+     <tr tal:repeat="annexInfo annexes">
+       <span tal:define="annex python: context.uid_catalog(UID=annexInfo['uid'])[0].getObject()">
+       <td class="pmLinks">
+         <img tal:attributes="src python:annex.getIcon()"/>&nbsp;
+         <span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target)"/>
+       </td>
+       <td tal:content="python: tool.getUserName(annex.Creator())"></td>
+       <td tal:content="annex/CreationDate"></td>
+       <td tal:content="annex/getObjSize"></td>
+       <td tal:condition="python:member.has_permission('Delete objects', here)" align="center">
+         <form name="deleteUidForm" action="delete_givenuid">
+           <input type="hidden" name="selected_uid" tal:attributes="value annex/UID" />
+           <img i18n:attributes="title" title="label_remove"
+                tal:attributes="src string:$portal_url/delete.png"
+                onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
+         </form>
+       </td>
+       </span>
+     </tr>
+   </table>
+  </fieldset>
+ </div>
+
+<tal:comment replace="nothing">Requires "meetingItem".
+     Optional: "decisionRelated". If True, decision-related annexes are shown
+               instead of item-related annexes.</tal:comment>
+<metal:icons define-macro="annexesIcons"
+     tal:define="decisionRelated decisionRelated|nothing;
+                 decisionRelated python:test(decisionRelated, True, False);
+                 annexesByType python:meetingItem.getAnnexesByType(decisionRelated);
+                 now python:DateTime();
+                 target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', ''); 
+                 tool python:context.portal_plonemeeting;
+                 cssClasses python: 'contentActionsAX no-style-table';
+                 global count python:0">
+
+  <table tal:condition="annexesByType" cellpadding="0" cellspacing="0"
+         class="contentActionsAX no-style-table">
+    <tr valign="top">
+      <td tal:condition="decisionRelated">
+        <span class="discreet" style="padding-left: 0.7em;"
+              i18n:translate="AnnexesDecisionShort"></span>
+        <span class="discreet">:</span>
+      </td>
+      <td tal:repeat="annexesGroup annexesByType" class="noPadding">
+        <tal:comment replace="nothing">Only one annex of this type is present</tal:comment>
+        <span tal:define="annex python:annexesGroup[0]" class="pmLinks"
+              tal:condition="python: len(annexesGroup) == 1"
+              tal:content="structure python: tool.getColoredLink(annex, showColors, showIcon=True, target=target)">
+        </span>
+        <tal:comment replace="nothing">Several annexes of this type are present</tal:comment>
+        <dl class="actionMenuAX"
+            tal:define="imgUrl python:portal_url + '/' + annexesGroup[0]['iconUrl'];
+                        global count python:count+1"
+            tal:attributes="id python:'annexesMenu_' + str(count) + '_' + meetingItem.UID() + '_' + str(decisionRelated)"
+            tal:condition="python: len(annexesGroup) > 1">
+          <dt class="actionMenuHeaderAX pmLinks">
+              <a href="#"><img
+                 tal:attributes="src imgUrl"/><b tal:condition="showColors"
+                 tal:content="python: len(annexesGroup)"
+                 tal:attributes="id python: test(tool.lastModifsConsultedOnAnnexes(annexesGroup), 'pmNoNewContent', 'pmNewContent')"></b><b tal:condition="not: showColors"
+                 tal:content="python: len(annexesGroup)" id="pmNoNewContent"></b></a>
+          </dt>
+          <dd class="actionMenuContentAX">
+            <ul>
+              <li class="pmLinks" tal:repeat="annex annexesGroup"><span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target)"/>
+              </li>
+            </ul>
+          </dd>
+        </dl>
+
+      </td>
+    </tr>
+  </table>
+</metal:icons>

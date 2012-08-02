@@ -1,0 +1,518 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xml:lang="en-US" lang="en-US"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      metal:use-macro="here/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+
+  <div metal:fill-slot="top_slot">
+    <tal:disable define="dummy python:request.set('disable_border', 1)"/>
+  </div>
+
+<body metal:fill-slot="main"
+      tal:define="tool python: context.portal_plonemeeting;
+                  member tool/getUser;
+                  meetingConfig python:tool.getMeetingConfig(context);
+                  meetingUid context/UID;
+                  bilingual python: 'secondLanguage' in tool.getModelAdaptations();
+                  langs python: tool.getAvailableInterfaceLanguages(True, True);
+                  iStartNumber python: context.getBatchStartNumber(late=False);
+                  lStartNumber python: context.getBatchStartNumber(late=True);
+                  showColors context/portal_plonemeeting/showColorsForUser;
+                  showPage context/portal_plonemeeting/showMeetingView;
+                  showLateItems python: context.mustShowLateItems(iStartNumber, meetingConfig.getMaxShownMeetingItems());
+                  usedAttrs meetingConfig/getUsedMeetingAttributes;
+                  useUserReplacements meetingConfig/getUseUserReplacements;
+                  showAvailableItems python:member.has_permission('Modify portal content', context) and context.wfConditions().mayAcceptItems()"
+      tal:attributes="onLoad python: 'javascript: askInitialItemsLists(\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\')' % (showColors, showLateItems, showAvailableItems, iStartNumber, lStartNumber, context.numberOfItems(), context.numberOfItems(True), meetingConfig.getMaxShownMeetingItems())">
+
+  <tal:mustShowPage condition="showPage">
+  <script language="javascript"
+    tal:content="string:var meetingUrl = '${context/absolute_url}'">
+  </script>
+  <script language="javascript">
+  <!--
+  // We maintain an array of all item UIDs
+  var itemUids = new Array();
+  var iStartNumber = 1; // Number of the first visible meeting item
+  // Number of the 1st visible late item (first=1; does not count normal items)
+  var lStartNumber = 1;
+  /* The following field will be computed when this page is loaded. It is the
+     total number of normal items. */
+  var numberOfItems = 0;
+  var numberOfLateItems = 0; // Idem, but late items.
+  /* The following field will be computed when this page is loaded. It is the
+     maximum number of normal items shown at once. */
+  var maxShownItems = 0; 
+  var checkBoxesChecked = true;
+
+  function presentSelectedItems() {
+    // Called when the user wants to present several items at once in a meeting.
+    var itemsCheckboxes = document.getElementsByName('itemCbToPresent');
+    var itemsUids = '';
+    var atLeastOneSelected = false;
+    for (var i=0; i < itemsCheckboxes.length; i++) {
+        if (itemsCheckboxes[i].checked) {
+            atLeastOneSelected = true;
+            itemsUids += itemsCheckboxes[i].value + ',';
+        }
+    }
+    if (! atLeastOneSelected) alert(no_selected_items);
+    else {
+        // Update the form and submit it.
+        var selectForm = document.forms['selectItemsForm'];
+        selectForm.uids.value = itemsUids;
+        selectForm.iStartNumber.value = iStartNumber;
+        selectForm.lStartNumber.value = lStartNumber;
+        selectForm.submit();
+    }
+  }
+  function onImageButtonFocus(itemNumber) {
+    var imageButtons = document.getElementsByName('moveImageButton');
+    for (var i=0; i<imageButtons.length; i++) {
+        if (imageButtons[i].id != itemNumber) {
+            imageButtons[i].style.visibility = 'hidden';
+        }
+        else {
+            imageButtons[i].style.visibility = 'visible';
+            imageButtons[i].style.cursor = 'pointer';
+            document.getElementById('moveValue_' + itemNumber).select();
+        }
+    }
+  }
+  function toggleCheckboxes() {
+    var checkBoxes = document.getElementsByName('itemCbToDump');
+    if (checkBoxesChecked) newCheckValue = false;
+    else newCheckValue = true;
+    for (var i=0; i<checkBoxes.length; i++) {
+       checkBoxes[i].checked = newCheckValue;
+       itemUids[checkBoxes[i].value] = newCheckValue;
+    }
+    checkBoxesChecked = newCheckValue;
+  }
+  function toggleSingleCheckbox(cb) {
+    if (!cb.checked) itemUids[cb.value] = false;
+    else itemUids[cb.value] = true;
+  }
+  function updateItemsList(rq, hook) {
+    /* After an items list has been retrieved through Ajax, we must update some
+       information inside it. */
+    // Update the status of checkboxes in this new items list, based on
+    // global Javascript variable itemUids.
+    var checkBoxes = hook.getElementsByTagName('input');
+    for (var i=0; i<checkBoxes.length; i++) {
+      if (checkBoxes[i].type != "checkbox") continue;
+      if (checkBoxes[i].name != "itemCbToDump") continue;
+      checkBoxes[i].checked = itemUids[checkBoxes[i].value];
+    }
+    // Keep in global Javascript variables the first number of this list
+    if (hook.id == 'meetingItems') iStartNumber = rq.info['startNumber'];
+    if (hook.id == 'lateItems') lStartNumber = rq.info['startNumber'];
+    // Enable annexes menus in this list.
+    initializeMenusAXStartingAt(hook);
+  }
+  function showOrHideLateItems(rq, params) {
+    /* This method is called before asking an items list through ajax, for
+       showing or hiding late items depending on if we are/not on the last page
+       of the normal items.*/
+    // First, store startNumber in the request object.
+    rq.info['startNumber'] = params['startNumber'];
+    if (rq.hook == 'meetingItems') {
+      // Are we on the last page of the normal items ?
+      var fieldsetLateItems = document.getElementById('fieldsetLateItems');
+      if ((params['startNumber']*1 + maxShownItems) <= numberOfItems) {
+        // Hide late items
+        fieldsetLateItems.style.display = 'none';
+      }
+      else {
+        // Show late items, if any
+        if (numberOfLateItems > 0) {
+          fieldsetLateItems.style.display = 'block';
+          askItemsList('lateItems', params['showColors'], 1);
+        }
+      }
+    }
+  }
+  // Function for getting an items list through an Ajax request
+  function askItemsList(whichItems, showColors, startNumber) {
+    // Asks via Ajax a list of items for this meeting.
+    var params = {"whichItems": whichItems, "showColors": showColors,
+                 "startNumber": startNumber,
+                 "showDescriptions": readCookie('pmShowDescriptions')};
+    askAjaxChunk(whichItems, 'GET', meetingUrl, 'meetingitems_list', 'items',
+                 params, showOrHideLateItems, updateItemsList);
+  }
+  function askInitialItemsLists(showColors, showLateItems, showAvailableItems,
+                                iStartNumber, lStartNumber,
+                                nbOfItems, nbOfLateItems, maxItems) {
+    // Store numberOfItems and maxShownItems in global Javascript variables
+    numberOfItems = nbOfItems*1;
+    numberOfLateItems = nbOfLateItems*1;
+    maxShownItems = maxItems*1;
+    // First, set the cookie for showing/hiding item descriptions and decisions
+    if (readCookie('pmShowDescriptions') == null){
+      // No cookie? By default create one that shows the descriptions.
+      createCookie('pmShowDescriptions', 'true')
+    }
+    // Load the lists of available, meeting and late items
+    if (showAvailableItems == "True")
+      askItemsList('availableItems', showColors, 1);
+    askItemsList('meetingItems', showColors, iStartNumber*1);
+    if (showLateItems == "True")
+      askItemsList('lateItems', showColors, lStartNumber*1);
+  }
+
+  function askItemsListByNumber(whichItems, showColors, inputWidget,
+                                totalNbOfItems, batchSize, firstNumber) {
+    // The user has typed in the number of an item in p_inputWidget and
+    // wants to see the page where this item is.
+    try {
+      var itemNumber = parseInt(inputWidget.value);
+      if (!isNaN(itemNumber)) {
+        /* Calibrate item number if firstNumber in the items list is not 1
+           (=late items) */
+        itemNumber = itemNumber - firstNumber + 1;
+        if ((itemNumber>=1) && (itemNumber<=totalNbOfItems)) {
+          var startNumber = computeStartNumberFrom(itemNumber, totalNbOfItems,
+                                                   batchSize);
+          askItemsList(whichItems, showColors, startNumber);
+        }
+        else inputWidget.style.background = wrongTextInput;
+      }
+      else inputWidget.style.background = wrongTextInput;
+    }
+    catch (err) { inputWidget.style.background = wrongTextInput; }
+  }
+
+  function moveMeetingItem(moveType, itemUid, inputField) {
+    // Moves an item up, down or to a given number in an items list.
+    var theForm = document.forms["formMoveMeetingItem"];
+    theForm.itemUid.value = itemUid;
+    theForm.moveType.value = moveType;
+    if (moveType == 'number') theForm.moveNumber.value = inputField.value;
+    theForm.iStartNumber.value = iStartNumber;
+    theForm.lStartNumber.value = lStartNumber;
+    theForm.submit();
+  }
+  function setToDiscuss(discussAction, itemUid) {
+  // Changes the "toDiscuss" status of a meeting item.
+    var theForm = document.forms["formSetToDiscuss"];
+    theForm.itemUid.value = itemUid;
+    theForm.discussAction.value = discussAction;
+    theForm.iStartNumber.value = iStartNumber;
+    theForm.lStartNumber.value = lStartNumber;
+    theForm.submit();
+    }
+
+  function toggleToDiscuss(UID, img_tag) {
+    var selector = "tr.UID_" + UID + " .ToDiscuss";
+    var $td = jq(selector);
+    if ($td.length == 1) {
+      var $old = jq('img', $td);
+      $td.empty();
+      var $img = jq(img_tag).appendTo($td);
+      $img.click(function() {
+        asyncToDiscuss(UID);
+      });
+    };
+  }
+
+  function asyncToDiscuss(UID) {
+    jq.ajax({
+      url: meetingUrl + "/toggle_to_discuss_on_item",
+      dataType: 'html',
+      data: {UID:UID},
+      success: function(data) { 
+        toggleToDiscuss(UID, data);
+        },
+      error: function(jqXHR, textStatus, errorThrown) {
+        /*console.log(textStatus);*/
+        }
+      });
+   }
+
+  function toggleItemsList(whichItems, imageWidget) {
+    listToToggle = document.getElementById(whichItems);
+    if (imageWidget.name == 'expandedItems') {
+      imageWidget.src = 'treeCollapsed.gif';
+      imageWidget.name = 'collapsedItems';
+      listToToggle.style.display = 'none';
+    }
+    else {
+      imageWidget.src = 'treeExpanded.gif';
+      imageWidget.name = 'expandedItems';
+      listToToggle.style.display = '';
+    }
+  }
+  // Function for triggering a transition from a list of items
+  function triggerTransitionFromList(objectUid, transition, confirm, comment) {
+    /* After the transition has been triggered, we must come back to the right
+       page within the items list, so we transmit the start number of current
+       page for late and normal items, stored in a global Javascript variable.*/
+    triggerTransition(objectUid, transition, confirm, comment,
+                      iStartNumber, lStartNumber);
+  }
+  -->
+  </script>
+  <script language="javascript" tal:content="context/getJsItemUids"></script>
+ 
+  <div tal:replace="structure provider:plone.abovecontenttitle" />
+
+  <tal:comment replace="nothing">Form used for moving an item up or down in an items list.</tal:comment>
+  <form name="formMoveMeetingItem" method="POST"
+        tal:attributes="action python: context.absolute_url_path() + '/meeting_changeitemsorder'">
+    <input type="hidden" name="itemUid"/>
+    <input type="hidden" name="moveType"/>
+    <input type="hidden" name="moveNumber"/>
+    <input type="hidden" name="iStartNumber"/>
+    <input type="hidden" name="lStartNumber"/>
+  </form>
+
+  <tal:comment replace="nothing">Form used for changing the "toDiscuss" status of a meeting item.</tal:comment>
+  <form name="formSetToDiscuss" method="POST"
+        tal:attributes="action python: context.absolute_url_path() + '/meetingitem_discuss'">
+      <input type="hidden" name="itemUid"/>
+      <input type="hidden" name="discussAction"/>
+      <input type="hidden" name="iStartNumber"/>
+      <input type="hidden" name="lStartNumber"/>
+  </form>
+
+  <tal:comment replace="nothing">Form used for going to meetingitem_view for an item whose number is given by the user.</tal:comment>
+  <form name="formGotoItem" tal:attributes="action python: context.absolute_url_path() + '/object_goto'">
+      <input type="hidden" name="objectId"/>
+      <input type="hidden" name="meetingUid"/>
+      <input type="hidden" name="idType" value="number"/>
+  </form>
+
+  <tal:comment replace="nothing">Title, with number of items</tal:comment>
+  <h1 class="documentFirstHeading">
+    <span tal:content="python: tool.formatDate(context.getDate(), prefixed=True)"
+          tal:omit-tag="">Meeting title</span>&nbsp;-
+    <span tal:condition="python:not here.adapted().isDecided()"
+          tal:content="python: here.translate('agenda', domain='PloneMeeting')"></span>
+    <span tal:condition="python:here.adapted().isDecided()"
+          tal:content="python: here.translate('decisions', domain='PloneMeeting')"></span>
+    <tal:comment replace="nothing">Display number of items in the meeting</tal:comment>
+    <span class="discreet">(<span tal:replace="python: context.getItemsCount()"></span>
+      <span i18n:translate="">items_count</span>)
+    </span>
+    <tal:comment replace="nothing">Edit the meeting</tal:comment>
+    <a tal:condition="python: member.has_permission('Modify portal content', context)"
+       tal:attributes="href python: here.absolute_url() + '/edit'">
+      <img src="edit.gif" title="Edit" i18n:attributes="title" />
+    </a>
+    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
+  </h1>
+  <div tal:replace="structure provider:plone.belowcontenttitle"></div>
+  <metal:field use-macro="here/hs_macros/macros/objectHistory" />
+  <div tal:replace="structure provider:plone.abovecontentbody"></div>
+
+  <div class="discreet">
+  <tal:comment replace="nothing">Place</tal:comment>
+  <tal:place condition="python: ('place' in usedAttrs) and context.getPlace()">
+    <b i18n:translate="PloneMeeting_label_place"></b>&nbsp;&nbsp;
+    <span tal:replace="context/getPlace"></span>&nbsp;&nbsp;
+  </tal:place>
+
+  <tal:comment replace="nothing">Start date</tal:comment>
+  <tal:date condition="python: ('startDate' in usedAttrs) and context.getStartDate()">
+    <b i18n:translate="PloneMeeting_label_startDate"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getStartDate(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+
+  <tal:comment replace="nothing">Mid date</tal:comment>
+  <tal:date condition="python: ('midDate' in usedAttrs) and context.getMidDate()">
+    <b i18n:translate="PloneMeeting_label_midDate"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getMidDate(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+
+  <tal:comment replace="nothing">End date</tal:comment>
+  <tal:date condition="python: ('endDate' in usedAttrs) and context.getEndDate()">
+    <b i18n:translate="PloneMeeting_label_endDate"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getEndDate(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+  <br/>
+  </div>
+
+  <div class="discreet" tal:condition="meetingConfig/deadlinesAreEnabled">
+  <tal:comment replace="nothing">Publish deadline</tal:comment>
+  <tal:date condition="python: ('deadlinePublish' in usedAttrs) and context.getDeadlinePublish()">
+    <b i18n:translate="PloneMeeting_label_deadlinePublish"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getDeadlinePublish(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+  <tal:date condition="python: ('deadlineFreeze' in usedAttrs) and context.getDeadlineFreeze()">
+    <b i18n:translate="PloneMeeting_label_deadlineFreeze"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getDeadlineFreeze(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+  </div>
+
+  <tal:comment replace="nothing">Assembly.  Backward compatibility for people that used the 'assembly' field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
+  <div class="discreet" tal:condition="python: ('assembly' in usedAttrs) or context.getAssembly()">
+    <b i18n:translate="meeting_assembly"></b>&nbsp;&nbsp;
+       <span tal:replace="structure context/getAssembly"/>
+  </div>
+
+  <tal:comment replace="nothing">Attendees, excused, absents, replacements</tal:comment>
+  <table id="meeting_users" class="vertical listing discreet" cellspacing="0" cellpadding="0"
+         tal:condition="python: ('attendees' in usedAttrs) and not context.getAssembly()"
+         tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display:table' or 'display:none'"
+         tal:define="allUsers meetingConfig/getActiveMeetingUsers;
+                     attendees context/getAttendees;
+                     excused context/getExcused;
+                     absents context/getAbsents;
+                     signers context/getSignatories;
+                     lateAttendees context/getLateAttendees;
+                     userReplacements context/getUserReplacements">
+    <tal:comment replace="nothing">Column captions</tal:comment>
+    <tr>
+      <th></th>
+      <th i18n:translate="is_attendee"></th>
+      <th tal:condition="python: 'excused' in usedAttrs" i18n:translate="is_excused"></th>
+      <th tal:condition="python: 'absents' in usedAttrs" i18n:translate="is_absent"></th>
+      <th tal:condition="python: 'signatories' in usedAttrs" i18n:translate="is_signer"></th>
+      <th tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
+    </tr>
+    <tr tal:repeat="mUser allUsers">
+      <td><b tal:content="mUser/Title"></b></td>
+      <td align="center" tal:define="aId mUser/getId">
+        <img tal:attributes="src string: $portal_url/checked.gif"
+             tal:condition="python: aId in attendees"/>
+        <tal:comment replace="nothing">Info about users late-entering the meeting</tal:comment>
+        <tal:late condition="python: aId in lateAttendees">
+          <img tal:attributes="src string: $portal_url/entrance.gif"
+            title="present_since" i18n:attributes="title"/><span style="color:black"
+            tal:content="python: context.getEntranceItem(aId) or '?'"></span>
+        </tal:late>
+        <tal:left define="departNumber python: context.getDepartureItem(aId)" condition="departNumber">
+          <img tal:attributes="src string: $portal_url/departure.gif"
+               title="left_after" i18n:attributes="title"/><span style="color:black" tal:content="python: departNumber-1"></span>
+        </tal:left>
+      </td>
+      <td align="center" tal:condition="python: 'excused' in usedAttrs">
+        <img tal:attributes="src string: $portal_url/checked.gif"
+             tal:condition="python: mUser.getId() in excused"/>
+      </td>
+      <td align="center" tal:condition="python: 'absents' in usedAttrs">
+        <img tal:attributes="src string: $portal_url/checked.gif"
+             tal:condition="python: mUser.getId() in absents"/>
+      </td>
+      <td align="center" tal:condition="python: 'signatories' in usedAttrs">
+        <img tal:attributes="src string: $portal_url/checked.gif"
+             tal:condition="python: mUser.getId() in signers"/>
+      </td>
+      <td tal:condition="useUserReplacements">
+        <span tal:condition="python: mUser.getId() in userReplacements" tal:content="python: getattr(meetingConfig.meetingusers, userReplacements[mUser.getId()]).Title()"></span>
+      </td>
+    </tr>
+  </table>
+
+  <tal:comment replace="nothing">Signatures. Backward compatibility for people that used the 'signatures' field</tal:comment>
+  <div class="discreet" tal:condition="python: ('signatures' in usedAttrs) or context.getSignatures()">
+    <b i18n:translate="meeting_signatures"></b>&nbsp;&nbsp;
+       <span tal:replace="python: context.getSignatures().replace('\r\n', '<br/>').replace('\n', '<br/>')"/>
+  </div>
+
+  <div class="discreet">
+  <tal:comment replace="nothing">Pre-meeting info</tal:comment>
+  <tal:pre condition="python: 'preMeetingDate' in usedAttrs">
+  <b i18n:translate="pre_meeting"></b>:&nbsp;&nbsp;
+  <b i18n:translate="PloneMeeting_label_preMeetingDate"></b>&nbsp;&nbsp;<span
+     tal:replace="python: toLocalizedTime(context.getPreMeetingDate(),long_format=1)"></span>
+  </tal:pre>
+  <tal:prePlace tal:condition="python: 'preMeetingPlace' in usedAttrs">
+    &nbsp;&nbsp;<b i18n:translate="PloneMeeting_label_preMeetingPlace"></b>&nbsp;&nbsp;
+    <span tal:replace="context/getPreMeetingPlace"></span>
+  </tal:prePlace>
+  </div>
+
+  <tal:comment replace="nothing">Show items that may be presented into the current meeting</tal:comment>
+  <fieldset tal:define="whichItems string:availableItems" tal:condition="showAvailableItems">
+    <legend> <span i18n:translate='available_items'>Available items</span>
+      <img tal:attributes="src string: $portal_url/treeExpanded.gif;
+                           name string:expandedItems;
+                           onClick python:'toggleItemsList(\'availableItems\', this)'"
+           style="cursor:pointer"/>
+    </legend>    
+    <span id="availableItems"><div align="center"><img tal:attributes="src string: $portal_url/waiting.gif"/></div></span>
+  </fieldset>
+
+  <tal:comment replace="nothing">Show items that are presented into the current meeting</tal:comment>
+  <fieldset tal:define="whichItems string:meetingItems">
+    <legend><span i18n:translate="">presented_items</span> (<span tal:replace="context/numberOfItems"/>)
+      <img tal:attributes="src string: $portal_url/treeExpanded.gif;
+                           name string:expandedItems;
+                           onClick python:'toggleItemsList(\'meetingItems\', this)'"
+           style="cursor:pointer"/>
+    </legend>
+    <span id="meetingItems"><div align="center"><img tal:attributes="src string: $portal_url/waiting.gif"/></div></span>
+  </fieldset>
+
+  <tal:comment replace="nothing">Show items that are "late"-presented into the current meeting</tal:comment>
+  <fieldset id="fieldsetLateItems" tal:define="whichItems string:lateItems"
+            tal:attributes="style python: test(showLateItems, 'display:block', 'display:none')">
+    <tal:comment replace="nothing">If late items must not be displayed for the moment, I still render the
+      fieldset but make it invisible; this way, once I will need to display late items (if the user goes
+      through AJAX to the last page of the normal items) I will make this fieldset visible and retrieve
+      the late items with an AJAX request.</tal:comment>
+    <legend><span i18n:translate="">late_presented_items</span> (<span tal:replace="python: context.numberOfItems(late=True)"/>)
+      <img tal:attributes="src string: $portal_url/treeExpanded.gif;
+                           name string:expandedItems;
+                           onClick python:'toggleItemsList(\'lateItems\', this)'"
+           style="cursor:pointer"/>
+    </legend>
+    <span id="lateItems"><div align="center"><img tal:attributes="src string: $portal_url/waiting.gif"/></div></span>
+  </fieldset>
+
+  <tal:comment replace="nothing">Observations</tal:comment>
+  <tal:field define="fieldName python: 'observations'"
+             condition="python: context.showObs('observations')">
+    <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+  </tal:field>
+
+  <tal:comment replace="nothing">Pre-observations</tal:comment>
+  <tal:field define="fieldName python: 'preObservations'"
+             condition="python: context.showObs('preObservations')">
+    <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+  </tal:field>
+
+  <tal:comment replace="nothing">For the admin only</tal:comment>
+  <fieldset tal:condition="python: member.has_role('Manager')">
+    <legend i18n:translate="for_admin_only" i18n:domain="PloneMeeting"></legend>
+    <table cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top" tal:define="mode python:'view'">
+        <td width="33%" tal:define="field python:here.getField('meetingNumber')">
+          <span metal:use-macro="here/widgets/field/macros/view" />
+        </td>
+        <td width="34%" tal:define="field python:here.getField('firstItemNumber')">
+          <span metal:use-macro="here/widgets/field/macros/view" />
+        </td>
+        <td width="33%" tal:define="field python:here.getField('meetingConfigVersion')">
+          <span metal:use-macro="here/widgets/field/macros/view" />
+        </td>
+      </tr>
+    </table>
+  </fieldset>
+
+  <tal:comment replace="nothing">Actions</tal:comment>
+  <br/>
+  <span tal:define="itemOrMeeting python:here">
+    <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions" />
+  </span>
+  <br/>
+  </tal:mustShowPage>
+
+  <tal:mustHidePage condition="not: showPage">
+  <script language="javascript">
+  <!--
+  function askInitialItemsLists() {}
+  -->
+  </script>
+  <img tal:attributes="src string: $portal_url/refuse.png"
+       align="left"><p>&nbsp;<span i18n:translate="">hide_meeting_view_page</span></p>
+  </tal:mustHidePage>
+
+  <div tal:replace="structure provider:plone.belowcontentbody" />
+
+</body>
+</html>

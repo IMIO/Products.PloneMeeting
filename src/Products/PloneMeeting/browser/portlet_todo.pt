@@ -1,0 +1,29 @@
+<dl i18n:domain="PloneMeeting" class="portlet portletTodo"
+    tal:define="showColors view/showColors;
+                meetingFolder view/getPloneMeetingFolder;
+                tool view/getPloneMeetingTool">
+
+    <dt class="portletHeader" i18n:translate="todo_portlet_title">To do</dt>
+
+    <tal:block repeat="topic view/getTopicsForPortletToDo">
+       <tal:block define="brains python: view.getBrainsForPortletTodo(topic);
+        topic_url python: meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=%s' % topic.getId()">
+         <dd class="portletSection">
+         <strong><span i18n:translate="" tal:content="python: topic.Title() or topic.getId()">Topic title</span></strong>
+        </dd>
+        <dt class="portletCell" tal:condition="not: brains">
+         <span class="discreet" i18n:translate="nothing_to_do">Nothing to do</span>
+        </dt>
+        <tal:loop repeat="brain brains">
+        <dd class="portletCell" tal:condition="brains"
+                                tal:define="oddrow repeat/brain/odd"
+                                tal:attributes="class python: oddrow and 'portletCell odd' or 'portletCell even'">
+           <acronym tal:attributes="title brain/Title">
+            <tal:showTitle replace="structure python: tool.getColoredLink(brain.getObject(), showColors, maxLength=view.getTitleLength())"/>
+           </acronym>
+        </dd>
+        </tal:loop>
+        <dd tal:condition="brains" class="portletCell"><div align="right"><a href="#" tal:attributes="href topic_url" i18n:translate="see_everything">See everything...</a></div></dd>
+       </tal:block>
+    </tal:block>
+</dl>

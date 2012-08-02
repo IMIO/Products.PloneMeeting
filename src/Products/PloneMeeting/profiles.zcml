@@ -1,0 +1,58 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    i18n_domain="PloneMeeting">
+
+  <include package="Products.GenericSetup" file="meta.zcml" />
+
+  <!-- ##code-section profiles.zcml-top #fill in your manual code here -->
+  <!-- ##/code-section profiles.zcml-top -->
+
+  <genericsetup:registerProfile
+      name="default"
+      title="PloneMeeting"
+      directory="profiles/default"
+      description="Extension profile for PloneMeeting."
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      />
+  
+  <!-- ##code-section profiles.zcml-bottom #fill in your manual code here -->
+  <genericsetup:upgradeStep
+      title="Re-install HubSessions/PloneMeeting"
+      description=""
+      source="O"
+      destination="99999"
+      handler="Products.PloneMeeting.setuphandlers.reInstall"
+      profile="Products.PloneMeeting:default" />
+
+  <!-- A shame: portal_quickinstaller.installProduct installs the first
+       extension profile found, among all extension profiles, sorted
+       alphabetically. So, hereafter, make sure that any profile name comes,
+       alphabetically, after "default", which is the profile to install. This
+       is why the archive profile is named "zarchive". -->
+  <genericsetup:registerProfile
+      name="test"
+      title="PloneMeeting / Test"
+      directory="profiles/test"
+      description="PloneMeeting test profile"
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot" />
+
+  <genericsetup:registerProfile
+      name="zarchive"
+      title="PloneMeeting / Archive"
+      directory="profiles/archive"
+      description="PloneMeeting profile for setting-up an archive site"
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot" />
+
+  <genericsetup:registerProfile
+      name="migrations"
+      title="PloneMeeting / Migrations"
+      directory="profiles/migrations"
+      description="PloneMeeting profile for performing migrations"
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      for="Products.CMFCore.interfaces.ISiteRoot" />
+  <!-- ##/code-section profiles.zcml-bottom -->
+
+</configure>

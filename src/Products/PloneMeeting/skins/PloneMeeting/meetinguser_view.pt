@@ -1,0 +1,93 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xml:lang="en-US" lang="en-US"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="PloneMeeting">
+
+<body>
+  <div metal:define-macro="header">
+    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" /><br/>
+  </div>
+  <div metal:define-macro="body"
+       tal:define="mode python:'view';
+                   tool python: context.portal_plonemeeting;
+                   member tool/getUser;
+                   bilingual python: 'secondLanguageCfg' in tool.getModelAdaptations();
+                   langs python: tool.getAvailableInterfaceLanguages(True, True);
+                   usedAttrs python:()">
+    <fieldset tal:condition="python: member.has_role('Manager')">
+      <legend i18n:translate="params_as_special_user"></legend>
+      <table cellpadding="0" cellspacing="0" width="100%">
+        <tr valign="top">
+          <td width="30%" tal:define="field python:here.getField('gender')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="70%" tal:define="fieldName python:'duty'">
+            <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+          </td>
+        <tr valign="top">  
+          <td tal:define="field python:here.getField('usages')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="fieldName python:'replacementDuty'">
+            <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+          </td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('signatureImage')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('signatureIsDefault')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend i18n:translate="user_preferences"></legend>
+      <table cellpadding="0" cellspacing="0" width="100%">
+        <tr valign="top">
+          <td width="33%" tal:define="field python:here.getField('meetingAppDefaultView')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="33%" tal:define="field python:here.getField('mailFormat')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="34%" tal:define="field python:here.getField('adviceStyle')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('itemsListVisibleColumns')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('itemColumns')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('meetingColumns')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('openAnnexesInSeparateWindows')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('mailMeetingEvents')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('mailItemEvents')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+      </table>
+    </fieldset>
+  </div>
+  <div metal:define-macro="folderlisting">
+    <tal:transitions define="member context/portal_plonemeeting/getUser"
+                     condition="python: member.has_role('Manager')">
+      <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
+    </tal:transitions>
+  </div>
+</body>
+</html>

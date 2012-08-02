@@ -1,0 +1,14 @@
+/* <dtml-var "enableHTTPCompression(request=REQUEST, debug=1)"> */
+/* <dtml-with base_properties> */
+/* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
+/* Override the 'objectMenu' id of authoring.css */
+/* This will be used to hide the "add element" drop down menu on MeetingItem */
+#objectMenu { display: none; }
+#actionDropDownMenu { display: none;}
+#vote-abstain { color: orange; font-weight: bold; }
+#vote-yes { color: green; font-weight: bold; }
+#vote-no { color: red; font-weight: bold; }
+#vote-not_yet { color: grey; font-weight: bold; }
+#vote-does_not_vote { color: blue; font-weight: bold; }
+#vote-not_consultable { color: black; font-weight: bold; }
+/* </dtml-with> */

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<object name="portal_skins"
+        meta_type="Plone Skins Tool"
+        allow_any="False"
+        default_skin="Plone Classic Theme"
+        cookie_persistence="False"
+        request_varname="plone_skin">
+
+ <object name="PloneMeeting"
+         meta_type="Filesystem Directory View"
+         directory="PloneMeeting/skins/PloneMeeting"/>
+ <object name="PloneMeeting_images"
+         meta_type="Filesystem Directory View"
+         directory="PloneMeeting/skins/PloneMeeting_images"/>
+ 
+ <skin-path name="*">
+  <layer insert-after="custom" 
+         name="PloneMeeting"/>
+  <layer insert-after="custom" 
+         name="PloneMeeting_images"/>
+ </skin-path>
+
+</object>

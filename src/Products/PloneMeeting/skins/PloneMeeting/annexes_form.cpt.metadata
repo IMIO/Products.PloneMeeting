@@ -1,0 +1,8 @@
+[validators]
+validators..=annexes_validate
+validators..Select=annexes_validate
+
+[actions]
+action.success=traverse_to:string:delete_givenuid
+action.success..Select=traverse_to:string:annexes
+action.failure=traverse_to:string:annexes_form

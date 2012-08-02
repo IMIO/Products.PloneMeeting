@@ -1,0 +1,37 @@
+<html xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="plone">
+
+<body>
+<div metal:define-macro="portlet"
+     tal:omit-tag="" tal:define="tool python:context.portal_plonemeeting"
+     tal:condition="python: tool.isPloneMeetingUser() and tool.isInPloneMeeting(context) and tool.getPloneDiskAware()">
+
+<dl tal:define="view context/@@navigation_view;
+                   root view/navigationRoot;"
+    class="portlet" id="portlet-navigation-tree"
+    tal:condition="view/display">
+    <dt class="portletHeader">
+        <span class="portletTopLeft"></span>
+        <a href="#"
+           class="tile"
+           tal:attributes="href python: context.portal_plonemeeting.getMeetingConfig(context).absolute_url()"
+           i18n:translate="Navigation">Navigation</a>
+        <span class="portletTopRight"></span>
+    </dt>
+
+    <dd class="portletItem lastItem">
+        <ul class="portletNavigationTree navTreeLevel0">
+            <li tal:replace="structure view/createNavTree">
+                SUBTREE
+            </li>
+        </ul>
+        <span class="portletBottomLeft"></span>
+        <span class="portletBottomRight"></span>
+    </dd>
+</dl>
+
+</div>
+</body>
+</html>

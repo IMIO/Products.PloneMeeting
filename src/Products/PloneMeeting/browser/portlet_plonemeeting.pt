@@ -1,0 +1,318 @@
+<html xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="PloneMeeting">
+<body>
+
+<div metal:define-macro="portlet">
+<metal:block metal:use-macro="here/global_defines/macros/defines" />
+<tal:portlet define="tool view/getPloneMeetingTool;
+                     inTool view/inTool;
+                     currentDateTime view/getCurrentDateTime;
+                     userIsAmongCreators python: tool.userIsAmong('creators');
+                     meetingConfig view/getCurrentMeetingConfig;
+                     isArchiveSite tool/isArchiveSite;
+                     meetingFolder view/getPloneMeetingFolder;
+                     itemStates meetingConfig/getItemTopicStates|nothing;
+                     templateItems view/getTemplateItems;
+                     ploneDiskAware tool/getPloneDiskAware;
+                     portal_url tool/getSiteUrl;
+                     member tool/getUser">
+
+<table cellpadding="0" cellspacing="0" class="portlet portletHs" width="100%">
+ <tal:comment replace="nothing">Header</tal:comment>
+ <tr class="portletHeader">
+   <td>
+    <table cellpadding="0" cellspacing="0" width="97%" align="center">
+      <tr>
+       <td class="portletSection" i18n:translate="app_name"></td>
+       <td align="right">
+         <img style="cursor:pointer"
+              tal:condition="python: meetingConfig"
+              tal:attributes="onClick python: 'href: window.location=\'%s\'' % meetingFolder.absolute_url();
+                              src string:$portal_url/home.gif;
+                              title meetingConfig/getName"/>
+         <img style="cursor:pointer" title="hs_configuration" i18n:attributes="title"
+              tal:condition="python: member.has_role('Manager')"
+              tal:attributes="onClick python: 'href: window.location=\'%s\'' % tool.absolute_url();
+                              src string:$portal_url/appyConfig.gif"/>
+         <img style="cursor:pointer" title="user_preferences" i18n:attributes="title"
+              tal:condition="python: not inTool and tool.getEnableUserPreferences()"
+              tal:attributes="onClick python: 'href: window.location=\'%s/gotoPreferences\'' % meetingConfig.absolute_url();
+                              src string:$portal_url/preferences.png"/>
+         <img tal:condition="not: inTool" style="cursor:pointer" title="search_advanced"
+              i18n:attributes="title"
+              tal:attributes="onClick python: 'href: window.location=\'%s/search_form\'' % meetingFolder.absolute_url();
+                              src string:$portal_url/search.gif"/>
+       </td>
+      </tr>
+    </table>
+  </td>
+ </tr>
+
+ <tal:comment replace="nothing">Section: items</tal:comment>
+ <tal:items condition="python: not inTool and not isArchiveSite and (itemStates or userIsAmongCreators)">
+ <tr>
+  <td>
+    <table width="100%" cellspacing="0" cellpadding="0">
+     <tr>
+      <td class="portletSection" i18n:translate="PloneMeeting_label_items"></td>
+      <td align="right">
+        <tal:comment replace="nothing">Create a new item</tal:comment>
+        <img style="cursor:pointer" tal:condition="python: userIsAmongCreators and not ploneDiskAware"
+             tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=MeetingItem%s\'' % (meetingFolder.absolute_url(), meetingConfig.getShortName());
+                             src string: $portal_url/new.png"
+             title="create_meeting_item" i18n:attributes="title"/>
+        <tal:comment replace="nothing">Create a new item from a template</tal:comment>
+        <img style="cursor:pointer" tal:condition="python: userIsAmongCreators and templateItems and not ploneDiskAware"
+             tal:attributes="src string: $portal_url/new_from.png"
+             onclick="javascript: openDialog('chooseItemTemplateDialog')"
+             title="create_meeting_item_from" i18n:attributes="title"/>
+      </td>
+     </tr>
+    </table>
+  </td>
+ </tr>
+ <tal:comment replace="nothing">Item-related topics</tal:comment>
+ <tr tal:condition="python: hasattr(meetingConfig, 'topics') and not isArchiveSite"
+     tal:repeat="topic python: meetingConfig.getTopics('MeetingItem')">
+   <td tal:condition="python: member.has_permission('View', topic)"
+       tal:attributes="class python: topic.getId() == context.REQUEST.form.get('search', '') and 'portletCell portletSelected' or 'portletCell'">
+      <a tal:attributes="href python: meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=%s' % topic.getId()"
+         i18n:translate="" tal:content="python: topic.Title() or topic.getId()"></a>
+   </td>
+ </tr>
+ </tal:items>
+
+ <tal:meetings condition="python: not inTool and not isArchiveSite">
+ <tal:comment replace="nothing">Section: meetings</tal:comment>
+ <tr>
+  <td>
+    <table width="100%" cellspacing="0" cellpadding="0">
+     <tr>
+      <td class="portletSection" i18n:translate="portletmeetings_title"></td>
+      <td align="right">
+        <tal:comment replace="nothing">Create a new meeting</tal:comment>
+        <img style="cursor:pointer" tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', context) and not ploneDiskAware"
+             tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=Meeting%s\'' % (meetingFolder.absolute_url(), meetingConfig.getShortName());
+                             src string: $portal_url/new.png"
+             title="create_meeting" i18n:attributes="title"/>
+      </td>
+     </tr>
+    </table>
+  </td>
+ </tr>
+ <tal:comment replace="nothing">List of available meetings</tal:comment>
+ <tal:links define="pc python:context.portal_catalog;
+                    portalTypeName meetingConfig/getMeetingTypeName;
+                    meetingStates meetingConfig/getMeetingTopicStates;
+                    meetingBrains python:pc(portal_type=portalTypeName, review_state=meetingStates, sort_on='getDate', sort_order='reverse');
+                    nbOfMeetings python:len(meetingBrains);
+                    maxShownMeetings meetingConfig/maxShownMeetings">
+
+    <tal:comment replace="nothing">A few number of meetings: show a link by meeting</tal:comment>
+    <tr tal:condition="python: nbOfMeetings <= maxShownMeetings"
+        tal:repeat="meetingBrain meetingBrains">
+      <td class="portletCell">
+        <a tal:attributes="href meetingBrain/getURL;
+                           class python: context.absolute_url().startswith(meetingBrain.getURL()) and 'portletSelected' or ''"
+           tal:content="python:tool.formatDate(meetingBrain, short=True, withHour=True)"></a>
+      </td>
+    </tr>
+
+    <tal:comment replace="nothing">Many meetings. Show a combo box</tal:comment>
+    <tr tal:condition="python: nbOfMeetings > maxShownMeetings">
+     <td class="portletCell">
+      <form name="gotoMeetingForm">
+        <select name="selectMeeting" onChange="location.href=gotoMeetingForm.selectMeeting.options[selectedIndex].value">
+          <option i18n:translate="make_a_choice"
+                  tal:attributes="value python:meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=searchallmeetings'"></option>
+          <option tal:repeat="meetingBrain meetingBrains"
+                  tal:content="python:tool.formatDate(meetingBrain, short=True, withHour=True)"
+                  tal:attributes="value meetingBrain/getURL;
+                                  selected python:context.absolute_url().startswith(meetingBrain.getURL())"></option>
+        </select>
+      </form>
+     </td>
+    </tr>
+
+    <tr tal:condition="python: nbOfMeetings==0">
+      <td class="portletCell"><i i18n:translate="no_meeting"></i></td>
+    </tr>
+  </tal:links>
+  </tal:meetings>
+
+  
+  <tal:decisions condition="not: inTool">
+  <tal:comment replace="nothing">Section: decisions</tal:comment>
+  <tr><td class="portletSection" i18n:translate="portletdecisions_title">Decisions</td></tr>
+
+  <tal:comment replace="nothing">List of available decisions</tal:comment>
+  <tal:links define="pc python:context.portal_catalog;
+                     portalTypeName meetingConfig/getMeetingTypeName;
+                     meetingStates meetingConfig/getDecisionTopicStates;
+                     meetingBrains python:pc(portal_type=portalTypeName, review_state=meetingStates, sort_on='getDate', sort_order='reverse', getDate={'query': currentDateTime-meetingConfig.getMaxDaysDecisions(), 'range': 'min'},);
+                     nbOfMeetings python:len(meetingBrains);
+                     maxShownMeetings meetingConfig/maxShownMeetings">
+
+    <tal:comment replace="nothing">A few number of meetings: show a link by meeting</tal:comment>
+    <tr tal:condition="python: nbOfMeetings <= maxShownMeetings"
+        tal:repeat="meetingBrain meetingBrains">
+     <td class="portletCell">
+      <a tal:attributes="href meetingBrain/getURL;
+                         class python: context.absolute_url().startswith(meetingBrain.getURL()) and 'portletSelected' or ''"
+         tal:content="python:tool.formatDate(meetingBrain, short=True, withHour=True)"></a>
+     </td>
+    </tr>
+
+    <tal:comment replace="nothing">Many meetings! Show a combo box</tal:comment>
+    <tr tal:condition="python: nbOfMeetings > maxShownMeetings">
+     <td class="portletCell">
+      <form name="gotoDecision">
+        <select name="selectDecision" onChange="location.href=gotoDecision.selectDecision.options[selectedIndex].value">
+          <option i18n:translate="make_a_choice"
+                  tal:attributes="value python:meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=searchalldecisions'"></option>
+          <option tal:repeat="meetingBrain meetingBrains"
+                  tal:content="python:tool.formatDate(meetingBrain, short=True, withHour=True)"
+                  tal:attributes="value meetingBrain/getURL;
+                                  selected python:context.absolute_url().startswith(meetingBrain.getURL())"></option>
+        </select>
+      </form>
+     </td>
+    </tr>
+  </tal:links>
+
+  <tal:comment replace="nothing">All decisions</tal:comment>
+  <tr>
+   <td class="portletCell">
+    <a tal:attributes="href python: meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=searchalldecisions';
+                       class python: 'searchalldecisions' == context.REQUEST.form.get('search', '') and 'portletSelected' or ''"
+       i18n:translate="searchalldecisions"></a>
+   </td>
+  </tr>
+  </tal:decisions>
+</table>
+
+<tal:comment replace="nothing">Here we define code corresponding to popups</tal:comment>
+<div id="hsGrey" class="hsGrey"></div>
+<div id="deleteDialog" class="hsDialog">
+  <form id="deleteForm" method="post"
+        tal:attributes="action python:tool.absolute_url() + '/delete_givenuid'">
+    <input type="hidden" name="selected_uid" id="objectUid"/>
+    <tal:comment replace="nothing">
+      Event time below is only required when deleting an event in an
+      object's history.
+    </tal:comment>
+    <input type="hidden" name="event_time" id="eventTime"/>
+    <div align="center" i18n:translate="plonemeeting_delete_confirm_message"></div><br/>
+    <div align="center">
+      <input type="submit" value="Ok" i18n:attributes="value" i18n:domain="plone"/>
+      <input type="button" onClick="javascript:closeDialog('deleteDialog')"
+             value="label_cancel" i18n:attributes="value" i18n:domain="plone"/>
+    </div>
+  </form>
+</div>
+<div id="chooseItemTemplateDialog" class="hsDialog" tal:condition="not: inTool">
+  <form name="createItemFromTemplate" method="post"
+        tal:attributes="action python:meetingConfig.absolute_url() + '/createItemFromTemplate'">
+  <i align="center" i18n:translate="choose_item_template"></i><br/><br/>
+  <tal:templateItem repeat="item templateItems">
+    <input type="radio" class="noborder" name="templateItem"
+           tal:attributes="id item/id;
+                           value item/id"/>
+    <label tal:attributes="for item/id" tal:content="item/Title"></label><br/>
+  </tal:templateItem>
+  <div align="right">
+    <input type="submit" value="Ok" i18n:attributes="value" i18n:domain="plone"/>
+    <input type="button" onClick="javascript:closeDialog('chooseItemTemplateDialog')"
+           value="label_cancel" i18n:attributes="value" i18n:domain="plone"/>
+  </div>
+  </form>
+</div>
+<tal:adviceStuff condition="python: not inTool and meetingConfig.getUseAdvices()">
+<div id="editAdviceDialog" class="hsDialog">
+  <form id="editAdviceForm" method="post"
+        tal:define="defaultAdviceType meetingConfig/getDefaultAdviceType"
+        tal:attributes="action python:meetingConfig.absolute_url() + '/editAdvice'">
+  <input type="hidden" name="itemUid"/>
+  <tal:comment replace="nothing">Adviser group</tal:comment>
+  <label i18n:translate="PloneMeeting_label_adviserName"></label>&nbsp;&nbsp;&nbsp;&nbsp;
+  <select id="editAdviceGroupSelect" name="meetingGroupId"></select><br/>
+  <tal:comment replace="nothing">Possible advice types (positive, negative...)</tal:comment>
+  <tal:adviceTypes repeat="adviceType meetingConfig/getUsedAdviceTypes">
+    <input type="radio" class="noborder" name="adviceType"
+           tal:attributes="id adviceType; value adviceType;
+                           checked python: adviceType == defaultAdviceType"/>
+    <label tal:attributes="for adviceType" tal:content="adviceType" i18n:translate=""></label><br/>
+  </tal:adviceTypes>
+  <br/><label for="comment" i18n:translate="advice_comment"></label>
+  <textarea name="comment" cols="30" rows="5"></textarea><br/><br/>
+  <div align="right">
+    <input type="submit" value="Ok" i18n:attributes="value" i18n:domain="plone"/>
+    <input type="button" onClick="javascript:closeDialog('editAdviceDialog')"
+           value="label_cancel" i18n:attributes="value" i18n:domain="plone"/>
+  </div>
+  </form>
+</div>
+<div id="deleteAdviceDialog" class="hsDialog">
+  <form id="deleteAdviceForm" method="post"
+        tal:attributes="action python:meetingConfig.absolute_url() + '/deleteAdvice'">
+    <input type="hidden" name="itemUid"/>
+    <input type="hidden" name="meetingGroupId"/>
+    <center>
+      <img tal:attributes="src string: $portal_url/advice_standard_positive_with_remarks.png"/>
+      <span align="center" i18n:translate="plonemeeting_delete_confirm_message"></span>
+    </center>
+    <br/>
+    <div align="right">
+      <input type="submit" value="Ok" i18n:attributes="value" i18n:domain="plone"/>
+      <input type="button" onClick="javascript:closeDialog('deleteAdviceDialog')"
+             value="label_cancel" i18n:attributes="value" i18n:domain="plone"/>
+    </div>
+  </form>
+</div>
+</tal:adviceStuff>
+<tal:comment replace="nothing">Confirm popup for triggering a transition.</tal:comment>
+<div id="confirmTransitionDialog" class="hsDialog">
+  <tal:comment replace="nothing">
+    This form is also used outside the context of the dialog, for triggering
+    any transition, be it "confirmable" or not.
+  </tal:comment>
+  <form id="formTriggerTransition" method="post"
+        tal:attributes="action python:tool.absolute_url() + '/triggerTransition'">
+    <input type="hidden" name="objectUid"/>
+    <input type="hidden" name="transition"/>
+    <tal:comment replace="nothing">
+      When the transition is triggered from within an items list, when coming
+      back to the list, we need to take care of pagination.
+    </tal:comment>
+    <input type="hidden" name="iStartNumber"/>
+    <input type="hidden" name="lStartNumber"/>
+  <i i18n:translate="workflow_confirm"></i>
+  <tal:comment replace="nothing">The workflow comment</tal:comment>
+  <br/>
+  <textarea name="comment" cols="30" rows="3"></textarea><br/><br/>
+  <div align="center">
+    <input type="submit" value="Yes" i18n:attributes="value" i18n:domain="plone"/>
+    <input type="button" onClick="closeDialog('confirmTransitionDialog')"
+           value="No" i18n:attributes="value" i18n:domain="plone"/>
+  </div>
+  </form>
+</div>
+<tal:comment replace="nothing">Confirm popup for bye-bying a user from a meeting.</tal:comment>
+<div id="confirmByebyeUser" class="hsDialog" tal:condition="python: context.meta_type == 'MeetingItem'">
+  <div align="center">
+    <input type="radio" name="byeType" id="leaves_after" class="noborder" value="leaves_after" checked="checked"/>
+    <label for="leaves_after" i18n:translate="person_byebye_descr"></label><br/>
+    <input type="radio" name="byeType" id="leaves_now" class="noborder" value="leaves_now"/>
+    <label for="leaves_now" i18n:translate="person_absent_descr"></label><br/>
+    <input type="button" value="Yes" i18n:attributes="value" i18n:domain="plone" onClick="byebyeUser()"/>
+    <input type="button" onClick="closeDialog('confirmByebyeUser')"
+           value="No" i18n:attributes="value" i18n:domain="plone"/>
+  </div>
+</div>
+<script language="javascript" tal:content="tool/getJavascriptMessages"></script>
+</tal:portlet>
+</div>
+</body>
+</html>

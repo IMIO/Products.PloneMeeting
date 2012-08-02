@@ -1,0 +1,3 @@
+<div i18n:domain="PloneMeeting" id="portal-footer">
+  <p i18n:translate="footer_credits"></p>
+</div>

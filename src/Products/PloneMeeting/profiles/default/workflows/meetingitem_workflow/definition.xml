@@ -1,0 +1,1431 @@
+<?xml version="1.0"?>
+<dc-workflow workflow_id="meetingitem_workflow"
+             title="meetingitem_workflow"
+             state_variable="review_state"
+             initial_state="itemcreated"
+             xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+             i18n:domain="plone">
+ <permission>View</permission>
+ <permission>Access contents information</permission>
+ <permission>Review portal content</permission>
+ <permission>Modify portal content</permission>
+ <permission>Delete objects</permission>
+ <permission>PloneMeeting: Add annex</permission>
+ <permission>PloneMeeting: Write decision</permission>
+ <permission>PloneMeeting: Read decision</permission>
+ <permission>Add portal content</permission>
+ <permission>PloneMeeting: Add MeetingFile</permission>
+ <permission>PloneMeeting: Read optional advisers</permission>
+ <permission>PloneMeeting: Write optional advisers</permission>
+ <permission>PloneMeeting: Write decision annex</permission>
+ <permission>PloneMeeting: Read decision annex</permission>
+ <permission>PloneMeeting: Read item observations</permission>
+ <permission>PloneMeeting: Write item observations</permission>
+ <state state_id="accepted"
+        title="accepted"
+        i18n:attributes="title">
+  <exit-transition transition_id="backToItemFrozen"/>
+  <exit-transition transition_id="confirm"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="confirmed"
+        title="confirmed"
+        i18n:attributes="title">
+  <exit-transition transition_id="backToAccepted"/>
+  <exit-transition transition_id="itemarchive"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="delayed"
+        title="delayed"
+        i18n:attributes="title">
+  <exit-transition transition_id="backToItemFrozen"/>
+  <exit-transition transition_id="itemarchive"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="itemarchived"
+        title="itemarchived"
+        i18n:attributes="title">
+  <exit-transition transition_id="backToRefused"/>
+  <exit-transition transition_id="backToConfirmed"/>
+  <exit-transition transition_id="backToDelayed"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingArchiveObserver</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingArchiveObserver</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingArchiveObserver</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingArchiveObserver</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingArchiveObserver</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="itemcreated"
+        title="itemcreated"
+        i18n:attributes="title">
+  <exit-transition transition_id="propose"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="itemfrozen"
+        title="itemfrozen"
+        i18n:attributes="title">
+  <exit-transition transition_id="refuse"/>
+  <exit-transition transition_id="accept"/>
+  <exit-transition transition_id="delay"/>
+  <exit-transition transition_id="backToItemPublished"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="itempublished"
+        title="itempublished"
+        i18n:attributes="title">
+  <exit-transition transition_id="itemfreeze"/>
+  <exit-transition transition_id="backToPresented"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="presented"
+        title="presented"
+        i18n:attributes="title">
+  <exit-transition transition_id="backToValidated"/>
+  <exit-transition transition_id="itempublish"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverUnpublished</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverUnpublished</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="proposed"
+        title="proposed"
+        i18n:attributes="title">
+  <exit-transition transition_id="backToItemCreated"/>
+  <exit-transition transition_id="validate"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="refused"
+        title="refused"
+        i18n:attributes="title">
+  <exit-transition transition_id="backToItemFrozen"/>
+  <exit-transition transition_id="itemarchive"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <state state_id="validated"
+        title="validated"
+        i18n:attributes="title">
+  <exit-transition transition_id="backToProposed"/>
+  <exit-transition transition_id="present"/>
+  <permission-map name="Access contents information"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverUnpublished</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+  <permission-map name="Add portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Delete objects"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Read optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write decision annex"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write item observations"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write optional advisers"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="Review portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="View"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingReviewer</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverLocal</permission-role>
+   <permission-role>MeetingMember</permission-role>
+   <permission-role>MeetingObserverUnpublished</permission-role>
+   <permission-role>MeetingObserverLocalCopy</permission-role>
+  </permission-map>
+ </state>
+ <transition transition_id="accept"
+             title="accept"
+             new_state="accepted"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">accept</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayDecide()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToAccepted"
+             title="backToAccepted"
+             new_state="accepted"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToAccepted</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToConfirmed"
+             title="backToConfirmed"
+             new_state="confirmed"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToConfirmed</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToDelayed"
+             title="backToDelayed"
+             new_state="delayed"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToDelayed</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToItemCreated"
+             title="backToItemCreated"
+             new_state="itemcreated"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToItemCreated</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToItemFrozen"
+             title="backToItemFrozen"
+             new_state="itemfrozen"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToItemFrozen</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToItemPublished"
+             title="backToItemPublished"
+             new_state="itempublished"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToItemPublished</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToPresented"
+             title="backToPresented"
+             new_state="presented"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToPresented</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToProposed"
+             title="backToProposed"
+             new_state="proposed"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToProposed</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToRefused"
+             title="backToRefused"
+             new_state="refused"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToRefused</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="backToValidated"
+             title="backToValidated"
+             new_state="validated"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">backToValidated</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="confirm"
+             title="confirm"
+             new_state="confirmed"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">confirm</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayConfirm()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="delay"
+             title="delay"
+             new_state="delayed"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">delay</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayDelay()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="itemarchive"
+             title="itemarchive"
+             new_state="itemarchived"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">itemarchive</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayArchive()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="itemfreeze"
+             title="itemfreeze"
+             new_state="itemfrozen"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">itemfreeze</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayFreeze()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="itempublish"
+             title="itempublish"
+             new_state="itempublished"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">itempublish</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayPublish()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="present"
+             title="present"
+             new_state="presented"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">present</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayPresent()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="propose"
+             title="propose"
+             new_state="proposed"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">propose</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayPropose()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="refuse"
+             title="refuse"
+             new_state="refused"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">refuse</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayDecide()</guard-expression>
+  </guard>
+ </transition>
+ <transition transition_id="validate"
+             title="validate"
+             new_state="validated"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">validate</action>
+  <guard>
+    <guard-expression>python:here.wfConditions().mayValidate()</guard-expression>
+  </guard>
+ </transition>
+ <variable variable_id="action" for_catalog="False"
+           for_status="True" update_always="True">
+  <description>The last transition</description>
+  <default>
+   <expression>transition/getId|nothing</expression>
+  </default>
+  <guard>
+  </guard>
+ </variable>
+ <variable variable_id="actor" for_catalog="False"
+           for_status="True" update_always="True">
+  <description>The ID of the user who performed the last transition</description>
+  <default>
+   <expression>user/getId</expression>
+  </default>
+  <guard>
+  </guard>
+ </variable>
+ <variable variable_id="comments" for_catalog="False"
+           for_status="True" update_always="True">
+  <description>Comments about the last transition</description>
+  <default>
+   <expression>python:state_change.kwargs.get('comment', '')</expression>
+  </default>
+  <guard>
+  </guard>
+ </variable>
+ <variable variable_id="review_history" for_catalog="False"
+           for_status="False" update_always="False">
+  <description>Provides access to workflow history</description>
+  <default>
+   <expression>state_change/getHistory</expression>
+  </default>
+  <guard>
+   <guard-permission>Request review</guard-permission>
+   <guard-permission>Review portal content</guard-permission>
+  </guard>
+ </variable>
+ <variable variable_id="time" for_catalog="False"
+           for_status="True" update_always="True">
+  <description>Time of the last transition</description>
+  <default>
+   <expression>state_change/getDateTime</expression>
+  </default>
+  <guard>
+  </guard>
+ </variable>
+ <!-- We dont use workflow scripts any more, we use subscribers -->
+</dc-workflow>

@@ -1,0 +1,8 @@
+/* <dtml-var "enableHTTPCompression(request=REQUEST, debug=1)"> */
+/* <dtml-with base_properties> */
+/* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
+/* Override the 'objectMenu' id of authoring.css */
+/* This will be used to hide the "add element" drop down menu on Meeting */
+#objectMenu { display: none;}
+#actionDropDownMenu { display: none;}
+/* </dtml-with> */

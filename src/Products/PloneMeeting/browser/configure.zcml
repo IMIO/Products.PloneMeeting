@@ -1,0 +1,112 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    >
+
+    <!-- HubSessions-specific viewlets -->
+    <browser:viewlet
+        name="plonemeeting.podtemplates"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
+        class=".viewlets.PodTemplatesViewlet"
+        permission="zope2.View"/>
+    <browser:viewlet
+        name="plonemeeting.podtemplates"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
+        class=".viewlets.PodTemplatesViewlet"
+        permission="zope2.View"/>
+    <browser:viewlet
+        name="plonemeeting.documentactions"
+        manager="plone.app.layout.viewlets.interfaces.IAboveContent"
+        class=".viewlets.DocumentActions"
+        permission="zope2.View"/>
+    <browser:viewlet
+        name="plonemeeting.footer"
+        manager="plone.app.layout.viewlets.interfaces.IPortalFooter"
+        class=".viewlets.FooterViewlet"
+        permission="zope2.View"/>
+
+    <!-- Overriden Plone viewlets -->
+    <browser:viewlet
+        name="plone.belowcontenttitle.workflowstate"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class=".viewlets.WorkflowState"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        permission="zope2.View"
+        />
+    <browser:viewlet
+        name="plone.belowcontenttitle.workflowstate"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class=".viewlets.WorkflowState"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        permission="zope2.View"
+        />
+    <browser:viewlet name="plone.belowcontenttitle.documentbyline"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class=".viewlets.DocumentBylineViewlet" permission="zope2.View"/>
+    <browser:viewlet name="plone.belowcontenttitle.documentbyline"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class=".viewlets.DocumentBylineViewlet" permission="zope2.View"/>
+
+    <!-- Change some Plone viewlets from viewlet container -->
+    <browser:viewlet
+        name="plone.abovecontenttitle.documentactions"
+        manager="plone.app.layout.viewlets.interfaces.IAboveContentTitle"
+        class="plone.app.layout.viewlets.content.DocumentActionsViewlet"
+        permission="zope2.View"/>
+    <browser:viewlet
+        name="plone.belowcontentbody.contenthistory"
+        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
+        class="plone.app.layout.viewlets.content.ContentHistoryViewlet"
+        permission="zope2.View"/>
+
+    <browser:page
+        name="toggle_to_discuss_on_item"
+        class=".discuss.Discuss"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        attribute="toggle"
+        permission="zope2.View"
+        allowed_attributes="available"/>
+
+    <browser:page
+        name="toggle_item_is_signed"
+        class=".itemsign.ItemSign"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        attribute="toggle"
+        permission="zope2.View"
+        allowed_attributes="toggle" />
+
+    <browser:page
+        name="toggle_item_is_signed"
+        class=".itemsign.ItemSign"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        attribute="toggle"
+        permission="zope2.View"
+        allowed_attributes="toggle" />
+
+    <!-- PloneMeeting-specific portlets -->
+    <include package="plone.app.portlets" />
+
+    <plone:portlet
+       name="plonemeeting.portlets.todo"
+       interface=".portlet_todo.ITodoPortlet"
+       view_permission="zope2.View"
+       edit_permission="cmf.ManagePortal"
+       assignment=".portlet_todo.Assignment"
+       renderer=".portlet_todo.Renderer"
+       addview=".portlet_todo.AddForm"
+       editview=".portlet_todo.EditForm"/>
+    <plone:portlet
+       name="plonemeeting.portlets.plonemeeting"
+       interface=".portlet_plonemeeting.IPloneMeetingPortlet"
+       view_permission="zope2.View"
+       edit_permission="cmf.ManagePortal"
+       assignment=".portlet_plonemeeting.Assignment"
+       renderer=".portlet_plonemeeting.Renderer"
+       addview=".portlet_plonemeeting.AddForm"
+       editview=".portlet_plonemeeting.EditForm"/>
+</configure>

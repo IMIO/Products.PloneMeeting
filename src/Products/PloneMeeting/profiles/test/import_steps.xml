@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<import-steps>
+ <import-step id="initializetool-PloneMeeting" version="20060707-01"
+              handler="Products.PloneMeeting.exportimport.content.initializeTool"
+              title="Initialize portal_plonemeeting folders.">
+  Initialize portal_plonemeeting folders.
+ </import-step>
+</import-steps>

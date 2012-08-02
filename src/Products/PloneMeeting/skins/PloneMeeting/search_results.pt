@@ -1,0 +1,121 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xml:lang="en-US" lang="en-US"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      metal:use-macro="here/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+
+<body>
+  <tal:comment replace="nothing">Disable the Standard Plone green tab</tal:comment>
+  <div metal:fill-slot="top_slot">
+    <metal:block metal:use-macro="here/global_defines/macros/defines" />
+    <div tal:define="dummy python:request.set('disable_border', 1)" />
+  </div>
+
+  <metal:main fill-slot="main"
+     tal:define="tool python: context.portal_plonemeeting;
+                 extApps python: tool.getActiveExternalApplications(usage='search');
+                 dummy python: tool.storeSearchParams(request.form);
+                 searchParams request/SESSION/searchParams;
+                 searchSite searchParams/search_site|string:_local;
+                 searchTypes searchParams/search_types|python:[];
+                 meetingConfig python: tool.get(searchParams['search_config'])">
+
+  <script language="javascript"
+          tal:content="python: 'configUrl = \'%s\';' % meetingConfig.absolute_url()">
+  </script>
+  <script language="javascript">
+  <!--
+  function enableAnnexesMenus(rq, hook) {
+    initializeMenusAXStartingAt(hook);
+  }
+  function askSearchResult(hookId, configUrl, topicId, batchStart,
+                           sortKey, sortOrder, filterKey, searchSite) {
+    var enableMenus = null;
+    var params = {'topicId': topicId, 'isFake':'True', 'b_start': batchStart-1,
+                  'hookId' : hookId};
+    if (sortKey) params['sortKey'] = sortKey;
+    if (sortOrder) params['sortOrder'] = sortOrder;
+    if (filterKey) {
+      var filterWidget = document.getElementById(hookId + '_' + filterKey);
+      if (filterWidget && filterWidget.value) {
+        params['filterKey'] = filterKey;
+        params['filterValue'] = filterWidget.value;
+      }
+    }
+    if (searchSite) {
+      /* Normally this param is already in the session. But the user may want
+         to switch from one site to the other. So this param may override the
+         one from the session. */
+      params['search_site'] = searchSite;
+    }
+    if (hookId == 'searchedItems') enableMenus = enableAnnexesMenus;
+    askAjaxChunk(hookId, 'GET', configUrl, 'plonemeeting_topic_result',
+                 'topicResult', params, null, enableMenus);
+  }
+  function switchSite(selectWidget){
+    // The user may want to trigger the same search, but on another site
+    var newSite = selectWidget.options[selectWidget.selectedIndex].value;
+    // Refresh query on items
+    var itemsHook = document.getElementById("searchedItems");
+    if (itemsHook) askSearchResult("searchedItems", configUrl, "searchallitems", 1, null, null, null, newSite);
+    var meetingsHook = document.getElementById("searchedMeetings");
+    if (meetingsHook) askSearchResult("searchedMeetings", configUrl, "searchalldecisions", 1, null, null, null, newSite);
+    var annexesHook = document.getElementById("searchedAnnexes");
+    if (annexesHook) askSearchResult("searchedAnnexes", configUrl, "searchallannexes", 1, null, null, null, newSite);
+  }
+  -->
+  </script>
+
+  <div tal:replace="structure provider:plone.abovecontenttitle" />
+
+  <h1 class="documentFirstHeading">
+    <span i18n:translate="heading_search_results" i18n:domain="plone"></span>
+    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
+  </h1>
+
+  <tal:comment replace="nothing">Switch external applications</tal:comment>
+  <div align="right" tal:condition="python: len(extApps) &gt; 0">
+    <select name="newSite" onChange="javascript:switchSite(this);">
+      <option i18n:translate="search_site_local" value="_local"
+              tal:attributes="selected python:searchSite=='_local'"></option>
+      <option tal:repeat="extApp extApps" tal:content="extApp/Title"
+              tal:attributes="value extApp/getId;
+                              selected python:searchSite==extApp.getId()">
+      </option>
+    </select>
+  </div>
+
+  <p class="discreet"><a tal:attributes="href python:context.absolute_url() + '/search_form'"
+                         i18n:translate="search_again"></a></p>
+
+  <tal:comment replace="nothing">Display matching items</tal:comment>
+  <div id="searchedItems" tal:condition="python: 'search_type_items' in searchTypes"></div>
+  <br/>
+
+  <tal:comment replace="nothing">Display matching meetings</tal:comment>
+  <div id="searchedMeetings" tal:condition="python: 'search_type_meetings' in searchTypes"></div>
+  <br/>
+
+  <tal:comment replace="nothing">Display matching annexes</tal:comment>
+  <div id="searchedAnnexes" tal:condition="python: 'search_type_annexes' in searchTypes"></div>
+
+  <div>
+    <script language="javascript" tal:condition="python: 'search_type_items' in searchTypes">
+      askSearchResult("searchedItems", configUrl, "searchallitems", 1);
+    </script>
+    <script language="javascript" tal:condition="python: 'search_type_meetings' in searchTypes">
+      askSearchResult("searchedMeetings", configUrl, "searchalldecisions", 1);
+    </script>
+    <script language="javascript" tal:condition="python: 'search_type_annexes' in searchTypes">
+      askSearchResult("searchedAnnexes", configUrl, "searchallannexes", 1);
+    </script>
+  </div>
+
+  <div tal:replace="structure provider:plone.belowcontentbody" />
+
+  </metal:main>
+
+</body>
+</html>

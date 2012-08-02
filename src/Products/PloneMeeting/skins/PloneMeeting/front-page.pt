@@ -1,0 +1,14 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      metal:use-macro="here/main_template/macros/master" i18n:domain="plone">
+  <body>
+    <div metal:fill-slot="main">
+      <span tal:define="defaultMeetingConfig python: context.portal_plonemeeting.getDefaultMeetingConfig()"
+            tal:condition="python: user.getId() and defaultMeetingConfig and context.portal_plonemeeting.getPloneMeetingFolder(defaultMeetingConfig.getId()).portal_type != 'Plone Site'">
+        <span metal:use-macro="here/hs_macros/macros/hsRedirect"/>
+      </span>
+      <span>
+        <span metal:use-macro="here/hs_macros/macros/hsWelcome"/>
+      </span>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,752 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PloneMeeting/HubSessions\n"
+"POT-Creation-Date: 2005-05-17 15:00-100\n"
+"PO-Revision-Date: 2011-06-17 14:34+0100\n"
+"Last-Translator: Arnold François <arnold.francois@oshz-eupen.be>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"Language-Code: de\n"
+"Language-Name: Deutsch\n"
+"Preferred-Encodings: utf-8 latin1\n"
+"Domain: plone\n"
+"X-Is-Fallback-For: de-be de-at de-li de-lu de-ch de-de\n"
+
+#. Default: "Advices"
+msgid "Advices"
+msgstr "Kommentare"
+
+# This way, the "typedescription macro in base_edit does not display 'MeetingItem' above the title.
+#. Default: "Annexes"
+msgid "Annexes"
+msgstr "Anhänge"
+
+#. Default: "Annexes (to the decision)"
+msgid "AnnexesDecision"
+msgstr "Anhängen (an diesen Beschluss)"
+
+#. Default: "Annexes (decision)"
+msgid "AnnexesDecisionShort"
+msgstr "Anhänge (Beschluss)"
+
+#. Default: "Copy PloneMeeting"
+msgid "Copy PloneMeeting"
+msgstr "Kopiere TOP"
+
+#. Default: "CopyItem"
+msgid "CopyItem"
+msgstr "Kopiere TOP"
+
+#. Default: "Creator"
+msgid "Creator"
+msgstr "Ersteller"
+
+#. Default: "Duplicate"
+msgid "Duplicate"
+msgstr "Duplikat"
+
+#. Default: "Duplicate and keep link"
+msgid "Duplicate and keep link"
+msgstr ""
+
+#. Default: "External application"
+msgid "ExternalApplication"
+msgstr "Externe Anwendung"
+
+# Plone syntax errors
+#. Default: "Login failed"
+msgid "Login failed"
+msgstr "Login fehlgeschlagen"
+
+#. Default: "Category"
+msgid "MeetingCategory"
+msgstr "Kategorie"
+
+# Portal type names
+#. Default: "Meeting configuration"
+msgid "MeetingConfig"
+msgstr "Konfiguration für Sitzungen"
+
+#. Default: "Annex"
+msgid "MeetingFile"
+msgstr "Anhang"
+
+#. Default: "File type"
+msgid "MeetingFileType"
+msgstr "Dateityp"
+
+#. Default: "PloneMeeting group"
+msgid "MeetingGroup"
+msgstr "PloneMeeting Gruppe"
+
+#. Default: "Item"
+msgid "MeetingItemPga"
+msgstr "TOP"
+
+#. Default: "Item"
+msgid "MeetingItemPma"
+msgstr "TOP"
+
+#. Default: "PloneGov assembly"
+msgid "MeetingPga"
+msgstr "PloneGov Versammlung"
+
+#. Default: "PloneMeeting assembly"
+msgid "MeetingPma"
+msgstr "PloneMeeting Versammlung"
+
+#. Default: "User characteristics"
+msgid "MeetingUser"
+msgstr "Benutzereinstellungen"
+
+#. Default: "Paste"
+msgid "Paste PloneMeeting"
+msgstr "Einfügen"
+
+#. Default: "PloneMeeting Delete"
+msgid "PloneMeeting Delete"
+msgstr "Löschen"
+
+#. Default: "PloneMeeting 'folder' view"
+msgid "PloneMeetingFolderView"
+msgstr "PloneMeeting 'Ordner' Ansicht"
+
+# PodTemplate
+#. Default: "Document template"
+msgid "PodTemplate"
+msgstr "POD-Dokumentvorlage"
+
+#. Default: "state"
+#, fuzzy
+msgid "State"
+msgstr "Status"
+
+#. Default: "To do"
+msgid "To do"
+msgstr "Zu erledigen"
+
+#. Default: "You can not copy this element : '${title}' is not an item."
+msgid "You can not copy this element : '${title}' is not an item."
+msgstr "Sie können dieses Element nicht kopieren: '${title}' ist kein TOP."
+
+#. Default: "You can not copy this item : ${title}, your are not in the same proposing group (${proposingGroup})."
+msgid "You can not copy this item : ${title}, your are not in the same proposing group (${proposingGroup})."
+msgstr "Sie können diesen TOP nicht kopieren: ${title}, sind sind nicht in der Selben vorschlagenden Gruppe (${proposingGroup})."
+
+# Workflow transitions
+#. Default: "On creation"
+msgid "_init_"
+msgstr "Bei Erstellung"
+
+#. Default: "Accept"
+msgid "accept"
+msgstr "Akzeptieren"
+
+#. Default: "The decision linked to this item has been accepted."
+msgid "accept_done_descr"
+msgstr "Der Beschluss der mit diesem TOP verknüpft ist wurde akzeptiert."
+
+#. Default: "Accepted"
+msgid "accepted"
+msgstr "Akzeptiert"
+
+#. Default: "Activate"
+msgid "activate"
+msgstr "Aktivieren"
+
+#. Default: "The element has been activated."
+msgid "activate_done_descr"
+msgstr ""
+
+#. Default: "Active"
+msgid "active"
+msgstr "Aktiv"
+
+#. Default: "Advices"
+msgid "advices"
+msgstr "Kommentare"
+
+#. Default: "Archive"
+msgid "archive"
+msgstr "Archivieren"
+
+#. Default: "The definitive decisions have been archived for this meeting."
+msgid "archive_done_descr"
+msgstr "Die definitiven Beschlüsse für diese Sitzung wurden archiviert."
+
+#. Default: "Archived"
+msgid "archived"
+msgstr "Archiviert"
+
+#. Default: "Correct"
+msgid "backToAccepted"
+msgstr "Korrigieren"
+
+#. Default: "You just canceled the fact that the decision linked to this item, that is accepted, is confirmed."
+msgid "backToAccepted_done_descr"
+msgstr "Sie haben soeben die Validierung für diesen akzeptierten TOP zurückgezogen."
+
+#. Default: "Correct"
+msgid "backToClosed"
+msgstr "Korrigieren"
+
+#. Default: "The archiving of definitive decisions has been canceled."
+msgid "backToClosed_done_descr"
+msgstr "Die Archivierung der definitiven Beschlüsse wurde abgebrochen."
+
+#. Default: "Correct"
+msgid "backToConfirmed"
+msgstr "Korrigieren"
+
+#. Default: "The archiving of this item and its decision has been canceled."
+msgid "backToConfirmed_done_descr"
+msgstr "Die Archivierung dieses TOPs und des zugehörigen Beschlusses wurde zurückgezogen."
+
+#. Default: "Correct"
+msgid "backToCreated"
+msgstr "Korrigieren"
+
+#. Default: "The publication of the meeting agenda has been canceled."
+msgid "backToCreated_done_descr"
+msgstr "Die Veröffentlichung der Tagesordnung wurde abgebrochen."
+
+#. Default: "Correct"
+msgid "backToDecided"
+msgstr "Korrigieren"
+
+#. Default: "The publication of definitive decisions has been canceled."
+msgid "backToDecided_done_descr"
+msgstr "Die Veröffentlichung der definitiven Beschlüsse wurde abgebrochen."
+
+#. Default: "Correct"
+msgid "backToDelayed"
+msgstr "Korrigieren"
+
+#. Default: "The archiving of this item and its decision has been canceled."
+msgid "backToDelayed_done_descr"
+msgstr "Die Archivierung dieses TOPs und des zugehörigen Beschlusses wurde zurückgezogen."
+
+#. Default: "Correct"
+msgid "backToFrozen"
+msgstr "Korrigieren"
+
+#. Default: "The publication of temporary decisions has been canceled."
+msgid "backToFrozen_done_descr"
+msgstr "Die Veröffentlichung der vorläufigen Beschlüsse wurde abgebrochen."
+
+#. Default: "Correct"
+msgid "backToItemCreated"
+msgstr "Korrigieren"
+
+#. Default: "This item is back in its initial state. The person who created it (or another creator within the same group) can now modify it and will need to propose it again once finished."
+msgid "backToItemCreated_done_descr"
+msgstr "Der TOP ist wieder in seinem Ausgangsstatus. Die Person die ihn erstellt hat (oder ein anderer Ersteller in derselben Gruppe) kann ihn nun anpassen und muss ihn erneut vorschlagen wenn die Änderungen vollständig sind."
+
+#. Default: "Correct"
+msgid "backToItemFrozen"
+msgstr "Korrigieren"
+
+#. Default: "The decision taken on this item has been canceled."
+msgid "backToItemFrozen_done_descr"
+msgstr "Der Beschluss über diesen TOP wurde zurückgezogen."
+
+#. Default: "Correct"
+msgid "backToItemPublished"
+msgstr "Korrigieren"
+
+#. Default: "This published item is not frozen anymore."
+msgid "backToItemPublished_done_descr"
+msgstr "Der veröffentlichte TOP ist nicht mehr gesperrt."
+
+#. Default: "Correct"
+msgid "backToPresented"
+msgstr "Korrigieren"
+
+#. Default: "Validation has been canceled."
+msgid "backToPresented_done_descr"
+msgstr "Die Validierung wurde zurückgezogen."
+
+#. Default: "Correct"
+msgid "backToPrevalidated"
+msgstr "Korrigieren"
+
+#. Default: "Validation has been canceled."
+msgid "backToPrevalidated_done_descr"
+msgstr "Die Validierung wurde annuliert."
+
+#. Default: "Correct"
+msgid "backToProposed"
+msgstr "Korrigieren"
+
+#. Default: "This item is not reviewed anymore: (the) meeting manager(s) can't see it anymore. After the needed modification will have been done on it, this item will need to be reviewed again."
+msgid "backToProposed_done_descr"
+msgstr "Dieser TOP ist nicht mehr validiert: Die Sitzungsleitung kann ihn nicht mehr sehen. Nachdem die nötigen Anpassungen daran erledigt wurden, muss der TOP erneut validiert werden."
+
+#. Default: "Correct"
+msgid "backToPublished"
+msgstr "Korrigieren"
+
+#. Default: "The meeting agenda is not frozen anymore."
+msgid "backToPublished_done_descr"
+msgstr "Die Tagesordnung ist nicht mehr gesperrt."
+
+#. Default: "Correct"
+msgid "backToRefused"
+msgstr "Korrigieren"
+
+#. Default: "The archiving of this item and its decision has been canceled."
+msgid "backToRefused_done_descr"
+msgstr "Die Archivierung dieses TOPs und des zugehörigen Beschlusses wurde abgebrochen."
+
+#. Default: "Correct"
+msgid "backToValidated"
+msgstr "Korrigieren"
+
+#. Default: "The item has been removed from the meeting agenda."
+msgid "backToValidated_done_descr"
+msgstr "Der TOP wurde von der Tagesordnung der Sitzung entfernt."
+
+#. Default: "Forgot password?"
+msgid "box_forgot_password_option"
+msgstr "Passwort vergessen?"
+
+#. Default: "You can not delete a container containing one or several meetings!"
+msgid "can_not_delete_meeting_container"
+msgstr "Sie können diesen Container nicht löschen weil er eine oder mehrere Sitzungen enthält!"
+
+#. Default: "This configuration can not be deleted, at least one meeting linked to this configuration exists!"
+msgid "can_not_delete_meetingconfig_meeting"
+msgstr "Diese Konfiguration kann nicht gelöscht werden, da mindestens eine Sitzung besteht die zu dieser Konfiguration verlinkt ist!"
+
+#. Default: "This configuration can not be deleted, at least one member folder designed to store PloneMeeting objects is not empty!"
+msgid "can_not_delete_meetingconfig_meetingfolder"
+msgstr "Diese Konfiguration kann nicht gelöscht werden, da mindestens ein PloneMeeting-Verzeichnis besteht welches nicht leer ist!"
+
+#. Default: "This configuration can not be deleted, at least one item linked to this configuration exists!"
+msgid "can_not_delete_meetingconfig_meetingitem"
+msgstr "Diese Konfiguration kann nicht gelöscht werden, da mindestens ein TOP besteht der zu dieser Konfiguration verlinkt ist!"
+
+#. Default: "This group can not be deleted, it is referenced in a meeting configuration"
+msgid "can_not_delete_meetinggroup_meetingconfig"
+msgstr "Diese Gruppe kann nicht gelöscht werden, Sie wird noch in einer Sitzungskonfiguration referenziert"
+
+#. Default: "This group can not be deleted, it is linked to one existing item at least"
+msgid "can_not_delete_meetinggroup_meetingitem"
+msgstr "Diese Gruppe kann nicht gelöscht werden, Sie ist mindestens noch mit einem TOP verbunden"
+
+#. Default: "This group can not be deleted, the linked Plone groups are not empty"
+msgid "can_not_delete_meetinggroup_plonegroup"
+msgstr "Diese Gruppe kann nicht gelöscht werden, die verlinkten Plonegruppen sind nicht leer"
+
+#. Default: "You can not delete a container containing one or several items!"
+msgid "can_not_delete_meetingitem_container"
+msgstr "Sie können einen Container nicht löschen solange er ein oder mehrere TOP enthält!"
+
+#. Default: "You can not delete this element!"
+msgid "can_not_delete_object"
+msgstr "Sie können dieses Element nicht löschen!"
+
+#. Default: "You can not paste an item coming from another meeting configuration !"
+msgid "cannot_paste_item_from_other_mc"
+msgstr ""
+
+#. Default: "This removal may not occur. Possible reasons: you try to remove a meeting already containing items, or an item already presented into a meeting."
+msgid "cant_delete_object"
+msgstr "Löschen nicht möglich. Mögliche Ursachen: Sie versuchen eine Sitzung die bereits TOP hat, oder einen TOP der bereits präsentiert wurde zu entfernen."
+
+#. Default: "Close"
+msgid "close"
+msgstr "Schließen"
+
+#. Default: "The definitive decisions have been published for this meeting."
+msgid "close_done_descr"
+msgstr "Die definitiven Beschlüsse für diese Sitzung wurden veröffentlicht."
+
+#. Default: "Closed"
+msgid "closed"
+msgstr "Geschlossen"
+
+#. Default: "Confirm"
+msgid "confirm"
+msgstr "Bestätigen"
+
+#. Default: "The acceptance of the decision linked to this item has been confirmed."
+msgid "confirm_done_descr"
+msgstr "Die Zustimmung zu dem Beschluss der mit diesem TOP verknüpft ist wurde bestätigt."
+
+#. Default: "Confirmed"
+msgid "confirmed"
+msgstr "Bestätigt"
+
+#. Default: "Create from delayed item"
+msgid "create_from_predecessor"
+msgstr "Erstellen aus einem verschobenen TOP"
+
+#. Default: "Create a plonegov item from a plonemeeting item"
+msgid "create_to_plonegov-assembly_from_plonemeeting-assembly"
+msgstr ""
+
+#. Default: "Create a plonmeeting item from a plonegov item"
+msgid "create_to_plonemeeting-assembly_from_plonegov-assembly"
+msgstr ""
+
+# Workflow states
+#. Default: "Created"
+msgid "created"
+msgstr "Erstellt"
+
+#. Default: "Data"
+msgid "data"
+msgstr "Daten"
+
+#. Default: "Deactivate"
+msgid "deactivate"
+msgstr "Deaktivieren"
+
+#. Default: "The element has been deactivated."
+msgid "deactivate_done_descr"
+msgstr ""
+
+#. Default: "Decide"
+msgid "decide"
+msgstr "Entscheiden"
+
+#. Default: "The temporary decisions have been published for this meeting."
+msgid "decide_done_descr"
+msgstr "Die vorläufigen Beschlüsse für diese Sitzung wurden veröffentlicht."
+
+#. Default: "Decided"
+msgid "decided"
+msgstr "Entschieden"
+
+#. Default: "Decision is empty for item ${itemNumber}."
+msgid "decision_is_empty"
+msgstr "Der Beschluss ist leer für den TOP ${itemNumber}."
+
+# Meeting config schemata
+#. Default: "General"
+msgid "default"
+msgstr "Allgemein"
+
+#. Default: "Delay"
+msgid "delay"
+msgstr "Verschieben"
+
+#. Default: "The item has been flagged as 'delayed'. Moreover, it has been duplicated: the proposing group will be able to propose its copy to another meeting. Note that if you cancel this action, the copy will not be deleted."
+msgid "delay_done_descr"
+msgstr "Der TOP wurde als 'verschoben' markiert. Zusätzlich wurde er dupliziert: die vorschlagende Gruppen kann diese Kopie für eine andere Sitzung vorschlagen. Notiz: wenn Sie diese Aktion abbrechen, wird diese Kopie nicht gelöscht."
+
+#. Default: "Delayed"
+msgid "delayed"
+msgstr "Verschoben"
+
+#. Default: "Delete, incl. items"
+msgid "delete_meeting_with_items"
+msgstr "Sitzung löschen inkl. TOP"
+
+# Meeting-related vocabulary
+#. Default: ""
+msgid "description_edit_meeting"
+msgstr " "
+
+#. Default: ""
+msgid "description_edit_meetingitem"
+msgstr " "
+
+#. Default: "Document template that conforms to POD (Python Open Document)."
+msgid "description_edit_podtemplate"
+msgstr "Dokumentvorlage die POD (Python Open Document) entspricht."
+
+#. Default: "Documents"
+msgid "doc"
+msgstr "Dokumentenerstellung"
+
+#. Default: "Freeze"
+msgid "freeze"
+msgstr "Sperren"
+
+#. Default: "The published agenda has been frozen."
+msgid "freeze_done_descr"
+msgstr "Die veröffentlichte Tagesordnung wurde gesperrt."
+
+#. Default: "Published (frozen)"
+msgid "frozen"
+msgstr "Veröffentlicht (gesperrt)"
+
+#. Default: "Get a document"
+msgid "generate_doc"
+msgstr "Ein Dokument holen"
+
+#. Default: "User interface"
+msgid "gui"
+msgstr "Bedieneroberfläche"
+
+# Misc
+#. Default: "Actions"
+msgid "heading_actions"
+msgstr "Aktionen"
+
+# MeetingItem-related vocabulary
+#. Default: "${itemtype} to create or edit"
+msgid "heading_edit_item"
+msgstr "Erstellen oder Bearbeiten von ${itemtype}"
+
+#. Default: "Inactive"
+msgid "inactive"
+msgstr "Inaktiv"
+
+#. Default: "The item has been duplicated: you currently see the duplicated item."
+#, fuzzy
+msgid "item_duplicated"
+msgstr "Der TOP wurde gelöscht: Sie sehen ein Duplikat"
+
+#. Default: "The item has been duplicated and a link to the original item has been kept: you currently see the duplicated item."
+msgid "item_duplicated_and_link_kept"
+msgstr ""
+
+#. Default: "In order to perform this action, at least one item should be inserted into this meeting."
+msgid "item_required_to_publish"
+msgstr "Um diesen Befehl auszuführen, muss mindestens ein TOP für diese Sitzung vorhanden sein."
+
+#. Default: "Archive"
+msgid "itemarchive"
+msgstr "Archivieren"
+
+#. Default: "The item and its decicion have been archived."
+msgid "itemarchive_done_descr"
+msgstr "Der TOP und der zugehörige Beschluss wurden archiviert."
+
+#. Default: "Archived"
+msgid "itemarchived"
+msgstr "Archiviert"
+
+#. Default: "Created"
+msgid "itemcreated"
+msgstr "Erstellt"
+
+#. Default: "Freeze"
+msgid "itemfreeze"
+msgstr "Sperren"
+
+#. Default: "Published (frozen)"
+msgid "itemfrozen"
+msgstr "Veröffentlicht (gesperrt)"
+
+#. Default: "Publish"
+msgid "itempublish"
+msgstr "Veröffentlichen"
+
+#. Default: "This item has been published."
+msgid "itempublish_done_descr"
+msgstr "Dieser TOP wurde veröffentlicht."
+
+#. Default: "Published"
+msgid "itempublished"
+msgstr "Veröffentlicht"
+
+# Misc
+#. Default: "Creator(s)"
+msgid "label_creators"
+msgstr "Ersteller"
+
+#. Default: "Edit"
+msgid "label_edit"
+msgstr "Bearbeiten"
+
+#. Default: "Delete"
+msgid "label_remove"
+msgstr "Löschen"
+
+#. Default: "Main information"
+msgid "label_schema_default"
+msgstr "Hauptinformationen"
+
+#. Default: "Advanced search"
+msgid "label_schema_pm_search"
+msgstr "Erweiterte Suche"
+
+#. Default: "Late"
+msgid "late"
+msgstr "Verspätet"
+
+#. Default: "Last modification"
+msgid "listingheader_modified"
+msgstr "Letzte Änderungen"
+
+#. Default: "Size"
+msgid "listingheader_size"
+msgstr "Größe"
+
+#. Default: "Title"
+msgid "listingheader_title"
+msgstr "Titel"
+
+#. Default: "Emails"
+msgid "mail"
+msgstr "E-Mails"
+
+#. Default: "At least one mandatory advice for this item is not positive or has not been given."
+msgid "mandatory_advice_ko"
+msgstr "Mindestens ein Pflichtkommentar für diesen TOP wurde nicht abgegeben oder ist nicht positiv."
+
+#. Default: "In order to perform this action, the meeting date must be in the past."
+msgid "meeting_in_past"
+msgstr "Um diesen Befehl auszuführen, muss das Datum dieser Sitzung in der Vergangenheit sein."
+
+#. Default: "A meeting having the same date and hour already exists. Please choose another date and/or hour."
+msgid "meeting_with_same_date_exists"
+msgstr "Eine Sitzung zur selben Zeit existiert bereits. Bitte wählen Sie ein anderes Datum und/oder eine andere Zeit."
+
+#. Default: "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups."
+msgid "meetinggroup_users_transfered_to_observers_plonegroup_if_disabled"
+msgstr ""
+
+#. Default: "Metadata"
+msgid "metadata"
+msgstr "Metadaten"
+
+#. Default: "This element was updated since the last time you visited this page."
+msgid "notConsultedYet"
+msgstr "Dieses Element wurde seit Ihrem letzten Besuch auf dieser Seite aktualisiert."
+
+#. Default: "You are a registered user but your account has not been activated yet. Please contact the system administrator."
+msgid "notPloneMeetingUser"
+msgstr "Sie sind ein registrierter Benutzer aber Ihr Konto wurde noch nicht aktiviert. Kontaktieren Sie bitte den Administrator."
+
+#. Default: "The element was deleted."
+msgid "object_deleted"
+msgstr "Das Element wurde gelöscht."
+
+#. Default: "Present"
+msgid "present"
+msgstr "Präsentieren"
+
+#. Default: "The item has been inserted into the meeting agenda."
+msgid "present_done_descr"
+msgstr "Der TOP wurde in die Agenda der Sitzung übernommen."
+
+#. Default: "Presented"
+msgid "presented"
+msgstr "Präsentiert"
+
+#. Default: "Pre-validate"
+msgid "prevalidate"
+msgstr "Vor-validieren"
+
+#. Default: "Your item has been pre-reviewed: it is now visible to (a) reviewer(s), that may decide to validate it."
+msgid "prevalidate_done_descr"
+msgstr "Ihr TOP wurde Vor-Validiert. Ein Validierer kann jetzt entscheiden den TOP zu validieren. Wenn Sie selber diese Rolle haben, ist der vorgesehene Button hier unten vorhanden."
+
+#. Default: "Pre-validated"
+msgid "prevalidated"
+msgstr "Vor-Validiert"
+
+#. Default: "Propose"
+msgid "propose"
+msgstr "Vorschlagen"
+
+#. Default: "Your item has been proposed. It must now be reviewed by someone in your group before being visible to a meeting manager. If you are yourself reviewer in your group, the 'validate' button is shown below."
+msgid "propose_done_descr"
+msgstr "Ihr TOP wurde vorgeschlagen. Es muss nun von jemandem in Ihrer Gruppe validiert werden bevor es für die Sitzungsleitung sichtbar wird. Wenn Sie selbst Prüfer in Ihrer Gruppe sind wird der 'validieren'-Knopf unten angezeigt."
+
+#. Default: "Proposed"
+msgid "proposed"
+msgstr "Vorgeschlagen"
+
+#. Default: "Publish"
+msgid "publish"
+msgstr "Veröffentlichen"
+
+#. Default: "The validation deadline for meeting freezing has not been respected"
+msgid "publish_deadline_ko"
+msgstr "Die Frist der Validierung beim Sperren für diese Sitzung wurde nicht eingehalten"
+
+#. Default: "The meeting agenda has been published."
+msgid "publish_done_descr"
+msgstr "Die Tagesordnung für die Sitzung wurde veröffentlicht."
+
+#. Default: "The validation deadline for meeting publication has not been respected"
+msgid "publish_freeze_ko"
+msgstr "Die Frist zur Validierung der Veröffentlichung der Sitzung wurde nicht eingehalten"
+
+#. Default: "Published"
+msgid "published"
+msgstr "Veröffentlicht"
+
+#. Default: "Refuse"
+msgid "refuse"
+msgstr "Ablehnen"
+
+#. Default: "The decision linked to this item has been refused."
+msgid "refuse_done_descr"
+msgstr "Der Beschluss der mit diesem TOP verknüpft ist wurde abgelehnt."
+
+#. Default: "Refused"
+msgid "refused"
+msgstr "Abgelehnt"
+
+#. Default: "Republish"
+msgid "republish"
+msgstr "Wieder veröffentlichen"
+
+#. Default: "The meeting agenda has been published again."
+msgid "republish_done_descr"
+msgstr "Die Tagesordnung wurde wieder veröffentlicht."
+
+#. Default: "The item has been successfully transfered to the plonegov assembly."
+msgid "sendto_plonegov-assembly_success"
+msgstr ""
+
+#. Default: "The item has been successfully transfered to the plonemeeting assembly."
+msgid "sendto_plonemeeting-assembly_success"
+msgstr ""
+
+#. Default: "Item sent to ${meetingConfigTitle}"
+msgid "sentto_othermeetingconfig"
+msgstr ""
+
+# This way, the "typedescription macro in base_edit does not display 'Meeting' above the title.
+#. Default: "Show / hide details"
+msgid "show_or_hide_details"
+msgstr "Anzeigen / Verstecken von Details"
+
+#. Default: "Tasks"
+msgid "tasks"
+msgstr "Aufgaben"
+
+#. Default: "This item is an oral question"
+msgid "this_item_is_an_oral_question"
+msgstr ""
+
+# Workflow transitions
+#. Default: "Transfer"
+msgid "transfer"
+msgstr "Transfer"
+
+#. Default: "Users"
+msgid "users"
+msgstr "Benutzer"
+
+#. Default: "Validate"
+msgid "validate"
+msgstr "Validieren"
+
+#. Default: "Your item has been reviewed: it is now visible to (a) meeting manager(s), that may decide to present it to a meeting."
+msgid "validate_done_descr"
+msgstr "Ihr TOP wurde validiert: es ist nun für die Sitzungsleitung sichtbar die es bei einer Sitzung präsentieren können."
+
+#. Default: "Validated"
+msgid "validated"
+msgstr "Validiert"
+
+#. Default: "Votes"
+msgid "votes"
+msgstr "Abstimmungen"
+
+#. Default: "Workflows"
+msgid "workflow"
+msgstr "Arbeitsablauf"
+

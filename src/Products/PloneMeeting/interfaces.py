@@ -1,0 +1,579 @@
+# -*- coding: utf-8 -*-
+
+from zope.interface import Interface
+
+##code-section HEAD
+##/code-section HEAD
+
+class IMeetingItem(Interface):
+    """Marker interface for .MeetingItem.MeetingItem
+    """
+
+class IMeeting(Interface):
+    """Marker interface for .Meeting.Meeting
+    """
+
+class IToolPloneMeeting(Interface):
+    """Marker interface for .ToolPloneMeeting.ToolPloneMeeting
+    """
+
+class IMeetingCategory(Interface):
+    """Marker interface for .MeetingCategory.MeetingCategory
+    """
+
+class IMeetingConfig(Interface):
+    """Marker interface for .MeetingConfig.MeetingConfig
+    """
+
+class IMeetingFileType(Interface):
+    """Marker interface for .MeetingFileType.MeetingFileType
+    """
+
+class IMeetingFile(Interface):
+    """Marker interface for .MeetingFile.MeetingFile
+    """
+
+class IMeetingGroup(Interface):
+    """Marker interface for .MeetingGroup.MeetingGroup
+    """
+
+class IExternalApplication(Interface):
+    """Marker interface for .ExternalApplication.ExternalApplication
+    """
+
+class IPodTemplate(Interface):
+    """Marker interface for .PodTemplate.PodTemplate
+    """
+
+class IMeetingUser(Interface):
+    """Marker interface for .MeetingUser.MeetingUser
+    """
+
+##code-section FOOT
+# Interfaces used for customizing the behaviour of meeting items ---------------
+class IMeetingItemDocumentation:
+    '''Normally, the methods described here should be part of IMeetingItem.
+       Because it is impossible to do so with an overengineered yet overrigid
+       ArchGenXML 2, we document the provided methods in this absurd class.'''
+    def getMeetingsAcceptingItems():
+        '''Gets the meetings that can accept items.'''
+    def isDelayed():
+        '''Am I delayed ?'''
+    def isRefused():
+        '''Am I refused ?'''
+    def getItemReference():
+        '''Returns the reference associated to this item. If the format of your
+           item references is simple, you should define it by a TAL expression,
+           directly in the MeetingConfig (through the web or via a profile).
+           Indeed, this is the default behaviour of getItemReference: to produce
+           a reference based on a format specified as a TAL expression in the
+           MeetingConfig. If your references are too complex, then override
+           this method in a specific adapter.'''
+    def mustShowItemReference():
+        '''When must I show the item reference ? In the default implementation,
+           item references are shown as soon as a meeting is published.'''
+    def getPredecessors():
+        '''Return a list of dict containing informations we want to show about
+           the predecessors.  The dict will contains the 'title' to display,
+           the 'url' to link to, the 'tagtitle' that will be used as title for the
+           link HTML tag and a 'class' defining a css class name'''
+    def getSpecificDocumentContext():
+        '''When a document is generated from an item, the POD template that is
+           used (see http://appyframework.org/pod.html) receives some variables
+           in its context (the item, the currently logged user, etc). If you
+           want to give more elements in the context, you can override this
+           method, that must return a dict whose keys will correspond to
+           variables that you can use in the POD template, and whose values
+           will be the values of those variables.'''
+    def getSpecificMailContext(event, translationMapping):
+        '''When a given p_event occurs on this meeting item, PloneMeeting will
+           send mail. For defining the mail subject and body, PloneMeeting will
+           use i18n labels <event>_mail_subject and <event>_mail_body in i18n
+           domain 'PloneMeeting'. When writing translations for those labels in
+           your i18n .po files, PloneMeeting will give you the following
+           variables that you may insert with the syntax ${variableName}
+             - portalUrl          The full URL of your Plone site
+             - portalTitle        The title your Plone site
+             - itemTitle          The title of the meeting item
+             - lastAnnexTitle     The title of the last annex added to this item
+                                  (be it desision-related or not)
+             - lastAnnexTypeTitle The title of the annex type of the last annex
+                                  added to this item
+             - meetingTitle       The title of the meeting to which this item
+                                  belongs (only when relevant)
+             - objectDavUrl       The WebDAV URL of the object
+           If you want to have other variables than those provided by default,
+           you can override this method: you will receive the default
+           p_translationMapping and you can add variables in it (the
+           p_translationMapping is a dict whose keys are variable names and
+           values are variable values). If you want to define yourself custom
+           mail subjects and bodies, simply return (mailSubject, mailBody). If
+           this method returns nothing, the mail body and subject will be
+           defined as described above.'''
+    def includeMailRecipient(event, userId):
+        '''This method is called when p_event occurs on this meeting item, and
+           when PloneMeeting should normally send a notification to user
+           p_userId (which has the necessary role or permission); user will
+           actually be added to the list of recipients only if this method
+           returns True. The default PloneMeeting behaviour for this method is
+           to return True in all cases. (Adapt it if you want to filter the
+           recipients of a notification belong other criteria than their role
+           or permission.)'''
+    def addRecurringItemToMeeting(meeting):
+        '''This meeting item was just created (by copy/pasting a recurring item)
+           in the folder that also contains the p_meeting into which it must
+           be inserted. So in this method, we must trigger automatically some
+           transitions on the workflow defined for meeting items, in order
+           to insert this item into the p_meeting and set it at the correct
+           state.  If this method returns True, it means that an error occured
+           while adding the recurring item to the meeting.'''
+    def mayBeLinkedToTasks():
+        '''This method returns True if this meeting item fulfills conditions
+           such that it can be associated to tasks. In the default
+           implementation, it is the case if the item is in state "confirmed"
+           or is in state "itemarchived" and previous state was "confirmed".'''
+    def transformRichTextField(fieldName, richContent):
+        '''This method is called every time an item is created or updated. It
+           allows you to modify the content of any "richtext" attribute
+           (description, decision...) defined on the item (the field name is
+           given in p_fieldName). The method must return the adapted version of
+           p_richContent, which contains the XHTML content of the "richtext"
+           field (a string). The default PloneMeeting behaviour for this method
+           is to return p_richContent untouched.
+
+           A current limitation of this mechanism: if you apply some
+           transformation on the field named "description", you will get
+           a conflict with the PloneMeeting "color system": this system will
+           always detect that some change occurred if this method updates the
+           field, and the pm_modification_date of the corresponding item will
+           be updated. With the field named "decision" this problem does not
+           occur because it is not taken into account by the PloneMeeting color
+           system.'''
+    def onEdit(isCreated):
+        '''This method is called every time an item is created or updated.
+           p_isCreated is True if the object was just created. It is called
+           within Archetypes methods at_post_create_script and
+           at_post_edit_script. You do not need to reindex the item. The
+           default PloneMeeting implementation for this method does nothing.'''
+    def getInsertOrder(insertMethod, meeting, late):
+        '''When inserting an item into a meeting, several "methods" are
+           available, built in PloneMeeting (follow category order, proposing
+           group order, all groups order, at the end, etc). If you want to
+           implement your own "method", you may want to propose an alternative
+           behaviour here, by returning an "order", or "weight" (as an integer
+           value) that you assign to the current item. According to this
+           "order", the item will be inserted at the right place. This method
+           receives:
+           - the p_insertMethod as specified in the meeting config, which
+             may not be useful if you choose to implement your own one;
+           - p_meeting is the meeting into which we are inserting the item;
+           - the boolean p_late value, which indicates if the item is being
+             inserted among "normal" (p_late=False) or "late" (p_late=True)
+             items on the meeting.
+        '''
+    def getIcons(inMeeting, meeting):
+        '''Gets info about the icons to show for this item while displaying it in
+           a list of items. If p_inMeeting is False, the concerned list of items
+           is the list of available items for p_meeting. Else, it is one of the
+           list of items within the meeting (normal or late items). This method
+           must return a list of 2-tuples
+           [(s_iconName1, s_label1),(s_iconName2, s_label2),]:
+           - "iconName" must be the name of the icon file which must lie in a
+             skin, ie "late.png";
+           - "label" must be a i18n label in the "PloneMeeting" domain that will
+             be used for the "title" attribute for the image.  If a mapping is
+             needed, the label can be a list where first element is the msgid
+             and second element the mapping dict.
+        '''
+    def mayCloneToOtherMeetingConfig(destMeetingConfigId):
+        '''Check that we can clone the item to p_destMeetingConfigId.
+           Checks are ordered from light to heavy as this could be called
+           several times...'''
+    def onDiscussChanged(toDiscuss):
+        '''This method is called when value of field "toDiscuss" (p_toDiscuss)
+           has changed on an item.'''
+
+    def onDuplicated(original):
+        '''This method is called whenever an item is duplicated. p_self is the
+           duplicated object, p_original is the original. This method does not
+           need to reindex the duplicated object, it will be done afterwards.'''
+
+    def onDuplicatedFromConfig(usage):
+        '''This method is called whenever an item is duplicated from an item
+           from the configuration: either a recurring item
+           (p_usage=='as_recurring_item') or a template item
+           (p_usage=='as_template_item'). The default implementation of this
+           method does nothing. p_self is the duplicated item.'''
+
+    def onTransferred(extApp):
+        '''Called just after this object was created from a distant one via
+           external application p_extApp. No need to reindex the object: the
+           framework will do it subsequently.'''
+
+    def isPrivacyViewable():
+        '''Privacy acts as a simple filter in front of workflow-based security.
+           It means that, if someone has the "View" permission on an item, he
+           may only access some information about the item. Field-specific
+           permissions exists for managing this problem, but on a too detailed
+           level (the field). Managing lots of field-specific permissions is
+           laborious, unmaintanable and produces huge workflow descriptions.
+           The idea here is to get an intermediate security filter. Very simple:
+           people that have View permission on an item where
+           item.isPrivacyViewable is False, will be able to consult information
+           shown in lists of items (titles, descriptions, decisions), excepted
+           advices and annexes, and will not be able to go to meetingitem_view.
+
+           The default implementation: isPrivacyViewable is True for any user
+           belonging to any of the Plone groups related to the MeetingGroup
+           which is the proposing group for the item. Note that
+           isPrivacyViewable is automatically True if the item has field
+           privacy=False.'''
+
+class IMeetingItemWorkflowConditions(Interface):
+    '''Conditions that may be defined in the workflow associated with a meeting
+       item are defined as methods in this interface.'''
+    def mayPropose():
+        '''May this item be proposed by a member to some reviewer ?'''
+    def mayPrevalidate():
+        '''May this item be pre-validated by a pre-reviewer ?
+           [only relevant when workflow adaptation "pre-validation" is
+           enabled].'''
+    def mayValidate():
+        '''May this item be validated by a reviewer and proposed to a meeting
+           manager ?'''
+    def mayPresent():
+        '''May this item be presented in a meeting ?'''
+    def mayDecide():
+        '''May a decision take place on this item (accept, reject...)?'''
+    def mayDelay():
+        '''May this item be delayed to another meeting ?'''
+    def mayConfirm():
+        '''May the decision be definitely confirmed?'''
+    def mayCorrect():
+        '''May the user cancel the previous action performed on me?'''
+    def mayDelete():
+        '''May one delete me? By default, it is always True. This method is
+           used to allow more fine-grained security than the "Delete objects"
+           permission. Indeed, in some complex cases, even if the user has this
+           permission on an item, it is not desirable to delete it.'''
+    def mayDeleteAnnex(annex):
+        '''May I delete p_annex (p_annex is one of my annexes) ?. In the
+           PloneMeeting default implementation, it is always True. This method
+           is used to allow more fine-grained security than the "Delete objects"
+           permission on p_annex.'''
+    def mayPublish():
+        '''May one publish me?'''
+    def meetingIsPublished():
+        '''Is the meeting where I am included published ?'''
+    def mayFreeze():
+        '''May one freeze me ?'''
+    def mayArchive():
+        '''May one archive me ?'''
+    def isLateFor(meeting):
+        '''Normally, when meeting agendas are published (and seen by everyone),
+           we shouldn't continue to add items to it. But sometimes those things
+           need to happen :-). This method allows to determine under which
+           circumstances an item may still be "late-presented" to a p_meeting.
+
+           Here is the default behaviour of this method as implemented into
+           PloneMeeting: an item whose preferred meeting is p_meeting, and
+           that was validated after the p_meeting has been published, may still
+           be presented to the p_meeting if the meeting is still in "published"
+           state (so in this case, m_isLateFor returns True).
+
+           Note that when such items are presented into a meeting, they are
+           added in a special section, below the items that were presented under
+           "normal" circumstances. This way, people that consult meeting agendas
+           know that there is a fixed part of items that were in the meeting
+           when it was first published, and that there are additional "late"
+           items that were added in a hurry.'''
+
+class IMeetingItemWorkflowActions(Interface):
+    '''Actions that may be triggered while the workflow linked to an item
+       executes.'''
+    def doPropose(stateChange):
+        '''Executes when an item is proposed to a reviewer.'''
+    def doPrevalidate(stateChange):
+        '''Executes when an item is pre-reviewed.'''
+    def doValidate(stateChange):
+        '''Executes when an action is validated by a reviewer and proposed to
+           the meeting owner.'''
+    def doPresent(stateChange):
+        '''Executes when an item is presented in a meeting.'''
+    def doItemPublish(stateChange):
+        '''Executes when the meeting containing this item is published.'''
+    def doItemFreeze(stateChange):
+        '''Executes when the meeting containing this item is frozen (ie
+           published, but without most people having the possibility to modify
+           it).'''
+    def doAccept(stateChange):
+        '''Executes when an item is accepted.'''
+    def doRefuse(stateChange):
+        '''Executes when an item is refused.'''
+    def doDelay(stateChange):
+        '''Executes when an item is delayed.'''
+    def doCorrect(stateChange):
+        '''Executes when the user performs a wrong action and needs to undo
+           it.'''
+    def doConfirm(stateChange):
+        '''Executes when an item is definitely confirmed.'''
+    def doItemArchive(stateChange):
+        '''Executes when the meeting containing this item is archived.'''
+
+class IMeetingItemCustom(IMeetingItem):
+    '''If you want to propose your own implementations of IMeetingItem methods,
+       you must define an adapter that adapts IMeetingItem to
+       IMeetingItemCustom.'''
+
+# Interfaces used for customizing the behaviour of meetings --------------------
+class IMeetingDocumentation:
+    '''Normally, the methods described here should be part of IMeeting.
+       Because it is impossible to do so with an overengineered yet overrigid
+       ArchGenXML 2, we document the provided methods in this absurd class.'''
+    def getAvailableItems():
+        '''Returns the list of items that may be presented to me.'''
+    def isDecided():
+        '''Am I in a state such that decisions have all been taken?'''
+    def getSpecificDocumentContext():
+        '''Similar to the method of the same name in IMeetingItem.'''
+    def getSpecificMailContext(event, translationMapping):
+        '''Similar to the method of the same name in IMeetingItem. There is one
+           diffence: for a meeting, the set of variables that one may use when
+           writing translations is the following:
+             - portalUrl          The full URL of your Plone site
+             - portalTitle        The title your Plone site
+             - meetingTitle       The title of this meeting
+             - objectDavUrl       The WebDAV URL of this meeting.'''
+    def includeMailRecipient(event, userId):
+        '''This method is called when p_event occurs on this meeting, and
+           when PloneMeeting should normally send a notification to user
+           p_userId (which has the necessary role or permission); user will
+           actually be added to the list of recipients only if this method
+           returns True. The default PloneMeeting behaviour for this method is
+           to return True in all cases. (Adapt it if you want to filter the
+           recipients of a notification belong other criteria than their role
+           or permission.)'''
+    def showVotes():
+        '''Under what circumstances must I show the tab "Votes" for every item
+           of this meeting? The default implementation for this method
+           returns True when the meeting has started (based on meeting.date or
+           meeting.startDate if used).'''
+    def showItemAdvices():
+        '''Under what circumstances must I show the "Advices" column on the
+           meeting.'''
+    def onEdit(isCreated):
+        '''This method is called every time a meeting is created or updated.'''
+    def onTransferred(extApp):
+        '''Called just after this object was created from a distant one via
+           external application p_extApp. No need to reindex the object: the
+           framework will do it subsequently.'''
+
+class IMeetingWorkflowConditions(Interface):
+    '''Conditions that may be defined in the workflow associated with a meeting
+       are defined as methods in this interface.'''
+    def mayPublish():
+        '''May the user put me in a state where I am complete and I can be
+           published and consulted by authorized persons before I begin?'''
+    def mayFroze():
+        '''May the user 'froze' the meeting? In this state, the meeting is
+           published, is not decided yet but nobody may modify the meeting
+           agenda anymore (at least in theory).'''
+    def mayDecide():
+        '''May the user put me in a state where all the decisions related to
+           all my items are taken ?'''
+    def mayClose():
+        '''May the user put me in a state where all the decisions are completely
+           finalized ?'''
+    def mayArchive():
+        '''May the user archive me ?'''
+    def mayCorrect():
+        '''May the user cancel the previous action performed on me?'''
+    def mayRepublish():
+        '''May the user publish me again ? Returns False by default.'''
+
+    # The following conditions are not workflow conditions in the strict sense,
+    # but are conditions that depend on the meeting state.
+    def mayAcceptItems():
+        '''May I accept new items to be integrated to me ? (am I in a relevant
+           state, is my date still in the future, ...)'''
+    def mayChangeItemsOrder():
+        '''May one change order of my list of items ?'''
+    def mayDelete():
+        '''May one delete me? by default, a meeting may only be deleted if it
+           contains no item.'''
+
+class IMeetingWorkflowActions(Interface):
+    '''Actions that may be triggered while the workflow linked to a meeting
+       executes.'''
+    def doPublish(stateChange):
+        '''Executes when the meeting is "published" (=becomes visible by every
+           authorized user). In the default PloneMeeting implementation,
+           Meeting.doPublish calls Item.doPublish for every "presented" item
+           contained in the meeting. It does so on the sorted list of items, so
+           Item.doPublish methods are called in the item order. The default
+           implementation also attributes a meeting number to the
+           meeting (a sequence number within the meeting configuration).'''
+    def doDecide(stateChange):
+        '''Executes when all items contained in me are "decided". In the default
+           PloneMeeting implementation, Meeting.doDecide calls Item.doAccept
+           for every "frozen" item contained in the meeting. It does so on the
+           sorted list of items because we use getItemsInOrder.'''
+    def doClose(stateChange):
+        '''Executes when all decisions are finalized. In the default
+           PloneMeeting implementation, Meeting.doClose calls Item.doConfirm
+           for every "accepted" item contained in the meeting. It does so on the
+           sorted list of items because we use getItemsInOrder.'''
+    def doArchive(stateChange):
+        '''Executes when the meeting is archived.'''
+    def doRepublish(stateChange):
+        '''Executes when I am published again.'''
+    def doBackToDecided(stateChange):
+        '''Executes when I undo a "close" transition.'''
+    def doBackToCreated(stateChange):
+        '''Executes when I undo a "publish" transition.'''
+    def doBackToPublished(stateChange):
+        '''Executes when I undo a "decide" transition.'''
+    def doBackToClosed(stateChange):
+        '''Executes when I undo a "archive" transition.'''
+
+class IMeetingCustom(IMeeting):
+    '''If you want to propose your own implementations of IMeeting methods,
+       you must define an adapter that adapts IMeeting to IMeetingCustom.'''
+
+# Interfaces used for customizing the behaviour of meeting categories ----------
+class IMeetingCategoryDocumentation:
+    '''Normally, the methods described here should be part of IMeetingCategory.
+       Because it is impossible to do so with an overengineered yet overrigid
+       ArchGenXML 2, we document the provided methods in this absurd class.'''
+    def onEdit(isCreated):
+        '''This method is called every time a category is created or updated.
+           p_isCreated is True if the object was just created. It is called
+           within Archetypes methods at_post_create_script and
+           at_post_edit_script. You do not need to reindex the category. The
+           default PloneMeeting implementation for this method does nothing.'''
+    def onTransferred(extApp):
+        '''Called just after this object was created from a distant one via
+           external application p_extApp. No need to reindex the object: the
+           framework will do it subsequently.'''
+    def isSelectable(item):
+        '''When creating or updating a meeting item, the user may choose a
+           category (or a classifier if you use field "classifier" in the
+           corresponding meeting configuration). Selectable categories are
+           categories for which method isSelectable returns True. The
+           default implementation of isSelectable returns True if the workflow
+           state is "active" for the category and if the current user is creator
+           for at least one of the 'usingGroups' selected on the category.'''
+
+class IMeetingCategoryCustom(IMeetingCategory): pass
+
+# Interfaces used for customizing the behaviour of external applications -------
+# See docstring of previous classes for understanding this section.
+class IExternalApplicationDocumentation:
+    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+class IExternalApplicationCustom(IExternalApplication): pass
+
+# Interfaces used for customizing the behaviour of meeting configs -------------
+# See docstring of previous classes for understanding this section.
+class IMeetingConfigDocumentation:
+    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onTransferred(extApp):
+        '''Called just after this object was created from a distant one via
+           external application p_extApp. No need to reindex the object: the
+           framework will do it subsequently.'''
+
+class IMeetingConfigCustom(IMeetingConfig): pass
+
+# Interfaces used for customizing the behaviour of meeting files ---------------
+# See docstring of previous classes for understanding this section.
+class IMeetingFileDocumentation:
+    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onTransferred(extApp):
+        '''Called just after this object was created from a distant one via
+           external application p_extApp. No need to reindex the object: the
+           framework will do it subsequently.'''
+
+class IMeetingFileCustom(IMeetingFile): pass
+
+# Interfaces used for customizing the behaviour of meeting file types ----------
+# See docstring of previous classes for understanding this section.
+class IMeetingFileTypeDocumentation:
+    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onTransferred(extApp):
+        '''Called just after this object was created from a distant one via
+           external application p_extApp. No need to reindex the object: the
+           framework will do it subsequently.'''
+    def isSelectable():
+        '''When adding an annex to an item, the user may choose a file type for
+           this annex, among all file types defined in the corresponding meeting
+           config for which this method isSelectable returns True. The
+           default implementation of isSelectable returns True if the workflow
+           state is "active" for the meeting file type.'''
+
+class IMeetingFileTypeCustom(IMeetingFileType): pass
+
+# Interfaces used for customizing the behaviour of meeting groups --------------
+# See docstring of previous classes for understanding this section.
+class IMeetingGroupDocumentation:
+    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onTransferred(extApp):
+        '''Called just after this object was created from a distant one via
+           external application p_extApp. No need to reindex the object: the
+           framework will do it subsequently.'''
+
+class IMeetingGroupCustom(IMeetingGroup):
+    '''If you want to propose your own implementations of IMeetingGroup methods,
+       you must define an adapter that adapts IMeetingGroup to
+       IMeetingGroupCustom.'''
+
+# Interfaces used for customizing the behaviour of pod templates ---------------
+# See docstring of previous classes for understanding this section.
+class IPodTemplateDocumentation:
+    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onTransferred(extApp):
+        '''Called just after this object was created from a distant one via
+           external application p_extApp. No need to reindex the object: the
+           framework will do it subsequently.'''
+
+class IPodTemplateCustom(IPodTemplate): pass
+
+# Interfaces used for customizing the behaviour of the PloneMeeting tool -------
+# See docstring of previous classes for understanding this section.
+class IToolPloneMeetingDocumentation:
+    def onEdit(isCreated):
+        '''Called when the tool p_isCreated or edited.'''
+    def onNotify(objectUrl, event):
+        '''Called when an external system sends to this one a notification
+           related to the occurrence of some p_event on some object whose
+           p_objectUrl is given.'''
+    def getSpecificMailContext(event, translationMapping):
+        '''See doc in methods with similar names above.'''
+
+class IToolPloneMeetingCustom(IToolPloneMeeting): pass
+
+# Interfaces used for customizing the behaviour of meeting users ---------------
+# See docstring of previous classes for understanding this section.
+class IMeetingUserDocumentation:
+    def mayConsultVote(loggedUser, item):
+        '''May the currently logged user (p_loggedUser) see the vote from this
+           meeting user on p_item?
+
+           The default implementation returns True if the logged user is the
+           voter, a Manager or a MeetingManager or if the meeting was decided
+           (result of meeting.isDecided()).'''
+    def mayEditVote(loggedUser, item):
+        '''May the currently logged user (p_loggedUser) edit the vote from this
+           meeting user on p_item?
+
+           The default implementation returns True if the meeting has not been
+           decided yet (result of meeting.isDecided()), and if the logged user
+           is the voter himself (provided voters encode votes according to the
+           meeting configuration) or if the logged user is a meeting manager
+           (provided meeting managers encode votes according to the meeting
+           configuration) or if the logged user is a Manager.'''
+    def onTransferred(extApp):
+        '''Called just after this object was created from a distant one via
+           external application p_extApp. No need to reindex the object: the
+           framework will do it subsequently.'''
+
+class IMeetingUserCustom(IMeetingUser): pass
+##/code-section FOOT

@@ -1,0 +1,639 @@
+<tal:comment replace="nothing">
+  This macro returns the edit view of an Archetypes field.
+  It requires a REQUEST with key "fieldName".
+</tal:comment>
+<metal:editField define-macro="editField" i18n:domain="PloneMeeting"
+                 tal:define="mode string:edit;
+                             fieldName request/fieldName;
+                             lang python: request.get('lang', '');
+                             fields python: [context.getField(fieldName)]">
+  <img align="left" style="cursor:pointer;"
+       tal:attributes="src string:$portal_url/save.gif;
+                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'hs_macros\', \'saveField\', {\'lang\':\'%s\'}, getRichTextContent)' % (fieldName, context.absolute_url(), lang)"/>
+  <form tal:attributes="id string:ajax_edit_$fieldName;" class="">
+  <div tal:define="errors python:{};
+                   schematas context/Schemata;
+                   fieldsets python:[key for key in schematas.keys() if (key != 'metadata') and (schematas[key].editableFields(context, visible_only=True))];
+                   default_fieldset python:(not schematas or schematas.has_key('default')) and 'default' or fieldsets[0];
+                   fieldset request/fieldset|options/fieldset|default_fieldset;
+                   dummy python:here.at_isEditable(fields);
+                   portal_type context/portal_type;
+                   default_language python:request.get('HTTP_ACCEPT_LANGUAGE', 'en').split(',')[0].split('-')[0];
+                   type_name portal_type;
+                   lockable python:hasattr(context, 'wl_isLocked');
+                   isLocked python:lockable and context.wl_isLocked();
+                   css python:here.getUniqueWidgetAttr(fields, 'helper_css');
+                   js python:here.getUniqueWidgetAttr(fields, 'helper_js')">
+  <metal:editMacro use-macro="python:context.widget(fieldName, mode='edit', use_label=True)"/>
+  </div>
+  </form>
+</metal:editField>
+
+<tal:comment replace="nothing">
+  This macro allows to edit a field with content that is possibly to be
+  encoded in two languages. It requires the name of the field as "fieldName",
+  which must correspond to a valid field on "context"; "bilingual" which, if
+  True, indicates that there are 2 languages. "langs" must be the list of
+  supported languages.
+</tal:comment>
+<metal:field define-macro="editContentField"
+   tal:define="field python: context.getField(fieldName);
+               isRich python: field.widget.getName() == 'RichWidget';
+               isOptional field/optional|python:False;
+               isUsed python: test(isOptional, fieldName in usedAttrs, True);"
+   tal:condition="python: isUsed and field.widget.visible and member.has_permission(field.read_permission, context)">
+  <tal:monolanguage condition="not: bilingual">
+    <metal:field use-macro="python:context.widget(fieldName, mode='edit')"/>
+  </tal:monolanguage>
+  <table tal:condition="bilingual" cellpadding="0" cellspacing="0" width="100%">
+    <tr valign="top">
+     <td width="50%">
+      <div style="position: relative">
+       <span class="hsLanguage" tal:content="python: langs[0]" tal:condition="isRich"></span>
+       <metal:f use-macro="python:context.widget(fieldName, mode='edit')"/>
+      </div>
+     </td>
+     <td width="50%">
+      <div style="position: relative">
+       <span class="hsLanguage" tal:content="python: langs[1]" tal:condition="isRich"></span>
+       <metal:f use-macro="python:context.widget(fieldName+'2', mode='edit')"/>
+      </div>
+     </td>
+    </tr>
+  </table>
+</metal:field>
+
+<tal:comment replace="nothing">
+  Save the content of an Archetypes field and return its consult view.
+  Requires a REQUEST with keys "fieldName" and "fieldContent".
+</tal:comment>
+<metal:save define-macro="saveField" i18n:domain="PloneMeeting"
+ tal:define="fieldName request/fieldName;
+             field python: context.getField(fieldName);
+             lang python: request.get('lang', '');
+             dummy python: context.setFieldFromAjax(fieldName, request.get('fieldContent'));
+             mayEdit python: member.has_permission(field.write_permission, context)">
+ <metal:view use-macro="context/hs_macros/macros/viewField"/>
+</metal:save>
+
+<tal:comment replace="nothing">Displays changes performed on a field.</tal:comment>
+<metal:field define-macro="viewFieldVersion" i18n:domain="PloneMeeting"
+ tal:define="fieldName request/fieldName;
+             field python: context.getField(fieldName);
+             lang python: request.get('lang', '');
+             changes python: request.get('changes', 'False') == 'True';
+             mayEdit python: member.has_permission(field.write_permission, context)">
+ <metal:view use-macro="context/hs_macros/macros/viewField"/>
+</metal:field>
+
+<tal:comment replace="nothing">
+  This macro allows to view the content of an ajax-editable field.
+</tal:comment>
+<div metal:define-macro="viewField"
+     tal:define="hookId python: 'hook_%s' % fieldName;
+                 changes changes|python: False;
+                 jsUrl context/absolute_url;
+                 jsParams python: '\'fieldName\':\'%s\',\'lang\':\'%s\'' % (fieldName, lang);
+                 jsCall python:'askAjaxChunk(\'%s\', \'GET\', \'%s\', \'hs_macros\'' % (hookId, jsUrl);
+                 jsEdit python: '%s,\'editField\',{%s},null,initRichTextField)' % (jsCall, jsParams);
+                 jsChanges python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'True\'})' % (jsCall, jsParams);
+                 jsView python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'False\'})' % (jsCall, jsParams)"
+     tal:attributes="id hookId; style python: lang and 'position: relative' or ''">
+ <fieldset tal:condition="python: mayEdit or not context.fieldIsEmpty(fieldName)">
+  <legend>
+    <span tal:condition="lang" class="hsLanguage" tal:content="lang"></span>
+    <span tal:replace="python: field.widget.Label(context)"></span>
+    <img style="cursor:pointer" tal:condition="mayEdit"
+         tal:attributes="src string:$portal_url/edit.gif; onClick jsEdit"/>
+    <tal:history define="hasHistory python: context.hasHistory(fieldName)" condition="hasHistory">
+    <img style="cursor:pointer" title="history_changes" i18n:attributes="title"
+         tal:condition="not: changes"
+         tal:attributes="src string:$portal_url/changes.gif; onClick jsChanges"/>
+    <img style="cursor:pointer" title="history_last" i18n:attributes="title"
+         tal:condition="changes"
+         tal:attributes="src string:$portal_url/view.gif; onClick jsView"/>
+    </tal:history>
+  </legend>
+  <div tal:replace="structure python: context.getFieldVersion(fieldName, changes)"></div>
+ </fieldset>
+</div>
+
+<tal:comment replace="nothing">
+  This macro allows to view a field with content that is possibly stored in
+  two languages. It requires the name of the field as "fieldName", which must
+  correspond to a valid field on "context"; "bilingual" which, if True, indicates
+  the presence of a second language. "langs" must be the list of supported
+  languages. "ajaxEdit" indicates if this field can be ajax-edited.
+</tal:comment>
+<metal:field define-macro="viewContentField" i18n:domain="PloneMeeting"
+     tal:define="field python: context.getField(fieldName);
+                 isRich python: field.widget.getName() == 'RichWidget';
+                 isOptional field/optional|python:False;
+                 isUsed python: test(isOptional, fieldName in usedAttrs, True);
+                 ajaxEdit ajaxEdit|nothing;
+                 mayEdit python: ajaxEdit and member.has_permission(field.write_permission, context)"
+     tal:condition="python: isUsed and field.widget.visible and member.has_permission(field.read_permission, context)">
+  <tal:comment replace="nothing">Mono-language, rich</tal:comment>
+  <tal:mono define="lang python:''" condition="python: not bilingual and isRich">
+    <metal:view use-macro="context/hs_macros/macros/viewField"/>
+  </tal:mono>
+  <tal:comment replace="nothing">Mono-language, other</tal:comment>
+  <tal:mono2 condition="python: not bilingual and not isRich">
+    <metal:view use-macro="context/widgets/field/macros/view" />
+  </tal:mono2>
+  <tal:comment replace="nothing">Bilingual, rich</tal:comment>
+  <tal:bilingual condition="python: bilingual and isRich">
+  <table cellpadding="0" cellspacing="0" width="100%"
+         tal:define="isEmpty python: context.fieldIsEmpty(fieldName) and context.fieldIsEmpty(fieldName+'2')"
+         tal:condition="python: mayEdit or not isEmpty">
+    <tr valign="top">
+      <td width="50%" tal:define="lang python: langs[0]">
+       <metal:view use-macro="context/hs_macros/macros/viewField"/>
+      </td>
+      <td>&nbsp;&nbsp;</td>
+      <td width="50%"
+        tal:define="fieldName python: fieldName+'2';
+                    field python: context.getField(fieldName);
+                    lang python: langs[1]">
+       <metal:view use-macro="context/hs_macros/macros/viewField"/>
+      </td>
+    </tr>
+  </table>
+  </tal:bilingual>
+  <tal:comment replace="nothing">Bilingual, not rich</tal:comment>
+  <tal:bilingual condition="python: bilingual and not isRich">
+  <table cellpadding="0" cellspacing="0" width="100%">
+    <tr valign="top">
+      <td width="50%"><metal:f use-macro="here/widgets/field/macros/view" /></td>
+      <td width="50%" tal:define="field python: context.getField(fieldName+'2')">
+        <metal:f use-macro="here/widgets/field/macros/view" />
+      </td>
+    </tr>
+  </table>
+  </tal:bilingual>
+</metal:field>
+
+<tal:comment replace="nothing">
+  This macro displays item title and reference on several item-related pages
+  (view, annexes, etc).
+</tal:comment>
+<metal:itemHeader define-macro="itemHeader" i18n:domain="PloneMeeting">
+<h1 class="documentFirstHeading">
+  <tal:comment replace="nothing">toDiscuss field</tal:comment>
+  <tal:discuss condition="context/showToDiscuss">
+    <img tal:condition="context/getToDiscuss"
+        tal:attributes="src string: $portal_url/toDiscussYes.png"
+        title="to_discuss_yes" i18n:attributes="title"/>
+    <img tal:condition="not: context/getToDiscuss"
+        tal:attributes="src string: $portal_url/toDiscussNo.png"
+        title="to_discuss_no" i18n:attributes="title"/>
+  </tal:discuss>
+  <tal:comment replace="nothing">Item title</tal:comment>
+  <span tal:replace="here/getName"/>
+  <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
+  <br/>
+  <tal:comment replace="nothing">Item number and reference</tal:comment>
+  <tal:itemRef condition="python: context.adapted().mustShowItemReference()">
+  <span class="discreet" tal:condition="python: itemNumber != None"
+                         tal:content="python: str(itemNumber) + '.'"></span>
+  <span class="discreet" tal:content="python: context.adapted().getItemReference()"></span>
+  </tal:itemRef>
+</h1>
+</metal:itemHeader>
+
+
+<tal:comment replace="nothing">
+  This macro manage the itemIsSigned attribute of MeetingItem viewed on different views.
+  It manage the fact that it can be Ajax-edited in several context.
+  This macro need :
+  ajaxEdit : a relevant info about the fact that we will activate the Ajax edition
+  meetingItem : the relevant MeetingItem
+</tal:comment>
+<metal:itemIsSigned define-macro="itemIsSigned" i18n:domain="PloneMeeting"
+                    tal:define="showItemIsSigned meetingItem/showItemIsSigned;
+                                mayEdit python: ajaxEdit==False and False or meetingItem.adapted().maySignItem(member);
+                                isManager python: tool.isManager();
+                                itemIsSigned meetingItem/getItemIsSigned;">
+  <span id="marker_toggle_itemissigned_UID#"
+        tal:attributes="id string:marker_toggle_itemissigned_$UID;"
+        tal:define="UID meetingItem/UID;
+                    contextType context/meta_type;
+                    baseUrl meetingItem/absolute_url;"
+        tal:condition="python: showItemIsSigned and mayEdit and isManager">
+    <img class="itemIsSignedEditable" tal:condition="itemIsSigned" name="itemIsSignedNo" style="cursor:pointer"
+         title="item_is_signed_yes_edit" i18n:attributes="title"
+         tal:attributes="src string:$portal_url/itemIsSignedYes.png;
+                         onClick python: 'asyncItemIsSigned(\''+UID+'\', baseUrl=\'' + baseUrl + '\')'"/>
+    <img class="itemIsSignedEditable" tal:condition="not: itemIsSigned" name="itemIsSignedYes" style="cursor:pointer"
+         title="item_is_signed_no_edit" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/itemIsSignedNo.png;
+                         onClick python: 'asyncItemIsSigned(\''+UID+'\', baseUrl=\'' + baseUrl + '\')'"/>
+  </span>
+  <tal:notMayEdit condition="python: not showItemIsSigned">-</tal:notMayEdit>
+  <tal:forTheOthers condition="python: showItemIsSigned and not mayEdit">
+    <img tal:condition="itemIsSigned" title="item_is_signed_yes" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/itemIsSignedYes.png"/>
+    <img tal:condition="not: itemIsSigned" title="item_is_signed_no" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/itemIsSignedNo.png"/>
+  </tal:forTheOthers>
+</metal:itemIsSigned>
+
+<tal:comment replace="nothing">
+  This macro displays buttons for triggering available transitions for any other
+  content type than Item or Meeting.
+</tal:comment>
+<div metal:define-macro="showTransitions" i18n:domain="PloneMeeting">
+  <table class="no-style-table">
+    <tr>
+      <td tal:repeat="transition python: context.portal_plonemeeting.getTransitionsFor(context)"
+          class="noPadding" align="left">
+        <input class="hsButton" type="button" i18n:attributes="value"
+               tal:attributes="value python: transition['title'];
+                               onClick python: 'triggerTransition(\'%s\', \'%s\')' % (context.UID(), transition['id'])"/>
+      </td>
+      <tal:back define="parent context/getParentNode;
+                        parentIsTool python: parent.meta_type == 'ToolPloneMeeting'">
+        <td tal:condition="python: parentIsTool or (parent.getParentNode().meta_type == 'MeetingConfig')">
+          &nbsp;<a tal:attributes="href python: context.portal_plonemeeting.getBackUrl(context);"
+                   i18n:translate="back"></a>
+        </td>
+      </tal:back>
+    </tr>
+  </table>
+</div>
+
+<tal:comment replace="nothing">
+  This macro redirects the user to its default page.
+</tal:comment>
+<div metal:define-macro="hsRedirect" i18n:domain="PloneMeeting"
+     tal:define="tool python: context.portal_plonemeeting;
+                 isHsUser tool/isPloneMeetingUser">
+
+  <span tal:condition="isHsUser">
+    <span tal:define="refererIsInnerPage tool/refererIsInnerPage">
+      <span tal:condition="not: refererIsInnerPage">
+          <tal:redirect
+            define="meetingConfig python: tool.getDefaultMeetingConfig();
+                    meetingFolder python: tool.getPloneMeetingFolder(meetingConfig.getId());
+                    dummy         python: request.RESPONSE.redirect(meetingFolder.absolute_url())"/>
+      </span>
+    </span>
+  </span>
+  <span tal:condition="not: isHsUser" i18n:translate="notPloneMeetingUser"></span>
+</div>
+
+<div metal:define-macro="hsWelcome" i18n:domain="PloneMeeting">
+  <h1 i18n:translate="">hs_welcome_title</h1>
+  <p><img class="image-right" src="welcomeImage.jpg"/><span i18n:translate="">hs_welcome_body</span></p>
+</div>
+
+<tal:comment replace="nothing">
+  If several languages are supported, this macro displays a language selector.
+</tal:comment>
+<div metal:define-macro="hsLanguageSelector" id="portal-languageselector"
+     tal:define="availLanguages context/portal_plonemeeting/getAvailableInterfaceLanguages"
+     tal:condition="python: availLanguages and (availLanguages.find(',') != -1)">
+
+  <script language="javascript">
+    function toggleLanguage(url, selectWidget, searchId, pageName){
+      var newLanguage = selectWidget.options[selectWidget.selectedIndex].value;
+      var newUrl = url + "?set_language=" + newLanguage;
+      if (searchId) newUrl = newUrl + '&search=' + searchId;
+      if (pageName) newUrl = newUrl + '&pageName=' + pageName;
+      window.location = newUrl;
+    }
+  </script>
+  <select tal:define="lgTool python: context.portal_languages;
+                      userLanguage context/portal_plonemeeting/getUserLanguage"
+          tal:attributes="onchange python: 'toggleLanguage(\'%s\', this, \'%s\', \'%s\')' % (request['ACTUAL_URL'], request.get('search', ''), request.get('pageName', ''))">
+    <tal:lg repeat="lg lgTool/getSupportedLanguages">
+      <option tal:define="lgInfo python: lgTool.getAvailableLanguageInformation().get(lg, None)"
+              tal:content="lgInfo/native" tal:attributes="value lg; selected python:userLanguage==lg"></option>
+    </tal:lg>
+  </select>
+</div>
+
+<div id="meeting_users_"
+     metal:define-macro="itemPeople" i18n:domain="PloneMeeting"
+     tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
+                 meeting context/getMeeting;
+                 usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes"
+     tal:condition="python: meeting and ('attendees' in usedMeetingAttributes)"
+     tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display:table' or 'display:none'">
+<form id="itemPeopleForm" name="itemPeopleForm" method="post">
+<table tal:define="meetingAttendees python: meeting.getAttendees(True);
+                   lateAttendees meeting/getLateAttendees;
+                   departees python: meeting.getDepartures(context, when='after', alsoEarlier=True);
+                   showQuestioners python: 'questioners' in usedAttrs;
+                   showAnswerers python: 'answerers' in usedAttrs;
+                   questioners context/getQuestioners;
+                   answerers context/getAnswerers;
+                   mayEditQAs context/mayEditQAs;
+                   showVotes context/showVotes;
+                   usedVoteValues meetingConfig/getUsedVoteValues;
+                   itemAbsents context/getItemAbsents;
+                   itemSigners context/getItemSignatories;
+                   voters python: context.getAttendees(usage='voter');
+                   global showSave python:False;
+                   global showRefresh python: False;
+                   error request/error | python:'';
+                   secret context/getVotesAreSecret;"
+       id="meeting_users" class="vertical listing discreet" cellspacing="0" cellpadding="0">
+  <tal:comment replace="nothing">Column headers</tal:comment>
+  <tr valign="top">
+    <th i18n:translate="item_specific"></th>
+    <th i18n:translate="is_attendee"></th>
+    <th tal:condition="python: 'signatories' in usedMeetingAttributes"
+        i18n:translate="is_signer"></th>
+    <th tal:condition="showQuestioners" i18n:translate="PloneMeeting_label_questioners"></th>
+    <th tal:condition="showAnswerers" i18n:translate="PloneMeeting_label_answerers"></th>
+    <th tal:condition="showVotes" i18n:translate="is_voter"></th>
+    <th tal:condition="python: showVotes and not secret" i18n:translate="vote_value"></th>
+    <th tal:condition="python: showVotes and secret" align="left">
+      <i style="color:blue">
+      <span i18n:translate="voter_count">
+        <span i18n:name="numberOfVoters" tal:content="python:len(voters)"></span>
+      </span> (<span i18n:translate="PloneMeeting_label_votesAreSecret"></span>)
+      </i><br/>
+      <tal:secret define="global showSave context/mayEditVotes;
+                          mayEditVotes showSave;
+                          mayConsultVotes context/mayConsultVotes"
+                  repeat="voteValue usedVoteValues">
+        <span i18n:translate="" tal:content="python: 'vote_value_%s' % voteValue"></span>:
+        <span tal:define="voteCount python: context.getVoteCount(voteValue);
+                          widgetName python: 'vote_count_%s' % voteValue">
+          <tal:comment replace="nothing">Display an editable number of votes</tal:comment>
+          <input tal:condition="mayEditVotes" type="text" size="2"
+                 tal:attributes="name widgetName;
+                                 value python: test(error, request.get(widgetName,0), voteCount)"/>
+
+          <tal:comment replace="nothing">Display the number of votes</tal:comment>
+          <span tal:condition="python: mayConsultVotes and not mayEditVotes" tal:content="voteCount"></span>
+
+          <tal:comment replace="nothing">Display nothing</tal:comment>
+          <span tal:condition="python: not mayConsultVotes and not mayEditVotes"
+                i18n:translate="vote_value_not_consultable"></span>
+        </span>
+      </tal:secret>
+    </th>
+  </tr>
+  <tr tal:repeat="attendee meetingAttendees">
+    <tal:attendee define="aId attendee/getId;
+                          isPresent python: attendee.isPresent(context, meeting)">
+    <td><b tal:content="attendee/Title"></b></td>
+    <td align="center"
+        tal:attributes="onmouseover python: 'setByeByeButton(\'%s\', \'visible\')' % aId;
+                        onmouseout python: 'setByeByeButton(\'%s\', \'hidden\')' % aId">
+      <tal:comment replace="nothing">The user is present</tal:comment>
+      <img tal:condition="isPresent" tal:attributes="src string: $portal_url/checked.gif"/>
+
+      <tal:comment replace="nothing">Show entrance number if user is an arrived late attendee</tal:comment>
+      <tal:entered condition="python: aId in lateAttendees and isPresent">
+       <img tal:attributes="src string: $portal_url/entrance.gif"
+            title="present_since" i18n:attributes="title"/><span style="color:black"
+            tal:content="python: meeting.getEntranceItem(aId)"></span>
+       <tal:comment replace="nothing">Remove info about user entrance into the meeting</tal:comment>
+       <img tal:condition="tool/isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+            tal:attributes="src string: $portal_url/delete.png;
+                            onClick python:'welcomeUser(\'%s\', \'%s\', \'delete\')' % (context.absolute_url(), aId)"/>
+      </tal:entered>
+
+      <tal:comment replace="nothing">Show depart number if user has left (or will do after this item)</tal:comment>
+      <tal:left condition="python: aId in departees">
+      <img tal:attributes="src string: $portal_url/departure.gif"
+           title="left_after" i18n:attributes="title"/><span style="color:black"
+           tal:content="python: meeting.getDepartureItem(aId)-1"></span>
+      <tal:comment replace="nothing">Remove info about user departure from the meeting</tal:comment>
+      <img tal:condition="tool/isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+           tal:attributes="src string: $portal_url/delete.png;
+                           onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_after\')' % (context.absolute_url(), aId)"/>
+      </tal:left>
+
+      <tal:comment replace="nothing">Show "absent" icon if the user has left only for this item (=item absent)</tal:comment>
+      <tal:left condition="python: aId in context.getItemAbsents()">
+      <img tal:attributes="src string: $portal_url/leaving.gif"
+           title="left_now" i18n:attributes="title"/>
+      <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
+      <img tal:condition="tool/isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+           tal:attributes="src string: $portal_url/delete.png;
+                           onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_now\')' % (context.absolute_url(), aId)"/>
+      </tal:left>
+
+      <tal:comment replace="nothing">Button for welcoming a late attendee not yet in the meeting</tal:comment>
+      <img title="person_welcome" i18n:attributes="title" style="cursor: pointer"
+           tal:condition="python: tool.isManager() and (aId in lateAttendees) and not isPresent and not meeting.getEntranceItem(aId)"
+           tal:attributes="src string: $portal_url/entrance.gif;
+                           onClick python:'welcomeUser(\'%s\', \'%s\', \'do\')' % (context.absolute_url(), aId)"/>
+      <tal:comment replace="nothing">Button for byebying a user</tal:comment>
+      <img title="person_byebye" i18n:attributes="title" style="cursor: pointer; visibility: hidden"
+           tal:condition="python: tool.isManager() and isPresent and not meeting.getDepartureItem(aId)"
+           tal:attributes="src string: $portal_url/departure.gif;
+                           id python: 'byebye_%s' % aId;
+                           name  python: 'byebye_%s' % aId;
+                           onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'do\')' % (context.absolute_url(), aId)"/>
+    </td>
+    <td align="center" tal:condition="python: 'signatories' in usedMeetingAttributes">
+      <img tal:attributes="src string: $portal_url/checked.gif"
+           tal:condition="python: attendee.getId() in itemSigners"/>
+    </td>
+    <td align="center" tal:condition="showQuestioners">
+      <tal:comment replace="nothing">Show check image for people that can't edit</tal:comment>
+      <img tal:condition="python: not mayEditQAs and (aId in questioners)"
+           tal:attributes="src string: $portal_url/checked.gif"/>
+      <tal:comment replace="nothing">Show checkbox for editors</tal:comment>
+      <input type="checkbox" id="questioner"
+             tal:define="cbId python: 'questioner_%s' % aId"
+             tal:condition="python: mayEditQAs and isPresent"
+             tal:attributes="id cbId; name cbId;
+                             checked python: aId in questioners"/>
+    </td>
+    <td align="center" tal:condition="showAnswerers">
+      <tal:comment replace="nothing">Show check image for people that can't edit</tal:comment>
+      <img tal:condition="python: not mayEditQAs and (aId in answerers)"
+           tal:attributes="src string: $portal_url/checked.gif"/>
+      <tal:comment replace="nothing">Show checkbox for editors</tal:comment>
+      <input type="checkbox"
+             tal:define="cbId python: 'answerer_%s' % aId"
+             tal:condition="python: mayEditQAs and isPresent"
+             tal:attributes="id cbId; name cbId;
+                             checked python: aId in answerers"/>
+    </td>
+    <td align="center" tal:condition="showVotes">
+      <img tal:attributes="src string: $portal_url/checked.gif"
+           tal:condition="python: attendee in voters"/>
+    </td>
+    <td align="center" tal:condition="python: showVotes and not secret">
+    <tal:showVote condition="python: (attendee in voters) and isPresent">
+    <tal:votes define="mayConsultVote python: attendee.adapted().mayConsultVote(member, context);
+                       mayEditVote python: attendee.adapted().mayEditVote(member, context);
+                       voterId attendee/getId;
+                       voteValue python: context.getVoteValue(voterId);
+                       global showSave python: test(mayEditVote, True, showSave);
+                       global showRefresh python: test(mayEditVote, False, test(mayConsultVote, True, showRefresh))">
+
+      <tal:comment replace="nothing">For users that can't consult neither edit the vote value</tal:comment>
+      <span id="vote-not_consultable" tal:condition="python: not mayConsultVote and not mayEditVote"
+            i18n:translate="vote_value_not_consultable"></span>
+      <tal:comment replace="nothing">For users that can consult the vote value but not edit it.</tal:comment>
+      <span tal:condition="python: mayConsultVote and not mayEditVote" i18n:translate=""
+            tal:content="python: 'vote_value_%s' % voteValue"></span>
+      <tal:comment replace="nothing">For users that can consult and edit the vote.</tal:comment>
+      <tal:editField condition="python: mayConsultVote and mayEditVote"
+                     define="widgetName python: 'vote_value_%s' % voterId">
+        <tal:radio repeat="usedVoteValue usedVoteValues">
+          <tal:input define="widgetId python:'vote_value_%s_%s' % (usedVoteValue, voterId)">
+          <input type="radio" class="noborder" value="not_yet"
+                 tal:attributes="name widgetName; id widgetId; value usedVoteValue;
+                                 checked python: voteValue == usedVoteValue"/>
+          <label tal:define="used_vote_value python: usedVoteValue.replace('-', '_')"
+                 tal:attributes="for widgetId;
+                                 id python: 'vote-%s' % used_vote_value"
+                 tal:content="python: 'vote_value_%s' % used_vote_value"
+                 i18n:translate=""></label>&nbsp;&nbsp;
+          </tal:input>
+        </tal:radio>
+      </tal:editField>
+    </tal:votes>
+    </tal:showVote>
+    </td>
+    <td align="center" tal:condition="python: showVotes and secret">-
+    </td>
+    </tal:attendee>
+  </tr>
+  <tr>
+    <td colspan="7" style="background-color: #D9D7D9;" align="right">
+      <tal:comment replace="nothing">Switch mode (secret / not secret)</tal:comment>
+      <img style="cursor:pointer;" title="switch_votes" i18n:attributes="title" align="right"
+           tal:condition="python: showVotes and not context.hasVotes() and member.has_permission('Modify portal content', context)"
+           tal:attributes="src string: $portal_url/switch.gif;
+                           onClick python:'switchVotes(\'%s\', \'%s\')' % (context.absolute_url(), secret)"/>
+      <tal:comment replace="nothing">Set 'yes' for everybody</tal:comment>
+      <img style="cursor:pointer;" title="update_votes_yes" i18n:attributes="title"
+           tal:condition="showSave" align="right"
+           tal:attributes="src string:$portal_url/yes.gif;
+                           onClick python:'saveItemPeopleInfos(\'%s\', true)' % context.absolute_url()"/>
+      <tal:comment replace="nothing">Save votes</tal:comment>
+      <img style="cursor:pointer" title="save" i18n:attributes="title"
+           tal:condition="python: showSave or mayEditQAs" align="right"
+           tal:attributes="src string:$portal_url/save.gif;
+                           onClick python:'saveItemPeopleInfos(\'%s\')' % context.absolute_url()"/>
+      <tal:comment replace="nothing">Refresh votes</tal:comment>
+      <img style="cursor:pointer;" title="refresh_votes" i18n:attributes="title"
+           tal:condition="showRefresh" align="right"
+           tal:attributes="src string:$portal_url/refresh.gif;
+                           onClick python:'refreshVotes(\'%s\')' % context.absolute_url()"/>
+      <i tal:condition="error" tal:content="request/peopleMsg"
+         style="color:green; margin-right: 1em;"></i>
+    </td>
+  </tr>
+</table>
+</form>
+</div>
+
+<tal:comment replace="nothing">
+  This macro displays, on the tool view, a control panel for consulting and
+  managing night works.
+</tal:comment>
+<table metal:define-macro="nightWork" i18n:domain="PloneMeeting" align="right"
+       cellpadding="0" cellspacing="0"
+       tal:define="nightInfo context/getNightInfo"
+       tal:condition="nightInfo/count">
+ <tr>
+  <td style="font-size: 70%; padding: 0 0.1em 0 1em;"
+      tal:content="nightInfo/count">
+  </td>
+  <td><img src="night.gif" tal:attributes="title nightInfo/msg"/></td>
+  <td>
+   <form name="deleteUidForm" action="onDeleteNightWorks">
+    <img style="cursor:pointer" src="delete_many.gif"
+         i18n:attributes="title" title="Delete" i18n:domain="plone"
+         onClick="javascript:confirmDeleteObject(this)"/>
+   </form>
+  </td>
+ </tr>
+</table>
+
+<tal:comment replace="nothing">
+  This Ajax-called macro displays an object's history.
+</tal:comment>
+<metal:history define-macro="history" i18n:domain="PloneMeeting"
+      tal:define="startNumber request/startNumber|python:0;
+                  startNumber python: int(startNumber);
+                  batchSize   python: int(request.get('maxPerPage'));
+                  historyInfo python: context.getHistory(startNumber, batchSize=batchSize);
+                  objs        historyInfo/events;
+                  totalNumber historyInfo/totalNumber;
+                  ajaxHookId  python: context.UID() + '_history';
+                  navBaseCall python: 'askObjectHistory(\'%s\',\'%s\',%d,**v**)' % (ajaxHookId, context.absolute_url(), batchSize)">
+
+  <tal:comment replace="nothing">Table containing the history</tal:comment>
+  <tal:history condition="objs">
+  <metal:nav use-macro="context/hs_navigate/macros/simple"/>
+  <table width="100%" class="listing nosort">
+    <tr i18n:domain="plone">
+      <th i18n:translate="listingheader_action"/>
+      <th i18n:translate="listingheader_performed_by"/>
+      <th i18n:translate="listingheader_date_and_time"/>
+      <th i18n:translate="history_details" i18n:domain="PloneMeeting"/>
+    </tr>
+    <tal:event repeat="event objs">
+    <tr tal:define="odd repeat/event/odd;
+                    rhComments event/comments|nothing;
+                    state event/review_state|nothing;
+                    isDataChange python: event['action'] == '_datachange_'"
+        tal:attributes="class python:test(odd, 'even', 'odd')" valign="top">
+      <td tal:condition="isDataChange">
+        <span i18n:translate="data_change"></span>
+        <img tal:condition="python: member.has_role('Manager')" style="cursor:pointer"
+             tal:attributes="src string:$portal_url/delete.png;
+                             onClick python: 'deleteEvent(\'%s\', \'%s\')' % (context.UID(), event['time'])"/>
+      </td>
+      <td tal:condition="not: isDataChange" tal:content="event/action" i18n:translate=""/>
+      <td tal:define="actorid python:event.get('actor');
+                      actor python:context.portal_membership.getMemberInfo(actorid);
+                      fullname actor/fullname|nothing;
+                      username actor/username|nothing"
+          tal:content="python:fullname or username or actorid"/>
+      <td tal:content="python:context.restrictedTraverse('@@plone').toLocalizedTime(event['time'],long_format=True)"/>
+      <td tal:condition="not: isDataChange"><tal:comment condition="rhComments" tal:content="structure rhComments"/>
+        <tal:noComment condition="not: rhComments" i18n:translate="no_comments" i18n:domain="plone"/></td>
+      <td tal:condition="isDataChange">
+        <tal:comment replace="nothing">
+          Display the previous values of the fields whose value were modified in this change.</tal:comment>
+        <table class="dataChanges" width="100%">
+          <tr>
+            <th align="left" width="30%" i18n:translate="modified_field"></th>
+            <th align="left" width="70%" i18n:translate="previous_value"></th>
+          </tr>
+          <tr tal:repeat="change event/changes/items" valign="top">
+            <tal:change define="field python:context.getField(change[0])">
+            <td tal:content="python: context.translate(field.widget.label_msgid, domain=field.widget.i18n_domain)"></td>
+            <td tal:content="structure python: change[1]"></td>
+            </tal:change>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    </tal:event>
+  </table>
+  </tal:history>
+</metal:history>
+
+<tal:comment replace="nothing">Object history</tal:comment>
+<tal:history metal:define-macro="objectHistory" i18n:domain="PloneMeeting"
+    tal:define="expanded python: request.get('objectHistory', 'collapsed') == 'expanded';
+                historyMaxPerPage python: 6;"
+    tal:condition="context/hasHistory">
+  <img align="left" style="cursor:pointer; margin-top: 3px" onClick="toggleBooleanCookie('objectHistory')"
+       tal:attributes="src python: expanded and 'treeExpanded.gif' or 'treeCollapsed.gif'"
+       id="objectHistory_img"/>&nbsp;
+  <i i18n:translate="label_history" i18n:domain="plone"></i><br/>
+  <span id="objectHistory"
+        tal:attributes="style python:test(expanded, 'display:block', 'display:none')">
+   <div tal:define="ajaxHookId python: context.UID() + '_history';"
+        tal:attributes="id ajaxHookId">
+      <script language="javascript" tal:content="python: 'askObjectHistory(\'%s\',\'%s\',%d,0)' % (ajaxHookId, context.absolute_url(), historyMaxPerPage)">
+      </script>
+   </div>
+  </span>
+</tal:history>

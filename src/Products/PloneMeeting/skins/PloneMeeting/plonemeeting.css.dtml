@@ -1,0 +1,509 @@
+/* <dtml-var "enableHTTPCompression(request=REQUEST, debug=1)"> */
+/* <dtml-with base_properties> */
+/* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
+
+/* PloneMeeting implementation of a selection box whose elements are icons + texts */
+fieldset {line-height: 1em; margin: 0.5em 0; }
+p {line-height: 1em;}
+.even { background-color: #f5f5f5; }
+.ploneMeetingSelectContainer{ float: left; }
+
+.ploneMeetingSelectButton {
+  cursor: pointer;
+  border: 1px solid &dtml-globalBorderColor;;
+  background-color: white;
+  padding: 0px;
+  color: &dtml-fontColor;;
+  text-align: left;
+  align:left;
+  width: auto;
+  height: 18px !important;
+  padding-right: 24px;
+}
+
+.ploneMeetingSelectBox {
+  cursor: pointer;
+  border-width: 1px;
+  border-color: &dtml-globalBorderColor;;
+  background-color: white;
+  padding: 0px;
+  font-height: 110%;
+  color: &dtml-fontColor;;
+  display: none;
+  position: absolute;
+  border-style: inset;
+  height: auto;
+  overflow: auto;
+  text-align: left;
+  width: auto;
+}
+
+.ploneMeetingSelectItem {
+  margin: 0px 1px 0px 1px;
+  width: 99%; /* If 100% a horizontal scrollbar is displayed */
+  vertical-align: top !important;
+}
+
+.ploneMeetingSelectItemUnselected {
+  background-color: &dtml-globalBackgroundColor;;
+}
+
+.ploneMeetingSelectImage {
+  max-height: 16px;
+  max-width: 16px;
+  vertical-align: top;
+}
+
+.ploneMeetingSelectDropdownIcon{
+  height: 16px;
+  background-image: url(<dtml-var portal_url>/drop_down.png);
+  background-repeat: no-repeat;
+  background-position: right;
+}
+.no-style-table {
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.no-style-table td {
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.itemsNavigation {margin-bottom: 0.3em; margin-top: 0.3em; }
+#archetypes-fieldname-title2 input { font-size: 160%; width:99%;}
+
+.pm_workflowstate {
+float: right;
+margin-top: -1.9em;
+}
+
+/* Colors on states */
+.state-active {}
+.state-inactive, .state-inactive a {color: red; }
+.state-created { color: red !important; }
+.state-proposed { color: #ff6c00 !important; }
+.state-validated { color: blue !important; }
+.state-presented { color: black !important; }
+.state-accepted { color: #64c168 !important; }
+.state-confirmed { color: green !important; }
+.state-delayed { color: grey !important; }
+.state-refused { color: violet !important; }
+.state-cloture { color: black !important; }
+.somethingtodo { color: red !important; }
+.selectRow { }
+.itemTitle { font-size: 100%; font-weight: bold; margin: 0.2em 0.1em 0 0.1em; }
+.itemDescription { margin: 0 0.1em; }
+.portletHs { border: 1px solid #8cacbb; }
+.portlet tr { height: 1.4em !important; }
+.portlet a:hover {text-decoration: underline; }
+.portletHeader { padding: 1px 0.5em; text-transform: none; font-weight: bold; }
+.portletSection {padding: 1px 0.5em 0 0.5em; font-weight: bold; height: 1.4em; }
+.portletCell { padding: 0 0.5em 0 1em; font-weight: normal; font-style: italic; }
+.portletSelected { font-weight: bold; }
+.field {margin: 0 1em 0.5em 0; }
+#portal-column-one .visualPadding { padding: 2em 0 1em 1em; }
+#portal-column-content { padding: 1em 0.5em 0 1em; }
+#portal-languageselector { float:right; margin: 0; font-size: 95%; }
+#portal-footer {margin: 1em 0 0.5em 0; padding: 0; }
+#portal-advanced-search {display: none; }
+
+/* Styles used for the annexes dropdown menus, derived from Plone styles
+   "contentAction" and "actionMenu" */
+.contentActionsAX { }
+.onTop { z-index: 20 !important; }
+.onBottom { z-index: 0 }
+.contentActionsAX td a { padding: 0 0.3em; border: 0 none white; }
+
+.actionItems li { background-image: none; }
+.actionMenuAX { position: relative; margin: 0; padding: 0; }
+.actionMenuAX .actionMenuHeaderAX { margin: 0; padding: 0; font-weight: normal; cursor: pointer; }
+.actionMenuAX.activated .actionMenuHeaderAX { position: relative; }
+.actionMenuAX .actionMenuHeaderAX a { display: inline; }
+.actionMenuAX.activated .actionMenuHeaderAX a,
+.actionMenuAX.deactivated .actionMenuHeaderAX a {
+  padding: 0 0.2em 0 0.2em !important;
+  cursor: pointer;
+  border: 0 none white;
+}
+
+.actionMenuDisabled { padding: 0 0.5em 0 0.5em !important; cursor: pointer; }
+.actionMenuAX .actionMenuContentAX {
+  display: none;
+  position: absolute;
+  top: 1.7em; /* Position of the popup menu relative to its "anchor"=the main menu) */
+  right: -1px;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.actionMenuAX .actionMenuContentAX ul {
+  display: block;
+  background-color: white;
+  border: 1px solid #CCCCCC;
+  margin: -1px 0 0 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.actionMenuAX.activated { z-index: 20; }
+.actionMenuAX.deactivated { z-index: 0; }
+.actionMenuAX.activated .actionMenuContentAX { z-index: 20; display: block !important; }
+.actionMenuAX.deactivated .actionMenuContentAX { display: none !important; }
+
+.actionMenuAX .actionMenuContentAX li {
+  float: none;
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.actionMenuAX .actionMenuContentAX li a {
+  display: block;
+  white-space: nowrap;
+  padding: 0 0.5em;
+  margin: 0.0em 0;
+}
+
+.actionMenuAX .actionMenuContentAX .selected {
+  display: block;
+  white-space: nowrap;
+  padding: 0 0.5em;
+  margin: 0.0em 0;
+}
+
+.actionMenuAX .actionMenuContentAX li a:hover { color: #436976; }
+
+.actionMenuAX .actionMenuContentAX .actionSeparator {
+  margin-top: 0.1em;
+  padding-top: 0.1em;
+  border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+}
+
+.actionMenuAX .actionMenuContentAX .actionSeparator div.currentDefaultPage {
+  margin-top: 0.2em;
+  padding: 0.2em 0.5em 0em 0.5em;
+  white-space: nowrap;
+  border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+}
+
+.actionMenuAX .actionMenuContentAX .actionSeparator div.actionLabel {
+  margin-top: 0.2em;
+  padding: 0.2em 0.5em 0em 0.5em;
+  white-space: nowrap;
+  border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+  background-color: &dtml-contentViewBorderColor;;
+  color: &dtml-contentViewBackgroundColor;;
+  cursor: default;
+}
+
+.actionMenuContentAdvice { width: 270px; }
+
+.contentBatchAction {
+  float: left !important;
+  padding: 0 0.5em;
+  border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+  border-right: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+  border-left: none !important;
+  border-collapse: collapse;
+  position: relative;
+  top: -1px;
+  margin-left: -0.5em !important;
+}
+
+#objectMenu.actionMenuAX .actionMenuContentAX li { display: block; }
+#objectMenu.actionMenuAX .actionMenuContentAX li,
+#objectMenu.actionMenuAX .actionMenuContentAX li a:hover {
+    background-position: 3px 50%;
+    margin-left: 0;
+}
+#objectMenu.actionMenuAX .actionMenuContentAX li a { padding-left: 22px; }
+
+.actionMenuSelected {
+  display: block;
+  cursor: default;
+  background-image: url(<dtml-var portal_url>/bullet_icon.gif);
+  background-repeat: no-repeat;
+  background-position: 0% 3px;
+  padding-left: 16px !important;
+}
+
+#templateMenu li a { padding-left: 16px; }
+.imageInput {border-width: 0px;  background: none; }
+input[type=radio] {margin: 0;}
+
+.noPadding {
+  padding-right: 0em !important;
+  padding-left: 0em !important;
+  padding-top: 0em !important;
+  padding-bottom: 0em !important;
+}
+
+.hsButton {
+  background: #DEE7EC none no-repeat scroll 0% 0%;
+  cursor: pointer;
+  font-size: 85%;
+  border: 1px solid #AEAEAE;
+  text-align: center;
+  height: 1.9em;
+  margin: 0 2px 0 0;
+}
+
+.hsButtonWF {
+  background-color: #DEE7EC;
+}
+
+/* Buttons used for worflow transitions can be designed button by button */
+.hsButtonWF_propose, .hsButtonWF_validate {
+  background-color: #DEE7EC;
+}
+
+.hsButtonAction {
+  background-color: #F4F6F7;
+}
+
+/* Buttons used for actions can be designed button by button */
+.hsButtonAction_delete, .hsButtonAction_deleteWholeMeeting, .hsButtonAction_duplicate {
+  background-color: #F4F6F7;
+}
+
+.fakeButton {
+  background: #ffd5c0 url(&dtml-portal_url;/fakeTransition.gif) no-repeat scroll 0% 0%;
+  font-style: italic;
+  cursor: help;
+  padding: 0 3px 0 9px;
+  height: 1.6em;
+  vertical-align: middle;
+}
+.hsCancel { background-color: white; }
+
+.listing { margin: 0em 0em !important; }
+#meeting_users td { padding: 0 0.4em 0 0.4em; }
+.image-right { border:0px solid Black; clear:both; float:right; margin:0.5em; }
+.documentByLine { margin-bottom:0.8em; }
+
+/* Styles for showing content (item, annexes) differently depending on the fact
+   that the user already consulted the last modifications on content or not. */
+#pmNewContent { color: Red; }
+#pmNoNewContent { color: #436976; }
+.pmLinks a:link {color: Red; text-decoration:none; }
+.pmLinks a:visited { color: #436976; text-decoration:none; }
+.documentContent { padding: 1em 0.5em 2.5em 1em !important; }
+.documentContent p a { border-bottom: 0px solid #CCCCCC; }
+.documentEditable { margin: 0; padding: 0 !important; }
+.searchItem { font-weight: normal; font-style: italic; }
+
+div.hsDialog {
+  display: none;
+  position: absolute;
+  top: 30%;
+  left: 35%;
+  width: 350px;
+  z-index : 100;
+  background: white;
+  padding: 8px;
+  border: 1px solid gray;
+}
+
+div.hsGrey {
+  display: none;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width:100%;
+  height:100%;
+  background:gray;
+  filter:alpha(Opacity=50);
+  opacity:0.5;
+  -moz-opacity:0.5;
+  -khtml-opacity:0.5
+}
+
+.hsActions {position: relative; top: 1.7em; right: 1.3em; z-index:10;}
+.hsCatId {font-style: italic; }
+.hsLanguage {position: absolute; right: 15px; font-style: italic; font-size: 95%;}
+legend .hsLanguage {top: -0.3em; right: 5px;}
+
+.hsPopup {
+  display:none;
+  border: 1px solid gray;
+  position: absolute;
+  background-color: white;
+  padding: 0.3em;
+  z-index: 5;
+  right: 10px;
+}
+
+.hsPopup a:hover {
+text-decoration: underline;
+}
+
+/* CSS for data changes in object histories. */
+.dataChanges { border: 0; }
+.dataChanges th {
+  font-style: italic;
+  background-color: transparent !important;
+  border: 0 none transparent !important;
+  padding: 0 !important;
+
+}
+
+.dataChanges td {
+  padding: 0.3em 0 0 0 !important;
+  border-top: 1px dashed grey !important;
+  border-right: 0 none transparent !important; 
+  border-left: 0 none transparent !important;
+  border-bottom: 0 none transparent !important; 
+}
+.highlight {background-color: yellow}
+
+/* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
+.highlightRedefinedValue {color: red;}
+
+/* CSS for MeetingItem.privacy */
+/* While displayed as a single item (meetingitem_view) */
+.item_privacy_public {
+color: green;
+}
+.item_privacy_secret {
+color: #FF934A;
+}
+/* While displayed in a Meeting */
+.meeting_item_privacy_secret {
+background-color: #E8E8E8;
+}
+.meeting_item_privacy_public {
+background-color: transparent;
+}
+
+/* CSS for portlet todo */
+.portletTodo dt {
+border: 0;
+}
+.portletTodo {
+border: 1px solid &dtml-globalBorderColor;;
+}
+.portletTodo .portletSection {
+margin: 0;
+padding-left: 0.5em;
+padding-top: 0.2em;
+padding-bottom: 0.2em;
+}
+.portletTodo .portletCell {
+margin: 0;
+padding-left: 1em;
+padding-top: 0.2em;
+padding-bottom: 0.2em;
+}
+
+.pod_template_icon_odt {
+background: transparent url(&dtml-portal_url;/odt.png) no-repeat scroll 0 3px;
+padding: 3px 0px 2px 20px;
+}
+
+.pod_template_icon_doc {
+background: transparent url(&dtml-portal_url;/doc.png) no-repeat scroll 0 3px;
+padding: 3px 0px 2px 20px;
+}
+
+.pod_template_icon_pdf {
+background: transparent url(&dtml-portal_url;/pdf.png) no-repeat scroll 0 3px;
+padding: 3px 0px 2px 20px;
+}
+
+.pod_template_icon_rtf {
+background: transparent url(&dtml-portal_url;/rtf.png) no-repeat scroll 0 3px;
+padding: 3px 0px 2px 20px;
+}
+
+.input_disabled {
+background: url("&dtml-portal_url;/linkOpaqueDisabled.gif") no-repeat scroll 9px 1px white !important;
+color: grey !important;
+border-color: lightgrey !important;
+cursor: not-allowed !important;
+}
+
+.toDiscussEditable, .itemIsSignedEditable {
+border-bottom: 2px dotted grey;
+padding-bottom: 2px;
+cursor:pointer;
+}
+
+/* </dtml-with> */
+
+/* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
+
+/* You can insert colors and other variables from Plone's 
+    base_properties by doing:
+    
+    & dtml-variableName ; (without the spaces, excluded here to not make it render)
+    
+    Example:
+    
+    myLink {
+        color: & dtml-fontColor ;   (again, without the spaces)
+    }
+ 
+   This means you can generate your own elements that use Plone's defaults,
+   and respect any customizations people have done. See base_properties for
+   the default values.
+ 
+   These are the available properties:
+   
+   logoName - the file name of the portal logo. 
+   
+   fontFamily - the font family used for all text that is not headers
+   
+   fontBaseSize - the base font size that everything is calculated from
+   
+   fontColor - the main font color
+   
+   backgroundColor - the background color 
+   
+   linkColor - the color used on normal links
+
+   linkActiveColor - color used on active links
+
+   linkVisitedColor - color used on visited links
+   
+   borderWidth - the width of most borders in Plone
+   
+   borderStyle - the style of the border lines, normally solid
+   
+   borderStyleAnnotations - style of border lines on comments etc
+   
+   globalBorderColor - the border color used on the main tabs, the portlets etc
+   
+   globalBackgroundColor - background color for the selected tabs, portlet headings etc
+   
+   globalFontColor - the color of the font in the tabs and in portlet headings
+   
+   headingFontFamily - font family for h1/h2/h3/h4/h5/h6 headlines.
+   
+   headingFontBaseSize - the base size used when calculating the different headline sizes
+   
+   contentViewBorderColor - the content view tabs border color
+   
+   contentViewBackgroundColor - the content view tabs background color
+   
+   contentViewFontColor - the font color used in the content view tabs
+   
+   textTransform - whether to lowercase text in portlets, tabs etc.
+   
+   evenRowBackgroundColor - the background color of even rows in listings
+   
+   oddRowBackgroundColor - the background color of even rows in listings
+   
+   notifyBorderColor - border color of notification elements like the status message, the calendar focus
+   
+   notifyBackgroundColor - background color of notification elements like the status message, the calendar focus
+   
+   discreetColor:string=#999999
+   helpBackgroundColor:string=#ffffe1
+ 
+ */
+
+

@@ -1,0 +1,340 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xml:lang="en-US" lang="en-US"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      metal:use-macro="here/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+
+<metal:js fill-slot="javascript_head_slot">
+  <script type="text/javascript" charset="iso-8859-1"
+          tal:attributes="src string:$portal_url/jscalendar/calendar.js">
+  </script>
+  <script type="text/javascript" charset="iso-8859-1"
+          tal:attributes="src string:$portal_url/jscalendar/calendar-en.js">
+  </script>
+</metal:js>
+<metal:css fill-slot="css_slot">
+  <style type="text/css" media="all"
+         tal:content="structure string:<!-- @import url($portal_url/jscalendar/calendar-system.css); -->">
+  </style>
+</metal:css>
+
+<body>
+  <tal:comment replace="nothing">Disable the Standard Plone green tab</tal:comment>
+  <div metal:fill-slot="top_slot">
+    <metal:block metal:use-macro="here/global_defines/macros/defines" />
+    <div tal:define="dummy python:request.set('disable_border', 1)" />
+  </div>
+
+  <metal:main fill-slot="main"
+     tal:define="tool python: context.portal_plonemeeting;
+                 meetingConfigs tool/getActiveConfigs;
+                 onlyOneConfig python: len(meetingConfigs) == 1;
+                 extApps python: tool.getActiveExternalApplications(usage='search');
+                 firstConfig python: meetingConfigs[0];
+                 associatedGroupsUsed python: tool.attributeIsUsed('item', 'associatedGroups');
+                 categoryUsed python: tool.attributeIsUsed('item', 'category');
+                 classifierUsed python: tool.attributeIsUsed('item', 'classifier');
+                 isArchiveSite tool/isArchiveSite">
+
+  <script language="javascript">
+  <!--
+  function askAllConfigData(configUrl, categoryUsed, classifierUsed) {
+    if (categoryUsed == 'True') {
+      askAjaxChunk('hook_categories', 'GET', configUrl, 'search_macros',
+                   'categories');
+    }
+    if (classifierUsed == 'True') {
+      askAjaxChunk('hook_classifiers', 'GET', configUrl, 'search_macros',
+                   'classifiers');
+    }
+  }
+  var cbChecked = new Array();
+  cbChecked['item_keywords_target'] = true;
+  cbChecked['search_types'] = true;
+  function toggleCheckboxes(cbType) {
+    var checkBoxes = document.getElementsByName(cbType);
+    var newValue = !cbChecked[cbType];
+    for (var i=0; i<checkBoxes.length; i++) {
+       checkBoxes[i].checked = newValue;
+       if (checkBoxes[i].id == 'search_type_items') toggleItemCriteria(checkBoxes[i]);
+    }
+    cbChecked[cbType] = newValue;
+  }
+  function toggleItemCriteria(checkbox){
+    var itemSpecificElements = document.getElementsByName('item_criteria');
+    var newValue = '';
+    if (!checkbox.checked) { newValue = 'none'; }
+    for (var i=0; i<itemSpecificElements.length; i++) {
+      itemSpecificElements[i].style.display = newValue;
+    }
+  }
+  -->
+  </script>
+
+  <h1 class="documentFirstHeading">
+    <span i18n:translate="search_advanced"></span>
+    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
+  </h1><br/>
+  <form name="pmSearchForm" method="post" action="search_results">
+    <table style="no-style-table" width="100%" cellspacing="0" cellpadding="0">
+      <tr valign="top">
+        <tal:comment replace="nothing">Keyword-related search options</tal:comment>
+        <td width="45%">
+          <label for="keywords" i18n:translate="search_words">Keywords</label>&nbsp;&nbsp;
+          <input type="text" size="40" name="keywords"/><br/><br class="discreet"/>
+
+          <img tal:attributes="src string: $portal_url/select_items.png" align="left"
+               i18n:attributes="title" title="pm_select_deselect"
+               onClick="javascript:toggleCheckboxes('search_types')" style="cursor:pointer"/>&nbsp;
+          <label i18n:translate="search_type_label"></label><br/>&nbsp;&nbsp;
+          <input type="checkbox" name="search_types" value="search_type_meetings" id="search_type_meetings"/>
+          <label for="search_type_meetings" i18n:translate="search_type_meetings" class="searchItem"></label>&nbsp;
+
+          <input type="checkbox" name="search_types" value="search_type_items" id="search_type_items"
+                 checked="checked" onClick="javascript:toggleItemCriteria(this)"/>
+          <label for="search_type_items" i18n:translate="search_type_items" class="searchItem"></label>&nbsp;
+
+          <input type="checkbox" name="search_types" value="search_type_annexes" id="search_type_annexes"/>
+          <label for="search_type_annexes" i18n:translate="search_type_annexes" class="searchItem"></label>&nbsp;
+        </td>
+        <tal:comment replace="nothing">Time interval for the search</tal:comment>
+        <td width="30%" tal:define="now python:DateTime();
+                                    siteStart tool/getSiteStartDate;
+                                    yearMin python: siteStart and (siteStart.year()-20) or (now.year()-20);
+                                    yearMax python: now.year()+1;
+                                    startDate python:siteStart and siteStart or (now-730)">
+          <label i18n:translate="search_time_period_label"></label><br class="discreet"/><br/>
+          <table style="no-style-table" cellpadding="0" cellspacing="0">
+
+            <tal:comment replace="nothing">"From" date</tal:comment>
+            <tr valign="middle">
+             <td><label i18n:translate="search_time_period_from" class="searchItem"></label>&nbsp;&nbsp;</td>
+             <td>
+               <input type="hidden" id="pmSearchForm_from_0" value="" name="from" originalvalue="">
+
+               <tal:comment replace="nothing">Day</tal:comment>
+               <span>
+                <select id="pmSearchForm_from_0_day" size="1" name="from_day">
+                 <option value="00">--</option>
+                 <tal:option repeat="day python: range(1, 32)">
+                   <option tal:define="value python: str(day).zfill(2)"
+                           tal:attributes="value value; selected python: day == startDate.day()"
+                           tal:content="value">
+                   </option>
+                 </tal:option>
+                </select>
+               </span>
+               <span>/</span>
+
+               <tal:comment replace="nothing">Month</tal:comment>
+               <span>
+                <select id="pmSearchForm_from_0_month" size="1" name="from_month">
+                 <option value="00">--</option>
+                 <tal:option repeat="month python: range(1, 13)">
+                  <option tal:define="value python: str(month).zfill(2)"
+                          tal:attributes="value value; selected python: month == startDate.month()"
+                          tal:content="value">
+                  </option>
+                 </tal:option>
+                </select>
+               </span>
+               <span>/</span>
+
+               <tal:comment replace="nothing">Year</tal:comment>
+               <span>
+                <select id="pmSearchForm_from_0_year" size="1" name="from_year">
+                 <option value="0000">--</option>
+                 <option tal:repeat="year python: range(yearMin, yearMax+1)"
+                         tal:attributes="value year; selected python: year == startDate.year()"
+                         tal:content="year">
+                 </option>
+                </select>
+               </span>
+               <a tal:attributes="onclick python: 'return plone.jscalendar.show(\'#pmSearchForm_from_0\', %s, %s)' % (yearMin, yearMax)">
+                <img title="Calendar" tal:attributes="src string: $portal_url/popup_calendar.gif">
+               </a>
+             </td>
+            </tr>
+            <tr><td colspan="4"><br class="discreet" /></td></tr>
+
+            <tal:comment replace="nothing">"To" date</tal:comment>
+            <tr>
+             <td><label i18n:translate="search_time_period_to" class="searchItem"></label>&nbsp;&nbsp;</td>
+             <td>
+               <input type="hidden" id="pmSearchForm_to_0" value="" name="to" originalvalue="">
+
+               <tal:comment replace="nothing">Day</tal:comment>
+               <span>
+                <select id="pmSearchForm_to_0_day" size="1" name="to_day">
+                 <option value="00">--</option>
+                 <tal:option repeat="day python: range(1, 32)">
+                   <option tal:define="value python: str(day).zfill(2)"
+                           tal:attributes="value value; selected python: day == now.day()"
+                           tal:content="value">
+                   </option>
+                 </tal:option>
+                </select>
+               </span>
+               <span>/</span>
+
+               <tal:comment replace="nothing">Month</tal:comment>
+               <span>
+                <select id="pmSearchForm_to_0_month" size="1" name="to_month">
+                 <option value="00">--</option>
+                 <tal:option repeat="month python: range(1, 13)">
+                  <option tal:define="value python: str(month).zfill(2)"
+                          tal:attributes="value value; selected python: month == now.month()"
+                          tal:content="value">
+                  </option>
+                 </tal:option>
+                </select>
+               </span>
+               <span>/</span>
+
+               <tal:comment replace="nothing">Year</tal:comment>
+               <span>
+                <select id="pmSearchForm_to_0_year" size="1" name="to_year">
+                 <option value="0000">--</option>
+                 <option tal:repeat="year python: range(yearMin, yearMax+1)"
+                         tal:attributes="value year; selected python: year == now.year()"
+                         tal:content="year">
+                 </option>
+                </select>
+               </span>
+               <a tal:attributes="onclick python: 'return plone.jscalendar.show(\'#pmSearchForm_to_0\', %s, %s)' % (yearMin, yearMax)">
+                <img title="Calendar" tal:attributes="src string: $portal_url/popup_calendar.gif">
+               </a>
+             </td>
+            </tr>
+          </table>
+        </td>
+        <tal:comment replace="nothing">What meeting configs and site to include in the search?</tal:comment>
+        <td width="25%">
+          <tal:chooseMeetingConfig condition="not: onlyOneConfig">
+            <label i18n:translate="search_config_label"></label><br class="discreet"/>
+            <tal:meetingConfig repeat="meetingConfig meetingConfigs">
+              <input type="radio" class="noborder" name="search_config"
+                     tal:attributes="value meetingConfig/id; id meetingConfig/id;
+                                     checked python: meetingConfigs.index(meetingConfig)==0;
+                                     onClick python: 'askAllConfigData(\'%s\', \'%s\',\'%s\')' % (meetingConfig.absolute_url(), categoryUsed, classifierUsed)"/>
+              <label tal:attributes="for meetingConfig/id" tal:content="meetingConfig/Title" class="searchItem"></label><br/>
+            </tal:meetingConfig>
+          </tal:chooseMeetingConfig>
+          <tal:onlyOneConfig condition="onlyOneConfig">
+            <input type="hidden" name="search_config"
+                   tal:attributes="value python: meetingConfigs[0].id; id python:meetingConfigs[0].id"/>
+          </tal:onlyOneConfig>
+          <tal:chooseSite condition="python: len(extApps) &gt; 0">
+          <br tal:condition="not: onlyOneConfig"/>
+          <label i18n:translate="search_site_label"></label><br class="discreet"/>
+          <select name="search_site">
+            <option i18n:translate="search_site_local" value="_local"></option>
+            <option tal:repeat="extApp extApps" tal:attributes="value extApp/getId" tal:content="extApp/Title">
+            </option>
+          </select>
+          </tal:chooseSite>
+        </td>
+      </tr>
+      <tr name="item_criteria">
+        <td colspan="3"><br class="discreet"/><h2 i18n:translate="search_criteria_item">Criteria</h2></td>
+      </tr>
+      <tr name="item_criteria" tal:condition="tool/getShowItemKeywordsTargets">
+        <tal:comment replace="nothing">Keyword-related search options</tal:comment>
+        <td colspan="3">
+          <label i18n:translate="search_keywords"></label><br class="discreet"/>&nbsp;&nbsp;
+
+          <input type="radio" name="item_keywords_target" value="Title" id="item_Title"/>
+          <label for="item_Title" i18n:translate="PloneMeeting_label_title" class="noborder"></label>&nbsp;
+
+          <input type="radio" name="item_keywords_target" value="Description" id="item_Description"/>
+          <label for="item_Description" i18n:translate="PloneMeeting_label_description" class="noborder"></label>&nbsp;
+
+          <input type="radio" name="item_keywords_target" value="getDecision" id="item_getDecision"/>
+          <label for="item_getDecision" i18n:translate="PloneMeeting_label_decision" class="noborder"></label>&nbsp;
+
+          <input type="radio" name="item_keywords_target" value="all" id="item_all" checked="checked"/>
+          <label for="item_all" i18n:translate="hs_all" class="noborder"></label><br/><br/>
+        </td>
+      </tr>
+      <tr name="item_criteria">
+        <td colspan="3">
+          <div i18n:translate="search_select_many"></div><br/>
+          <tal:comment replace="nothing">Item-specific search criteria</tal:comment>
+          <table style="no-style-table" cellspacing="0" cellpadding="0" align="center"
+                 tal:define="groupInfos tool/getMeetingGroupsForSearch">
+            <tr valign="top">
+              <td> <tal:comment replace="nothing">Proposing groups</tal:comment>
+                <label for="proposingGroups" i18n:translate="PloneMeeting_label_proposingGroup"></label><br/><br/>
+                <select name="proposingGroups" multiple="multiple" size="7">
+                  <option tal:repeat="groupInfo python:groupInfos[0]"
+                          tal:attributes="value python: groupInfo[0]; title python: groupInfo[1]"
+                          tal:content="python: tool.truncate(groupInfo[1])">
+                  </option>
+                </select>&nbsp;&nbsp;&nbsp;&nbsp;
+              </td>
+              <td tal:condition="associatedGroupsUsed">
+                <tal:comment replace="nothing">Associated groups</tal:comment>
+                <label for="associatedGroups" i18n:translate="PloneMeeting_label_associatedGroups"></label><br/>
+                <tal:comment replace="nothing">And/or selector (only if no duplicate group).</tal:comment>
+                <tal:endOr condition="python: not groupInfos[1]">
+                  <input type="radio" class="noborder" name="ag_operator" id="ag_operator_or"
+                         value="or" checked="checked"/>
+                  <label for="ag_operator_or" i18n:translate="search_or" class="searchItem"></label>
+                  <input type="radio" class="noborder" name="ag_operator" id="ag_operator_and" value="and"/>
+                  <label for="ag_operator_and" i18n:translate="search_and" class="searchItem"></label><br/>
+                </tal:endOr>
+                <br tal:condition="python: groupInfos[1]"/>
+                <select name="associatedGroups" multiple="multiple" size="7">
+                  <option tal:repeat="groupInfo python:groupInfos[0]"
+                          tal:attributes="value python: groupInfo[0]; title python: groupInfo[1]"
+                          tal:content="python: tool.truncate(groupInfo[1])">
+                  </option>
+                </select>&nbsp;&nbsp;&nbsp;&nbsp;
+              </td>
+              <tal:comment replace="nothing">Item state</tal:comment>
+              <td tal:define="searchItemStates tool/getSearchItemStates"
+                  tal:condition="python: not isArchiveSite and searchItemStates">
+                <label i18n:translate="item_state"></label><br/><br/>
+                <select name="itemState" multiple="multiple" size="7">
+                  <tal:options repeat="stateInfo python: firstConfig.listStates('Item')">
+                   <option tal:condition="python: stateInfo[0] in searchItemStates"
+                           tal:attributes="value python: stateInfo[0]; title python: stateInfo[1]"
+                           tal:content="python: tool.truncate(stateInfo[1])">
+                   </option>
+                  </tal:options>
+                </select>
+              </td>
+            </tr>
+          </table>
+          <table style="no-style-table" cellspacing="0" cellpadding="0" align="center">
+            <tr tal:condition="python: categoryUsed or classifierUsed">
+              <td tal:condition="categoryUsed">
+               <tal:comment replace="nothing">Categories</tal:comment>
+               <br/><label for="categories" i18n:translate="PloneMeeting_label_category"></label><br/>
+               <span id="hook_categories"></span>&nbsp;&nbsp;&nbsp;&nbsp;
+              </td>
+              <td tal:condition="classifierUsed">
+                <tal:comment replace="nothing">Classifiers</tal:comment>
+                <br/><label for="classifiers" i18n:translate="PloneMeeting_label_classifier"></label><br/>
+                <span id="hook_classifiers"></span>&nbsp;&nbsp;&nbsp;&nbsp;
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr align="right">
+        <td colspan="3"><br class="discreet"/>
+          <input type="submit" name="performSearch" value="Search"
+                 i18n:attributes="value" i18n:domain="plone"/>
+        </td>
+      </tr>
+    </table>
+  </form>
+  <script language="javascript"
+          tal:content="python: 'askAllConfigData(\'%s\',\'%s\',\'%s\')' % (firstConfig.absolute_url(), categoryUsed, classifierUsed)">
+  </script>
+  </metal:main>
+</body>
+</html>

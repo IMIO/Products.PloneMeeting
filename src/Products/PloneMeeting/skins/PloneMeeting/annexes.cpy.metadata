@@ -1,0 +1,3 @@
+[actions]
+action.success=traverse_to:python:test(request.get('decisionRelated')=='True', 'annexes_decision_form', 'annexes_form')
+action.failure=traverse_to:python:test(request.get('decisionRelated')=='True', 'annexes_decision_form', 'annexes_form')

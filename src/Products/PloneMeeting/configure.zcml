@@ -1,0 +1,67 @@
+<configure xmlns="http://namespaces.zope.org/zope"
+           xmlns:browser="http://namespaces.zope.org/browser"
+           xmlns:five="http://namespaces.zope.org/five"
+           xmlns:i18n="http://namespaces.zope.org/i18n"
+           i18n_domain="PloneMeeting">
+
+  <!-- ##code-section configure.zcml.header -->
+  <include package=".browser" />
+  <adapter for=".interfaces.IMeetingItem"
+           factory=".MeetingItem.MeetingItemWorkflowConditions"
+           provides=".interfaces.IMeetingItemWorkflowConditions" />
+  <adapter for=".interfaces.IMeetingItem"
+           factory=".MeetingItem.MeetingItemWorkflowActions"
+           provides=".interfaces.IMeetingItemWorkflowActions" />
+  <adapter for=".interfaces.IMeeting"
+           factory=".Meeting.MeetingWorkflowConditions"
+           provides=".interfaces.IMeetingWorkflowConditions" />
+  <adapter for=".interfaces.IMeeting"
+           factory=".Meeting.MeetingWorkflowActions"
+           provides=".interfaces.IMeetingWorkflowActions" />
+
+  <subscriber for=".interfaces.IMeetingItem
+                   zope.app.container.interfaces.IObjectAddedEvent"
+              handler=".MeetingItem.onAddMeetingItem"/>
+
+  <subscriber for=".interfaces.IMeeting
+                   zope.app.container.interfaces.IObjectAddedEvent"
+              handler=".Meeting.onAddMeeting"/>
+
+  <subscriber for=".interfaces.IMeetingItem
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".setuphandlers.onItemTransition"/>
+
+  <subscriber for=".interfaces.IMeeting
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".setuphandlers.onMeetingTransition"/>
+
+  <subscriber for=".interfaces.IMeetingGroup
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".setuphandlers.onMeetingGroupTransition"/>
+
+  <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
+  <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
+  <five:deprecatedManageAddDelete class=".MeetingFile.MeetingFile" />
+  <five:deprecatedManageAddDelete class=".MeetingFileType.MeetingFileType" />
+  <five:deprecatedManageAddDelete
+                             class=".ExternalApplication.ExternalApplication" />
+  <five:deprecatedManageAddDelete class=".MeetingCategory.MeetingCategory" />
+  <five:deprecatedManageAddDelete class=".MeetingGroup.MeetingGroup" />
+  <five:deprecatedManageAddDelete class=".MeetingConfig.MeetingConfig" />
+  <five:deprecatedManageAddDelete class=".MeetingUser.MeetingUser" />
+  <five:deprecatedManageAddDelete class=".PodTemplate.PodTemplate" />
+  <five:deprecatedManageAddDelete class=".Searcher.Searcher" />
+  <five:deprecatedManageAddDelete class=".ToolPloneMeeting.ToolPloneMeeting" />
+
+  <!-- ##/code-section configure.zcml.header -->
+
+  <i18n:registerTranslations directory="locales" />
+
+  <include file="profiles.zcml" />
+
+
+
+  <!-- ##code-section configure.zcml -->
+  <!-- ##/code-section configure.zcml -->
+
+</configure>
