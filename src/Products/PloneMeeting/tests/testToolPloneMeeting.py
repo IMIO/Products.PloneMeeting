@@ -45,10 +45,18 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         login(self.portal, 'admin')
         # Create a new MeetingGroup
         newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
+        newGroupId = newGroup.getId()
         self.tool.REQUEST['template_id'] = '.'
-        self.tool.folder_position(position='up', id=newGroup.id,template_id='.')
-        self.assertEquals(self.tool.objectIds()[1:5],
-                          ['developers', 'vendors', 'o1', 'endUsers'])
+        # As scripts in portal_skins are not acquirable in tests, make like if it was a method of the tool
+        folder_position = self.portal.portal_skins.PloneMeeting_plone.folder_position
+        self.tool.folder_position = folder_position
+        # After creation, the new MeetingGroup is in last position
+        self.assertEquals(self.tool.objectIds('MeetingGroup'),
+                          ['developers', 'vendors', 'endUsers', newGroupId])
+        # Move the new MeetingGroup one position up
+        self.tool.folder_position(position='up', id=newGroupId, template_id='.')
+        self.assertEquals(self.tool.objectIds('MeetingGroup'),
+                          ['developers', 'vendors', newGroupId, 'endUsers'])
 
     def testCloneItem(self):
         '''Clones a given item in parent item folder.'''

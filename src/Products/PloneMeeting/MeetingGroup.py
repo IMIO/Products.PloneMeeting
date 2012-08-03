@@ -206,7 +206,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             'default_charset')
         groupTitle = '%s (%s)' % (
             self.Title().decode(enc),
-            translate(groupSuffix, domain='PloneMeeting', context=self))
+            translate(groupSuffix, domain='PloneMeeting', context=self.REQUEST))
         # a default Plone group title is NOT unicode.  If a Plone group title is
         # edited TTW, his title is no more unicode if it was previously...
         # make sure we behave like Plone...
