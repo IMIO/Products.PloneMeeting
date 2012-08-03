@@ -9,6 +9,8 @@
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="communesplone.iconified_document_actions"/>
 
+  <i18n:registerTranslations directory="locales" />
+
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
            provides=".interfaces.IMeetingItemWorkflowConditions" />
