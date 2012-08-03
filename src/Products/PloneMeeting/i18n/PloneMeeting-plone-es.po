@@ -700,6 +700,10 @@ msgstr "Publicado de nuevo"
 msgid "republish_done_descr"
 msgstr "La agenda de reunión han sido publicada otra ves."
 
+#. Default: "Unable to send this item to the ${meetingConfigTitle} meetingConfig because the user to create the item to does not have a personal folder in this meetingConfig.  If necessary, the concerned user can connect for this folder to be created automatically."
+msgid "sendto_inexistent_destfolder_error"
+msgstr ""
+
 #. Default: "The item has been successfully transfered to the plonegov assembly."
 msgid "sendto_plonegov-assembly_success"
 msgstr ""

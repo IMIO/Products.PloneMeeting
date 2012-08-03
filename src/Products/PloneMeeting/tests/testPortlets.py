@@ -24,6 +24,7 @@
 
 from zope.component import getUtility, getMultiAdapter
 from plone.portlets.interfaces import IPortletManager, IPortletRenderer
+from plone.app.testing import login
 from Products.PloneMeeting.browser import portlet_plonemeeting as pm
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
@@ -40,7 +41,7 @@ class testPortlets(PloneMeetingTestCase):
            returning available item templates for current user.
            template1 is available to everyone but template2 is restricted to group 'vendors'.'''
         # pmCreator1 is member of 'developers'
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         self.getMeetingFolder()
         context = getattr(self.portal.Members.pmCreator1.mymeetings, self.meetingConfig.getId())
         request = self.portal.REQUEST
@@ -50,7 +51,7 @@ class testPortlets(PloneMeetingTestCase):
         renderer = getMultiAdapter((context, request, view, manager, assignment), IPortletRenderer)
         self.assertEquals(['template1',], [template.getId() for template in renderer.getTemplateItems()])
         # pmCreator2 is member of 'vendors' and can so access template2 that is restricted to 'vendors'
-        self.login('pmCreator2')
+        login(self.portal, 'pmCreator2')
         self.getMeetingFolder()
         context = getattr(self.portal.Members.pmCreator2.mymeetings, self.meetingConfig.getId())
         request = self.portal.REQUEST

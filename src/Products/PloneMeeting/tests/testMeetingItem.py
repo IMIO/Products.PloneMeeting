@@ -25,6 +25,8 @@
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from zope.annotation.interfaces import IAnnotations
+from plone.app.testing import login
+from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -43,14 +45,14 @@ class testMeetingItem(PloneMeetingTestCase):
            between MeetingCategory.usingGroups and current member
            proposingGroups is not empty.'''
         # Use MeetingCategory as categories
-        self.login('admin')
+        login(self.portal, 'admin')
         # Use the 'plonegov-assembly' meetingConfig
         self.setMeetingConfig(self.meetingConfig2.getId())
         self.meetingConfig.classifiers.invokeFactory('MeetingCategory', id='class1', title='Classifier 1')
         self.meetingConfig.classifiers.invokeFactory('MeetingCategory', id='class2', title='Classifier 2')
         self.meetingConfig.classifiers.invokeFactory('MeetingCategory', id='class3', title='Classifier 3')
         # create an item for test
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         item = self.create('MeetingItem')
         expectedCategories = ['deployment', 'maintenance', 'development', 'events', 'research', 'projects', ]
         expectedClassifiers = ['class1', 'class2', 'class3', ]
@@ -62,22 +64,22 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True)] == expectedClassifiers)
         self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True,item=item)] == expectedClassifiers)
         # Deactivate a category and a classifier
-        self.login('admin')
+        login(self.portal, 'admin')
         self.wfTool.doActionFor(self.meetingConfig.categories.deployment, 'deactivate')
         self.wfTool.doActionFor(self.meetingConfig.classifiers.class2, 'deactivate')
         expectedCategories.remove('deployment') 
         expectedClassifiers.remove('class2') 
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
         self.failUnless([cat.id for cat in self.meetingConfig.getCategories()] == expectedCategories)
         self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True)] == expectedClassifiers)
         self.failUnless([cat.id for cat in self.meetingConfig.getCategories(item=item)] == expectedCategories)
         self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True,item=item)] == expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
-        self.login('admin')
+        login(self.portal, 'admin')
         self.meetingConfig.categories.maintenance.setUsingGroups(('vendors',))
         self.meetingConfig.classifiers.class1.setUsingGroups(('vendors',))
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         # A category defined for a given group will not be returned for a given item
         self.failUnless([cat.id for cat in self.meetingConfig.getCategories()] == expectedCategories)
         self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True)] == expectedClassifiers)
@@ -105,7 +107,7 @@ class testMeetingItem(PloneMeetingTestCase):
         #check with an list of user the current user is not in
         self.tool.setColorSystemDisabledFor("user1\nuser2\nuser3")
         #login as a user that is not in the list here above
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         #check with no colorization
         self.tool.setUsedColorSystem('no_color')
         self.assertEquals(self.tool.showColorsForUser(), False)
@@ -117,10 +119,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(self.tool.showColorsForUser(), True)
 
         #check with an list of user the current user is in
-        self.login('admin')
+        login(self.portal, 'admin')
         self.tool.setColorSystemDisabledFor("user1\nuser2\nuser3\npmCreator1")
         #login as a user that is not in the list here above
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         #check with no colorization
         self.tool.setUsedColorSystem('no_color')
         self.assertEquals(self.tool.showColorsForUser(), False)
@@ -141,7 +143,7 @@ class testMeetingItem(PloneMeetingTestCase):
         #check with no colorization
         self.tool.setUsedColorSystem('no_color')
         #create an item for test
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         item = self.create('MeetingItem')
         item.setTitle('item_title')
         #here, the resulting item should not be colored
@@ -152,19 +154,19 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(self.tool.getColoredLink(item, showColors),
             '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
             (url, title, content))
-        self.login('admin')
+        login(self.portal, 'admin')
         #use colors depdending on item workflow state
         self.tool.setUsedColorSystem('state_color')
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         showColors = self.tool.showColorsForUser()
         wf_class = "state-" + item.queryState()
         self.assertEquals(self.tool.getColoredLink(item, showColors),
             '<a href="%s" title="%s" class="%s">%s</a>' % \
             (url, title, wf_class, content))
-        self.login('admin')
+        login(self.portal, 'admin')
         #use colors depdending on item modification
         self.tool.setUsedColorSystem('modification_color')
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         # Now that we are in modification_color mode, we have to remember the
         # access.
         self.tool.rememberAccess(uid = item.UID(), commitNeeded=False)
@@ -175,13 +177,13 @@ class testMeetingItem(PloneMeetingTestCase):
             '<a href="%s" title="%s"%s>%s</a>' % \
             (url, title, " id=\"pmNoNewContent\"", content))
         #change the item and check if the color appear for pmCreator1
-        self.login('admin')
+        login(self.portal, 'admin')
         #use process_form
         self.portal.REQUEST.set('title', 'my_new_title')
         self.portal.REQUEST.set('description', 'description')
         item.processForm()
         item.at_post_edit_script()
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         showColors = self.tool.showColorsForUser()
         #as 'admin' changed the content, it must be colored to 'pmCreator1'
         self.failIf('pmNoNewContent' in \
@@ -194,7 +196,7 @@ class testMeetingItem(PloneMeetingTestCase):
         #check with no colorization
         self.tool.setUsedColorSystem('no_color')
         #create an item for test
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         item = self.create('MeetingItem')
         item.setTitle('item_title')
         #here, the resulting item should not be colored
@@ -205,19 +207,19 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(self.tool.getColoredLink(item, showColors),
             '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
             (url, title, content))
-        self.login('admin')
+        login(self.portal, 'admin')
         #use colors depdending on item workflow state
         self.tool.setUsedColorSystem('state_color')
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         showColors = self.tool.showColorsForUser()
         wf_class = "state-" + item.queryState()
         self.assertEquals(self.tool.getColoredLink(item, showColors),
             '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
             (url, title, content))
-        self.login('admin')
+        login(self.portal, 'admin')
         #use colors depdending on item modification
         self.tool.setUsedColorSystem('modification_color')
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         # Now that we are in modification_color mode, we have to remember the
         # access
         self.tool.rememberAccess(uid = item.UID(), commitNeeded=False)
@@ -228,9 +230,9 @@ class testMeetingItem(PloneMeetingTestCase):
             '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
             (url, title, content))
         #change the item and check if the color appear for pmCreator1
-        self.login('admin')
+        login(self.portal, 'admin')
         item.at_post_edit_script()
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         self.assertEquals(self.tool.getColoredLink(item, showColors),
             '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
             (url, title, content))
@@ -248,14 +250,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # test the bug of ticket #643
         #adapt the pmReviewer1 user : add him to a creator group and create is
         # personal folder.
-        self.login('admin')
+        login(self.portal, 'admin')
         #pmReviser1 is member of developer_reviewers and developers_observers
         #add him to a creator group different from his reviwer group
         vcGroup = self.portal.portal_groups.getGroupById('vendors_creators')
         vcGroup.addMember('pmReviewer1')
         #create his personnal zone because he is a creator now
-        self.createMemberarea('pmReviewer1')
-        self.login('pmReviewer1')
+        _createHomeFolder(self.portal, 'pmReviewer1')
+        login(self.portal, 'pmReviewer1')
         item = self.create('MeetingItem')
         self.assertEquals(tuple(item.listProposingGroup()), ('vendors', ))
 
@@ -264,7 +266,7 @@ class testMeetingItem(PloneMeetingTestCase):
         #check MeetingConfig behaviour
         #while activating a meetingConfig to send items to, an action and an
         #actionicon are created.  While deactivated, theses actions disappear
-        self.login('admin')
+        login(self.portal, 'admin')
         self.meetingConfig.setUseGroupsAsCategories(False)
         typeName = self.meetingConfig.getItemTypeName()
         meetingConfigId = self.meetingConfig.getId()
@@ -292,11 +294,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # the item is sendable if it is 'accepted', the user is a MeetingManager,
         # the destMeetingConfig is selected in the MeetingItem.otherMeetingConfigsClonableTo
         # and it has not already been sent to this other meetingConfig
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
         m1 = self.create('Meeting', date=meetingDate)
         #a creator creates an item
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         i1.setCategory('development')
         i1.setDecision('<p>My decision</p>', mimetype='text/html')
@@ -305,13 +307,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(i1, i1.wfConditions().transitionsForPresentingAnItem[0])
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         #his reviewer validate it
-        self.login('pmReviewer1')
+        login(self.portal, 'pmReviewer1')
         #trigger transitions until the item is in state 'validated'
         while not i1.queryState() == 'validated':
             for tr in i1.wfConditions().transitionsForPresentingAnItem[1:-1]:
                 self.do(i1, tr)
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         self.do(i1, 'present')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -328,23 +330,34 @@ class testMeetingItem(PloneMeetingTestCase):
         #now it is sendable by a MeetingManager
         self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         #but not by the creator
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         #no more by the reviewer
-        self.login('pmReviewer1')
+        login(self.portal, 'pmReviewer1')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         #if not activated in the config, it is not sendable anymore
-        self.login('admin')
+        login(self.portal, 'admin')
         self.meetingConfig.setMeetingConfigsToCloneTo(())
         self.meetingConfig.at_post_edit_script()
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
 
         #ok, activate it and send it!
-        self.login('admin')
+        login(self.portal, 'admin')
         self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
         self.meetingConfig.at_post_edit_script()
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
+        self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
+        i1.cloneToOtherMeetingConfig(otherMeetingConfigId)
+        #the item has not been created because the destination folder to create the item in does not exist
+        annotations = IAnnotations(i1)
+        annotationKey = i1._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
+        self.failIf(annotations.has_key(annotationKey))
+        #now create the destination folder so we can send the item
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(otherMeetingConfigId)
+        #try again
+        login(self.portal, 'pmManager')
         self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         i1.cloneToOtherMeetingConfig(otherMeetingConfigId)
         #the item as been sent to another mc
@@ -369,7 +382,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(newItem.getCategory() == i1.getCategory())
         #if we remove the newItem, the reference in the original item annotation is removed
         #and the original item is sendable again
-        self.portal.delete_givenuid(newUID)
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(newUID)
         self.failIf(annotations.has_key(annotationKey))
         self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # An item is automatically sent to the other meetingConfigs when it is 'accepted'
@@ -398,7 +411,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # MeetingItem.itemPositiveDecidedStates
         # by default, the only positive state is 'accepted'
         for state in MeetingItem.itemPositiveDecidedStates:
-            self.portal.delete_givenuid(newUID)
+            self.portal.portal_skins.PloneMeeting.delete_givenuid(newUID)
             self.do(i1, 'backToItemFrozen')
             self.failIf(i1._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
             self.do(i1, self._getTransitionToReachState(i1, state))
@@ -429,7 +442,7 @@ class testMeetingItem(PloneMeetingTestCase):
            the TAL expression defined on every MeetingGroup.asCopyGroupOn.'''
         # Use the 'plonegov-assembly' meetingConfig
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         # By default, adding an item does not add any copyGroup
         i1 = self.create('MeetingItem')
         self.failIf(i1.getCopyGroups())
@@ -437,13 +450,13 @@ class testMeetingItem(PloneMeetingTestCase):
         i2 = self.create('MeetingItem', copyGroups=self.meetingConfig.getSelectableCopyGroups())
         self.failUnless(i2.getCopyGroups() == self.meetingConfig.getSelectableCopyGroups())
         # Now, define on a MeetingGroup of the config that it will returns a particular suffixed group
-        self.login('admin')
+        login(self.portal, 'admin')
         # If an item with proposing group 'vendors' is created, the 'reviewers' and 'advisers' of
         # the developers will be set as copyGroups.  That is what the expression says, but in reality,
         # only the 'developers_reviewers' will be set as copyGroups as the 'developers_advisers' are
         # not in the meetingConfig.selectableCopyGroups
         self.meetingConfig.developers.setAsCopyGroupOn("python: item.getProposingGroup() == 'vendors' and ['reviewers', 'advisers', ] or []")
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         # Creating an item with the default proposingGroup ('developers') does nothing
         i3 = self.create('MeetingItem')
         self.failIf(i3.getCopyGroups())
@@ -464,7 +477,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.setMeetingConfig(self.meetingConfig2.getId())
         mtool = getToolByName(self.portal, 'portal_membership')
         authMember = mtool.getAuthenticatedMember
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         item = self.create('MeetingItem')
         item.setCategory('development')
         item.setDecision('<p>My decision</p>', mimetype='text/html')

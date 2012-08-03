@@ -2,7 +2,7 @@
 #
 # File: testToolPloneMeeting.py
 #
-# Copyright (c) 2007 by PloneGov
+# Copyright (c) 2007-2012 by PloneGov
 #
 # GNU General Public License (GPL)
 #
@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from plone.app.testing import login
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
@@ -41,7 +42,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         '''Tests changing MeetingGroup and MeetingConfig order within the tool.
            This is more coplex than it seems at first glance because groups and
            configs are mixed together within the tool.'''
-        self.login('admin')
+        login(self.portal, 'admin')
         # Create a new MeetingGroup
         newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
         self.tool.REQUEST['template_id'] = '.'
@@ -51,7 +52,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def testCloneItem(self):
         '''Clones a given item in parent item folder.'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         item1 = self.create('MeetingItem')
         item1.setItemKeywords('My keywords')
         item1.setTitle('My title')
@@ -73,7 +74,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.failUnless(clonedItem.getPreferredMeeting() == ITEM_NO_PREFERRED_MEETING_VALUE)
         # Test that an item viewable by a different user (another member of the
         # same group) can be pasted too. item1 is viewable by pmCreator1 too.
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         clonedItem = item1.clone()
         # The item is cloned in the pmCreator1 personnal folder.
         self.assertEquals(
@@ -81,7 +82,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def testCloneItemWithContent(self):
         '''Clones a given item containing annexes in parent item folder.'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         item1 = self.create('MeetingItem')
         # Add one annex
         self.addAnnex(item1)
@@ -96,7 +97,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Test that an item viewable by a different user (another member of the
         # same group) can be pasted too if it contains things. item1 is viewable
         # by pmCreator1 too. And Also tests cloning without annex copying.
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         clonedItem = item1.clone(copyAnnexes=False)
         self.assertEquals(set([clonedItem]),
             set(clonedItem.getParentNode().objectValues()))
@@ -107,7 +108,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            if the contained objects are not removable, they are removed.
            Now we use removeGivenObject to remove contained objects of
            copied items.'''
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         item = self.create('MeetingItem')
         # Add one annex
         self.addAnnex(item)
@@ -115,7 +116,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.do(item, 'propose')
         self.changeUser('pmReviewer1')
         self.do(item, 'validate')
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         clonedItem = item.clone()
         # The item is cloned in the pmCreator1 personal folder. We should
         # have now two elements in the folder
@@ -124,7 +125,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def testPasteItems(self):
         '''Paste objects (previously copied) in destFolder.'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
         destFolder = item1.getParentNode()
@@ -149,22 +150,22 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), False)
         self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), False)
         # every roles of the application can see the tabs
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), True)
         self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), True)
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), True)
         self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), True)
-        self.login('pmReviewer1')
+        login(self.portal, 'pmReviewer1')
         self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), True)
         self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), True)
         # If a wrong meetingConfigId is passed, it returns False
         self.assertEquals(self.tool.showPloneMeetingTab('wrong-meeting-config-id'), False)
         # If we disable one meetingConfig, no more tab is shown, there must be
         # at least 2 active meetingConfigs for the tabs to be displayed
-        self.login('admin')
+        login(self.portal, 'admin')
         self.do(getattr(self.tool, 'plonegov-assembly'), 'deactivate')
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), False)
         # Even an activated meetingConfig will not show his tab if it is alone...
         self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), False)

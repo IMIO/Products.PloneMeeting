@@ -743,6 +743,10 @@ msgstr ""
 msgid "sentto_othermeetingconfig"
 msgstr ""
 
+#. Default: "Unable to send this item to the ${meetingConfigTitle} meetingConfig because the user to create the item to does not have a personal folder in this meetingConfig.  If necessary, the concerned user can connect for this folder to be created automatically."
+msgid "sendto_inexistent_destfolder_error"
+msgstr ""
+
 #. Default: "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups."
 msgid "meetinggroup_users_transfered_to_observers_plonegroup_if_disabled"
 msgstr ""

@@ -33,6 +33,7 @@ from App.class_init import InitializeClass
 from OFS.ObjectManager import BeforeDeleteException
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from zope.annotation.interfaces import IAnnotations
+from zope.i18n import translate
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import \
@@ -231,7 +232,8 @@ class MeetingItemWorkflowConditions:
             # Verify if all mandatory advices have been given on this item.
             if self.context.enforceAdviceMandatoriness() and \
                not self.context.mandatoryAdvicesAreOk():
-                res = No(self.context.translate('mandatory_advice_ko'))
+                res = No(self.context.translate('mandatory_advice_ko', domain="plone",
+                                                context=self.context.REQUEST))
         return res
 
     security.declarePublic('mayDecide')
@@ -247,8 +249,8 @@ class MeetingItemWorkflowConditions:
                     res = True
                 else:
                     itemNumber= self.context.getItemNumber(relativeTo='meeting')
-                    res = No(self.context.translate('decision_is_empty',
-                             {'itemNumber': itemNumber}))
+                    res = No(translate('decision_is_empty', mapping={'itemNumber': itemNumber},
+                                       domain="plone", context=self.context.REQUEST))
         return res
 
     security.declarePublic('mayDelay')
@@ -992,19 +994,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # it was displayed as radio buttons...  Category use 'flex' format
         if (not meetingConfig.getUseGroupsAsCategories()) and \
            (value == '_none_' or not value):
-            return self.translate('category_required', domain='PloneMeeting')
+            return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
     def validate_proposingGroup(self, value):
         '''If self.isDefinedInTool, the proposingGroup is mandatory if used
            as a recurring item.'''
         usages = self.REQUEST.get('usages', [])
         if 'as_recurring_item' in usages and not value:
-            return self.utranslate('proposing_group_required', domain='PloneMeeting')
+            return translate('proposing_group_required', domain='PloneMeeting', context=self.REQUEST)
 
     def validate_classifier(self, value):
         '''If classifiers are used, they are mandatory.'''
         if self.attributeIsUsed('classifier') and not value:
-            return self.translate('category_required', domain='PloneMeeting')
+            return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
     def validate_itemSignatories(self, value):
         '''Checks that the selected signatories are not among itemAbsents.'''
@@ -1012,8 +1014,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             absents = self.REQUEST.get('itemAbsents', [])
             for signatory in value:
                 if signatory and signatory in absents:
-                    return self.translate('signatories_absents_mismatch',
-                                          domain='PloneMeeting')
+                    return translate('signatories_absents_mismatch',
+                                     domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePublic('getDefaultBudgetInfo')
     def getDefaultBudgetInfo(self):
@@ -1372,12 +1374,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            config as this item.'''
         # I add here the "initial transition", that is not stored as a real
         # transition.
-        res = [ ('_init_', self.translate('_init_')) ]
+        res = [ ('_init_', translate('_init_', domain="plone", context=self.REQUEST)) ]
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         meetingWorkflowName = meetingConfig.getMeetingWorkflow()
         meetingWorkflow = getattr(self.portal_workflow, meetingWorkflowName)
         for transition in meetingWorkflow.transitions.objectValues():
-            name = self.translate(transition.id) + ' (' + transition.id + ')'
+            name = translate(transition.id, domain="plone", context=self.REQUEST) + ' (' + transition.id + ')'
             res.append( (transition.id, name) )
         return DisplayList(tuple(res))
 
@@ -1418,7 +1420,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for group in self.portal_plonemeeting.getActiveGroups():
                 res.append( (group.id, group.getName()) )
             res.insert(0, ('',
-                self.utranslate('make_a_choice', domain='PloneMeeting')))
+                translate('make_a_choice', domain='PloneMeeting', context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listAssociatedGroups')
@@ -1464,10 +1466,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''If this item is defined as a special item in a meeting configuration,
            this method returns the list of possible usages for the item.'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = DisplayList((
-            ("as_recurring_item", _('as_recurring_item', domain=d)),
-            ("as_template_item", _('as_template_item', domain=d)),
+            ("as_recurring_item", translate('as_recurring_item', domain=d, context=self.REQUEST)),
+            ("as_template_item", translate('as_template_item', domain=d, context=self.REQUEST)),
         ))
         return res
 
@@ -1475,10 +1476,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listPrivacyValues(self):
         '''An item be "public" or "secret".'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = DisplayList((
-            ("public", _('ip_public', domain=d)),
-            ("secret", _('ip_secret', domain=d)),
+            ("public", translate('ip_public', domain=d, context=self.REQUEST)),
+            ("secret", translate('ip_secret', domain=d, context=self.REQUEST)),
         ))
         return res
 
@@ -1540,7 +1540,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append( (cat.id, cat.getName()) )
         if len(res) > 4:
             res.insert(0, ('_none_',
-                self.translate('make_a_choice', domain='PloneMeeting')))
+                translate('make_a_choice', domain='PloneMeeting', context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('getCategory')
@@ -1611,7 +1611,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('i18n')
     def i18n(self, msg, domain="PloneMeeting"):
         '''Shortcut for translating p_msg in domain PloneMeeting.'''
-        return self.translate(msg, domain=domain)
+        return translate(msg, domain=domain, context=self.REQUEST)
 
     security.declarePublic('attributeIsUsed')
     def attributeIsUsed(self, name):
@@ -2122,13 +2122,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the active MeetingUsers having usage "asker".'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         res = []
-        _ = self.translate
         for u in meetingConfig.getActiveMeetingUsers(usages=['asker',]):
             value = ''
             gender = u.getGender()
             if gender:
-                value = "%s " % _('gender_%s_extended' % gender, \
-                                 domain='PloneMeeting', default='')
+                value = "%s " % translate('gender_%s_extended' % gender, \
+                                 domain='PloneMeeting', default='', context=self.REQUEST)
             value = value + unicode(u.Title(), 'utf-8')
             duty = unicode(u.getDuty(), 'utf-8')
             if duty:
@@ -2692,7 +2691,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             firstEvent = res.workflow_history[wfName][0]
             cloneEvent = firstEvent.copy()
             cLabel = cloneEventAction + '_comments'
-            cloneEvent['comments']= self.translate(cLabel,domain='PloneMeeting')
+            cloneEvent['comments']= translate(cLabel,domain='PloneMeeting', context=self.REQUEST)
             cloneEvent['action'] = cloneEventAction
             cloneEvent['actor'] = userId
             res.workflow_history[wfName] = (firstEvent, cloneEvent)
@@ -2716,17 +2715,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         plone_utils = getToolByName(self, "plone_utils")
         destMeetingConfig = getattr(pmtool, destMeetingConfigId, None)
         meetingConfig = pmtool.getMeetingConfig(self)
-        # Check if the meetingConfig we want to send the item to exists
-        if not destMeetingConfig:
-            plone_utils.addPortalMessage('sendto_inexistent_meetingconfig',
+
+        wftool = getToolByName(self, 'portal_workflow')
+        # This will get the destFolder or create it if the current user has the permission
+        # if not, then we return a message
+        try:
+            destFolder = pmtool.getPloneMeetingFolder(destMeetingConfigId,
+                                                  self.Creator())
+        except ValueError:
+            # While getting the destFolder, it could not exist, in this case
+            # we return a clear message
+            plone_utils.addPortalMessage(translate('sendto_inexistent_destfolder_error',
+                                         mapping={'meetingConfigTitle': destMeetingConfig.Title()},
+                                         domain="plone", context=self.REQUEST),
                                          type='error')
             backUrl = self.REQUEST['HTTP_REFERER'] or self.absolute_url()
             return self.REQUEST.RESPONSE.redirect(backUrl)
-
-        wftool = getToolByName(self, 'portal_workflow')
-        # This will get or create the destFolder
-        destFolder = pmtool.getPloneMeetingFolder(destMeetingConfigId,
-                                                  self.Creator())
         # The owner of the new item will be the same as the owner of the
         # original item.
         newOwnerId = self.Creator()
@@ -2758,7 +2762,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         mapping = {'meetingConfigTitle': destMeetingConfig.Title(),}
         newItem.sendMailIfRelevant('itemClonedToThisMC','Modify portal content',\
                                    isRole=False, mapping=mapping)
-        plone_utils.addPortalMessage(self.translate('sendto_%s_success') % \
+        plone_utils.addPortalMessage(translate('sendto_%s_success', domain="plone", context=self.REQUEST) % \
                                      destMeetingConfigId, type='info')
         backUrl = self.REQUEST['HTTP_REFERER'] or self.absolute_url()
         return self.REQUEST.RESPONSE.redirect(backUrl)
@@ -2807,7 +2811,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         user = self.portal_membership.getAuthenticatedMember()
         newItem = self.clone(newOwnerId=user.id, cloneEventAction=None)
         self.plone_utils.addPortalMessage(
-            self.translate('item_duplicated', domain='PloneMeeting'))
+            translate('item_duplicated', domain='PloneMeeting', context=self.REQUEST))
         return self.REQUEST.RESPONSE.redirect(newItem.absolute_url())
 
     security.declarePublic('onDuplicateAndKeepLink')
@@ -2818,7 +2822,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         newItem = self.clone(newOwnerId=user.id, cloneEventAction=None)
         newItem.setPredecessor(self)
         self.plone_utils.addPortalMessage(
-            self.utranslate('item_duplicated_and_link_kept', domain='PloneMeeting'))
+            translate('item_duplicated_and_link_kept', domain='PloneMeeting', context=self.REQUEST))
         return self.REQUEST.RESPONSE.redirect(newItem.absolute_url())
 
     security.declareProtected('Modify portal content', 'onDuplicated')
@@ -3037,7 +3041,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Update the vote values
         if not self.mayEditVotes():
             raise Exception("This user can't update votes.")
-        rq.set('peopleMsg', self.translate('Changes saved.'))
+        rq.set('peopleMsg', translate('Changes saved.', domain="plone", context=self.REQUEST))
         rq.set('error', False)
         if secret: self.saveVoteCounts(requestVotes)
         else:      self.saveVoteValues(requestVotes)
@@ -3142,13 +3146,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           the linked Meeting.assembly value so it is easily overridable.'''
         enc = self.portal_properties.site_properties.getProperty(
             'default_charset')
-        value = self.utranslate(self.Schema()['itemAssembly'].widget.description_msgid, domain='PloneMeeting').encode(enc) + '<br/>'
+        value = translate(self.Schema()['itemAssembly'].widget.description_msgid, domain='PloneMeeting', context=self.REQUEST).encode(enc) + '<br/>'
         collapsibleMeetingAssembly = """<dl id="meetingAssembly" class="collapsible inline collapsedOnLoad">
 <dt class="collapsibleHeader">%s</dt>
 <dd class="collapsibleContent">
 %s
 </dd>
-</dl>""" % (self.utranslate('assembly_defined_on_meeting', domain='PloneMeeting').encode(enc), self.getMeeting().getAssembly())
+</dl>""" % (translate('assembly_defined_on_meeting', domain='PloneMeeting', context=self.REQUEST).encode(enc), self.getMeeting().getAssembly())
         return value + collapsibleMeetingAssembly
 
     security.declareProtected('Modify portal content', 'ItemSignaturesDescrMethod')
@@ -3157,13 +3161,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           the linked Meeting.signatures value so it is easily overridable.'''
         enc = self.portal_properties.site_properties.getProperty(
             'default_charset')
-        value = self.utranslate(self.Schema()['itemSignatures'].widget.description_msgid, domain='PloneMeeting').encode(enc) + '<br/>'
+        value = translate(self.Schema()['itemSignatures'].widget.description_msgid, domain='PloneMeeting', context=self.REQUEST).encode(enc) + '<br/>'
         collapsibleMeetingSignatures = """<dl id="meetingSignatures" class="collapsible inline collapsedOnLoad">
 <dt class="collapsibleHeader">%s</dt>
 <dd class="collapsibleContent">
 %s
 </dd>
-</dl>""" % (self.utranslate('signatures_defined_on_meeting', domain='PloneMeeting').encode(enc), self.getMeeting().getSignatures().replace('\n', '<br />'))
+</dl>""" % (translate('signatures_defined_on_meeting', domain='PloneMeeting', context=self.REQUEST).encode(enc), self.getMeeting().getSignatures().replace('\n', '<br />'))
         return value + collapsibleMeetingSignatures
 
 

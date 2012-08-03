@@ -694,6 +694,10 @@ msgstr "Republier"
 msgid "republish_done_descr"
 msgstr "L'ordre du jour de cette séance a été à nouveau publié."
 
+#. Default: "Unable to send this item to the ${meetingConfigTitle} meetingConfig because the user to create the item to does not have a personal folder in this meetingConfig.  If necessary, the concerned user can connect for this folder to be created automatically."
+msgid "sendto_inexistent_destfolder_error"
+msgstr "Impossible d'envoyer ce point vers le type de séance ${meetingConfigTitle} car l'utilisateur n'a pas d'espace dans cet autre type de séance.  Il est nécessaire que l'utilisateur concerné se connecte à l'application pour que cet espace soit créé automatiquement."
+
 #. Default: "The item has been successfully transfered to the plonegov assembly."
 msgid "sendto_plonegov-assembly_success"
 msgstr "Le point a été envoyé à l'assemblée PloneGov."

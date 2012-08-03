@@ -276,18 +276,17 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
         '''Returns the list of possible usages: for what usage(s) will this
            external application be useful for?'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = [
           # Use it for importing meetings
-          ("import", _('extapp_usage_import', domain=d)),
+          ("import", translate('extapp_usage_import', domain=d, context=self)),
           # Use it as a target for exporting meetings
-          ("export", _('extapp_usage_export', domain=d)),
+          ("export", translate('extapp_usage_export', domain=d, context=self)),
           # Use it as a target for sending a notification
-          ("notify", _('extapp_usage_notify', domain=d)),
+          ("notify", translate('extapp_usage_notify', domain=d, context=self)),
           # Use it as a place for performing searches
-          ("search", _('extapp_usage_search', domain=d)),
+          ("search", translate('extapp_usage_search', domain=d, context=self)),
           # Use it as a database of users for keeping ours in sync with it
-          ("users", _('extapp_usage_users', domain=d)),
+          ("users", translate('extapp_usage_users', domain=d, context=self)),
         ]
         return DisplayList(tuple(res))
 
@@ -313,13 +312,13 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
     def validate_secondUrl(self, value):
         '''secondUrl is mandatory if 'search' is among usages.'''
         if ('search' in self.REQUEST.get('usages')) and not value:
-            return self.translate('second_url_mandatory', domain='PloneMeeting')
+            return translate('second_url_mandatory', domain='PloneMeeting', context=self)
         return None
 
     def validate_notifyPassword(self, value):
         '''Password is mandatory if notifyLogin is filled.'''
         if self.REQUEST.get('notifyLogin', None) and not value:
-            return self.translate('password_mandatory', domain='PloneMeeting')
+            return translate('password_mandatory', domain='PloneMeeting', context=self)
         return None
 
     def _unmarshall(self, data, classes={}):

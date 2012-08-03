@@ -44,8 +44,9 @@ from DateTime import DateTime
 import transaction
 import OFS.Moniker
 from ZODB.POSException import ConflictError
-from zope.interface import directlyProvides
 from zope.annotation.interfaces import IAnnotations
+from zope.interface import directlyProvides
+from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import View
@@ -682,14 +683,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         root_folder = getattr(home_folder, ROOT_FOLDER)
         if not hasattr(root_folder, meetingConfigId):
-            # We call here a python script containing only a call to
-            # createPloneMeetingFolder()
-            # We do so to permit to another product to overwrite the script to
-            # do more in another context (like in the Container product)
-            try:
-                portal.create_meetingconfig_folder(meetingConfigId, userId)
-            except AttributeError:
-                self.createMeetingConfigFolder(meetingConfigId, userId)
+            self.createMeetingConfigFolder(meetingConfigId, userId)
         return getattr(root_folder, meetingConfigId)
 
     security.declarePublic('createMeetingConfigFolder')
@@ -769,7 +763,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res = None
         return res
 
-    security.declarePublic('createMeetingConfigFolder')
+    security.declarePublic('createMeetingConfig')
     def createMeetingConfig(self, configData, source):
         '''Creates a new meeting configuration from p_configData which is a
            MeetingConfigDescriptor instance. If p_source is a string, it
@@ -1035,9 +1029,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         msgid, mapping = msgid[0], msgid[1]
                     content = "<img src='%s/%s' title='%s' />&nbsp;" % \
                         (portal_url, iconname,
-                         self.translate(msgid, mapping,
-                                        domain="PloneMeeting").encode('utf-8'))\
-                         + content
+                         translate(msgid, mapping, domain="PloneMeeting",
+                                   context=self.REQUEST).encode('utf-8')) + content
             # Is this a not-privacy-viewable item?
             if (objClassName == 'MeetingItem') and not obj.isPrivacyViewable():
                 isPrivacyViewable = False
@@ -1063,7 +1056,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 return '<a href="%s" title="%s" id="pmNoNewContent"%s>%s</a>' %\
                        (url, title, tg, content)
             else:
-                msg = self.translate('ip_secret', domain='PloneMeeting')
+                msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                 return '<div title="%s"><i>%s</i></div>' % \
                        (msg.encode('utf-8'), content)
 
@@ -1082,7 +1075,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     res = '<a href="%s" title="%s" class="%s"%s>%s</a>' % \
                           (url, title, wf_class, tg, content)
                 else:
-                    msg = self.translate('ip_secret', domain='PloneMeeting')
+                    msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                     res = '<div title="%s"><i>%s</i></div>' % \
                           (msg.encode('utf-8'), content)
             except (KeyError, WorkflowException):
@@ -1094,7 +1087,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     res = '<a href="%s" title="%s" id="pmNoNewContent"%s>%s' \
                           '</a>' % (url, title, tg, content)
                 else:
-                    msg = self.translate('ip_secret', domain='PloneMeeting')
+                    msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                     res = '<div title="%s"><i>%s</i></div>' % \
                           (msg.encode('utf-8'), content)
         else:
@@ -1123,7 +1116,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res = '<a href="%s" title="%s"%s%s>%s</a>' % \
                       (href, title, idPart, tg, content)
             else:
-                msg = self.translate('ip_secret', domain='PloneMeeting')
+                msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                 res = '<div title="%s"><i>%s</i></div>' % \
                       (msg.encode('utf-8'), content)
         return res
@@ -1227,7 +1220,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Return a list of available color system'''
         res = []
         for cs in colorSystems:
-            res.append( (cs, self.translate(cs, domain='PloneMeeting')) )
+            res.append( (cs, translate(cs, domain='PloneMeeting', context=self.REQUEST)) )
         return DisplayList(tuple(res))
 
     security.declarePublic('listOcrLanguages')
@@ -1235,19 +1228,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Return the list of OCR languages supported by Tesseract.'''
         res = []
         for lang in self.ocrLanguages:
-            res.append( (lang, self.translate('language_%s' % lang,
-                                              domain='PloneMeeting')) )
+            res.append( (lang, translate('language_%s' % lang, domain='PloneMeeting', context=self.REQUEST)) )
         return DisplayList(tuple(res))
 
     security.declarePublic('listModelAdaptations')
     def listModelAdaptations(self):
-        tr = self.translate
         d = 'PloneMeeting'
         res = (
             # This adaptation adds, for every content field defined on meetings,
             # items and annexes, a second field for storing content in a second
             # language.
-            ('secondLanguage', tr('ma_second_language', domain=d)),
+            ('secondLanguage', translate('ma_second_language', domain=d, context=self.REQUEST)),
             # This adaptation does the same thing, but for every content field
             # defined on objects in the configuration (like classifiers, POD
             # templates or file types). Why do we need 2 distinct adaptations:
@@ -1260,7 +1251,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # will use "secondLanguageCfg". This way, when choosing a
             # classifier, the user will get the name of the classifier in its
             # own language.
-            ('secondLanguageCfg', tr('ma_second_language_cfg', domain=d)),
+            ('secondLanguageCfg', translate('ma_second_language_cfg', domain=d, context=self.REQUEST)),
         )
         return DisplayList(res)
 
@@ -1363,8 +1354,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         obj = self.uid_catalog(UID=rq['objectUid'])[0].getObject()
         self.portal_workflow.doActionFor(obj, rq['transition'],
                                          comment=rq['comment'])
-        msg = self.translate('%s_done_descr' % rq['transition'],
-                             domain="PloneMeeting")
+        msg = translate('%s_done_descr' % rq['transition'],
+                        domain="PloneMeeting", context=self.REQUEST)
         self.plone_utils.addPortalMessage(msg)
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_permission('View', obj):
@@ -1530,7 +1521,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if not copyAnnexes:
                 # Delete the annexes that have been copied.
                 for annex in newItem.objectValues('MeetingFile'):
-                    self.removeGivenObject(annex)
+                    self.portal_skins.PloneMeeting.removeGivenObject(annex)
             else:
                 # Recreate the references to annexes: the copy/paste does
                 # not handle this correctly.
@@ -1772,22 +1763,21 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             fmt += ' (%H:%M)'
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to
         # translated names of days and months.
-        _ = self.translate
         # Manage day of week
-        dow = _(weekdaysIds[aDate.dow()], target_language=lang,
-                domain='plonelocales')
+        dow = translate(weekdaysIds[aDate.dow()], target_language=lang,
+                        domain='plonelocales', context=self.REQUEST)
         fmt = fmt.replace('%dt', dow.lower())
         fmt = fmt.replace('%DT', dow)
         # Manage month
-        month = _(monthsIds[aDate.month()], target_language=lang,
-                  domain='plonelocales')
+        month = translate(monthsIds[aDate.month()], target_language=lang,
+                          domain='plonelocales', context=self.REQUEST)
         fmt = fmt.replace('%mt', month.lower())
         fmt = fmt.replace('%MT', month)
         # Resolve all other, standard, symbols
         res = aDate.strftime(fmt)
         # Finally, prefix the date with "Meeting of" when required.
         if prefixed:
-            res = _('meeting_of', domain='PloneMeeting') + ' ' + res
+            res = translate('meeting_of', domain='PloneMeeting', context=self.REQUEST) + ' ' + res
         return res
 
     def _checkTransitionGuard(self, guard, sm, wf_def, ob):
@@ -1874,8 +1864,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     preName = '%s.%s' % (obj.meta_type, transition.id)
                     tInfo = {
                         'id': transition.id,
-                        'title': obj.translate(transition.title,
-                                               domain='PloneMeeting'),
+                        'title': translate(transition.title,
+                                           domain='PloneMeeting', context=self.REQUEST),
                         'description': transition.description,
                         'name': transition.actbox_name, 'may_trigger': True,
                         'confirm': preName in toConfirm,
@@ -1945,14 +1935,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getJavascriptMessages(self):
         '''Produces the Javascript code that will initialize some translated
            messages for all pages.'''
-        args = {'domain': 'PloneMeeting', 'escape_for_js': True}
+        args = {'domain': 'PloneMeeting', 'context': self.REQUEST}
         res = ''
         for msg in ('plonemeeting_delete_confirm_message',
                     'plonemeeting_delete_meeting_confirm_message',
                     'confirm_delete_archived_meetings',
                     'no_selected_items', 'are_you_sure'):
-            res += 'var %s = "%s";\n' % (msg, self.translate(msg, **args))
-        return res
+            res += 'var %s = "%s";\n' % (msg, translate(msg, **args))
+        # escape_for_js from portal_skins/plone_scripts/translate.py does this replace here above
+        return res.replace("'", "\\'")
 
     security.declarePublic('refererIsInnerPage')
     def refererIsInnerPage(self):
@@ -2030,8 +2021,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = {'count': 0, 'msg':''}
         if not hasattr(self, 'nightWorks') or not self.nightWorks: return res
         res['count'] = len(self.nightWorks)
-        res['msg'] = self.translate('night_works', mapping={'nb':res['count']},
-                                    domain='PloneMeeting')
+        res['msg'] = translate('night_works', mapping={'nb':res['count']},
+                               domain='PloneMeeting', context=self.REQUEST)
         return res
 
     security.declareProtected('Modify portal content', 'hasNightWork')

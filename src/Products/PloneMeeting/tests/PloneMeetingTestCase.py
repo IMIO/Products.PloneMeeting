@@ -20,21 +20,23 @@
 # 02110-1301, USA.
 #
 
+import unittest
 import os.path
-from Testing import ZopeTestCase
-from Products.PloneTestCase import PloneTestCase
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
+
+from plone.app.testing.helpers import setRoles
+from plone.app.testing import login, logout
+
+from Products.PloneTestCase.setup import _createHomeFolder
+
 import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
-from Products.CMFCore.utils import getToolByName
 
-# Initialize Zope & Plone test systems.
-ZopeTestCase.installProduct('PloneMeeting')
-PloneTestCase.setupPloneSite(products=['PloneMeeting'])
+from Products.PloneMeeting.testing import PM_TESTS_PROFILE_FUNCTIONAL
 
 # ------------------------------------------------------------------------------
 class TestFile:
@@ -45,7 +47,7 @@ class TestFile:
         self.headers = None
 
 # ------------------------------------------------------------------------------
-class PloneMeetingTestCase(PloneTestCase.PloneTestCase):
+class PloneMeetingTestCase(unittest.TestCase):
     '''Base class for defining PloneMeeting test cases.'''
 
     # Some default content
@@ -53,8 +55,11 @@ class PloneMeetingTestCase(PloneTestCase.PloneTestCase):
     decisionText = '<p>Some decision.</p>'
     schemas = {'MeetingItem':MeetingItem_schema, 'Meeting':Meeting_schema}
 
-    def afterSetUp(self):
+    layer = PM_TESTS_PROFILE_FUNCTIONAL
+
+    def setUp(self):
         # Define some useful attributes
+        self.portal = self.layer['portal']
         self.tool = self.portal.portal_plonemeeting
         self.wfTool = self.portal.portal_workflow
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
@@ -62,22 +67,20 @@ class PloneMeetingTestCase(PloneTestCase.PloneTestCase):
         # Do not use 'userFolderAddUser' to avoid bug in Container
         self.createUser('admin', ('Member','Manager'))
         # Import the test profile
-        self.login('admin')
-        setup_tool = getToolByName(self.portal, 'portal_setup')
-        setup_tool.runImportStepFromProfile(
-            'profile-Products.PloneMeeting:test', 'initializetool-PloneMeeting',
-            run_dependencies=True)
+        login(self.portal, 'admin')
+        #setup_tool = getToolByName(self.portal, 'portal_setup')
+        #setup_tool.runImportStepFromProfile(
+        #    'profile-Products.PloneMeeting:test', 'initializetool-PloneMeeting',
+        #    run_dependencies=True)
         # Create some member areas
         for userId in ('pmManager', 'pmCreator1', 'pmCreator2'):
-            self.createMemberarea(userId)
+            _createHomeFolder(self.portal, userId)
         # Disable notifications mechanism. This way, the test suite may be
         # executed even on production sites that contain many real users.
         for meetingConfig in self.tool.objectValues('MeetingConfig'):
-            mailItemEvents = meetingConfig.getMailItemEvents()
-            mailMeetingEvents = meetingConfig.getMailMeetingEvents()
             meetingConfig.setMailItemEvents([])
             meetingConfig.setMailMeetingEvents([])
-        self.logout()
+        logout()
         # Set the default meeting config
         self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly')
         self.meetingConfig2 = getattr(self.tool, 'plonegov-assembly')
@@ -90,7 +93,7 @@ class PloneMeetingTestCase(PloneTestCase.PloneTestCase):
         '''Creates a user named p_username with some p_roles.'''
         pms = self.portal.portal_membership
         pms.addMember(username, 'password', [], [])
-        self.setRoles(roles, name=username)
+        setRoles(self.portal, username, roles)
 
     def setMeetingConfig(self, meetingConfigId):
         '''On which meeting config must we work?'''
@@ -126,8 +129,8 @@ class PloneMeetingTestCase(PloneTestCase.PloneTestCase):
 
     def changeUser(self, loginName):
         '''Logs out currently logged user and logs in p_loginName.'''
-        self.logout()
-        self.login(loginName)
+        logout()
+        login(self.portal, loginName)
 
     def _generateId(self, ploneFolder):
         '''Generate an id for creating an object in p_ploneFolder.'''
@@ -194,7 +197,7 @@ class PloneMeetingTestCase(PloneTestCase.PloneTestCase):
         schema = self.schemas[metatype]
         for key in attrs.keys():
             if not schema.has_key(key):
-                print "Field %s not present in schema %s" % (field, metatype)
+                print "Field %s not present in schema %s" % (key, metatype)
                 continue
             field = schema[key]
             field.getMutator(obj)(attrs[key])

@@ -24,8 +24,12 @@
 
 from DateTime import DateTime
 from AccessControl import Unauthorized
+
+from plone.app.testing import login
+
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
+
 
 class testAdvices(PloneMeetingTestCase):
     '''Tests various aspects of advices management.
@@ -47,7 +51,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(self.meetingConfig.getItemAdviceViewStates(), \
                          ('presented',))
         # creator for group 'developers'
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
@@ -59,32 +63,32 @@ class testAdvices(PloneMeetingTestCase):
         item2.setOptionalAdvisers(('developers',))
         item3 = self.create('MeetingItem', **data)
         # at this state, the item is not viewable by the advisers
-        self.login('pmReviewer2')
+        login(self.portal, 'pmReviewer2')
         self.failIf(self.hasPermission('View', (item1, item2, item3)))
         # propose the items
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         for item in (item1, item2, item3):
             self.do(item, 'propose')
         # now the item (item1) to advice is viewable because 'pmReviewer2' has an advice to add
-        self.login('pmReviewer2')
+        login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
         self.failIf(self.hasPermission('View', (item2, item3)))
-        self.login('pmReviewer1')
+        login(self.portal, 'pmReviewer1')
         # validate the items
         for item in (item1, item2, item3):
             self.do(item, 'validate')
         # item1 still viewable because 'pmReviewer2' can still edit advice
-        self.login('pmReviewer2')
+        login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
         self.failIf(self.hasPermission('View', (item2, item3)))
         # present the items
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
         self.create('Meeting', date=meetingDate)
         for item in (item1, item2, item3):
             self.do(item, 'present')
         # item1 still viewable because the item an advice is asked for is still viewable in the 'presented' state...
-        self.login('pmReviewer2')
+        login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
         self.failIf(self.hasPermission('View', (item2, item3)))
 
@@ -94,7 +98,7 @@ class testAdvices(PloneMeetingTestCase):
            the second with editable/deletable advices.'''
         self.setMeetingConfig(self.meetingConfig2.getId())
         # creator for group 'developers'
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
@@ -107,14 +111,14 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(item1.needsAdvices(), True)
         # 'pmCreator1' has no addable nor editable advice to give
         self.assertEquals(item1.getAdvicesToGive(), (None, None))
-        self.login('pmReviewer2')
+        login(self.portal, 'pmReviewer2')
         self.failIf(self.hasPermission('View', item1))
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         self.do(item1, 'propose')
         # a user able to View the item can not add an advice, even if he tries...
         self.assertRaises(Unauthorized, item1.editAdvice, group=self.portal.portal_plonemeeting.developers, adviceType='positive', comment='My comment')
         self.assertEquals(item1.getAdvicesToGive(), (None, None))
-        self.login('pmReviewer2')
+        login(self.portal, 'pmReviewer2')
         # the given 'adviceType' must exists (selected in the MeetingConfig.usedAdviceTypes)
         self.assertRaises(KeyError, item1.editAdvice, group=self.portal.portal_plonemeeting.vendors, adviceType='wrong_advice_type', comment='My comment')
         # even if the user can give an advice, he can not for another group
@@ -130,10 +134,10 @@ class testAdvices(PloneMeetingTestCase):
         # given advice is correctly stored
         self.assertEquals(item1.advices['vendors']['type'], 'positive')
         self.assertEquals(item1.advices['vendors']['comment'], 'My comment')
-        self.login('pmReviewer1')
+        login(self.portal, 'pmReviewer1')
         self.do(item1, 'validate')
         # now 'pmReviewer2' can't add (already given) or edit an advice
-        self.login('pmReviewer2')
+        login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
         self.assertEquals(item1.getAdvicesToGive(), ([], []))
         # if we remove the given advice, then it is addable again
@@ -141,10 +145,10 @@ class testAdvices(PloneMeetingTestCase):
         item1.updateAdvices()
         self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
         # remove the fact that we asked the advice
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         item1.setOptionalAdvisers([])
         item1.at_post_edit_script()
-        self.login('pmReviewer2')
+        login(self.portal, 'pmReviewer2')
         self.assertEquals(item1.getAdvicesToGive(), ([], []))
 
 

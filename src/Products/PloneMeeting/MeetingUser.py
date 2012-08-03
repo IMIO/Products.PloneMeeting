@@ -25,6 +25,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 from App.class_init import InitializeClass
+from zope.i18n import translate
 from Products.PloneMeeting.utils import \
      getCustomAdapter, HubSessionsMarshaller, FakeMeetingUser, getFieldContent
 
@@ -343,8 +344,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def listGenders(self):
         '''Lists the genders (M, F).'''
         res = DisplayList((
-                ("m", self.translate('gender_m', domain='PloneMeeting')),
-                ("f", self.translate('gender_f', domain='PloneMeeting')),
+                ("m",translate('gender_m', domain='PloneMeeting', context=self)),
+                ("f", translate('gender_f', domain='PloneMeeting', context=self)),
               ))
         return res
 

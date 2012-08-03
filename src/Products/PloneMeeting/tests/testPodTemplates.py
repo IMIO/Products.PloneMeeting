@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from plone.app.testing import login
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
@@ -39,7 +40,7 @@ class testPodTemplates(PloneMeetingTestCase):
         '''Tests the conditions and permissions defined for each POD
            template.'''
         # Create an item as creator
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         item = self.create('MeetingItem')
         item.setCategory('development')
         podTemplates = self.meetingConfig.getAvailablePodTemplates(item)

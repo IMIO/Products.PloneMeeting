@@ -30,6 +30,7 @@ from App.class_init import InitializeClass
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
 from zope.component import getGlobalSiteManager
+from zope.i18n import translate
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.ActionInformation import Action
 from Products.PloneMeeting.interfaces import *
@@ -1362,8 +1363,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             (field.type != 'reference') and \
                             (field.read_permission != 'Manage portal')
             if condition:
-                res.append((field.getName(), self.translate(
-                    field.widget.label_msgid, domain=field.widget.i18n_domain)))
+                res.append((field.getName(), translate(field.widget.label_msgid,
+                                domain=field.widget.i18n_domain, context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listUsedItemAttributes')
@@ -1396,14 +1397,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         pm = 'PloneMeeting'
         # Prevent combined use of "signatures" and "signatories"
         if ('signatures' in newValue) and ('signatories' in newValue):
-            return self.translate('no_signatories_and_signatures', domain=pm)
+            return translate('no_signatories_and_signatures', domain=pm, context=self.REQUEST)
         # Prevent use of "excused" or "absents" without "attendees"
         if (('excused' in newValue) or ('absents' in newValue)) and \
            ('attendees' not in newValue):
-            return self.translate('attendees_required', domain=pm)
+            return translate('attendees_required', domain=pm, context=self.REQUEST)
         # Prevent combined use of "assembly" and "attendees"
         if ('assembly' in newValue) and ('attendees' in newValue):
-            return self.translate('no_assembly_and_attendees', domain=pm)
+            return translate('no_assembly_and_attendees', domain=pm, context=self.REQUEST)
 
     security.declarePrivate('validate_itemConditionsInterface')
     def validate_itemConditionsInterface(self, value):
@@ -1442,16 +1443,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 '%s.png' % self._getCloneToOtherMCActionId(value, self.getId())
             #try to get the icon in portal_skins
             if not getattr(self.portal_skins, iconname, None):
-                return self.translate('iconname_does_not_exist',
-                                       mapping={'iconname':iconname,},
-                                       domain='PloneMeeting')
+                return translate('iconname_does_not_exist',
+                                  mapping={'iconname':iconname,},
+                                  domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('listWorkflowAdaptations')
     def listWorkflowAdaptations(self):
         '''Lists the available workflow changes.'''
         res = []
         for adaptation in self.wfAdaptations:
-            title = self.translate('wa_%s' % adaptation, domain='PloneMeeting')
+            title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
             res.append((adaptation, title))
         return DisplayList(tuple(res))
 
@@ -1470,7 +1471,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''This method ensures that the combination of used workflow
            adaptations is valid.'''
         if '' in v: v.remove('')
-        msg = self.translate('wa_conflicts', domain='PloneMeeting')
+        msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
         if 'items_come_validated' in v:
             if ('creator_initiated_decisions' in v) or ('pre_validation' in v):
                 return msg
@@ -1485,30 +1486,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Lists all the attributes that can be used as columns for displaying
            information about an item.'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = [
-            ("creator", _('pm_creator', domain=d)),
-            ("creationDate", _('pm_creation_date', domain=d)),
-            ("state", _('item_state', domain=d)),
+            ("creator", translate('pm_creator', domain=d, context=self.REQUEST)),
+            ("creationDate", translate('pm_creation_date', domain=d, context=self.REQUEST)),
+            ("state", translate('item_state', domain=d, context=self.REQUEST)),
             ("categoryOrProposingGroup",
-                _("category_or_proposing_group", domain=d)),
-            ("proposingGroup", _("PloneMeeting_label_proposingGroup",domain=d)),
-            ("proposingGroupAcronym", _("proposing_group_acronym", domain=d)),
+                translate("category_or_proposing_group", domain=d, context=self.REQUEST)),
+            ("proposingGroup", translate("PloneMeeting_label_proposingGroup",domain=d, context=self.REQUEST)),
+            ("proposingGroupAcronym", translate("proposing_group_acronym", domain=d, context=self.REQUEST)),
             ("associatedGroups",
-                _("PloneMeeting_label_associatedGroups", domain=d)),
+                translate("PloneMeeting_label_associatedGroups", domain=d, context=self.REQUEST)),
             ("associatedGroupsAcronyms",
-                _("associated_groups_acronyms", domain=d)),
-            ("annexes", _("annexes", domain=d)),
-            ("annexesDecision", _("AnnexesDecision", domain=d)),
-            ("advices", _("advices_config", domain=d)),
-            ("privacy", _("PloneMeeting_label_privacy", domain=d)),
-            ("budgetInfos", _("PloneMeeting_label_budgetInfos", domain=d)),
-            ("actions", _("heading_actions", domain=d)),
+                translate("associated_groups_acronyms", domain=d, context=self.REQUEST)),
+            ("annexes", translate("annexes", domain=d, context=self.REQUEST)),
+            ("annexesDecision", translate("AnnexesDecision", domain=d, context=self.REQUEST)),
+            ("advices", translate("advices_config", domain=d, context=self.REQUEST)),
+            ("privacy", translate("PloneMeeting_label_privacy", domain=d, context=self.REQUEST)),
+            ("budgetInfos", translate("PloneMeeting_label_budgetInfos", domain=d, context=self.REQUEST)),
+            ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
         ]
         if 'toDiscuss' in self.getUsedItemAttributes():
-            res.insert(0, ("toDiscuss",_('PloneMeeting_label_toDiscuss',domain=d)))
+            res.insert(0, ("toDiscuss",translate('PloneMeeting_label_toDiscuss',domain=d, context=self.REQUEST)))
         if 'itemIsSigned' in self.getUsedItemAttributes():
-            res.insert(0, ("itemIsSigned",u('PloneMeeting_label_itemIsSigned',domain=d)))
+            res.insert(0, ("itemIsSigned",translate('PloneMeeting_label_itemIsSigned',domain=d, context=self.REQUEST)))
         return res
 
     security.declarePrivate('listItemsListVisibleColumns')
@@ -1519,23 +1519,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemColumns')
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.append( ('meeting',
-                    self.translate('Meeting',
-                                    domain='PloneMeeting')))
-        res.append( ('preferredMeeting',
-                    self.translate('PloneMeeting_label_preferredMeeting',
-                                   domain='PloneMeeting')))
+        res.append( ('meeting', translate('Meeting', domain='PloneMeeting', context=self.REQUEST)))
+        res.append( ('preferredMeeting', translate('PloneMeeting_label_preferredMeeting',
+                                                   domain='PloneMeeting', context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingColumns')
     def listMeetingColumns(self):
         d = 'PloneMeeting'
-        _ = self.translate
         res = [
-            ("creator", _('pm_creator', domain=d)),
-            ("creationDate", _('pm_creation_date', domain=d)),
-            ("state", _('item_state', domain=d)),
-            ("actions", _("heading_actions", domain=d)),
+            ("creator", translate('pm_creator', domain=d, context=self.REQUEST)),
+            ("creationDate", translate('pm_creation_date', domain=d, context=self.REQUEST)),
+            ("state", translate('item_state', domain=d, context=self.REQUEST)),
+            ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
         ]
         return DisplayList(tuple(res))
 
@@ -1543,51 +1539,48 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listVotesEncoders(self):
         d = "PloneMeeting"
         res = DisplayList((
-            ("aMeetingManager", self.translate('a_meeting_manager', domain=d)),
-            ("theVoterHimself", self.translate('the_voter_himself', domain=d)),
+            ("aMeetingManager", translate('a_meeting_manager', domain=d, context=self.REQUEST)),
+            ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
             ))
         return res
 
     security.declarePrivate('listAdviceTypes')
     def listAdviceTypes(self):
         d = "PloneMeeting"
-        _ = self.translate
         res = DisplayList((
-            ("positive", _('positive', domain=d)),
-            ("positive_with_remarks", _('positive_with_remarks', domain=d)),
-            ("negative", _('negative', domain=d)),
-            ("nil", _('nil', domain=d)),
+            ("positive", translate('positive', domain=d, context=self.REQUEST)),
+            ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),
+            ("negative", translate('negative', domain=d, context=self.REQUEST)),
+            ("nil", translate('nil', domain=d, context=self.REQUEST)),
             ))
         return res
 
     security.declarePrivate('listAdviceStyles')
     def listAdviceStyles(self):
         d = "PloneMeeting"
-        _ = self.translate
         res = DisplayList((
-            ("standard", _('advices_standard', domain=d)),
-            ("hands", _('advices_hands', domain=d)),
+            ("standard", translate('advices_standard', domain=d, context=self.REQUEST)),
+            ("hands", translate('advices_hands', domain=d, context=self.REQUEST)),
             ))
         return res
 
     security.declarePrivate('listAllVoteValues')
     def listAllVoteValues(self):
         d = "PloneMeeting"
-        _ = self.translate
         res = DisplayList((
-            ("not_yet", _('vote_value_not_yet', domain=d)),
-            ("yes", _('vote_value_yes', domain=d)),
-            ("no", _('vote_value_no', domain=d)),
-            ("abstain", _('vote_value_abstain', domain=d)),
-            ("does_not_vote", _('vote_value_does_not_vote',domain=d)),
+            ("not_yet", translate('vote_value_not_yet', domain=d, context=self.REQUEST)),
+            ("yes", translate('vote_value_yes', domain=d, context=self.REQUEST)),
+            ("no", translate('vote_value_no', domain=d, context=self.REQUEST)),
+            ("abstain", translate('vote_value_abstain', domain=d, context=self.REQUEST)),
+            ("does_not_vote", translate('vote_value_does_not_vote',domain=d, context=self.REQUEST)),
             # 'not_found' represents, when the vote is done manually in an urn,
             # a ballot that was not found in the urn.
-            ("not_found",_('vote_value_not_found',domain=d)),
+            ("not_found",translate('vote_value_not_found',domain=d, context=self.REQUEST)),
             # 'invalid' represents, when the vote is done manually, an invalid
             # ballot.
-            ("invalid",_('vote_value_invalid',domain=d)),
+            ("invalid",translate('vote_value_invalid',domain=d, context=self.REQUEST)),
             # 'blank' represents a blank vote.
-            ("blank",_('vote_value_blank',domain=d)),
+            ("blank",translate('vote_value_blank',domain=d, context=self.REQUEST)),
             ))
         return res
 
@@ -1772,7 +1765,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
                         'object.adapted().mayCloneToOtherMeetingConfig("%s")' \
                         % configId
-            label = self.translate('clone_to', domain='PloneMeeting')
+            label = translate('clone_to', domain='PloneMeeting', context=self.REQUEST)
             cfg = getattr(self.portal_plonemeeting, configId)
             actionName = '%s %s' % (label.encode('utf-8'), cfg.Title())
             item_portal_type.addAction(id=actionId, name=actionName,
@@ -1858,8 +1851,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     break
             if not defConfig:
                 self.setIsDefault(True)
-                msg = self.translate('config_is_still_default',
-                                     domain='PloneMeeting')
+                msg = translate('config_is_still_default',
+                                 domain='PloneMeeting', context=self.REQUEST)
                 self.plone_utils.addPortalMessage(msg)
 
     security.declarePrivate('createTab')
@@ -2088,7 +2081,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         workflow = getattr(self.portal_workflow, workflowName)
         for state in workflow.states.objectValues():
             if excepted and (state.id == excepted): continue
-            res.append( (state.id, self.translate(state.id)) )
+            res.append( (state.id, translate(state.id, domain="plone", context=self.REQUEST)) )
         return res
 
     security.declarePublic('listTransitions')
@@ -2099,7 +2092,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         exec 'workflowName = self.get%sWorkflow()' % objectType
         workflow = getattr(self.portal_workflow, workflowName)
         for t in workflow.transitions.objectValues():
-            name = self.translate(t.id) + ' (' + t.id + ')'
+            name = translate(t.id, domain="plone", context=self.REQUEST) + ' (' + t.id + ')'
             # Indeed several transitions can have the same translation
             # (ie "correct")
             res.append( (t.id, name) )
@@ -2136,13 +2129,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Lists all rich-text fields belonging to classes MeetingItem and
            Meeting.'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = []
         for field in MeetingItem.schema.fields():
             fieldName = field.getName()
             if field.widget.getName() == 'RichWidget':
                 msg = '%s - %s' % (fieldName,
-                                   _(field.widget.label_msgid, domain=d))
+                                   translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
                 res.append( (fieldName, msg) )
         return DisplayList(tuple(res))
 
@@ -2150,10 +2142,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listTransformTypes(self):
         '''Lists the possible transform types on a rich text field.'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = DisplayList((
-            ("removeBlanks", _('rich_text_remove_blanks', domain=d)),
-            ("signatureNotAlone", _('rich_text_signature_not_alone', domain=d)),
+            ("removeBlanks", translate('rich_text_remove_blanks', domain=d, context=self.REQUEST)),
+            ("signatureNotAlone", translate('rich_text_signature_not_alone', domain=d, context=self.REQUEST)),
             ))
         return res
 
@@ -2161,11 +2152,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listMailModes(self):
         '''Lists the available modes for email notifications.'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = DisplayList((
-            ("activated", _('mail_mode_activated', domain=d)),
-            ("deactivated", _('mail_mode_deactivated', domain=d)),
-            ("test", _('mail_mode_test', domain=d)),
+            ("activated", translate('mail_mode_activated', domain=d, context=self.REQUEST)),
+            ("deactivated", translate('mail_mode_deactivated', domain=d, context=self.REQUEST)),
+            ("test", translate('mail_mode_test', domain=d, context=self.REQUEST)),
             ))
         return res
 
@@ -2173,10 +2163,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listMailFormats(self):
         '''Lists the available formats for email notifications.'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = DisplayList((
-            ("text", _('mail_format_text', domain=d)),
-            ("html", _('mail_format_html', domain=d)),
+            ("text", translate('mail_format_text', domain=d, context=self.REQUEST)),
+            ("html", translate('mail_format_html', domain=d, context=self.REQUEST)),
             ))
         return res
 
@@ -2185,22 +2174,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Lists the events related to items that will trigger a mail being
            sent.'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = [
-            ("lateItem", _('event_late_item', domain=d)),
-            ("itemPresented", _('event_item_presented', domain=d)),
-            ("itemUnpresented", _('event_item_unpresented', domain=d)),
-            ("itemDelayed", _('event_item_delayed', domain=d)),
-            ("annexAdded", _('event_add_annex', domain=d)),
+            ("lateItem", translate('event_late_item', domain=d, context=self.REQUEST)),
+            ("itemPresented", translate('event_item_presented', domain=d, context=self.REQUEST)),
+            ("itemUnpresented", translate('event_item_unpresented', domain=d, context=self.REQUEST)),
+            ("itemDelayed", translate('event_item_delayed', domain=d, context=self.REQUEST)),
+            ("annexAdded", translate('event_add_annex', domain=d, context=self.REQUEST)),
         ]
         if self.getUseAdvices():
-            res += [("adviceToGive", _('event_advice_to_give', domain=d)),
-                    ("adviceEdited", _('event_add_advice', domain=d)),
-                    ("adviceInvalidated", _('event_invalidate_advice',domain=d))
+            res += [("adviceToGive", translate('event_advice_to_give', domain=d, context=self.REQUEST)),
+                    ("adviceEdited", translate('event_add_advice', domain=d, context=self.REQUEST)),
+                    ("adviceInvalidated", translate('event_invalidate_advice',domain=d, context=self.REQUEST))
             ]
         if 'toDiscuss' in self.getUsedItemAttributes():
-            res.append(("askDiscussItem",_('event_ask_discuss_item', domain=d)))
-        res.append(("itemClonedToThisMC",_('event_item_clone_to_this_mc', domain=d)))
+            res.append(("askDiscussItem",translate('event_ask_discuss_item', domain=d, context=self.REQUEST)))
+        res.append(("itemClonedToThisMC",translate('event_item_clone_to_this_mc', domain=d, context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingEvents')
@@ -2282,13 +2270,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         except AttributeError:
                             title = view
                     res.append(('folder_' + view,
-                                self.translate(title, domain="plone")))
+                                translate(title, domain="plone", context=self.REQUEST)))
         # Add the topic-based views
         if not hasattr(self.aq_base, 'topics'):
             # This can be the case if we are creating this meeting config.
             return DisplayList(tuple(res))
         for topic in self.topics.objectValues():
-            topicData = ('topic_' + topic.id, self.translate(topic.Title()))
+            topicData = ('topic_' + topic.id, translate(topic.Title(), domain="Plone", context=self.REQUEST))
             if topic.id == 'searchallitemsincopy':
                 if self.getUseCopies():
                     res.append(topicData)
@@ -2341,7 +2329,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            to a meeting'''
         res = []
         for sm in itemSortMethods:
-            res.append( (sm, self.translate(sm, domain='PloneMeeting')) )
+            res.append( (sm, translate(sm, domain='PloneMeeting', context=self.REQUEST)) )
         return DisplayList(tuple(res))
 
     security.declarePublic('listSelectableCopyGroups')
@@ -2583,7 +2571,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Create the advice in the item.
         item.editAdvice(group, adviceType, comment.decode('utf-8'))
         # Return to the same page
-        msg = self.translate('advice_edited', domain='PloneMeeting')
+        msg = translate('advice_edited', domain='PloneMeeting', context=self.REQUEST)
         self.plone_utils.addPortalMessage(msg)
         rq.RESPONSE.redirect(rq['HTTP_REFERER'])
 
@@ -2599,7 +2587,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             del item.advices[groupId]
             item.updateAdvices() # To recreate an empty dict for this adviser
             item.reindexObject()
-        msg = self.translate('advice_deleted', domain='PloneMeeting')
+        msg = translate('advice_deleted', domain='PloneMeeting', context=self.REQUEST)
         self.plone_utils.addPortalMessage(msg)
         rq.RESPONSE.redirect(rq['HTTP_REFERER'])
 
@@ -2631,12 +2619,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = 'PloneMeeting'
         msg = None
         if not userId:
-            msg = self.translate('meeting_user_id_required', domain=d)
+            msg = translate('meeting_user_id_required', domain=d, context=self.REQUEST)
         elif not self.acl_users.getUser(userId):
-            msg = self.translate('meeting_user_no_plone_user', domain=d)
+            msg = translate('meeting_user_no_plone_user', domain=d, context=self.REQUEST)
         elif hasattr(self.meetingusers.aq_base, userId):
-            msg = self.translate('meeting_user_plone_user_already_used',
-                                   domain=d)
+            msg = translate('meeting_user_plone_user_already_used',
+                                   domain=d, context=self.REQUEST)
         if msg:
             self.plone_utils.addPortalMessage(msg)
             rq.RESPONSE.redirect(self.absolute_url()+'?pageName=users')

@@ -24,12 +24,12 @@
 
 from DateTime import DateTime
 from AccessControl import Unauthorized
+from plone.app.testing import login, logout
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 
 class testWorkflows(PloneMeetingTestCase):
     '''Tests the default workflows implemented in PloneMeeting.
-
        WARNING:
        The Plone test system seems to be bugged: it does not seem to take into
        account the write_permission and read_permission tags that are defined
@@ -46,7 +46,7 @@ class testWorkflows(PloneMeetingTestCase):
         '''Creates an item (in "created" state) and checks that only
            allowed persons may see this item.'''
         # Create an item as creator
-        self.login('pmCreator2')
+        login(self.portal, 'pmCreator2')
         # Does the creator has the right to create an item ?
         self.failUnless(self.tool.userIsAmong('creators'))
         item = self.create('MeetingItem')
@@ -55,21 +55,21 @@ class testWorkflows(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('Access contents information', item))
         myItems = self.meetingConfig.topics.searchmyitems.queryCatalog()
         self.failIf(len(myItems) != 1)
-        self.logout()
-        self.login('pmManager')
+        logout()
+        login(self.portal, 'pmManager')
         # The manager may not see the item yet.
         allItems = self.meetingConfig.topics.searchallitems.queryCatalog()
         self.failIf(len(allItems) != 0)
-        self.logout()
+        logout()
 
     def testRemoveObjects(self):
         '''Tests objects removal (items, meetings, annexes...).'''
         # Create an item with annexes
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         item = self.create('MeetingItem')
         parentFolder = item.getParentNode()
         #test that we can remove an empty item...
-        self.portal.delete_givenuid(item.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(item.UID())
         self.failIf(len(parentFolder.objectValues()) != 0)
         #test removal of an item with annexes
         item = self.create('MeetingItem')
@@ -78,37 +78,37 @@ class testWorkflows(PloneMeetingTestCase):
         annex2 = self.addAnnex(item)
         self.failIf(len(item.objectValues()) != 2)
         self.changeUser('pmCreator1')
-        self.portal.delete_givenuid(annex2.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(annex2.UID())
         self.failIf(len(item.objectValues()) != 1)
         # Propose the item
         self.do(item, item.wfConditions().transitionsForPresentingAnItem[0])
         # Remove the item with annexes
         self.changeUser('pmCreator1b')
         # Check that now MeetingMember(s) can't remove the item anymore
-        self.assertRaises(Unauthorized, self.portal.delete_givenuid, item.UID())
+        self.assertRaises(Unauthorized, self.portal.portal_skins.PloneMeeting.delete_givenuid, item.UID())
         self.changeUser('pmReviewer1')
-        self.portal.delete_givenuid(annex1.UID())
-        self.portal.delete_givenuid(item.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(annex1.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(item.UID())
         self.failIf(len(parentFolder.objectValues()) != 0)
 
     def testRemoveContainer(self):
         '''We avoid a strange behaviour of Plone.  Removal of a container
            does not check inner objects security...
            Check that removing an item or a meeting by is container fails.'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         pmManagerFolder = self.getMeetingFolder()
-        self.login('admin')
+        login(self.portal, 'admin')
         # Create a folder in the pmManager meetingFolder
         folderId = pmManagerFolder.invokeFactory('Folder', id='testfolder',
             title='Test folder')
         testfolder = getattr(pmManagerFolder, folderId)
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         type_name = 'MeetingItem%s' % self.tool.getMeetingConfig(
             pmManagerFolder).getShortName()
         itemId = testfolder.invokeFactory(type_name, id='testitem',
             title='Test item', proposingGroup='developers')
         testitem = getattr(testfolder, itemId)
-        self.portal.delete_givenuid(testfolder.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(testfolder.UID())
         # The folder should not have been deleted...
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         self.failUnless(hasattr(testfolder, 'testitem'))
@@ -119,29 +119,29 @@ class testWorkflows(PloneMeetingTestCase):
         meetingId = testfolder.invokeFactory(type_name, id='testmeeting',
             title='Test meeting', date=meetingDate)
         testmeeting = getattr(testfolder, meetingId)
-        self.portal.delete_givenuid(testfolder.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(testfolder.UID())
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         self.failUnless(hasattr(testfolder, 'testitem'))
         self.failUnless(hasattr(testfolder, 'testmeeting'))
         self.assertEquals(len(testfolder.objectValues()),2)
         # Now, remove things in the good order. Remove the item and check
-        self.portal.delete_givenuid(testitem.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(testitem.UID())
         self.assertEquals(len(testfolder.objectValues()),1)
         # Try to remove the folder again but with a contained meeting only
-        self.portal.delete_givenuid(testfolder.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(testfolder.UID())
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         # Remove the meeting
-        self.portal.delete_givenuid(testmeeting.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(testmeeting.UID())
         self.assertEquals(len(testfolder.objectValues()),0)
         # Check that now that the testfolder is empty, we can remove it.
-        self.portal.delete_givenuid(testfolder.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(testfolder.UID())
         self.failIf(hasattr(pmManagerFolder, 'testfolder'))
 
     def testWholeDecisionProcess(self):
         '''This test covers the whole decision workflow. It begins with the
            creation of some items, and ends by closing a meeting.'''
         # pmCreator1 creates an item with 1 annex and proposes it
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         item1 = self.create('MeetingItem', title='The first item')
         self.addAnnex(item1)
         # The creator cannot add a decision annex on created item
@@ -178,7 +178,7 @@ class testWorkflows(PloneMeetingTestCase):
         # The meetingManager can add annexes, decision-related or not
         managerAnnex = self.addAnnex(item1)
         self.addAnnex(item1, decisionRelated=True)
-        self.portal.delete_givenuid(managerAnnex.UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(managerAnnex.UID())
         self.do(item1, 'present')
         self.changeUser('pmCreator1')
         someAnnex = self.addAnnex(item1)
@@ -257,7 +257,7 @@ class testWorkflows(PloneMeetingTestCase):
            this case local roles (whose permissions depend on) are correctly
            updated.'''
         # pmCreator1 creates an item with an annex (group: developers)
-        self.login('pmCreator1')
+        login(self.portal, 'pmCreator1')
         item1 = self.create('MeetingItem', title='A given item')
         item2 = self.create('MeetingItem', title='A second item')
         annex1 = self.addAnnex(item1)
@@ -337,7 +337,7 @@ class testWorkflows(PloneMeetingTestCase):
     def testRecurringItems(self):
         '''Tests the recurring items system.'''
         # First, define recurring items in the meeting config
-        self.login('admin')
+        login(self.portal, 'admin')
         # One recurring item 'Rec item 1' already exist in the configuration
         self.create('RecurringMeetingItem', title='Rec item 1a',
                     proposingGroup='vendors',
@@ -370,7 +370,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.failIf(len(meeting.getLateItems()) != 1)
         # Back to created: rec item 2 is not inserted.
         # We can not 'backToCreated' a meeting if some late items are into it...
-        self.portal.delete_givenuid(meeting.getLateItems()[0].UID())
+        self.portal.portal_skins.PloneMeeting.delete_givenuid(meeting.getLateItems()[0].UID())
         self.do(meeting, 'backToCreated')
         self.failIf(len(meeting.getItems()) != 2)
         self.failIf(len(meeting.getLateItems()) != 0)
@@ -413,7 +413,7 @@ class testWorkflows(PloneMeetingTestCase):
         '''Deactivating a MeetingGroup will transfer every users of every
            sub Plone groups to the '_observers' Plone group'''
         # Work with the 'developers' MeetingGroup
-        self.login('admin')
+        login(self.portal, 'admin')
         developers = self.tool.developers
         # By default, many users are in the different sub Plone groups
         groupsTool = self.portal.portal_groups

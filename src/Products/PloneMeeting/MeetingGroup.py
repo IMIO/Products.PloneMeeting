@@ -25,12 +25,12 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 from App.class_init import InitializeClass
+from zope.i18n import translate
 from Products.PloneMeeting.utils import getCustomAdapter, \
      HubSessionsMarshaller, getFieldContent
 from Products.PloneMeeting import PloneMeetingError
 import logging
 logger = logging.getLogger('PloneMeeting')
-from Products.CMFCore.permissions import ModifyPortalContent
 from OFS.ObjectManager import BeforeDeleteException
 from Products.PloneMeeting.profiles import GroupDescriptor
 defValues = GroupDescriptor.get()
@@ -206,7 +206,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             'default_charset')
         groupTitle = '%s (%s)' % (
             self.Title().decode(enc),
-            self.translate(groupSuffix, domain='PloneMeeting'))
+            translate(groupSuffix, domain='PloneMeeting', context=self))
         # a default Plone group title is NOT unicode.  If a Plone group title is
         # edited TTW, his title is no more unicode if it was previously...
         # make sure we behave like Plone...

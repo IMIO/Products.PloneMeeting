@@ -24,6 +24,7 @@
 
 
 from DateTime import DateTime
+from plone.app.testing import login
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
@@ -73,7 +74,7 @@ class testMeeting(PloneMeetingTestCase):
 
            sort methods tested here are "on_categories" and
            "on_proposing_groups".'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         for meetingConfig in ('plonegov-assembly', 'plonemeeting-assembly'):
             self.setMeetingConfig(meetingConfig)
             meeting = self._createMeetingWithItems()
@@ -87,7 +88,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def testInsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         self.setMeetingConfig('plonegov-assembly')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
@@ -95,7 +96,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def testInsertItemAllGroups(self):
         '''Sort method tested here is "on_all_groups".'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         self.meetingConfig.setSortingMethodOnAddItem('on_all_groups')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
@@ -103,7 +104,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def testInsertItemPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy_then_proposing_groups".'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_proposing_groups')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
@@ -111,7 +112,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def testInsertItemPrivacyThenCategories(self):
         '''Sort method tested here is "on_privacy_then_categories".'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         self.setMeetingConfig('plonegov-assembly')
         self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_categories')
         meeting = self._createMeetingWithItems()
@@ -120,7 +121,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def testRemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                             ['recItem1', 'o3', 'o5', 'o2', 'o4', 'o6'])
@@ -131,14 +132,14 @@ class testMeeting(PloneMeetingTestCase):
                             ['recItem1', 'o3', 'o2', 'o4', 'o6'])
         #delete a linked item
         item4 = getattr(meeting, 'o4')
-        meeting.delete_givenuid(item4.UID())
+        meeting.portal_skins.PloneMeeting.delete_givenuid(item4.UID())
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                             ['recItem1', 'o3', 'o2', 'o6'])
 
     def testMeetingNumbers(self):
         '''Tests that meetings receive correctly their numbers from the config
            when they are published.'''
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         m1 = self._createMeetingWithItems()
         self.assertEquals(self.meetingConfig.getLastMeetingNumber(), 0)
         self.assertEquals(m1.getMeetingNumber(), -1)
@@ -159,7 +160,7 @@ class testMeeting(PloneMeetingTestCase):
         """
         #create 3 meetings
         #we can do every steps as a MeetingManager
-        self.login('pmManager')
+        login(self.portal, 'pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
         m1 = self.create('Meeting', date=meetingDate)
         meetingDate = DateTime('2008/06/19 08:00:00')
