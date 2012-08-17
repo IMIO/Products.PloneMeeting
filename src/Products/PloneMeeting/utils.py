@@ -29,6 +29,7 @@ from email import Encoders
 from appy.shared.xml_parser import XmlMarshaller
 from DateTime import DateTime
 from AccessControl import getSecurityManager, Unauthorized
+from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from Products.MailHost.MailHost import MailHostError
 from Products.Archetypes.Marshall import Marshaller
@@ -323,12 +324,11 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         subject = customRes[0].encode(enc)
         body = customRes[1].encode(enc)
     else:
-        _ = obj.translate
         subjectLabel = '%s_mail_subject' % event
-        subject = _(subjectLabel, domain=d, mapping=translationMapping)
+        subject = translate(subjectLabel, domain=d, mapping=translationMapping, context=obj.REQUEST)
         subject = subject.encode(enc)
         bodyLabel = '%s_mail_body' % event
-        body = _(bodyLabel, domain=d, mapping=translationMapping).encode(enc)
+        body = translate(bodyLabel, domain=d, mapping=translationMapping, context=obj.REQUEST).encode(enc)
     adminFromAddress = _getEmailAddress(
         portal.getProperty('email_from_name'),
         portal.getProperty('email_from_address'), enc)
@@ -450,7 +450,7 @@ def sendAdviceToGiveMailIfRelevant(event):
             if recipient:
                 labelType = adviceInfo['optional'] and \
                             'advice_optional' or 'advice_mandatory'
-                type = tool.translate(labelType, domain='PloneMeeting').lower()
+                type = translate(labelType, domain='PloneMeeting', context=event.object.REQUEST).lower()
                 sendMail([recipient], event.object, 'adviceToGive',
                          mapping = {'type': type})
 
@@ -978,8 +978,8 @@ def getHistoryTexts(obj, event):
     mapping = {'userName': userName.decode('utf-8')}
     res = []
     for type in ('insert', 'delete'):
-        msg = obj.translate('history_%s' % type, mapping=mapping,
-                            domain='PloneMeeting')
+        msg = translate('history_%s' % type, mapping=mapping,
+                        domain='PloneMeeting', context=obj.REQUEST)
         date = obj.portal_plonemeeting.formatDate(event['time'],
                                                   short=True, withHour=True)
         msg = '%s: %s' % (date, msg)
@@ -1018,7 +1018,7 @@ def getHistory(obj, startNumber=0, batchSize=5):
                     event['changes'][name] = val
                 elif widgetName == 'BooleanWidget':
                     label = oldValue and 'Yes' or 'No'
-                    event['changes'][name] = obj.translate(label)
+                    event['changes'][name] = translate(label, domain="plone", context=obj.REQUEST)
                 elif widgetName == 'TextAreaWidget':
                     val = oldValue.replace('\r', '').replace('\n', '<br/>')
                     event['changes'][name] = val

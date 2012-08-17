@@ -1837,10 +1837,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         # Retrieve the meeting history of the workflow used for the meeting
         history = meeting.workflow_history[meeting.getWorkflowName()]
-        if not history:
+        # By default, a first action is added to the workflow_history when the element
+        # is created, the 'action' is None and the intial review_state is in 'review_state'
+        if history[-1]['action'] == None:
             lastTransition = '_init_'
         else:
-            lastTransition = history[0]['action']
+            lastTransition = history[-1]['action']
         transitions = item.meetingTransitionsAcceptingRecurringItems
         if lastTransition and (lastTransition not in transitions):
             # A strange transition was chosen for addding a recurring item (ie
@@ -1858,7 +1860,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # where a recurring item is created with a proposingGroup the
             # MeetingManager is not in as a creator...
             # we must be sure that the item is removed in every case.
-            item.removeGivenObject(item)
+            item.portal_skins.PloneMeeting.removeGivenObject(item)
             return True
         else:
             wfTool = item.portal_workflow
