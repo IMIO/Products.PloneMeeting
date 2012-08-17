@@ -88,7 +88,7 @@ msgid "How many items to list in each topic."
 msgstr "Cuantos elementos a listar en cada tópico."
 
 #. Default: "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups."
-msgid "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore."
+msgid "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups."
 msgstr ""
 
 #. Default: "Limit the number of shown characters of the title to avoid too long titles displayed in the portlet."
@@ -2068,6 +2068,10 @@ msgstr "Cuando un tema tiene uno de los estados que usted selecciona aquí, eso 
 msgid "group_item_advice_states_descr"
 msgstr "Cuando un tema tiene uno de los estados que usted selecciono aquí, eso le permitirá a un consejero de este grupo para agregar un consejo en este tema. Si usted no especifica ningún estado aquí, una lista de estados, global a todos los grupos, son definidos al nivel de configuración a ser usado en su lugar."
 
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+msgid "group_item_advice_view_states_descr"
+msgstr ""
+
 #. Default: "User interface"
 msgid "gui"
 msgstr "Interfaz de usuario"
@@ -2076,10 +2080,6 @@ msgstr "Interfaz de usuario"
 #. Default: "Actions"
 msgid "heading_actions"
 msgstr "Acciones"
-
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
-msgid "group_item_advice_view_states_descr"
-msgstr ""
 
 # Other
 #. Default: "Check/uncheck items (for document generation)"
@@ -3606,7 +3606,8 @@ msgstr "Cuando haga clic en el botón 'Eliminar las reuniones archivadas', el si
 msgid "sort_all_item_tags_descr"
 msgstr "Verifique esta casilla si usted quiere ordenar las etiquetas en orden alfabético."
 
-#. Default: "Choose the method that will define where the item will be added when inserted into a meeting.  It can be 'At the end' of the meeting, it can 'Follow proposing groups order' or it can 'Follow categories order'."
+#. Default: "Choose the method that will define where the item will be added by default when inserted into a meeting."
+#, fuzzy
 msgid "sorting_method_on_add_item_descr"
 msgstr "Elija el método que se definirá para cuando el tema sea agregado se inserte dentro de una reunión. Eso puede ser 'Al final' de la reunión, se puede proponer 'Seguir orden grupos' o se puede 'Seguir orden categorías'."
 

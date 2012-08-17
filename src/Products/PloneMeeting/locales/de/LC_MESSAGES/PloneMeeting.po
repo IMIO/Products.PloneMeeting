@@ -85,7 +85,7 @@ msgid "How many items to list in each topic."
 msgstr "Im Portlet angezeigte Anzahl Treffer pro Suche "
 
 #. Default: "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups."
-msgid "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore."
+msgid "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups."
 msgstr ""
 
 #. Default: "Limit the number of shown characters of the title to avoid too long titles displayed in the portlet."
@@ -2065,6 +2065,10 @@ msgstr "Wenn ein TOP in einem Status ist, den Sie hier definieren, ist es für e
 msgid "group_item_advice_states_descr"
 msgstr "Wenn ein TOP in einem Status ist, den Sie hier definieren, ist es für einen Kommentator dieser Gruppe möglich einen Kommentar ab zu geben. Wenn Sie hier keinen Status definieren, wird eine Liste von globalen Status aller Gruppen, die auf der Ebene der Sitzungskonfiguration definiert wurden, an deren Stelle benutzt."
 
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+msgid "group_item_advice_view_states_descr"
+msgstr ""
+
 #. Default: "User interface"
 msgid "gui"
 msgstr "Bedieneroberfläche"
@@ -2073,10 +2077,6 @@ msgstr "Bedieneroberfläche"
 #. Default: "Actions"
 msgid "heading_actions"
 msgstr "Aktionen"
-
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
-msgid "group_item_advice_view_states_descr"
-msgstr ""
 
 # Other
 #. Default: "Check/uncheck items (for document generation)"
@@ -3602,7 +3602,8 @@ msgstr ""
 msgid "sort_all_item_tags_descr"
 msgstr "Markieren Sie dieses Kästchen wenn Sie die Tags in alphabetischer Reihenfolge angezeigt bekommen wollen."
 
-#. Default: "Choose the method that will define where the item will be added when inserted into a meeting.  It can be 'At the end' of the meeting, it can 'Follow proposing groups order' or it can 'Follow categories order'."
+#. Default: "Choose the method that will define where the item will be added by default when inserted into a meeting."
+#, fuzzy
 msgid "sorting_method_on_add_item_descr"
 msgstr "Hier können Sie festlegen wo ein neuer TOP in der Sitzung eingefügt wird. Folgende Möglichkeiten sind vorhanden 'Der Kategorienlistung folgen' oder 'An das Ende der Sitzung anhängen' oder Der vorschlagenden Gruppenlistung folgen'.  "
 

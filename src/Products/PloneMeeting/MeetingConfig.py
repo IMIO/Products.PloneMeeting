@@ -1642,13 +1642,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portalType.title = portalTypeName
                 # Associate a workflow for this new portal type.
                 exec 'workflowName = self.get%sWorkflow()' % self.metaNames[i]
-                try:
-                    getattr(self.portal_workflow, workflowName)
-                except AttributeError:
-                    logger.warn('Workflow "%s" was not found. Using "%s" ' \
-                                'instead.' %  (workflowName,
-                                self.defaultWorkflows[i]))
-                    workflowName = self.defaultWorkflows[i]
+                #because of reinstallation problems, we MUST trust given workflow name and use
+                #it.  For example, while reinstalling an external profile, the workflow
+                #could not exist at this time but we need to set it nevertheless
                 self.portal_workflow.setChainForPortalTypes([portalTypeName],
                                                             workflowName)
                 # Copy actions from the base portal type

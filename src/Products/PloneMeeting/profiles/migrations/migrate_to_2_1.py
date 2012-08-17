@@ -165,7 +165,7 @@ class Migrate_To_2_1(Migrator):
                         break
 
     def _updateTopicsWithSearchScripts(self):
-        '''Topics criteria are now taken into account so remove wrongly added state criterion
+        '''Topics criteria are now taken into account so remove wrongly added criteria
            on topics having a searchScript.'''
         logger.info('Updating every topics having a searchScript...')
         cfgs = self.portal.portal_plonemeeting.objectValues('MeetingConfig')
@@ -175,7 +175,8 @@ class Migrate_To_2_1(Migrator):
                 if not topic.getProperty(TOPIC_SEARCH_SCRIPT, None):
                     continue
                 for criterion in topic.listCriteria():
-                    if criterion.field == 'review_state':
+                    # we just keep the 'Type' criterion, every other criteria are removed
+                    if not criterion.field == 'Type':
                         topic.manage_delObjects([criterion.getId(),])
                         #manage several state criterion?  continue...
 

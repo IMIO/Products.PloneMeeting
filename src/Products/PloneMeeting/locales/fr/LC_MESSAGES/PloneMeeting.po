@@ -1007,7 +1007,6 @@ msgid "RecurringItems"
 msgstr "Points prédéfinis"
 
 #. Default: "state"
-#, fuzzy
 msgid "State"
 msgstr "État"
 
@@ -2065,6 +2064,10 @@ msgstr "Quand un point est dans un des états que vous définissez ici, il sera 
 msgid "group_item_advice_states_descr"
 msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible pour un aviseur de ce groupe de donner un avis. Si vous ne spécifiez aucun état ici, une liste d'états globale à tous les groupes, définie au niveau de la configuration de séance, sera utilisée à la place."
 
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+msgid "group_item_advice_view_states_descr"
+msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible pour un aviseur sélectionné sur ce point de voir le point. Si vous ne spécifiez aucun état ici, une liste d'états globale à tous les groupes, définie au niveau de la configuration de séance, sera utilisée à la place."
+
 #. Default: "User interface"
 msgid "gui"
 msgstr "Interface utilisateur"
@@ -2073,10 +2076,6 @@ msgstr "Interface utilisateur"
 #. Default: "Actions"
 msgid "heading_actions"
 msgstr "Actions"
-
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
-msgid "group_item_advice_view_states_descr"
-msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible pour un aviseur sélectionné sur ce point de voir le point. Si vous ne spécifiez aucun état ici, une liste d'états globale à tous les groupes, définie au niveau de la configuration de séance, sera utilisée à la place."
 
 # Other
 #. Default: "Check/uncheck items (for document generation)"
@@ -2344,7 +2343,6 @@ msgid "itemarchive"
 msgstr "Archiver"
 
 #. Default: "The item and its decicion have been archived."
-#, fuzzy
 msgid "itemarchive_done_descr"
 msgstr "Le point et sa décision ont été archivés."
 
@@ -3602,9 +3600,9 @@ msgstr "Quand vous cliquerez sur le bouton 'Supprimer les séances archivées', 
 msgid "sort_all_item_tags_descr"
 msgstr "Cochez cette case si vous voulez que les marqueurs soient triés par ordre alphabétique."
 
-#. Default: "Choose the method that will define where the item will be added when inserted into a meeting.  It can be 'At the end' of the meeting, it can 'Follow proposing groups order' or it can 'Follow categories order'."
+#. Default: "Choose the method that will define where the item will be added by default when inserted into a meeting."
 msgid "sorting_method_on_add_item_descr"
-msgstr "Les méthodes disponibles sont 'Ajout à la fin de la séance', 'Ajouter en suivant l'ordre des catégories' ou 'Ajouter en suivant l'ordre des groupes proposants'."
+msgstr "Permet de définir où ira se placer un point lorsqu'il est inséré dans une séance."
 
 #. Default: "state_color"
 msgid "state_color"

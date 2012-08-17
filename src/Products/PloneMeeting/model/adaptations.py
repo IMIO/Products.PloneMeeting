@@ -19,6 +19,7 @@ noDeleteStates = ('proposed', 'prevalidated', 'validated', 'presented',
                   'delayed', 'confirmed')
 viewPermissions = ('View', 'Access contents information')
 WF_APPLIED = 'Workflow change "%s" applied.'
+WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
 
 def grantPermission(state, perm, role):
     '''For a given p_state, this function ensures that p_role is among roles
@@ -40,6 +41,16 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # combinations of adaptations exist, wrong combination of adaptations is
     # performed in meetingConfig.validate_workflowAdaptations.
     adaptations = meetingConfig.getWorkflowAdaptations()
+    #while reinstalling a separate profile, the workflow could not exist
+    meetingWorkflow = getattr(site.portal_workflow, meetingConfig.getMeetingWorkflow(), None)
+    if not meetingWorkflow:
+        logger.warning(WF_DOES_NOT_EXIST_WARNING % meetingConfig.getMeetingWorkflow())
+        return
+    itemWorkflow = getattr(site.portal_workflow, meetingConfig.getItemWorkflow(), None)
+    if not itemWorkflow:
+        logger.warning(WF_DOES_NOT_EXIST_WARNING % meetingConfig.getItemWorkflow())
+        return
+
     error = meetingConfig.validate_workflowAdaptations(adaptations)
     if error: raise Exception(error)
 
@@ -52,7 +63,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # do not like this idea.
     if 'no_publication' in adaptations:
         # First, update the meeting workflow
-        wf = getattr(site.portal_workflow, meetingConfig.getMeetingWorkflow())
+        wf = meetingWorkflow
         # Delete transitions 'publish' and 'backToPublished'
         for tr in ('publish', 'backToPublished', 'republish'):
             if tr in wf.transitions: wf.transitions.deleteTransitions([tr])
@@ -66,7 +77,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
         if 'published' in wf.states: wf.states.deleteStates(['published'])
 
         # Then, update the item workflow.
-        wf = getattr(site.portal_workflow, meetingConfig.getItemWorkflow())
+        wf = itemWorkflow
         # Delete transitions 'itempublish' and 'backToItemPublished'
         for tr in ('itempublish', 'backToItemPublished'):
             if tr in wf.transitions: wf.transitions.deleteTransitions([tr])
@@ -85,7 +96,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # "no_proposal" removes state 'proposed' in the item workflow: this way,
     # people can directly validate items after they have been created.
     if 'no_proposal' in adaptations:
-        wf = getattr(site.portal_workflow, meetingConfig.getItemWorkflow())
+        wf = itemWorkflow
         # Delete transitions 'propose' and 'backToProposed'
         for tr in ('propose', 'backToProposed'):
             if tr in wf.transitions: wf.transitions.deleteTransitions([tr])
@@ -114,7 +125,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
             allRoles.append('MeetingPreReviewer')
             site.__ac_roles__ = tuple(allRoles)
         # Create state "prevalidated"
-        wf = getattr(site.portal_workflow, meetingConfig.getItemWorkflow())
+        wf = itemWorkflow
         if 'prevalidated' not in wf.states: wf.states.addState('prevalidated')
         # Create new transitions linking the new state to existing ones
         # ('proposed' and 'validated').
@@ -201,7 +212,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # are already pre-encoded (as propositions) by the proposing group.
     # (De-)activation of adaptation "pre_validation" impacts this one.
     if 'creator_initiated_decisions' in adaptations:
-        wf = getattr(site.portal_workflow, meetingConfig.getItemWorkflow())
+        wf = itemWorkflow
         # Creator can read and write the "decision" field on item creation.
         grantPermission(wf.states['itemcreated'], WriteDecision,'MeetingMember')
         grantPermission(wf.states['itemcreated'], ReadDecision, 'MeetingMember')
@@ -232,7 +243,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # chaining several HubSessions: items may have been validated in another
     # HubSessions, and transferred in this one.
     if 'items_come_validated' in adaptations:
-        wf = getattr(site.portal_workflow, meetingConfig.getItemWorkflow())
+        wf = itemWorkflow
         # State 'validated' becomes the initial state
         wf.initial_state = 'validated'
         # Remove early transitions
@@ -247,7 +258,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # workflows for setting up an archive site.
     if 'archiving' in adaptations:
         # Keep only final state (itemarchived) in item workflow
-        wf = getattr(site.portal_workflow, meetingConfig.getItemWorkflow())
+        wf = itemWorkflow
         # State 'itemarchived' becomes the initial state
         wf.initial_state = 'itemarchived'
         # Remove all transitions
@@ -258,7 +269,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
         if 'itemarchived' in names: names.remove('itemarchived')
         if names: wf.states.deleteStates(names)
         # Keep only final state (archived) in meeting workflow
-        wf = getattr(site.portal_workflow, meetingConfig.getMeetingWorkflow())
+        wf = meetingWorkflow
         # State 'archived' becomes the initial state
         wf.initial_state = 'archived'
         # Remove all transitions
@@ -274,7 +285,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # creators only (=role MeetingMember)(and also to God=Manager).
     # (De-)activation of adaptation "pre_validation" impacts this one.
     if 'only_creator_may_delete' in adaptations:
-        wf = getattr(site.portal_workflow, meetingConfig.getItemWorkflow())
+        wf = itemWorkflow
         for stateName in noDeleteStates:
             if stateName not in wf.states: continue
             state = wf.states[stateName]
@@ -288,7 +299,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     if 'no_global_observation' in adaptations:
         # Modify the meetingitem workflow: once a meeting has been published,
         # remove any permission for role "MeetingObserverGlobal".
-        wf = getattr(site.portal_workflow, meetingConfig.getItemWorkflow())
+        wf = itemWorkflow
         for stateName in noGlobalObsStates:
             if stateName not in wf.states: continue
             state = wf.states[stateName]
@@ -303,8 +314,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # "everyone_reads_all" grants, in meeting and item workflows, view access
     # to MeetingObserverGlobal in any state.
     if 'everyone_reads_all' in adaptations:
-        wfs= (getattr(site.portal_workflow, meetingConfig.getItemWorkflow()),
-              getattr(site.portal_workflow, meetingConfig.getMeetingWorkflow()))
+        wfs = (itemWorkflow, meetingWorkflow)
         for wf in wfs:
             for stateName in wf.states:
                 state = wf.states[stateName]
@@ -319,7 +329,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # confirmed or archived. In the standard worflow, as soon as the item is
     # proposed, its creator looses it ability to modify it.
     if 'creator_edits_unless_closed' in adaptations:
-        wf = getattr(site.portal_workflow, meetingConfig.getItemWorkflow())
+        wf = itemWorkflow
         for stateName in wf.states:
             if stateName in ('delayed', 'refused', 'confirmed', 'itemarchived'):
                 continue
@@ -349,7 +359,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
             site.__ac_roles__ = tuple(allRoles)
         # Patch the meeting workflow: everything that is granted to
         # MeetingManager, grant it to MeetingManagerLocal instead.
-        wf = getattr(site.portal_workflow, meetingConfig.getMeetingWorkflow())
+        wf = meetingWorkflow
         for stateName in wf.states:
             state = wf.states[stateName]
             for permission, roles in state.permission_roles.iteritems():

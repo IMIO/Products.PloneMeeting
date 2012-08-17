@@ -332,9 +332,6 @@ class testMeetingItem(PloneMeetingTestCase):
         #but not by the creator
         login(self.portal, 'pmCreator1')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        #no more by the reviewer
-        login(self.portal, 'pmReviewer1')
-        self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         #if not activated in the config, it is not sendable anymore
         login(self.portal, 'admin')
         self.meetingConfig.setMeetingConfigsToCloneTo(())

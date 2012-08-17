@@ -1685,7 +1685,7 @@ msgstr ""
 msgid "PloneMeeting_label_sortingMethodOnAddItem"
 msgstr ""
 
-#. Default: "Choose the method that will define where the item will be added when inserted into a meeting.  It can be 'At the end' of the meeting, it can 'Follow proposing groups order' or it can 'Follow categories order'."
+#. Default: "Choose the method that will define where the item will be added by default when inserted into a meeting."
 msgid "sorting_method_on_add_item_descr"
 msgstr ""
 
@@ -3987,7 +3987,7 @@ msgid "label_create_an_element"
 msgstr ""
 
 #. Default: "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups." 
-msgid "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore." 
+msgid "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups." 
 msgstr "" 
 
 #. Default: "Create an element of this type"
