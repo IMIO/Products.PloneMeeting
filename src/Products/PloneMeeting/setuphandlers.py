@@ -227,11 +227,12 @@ def postInstall(context):
         available_expr = "python: not here.portal_plonemeeting." \
                          "isInPloneMeeting(here, True)")
 
-    # Silly Plone 3 removes some of our stuff every time our product is
-    # reinstalled. So recreate them here; and also, apply workflow adaptations
-    # if required.
+    # portal_quickinstaller remove some installed elements when reinstalling...
+    # readd them manually here...
     for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
         meetingConfig.registerPortalTypes()
+        # add default portal_tabs
+        meetingConfig.createTab()
         # Perform workflow adaptations if required
         performWorkflowAdaptations(site, meetingConfig, logger)
 
