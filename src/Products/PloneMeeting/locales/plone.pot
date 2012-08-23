@@ -750,3 +750,7 @@ msgstr ""
 #. Default: "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups."
 msgid "meetinggroup_users_transfered_to_observers_plonegroup_if_disabled"
 msgstr ""
+
+#. Default: "PloneMeeting view redirecting to the application when logged in"
+msgid "plonemeeting_redirect_to_app_view"
+msgstr ""

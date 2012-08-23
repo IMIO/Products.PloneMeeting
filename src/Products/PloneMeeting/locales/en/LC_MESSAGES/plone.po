@@ -623,6 +623,10 @@ msgstr "You are a registered user but your account has not been activated yet. P
 msgid "object_deleted"
 msgstr "The element was deleted."
 
+#. Default: "PloneMeeting view redirecting to the application when logged in"
+msgid "plonemeeting_redirect_to_app_view"
+msgstr ""
+
 #. Default: "Present"
 msgid "present"
 msgstr "Present"

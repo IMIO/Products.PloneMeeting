@@ -618,6 +618,10 @@ msgstr "Vous êtes un utilisateur enregistré mais votre compte n'a pas encore �
 msgid "object_deleted"
 msgstr "L'élément a été supprimé."
 
+#. Default: "PloneMeeting view redirecting to the application when logged in"
+msgid "plonemeeting_redirect_to_app_view"
+msgstr "Vue PloneMeeting redirection vers l'application"
+
 #. Default: "Present"
 msgid "present"
 msgstr "Présenter"

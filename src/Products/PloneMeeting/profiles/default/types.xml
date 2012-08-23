@@ -24,5 +24,7 @@
  <object name="MeetingUser"
          meta_type="Factory-based Type Information with dynamic views"/>
  <!-- ##code-section TYPES -->
+ <object name="Plone Site"
+         meta_type="Factory-based Type Information with dynamic views"/>
  <!-- ##/code-section TYPES -->
 </object>

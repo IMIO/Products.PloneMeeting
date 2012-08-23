@@ -620,6 +620,10 @@ msgstr "Sie sind ein registrierter Benutzer aber Ihr Konto wurde noch nicht akti
 msgid "object_deleted"
 msgstr "Das Element wurde gelöscht."
 
+#. Default: "PloneMeeting view redirecting to the application when logged in"
+msgid "plonemeeting_redirect_to_app_view"
+msgstr ""
+
 #. Default: "Present"
 msgid "present"
 msgstr "Präsentieren"

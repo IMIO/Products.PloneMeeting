@@ -191,12 +191,6 @@ def postInstall(context):
     pc.setPolicyIn('')
     pc.setPolicyBelow('portal_plonemeeting_policy')
 
-    # Replace default front page with HS one.
-    try:
-        site.manage_delObjects(('front-page'),)
-    except AttributeError:
-        pass
-
     # We must be able to choose a user password on user creation.
     site.manage_changeProperties(validate_email=0)
 
