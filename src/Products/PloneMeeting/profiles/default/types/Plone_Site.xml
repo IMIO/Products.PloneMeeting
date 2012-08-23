@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<object name="Plone Site"
+        meta_type="Factory-based Type Information with dynamic views"
+        xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+        i18n:domain="plone">
+ <property name="view_methods">
+  <element value="folder_listing"/>
+  <element value="folder_summary_view"/>
+  <element value="folder_full_view"/>
+  <element value="folder_tabular_view"/>
+  <element value="atct_album_view"/>
+  <element value="plonemeeting_redirect_to_app_view"/>
+ </property>
+</object>
