@@ -227,8 +227,8 @@ def postInstall(context):
         available_expr = "python: not here.portal_plonemeeting." \
                          "isInPloneMeeting(here, True)")
 
-    # portal_quickinstaller remove some installed elements when reinstalling...
-    # readd them manually here...
+    # portal_quickinstaller removes some installed elements when reinstalling...
+    # re-add them manually here...
     for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
         meetingConfig.registerPortalTypes()
         # add default portal_tabs
@@ -289,27 +289,6 @@ def reInstall(context):
     '''Reinstalls the product.'''
     profileId = u'profile-Products.PloneMeeting:default'
     context.runAllImportStepsFromProfile(profileId)
-
-def configureFCKeditor(context):
-    '''If we want to use FCKeditor, we need to do some adaptations'''
-    if isNotPloneMeetingProfile(context): return
-    site = context.getSite()
-
-    # Check if we can get a 'fck_ploneInit.js' file in
-    # portal_skins/fckeditorplone. This could change with future versions of
-    # FCKeditor.
-    if hasattr(site.portal_skins, 'fckeditorplone') and \
-       hasattr(site.portal_skins.fckeditorplone, 'fck_ploneInit.js'):
-        # Register it in portal_javascript  
-        pjs = site.portal_javascripts
-        try:
-            kwargs = {'enabled' : True, 'cookable' : True,
-                      'compression' : 'safe', 'cacheable' : True}
-            pjs.registerScript('fck_ploneInit.js', **kwargs)
-            logger.info('FCKeditor configured for PloneMeeting.')
-        except ValueError:
-            # Already registered.
-            pass
 
 # Code executed after a workflow transition has been triggered -----------------
 def do(action, event):
