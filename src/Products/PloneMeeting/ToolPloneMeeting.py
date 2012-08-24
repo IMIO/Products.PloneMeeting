@@ -761,7 +761,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res = None
         return res
 
-    security.declarePublic('createMeetingConfigFolder')
+    security.declarePublic('createMeetingConfig')
     def createMeetingConfig(self, configData, source):
         '''Creates a new meeting configuration from p_configData which is a
            MeetingConfigDescriptor instance. If p_source is a string, it

@@ -1479,7 +1479,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
-    security.declarePublic('getMeetingsAcceptingItems')
+    security.declarePublic('getMeeting')
     def getMeeting(self, brain=False):
         '''Returns the linked meeting if it exists.'''
         # getBRefs returns linked *objects* through a relationship defined in
@@ -1508,7 +1508,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Is there a meeting tied to me?'''
         return self.getMeeting(brain=True) != None
 
-    security.declarePublic('isLateFor')
+    security.declarePublic('isLate')
     def isLate(self):
         '''Am I included in a meeting as a late item?'''
         if self.reference_catalog.getBackReferences(self, 'MeetingLateItems'):
