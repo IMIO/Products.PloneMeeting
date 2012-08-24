@@ -1,18 +1,8 @@
 <?xml version="1.0"?>
 <import-steps>
-  <import-step id="migrateExistingPloneGroupsTitle" version="20120629-01"
-               handler="Products.PloneMeeting.profiles.migrations.migrate_to_2_0.migrateExistingPloneGroupsTitle"
-               title="Migrate existing Plone groups title.">
-      Migrate existing Plone groups title to make sure it is not unicode and avoid UnicodeDecodeErrors.
-  </import-step>
-  <import-step id="migrateToPloneMeeting_2_0" version="20100817-01"
-               handler="Products.PloneMeeting.profiles.migrations.migrate_to_2_0.migrate"
-               title="Migrate to PloneMeeting 2.0.">
-      Migrate to HubSessions/PloneMeeting 2.0 for production sites running v1.9.
-  </import-step>
-  <import-step id="migrateToPloneMeeting_2_1" version="20110519-01"
-               handler="Products.PloneMeeting.profiles.migrations.migrate_to_2_1.migrate"
-               title="Migrate to PloneMeeting 2.1.">
-      Migrate to HubSessions/PloneMeeting 2.1 for production sites running v2.0.
+  <import-step id="migrateToPloneMeeting_3_0" version="20120824-01"
+               handler="Products.PloneMeeting.profiles.migrations.migrate_to_3_0.migrate"
+               title="Migrate to PloneMeeting 3.0.">
+      Migrate to PloneMeeting 3.0 (Plone4) for production sites running v2.1.2 (Plone3).
   </import-step>
 </import-steps>

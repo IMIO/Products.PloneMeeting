@@ -24,6 +24,13 @@
            factory=".Meeting.MeetingWorkflowActions"
            provides=".interfaces.IMeetingWorkflowActions" />
 
+  <!-- add the file field to MeetingFileBlob -->
+  <adapter
+    name="plone.app.blob.subtypes.file"
+    for="Products.PloneMeeting.interfaces.IMeetingFile"
+    factory="plone.app.blob.subtypes.file.SchemaExtender" />
+
+           
   <subscriber for=".interfaces.IMeetingItem
                    zope.app.container.interfaces.IObjectAddedEvent"
               handler=".MeetingItem.onAddMeetingItem"/>

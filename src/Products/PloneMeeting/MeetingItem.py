@@ -2048,8 +2048,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            evaluating the TAL expression on every active MeetingGroup containing
            at least one adviser. The method returns a list of MeetingGroup
            ids.'''
-        tool = self.portal_plonemeeting
-        portal = self.portal_url.getPortalObject()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        portal = getToolByName(self, 'portal_url').getPortalObject()
         res = []
         for mGroup in tool.getActiveGroups(notEmptySuffix='advisers'):
             # Check that the TAL expression on the group returns True

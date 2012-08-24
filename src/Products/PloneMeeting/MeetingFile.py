@@ -21,6 +21,8 @@ import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
+from plone.app.blob.content import ATBlob
+from plone.app.blob.content import ATBlobSchema
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
@@ -29,7 +31,6 @@ from App.class_init import InitializeClass
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import getToolByName
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
-from Products.ATContentTypes.content.file import ATFile, ATFileSchema
 from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, \
      HubSessionsMarshaller
 import logging
@@ -96,7 +97,7 @@ schema = Schema((
 ##code-section after-local-schema #fill in your manual code here
 ##/code-section after-local-schema
 
-MeetingFile_schema = ATFileSchema.copy() + \
+MeetingFile_schema = ATBlobSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
@@ -104,7 +105,7 @@ MeetingFile_schema = ATFileSchema.copy() + \
 MeetingFile_schema.registerLayer('marshall', MeetingFileMarshaller())
 ##/code-section after-schema
 
-class MeetingFile(ATFile, BrowserDefaultMixin):
+class MeetingFile(ATBlob, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
@@ -175,7 +176,7 @@ class MeetingFile(ATFile, BrowserDefaultMixin):
     def index_html(self, REQUEST=None, RESPONSE=None):
         '''Download the file'''
         self.portal_plonemeeting.rememberAccess(self.UID())
-        return ATFile.index_html(self, REQUEST, RESPONSE)
+        return ATBlob.index_html(self, REQUEST, RESPONSE)
 
     security.declarePublic('at_post_create_script')
     def at_post_create_script(self):
