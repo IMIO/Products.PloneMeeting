@@ -1,44 +1,8 @@
 # ------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('PloneMeeting')
-from Products.contentmigration.walker import CustomQueryWalker
-from Products.contentmigration.archetypes import InplaceATItemMigrator
 from Products.PloneMeeting.profiles.migrations import Migrator
 
-
-# Products.contentmigration class for migrating MeetingFiles to MeetingFileBlobs
-class MeetingFileToMeetingFileBlobMigrator(object, InplaceATItemMigrator):
-
-    walker = CustomQueryWalker  
-    src_portal_type = 'MeetingFile'
-    src_meta_type = 'MeetingFile'
-    dst_portal_type = 'MeetingFile'
-    dst_meta_type = 'MeetingFile'
-
-    def __init__(self, *args, **kwargs):
-        InplaceATItemMigrator.__init__(self, *args, **kwargs)
-
-    # migrate all fields except 'file', which needs special handling...
-    fields_map = {
-        'file': None,
-    }
-
-    def migrate_data(self):
-        fields = self.getFields(self.obj)
-        for name in fields:
-            #XXX changed for this migration : Products.contentmigration call self.obj.schema
-            #that does not seem to return schemaExtender fields...  We call self.obj.Schema()
-            oldfield = self.obj.Schema()[name]
-            if hasattr(oldfield, 'removeScales'):
-                # clean up old image scales
-                oldfield.removeScales(self.obj)
-            value = oldfield.get(self.obj)
-            field = self.obj.getField(name)
-            field.getMutator(self.obj)(value)
-
-    def last_migrate_reindex(self):
-        self.new.reindexObject(idxs=['object_provides', 'portal_type',
-            'Type', 'UID'])
 
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_0(Migrator):
@@ -65,22 +29,24 @@ class Migrate_To_3_0(Migrator):
 
     def _migrateMeetingFilesToBlobs(self):
         '''Migrate MeetingFile to MeetingFileBlob.'''
-        portal = self.portal
-        #to avoid link integrity problems, disable checks
-        portal.portal_properties.site_properties.enable_link_integrity_checks = False
-    
-        migrators = (
-                        (MeetingFileToMeetingFileBlobMigrator, {'path':'/'.join(portal.getPhysicalPath())}),
-                    )
-    
-        #Run the migrations
-        for migrator, query in migrators:
-            walker = migrator.walker(portal, migrator, query=query)
-            walker.go()
-            # we need to reset the class variable to avoid using current query in next use of CustomQueryWalker
-            walker.__class__.additionalQuery = {}
-        #enable linkintegrity checks
-        portal.portal_properties.site_properties.enable_link_integrity_checks = True
+        # Call an helper method of plone.app.blob that does "inplace" migration
+        # so existing 'file' are migrated to blob
+        from plone.app.blob.migrations import migrate
+        migrate(self.portal, 'MeetingFile')
+        # Title of the MeetingFiles are lost (???) retrieve it from annexIndex
+        brains = self.portal.portal_catalog(meta_type='MeetingItem')
+        for brain in brains:
+            item = brain.getObject()
+            annexes = item.getAnnexes()
+            if not annexes:
+                continue
+            title_to_uid_mapping = {}
+            for annexInfo in item.annexIndex:
+                title_to_uid_mapping[annexInfo['uid']] = annexInfo['Title']
+            for annex in annexes:
+                if not annex.Title():
+                    annex.setTitle(title_to_uid_mapping[annex.UID()])
+                    annex.reindexObject()
         logger.info("MeetingFiles have been migrated to MeetingFileBlobs.")
 
     def run(self, refreshCatalogs=True, refreshWorkflows=True):
