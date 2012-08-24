@@ -2,8 +2,8 @@
 #
 # File: ToolPloneMeeting.py
 #
-# Copyright (c) 2011 by PloneGov
-# Generator: ArchGenXML Version 2.6
+# Copyright (c) 2012 by PloneGov
+# Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
@@ -210,7 +210,6 @@ schema = Schema((
     ),
     TextField(
         name='colorSystemDisabledFor',
-        allowable_content_types="text/plain",
         default= defValues.colorSystemDisabledFor,
         widget=TextAreaWidget(
             description="ColorSystemDisabledFor",
@@ -233,7 +232,6 @@ schema = Schema((
     ),
     TextField(
         name='unrestrictedUsers',
-        allowable_content_types="text/plain",
         default= defValues.unrestrictedUsers,
         widget=TextAreaWidget(
             description="UnrestrictedUsers",
@@ -437,6 +435,7 @@ schema = Schema((
         default= defValues.searchItemStates,
         enforceVocabulary=False,
     ),
+
 ),
 )
 
@@ -455,7 +454,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-
     implements(interfaces.IToolPloneMeeting)
 
     meta_type = 'ToolPloneMeeting'
@@ -486,7 +484,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def __init__(self, id=None):
         OrderedBaseFolder.__init__(self,'portal_plonemeeting')
         self.setTitle('PloneMeeting')
-        
+
         ##code-section constructor-footer #fill in your manual code here
         ##/code-section constructor-footer
 
@@ -494,7 +492,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):
         self.unindexObject()
-        
+
         ##code-section post-edit-method-footer #fill in your manual code here
         self.updatePloneDiskActions()
         self.updateLanguageSettings()
@@ -763,7 +761,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res = None
         return res
 
-    security.declarePublic('createMeetingConfig')
+    security.declarePublic('createMeetingConfigFolder')
     def createMeetingConfig(self, configData, source):
         '''Creates a new meeting configuration from p_configData which is a
            MeetingConfigDescriptor instance. If p_source is a string, it
@@ -892,7 +890,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''I show the PloneMeeting tabs (corresponding to meeting configs) if
            the user has one of the PloneMeeting roles and if the meeting config
            is active.'''
-           
+
         activeConfigs = self.getActiveConfigs()
         # Are there at least 2 active meetingConfigs?
         if not len(activeConfigs) > 1:

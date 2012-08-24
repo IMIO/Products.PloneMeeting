@@ -2,8 +2,8 @@
 #
 # File: PodTemplate.py
 #
-# Copyright (c) 2011 by PloneGov
-# Generator: ArchGenXML Version 2.6
+# Copyright (c) 2012 by PloneGov
+# Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
@@ -59,7 +59,6 @@ schema = Schema((
 
     TextField(
         name='description',
-        allowable_content_types="text/plain",
         widget=TextAreaWidget(
             description="PodTemplateDescription",
             description_msgid="pod_template_description",
@@ -135,7 +134,6 @@ schema = Schema((
     ),
     TextField(
         name='mailingLists',
-        allowable_content_types="text/plain",
         widget=TextAreaWidget(
             description="PTMailingLists",
             description_msgid="pt_mailing_lists_descr",
@@ -179,7 +177,6 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-
     implements(interfaces.IPodTemplate)
 
     meta_type = 'PodTemplate'

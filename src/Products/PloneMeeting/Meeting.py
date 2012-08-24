@@ -2,8 +2,8 @@
 #
 # File: Meeting.py
 #
-# Copyright (c) 2011 by PloneGov
-# Generator: ArchGenXML Version 2.6
+# Copyright (c) 2012 by PloneGov
+# Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
@@ -574,7 +574,6 @@ schema = Schema((
     ),
     TextField(
         name='signatures',
-        allowable_content_types="text/plain",
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('signatures')",
             label_msgid="meeting_signatures",
@@ -829,7 +828,6 @@ Meeting_schema.registerLayer('marshall', MeetingMarshaller())
 class Meeting(BaseContent, BrowserDefaultMixin):
     """ A meeting made of items """
     security = ClassSecurityInfo()
-
     implements(interfaces.IMeeting)
 
     meta_type = 'Meeting'

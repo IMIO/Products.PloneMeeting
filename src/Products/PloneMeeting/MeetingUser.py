@@ -2,8 +2,8 @@
 #
 # File: MeetingUser.py
 #
-# Copyright (c) 2011 by PloneGov
-# Generator: ArchGenXML Version 2.6
+# Copyright (c) 2012 by PloneGov
+# Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
@@ -281,7 +281,6 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-
     implements(interfaces.IMeetingUser)
 
     meta_type = 'MeetingUser'

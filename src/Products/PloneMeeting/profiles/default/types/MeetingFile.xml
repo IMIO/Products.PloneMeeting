@@ -3,10 +3,10 @@
         meta_type="Factory-based Type Information with dynamic views"
         xmlns:i18n="http://xml.zope.org/namespaces/i18n"
         i18n:domain="plone">
-   
+
  <property name="title" i18n:translate="">MeetingFile</property>
  <property name="description" i18n:translate=""></property>
- <property name="content_icon">MeetingFile.gif</property>
+ <property name="icon_expr">string:${portal_url}/MeetingFile.png</property>
  <property name="content_meta_type">MeetingFile</property>
  <property name="product">PloneMeeting</property>
  <property name="factory">addMeetingFile</property>
@@ -25,20 +25,22 @@
  <alias from="index.html" to="(dynamic view)"/>
  <alias from="view" to="(selected layout)"/>
  <alias from="edit" to="base_edit"/>
- <action title="Edit" 
+ <action title="Edit"
          action_id="edit"
-         category="object" 
+         category="object"
          condition_expr="not:object/@@plone_lock_info/is_locked_for_current_user"
-         url_expr="string:${object_url}/edit" 
+         url_expr="string:${object_url}/edit"
          visible="True">
   <permission value="Modify portal content"/>
  </action>
- <action title="View" 
+ <action title="View"
          action_id="view"
-         category="object" 
+         category="object"
          condition_expr="python:not here.portal_factory.isTemporary(here)"
-         url_expr="string:${object_url}/file_view" 
+         url_expr="string:${object_url}/file_view"
          visible="True">
   <permission value="View"/>
  </action>
+<!-- ##code-section FOOT -->
+<!-- ##/code-section FOOT -->
 </object>

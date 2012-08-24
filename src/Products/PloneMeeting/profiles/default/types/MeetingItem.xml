@@ -3,10 +3,10 @@
         meta_type="Factory-based Type Information with dynamic views"
         xmlns:i18n="http://xml.zope.org/namespaces/i18n"
         i18n:domain="plone">
-   
+
  <property name="title" i18n:translate="">MeetingItem</property>
  <property name="description" i18n:translate=""></property>
- <property name="content_icon">meetingitem_icon.gif</property>
+ <property name="icon_expr">string:${portal_url}/meetingitem_icon.gif</property>
  <property name="content_meta_type">MeetingItem</property>
  <property name="product">PloneMeeting</property>
  <property name="factory">addMeetingItem</property>
@@ -30,65 +30,67 @@
  <alias from="view" to="(selected layout)"/>
  <alias from="edit" to="base_edit"/>
  <alias from="sharing" to="@@sharing"/>
- <action title="View" 
+ <action title="View"
          action_id="view"
-         category="object" 
+         category="object"
          condition_expr="python:not here.portal_factory.isTemporary(here)"
-         url_expr="string:${object_url}/meetingitem_view" 
+         url_expr="string:${object_url}/meetingitem_view"
          visible="True">
   <permission value="View"/>
  </action>
- <action title="Edit" 
+ <action title="Edit"
          action_id="edit"
-         category="object" 
+         category="object"
          condition_expr="python:True"
-         url_expr="string:${object_url}/meetingitem_edit" 
+         url_expr="string:${object_url}/meetingitem_edit"
          visible="True">
   <permission value="Modify portal content"/>
  </action>
- <action title="Annexes" 
+ <action title="Annexes"
          i18n:attributes="title"
          action_id="annexes_form"
-         category="object" 
+         category="object"
          condition_expr="python:here.showAnnexesTab(decisionRelated=False)"
-         url_expr="string:${object_url}/annexes_form" 
+         url_expr="string:${object_url}/annexes_form"
          visible="True">
   <permission value="View"/>
  </action>
- <action title="AnnexesDecision" 
+ <action title="AnnexesDecision"
          i18n:attributes="title"
          action_id="annexes_decision_form"
-         category="object" 
+         category="object"
          condition_expr="python:here.showAnnexesTab(decisionRelated=True)"
-         url_expr="string:${object_url}/annexes_decision_form" 
+         url_expr="string:${object_url}/annexes_decision_form"
          visible="True">
   <permission value="PloneMeeting: Read decision annex"/>
  </action>
- <action title="Duplicate" 
+ <action title="Duplicate"
          i18n:attributes="title"
          action_id="duplicate"
-         category="object_buttons" 
+         category="object_buttons"
          condition_expr="python:object.showDuplicateItemAction()"
-         url_expr="string:${object_url}/onDuplicate" 
+         url_expr="string:${object_url}/onDuplicate"
          visible="True">
   <permission value="Copy or Move"/>
  </action>
- <action title="Duplicate and keep link" 
+ <action title="Duplicate and keep link"
          i18n:attributes="title"
          action_id="duplicate_and_keep_link"
-         category="object_buttons" 
+         category="object_buttons"
          condition_expr="python:object.showDuplicateItemAction()"
-         url_expr="string:${object_url}/onDuplicateAndKeepLink" 
+         url_expr="string:${object_url}/onDuplicateAndKeepLink"
          visible="True">
   <permission value="Copy or Move"/>
  </action>
- <action title="CopyItem" 
+ <action title="CopyItem"
          i18n:attributes="title"
          action_id="copyitem"
-         category="object_buttons" 
+         category="object_buttons"
          condition_expr="python:object.showCopyItemAction()"
-         url_expr="string:${object_url}/copy_items" 
+         url_expr="string:${object_url}/copy_items"
          visible="True">
   <permission value="Copy or Move"/>
  </action>
+<!-- ##code-section FOOT -->
+<!-- ##/code-section FOOT -->
 </object>

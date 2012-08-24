@@ -2,8 +2,8 @@
 #
 # File: MeetingFileType.py
 #
-# Copyright (c) 2011 by PloneGov
-# Generator: ArchGenXML Version 2.6
+# Copyright (c) 2012 by PloneGov
+# Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
@@ -88,7 +88,6 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-
     implements(interfaces.IMeetingFileType)
 
     meta_type = 'MeetingFileType'

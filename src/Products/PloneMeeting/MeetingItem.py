@@ -2,8 +2,8 @@
 #
 # File: MeetingItem.py
 #
-# Copyright (c) 2011 by PloneGov
-# Generator: ArchGenXML Version 2.6
+# Copyright (c) 2012 by PloneGov
+# Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
@@ -507,7 +507,6 @@ schema = Schema((
     ),
     TextField(
         name='budgetInfos',
-        allowable_content_types="text/plain",
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('budgetInfos')",
             description="BudgetInfos",
@@ -743,7 +742,7 @@ schema = Schema((
         widget=MultiSelectionWidget(
             description="TemplateUsingGroups",
             description_msgid="template_using_groups_descr",
-            condition='python: here.isDefinedInTool()',
+            condition="python: here.isDefinedInTool()",
             label='Templateusinggroups',
             label_msgid='PloneMeeting_label_templateUsingGroups',
             i18n_domain='PloneMeeting',
@@ -782,7 +781,6 @@ schema = Schema((
     ),
     TextField(
         name='itemSignatures',
-        allowable_content_types="text/plain",
         widget=TextAreaWidget(
             condition="python: (member.has_role('MeetingManager') or member.has_role('Manager')) and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures')",
             description="ItemSignaturesDescrMethod",
@@ -937,7 +935,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-
     implements(interfaces.IMeetingItem)
 
     meta_type = 'MeetingItem'
@@ -1482,7 +1479,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
-    security.declarePublic('getMeeting')
+    security.declarePublic('getMeetingsAcceptingItems')
     def getMeeting(self, brain=False):
         '''Returns the linked meeting if it exists.'''
         # getBRefs returns linked *objects* through a relationship defined in
@@ -1511,7 +1508,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Is there a meeting tied to me?'''
         return self.getMeeting(brain=True) != None
 
-    security.declarePublic('isLate')
+    security.declarePublic('isLateFor')
     def isLate(self):
         '''Am I included in a meeting as a late item?'''
         if self.reference_catalog.getBackReferences(self, 'MeetingLateItems'):

@@ -2,8 +2,8 @@
 #
 # File: MeetingGroup.py
 #
-# Copyright (c) 2011 by PloneGov
-# Generator: ArchGenXML Version 2.6
+# Copyright (c) 2012 by PloneGov
+# Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
@@ -59,7 +59,6 @@ schema = Schema((
     ),
     TextField(
         name='description',
-        allowable_content_types="text/plain",
         widget=TextAreaWidget(
             label='Description',
             label_msgid='PloneMeeting_label_description',
@@ -149,7 +148,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-
     implements(interfaces.IMeetingGroup)
 
     meta_type = 'MeetingGroup'

@@ -2,8 +2,8 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2011 by PloneGov
-# Generator: ArchGenXML Version 2.6
+# Copyright (c) 2012 by PloneGov
+# Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
@@ -128,7 +128,6 @@ schema = Schema((
 
     TextField(
         name='assembly',
-        allowable_content_types="text/plain",
         default= defValues.assembly,
         widget=TextAreaWidget(
             description="Assembly",
@@ -140,7 +139,6 @@ schema = Schema((
     ),
     TextField(
         name='signatures',
-        allowable_content_types="text/plain",
         default= defValues.signatures,
         widget=TextAreaWidget(
             description="Signatures",
@@ -163,7 +161,6 @@ schema = Schema((
     ),
     TextField(
         name='places',
-        allowable_content_types="text/plain",
         default= defValues.places,
         widget=TextAreaWidget(
             description="Places",
@@ -175,7 +172,6 @@ schema = Schema((
     ),
     TextField(
         name='budgetDefault',
-        allowable_content_types="text/plain",
         default= defValues.budgetDefault,
         widget=TextAreaWidget(
             description="BudgetDefault",
@@ -420,7 +416,6 @@ schema = Schema((
     ),
     TextField(
         name='itemReferenceFormat',
-        allowable_content_types="text/plain",
         default= defValues.itemReferenceFormat,
         widget=TextAreaWidget(
             description="ItemReferenceFormat",
@@ -448,7 +443,6 @@ schema = Schema((
     ),
     TextField(
         name='allItemTags',
-        allowable_content_types="text/plain",
         default= defValues.allItemTags,
         widget=TextAreaWidget(
             description="AllItemTags",
@@ -1240,7 +1234,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-
     implements(interfaces.IMeetingConfig)
 
     meta_type = 'MeetingConfig'
@@ -1755,7 +1748,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 aitool.removeActionIcon('object_buttons', aiId)
 
         for configId in self.getMeetingConfigsToCloneTo():
-            actionId = self._getCloneToOtherMCActionId(configId, self.getId())            
+            actionId = self._getCloneToOtherMCActionId(configId, self.getId())
             urlExpr = 'string:${object/absolute_url}/cloneToOtherMeeting' \
                       'Config?destMeetingConfigId=%s' % configId
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
@@ -1977,7 +1970,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('searchItemsInCopy')
     def searchItemsInCopy(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items for which the current user is in copyGroups.'''        
+        '''Queries all items for which the current user is in copyGroups.'''
         member = self.portal_membership.getAuthenticatedMember()
         userGroups = self.portal_groups.getGroupsForPrincipal(member)
         params = {'portal_type'   : self.getItemTypeName(),

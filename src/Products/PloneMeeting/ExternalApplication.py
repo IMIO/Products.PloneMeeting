@@ -2,8 +2,8 @@
 #
 # File: ExternalApplication.py
 #
-# Copyright (c) 2011 by PloneGov
-# Generator: ArchGenXML Version 2.6
+# Copyright (c) 2012 by PloneGov
+# Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
@@ -203,7 +203,6 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-
     implements(interfaces.IExternalApplication)
 
     meta_type = 'ExternalApplication'
