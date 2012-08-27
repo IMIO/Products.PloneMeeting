@@ -40,14 +40,6 @@
  </import-step>
 
 <!-- ##code-section ADDITIONALSTEPS -->
- <import-step 
-    id="PloneMeeting-configureFCKeditor" 
-    handler="Products.PloneMeeting.setuphandlers.configureFCKeditor"
-    title="Configure FCKeditor for PloneMeeting"
-    version="2012-02-24T13:13:13.131313">
-   <dependency step="toolset"/>
-   Configure FCKeditor for PloneMeeting
- </import-step>
 <!-- ##/code-section ADDITIONALSTEPS -->
 
 </import-steps>
