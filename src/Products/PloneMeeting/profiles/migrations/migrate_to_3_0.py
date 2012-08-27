@@ -31,6 +31,18 @@ class Migrate_To_3_0(Migrator):
         '''Migrate MeetingFiles to Blobs.'''
         # Call an helper method of plone.app.blob that does "inplace" migration
         # so existing 'file' are migrated to blob
+        brains = self.portal.portal_catalog(meta_type='MeetingFile')
+        # Some MeetingFiles to migrate?
+        if not brains:
+            logger.info('No MeetingFiles found.')
+            return
+        # Check if migration has already been launched
+        aMeetingFile = brains[0].getObject()
+        if aMeetingFile.getField('file').get(aMeetingFile).__module__ == 'plone.app.blob.field':
+            logger.info('MeetingFiles already migrated to blobs.')
+            return
+
+        logger.info('Migrating %s MeetingFile objects...' % len(brains))
         from plone.app.blob.migrations import migrate
         migrate(self.portal, 'MeetingFile')
         # Title of the MeetingFiles are lost (???) retrieve it from annexIndex
