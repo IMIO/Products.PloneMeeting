@@ -24,7 +24,7 @@
            factory=".Meeting.MeetingWorkflowActions"
            provides=".interfaces.IMeetingWorkflowActions" />
 
-  <!-- add the file field to MeetingFileBlob -->
+  <!-- add the blob field to MeetingFile -->
   <adapter
     name="plone.app.blob.subtypes.file"
     for="Products.PloneMeeting.interfaces.IMeetingFile"

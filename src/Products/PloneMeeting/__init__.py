@@ -125,6 +125,7 @@ from Products.PloneMeeting.model.extender import ModelExtender
 def initialize(context):
     """initialize product (called by zope)"""
     ##code-section custom-init-top #fill in your manual code here
+    from Products.PloneMeeting import monkey
     ##/code-section custom-init-top
 
     # imports packages and types for registration

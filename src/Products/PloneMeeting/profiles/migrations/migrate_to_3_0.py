@@ -28,7 +28,7 @@ class Migrate_To_3_0(Migrator):
 
 
     def _migrateMeetingFilesToBlobs(self):
-        '''Migrate MeetingFile to MeetingFileBlob.'''
+        '''Migrate MeetingFiles to Blobs.'''
         # Call an helper method of plone.app.blob that does "inplace" migration
         # so existing 'file' are migrated to blob
         from plone.app.blob.migrations import migrate
@@ -47,7 +47,7 @@ class Migrate_To_3_0(Migrator):
                 if not annex.Title():
                     annex.setTitle(title_to_uid_mapping[annex.UID()])
                     annex.reindexObject()
-        logger.info("MeetingFiles have been migrated to MeetingFileBlobs.")
+        logger.info("MeetingFiles have been migrated to Blobs.")
 
     def run(self, refreshCatalogs=True, refreshWorkflows=True):
         logger.info('Migrating to PloneMeeting 3.0...')
@@ -60,7 +60,7 @@ def migrate(context):
     '''This migration function:
 
        1) Patches security of File objects;
-       2) Migrate MeetingFile to MeetingFileBlob.
+       2) Migrate MeetingFiles to Blobs.
     '''
     if context.readDataFile("PloneMeeting_migrations_marker.txt") is None:return
     Migrate_To_3_0(context).run()
