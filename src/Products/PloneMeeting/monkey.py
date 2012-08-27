@@ -36,7 +36,6 @@ def makeMigrator(context, portal_type, meta_type=None):
                 #XXX changed for PloneMeeting
                 #use .Schema() instead of .schema
                 #oldfield = self.obj.schema[name]
-                import ipdb; ipdb.set_trace()
                 oldfield = self.obj.Schema()[name]
                 if hasattr(oldfield, 'removeScales'):
                     # clean up old image scales
