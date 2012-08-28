@@ -39,6 +39,8 @@
     }
     // Initialize FCK editor if it is the used editor
     if (ploneEditor == 'FCKeditor') { FCKeditor_Plone_Init(); }
+    // Initialize CKeditor if it is the used editor
+    if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances); }
   }
   function getRichTextContent(rq, params) {
     /* Gets the content of a rich text field before sending it through an Ajax
@@ -59,6 +61,10 @@
         fckObject.SetStatus(FCK_STATUS_COMPLETE);
         finalizePublication(fckObject);
         }
+    }
+    if (ploneEditor == 'CKeditor'){
+       /* with CKeditor the value is not stored in the widget so get the data from the real CKeditor instance */
+       theWidget.value = window.parent.CKEDITOR.instances[fieldName].getData();
     }
     /* Disable the Plone automatic detection of changes to the form. Indeed,
        Plone is not aware that we have sent the form, so he will try to display
