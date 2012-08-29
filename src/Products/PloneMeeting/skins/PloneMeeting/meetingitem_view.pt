@@ -26,6 +26,7 @@
     // Javascripts inside this zone will not be executed. So find them
     // and trigger their execution here.
     var scripts = cssQuery('script', hook);
+    var fieldName = rq.hook.split('_')[1];
     for (var i=0; i<scripts.length; i++) {
       var scriptContent = scripts[i].innerHTML;
       if (scriptContent.search('addEventHandler') != -1) {
@@ -40,7 +41,7 @@
     // Initialize FCK editor if it is the used editor
     if (ploneEditor == 'FCKeditor') { FCKeditor_Plone_Init(); }
     // Initialize CKeditor if it is the used editor
-    if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances); }
+    if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
   }
   function getRichTextContent(rq, params) {
     /* Gets the content of a rich text field before sending it through an Ajax
