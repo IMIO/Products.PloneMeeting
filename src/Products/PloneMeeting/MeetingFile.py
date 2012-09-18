@@ -175,6 +175,10 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     security.declareProtected(View, 'index_html')
     def index_html(self, REQUEST=None, RESPONSE=None):
         '''Download the file'''
+        # Prevent downloading the annex if the related item is not # privacy-viewable.
+        item = self.getItem()
+        if not item.adapted().isPrivacyViewable():
+            raise Unauthorized
         self.portal_plonemeeting.rememberAccess(self.UID())
         return ATBlob.index_html(self, REQUEST, RESPONSE)
 
