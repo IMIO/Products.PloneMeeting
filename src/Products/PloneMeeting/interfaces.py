@@ -229,6 +229,13 @@ class IMeetingItemDocumentation:
            isPrivacyViewable is automatically True if the item has field
            privacy=False.'''
 
+    def getExtraFieldsToCopyWhenCloningToOtherMC():
+        '''While cloning an item to another MeetingConfig, some fields are selected
+           to be copied to the new cloned items.  If we want to add some arbitrary
+           fields like fields coming from a SchemaExtender, we can specify this
+           with this method that will returns a list of extra field ids to copy to
+           the cloned item.'''
+
 class IMeetingItemWorkflowConditions(Interface):
     '''Conditions that may be defined in the workflow associated with a meeting
        item are defined as methods in this interface.'''

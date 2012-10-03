@@ -1459,7 +1459,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('pasteItems')
     def pasteItems(self, destFolder, copiedData, copyAnnexes=False,
-                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS):
+                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.'''
         meetingConfig = self.getMeetingConfig(destFolder)
@@ -1478,6 +1478,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not newOwnerId:
             # The new owner will become the currently logged user
             newOwnerId = loggedUserId
+        wftool = getToolByName(self, 'portal_workflow')
         res = []
         i = -1
         for itemId in pasteResult:
@@ -1499,6 +1500,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             newItem.setCreators( (newOwnerId,) )
             # The creation date is kept, redefine it
             newItem.setCreationDate(DateTime())
+
+            # Change the new item portal_type dynamically (wooow) if needed
+            if newPortalType:
+                newItem.portal_type = newPortalType
+                # Rename the workflow used in workflow_history because the used workflow
+                # has changed (more than probably)
+                oldWFName = wftool.getWorkflowsFor(copiedItem)[0].id
+                newWFName = wftool.getWorkflowsFor(newItem)[0].id
+                oldHistory = newItem.workflow_history
+                tmpDict = {newWFName: oldHistory[oldWFName]}
+                newItem.workflow_history = tmpDict
 
             # Set fields not in the copyFields list to their default value
             #'id' and  'proposingGroup' will be kept in anyway
@@ -1534,7 +1546,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     exec 'newItem.set%s(newAnnexes)' % annexType
             # The copy/paste has transferred history. We must clean the history
             # of the cloned object.
-            wfName = self.portal_workflow.getWorkflowsFor(newItem)[0].id
+            wfName = wftool.getWorkflowsFor(newItem)[0].id
             firstEvent = newItem.workflow_history[wfName][0]
             firstEvent['actor'] = newOwnerId or self.Creator()
             firstEvent['time'] = DateTime()
@@ -1550,6 +1562,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if newItem.getProposingGroup(True) not in userGroups:
                 if userGroups:
                     newItem.setProposingGroup(userGroups[0].id)
+
             # at_post_create_script updates the local roles (so removes role
             # 'Manager' that we've set above), and also gives role "Owner" to
             # the logged user.

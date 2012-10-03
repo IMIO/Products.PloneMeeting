@@ -1344,6 +1344,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.isPrivacyViewable():
             raise Unauthorized
 
+    security.declarePublic('getExtraFieldsToCopyWhenCloningToOtherMC')
+    def getExtraFieldsToCopyWhenCloningToOtherMC(self):
+        '''Check doc in interfaces.py.'''
+        return []
+
     security.declarePublic('listTemplateUsingGroups')
     def listTemplateUsingGroups(self):
         '''Returns a list of groups that will restrict the use of this item
@@ -2665,7 +2670,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('clone')
     def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
-              destFolder=None, copyFields=DEFAULT_COPIED_FIELDS):
+              destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -2686,7 +2691,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         sourceFolder = self.getParentNode()
         copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
         res = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
-                              newOwnerId=newOwnerId, copyFields=copyFields)[0]
+                              newOwnerId=newOwnerId, copyFields=copyFields,
+                              newPortalType=newPortalType)[0]
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
             # because it was cleaned by ToolPloneMeeting.pasteItems.
@@ -2714,12 +2720,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.adapted().mayCloneToOtherMeetingConfig(destMeetingConfigId):
             # If the user came here, he even does not deserve a clear message;-)
             raise Unauthorized
-        pmtool = getToolByName(self, "portal_plonemeeting")
-        plone_utils = getToolByName(self, "plone_utils")
+        pmtool = getToolByName(self, 'portal_plonemeeting')
+        plone_utils = getToolByName(self, 'plone_utils')
         destMeetingConfig = getattr(pmtool, destMeetingConfigId, None)
         meetingConfig = pmtool.getMeetingConfig(self)
 
-        wftool = getToolByName(self, 'portal_workflow')
         # This will get the destFolder or create it if the current user has the permission
         # if not, then we return a message
         try:
@@ -2743,18 +2748,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Copy also budget related fields if used in the destMeetingConfig
         if 'budgetInfos' in destMeetingConfig.getUsedItemAttributes():
             fieldsToCopy = fieldsToCopy + ['budgetRelated', 'budgetInfos']
+        # Check if an external plugin want to add some fieldsToCopy
+        fieldsToCopy = fieldsToCopy + self.adapted().getExtraFieldsToCopyWhenCloningToOtherMC()
         newItem = self.clone(copyAnnexes=True, newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
-                             destFolder=destFolder, copyFields=fieldsToCopy)
-        # Change the new item portal_type dynamically (wooow)
-        newItem.portal_type = destMeetingConfig.getItemTypeName()
-        # Rename the workflow used in workflow_history because the used workflow
-        # has changed (more than probably)
-        oldWFName = wftool.getWorkflowsFor(self)[0].id
-        newWFName = wftool.getWorkflowsFor(newItem)[0].id
-        oldHistory = newItem.workflow_history
-        tmpDict = {newWFName: oldHistory[oldWFName]}
-        newItem.workflow_history = tmpDict
+                             destFolder=destFolder, copyFields=fieldsToCopy,
+                             newPortalType=destMeetingConfig.getItemTypeName())
         newItem.setPredecessor(self)
         newItem.reindexObject()
         # Save that the element has been cloned to another meetingConfig

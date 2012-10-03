@@ -85,7 +85,7 @@ class PloneMeetingTestCase(unittest.TestCase):
         self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly')
         self.meetingConfig2 = getattr(self.tool, 'plonegov-assembly')
         # Set the default file and file type for adding annexes
-        self.annexFile = 'INSTALL.TXT'
+        self.annexFile = 'README.txt'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
 

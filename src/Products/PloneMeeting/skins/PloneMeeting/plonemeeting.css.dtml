@@ -432,6 +432,11 @@ padding-bottom: 2px;
 cursor:pointer;
 }
 
+/* input containing the item number on the meeting view, large enough to show 3-digit numbers */
+span#meetingItems INPUT {
+width: 2.5em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
