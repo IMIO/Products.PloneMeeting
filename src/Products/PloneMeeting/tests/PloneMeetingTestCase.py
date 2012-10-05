@@ -32,7 +32,7 @@ from Products.PloneTestCase.setup import _createHomeFolder
 
 import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
-from Products.PloneMeeting.MeetingItem import MeetingItem
+#from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
 
@@ -215,6 +215,13 @@ class PloneMeetingTestCase(unittest.TestCase):
         # Find the needed information for creating the annex
         if annexPath == None:
             annexPath = self.annexFile
+        #copy the default annexFile because ZODB.blob removes (os.remove) a FileUpload
+        #after having used it...
+        from shutil import copyfile
+        originalAnnexPath = os.path.join(self.pmFolder, annexPath)
+        newAnnexPath = originalAnnexPath[:-4] + '_tmp' + '.txt'
+        copyfile(originalAnnexPath, newAnnexPath)
+        annexPath = newAnnexPath
         annexFile = FileUpload(TestFile(
             file(os.path.join(self.pmFolder, annexPath)), annexPath))
         if annexType == None:
