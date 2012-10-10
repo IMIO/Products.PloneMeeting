@@ -26,7 +26,7 @@
     <table cellpadding="0" cellspacing="0" width="97%" align="center">
       <tr>
        <td class="portletSection" i18n:translate="app_name"></td>
-       <td align="right">
+       <td style="text-align: right">
          <img style="cursor:pointer"
               tal:condition="python: meetingConfig"
               tal:attributes="onClick python: 'href: window.location=\'%s\'' % meetingFolder.absolute_url();
@@ -57,7 +57,7 @@
     <table width="100%" cellspacing="0" cellpadding="0">
      <tr>
       <td class="portletSection" i18n:translate="PloneMeeting_label_items"></td>
-      <td align="right">
+      <td style="text-align: right">
         <tal:comment replace="nothing">Create a new item</tal:comment>
         <img style="cursor:pointer" tal:condition="python: userIsAmongCreators and not ploneDiskAware"
              tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=MeetingItem%s\'' % (meetingFolder.absolute_url(), meetingConfig.getShortName());
@@ -91,7 +91,7 @@
     <table width="100%" cellspacing="0" cellpadding="0">
      <tr>
       <td class="portletSection" i18n:translate="portletmeetings_title"></td>
-      <td align="right">
+      <td style="text-align: right">
         <tal:comment replace="nothing">Create a new meeting</tal:comment>
         <img style="cursor:pointer" tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', context) and not ploneDiskAware"
              tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=Meeting%s\'' % (meetingFolder.absolute_url(), meetingConfig.getShortName());
