@@ -19,6 +19,7 @@ p {line-height: 1em;}
   width: auto;
   height: 18px !important;
   padding-right: 24px;
+  margin-top: 5px;
 }
 
 .ploneMeetingSelectBox {
@@ -42,6 +43,7 @@ p {line-height: 1em;}
   margin: 0px 1px 0px 1px;
   width: 99%; /* If 100% a horizontal scrollbar is displayed */
   vertical-align: top !important;
+  min-height: 18px;
 }
 
 .ploneMeetingSelectItemUnselected {
