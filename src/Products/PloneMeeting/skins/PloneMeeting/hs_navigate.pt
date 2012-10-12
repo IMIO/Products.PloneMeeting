@@ -1,8 +1,8 @@
 <tal:comment replace="nothing">Macro that shows the navigation controls on a paginated
     list of items (meetingitems_list)</tal:comment>
-<metal:nav define-macro="meetingItems" tal:condition="python: batchSize and (totalNbOfItems &gt; batchSize)"
-   i18n:domain="PloneMeeting">
-  <table cellspacing="0" cellpadding="0" class="itemsNavigation" align="center"
+<div metal:define-macro="meetingItems" tal:condition="python: batchSize and (totalNbOfItems &gt; batchSize)"
+   i18n:domain="PloneMeeting" align="center">
+  <table cellspacing="0" cellpadding="0" class="itemsNavigation"
          tal:define="jsParams python:'\'%s\',\'%s\'' % (whichItems, showColors);
                      startItem python: int(request['startNumber']);
                      _ python: context.translate;
@@ -55,7 +55,7 @@
                           onClick python: 'gotoItem(this.previousSibling, %d, \'%s\')' % (meeting.numberOfItems() + meeting.numberOfItems(True), meeting.UID())" style="cursor:pointer"/></td>
     </tr>
   </table>
-</metal:nav>
+</div>
 
 <tal:comment replace="nothing">Macro that shows the navigation controls on meetingitem_view</tal:comment>
 <metal:itemnav define-macro="item" i18n:domain="PloneMeeting" tal:condition="mayView"
