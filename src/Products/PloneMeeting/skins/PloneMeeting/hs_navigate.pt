@@ -5,8 +5,8 @@
   <table cellspacing="0" cellpadding="0" class="itemsNavigation" align="center"
          tal:define="jsParams python:'\'%s\',\'%s\'' % (whichItems, showColors);
                      startItem python: int(request['startNumber']);
-                     _ python: context.translate">
-                     isAvailableItems python:whichItems == 'availableItems';
+                     _ python: context.translate;
+                     isAvailableItems python:whichItems == 'availableItems';">
     <tr>
       <tal:comment replace="nothing">Go to the first page</tal:comment>
       <td tal:condition="python: (startItem != 1) and (startItem != 1+batchSize)">
