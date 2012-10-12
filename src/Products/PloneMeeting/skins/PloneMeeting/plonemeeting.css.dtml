@@ -216,6 +216,11 @@ margin-top: -1.9em;
   margin-left: -0.5em !important;
 }
 
+#objectHistory_img {
+  cursor:pointer;
+  margin-top: 3px;
+}
+
 #objectMenu.actionMenuAX .actionMenuContentAX li { display: block; }
 #objectMenu.actionMenuAX .actionMenuContentAX li,
 #objectMenu.actionMenuAX .actionMenuContentAX li a:hover {

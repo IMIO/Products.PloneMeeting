@@ -576,7 +576,7 @@
   <tal:comment replace="nothing">Table containing the history</tal:comment>
   <tal:history condition="objs">
   <metal:nav use-macro="context/hs_navigate/macros/simple"/>
-  <table width="100%" class="listing nosort">
+  <table class="listing nosort">
     <tr i18n:domain="plone">
       <th i18n:translate="listingheader_action"/>
       <th i18n:translate="listingheader_performed_by"/>
@@ -631,7 +631,7 @@
     tal:define="expanded python: request.get('objectHistory', 'collapsed') == 'expanded';
                 historyMaxPerPage python: 6;"
     tal:condition="context/hasHistory">
-  <img align="left" style="cursor:pointer; margin-top: 3px" onClick="toggleBooleanCookie('objectHistory')"
+  <img align="left" onClick="toggleBooleanCookie('objectHistory')"
        tal:attributes="src python: expanded and 'treeExpanded.gif' or 'treeCollapsed.gif'"
        id="objectHistory_img"/>&nbsp;
   <i i18n:translate="label_history" i18n:domain="plone"></i><br/>
