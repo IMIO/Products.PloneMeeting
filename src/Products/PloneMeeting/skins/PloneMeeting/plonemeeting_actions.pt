@@ -33,10 +33,11 @@
                                  onClick python:'%s(\'%s\',\'%s\',%s)' % (triggerFunction,uid,transition['id'],confirm)" />
         </tal:transition>
         <tal:comment replace="nothing">The user can't trigger this transition: we tell him why.</tal:comment>
-        <div tal:condition="not: transition/may_trigger" class="hsButton fakeButton"
-             tal:content="transition/title" i18n:translate=""
-             tal:attributes="title transition/reason">
-        </div>
+        <input type="button" disabled
+               tal:condition="not: transition/may_trigger" class="hsButton fakeButton"
+               tal:attributes="value transition/title;
+                               title transition/reason"
+               i18n:attributes="value" />
       </td>
 
       <tal:comment replace="nothing">Arrows (only icons) for moving items up or down in a meeting</tal:comment>

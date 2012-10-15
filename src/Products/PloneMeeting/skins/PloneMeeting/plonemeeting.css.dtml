@@ -278,12 +278,11 @@ input[type=radio] {margin: 0;}
 }
 
 .fakeButton {
-  background: #ffd5c0 url(&dtml-portal_url;/fakeTransition.gif) no-repeat scroll 0% 0%;
+  background: #ffd5c0 url(&dtml-portal_url;/fakeTransition.gif) no-repeat scroll 3px 2px;
   font-style: italic;
   cursor: help;
   padding: 0 3px 0 9px;
-  height: 1.6em;
-  vertical-align: middle;
+  color: #474747;
 }
 .hsCancel { background-color: white; }
 
