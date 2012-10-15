@@ -66,12 +66,20 @@
     <property name="title" i18n:translate="">Copy PloneMeeting</property>
     <property name="description" i18n:translate=""></property>
     <property name="url_expr">string:folder_copyitems:method</property>
-    <property name="icon_expr"></property>
+    <property name="icon_expr">string:$portal_url/copy_icon.gif</property>
     <property name="available_expr">object/showFolderCopyMeetingItemAction</property>
     <property name="permissions">
      <element value="Copy or Move"/>
     </property>
     <property name="visible">True</property>
+   </object>
+  </object>
+
+  <!-- Manage object_buttons. -->
+  <object name="object_buttons" meta_type="CMF Action Category">
+   <object name="rename" meta_type="CMF Action">
+    <property name="icon_expr">string:$portal_url/rename_icon.gif</property>
+    <property name="visible">False</property>
    </object>
   </object>
 

@@ -10,6 +10,7 @@
             category="Products" 
             condition_expr=""
             url_expr="string:${portal_url}/portal_plonemeeting/view"
+            icon_expr="string:${portal_url}/ploneMeeting.png"
             visible="True" 
             i18n:attributes="title">
   <permission>PloneMeeting: Manage configuration</permission>
