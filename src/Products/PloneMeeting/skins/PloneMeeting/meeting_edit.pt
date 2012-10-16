@@ -257,7 +257,7 @@
         </table>
         </tal:users>
         <tal:comment replace="nothing">Information for the pre-meeting</tal:comment>
-        <fieldset tal:condition="python: 'preMeetingDate' in usedAttrs and not temporary">
+        <fieldset tal:condition="python: 'preMeetingDate' in usedAttrs and not context.isTemporary()">
           <legend i18n:translate="pre_meeting" i18n:domain="PloneMeeting"></legend>
           <table cellpadding="0" cellspacing="0" class="no-style-table">
             <tr>

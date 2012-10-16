@@ -43,27 +43,27 @@
     <tr>
           
       <tal:comment replace="nothing">Title</tal:comment>
-      <th tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
+      <th class="pm_listing_th_title" tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
         <span i18n:translate="listingheader_title"></span>
         <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
       </th>
 
       <tal:comment replace="nothing">Creator</tal:comment>
-      <th tal:condition="python: 'creator' in visibleColumns"
+      <th class="pm_listing_th_creator" tal:condition="python: 'creator' in visibleColumns"
           tal:define="fieldIndex string:Creator">
         <span i18n:translate="pm_creator"></span>
         <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
       </th>
 
       <tal:comment replace="nothing">Creation date</tal:comment>
-      <th tal:condition="python: 'creationDate' in visibleColumns"
+      <th class="pm_listing_th_creationDate" tal:condition="python: 'creationDate' in visibleColumns"
           tal:define="fieldIndex string:created">
         <span i18n:translate="pm_creation_date"></span>
         <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
       </th>
 
       <tal:comment replace="nothing">State</tal:comment>
-      <th tal:condition="python: 'state' in visibleColumns"
+      <th class="pm_listing_th_state" tal:condition="python: 'state' in visibleColumns"
           tal:define="fieldIndex string:review_state">
         <span i18n:translate="State"></span>
         <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
@@ -72,13 +72,13 @@
       <tal:comment replace="nothing">Columns specific to items</tal:comment>
 
       <tal:comment replace="nothing">toDiscuss</tal:comment>
-      <th tal:condition="showToDiscuss"
+      <th class="pm_listing_th_toDiscuss" tal:condition="showToDiscuss"
           i18n:translate="nothing" i18n:domain="PloneMeeting">
           <img src="toDiscussYes.png" title="Item to discuss?" tal:attributes="src string:$portal_url/toDiscussYes.png" i18n:attributes="title PloneMeeting_label_toDiscuss" />
       </th>
 
       <tal:comment replace="nothing">Category (or proposing group)</tal:comment>
-      <th tal:condition="python: 'categoryOrProposingGroup' in visibleColumns">
+      <th class="pm_listing_th_categoryOrProposingGroup" tal:condition="python: 'categoryOrProposingGroup' in visibleColumns">
         <tal:category condition="python: not meetingConfig.getUseGroupsAsCategories()"
                       define="fieldIndex string:getCategory">
           <span i18n:translate="MeetingCategory"></span>
@@ -92,7 +92,7 @@
       </th>
 
       <tal:comment replace="nothing">Proposing group</tal:comment>
-      <th tal:condition="python: 'proposingGroup' in visibleColumns">
+      <th class="pm_listing_th_proposingGroup" tal:condition="python: 'proposingGroup' in visibleColumns">
        <tal:group define="fieldIndex string:getProposingGroup">
         <span i18n:translate="PloneMeeting_label_proposingGroup"></span>
         <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
@@ -100,42 +100,42 @@
       </th>
 
       <tal:comment replace="nothing">Proposing group acronym</tal:comment>
-      <th tal:condition="python: 'proposingGroupAcronym' in visibleColumns"
+      <th class="pm_listing_th_proposingGroupAcronym" tal:condition="python: 'proposingGroupAcronym' in visibleColumns"
           tal:define="fieldIndex string:getProposingGroup">
         <span i18n:translate="PloneMeeting_label_proposingGroup"></span>
         <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
       </th>
 
       <tal:comment replace="nothing">Associated groups</tal:comment>
-      <th tal:condition="python: 'associatedGroups' in visibleColumns"
+      <th class="pm_listing_th_associatedGroups" tal:condition="python: 'associatedGroups' in visibleColumns"
           i18n:translate="PloneMeeting_label_associatedGroups"></th>
 
       <tal:comment replace="nothing">Associated groups acronyms</tal:comment>
-      <th tal:condition="python: 'associatedGroupsAcronyms' in visibleColumns"
+      <th class="pm_listing_th_associatedGroupsAcronyms" tal:condition="python: 'associatedGroupsAcronyms' in visibleColumns"
           i18n:translate="PloneMeeting_label_associatedGroups"></th>
 
       <tal:comment replace="nothing">Privacy</tal:comment>
-      <th i18n:translate="PloneMeeting_label_privacy"
+      <th class="pm_listing_th_privacy" i18n:translate="PloneMeeting_label_privacy"
           tal:condition="python: 'privacy' in visibleColumns"></th>
 
       <tal:comment replace="nothing">Advices</tal:comment>
-      <th i18n:translate="advices" tal:condition="showAdvices"
+      <th class="pm_listing_th_advices" i18n:translate="advices" tal:condition="showAdvices"
           tal:attributes="width python:meetingConfig.getAdvicesIconsWidth()"></th>
 
       <tal:comment replace="nothing">Related meeting</tal:comment>
-      <th tal:condition="showRelatedMeeting" i18n:translate="Meeting"></th>
+      <th class="pm_listing_th_relatedMeeting" tal:condition="showRelatedMeeting" i18n:translate="Meeting"></th>
 
       <tal:comment replace="nothing">Preferred meeting</tal:comment>
-      <th tal:condition="showPrefMeeting" i18n:translate="PloneMeeting_label_preferredMeeting"></th>
+      <th class="pm_listing_th_preferredMeeting" tal:condition="showPrefMeeting" i18n:translate="PloneMeeting_label_preferredMeeting"></th>
 
       <tal:comment replace="nothing">itemIsSigned</tal:comment>
-      <th tal:condition="showItemIsSigned"
+      <th class="pm_listing_th_itemIsSigned" tal:condition="showItemIsSigned"
           i18n:translate="nothing" i18n:domain="PloneMeeting">
           <img src="itemIsSignedYes.png" title="Item is signed?" tal:attributes="src string:$portal_url/itemIsSignedYes.png" i18n:attributes="title PloneMeeting_label_itemIsSigned" />
       </th>
 
       <tal:comment replace="nothing">Actions</tal:comment>
-      <th i18n:translate="heading_actions" tal:condition="showActions"></th>
+      <th class="pm_listing_th_actions" i18n:translate="heading_actions" tal:condition="showActions"></th>
       </tr>
 
       <tal:comment replace="nothing">The table content</tal:comment>

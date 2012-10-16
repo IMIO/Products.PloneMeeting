@@ -66,6 +66,11 @@ p {line-height: 1em;}
   padding: 0 !important;
   margin: 0 !important;
 }
+
+tr.even table.advices td {
+  background-color: white !important;
+}
+
 .no-style-table td {
   border: 0 !important;
   padding: 0 !important;
@@ -140,13 +145,14 @@ margin-top: -1.9em;
   cursor: pointer;
 }
 
-.actionMenuAX .actionMenuContentAX ul {
+#content .actionMenuAX .actionMenuContentAX ul {
   display: block;
   background-color: white;
   border: 1px solid #CCCCCC;
   margin: -1px 0 0 0;
   padding: 0;
   cursor: pointer;
+  list-style: none;
 }
 
 .actionMenuAX.activated { z-index: 20; }
@@ -437,9 +443,41 @@ padding-bottom: 2px;
 cursor:pointer;
 }
 
-/* input containing the item number on the meeting view, large enough to show 3-digit numbers */
-span#meetingItems INPUT {
-width: 2.5em;
+.ToDiscuss {
+    text-align: center;
+}
+
+/* TH of the table listing items are stylable th by th */
+/* using 1% limit the width as much as possible... */
+.pm_listing_th_actions, .pm_listing_th_toDiscuss, .pm_listing_th_itemIsSigned,
+.pm_meeting_listing_th_actions, .pm_meeting_listing_th_toDiscuss, .pm_meeting_listing_th_itemIsSigned,
+.pm_meeting_listing_th_checkBoxes {
+    width: 1%;
+}
+
+.pm_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_proposingGroup {
+    width: 150px;
+}
+.pm_listing_th_creationDate, .pm_listing_th_relatedMeeting {
+    width: 125px;
+}
+
+.pm_listing_th_creator, .pm_meeting_listing_th_creator {
+    width: 100px;
+}
+
+.pm_listing_th_state, .pm_meeting_listing_th_state, .pm_listing_th_privacy, .pm_meeting_listing_th_privacy {
+    width: 60px;
+}
+
+/* TH of the table listing on the meeting view are stylable th by th */
+/* using 1% limit the width as much as possible... */
+.pm_meeting_listing_th_toDiscuss {
+    width: 1%;
+}
+
+.pm_meeting_listing_th_itemsNumbering {
+    width: 25px;
 }
 
 /* </dtml-with> */

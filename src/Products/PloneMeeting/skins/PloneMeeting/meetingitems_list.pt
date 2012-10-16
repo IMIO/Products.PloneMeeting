@@ -51,16 +51,16 @@
     <tal:comment replace="nothing">Column headers</tal:comment>
     <tr>
       <tal:comment replace="nothing">"toDiscuss" field</tal:comment>
-      <th width="17px" tal:condition="showToDiscuss"
+      <th class="pm_meeting_listing_th_toDiscuss" tal:condition="showToDiscuss"
           i18n:translate="nothing" i18n:domain="PloneMeeting">
           <img src="toDiscussYes.png" title="Item to discuss?" tal:attributes="src string:$portal_url/toDiscussYes.png" i18n:attributes="title PloneMeeting_label_toDiscuss" />
       </th>
 
       <tal:comment replace="nothing">Number</tal:comment>
-      <th width="25px" tal:condition="itemsNumbering"></th>
+      <th class="pm_meeting_listing_th_itemsNumbering" tal:condition="itemsNumbering"></th>
 
       <tal:comment replace="nothing">Title</tal:comment>
-      <th>
+      <th class="pm_meeting_listing_th_title">
         <span i18n:translate="listingheader_title"></span><span 
           id="pmDescription" name="pmDescription" class="pmExpanded"
           tal:condition="python: not isDecided" i18n:translate="and_description"
@@ -71,17 +71,17 @@
       </th>
 
       <tal:comment replace="nothing">Creator</tal:comment>
-      <th tal:condition="python: 'creator' in visibleColumns" i18n:translate="pm_creator"></th>
+      <th class="pm_meeting_listing_th_creator" tal:condition="python: 'creator' in visibleColumns" i18n:translate="pm_creator"></th>
 
       <tal:comment replace="nothing">Creation date</tal:comment>
-      <th tal:condition="python: 'creationDate' in visibleColumns"
+      <th class="pm_meeting_listing_th_creationDate" tal:condition="python: 'creationDate' in visibleColumns"
           i18n:translate="label_creation_date" i18n:domain="plone"></th>
 
       <tal:comment replace="nothing">State</tal:comment>
-      <th tal:condition="python: 'state' in visibleColumns" i18n:translate="State"></th>
+      <th class="pm_meeting_listing_th_state" tal:condition="python: 'state' in visibleColumns" i18n:translate="State"></th>
 
       <tal:comment replace="nothing">Category (or proposing group)</tal:comment>
-      <th tal:condition="python: 'categoryOrProposingGroup' in visibleColumns">
+      <th class="pm_meeting_listing_th_categoryOrProposingGroup" tal:condition="python: 'categoryOrProposingGroup' in visibleColumns">
         <span tal:condition="python: not meetingConfig.getUseGroupsAsCategories()"
               i18n:translate="MeetingCategory"></span>
         <span tal:condition="python: meetingConfig.getUseGroupsAsCategories()"
@@ -89,39 +89,39 @@
       </th>
 
       <tal:comment replace="nothing">Proposing group</tal:comment>
-      <th tal:condition="python: 'proposingGroup' in visibleColumns"
+      <th class="pm_meeting_listing_th_proposingGroup" tal:condition="python: 'proposingGroup' in visibleColumns"
           i18n:translate="PloneMeeting_label_proposingGroup"></th>
 
       <tal:comment replace="nothing">Proposing group acronym</tal:comment>
-      <th tal:condition="python: 'proposingGroupAcronym' in visibleColumns"
+      <th class="pm_meeting_listing_th_proposingGroupAcronym" tal:condition="python: 'proposingGroupAcronym' in visibleColumns"
           i18n:translate="PloneMeeting_label_proposingGroup"></th>
 
       <tal:comment replace="nothing">Associated groups</tal:comment>
-      <th tal:condition="python: 'associatedGroups' in visibleColumns"
+      <th class="pm_meeting_listing_th_associatedGroups" tal:condition="python: 'associatedGroups' in visibleColumns"
           i18n:translate="PloneMeeting_label_associatedGroups"></th>
 
       <tal:comment replace="nothing">Associated groups acronyms</tal:comment>
-      <th tal:condition="python: 'associatedGroupsAcronyms' in visibleColumns"
+      <th class="pm_meeting_listing_th_associatedGroupsAcronyms" tal:condition="python: 'associatedGroupsAcronyms' in visibleColumns"
           i18n:translate="PloneMeeting_label_associatedGroups"></th>
 
       <tal:comment replace="nothing">Privacy</tal:comment>
-      <th i18n:translate="PloneMeeting_label_privacy"
+      <th class="pm_meeting_listing_th_privacy" i18n:translate="PloneMeeting_label_privacy"
           tal:condition="python: 'privacy' in visibleColumns"></th>
 
       <tal:comment replace="nothing">Advices</tal:comment>
-      <th i18n:translate="advices" tal:condition="showAdvices"
+      <th class="pm_meeting_listing_th_advices" i18n:translate="advices" tal:condition="showAdvices"
           tal:attributes="width python:meetingConfig.getAdvicesIconsWidth()"></th>
 
-      <th width="17px" tal:condition="showItemIsSigned"
+      <th class="pm_meeting_listing_th_itemIsSigned" tal:condition="showItemIsSigned"
           i18n:translate="nothing" i18n:domain="PloneMeeting">
           <img src="itemIsSignedYes.png" title="Item is signed?" tal:attributes="src string:$portal_url/itemIsSignedYes.png" i18n:attributes="title PloneMeeting_label_itemIsSigned" />
       </th>
 
       <tal:comment replace="nothing">Actions</tal:comment>
-      <th i18n:translate="heading_actions" tal:condition="showActions"></th>
+      <th class="pm_meeting_listing_th_actions" i18n:translate="heading_actions" tal:condition="showActions"></th>
 
       <tal:comment replace="nothing">Checkbox column for selecting items.</tal:comment>
-      <th width="17px" tal:condition="showCheckboxes">
+      <th class="pm_meeting_listing_th_checkBoxes" tal:condition="showCheckboxes">
         <img tal:condition="itemsNumbering" tal:attributes="src string: $portal_url/select_items.png"
              i18n:attributes="title" title="helpSelectForPrintingIcon"
              onClick="javascript:toggleCheckboxes()" style="cursor:pointer"/>

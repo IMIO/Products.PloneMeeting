@@ -24,7 +24,8 @@
                   showLateItems python: context.mustShowLateItems(iStartNumber, meetingConfig.getMaxShownMeetingItems());
                   usedAttrs meetingConfig/getUsedMeetingAttributes;
                   useUserReplacements meetingConfig/getUseUserReplacements;
-                  showAvailableItems python:member.has_permission('Modify portal content', context) and context.wfConditions().mayAcceptItems()"
+                  showAvailableItems python:member.has_permission('Modify portal content', context) and context.wfConditions().mayAcceptItems();
+                  toLocalizedTime nocall: context/@@plone/toLocalizedTime;"
       tal:attributes="onLoad python: 'javascript: askInitialItemsLists(\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\')' % (showColors, showLateItems, showAvailableItems, iStartNumber, lStartNumber, context.numberOfItems(), context.numberOfItems(True), meetingConfig.getMaxShownMeetingItems())">
 
   <tal:mustShowPage condition="showPage">
