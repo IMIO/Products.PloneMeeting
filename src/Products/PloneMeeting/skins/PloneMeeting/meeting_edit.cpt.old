@@ -1,87 +1,24 @@
-<tal:block metal:define-macro="master"
-           define="errors options/state/getErrors | nothing;
-                   temporary here/isTemporary | nothing;
-                   dummy python:temporary and request.set('disable_border', True);
-                   schematas here/Schemata;
-                   fieldsets python:[key for key in schematas.keys() if (key != 'metadata') and (schematas[key].editableFields(here, visible_only=True))];
-                   default_fieldset python:(not schematas or schematas.has_key('default')) and 'default' or fieldsets[0];
-                   fieldset request/fieldset|options/fieldset|default_fieldset;
-                   fields python:schematas[fieldset].editableFields(here);
-                   dummy python:here.at_isEditable(fields);
-                   portal_type python:here.getPortalTypeName().lower().replace(' ', '_');
-                   type_name here/getPortalTypeName|here/archetype_name;
-                   base_macros here/edit_macros/macros;
-                   edit_template python:'%s_edit' % portal_type;
-                   edit_macros python:path('here/%s/macros | nothing' % edit_template);
-                   header_macro edit_macros/header | header_macro | base_macros/header;
-                   typedescription_macro edit_macros/typedescription | typedescription_macro | base_macros/typedescription;
-                   body_macro edit_macros/body | body_macro | base_macros/body;
-                   footer_macro edit_macros/footer | footer_macro | base_macros/footer;
-                   lockable python:hasattr(here, 'wl_isLocked');
-                   isLocked python:lockable and here.wl_isLocked();
-                   css python:context.getUniqueWidgetAttr(fields, 'helper_css');
-                   js python:context.getUniqueWidgetAttr(fields, 'helper_js');
-                   tool python: context.portal_plonemeeting;
-                   member tool/getUser;
-                   portal context/portal_url/getPortalObject;
-                   meetingConfig python: tool.getMeetingConfig(here);
-                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
-                   langs python: tool.getAvailableInterfaceLanguages(True, True);
-                   usedAttrs meetingConfig/getUsedMeetingAttributes;
-                   useUserReplacements meetingConfig/getUseUserReplacements">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US"
+      lang="en-US"
+      i18n:domain="PloneMeeting">
 
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xml:lang="en"
-      lang="en"
-      xmlns:tal="http://xml.zope.org/namespaces/tal"
-      xmlns:metal="http://xml.zope.org/namespaces/metal"
-      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-      metal:use-macro="here/main_template/macros/master"
-      i18n:domain="plone">
+<body>
+<div metal:define-macro="body" tal:define="base_macros context/base/macros;">
 
-  <metal:head fill-slot="top_slot">
-    <tal:block define="macro edit_macros/topslot | nothing" condition="macro">
-    <metal:block use-macro="macro" />
-    </tal:block>
-  </metal:head>
-  
-  <metal:javascript_head fill-slot="javascript_head_slot">
-    <tal:block define="macro context/archetypes_custom_js/macros/javascript_head | nothing"
-               condition="macro">
-      <metal:block use-macro="macro" />
-    </tal:block>
-    <tal:js condition="js"
-            repeat="item js">
-      <script type="text/javascript"
-              charset="iso-8859-1"
-              tal:condition="python:exists('portal/%s' % item)"
-              tal:attributes="src string:$portal_url/$item">
-      </script>
-    </tal:js>
-    <tal:block define="macro edit_macros/javascript_head | nothing"
-                    condition="macro">
-      <metal:block use-macro="macro" />
-    </tal:block>
-  </metal:javascript_head>
+<metal:base_body use-macro="context/base/macros/body">
 
-  <metal:css fill-slot="css_slot">
-    <tal:css condition="css"
-             repeat="item css">
-      <style type="text/css" media="all"
-             tal:condition="python:exists('portal/%s' % item)"
-             tal:content="structure string:&lt;!-- @import url($portal_url/$item); --&gt;">
-      </style>
-    </tal:css>
-    <tal:block define="macro edit_macros/css | nothing"
-                    condition="macro">
-      <metal:block use-macro="macro" />
-    </tal:block>
-  </metal:css>
-    
-  <body>
+<metal:widgets fill-slot="widgets"
+           tal:define="border python: test(member.has_role('Manager'), 'enable_border', 'disable_border');
+                       dummy python:request.set(border, 1);
+                       tool python: context.portal_plonemeeting;
+                       member tool/getUser;
+                       portal context/portal_url/getPortalObject;
+                       meetingConfig python: tool.getMeetingConfig(here);
+                       bilingual python: 'secondLanguage' in tool.getModelAdaptations();
+                       langs python: tool.getAvailableInterfaceLanguages(True, True);
+                       usedAttrs meetingConfig/getUsedMeetingAttributes;
+                       useUserReplacements meetingConfig/getUseUserReplacements;">
 
-    <metal:fill fill-slot="main">
-      <metal:main define-macro="main">
       <script language="javascript">
       // When a checkbox is unchecked, what other one will we check?
       var uncheckWillCheck = {"attendee":"excused", "excused":"attendee",
@@ -415,11 +352,10 @@
       </form>
       </div>
       <div tal:replace="structure provider:plone.belowcontentbody" />
-      </metal:main>
-    </metal:fill>
 
-  </body>
+</metal:widgets>
+</metal:base_body>
+</div>
 
+</body>
 </html>
-
-</tal:block>

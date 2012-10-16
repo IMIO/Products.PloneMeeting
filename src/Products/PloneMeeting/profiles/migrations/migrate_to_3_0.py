@@ -26,7 +26,6 @@ class Migrate_To_3_0(Migrator):
             patched += 1
         logger.info('Done (%d file(s) patched).' % patched)
 
-
     def _migrateMeetingFilesToBlobs(self):
         '''Migrate MeetingFiles to Blobs.'''
         # Call an helper method of plone.app.blob that does "inplace" migration
@@ -60,6 +59,7 @@ class Migrate_To_3_0(Migrator):
                     annex.setTitle(title_to_uid_mapping[annex.UID()])
                     annex.reindexObject()
         logger.info("MeetingFiles have been migrated to Blobs.")
+
 
     def run(self, refreshCatalogs=True, refreshWorkflows=True):
         logger.info('Migrating to PloneMeeting 3.0...')
