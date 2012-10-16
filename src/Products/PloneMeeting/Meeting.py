@@ -1061,7 +1061,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return
         # The pre-meeting date is required if the field is in use.
         if not value:
-            return translate('field_required', domain='PloneMeeting', context=self)
+            return translate('field_required', domain='PloneMeeting', context=self.REQUEST)
         # Get the meeting date from the request
         try:
             meetingDate = DateTime(self.REQUEST['date'])
@@ -1072,7 +1072,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # Compare meeting and pre-meeting dates
         if meetingDate and (DateTime(value) >= meetingDate):
             label = 'pre_date_after_meeting_date'
-            return translate(label, domain='PloneMeeting', context=self)
+            return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePublic('getAllItems')
     def getAllItems(self, uids=[], ordered=False):
@@ -1613,7 +1613,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('i18n')
     def i18n(self, msg, domain="PloneMeeting"):
         '''Shortcut for translating p_msg in domain PloneMeeting.'''
-        return translate(msg, domain=domain, context=self)
+        return translate(msg, domain=domain, context=self.REQUEST)
 
     security.declarePublic('showAllItemsAtOnce')
     def showAllItemsAtOnce(self):
