@@ -15,7 +15,6 @@ p {line-height: 1em;}
   padding: 0px;
   color: &dtml-fontColor;;
   text-align: left;
-  align:left;
   width: auto;
   height: 18px !important;
   padding-right: 24px;
