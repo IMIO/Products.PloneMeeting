@@ -1027,7 +1027,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         msgid, mapping = msgid[0], msgid[1]
                     content = "<img src='%s/%s' title='%s' />&nbsp;" % \
                         (portal_url, iconname,
-                         translate(msgid, mapping, domain="PloneMeeting",
+                         translate(msgid, domain="PloneMeeting", mapping=mapping,
                                    context=self.REQUEST).encode('utf-8')) + content
             # Is this a not-privacy-viewable item?
             if (objClassName == 'MeetingItem') and not obj.isPrivacyViewable():
@@ -1564,8 +1564,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     newItem.setProposingGroup(userGroups[0].id)
 
             # at_post_create_script updates the local roles (so removes role
-            # 'Manager' that we've set above), and also gives role "Owner" to
-            # the logged user.
+            # 'Manager' that we've set above) by calling MeetingItem.updateLocalRoles,
+            # and also gives role "Owner" to the logged user.
             newItem.at_post_create_script()
             newItem.updateAnnexIndex()
             if newOwnerId != loggedUserId:

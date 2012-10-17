@@ -82,6 +82,7 @@ schema = Schema((
 
     ReferenceField(
         name='meetingFileType',
+        keepReferencesOnCopy=True,
         widget=ReferenceBrowserWidget(
             label='Meetingfiletype',
             label_msgid='PloneMeeting_label_meetingFileType',

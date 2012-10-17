@@ -690,6 +690,7 @@ schema = Schema((
     ),
     ReferenceField(
         name='annexes',
+        keepReferencesOnCopy=True,
         widget=ReferenceBrowserWidget(
             visible=False,
             label='Annexes',
@@ -702,6 +703,7 @@ schema = Schema((
     ),
     ReferenceField(
         name='annexesDecision',
+        keepReferencesOnCopy=True,
         widget=ReferenceBrowserWidget(
             visible=False,
             label='Annexesdecision',
