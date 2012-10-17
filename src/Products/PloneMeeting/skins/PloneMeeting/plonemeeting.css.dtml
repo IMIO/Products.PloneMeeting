@@ -244,7 +244,7 @@ margin-top: -1.9em;
 }
 
 #templateMenu li a { padding-left: 16px; }
-.imageInput {border-width: 0px;  background: none; }
+.imageInput {border-width: 0px;  background: none; vertical-align: top;}
 input[type=radio] {margin: 0;}
 
 .noPadding {
