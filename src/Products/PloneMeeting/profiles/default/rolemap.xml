@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <rolemap>
   <roles>
+    <role name="MeetingAdviser"/>
     <role name="MeetingArchiveObserver"/>
     <role name="MeetingManager"/>
     <role name="MeetingMember"/>

@@ -2341,7 +2341,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                    (itemState not in mGroup.getItemAdviceEditStates(cfg))and \
                    (itemState not in mGroup.getItemAdviceViewStates(cfg)):
                     continue
-                self.manage_addLocalRoles(ploneGroup, ('MeetingObserverLocal',))
+                self.manage_addLocalRoles(ploneGroup, ('MeetingAdviser',))
         # Invalidate advices if needed
         if invalidate and getattr(self, '_v_modified', False):
             # Invalidate all advices. Send notification mail(s) if configured.

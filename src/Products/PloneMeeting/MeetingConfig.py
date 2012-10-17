@@ -999,7 +999,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listItemStatesInitExcepted',
+        vocabulary='listItemStates',
         default= defValues.itemAdviceStates,
         enforceVocabulary=False,
     ),
@@ -1014,7 +1014,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listItemStatesInitExcepted',
+        vocabulary='listItemStates',
         default= defValues.itemAdviceEditStates,
         enforceVocabulary=False,
     ),
@@ -1029,7 +1029,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listItemStatesInitExcepted',
+        vocabulary='listItemStates',
         default= defValues.itemAdviceViewStates,
         enforceVocabulary=False,
     ),
@@ -1099,7 +1099,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listItemStatesInitExcepted',
+        vocabulary='listItemStates',
         default= defValues.itemAdviceInvalidateStates,
         enforceVocabulary=False,
     ),
@@ -2098,13 +2098,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listItemStates')
     def listItemStates(self):
         return DisplayList(tuple(self.listStates('Item'))).sortedByValue()
-
-    security.declarePublic('listItemStatesInitExcepted')
-    def listItemStatesInitExcepted(self):
-        itemWFName = self.getItemWorkflow()
-        initial_state = getattr(self.portal_workflow, itemWFName).initial_state
-        states = self.listStates('Item', excepted=initial_state)
-        return DisplayList(tuple(states)).sortedByValue()
 
     security.declarePublic('listMeetingStates')
     def listMeetingStates(self):

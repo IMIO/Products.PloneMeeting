@@ -5,7 +5,7 @@
     id="PloneMeeting-Hide-Tools-From-Navigation" 
     handler="Products.PloneMeeting.setuphandlers.setupHideToolsFromNavigation"
     title="Hide Custom tools from Navigation for PloneMeeting"
-    version="2012-10-16T11:39:59.599760">
+    version="2012-10-17T11:08:40.004229">
    <dependency step="PloneMeeting-QI-dependencies"/>
    Hides custom tools from navigation tree for PloneMeeting
  </import-step>
@@ -16,7 +16,7 @@
     id="PloneMeeting-Setup-Catalog-Multiplex" 
     handler="Products.PloneMeeting.setuphandlers.setupCatalogMultiplex"
     title="setup catalog multiplex for PloneMeeting"
-    version="2012-10-16T11:39:59.599760">
+    version="2012-10-17T11:08:40.004229">
    <dependency step="toolset"/>
    setup catalog multiplex for PloneMeeting
  </import-step>
@@ -25,7 +25,7 @@
     id="PloneMeeting-Update-RoleMappings" 
     handler="Products.PloneMeeting.setuphandlers.updateRoleMappings"
     title="Update Workflow role mappings for PloneMeeting"
-    version="2012-10-16T11:39:59.599760">
+    version="2012-10-17T11:08:40.004229">
    <dependency step="PloneMeeting-QI-dependencies"/>
    updates the workflow role mappings for PloneMeeting
  </import-step>
@@ -34,7 +34,7 @@
     id="PloneMeeting-postInstall" 
     handler="Products.PloneMeeting.setuphandlers.postInstall"
     title="manual coded post-install for PloneMeeting"
-    version="2012-10-16T11:39:59.599760">
+    version="2012-10-17T11:08:40.004229">
    <dependency step="PloneMeeting-QI-dependencies"/>
    manual coded post-install for PloneMeeting
  </import-step>
