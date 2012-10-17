@@ -60,11 +60,25 @@ class Migrate_To_3_0(Migrator):
                     annex.reindexObject()
         logger.info("MeetingFiles have been migrated to Blobs.")
 
+    def _updateAdvices(self):
+        '''We use a new role to manage advices, 'MeetingAdviser' instead of
+           'MeetingObserverLocal', we need to update every advices for this to
+           be taken into account.'''
+        brains = self.portal.portal_catalog(meta_type='MeetingItem')
+        logger.info('Updating every advices for %s MeetingItem objects...' % len(brains))
+        for brain in brains:
+            obj = brain.getObject()
+            obj.updateAdvices()
+            # Update security as local_roles are set by updateAdvices
+            obj.reindexObject(idxs=['allowedRolesAndUsers',])
+        logger.info('MeetingItems advices have been updated.')
+
 
     def run(self, refreshCatalogs=True, refreshWorkflows=True):
         logger.info('Migrating to PloneMeeting 3.0...')
         self._patchFileSecurity()
         self._migrateMeetingFilesToBlobs()
+        self._updateAdvices()
         self.finish()
 
 # The migration function -------------------------------------------------------
