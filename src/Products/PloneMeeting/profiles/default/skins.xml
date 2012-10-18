@@ -12,6 +12,9 @@
  <object name="PloneMeeting_images"
          meta_type="Filesystem Directory View"
          directory="PloneMeeting/skins/PloneMeeting_images"/>
+ <object name="PloneMeeting_styles"
+         meta_type="Filesystem Directory View"
+         directory="PloneMeeting/skins/PloneMeeting_styles"/>
  <object name="PloneMeeting_plone"
          meta_type="Filesystem Directory View"
          directory="PloneMeeting/skins/PloneMeeting_plone"/>
@@ -23,6 +26,8 @@
          name="PloneMeeting_images"/>
   <layer insert-after="custom" 
          name="PloneMeeting_plone"/>
+  <layer insert-after="custom" 
+         name="PloneMeeting_styles"/>
  </skin-path>
 
 </object>
