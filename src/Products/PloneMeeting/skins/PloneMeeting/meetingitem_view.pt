@@ -361,7 +361,7 @@
         <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions" />
     </div>
     <p></p>
-<a href="http://localhost:8081/pm30e/login" class="link-overlay">Se connecter</a>
+
     <tal:comment replace="nothing">Tasks</tal:comment>
     <tal:tasks condition="meetingConfig/getTasksMacro">
     <span tal:define="tasksMacro python: path(meetingConfig.getTasksMacro() + '|nothing')"
