@@ -3801,12 +3801,12 @@ msgstr ""
 msgid "object_deleted"
 msgstr ""
 
-#. Default: "The item has been deleted: you currently see the duplicated item."
-msgid "item_duplicated"
-msgstr ""
-
 #. Default: "Duplicate"
 msgid "Duplicate"
+msgstr ""
+
+#. Default: "Duplicate and keep link"
+msgid "Duplicate and keep link"
 msgstr ""
 
 #. Default: "Annexes"

@@ -68,6 +68,10 @@ msgstr "Ersteller"
 msgid "Duplicate"
 msgstr "Duplikat"
 
+#. Default: "Duplicate and keep link"
+msgid "Duplicate and keep link"
+msgstr ""
+
 #. Default: "Edit PloneMeeting Portlet"
 msgid "Edit PloneMeeting Portlet"
 msgstr "PloneMeeting Portlet bearbeiten"
@@ -2274,10 +2278,6 @@ msgstr "Im Arbeitsablauf der TOP werden die Statusübergänge von boolschen Ausd
 #. Default: "No move occurred because you specified the item number or this number plus one. If you specify a number X, the item will go just before the previous item having number X, and the other items will be shifted. If you want to move an item at the end of the list, you must specify the number of the last item plus one. Note that when two items lists are shown, you can't move items from one list to the other."
 msgid "item_did_not_move"
 msgstr "Der TOP wurde nicht bewegt weil Sie die Nummer des TOPs oder die Nummer plus eins angegeben haben. Wenn Sie eine Nummer X angeben wird der TOP vor den TOP mit der Nummer X eingefügt und die anderen TOP werden verschoben. Wenn Sie den TOP zum Ende der Liste bewegen wollen, geben Sie die Nummer des letzten TOPs an plus eins. Beachten Sie dass Sie wenn zwei TOP-Listen angezeigt werden keine TOP von einer Liste zur anderen bewegen können."
-
-#. Default: "The item has been deleted: you currently see the duplicated item."
-msgid "item_duplicated"
-msgstr "Der TOP wurde gelöscht: Sie sehen ein Duplikat"
 
 #. Default: "You can't make this move. If you specify a number X, the item will go just before the previous item having number X, and the other items will be shifted. If you want to move an item at the end of the list, you must specify the number of the last item plus one. Note that when two items lists are shown, you can't move items from one list to the other."
 msgid "item_illegal_move"

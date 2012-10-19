@@ -71,6 +71,10 @@ msgstr "Creador"
 msgid "Duplicate"
 msgstr "Duplicar"
 
+#. Default: "Duplicate and keep link"
+msgid "Duplicate and keep link"
+msgstr ""
+
 #. Default: "Edit PloneMeeting Portlet"
 msgid "Edit PloneMeeting Portlet"
 msgstr "Editar Portlet PloneMeeting"
@@ -2277,10 +2281,6 @@ msgstr "En el flujo de trabajo de tema, algún expresiones booleanas guardan la 
 #. Default: "No move occurred because you specified the item number or this number plus one. If you specify a number X, the item will go just before the previous item having number X, and the other items will be shifted. If you want to move an item at the end of the list, you must specify the number of the last item plus one. Note that when two items lists are shown, you can't move items from one list to the other."
 msgid "item_did_not_move"
 msgstr "Sin mover por que usted especifico el número o este número más uno. Si usted especifica un número X, el tema irá justo antes del tema anterior de número X, y los otros temas se cambiará. Si usted quiere mover un tema al final de la lista, usted debe especificar el número del ultimo tema más uno. Tenga en cuenta que cuando dos temas se muestran en las listas, usted no puede mover los temas desde una lista a la otra."
-
-#. Default: "The item has been deleted: you currently see the duplicated item."
-msgid "item_duplicated"
-msgstr "Este tema ha sito eliminado: usted actualmente ve el tema duplicado."
 
 #. Default: "You can't make this move. If you specify a number X, the item will go just before the previous item having number X, and the other items will be shifted. If you want to move an item at the end of the list, you must specify the number of the last item plus one. Note that when two items lists are shown, you can't move items from one list to the other."
 msgid "item_illegal_move"
