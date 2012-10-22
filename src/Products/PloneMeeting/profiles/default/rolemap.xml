@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <rolemap>
   <roles>
-    <role name="MeetingAdviser"/>
     <role name="MeetingArchiveObserver"/>
     <role name="MeetingManager"/>
     <role name="MeetingMember"/>
@@ -9,6 +8,7 @@
     <role name="MeetingObserverLocal"/>
     <role name="MeetingObserverLocalCopy"/>
     <role name="MeetingObserverUnpublished"/>
+    <role name="MeetingPowerObserverLocal"/>
     <role name="MeetingReviewer"/>
 <!-- ##code-section roles -->
 <!-- ##/code-section roles -->

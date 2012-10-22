@@ -532,6 +532,7 @@ schema = Schema((
     ),
     ReferenceField(
         name='classifier',
+        keepReferencesOnCopy=True,
         widget=ReferenceBrowserWidget(
             description="Classifier",
             description_msgid="item_classifier_descr",
@@ -546,10 +547,10 @@ schema = Schema((
             label_msgid='PloneMeeting_label_classifier',
             i18n_domain='PloneMeeting',
         ),
-        allowed_types=('MeetingCategory',),
-        optional=True,
         multiValued=False,
         relationship="ItemClassification",
+        allowed_types=('MeetingCategory',),
+        optional=True,
     ),
     StringField(
         name='proposingGroup',
@@ -710,9 +711,9 @@ schema = Schema((
             label_msgid='PloneMeeting_label_annexesDecision',
             i18n_domain='PloneMeeting',
         ),
-        write_permission="PloneMeeting: Write decision annex",
         read_permission="PloneMeeting: Read decision annex",
         relationship="DecisionAnnexes",
+        write_permission="PloneMeeting: Write decision annex",
         multiValued=True,
     ),
     BooleanField(
@@ -2343,7 +2344,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                    (itemState not in mGroup.getItemAdviceEditStates(cfg))and \
                    (itemState not in mGroup.getItemAdviceViewStates(cfg)):
                     continue
-                self.manage_addLocalRoles(ploneGroup, ('MeetingAdviser',))
+                self.manage_addLocalRoles(ploneGroup, ('MeetingPowerObserverLocal',))
         # Invalidate advices if needed
         if invalidate and getattr(self, '_v_modified', False):
             # Invalidate all advices. Send notification mail(s) if configured.
