@@ -140,9 +140,14 @@ class testAdvices(PloneMeetingTestCase):
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
         self.assertEquals(item1.getAdvicesToGive(), ([], []))
-        # if we remove the given advice, then it is addable again
-        del item1.advices['vendors']
-        item1.updateAdvices()
+        # if a user that can not remove the advice tries (here the item is validated), he gets Unauthorized
+        self.assertRaises(Unauthorized, item1.deleteAdvice, 'vendors')
+        # put the item back in a state where 'pmReviewer2' can remove the advice
+        login(self.portal, 'pmManager')
+        self.do(item1, 'backToProposed')
+        login(self.portal, 'pmReviewer2')
+        # remove the advice
+        item1.deleteAdvice('vendors')
         self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
         # remove the fact that we asked the advice
         login(self.portal, 'pmManager')

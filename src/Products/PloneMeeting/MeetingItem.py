@@ -2230,10 +2230,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.sendMailIfRelevant('adviceEdited', 'View', isRole=False)
 
     security.declarePublic('deleteAdvice')
-    def deleteAdvice(self):
-        '''Delete an advice for a given group (get from the request).'''
-        # get groupId from the REQUEST
-        groupId = self.REQUEST.get('meetingGroupId')
+    def deleteAdvice(self, groupId):
+        '''Delete an advice for a given group.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         group = getattr(tool, groupId)
         # First of all, check that the current user actually can manage

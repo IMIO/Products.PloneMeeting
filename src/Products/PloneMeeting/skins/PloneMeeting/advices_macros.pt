@@ -36,8 +36,8 @@
                     <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span>
                     </td>
                     <td align="right" width="17px" class="noPadding" tal:condition="mayEdit">
-                      <form action="deleteAdvice" name="deleteAdvice">
-                        <input type="hidden" value="#" name="meetingGroupId" tal:attributes="value advice/id">
+                      <form action="deleteAdvice" name="deleteAdvice" tal:attributes="action python: meetingItem.absolute_url() + '/deleteAdvice'">
+                        <input type="hidden" value="#" name="groupId" tal:attributes="value advice/id">
                         <img style="cursor:pointer"
                              tal:attributes="src string:$portal_url/delete.png;"
                              i18n:attributes="title"
