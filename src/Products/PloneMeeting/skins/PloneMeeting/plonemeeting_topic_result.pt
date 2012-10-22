@@ -260,7 +260,7 @@
             tal:content="python: 'ip_%s' % obj.getPrivacy()" i18n:translate=""></td>
 
         <tal:comment replace="nothing">Advices</tal:comment>
-        <td tal:condition="showAdvices" align="center" style="padding: 0" tal:define="meetingItem python: obj">
+        <td tal:condition="showAdvices" align="center" style="padding-left: 0; padding-right: 0;" tal:define="meetingItem python: obj">
           <tal:show condition="obj/isPrivacyViewable">
             <div metal:use-macro="here/advices_macros/macros/advicesIcons"></div>
           </tal:show>
