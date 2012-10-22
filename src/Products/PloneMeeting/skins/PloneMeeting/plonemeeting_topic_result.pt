@@ -23,7 +23,7 @@
     given in searchResults.</tal:comment>
 
   <tal:comment replace="nothing">Show the result.</tal:comment>
-  <div onmouseover="javascript:initializeOverlays()" id="ajax-listitems-frame" tal:condition="searchResults">
+  <div onmouseover="javascript:initializePMOverlays()" id="ajax-listitems-frame" tal:condition="searchResults">
 
     <div metal:use-macro="context/hs_navigate/macros/search"/>
     <tal:comment replace="nothing">The table containing the result</tal:comment>

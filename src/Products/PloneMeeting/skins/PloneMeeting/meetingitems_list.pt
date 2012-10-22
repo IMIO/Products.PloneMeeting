@@ -46,6 +46,9 @@
              showCheckboxes python: itemsNumbering or ((not itemsNumbering) and (len(meetingItems)&gt;1))">
 
    <metal:navigate use-macro="context/hs_navigate/macros/meetingItems"/>
+
+   <div onmouseover="javascript:initializePMOverlays()" id="ajax-listitems-frame">
+
    <table class="vertical listing" width="100%" i18n:domain="PloneMeeting">
 
     <tal:comment replace="nothing">Column headers</tal:comment>
@@ -344,6 +347,7 @@
     </tal:showItem>
     <tr><td colspan="30" tal:condition="not: shownItems" i18n:translate="no_shown_items"/></tr>
    </table>
+   </div>
    <metal:navigate use-macro="context/hs_navigate/macros/meetingItems"/>
    </tal:items>
   </tal:meetingItems>
