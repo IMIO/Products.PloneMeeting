@@ -23,8 +23,7 @@
     given in searchResults.</tal:comment>
 
   <tal:comment replace="nothing">Show the result.</tal:comment>
-
-  <div tal:condition="searchResults">
+  <div onmouseover="javascript:initializeOverlays()" id="ajax-listitems-frame" tal:condition="searchResults">
 
     <div metal:use-macro="context/hs_navigate/macros/search"/>
     <tal:comment replace="nothing">The table containing the result</tal:comment>
@@ -318,4 +317,5 @@
      tal:content="python: tool.translate('search_%s_empty' % resultMetaType, domain='PloneMeeting')">
   </span>
   <div metal:use-macro="context/hs_navigate/macros/search" />
+
 </metal:result>

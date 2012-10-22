@@ -31,7 +31,7 @@ class Assignment(base.Assignment):
 
 class Renderer(base.Renderer):
 
-    _template = ViewPageTemplateFile('portlet_plonemeeting.pt')
+    _template = ViewPageTemplateFile('templates/portlet_plonemeeting.pt')
 
     def __init__(self, *args):
         base.Renderer.__init__(self, *args)

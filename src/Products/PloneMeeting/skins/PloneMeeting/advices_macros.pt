@@ -12,9 +12,10 @@
     <tr>
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
       <td tal:condition="advicesToAdd" class="noPadding">
-        <img i18n:attributes="title" title="advice_add" style="cursor:pointer"
-             tal:attributes="src string:$portal_url/new.png;
-                             onClick python: 'editAdvice(\'%s\', \'%s\', \'\', \'\')' % (meetingItem.UID(), u'??'.join([u'%s**%s' % (a[0], a[1]) for a in advicesToAdd]))" />
+        <a href="addeditadvice" class="link-overlay" tal:attributes="href string:${meetingItem/absolute_url}/addeditadvice">
+          <img i18n:attributes="title" title="advice_add" style="cursor:pointer"
+               tal:attributes="src string:$portal_url/new.png;" />
+        </a>
       </td>
       <tal:menu repeat="adviceType python: meetingConfig.getUsedAdviceTypes() + ('not_given',)">
       <td tal:condition="python: adviceType in advicesByType" class="noPadding">
@@ -37,10 +38,16 @@
                     <td align="right" width="17px" class="noPadding" tal:condition="mayEdit"><img style="cursor:pointer"
                         tal:attributes="src string:$portal_url/delete.png;
                                         onClick python: 'deleteAdvice(\'%s\', \'%s\')' % (meetingItem.UID(), advice['id'])"/></td>
-                    <td align="right" width="17px" class="noPadding" tal:condition="python: mayEdit or (advicesToAdd and advice.has_key('comment') and advice['comment'] and (advice['id'] in [a[0] for a in advicesToAdd]))"><img style="cursor:pointer"
-                        tal:attributes="src string:$portal_url/edit.gif;
-                                        onClick python: 'editAdvice(\'%s\', \'%s**%s\', \'%s\', \'%s\')' % (meetingItem.UID(), advice['id'], advice['name'], test(adviceType=='not_given', defaultAdviceType, adviceType), tool.forJs(advice['comment']))"/></td>
+                    <td align="right" width="17px" class="noPadding" tal:condition="python: mayEdit or (advicesToAdd and advice.has_key('comment') and advice['comment'] and (advice['id'] in [a[0] for a in advicesToAdd]))">
+                    <a href="addeditadvice"
+                       class="link-overlay"
+                       tal:attributes="href python: meetingItem.absolute_url() + ('/addeditadvice?groupId=%s') % (advice['id'])">
+                      <img i18n:attributes="title" title="advice_edit" style="cursor:pointer"
+                           tal:attributes="src string:$portal_url/edit.gif;" />
+                    </a>
+                    </td>
                   </tr>
+                  
                 </table>
                 <tal:details condition="python: (adviceType != 'not_given') and advice['comment']">
                   <i style="font-size: 95%" tal:content="structure advice/comment"></i><br/>

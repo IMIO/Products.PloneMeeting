@@ -272,6 +272,7 @@
   </form>
 </div>
 </tal:adviceStuff>
+
 <tal:comment replace="nothing">Confirm popup for triggering a transition.</tal:comment>
 <div id="confirmTransitionDialog" class="hsDialog">
   <tal:comment replace="nothing">

@@ -1,0 +1,46 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      lang="en"
+      metal:use-macro="here/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+
+<head>
+</head>
+
+<body>
+<metal:main fill-slot="main">
+<metal:main_macro define-macro="main">
+    <metal:body define-macro="body_macro">
+  <form id="editAdviceForm" method="post"
+        tal:define="meetingConfig view/getCurrentMeetingConfig;
+                    checkedAdviceType view/initAdviceType;"
+        tal:attributes="action python:context.absolute_url() + '/@@addeditadvice'">
+  <input type="hidden" name="itemUid" tal:attributes="value context/UID"/>
+  <tal:comment replace="nothing">Adviser group</tal:comment>
+  <label i18n:translate="PloneMeeting_label_adviserName"></label>
+  <select id="editAdviceGroupSelect" name="meetingGroupId" tal:define="meetingGroupIds view/initMeetingGroupId">
+    <option tal:repeat="meetingGroupId meetingGroupIds"
+            tal:attributes="value python: meetingGroupId[0]"
+            tal:content="python: meetingGroupId[1]">MeetingGroupId Title</option>
+  </select><br/>
+  <tal:comment replace="nothing">Possible advice types (positive, negative...)</tal:comment>
+  <tal:adviceTypes repeat="adviceType meetingConfig/getUsedAdviceTypes">
+    <input type="radio" class="noborder" name="adviceType"
+           tal:attributes="id adviceType; value adviceType;
+                           checked python: adviceType == checkedAdviceType"/>
+    <label tal:attributes="for adviceType" tal:content="adviceType" i18n:translate=""></label><br/>
+  </tal:adviceTypes>
+  <br/><label for="comment" i18n:translate="advice_comment"></label>
+  <textarea name="comment" rows="8" tal:content="view/initComment"></textarea><br/><br/>
+  <div align="center">
+    <input type="hidden" name="form.submitted:boolean" value="True" />
+    <input type="hidden" name="form.HTTP_REFERER" value="#" tal:attributes="value context/REQUEST/HTTP_REFERER" />
+    <input type="submit" class="context" value="Save" i18n:attributes="value" i18n:domain="plone"/>
+
+  </div>
+  </form>
+
+</metal:body>
+</metal:main_macro>
+</metal:main>
+</body>
+</html>

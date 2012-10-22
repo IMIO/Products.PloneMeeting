@@ -43,7 +43,7 @@ class Assignment(base.Assignment):
 
 class Renderer(base.Renderer):
 
-    _template = ViewPageTemplateFile('portlet_todo.pt')
+    _template = ViewPageTemplateFile('templates/portlet_todo.pt')
 
     def __init__(self, *args):
         base.Renderer.__init__(self, *args)
