@@ -458,7 +458,7 @@ cursor:pointer;
     width: 1%;
 }
 
-.pm_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_proposingGroup {
+.pm_listing_th_proposingGroup, .pm_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_proposingGroup {
     width: 150px;
 }
 .pm_listing_th_creationDate, .pm_listing_th_relatedMeeting {
