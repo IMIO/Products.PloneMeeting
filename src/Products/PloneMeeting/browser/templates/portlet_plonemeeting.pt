@@ -229,49 +229,6 @@
   </div>
   </form>
 </div>
-<tal:adviceStuff condition="python: not inTool and meetingConfig.getUseAdvices()">
-<div id="editAdviceDialog" class="hsDialog">
-  <form id="editAdviceForm" method="post"
-        tal:define="defaultAdviceType meetingConfig/getDefaultAdviceType"
-        tal:attributes="action python:meetingConfig.absolute_url() + '/editAdvice'">
-  <input type="hidden" name="itemUid"/>
-  <tal:comment replace="nothing">Adviser group</tal:comment>
-  <label i18n:translate="PloneMeeting_label_adviserName"></label>&nbsp;&nbsp;&nbsp;&nbsp;
-  <select id="editAdviceGroupSelect" name="meetingGroupId"></select><br/>
-  <tal:comment replace="nothing">Possible advice types (positive, negative...)</tal:comment>
-  <tal:adviceTypes repeat="adviceType meetingConfig/getUsedAdviceTypes">
-    <input type="radio" class="noborder" name="adviceType"
-           tal:attributes="id adviceType; value adviceType;
-                           checked python: adviceType == defaultAdviceType"/>
-    <label tal:attributes="for adviceType" tal:content="adviceType" i18n:translate=""></label><br/>
-  </tal:adviceTypes>
-  <br/><label for="comment" i18n:translate="advice_comment"></label>
-  <textarea name="comment" cols="30" rows="5"></textarea><br/><br/>
-  <div align="right">
-    <input type="submit" value="Ok" i18n:attributes="value" i18n:domain="plone"/>
-    <input type="button" onClick="javascript:closeDialog('editAdviceDialog')"
-           value="label_cancel" i18n:attributes="value" i18n:domain="plone"/>
-  </div>
-  </form>
-</div>
-<div id="deleteAdviceDialog" class="hsDialog">
-  <form id="deleteAdviceForm" method="post"
-        tal:attributes="action python:meetingConfig.absolute_url() + '/deleteAdvice'">
-    <input type="hidden" name="itemUid"/>
-    <input type="hidden" name="meetingGroupId"/>
-    <center>
-      <img tal:attributes="src string: $portal_url/advice_standard_positive_with_remarks.png"/>
-      <span align="center" i18n:translate="plonemeeting_delete_confirm_message"></span>
-    </center>
-    <br/>
-    <div align="right">
-      <input type="submit" value="Ok" i18n:attributes="value" i18n:domain="plone"/>
-      <input type="button" onClick="javascript:closeDialog('deleteAdviceDialog')"
-             value="label_cancel" i18n:attributes="value" i18n:domain="plone"/>
-    </div>
-  </form>
-</div>
-</tal:adviceStuff>
 
 <tal:comment replace="nothing">Confirm popup for triggering a transition.</tal:comment>
 <div id="confirmTransitionDialog" class="hsDialog">

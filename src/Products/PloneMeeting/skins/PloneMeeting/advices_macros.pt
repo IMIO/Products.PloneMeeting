@@ -35,9 +35,17 @@
                     <td class="noPadding"> <tal:comment replace="nothing">Name is surrounded with () if optional.</tal:comment>
                     <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span>
                     </td>
-                    <td align="right" width="17px" class="noPadding" tal:condition="mayEdit"><img style="cursor:pointer"
-                        tal:attributes="src string:$portal_url/delete.png;
-                                        onClick python: 'deleteAdvice(\'%s\', \'%s\')' % (meetingItem.UID(), advice['id'])"/></td>
+                    <td align="right" width="17px" class="noPadding" tal:condition="mayEdit">
+                      <form action="deleteAdvice" name="deleteAdvice">
+                        <input type="hidden" value="#" name="meetingGroupId" tal:attributes="value advice/id">
+                        <img style="cursor:pointer"
+                             tal:attributes="src string:$portal_url/delete.png;"
+                             i18n:attributes="title"
+                             title="Delete"
+                             i18n:domain="plone"
+                             onclick="javascript:confirmDeleteObject(this)" />
+                      </form>
+                    </td>
                     <td align="right" width="17px" class="noPadding" tal:condition="python: mayEdit or (advicesToAdd and advice.has_key('comment') and advice['comment'] and (advice['id'] in [a[0] for a in advicesToAdd]))">
                     <a href="addeditadvice"
                        class="link-overlay"

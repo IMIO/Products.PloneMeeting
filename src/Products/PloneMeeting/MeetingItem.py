@@ -2229,6 +2229,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.reindexObject()
         self.sendMailIfRelevant('adviceEdited', 'View', isRole=False)
 
+    security.declarePublic('deleteAdvice')
+    def deleteAdvice(self):
+        '''Delete an advice for a given group (get from the request).'''
+        # get groupId from the REQUEST
+        groupId = self.REQUEST.get('meetingGroupId')
+        tool = getToolByName(self, 'portal_plonemeeting')
+        group = getattr(tool, groupId)
+        # First of all, check that the current user actually can manage
+        # advices for the given group
+        member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
+        if not group.getPloneGroupId('advisers') in member.getGroups():
+            raise Unauthorized
+        itemState = self.queryState()
+        # check that the item is in a state where we can remove an advice
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        if not itemState in group.getItemAdviceEditStates(cfg):
+            raise Unauthorized
+        # ok, proceed, the advice for the group is in the already given advices
+        # the user is an adviser for this group and in this item state, an advice
+        # can be removed
+        del self.advices[groupId]
+        self.updateAdvices() # To recreate an empty dict for this adviser
+        self.reindexObject()
+        msg = translate('advice_deleted', domain='PloneMeeting', context=self.REQUEST)
+        self.plone_utils.addPortalMessage(msg)
+        self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
     security.declarePublic('needsAdvices')
     def needsAdvices(self):
         '''Is there at least one advice that needs to be (or has already been)

@@ -2537,39 +2537,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         newItem = templateItem.clone(newOwnerId=user.id)
         rq.RESPONSE.redirect(newItem.absolute_url() + '/edit')
 
-    security.declarePublic('editAdvice')
-    def editAdvice(self):
-        '''Adds or updates an advice for an item whose UID is in the request,
-           in the name of a group whose id is in the request, too.'''
-        rq = self.REQUEST
-        # Extract data from the request
-        item = self.uid_catalog(UID=rq.get('itemUid'))[0].getObject()
-        group = getattr(self.getParentNode(), rq.get('meetingGroupId'))
-        adviceType = rq.get('adviceType')
-        comment = rq.get('comment', '')
-        # Create the advice in the item.
-        item.editAdvice(group, adviceType, comment.decode('utf-8'))
-        # Return to the same page
-        msg = translate('advice_edited', domain='PloneMeeting', context=self.REQUEST)
-        self.plone_utils.addPortalMessage(msg)
-        rq.RESPONSE.redirect(rq['HTTP_REFERER'])
-
-    security.declarePublic('deleteAdvice')
-    def deleteAdvice(self):
-        '''Deletes an advice on an item whose UID is in the request, for the
-           group also defined in the request.'''
-        rq = self.REQUEST
-        # Extract data from the request
-        item = self.uid_catalog(UID=rq.get('itemUid'))[0].getObject()
-        groupId = rq.get('meetingGroupId')
-        if groupId in item.advices:
-            del item.advices[groupId]
-            item.updateAdvices() # To recreate an empty dict for this adviser
-            item.reindexObject()
-        msg = translate('advice_deleted', domain='PloneMeeting', context=self.REQUEST)
-        self.plone_utils.addPortalMessage(msg)
-        rq.RESPONSE.redirect(rq['HTTP_REFERER'])
-
     security.declarePrivate('createUser')
     def createUser(self, userId):
         '''Creates, in folder self.meetingusers, a new MeetingUser instance.'''

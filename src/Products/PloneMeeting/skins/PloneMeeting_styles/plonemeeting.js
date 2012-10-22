@@ -384,14 +384,6 @@ function editAdvice(itemUid, meetingGroupsIds, adviceType, comment) {
   openDialog('editAdviceDialog');
 }
 
-// Function that shows the form for deleting an advice
-function deleteAdvice(itemUid, meetingGroupId) {
-  var f = document.getElementById("deleteAdviceForm");
-  // Store the object UID
-  f.itemUid.value = itemUid;
-  f.meetingGroupId.value = meetingGroupId;
-  openDialog('deleteAdviceDialog');
-}
 // Function allowing to remove an event from an object's history
 function deleteEvent(objectUid, eventTime) {
   var f = document.getElementById("deleteForm");
