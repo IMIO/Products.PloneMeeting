@@ -18,20 +18,31 @@
                                 imageName python:  transitionId + '.png';
                                 confirm python: str(transition['confirm']).lower()"
                         condition="transition/may_trigger">
-          <tal:comment replace="nothing">Icon</tal:comment>
-          <img style="cursor:pointer"
-               tal:condition="python: showIcons and hasattr(portal, imageName)"
-               tal:attributes="src string: $portal_url/$imageName;
-                               title python: transition['title'];
-                               onClick python:'%s(\'%s\',\'%s\',%s)' % (triggerFunction,uid,transition['id'],confirm)"/>
-          <tal:comment replace="nothing">Button</tal:comment>
-          <input class="#" type="button"
-                 tal:condition="python: not (showIcons and hasattr(portal, imageName))"
-                 tal:attributes="class string:hsButton hsButtonWF hsButtonWF_$transitionId;
-                                 value python: transition['title'];
-                                 size python: int(len(transition['title'])/1.2);
-                                 onClick python:'%s(\'%s\',\'%s\',%s)' % (triggerFunction,uid,transition['id'],confirm)" />
+
+          <a href="@@dotransition"
+             class="#"
+             tal:attributes="href python: itemOrMeeting.absolute_url()
+                                          + '/dotransition?objectUid='
+                                          + itemOrMeeting.UID()
+                                          + '&transition='
+                                          + transition['name']
+                                          + (confirm=='false' and '&form.submitted=boolean:True' or '');
+                             class python: confirm=='true' and 'link-overlay-pm transition-overlay' or ''">
+            <tal:comment replace="nothing">Icon</tal:comment>
+            <img style="cursor:pointer"
+                 tal:condition="python: showIcons and hasattr(portal, imageName)"
+                 tal:attributes="src string: $portal_url/$imageName;
+                                 title python: transition['title'];"/>
+            <tal:comment replace="nothing">Button</tal:comment>
+            <input class="#" type="button"
+                   tal:condition="python: not(showIcons and hasattr(portal, imageName))"
+                   tal:attributes="class string:hsButton hsButtonWF hsButtonWF_$transitionId;
+                                   value python: transition['title'];
+                                   size python: int(len(transition['title'])/1.2);" />
+          </a>
+
         </tal:transition>
+
         <tal:comment replace="nothing">The user can't trigger this transition: we tell him why.</tal:comment>
         <input type="button" disabled
                tal:condition="not: transition/may_trigger" class="hsButton fakeButton"

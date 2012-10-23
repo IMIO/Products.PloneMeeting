@@ -127,7 +127,8 @@ def getCurrentMeetingObject(context):
     obj = context.REQUEST.get('PUBLISHED')
     className = obj.__class__.__name__
     if not (className in ('Meeting', 'MeetingItem')):
-        if className in methodTypes:
+        # check if we are on a Script or so or calling a BrowserView
+        if className in methodTypes or 'SimpleViewClass' in className:
             # We are changing the state of an element. We must then check the
             # referer
             refererUrl = context.REQUEST.get('HTTP_REFERER')

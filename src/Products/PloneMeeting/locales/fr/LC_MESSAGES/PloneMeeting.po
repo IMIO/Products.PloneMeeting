@@ -3954,7 +3954,7 @@ msgstr "Choisissez ici un ou plusieurs jeu(x) de changements à appliquer aux wo
 
 #. Default: "Are you sure you want to perform this action? If yes, you can enter a comment below (optional)."
 msgid "workflow_confirm"
-msgstr "Êtes-vous certain de vouloir faire cette action? Si oui, vous pouvez entrer un commentaire ci-dessous (facultatif)."
+msgstr "Êtes-vous certain de vouloir faire cette action? Si oui, vous pouvez entrer un commentaire ci-dessous (facultatif) et cliquer sur le bouton 'Enregistrer', sinon, fermez cette fenêtre via la croix ci-contre."
 
 #. Default: "Every field that you select in this list will, every time its object will be created or updated, undergo the transform(s) defined in the next field."
 msgid "xhtml_transform_fields_descr"

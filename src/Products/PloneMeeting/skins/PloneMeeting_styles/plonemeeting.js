@@ -7,7 +7,7 @@ function triggerTransition(objectUid, transition, confirm, comment,
   if (comment) theForm.comment.value = comment;
   if (iStartNumber) theForm.iStartNumber.value = iStartNumber;
   if (lStartNumber) theForm.lStartNumber.value = lStartNumber;
-  // Either we send the form directly, or we show a confim popup.
+  // Either we send the form directly, or we show a confirmation popup
   if (!confirm) { theForm.submit(); }
   else { openDialog('confirmTransitionDialog') }
 }

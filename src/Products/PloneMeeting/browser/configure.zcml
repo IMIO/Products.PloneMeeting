@@ -73,6 +73,14 @@
       />
 
     <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="dotransition"
+        class=".transitions.ConfirmTransitionView"
+        permission="zope2.View"
+        template="templates/transitions.pt"
+      />
+
+    <browser:page
         name="toggle_to_discuss_on_item"
         class=".discuss.Discuss"
         for="Products.PloneMeeting.interfaces.IMeeting"

@@ -10,18 +10,19 @@
 <metal:main fill-slot="main">
 <metal:main_macro define-macro="main">
     <metal:body define-macro="body_macro">
+  <h1 class="documentFirstHeading" tal:content="context/Title">Title</h1>
   <form id="editAdviceForm" method="post"
         tal:define="meetingConfig view/getCurrentMeetingConfig;
                     checkedAdviceType view/initAdviceType;"
         tal:attributes="action python:context.absolute_url() + '/@@addeditadvice'">
   <input type="hidden" name="itemUid" tal:attributes="value context/UID"/>
   <tal:comment replace="nothing">Adviser group</tal:comment>
-  <label i18n:translate="PloneMeeting_label_adviserName"></label>
+  <label i18n:translate="PloneMeeting_label_adviserName" for="meetingGroupId"></label>
   <select id="editAdviceGroupSelect" name="meetingGroupId" tal:define="meetingGroupIds view/initMeetingGroupId">
     <option tal:repeat="meetingGroupId meetingGroupIds"
             tal:attributes="value python: meetingGroupId[0]"
             tal:content="python: meetingGroupId[1]">MeetingGroupId Title</option>
-  </select><br/>
+  </select><br/><br/>
   <tal:comment replace="nothing">Possible advice types (positive, negative...)</tal:comment>
   <tal:adviceTypes repeat="adviceType meetingConfig/getUsedAdviceTypes">
     <input type="radio" class="noborder" name="adviceType"
@@ -35,10 +36,8 @@
     <input type="hidden" name="form.submitted:boolean" value="True" />
     <input type="hidden" name="form.HTTP_REFERER" value="#" tal:attributes="value context/REQUEST/HTTP_REFERER" />
     <input type="submit" class="context" value="Save" i18n:attributes="value" i18n:domain="plone"/>
-
   </div>
   </form>
-
 </metal:body>
 </metal:main_macro>
 </metal:main>

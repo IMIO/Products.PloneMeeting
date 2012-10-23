@@ -254,6 +254,7 @@
     triggerTransition(objectUid, transition, confirm, comment,
                       iStartNumber, lStartNumber);
   }
+
   -->
   </script>
   <script language="javascript" tal:content="context/getJsItemUids"></script>
@@ -497,7 +498,7 @@
 
   <tal:comment replace="nothing">Actions</tal:comment>
   <br/>
-  <span tal:define="itemOrMeeting python:here">
+  <span tal:define="itemOrMeeting python:here;">
     <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions" />
   </span>
   <br/>

@@ -466,8 +466,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     schema["id"].widget.visible = False
     schema["title"].widget.visible = False
 
-    ploneDiskActions = ('copy', 'cut', 'folderContents', 'paste', 'delete',
-                        'rename')
     ploneMeetingTypes = ('MeetingItem', 'MeetingFile')
     __dav_marshall__ = True # Tool is folderish so normally it can't be
     # marshalled through WebDAV.
@@ -494,7 +492,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.unindexObject()
 
         ##code-section post-edit-method-footer #fill in your manual code here
-        self.updatePloneDiskActions()
         self.updateLanguageSettings()
         performModelAdaptations(self)
         self.adapted().onEdit(isCreated=False)
@@ -504,6 +501,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     # Methods
 
     # Manually created methods
+
+    security.declarePrivate('at_post_create_script')
+    def at_post_create_script(self):
+        self.updateLanguageSettings()
+        self.adapted().onEdit(isCreated=True)
 
     def validate_unoEnabledPython(self, value):
         '''Checks if the given Python interpreter exists and is uno-enabled.'''
@@ -523,17 +525,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                    'a Python interpreter is UNO-enabled, launch it and type ' \
                    '"import uno". If you have no ImportError exception it ' \
                    'is ok.' % value
-
-    security.declarePrivate('updatePloneDiskActions')
-    def updatePloneDiskActions(self):
-        '''Shows or hides plone-disk-related actions depending on attribute
-          ploneDiskAware.'''
-        visibility = False
-        if self.getPloneDiskAware():
-            visibility = True
-        for action in self.portal_actions.listActions():
-            if action.id in self.ploneDiskActions:
-                action.visible = visibility
 
     security.declarePublic('getCustomFields')
     def getCustomFields(self, cols):
@@ -572,12 +563,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         splitted = res.split(',')
         if not names: return splitted
         return [nativeNames[name] for name in splitted]
-
-    security.declarePublic('at_post_create_script')
-    def at_post_create_script(self):
-        self.updatePloneDiskActions()
-        self.updateLanguageSettings()
-        self.adapted().onEdit(isCreated=True)
 
     security.declarePublic('getActiveGroups')
     def getActiveGroups(self, notEmptySuffix=None):
@@ -1350,8 +1335,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Triggers a p_transition on an p_obj.'''
         rq = self.REQUEST
         obj = self.uid_catalog(UID=rq['objectUid'])[0].getObject()
-        self.portal_workflow.doActionFor(obj, rq['transition'],
-                                         comment=rq['comment'])
+        self.portal_workflow.doActionFor(obj, rq.get('transition'),
+                                         comment=rq.get('comment'))
         msg = translate('%s_done_descr' % rq['transition'],
                         domain="PloneMeeting", context=self.REQUEST)
         self.plone_utils.addPortalMessage(msg)

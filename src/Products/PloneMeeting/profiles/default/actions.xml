@@ -75,11 +75,42 @@
    </object>
   </object>
 
-  <!-- Manage object_buttons. -->
+  <!-- Manage object_buttons actions. -->
   <object name="object_buttons" meta_type="CMF Action Category">
    <object name="rename" meta_type="CMF Action">
     <property name="icon_expr">string:$portal_url/rename_icon.gif</property>
-    <property name="visible">False</property>
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+   </object>
+   <object name="cut" meta_type="CMF Action">
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+   </object>
+   <object name="copy" meta_type="CMF Action">
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+   </object>
+   <object name="paste" meta_type="CMF Action">
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+   </object>
+   <object name="delete" meta_type="CMF Action">
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+   </object>
+  </object>
+
+  <!-- Manage object actions. -->
+  <object name="object" meta_type="CMF Action Category">
+   <object name="folderContents" meta_type="CMF Action">
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
    </object>
   </object>
 
