@@ -2521,22 +2521,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(item)
         return res
 
-    security.declarePublic('createItemFromTemplate')
-    def createItemFromTemplate(self):
-        '''The user wants to create an item from a item template that lies in
-           this meeting configuration. Item id is in the request.'''
-        rq = self.REQUEST
-        # Find the template ID within the meeting configuration
-        itemId = rq.get('templateItem', None)
-        if not itemId: return
-        itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
-        templateItem = getattr(itemsFolder, itemId, None)
-        if not templateItem: return
-        # Create the new item by duplicating the template item
-        user = self.portal_membership.getAuthenticatedMember()
-        newItem = templateItem.clone(newOwnerId=user.id)
-        rq.RESPONSE.redirect(newItem.absolute_url() + '/edit')
-
     security.declarePrivate('createUser')
     def createUser(self, userId):
         '''Creates, in folder self.meetingusers, a new MeetingUser instance.'''
