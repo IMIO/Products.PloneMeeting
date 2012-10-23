@@ -1971,10 +1971,6 @@ msgstr "Filtrar por una palabra clave"
 msgid "folder_title_descr"
 msgstr "En la carpeta PloneMeeting de cada miembro, una subcarpeta es creada para cada configuración de reunión. El nombre de esta subcarpeta es definida aquí."
 
-#. Default: "This software was created by the <a href=\"http://plonegov.org\" target=\"_blank\">PloneGov</a> community with the <a href=\"http://plone.org\" target=\"_blank\">Plone</a> content management system."
-msgid "footer_credits"
-msgstr "Este software fue creado por la comunidad <a href=\"http://plonegov.org\" target=\"_blank\">PloneGov</a> con el sistema de administración de contenidos <a href=\"http://plone.org\" target=\"_blank\">Plone</a>."
-
 #. Default: "For the administrator only"
 msgid "for_admin_only"
 msgstr "Para la administración solamente"

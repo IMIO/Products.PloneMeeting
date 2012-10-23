@@ -754,3 +754,8 @@ msgstr ""
 #. Default: "PloneMeeting view redirecting to the application when logged in"
 msgid "plonemeeting_redirect_to_app_view"
 msgstr ""
+
+#. Default: "This application is maintened by <a href='http://www.imio.be'>IMIO</a>, member of the <a href='http://www.plonegov.org'>PloneGov</a> community."
+msgid "description_copyright"
+msgstr ""
+

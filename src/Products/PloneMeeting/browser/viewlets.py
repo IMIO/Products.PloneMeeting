@@ -32,14 +32,6 @@ class PodTemplatesViewlet(ViewletBase):
     index = ViewPageTemplateFile("templates/pod_templates.pt")
 
 # ------------------------------------------------------------------------------
-class FooterViewlet(ViewletBase):
-    '''This viewlet displays the page footer.'''
-    def update(self):
-        self.context_state = getMultiAdapter((self.context, self.request),
-                                             name=u'plone_context_state')
-    index = ViewPageTemplateFile("templates/footer.pt")
-
-# ------------------------------------------------------------------------------
 class WorkflowState(ViewletBase):
     '''This viewlet displays the workflow state.'''
     def update(self):
@@ -56,11 +48,6 @@ class WorkflowState(ViewletBase):
         return ''
 
     index = ViewPageTemplateFile("templates/workflowstate.pt")
-
-# ------------------------------------------------------------------------------
-class DocumentActions(ViewletBase):
-    '''This viewlet displays document actions as icons.'''
-    index = ViewPageTemplateFile("templates/document_actions.pt")
 
 # ------------------------------------------------------------------------------
 class DocumentBylineViewlet(DocumentBylineViewlet):

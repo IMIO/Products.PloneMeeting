@@ -17,16 +17,6 @@
         manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
         class=".viewlets.PodTemplatesViewlet"
         permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.documentactions"
-        manager="plone.app.layout.viewlets.interfaces.IAboveContent"
-        class=".viewlets.DocumentActions"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.footer"
-        manager="plone.app.layout.viewlets.interfaces.IPortalFooter"
-        class=".viewlets.FooterViewlet"
-        permission="zope2.View"/>
 
     <!-- Overriden Plone viewlets -->
     <browser:viewlet

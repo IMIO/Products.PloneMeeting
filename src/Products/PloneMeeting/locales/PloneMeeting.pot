@@ -2937,10 +2937,6 @@ msgstr ""
 msgid "topic_description"
 msgstr ""
 
-#. Default: "This software was created by the <a href=\"http://plonegov.org\" target=\"_blank\">PloneGov</a> community with the <a href=\"http://plone.org\" target=\"_blank\">Plone</a> content management system."
-msgid "footer_credits"
-msgstr ""
-
 #. Default: "item(s)"
 msgid "items_count"
 msgstr ""

@@ -1964,10 +1964,6 @@ msgstr "Filtrer"
 msgid "folder_title_descr"
 msgstr "Dans le répertoire PloneMeeting de chaque utilisateur, un sous-répertoire par configuration de séance est créé. Le nom de ce sous-répertoire se définit ici."
 
-#. Default: "This software was created by the <a href=\"http://plonegov.org\" target=\"_blank\">PloneGov</a> community with the <a href=\"http://plone.org\" target=\"_blank\">Plone</a> content management system."
-msgid "footer_credits"
-msgstr "Ce logiciel a été créé par la communauté <a href=\"http://plonegov.org\" target=\"_blank\">PloneGov</a> sur base du logiciel <a href=\"http://plone.org\" target=\"_blank\">Plone</a>."
-
 #. Default: "For the administrator only"
 msgid "for_admin_only"
 msgstr "Pour l'administrateur uniquement"

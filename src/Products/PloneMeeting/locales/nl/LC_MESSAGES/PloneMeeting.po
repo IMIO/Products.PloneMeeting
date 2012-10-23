@@ -1967,10 +1967,6 @@ msgstr "Filteren"
 msgid "folder_title_descr"
 msgstr "In the PloneMeeting folder of every member, a sub-folder is created for each meeting configuration. The name of this sub-folder is defined here."
 
-#. Default: "This software was created by the <a href=\"http://plonegov.org\" target=\"_blank\">PloneGov</a> community with the <a href=\"http://plone.org\" target=\"_blank\">Plone</a> content management system."
-msgid "footer_credits"
-msgstr "This software was created by the <a href=\"http://plonegov.org\" target=\"_blank\">PloneGov</a> community with the <a href=\"http://plone.org\" target=\"_blank\">Plone</a> content management system."
-
 #. Default: "For the administrator only"
 msgid "for_admin_only"
 msgstr ""

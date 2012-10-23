@@ -1968,10 +1968,6 @@ msgstr ""
 msgid "folder_title_descr"
 msgstr "Im PloneMeeting-Ordner jedes Nutzers wird für jede Sitzungs-Konfiguration ein Unterordner erstellt. Der Name dieses Unterordners wird hier definiert."
 
-#. Default: "This software was created by the <a href=\"http://plonegov.org\" target=\"_blank\">PloneGov</a> community with the <a href=\"http://plone.org\" target=\"_blank\">Plone</a> content management system."
-msgid "footer_credits"
-msgstr "Diese Software wurde von der <a href=\"http://plonegov.org\" target=\"_blank\">PloneGov</a> Community auf Basis des <a href=\"http://plone.org\" target=\"_blank\">Plone</a> Content Management Systems erstellt."
-
 #. Default: "For the administrator only"
 msgid "for_admin_only"
 msgstr "Nur für den Administrator"
