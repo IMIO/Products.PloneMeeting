@@ -2636,15 +2636,15 @@ msgid "plonemeeting_identifier"
 msgstr ""
 
 # Portlet "PloneMeeting"
-#. Default: "create an item"
+#. Default: "Create an item"
 msgid "create_meeting_item"
 msgstr ""
 
-#. Default: "create an item from..."
+#. Default: "Create an item from..."
 msgid "create_meeting_item_from"
 msgstr ""
 
-#. Default: "create an item in the current folder"
+#. Default: "Create an item in the current folder"
 msgid "create_meeting_item_in_current_folder"
 msgstr ""
 

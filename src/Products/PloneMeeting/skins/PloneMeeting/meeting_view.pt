@@ -246,14 +246,6 @@
       listToToggle.style.display = '';
     }
   }
-  // Function for triggering a transition from a list of items
-  function triggerTransitionFromList(objectUid, transition, confirm, comment) {
-    /* After the transition has been triggered, we must come back to the right
-       page within the items list, so we transmit the start number of current
-       page for late and normal items, stored in a global Javascript variable.*/
-    triggerTransition(objectUid, transition, confirm, comment,
-                      iStartNumber, lStartNumber);
-  }
 
   -->
   </script>

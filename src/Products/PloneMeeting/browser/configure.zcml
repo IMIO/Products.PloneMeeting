@@ -64,6 +64,7 @@
         class="plone.app.layout.viewlets.content.ContentHistoryViewlet"
         permission="zope2.View"/>
 
+    <!-- Overlays views -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="addeditadvice"
@@ -71,15 +72,22 @@
         permission="zope2.View"
         template="templates/advices.pt"
       />
-
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        name="dotransition"
+        for="*"
+        name="createitemfromtemplate"
+        class=".itemtemplates.ItemTemplateView"
+        permission="zope2.View"
+        template="templates/itemtemplates.pt"
+      />
+    <browser:page
+        for="*"
+        name="triggertransition"
         class=".transitions.ConfirmTransitionView"
         permission="zope2.View"
         template="templates/transitions.pt"
       />
 
+    <!-- Asynchronous calls (ajax) -->
     <browser:page
         name="toggle_to_discuss_on_item"
         class=".discuss.Discuss"

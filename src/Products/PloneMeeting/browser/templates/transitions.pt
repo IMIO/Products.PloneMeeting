@@ -12,7 +12,7 @@
     <metal:body define-macro="body_macro">
   <h1 class="documentFirstHeading" tal:content="context/Title">Title</h1>
   <form id="confirmTransitionForm" method="post"
-        tal:attributes="action python:context.absolute_url() + '/@@dotransition'">
+        tal:attributes="action python:context.absolute_url() + '/@@triggertransition'">
   <input type="hidden" name="objectUid" tal:attributes="value context/UID"/>
   <input type="hidden" name="transition" tal:attributes="value view/initTransition"/>
   <input type="hidden" name="iStartNumber" tal:attributes="value view/initIStartNumber"/>

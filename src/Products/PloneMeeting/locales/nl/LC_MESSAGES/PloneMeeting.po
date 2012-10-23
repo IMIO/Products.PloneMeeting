@@ -1650,15 +1650,17 @@ msgstr ""
 msgid "create_meeting"
 msgstr "Creatie van een vergadering"
 
-#. Default: "create an item"
+#. Default: "Create an item"
+#, fuzzy
 msgid "create_meeting_item"
 msgstr "Creatie van een punt"
 
-#. Default: "create an item from..."
+#. Default: "Create an item from..."
 msgid "create_meeting_item_from"
 msgstr ""
 
-#. Default: "create an item in the current folder"
+#. Default: "Create an item in the current folder"
+#, fuzzy
 msgid "create_meeting_item_in_current_folder"
 msgstr "Creatie van een punt in de huidige folder"
 

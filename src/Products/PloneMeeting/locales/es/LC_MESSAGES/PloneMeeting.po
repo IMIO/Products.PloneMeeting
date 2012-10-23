@@ -1653,15 +1653,18 @@ msgstr "Este tema ha sido creado desde un tema demorado."
 msgid "create_meeting"
 msgstr "¿crear una reunión?"
 
-#. Default: "create an item"
+#. Default: "Create an item"
+#, fuzzy
 msgid "create_meeting_item"
 msgstr "crear un tema"
 
-#. Default: "create an item from..."
+#. Default: "Create an item from..."
+#, fuzzy
 msgid "create_meeting_item_from"
 msgstr "crear un tema desde..."
 
-#. Default: "create an item in the current folder"
+#. Default: "Create an item in the current folder"
+#, fuzzy
 msgid "create_meeting_item_in_current_folder"
 msgstr "crear un tema en la actual carpeta"
 

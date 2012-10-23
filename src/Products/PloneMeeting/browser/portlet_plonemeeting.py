@@ -76,23 +76,12 @@ class Renderer(base.Renderer):
         return DateTime()
 
     @memoize
-    def getTemplateItems(self):
-        '''Gets the list of template items from the config.'''
+    def templateItems(self):
+        '''Check if there are item templates defined or not.'''
         cfg = self.getCurrentMeetingConfig()
-        res = []
+        res = False
         if cfg:
-            templates = cfg.getItems(usage='as_template_item')
-            if templates:
-                tool = self.getPloneMeetingTool()
-                member = tool.portal_membership.getAuthenticatedMember()
-                memberGroups = tool.getGroups(member.getId())
-                memberGroupIds = [group.id for group in memberGroups]
-                for template in templates:
-                    #check if the current user can use the template
-                    templateRestrictedGroups = template.getTemplateUsingGroups()
-                    if not templateRestrictedGroups or \
-                       set(memberGroupIds).intersection(templateRestrictedGroups):
-                        res.append(template)
+            res = bool(cfg.getItems(usage='as_template_item'))
         return res
 
 class AddForm(base.AddForm):

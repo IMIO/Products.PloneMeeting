@@ -1649,17 +1649,17 @@ msgstr "Ce point a été créé suite au report d'un autre point."
 msgid "create_meeting"
 msgstr "créer une séance"
 
-#. Default: "create an item"
+#. Default: "Create an item"
 msgid "create_meeting_item"
-msgstr "créer un point"
+msgstr "Créer un point"
 
-#. Default: "create an item from..."
+#. Default: "Create an item from..."
 msgid "create_meeting_item_from"
-msgstr "créer un point depuis..."
+msgstr "Créer un point depuis..."
 
-#. Default: "create an item in the current folder"
+#. Default: "Create an item in the current folder"
 msgid "create_meeting_item_in_current_folder"
-msgstr "créer un point ici"
+msgstr "Créer un point ici"
 
 #. Default: "Create a plonegov item from a plonemeeting item"
 msgid "create_to_plonegov-assembly_from_plonemeeting-assembly"

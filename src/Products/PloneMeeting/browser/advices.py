@@ -6,7 +6,9 @@ from plone.memoize.instance import memoize
 
 
 class AddEditAdvice(BrowserView):
-
+    '''
+      This manage the overlay popup displayed when an advice is added or edited.
+    '''
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
         self.context = context

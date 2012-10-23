@@ -1649,15 +1649,18 @@ msgstr "This item has been created from a delayed item."
 msgid "create_meeting"
 msgstr "create a meeting"
 
-#. Default: "create an item"
+#. Default: "Create an item"
+#, fuzzy
 msgid "create_meeting_item"
 msgstr "create an item"
 
-#. Default: "create an item from..."
+#. Default: "Create an item from..."
+#, fuzzy
 msgid "create_meeting_item_from"
 msgstr "create an item from..."
 
-#. Default: "create an item in the current folder"
+#. Default: "Create an item in the current folder"
+#, fuzzy
 msgid "create_meeting_item_in_current_folder"
 msgstr "create an item here"
 

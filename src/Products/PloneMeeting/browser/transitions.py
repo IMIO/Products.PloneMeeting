@@ -6,7 +6,10 @@ from plone.memoize.instance import memoize
 
 
 class ConfirmTransitionView(BrowserView):
-
+    '''
+      This manage the overlay popup displayed when a transition needs to be confirmed.
+      For other transitions, this views is also used but the confirmation popup is not shown.
+    '''
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
         self.context = context
@@ -20,6 +23,9 @@ class ConfirmTransitionView(BrowserView):
 
     def __call__(self):
         form = self.request.form
+        # either we received form.submitted=False from the request because we are triggering
+        # a transition that does not need a confirmation or we clicked on the save button of
+        # the confirmation popup
         submitted = form.get('form.submitted', False)
         if submitted:
             self.tool.triggerTransition()

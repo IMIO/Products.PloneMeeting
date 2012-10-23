@@ -6,8 +6,7 @@
                  mayChangeOrder mayChangeOrder|nothing;
                  isItem python:itemOrMeeting.meta_type == 'MeetingItem';
                  inItemsList inItemsList|nothing;
-                 uid itemOrMeeting/UID;
-                 triggerFunction python: test(inItemsList, 'triggerTransitionFromList', 'triggerTransition')">
+                 uid itemOrMeeting/UID;">
 
   <table class="no-style-table" tal:attributes="align python:test(showIcons, 'right', 'left')">
     <tr>
@@ -19,10 +18,10 @@
                                 confirm python: str(transition['confirm']).lower()"
                         condition="transition/may_trigger">
 
-          <a href="@@dotransition"
+          <a href="@@triggertransition"
              class="#"
              tal:attributes="href python: itemOrMeeting.absolute_url()
-                                          + '/dotransition?objectUid='
+                                          + '/triggertransition?objectUid='
                                           + itemOrMeeting.UID()
                                           + '&transition='
                                           + transition['name']
