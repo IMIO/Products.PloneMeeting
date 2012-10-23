@@ -133,7 +133,7 @@ def getCurrentMeetingObject(context):
             # referer
             refererUrl = context.REQUEST.get('HTTP_REFERER')
             referer = urlparse.urlparse(refererUrl)[2]
-            if referer.endswith('_view') or referer.endswith('_edit'):
+            if referer.endswith('/view') or referer.endswith('/edit'):
                 referer = os.path.dirname(referer)
             # We add the portal path if necessary
             # (in case Apache rewrites the uri for example)
