@@ -1,17 +1,3 @@
-// Function for triggering a workflow transition
-function triggerTransition(objectUid, transition, confirm, comment,
-                           iStartNumber, lStartNumber) {
-  var theForm = document.forms["formTriggerTransition"];
-  theForm.objectUid.value = objectUid;
-  theForm.transition.value = transition;
-  if (comment) theForm.comment.value = comment;
-  if (iStartNumber) theForm.iStartNumber.value = iStartNumber;
-  if (lStartNumber) theForm.lStartNumber.value = lStartNumber;
-  // Either we send the form directly, or we show a confirmation popup
-  if (!confirm) { theForm.submit(); }
-  else { openDialog('confirmTransitionDialog') }
-}
-
 /* Dropdown for selecting an annex type */
 var ploneMeetingSelectBoxes = new Object();
 
@@ -354,34 +340,6 @@ function closeDialog(dialogId) {
   greyed.style.display = "none";
   // Empty the global variable dialogData
   dialogData = null;
-}
-
-// Function that shows the form for adding or updating an advice
-function editAdvice(itemUid, meetingGroupsIds, adviceType, comment) {
-  var f = document.getElementById("editAdviceForm");
-  // Remember the object UID
-  f.itemUid.value = itemUid;
-  // Populate the widget allowing to select the adviser group
-  var sg = document.getElementById("editAdviceGroupSelect");
-  for (var i=sg.options.length-1 ; i>=0 ; i--) sg.remove(i);
-  var groupIds = meetingGroupsIds.split('??');
-  for (var i=0; i < groupIds.length; i++) {
-    var opt = document.createElement("OPTION");
-    var groupInfo = groupIds[i].split('**');
-    opt.value = groupInfo[0];
-    opt.text = groupInfo[1].replace(/&nbsp;/g, ' ');
-    sg.options.add(opt);
-  }
-  if (adviceType) {
-    // Override the default advice type. Loop among radio buttons
-    for (var i=0; i < f.adviceType.length; i++) {
-      if (f.adviceType[i].value == adviceType) { f.adviceType[i].checked=true; }
-      else { f.adviceType[i].checked = false; }
-    }
-  }
-  // Populate the comment
-  f.comment.value = comment.replace(/<br\/>/g, '\n');
-  openDialog('editAdviceDialog');
 }
 
 // Function allowing to remove an event from an object's history

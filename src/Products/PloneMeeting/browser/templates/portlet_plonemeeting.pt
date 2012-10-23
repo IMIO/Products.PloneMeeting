@@ -230,33 +230,6 @@
   </form>
 </div>
 
-<tal:comment replace="nothing">Confirm popup for triggering a transition.</tal:comment>
-<div id="confirmTransitionDialog" class="hsDialog">
-  <tal:comment replace="nothing">
-    This form is also used outside the context of the dialog, for triggering
-    any transition, be it "confirmable" or not.
-  </tal:comment>
-  <form id="formTriggerTransition" method="post"
-        tal:attributes="action python:tool.absolute_url() + '/triggerTransition'">
-    <input type="hidden" name="objectUid"/>
-    <input type="hidden" name="transition"/>
-    <tal:comment replace="nothing">
-      When the transition is triggered from within an items list, when coming
-      back to the list, we need to take care of pagination.
-    </tal:comment>
-    <input type="hidden" name="iStartNumber"/>
-    <input type="hidden" name="lStartNumber"/>
-  <i i18n:translate="workflow_confirm"></i>
-  <tal:comment replace="nothing">The workflow comment</tal:comment>
-  <br/>
-  <textarea name="comment" cols="30" rows="3"></textarea><br/><br/>
-  <div align="center">
-    <input type="submit" value="Yes" i18n:attributes="value" i18n:domain="plone"/>
-    <input type="button" onClick="closeDialog('confirmTransitionDialog')"
-           value="No" i18n:attributes="value" i18n:domain="plone"/>
-  </div>
-  </form>
-</div>
 <tal:comment replace="nothing">Confirm popup for bye-bying a user from a meeting.</tal:comment>
 <div id="confirmByebyeUser" class="hsDialog" tal:condition="python: context.meta_type == 'MeetingItem'">
   <div align="center">
