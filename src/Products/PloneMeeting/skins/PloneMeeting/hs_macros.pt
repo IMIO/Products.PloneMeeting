@@ -247,9 +247,16 @@
     <tr>
       <td tal:repeat="transition python: context.portal_plonemeeting.getTransitionsFor(context)"
           class="noPadding" align="left">
-        <input class="hsButton" type="button" i18n:attributes="value"
-               tal:attributes="value python: transition['title'];
-                               onClick python: 'triggerTransition(\'%s\', \'%s\')' % (context.UID(), transition['id'])"/>
+        <a href="@@triggertransition"
+           tal:attributes="href python: context.absolute_url()
+                                        + '/triggertransition?objectUid='
+                                        + context.UID()
+                                        + '&transition='
+                                        + transition['name'] + '&form.submitted=boolean:True';">
+          <input class="hsButton" type="button"
+                 tal:attributes="value python: transition['title'];
+                                 size python: int(len(transition['title'])/1.2);" />
+        </a>
       </td>
       <tal:back define="parent context/getParentNode;
                         parentIsTool python: parent.meta_type == 'ToolPloneMeeting'">

@@ -89,16 +89,16 @@ margin-top: -1.9em;
 
 /* Colors on states */
 .state-active {}
-.state-inactive, .state-inactive a {color: red; }
-.state-created { color: red !important; }
-.state-proposed { color: #ff6c00 !important; }
-.state-validated { color: blue !important; }
-.state-presented { color: black !important; }
-.state-accepted { color: #64c168 !important; }
-.state-confirmed { color: green !important; }
-.state-delayed { color: grey !important; }
-.state-refused { color: violet !important; }
-.state-cloture { color: black !important; }
+.state-inactive, .state-inactive a {color: red !important; }
+.state-created, .state-itemcreated, .label-state-itemcreated { color: red !important; }
+.state-proposed, .label-state-proposed { color: #ff6c00 !important; }
+.state-validated, .label-state-validated { color: blue !important; }
+.state-presented, .label-state-presented { color: black !important; }
+.state-accepted, .label-state-accepted { color: #64c168 !important; }
+.state-confirmed, .label-state-confirmed { color: green !important; }
+.state-delayed, .label-state-delayed { color: grey !important; }
+.state-refused, .label-state-refused { color: violet !important; }
+.state-cloture, .label-state-cloture { color: black !important; }
 .somethingtodo { color: red !important; }
 .selectRow { }
 .itemTitle { font-size: 100%; font-weight: bold; margin: 0.2em 0.1em 0 0.1em; }

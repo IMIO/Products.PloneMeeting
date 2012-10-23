@@ -218,10 +218,8 @@
           <table class="vertical listing" align="right" width="100%">
             <tr>
               <th i18n:translate="listingheader_title"></th>
-              <th width="8%" i18n:translate="group_is_active"></th>
-              <th width="10%" i18n:translate="heading_actions"></th>
               <th width="50px" i18n:translate="group_is_active"></th>
-              <th width="120px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
             </tr>
             <tr tal:condition="python: not fFolder.objectValues('MeetingFileType')">
               <td colspan="3" align="center" i18n:translate="">no_meeting_file_type</td>
@@ -301,7 +299,7 @@
             <tr>
               <th i18n:translate="listingheader_title"></th>
               <th width="50px" i18n:translate="config_is_active"></th>
-              <th width="120px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
             </tr>
             <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
               <td colspan="3" align="center" i18n:translate="">no_category</td>
@@ -381,7 +379,7 @@
               <th i18n:translate="listingheader_title"></th>
               <th width="20%" i18n:translate="PloneMeeting_label_categoryId"></th>
               <th width="50px" i18n:translate="group_is_active"></th>
-              <th width="120px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
             </tr>
             <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
               <td colspan="4" align="center" i18n:translate="">no_classifier</td>
@@ -466,7 +464,7 @@
               <th width="25%" i18n:translate="PloneMeeting_label_description"></th>
               <th width="15%" i18n:translate="PloneMeeting_label_usages"></th>
               <th width="25%" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe"></th>
-              <th width="120px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
             </tr>
             <tr tal:condition="python: not rFolder.objectValues('MeetingItem')">
               <td colspan="5" align="center" i18n:translate="">no_recurring_item</td>
@@ -652,7 +650,7 @@
               <th i18n:translate="topic_search_script">Topic search script</th>
               <th i18n:translate="topic_tal_expression">Topic tal expression</th>
               <th width="50px" i18n:translate="pod_template_is_active"></th>
-              <th width="120px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
             </tr>
 
             <!-- No topic is defined -->
@@ -868,7 +866,7 @@
             <th width="20%" i18n:translate="PloneMeeting_label_duty"></th>
             <th width="20%" i18n:translate="PloneMeeting_label_usages"></th>
             <th width="50px" i18n:translate="pod_template_is_active"></th>
-            <th width="120px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+            <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
           </tr>
           <tr tal:condition="python: not mFolder.objectValues('MeetingUser')">
             <td colspan="6" align="center" i18n:translate="">no_meeting_user</td>
@@ -967,7 +965,7 @@
               <th width="20px"></th>
               <th i18n:translate="listingheader_title"></th>
               <th width="50px"  i18n:translate="pod_template_is_active"></th>
-              <th width="120px"  i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px"  i18n:translate="heading_actions" i18n:domain="plone"></th>
             </tr>
 
             <tal:comment replace="nothing">No template is defined.</tal:comment>
