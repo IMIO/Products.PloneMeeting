@@ -89,7 +89,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         multiValued=1,
-        vocabulary='listItemStatesInitExcepted',
+        vocabulary='listItemStates',
     ),
     LinesField(
         name='itemAdviceEditStates',
@@ -102,7 +102,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         multiValued=1,
-        vocabulary='listItemStatesInitExcepted',
+        vocabulary='listItemStates',
     ),
     LinesField(
         name='itemAdviceViewStates',
@@ -115,7 +115,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         multiValued=1,
-        vocabulary='listItemStatesInitExcepted',
+        vocabulary='listItemStates',
     ),
     StringField(
         name='asCopyGroupOn',
@@ -167,13 +167,13 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
-    security.declarePublic('listItemStatesInitExcepted')
-    def listItemStatesInitExcepted(self):
+    security.declarePublic('listItemStates')
+    def listItemStates(self):
         '''Lists the states of the item workflow ("itemcreated" excepted).'''
         cfg = self.portal_plonemeeting.getDefaultMeetingConfig()
         if not cfg:
             return DisplayList()
-        return cfg.listItemStatesInitExcepted()
+        return cfg.listItemStates()
 
     def getPloneGroupId(self, suffix):
         '''Returns the id of the Plone group that corresponds to me and
