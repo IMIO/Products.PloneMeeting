@@ -201,6 +201,7 @@
      Optional: "decisionRelated". If True, decision-related annexes are shown
                instead of item-related annexes.</tal:comment>
 <metal:icons define-macro="annexesIcons"
+     i18n:domain="PloneMeeting"
      tal:define="decisionRelated decisionRelated|nothing;
                  decisionRelated python:test(decisionRelated, True, False);
                  annexesByType python:meetingItem.getAnnexesByType(decisionRelated);
