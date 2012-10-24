@@ -461,14 +461,15 @@ cursor:pointer;
 .pm_listing_th_proposingGroup, .pm_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_proposingGroup {
     width: 150px;
 }
-.pm_listing_th_creationDate, .pm_listing_th_relatedMeeting {
+.pm_listing_th_creationDate {
+    width: 135px;
+}
+.pm_listing_th_relatedMeeting {
     width: 125px;
 }
-
 .pm_listing_th_creator, .pm_meeting_listing_th_creator {
     width: 100px;
 }
-
 .pm_listing_th_state, .pm_meeting_listing_th_state, .pm_listing_th_privacy, .pm_meeting_listing_th_privacy {
     width: 60px;
 }

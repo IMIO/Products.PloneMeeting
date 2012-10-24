@@ -181,7 +181,7 @@
          <span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target)"/>
        </td>
        <td tal:content="python: tool.getUserName(annex.Creator())"></td>
-       <td tal:content="annex/CreationDate"></td>
+       <td tal:content="python: context.restrictedTraverse('@@plone').toLocalizedTime(annex.CreationDate(),long_format=True)"></td>
        <td tal:content="annex/getObjSize"></td>
        <td tal:condition="python:member.has_permission('Delete objects', here)" align="center">
          <form name="deleteUidForm" action="delete_givenuid">
