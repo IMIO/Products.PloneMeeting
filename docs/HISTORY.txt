@@ -5,10 +5,25 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 
 3.0 (unreleased-plone4)
 -----------------------
-- Migrate application to Plone4
+- Migrated to Plone 4
+- Migrated MeetingFiles and PodTemplates to blobs
+- Quick edition works with CKeditor
+- Use Plone4 overlays to display popups
+- Use communesplone.iconified_document_actions
+- Display action icon on action buttons (do not use portal_actionicons anymore)
+- Advices are now askable when the item is in his initial workflow state
 
-2.1.2
------
+2.1.4dev
+--------
+- Nothing yet
+
+2.1.3 (2012-10-03)
+------------------
+- Make the input showing the item number on the meeting view larger so 3-digit numbers are displayed correctly
+- Make it possible for an external plugin to define extra fields to keep (copy) when sending an item to another meeting config (getExtraFieldsToCopyWhenCloningToOtherMC)
+
+2.1.2 (2012-07-09)
+------------------
 - Added possibility to "duplicate and keep link" : duplicate an existing item and keep a link to the original item
 - Corrected problems around groups UnicodeDecodeErrors (migration added)
 - MeetingItem.itemInitiator field is now multivalued (migration added)
@@ -16,7 +31,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Make item title longer (500 chars)
 - Show the decision annexes everywhere (list of items, main item view, ...)
 
-2.1.1 (2012-07-09)
+2.1.1 (2012-04-02)
 ------------------
 - Added field MeetingConfig.certifiedSignatures useable to define current certified signatures to use on templates
 - Item templates are now definable by proposingGroup
