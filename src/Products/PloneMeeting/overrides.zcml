@@ -23,7 +23,13 @@
     <!-- Override the contenthistory template displayed in the history popup
          to display things as a table -->
     <browser:view
-        for="*"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        name="contenthistory"
+        class=".browser.views.PloneMeetingContentHistoryView"
+        permission="zope2.View"
+        />
+    <browser:view
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="contenthistory"
         class=".browser.views.PloneMeetingContentHistoryView"
         permission="zope2.View"
