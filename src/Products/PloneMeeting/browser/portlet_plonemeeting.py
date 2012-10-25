@@ -2,14 +2,15 @@ from zope.component import getMultiAdapter
 from zope.interface import implements
 from zope.formlib import form
 
+from DateTime import DateTime
+
 from plone.memoize.instance import memoize
 from plone.app.portlets.portlets import base
 from plone.portlets.interfaces import IPortletDataProvider
 
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-
-from DateTime import DateTime
+from Products.PloneMeeting.browser.itemtemplates import ItemTemplateView
 
 from zope.i18nmessageid import MessageFactory
 _ = MessageFactory('PloneMeeting')
@@ -78,11 +79,7 @@ class Renderer(base.Renderer):
     @memoize
     def templateItems(self):
         '''Check if there are item templates defined or not.'''
-        cfg = self.getCurrentMeetingConfig()
-        res = False
-        if cfg:
-            res = bool(cfg.getItems(usage='as_template_item'))
-        return res
+        return ItemTemplateView(self.context, self.request).getTemplateItems()
 
 class AddForm(base.AddForm):
     form_fields = form.Fields(IPloneMeetingPortlet)

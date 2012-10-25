@@ -49,7 +49,7 @@ class testPortlets(PloneMeetingTestCase):
         manager = getUtility(IPortletManager, name='plone.leftcolumn', context=self.portal)
         assignment = pm.Assignment()
         renderer = getMultiAdapter((context, request, view, manager, assignment), IPortletRenderer)
-        self.assertEquals(['template1',], [template.getId() for template in renderer.getTemplateItems()])
+        self.assertEquals(['template1',], [template.getId() for template in renderer.templateItems()])
         # pmCreator2 is member of 'vendors' and can so access template2 that is restricted to 'vendors'
         login(self.portal, 'pmCreator2')
         self.getMeetingFolder()
@@ -59,7 +59,7 @@ class testPortlets(PloneMeetingTestCase):
         manager = getUtility(IPortletManager, name='plone.leftcolumn', context=self.portal)
         assignment = pm.Assignment()
         renderer = getMultiAdapter((context, request, view, manager, assignment), IPortletRenderer)
-        self.assertEquals(['template1', 'template2', ], [template.getId() for template in renderer.getTemplateItems()])
+        self.assertEquals(['template1', 'template2', ], [template.getId() for template in renderer.templateItems()])
 
 
 
