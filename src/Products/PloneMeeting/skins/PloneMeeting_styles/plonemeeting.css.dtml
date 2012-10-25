@@ -93,7 +93,9 @@ margin-top: -1.9em;
 .state-created, .state-itemcreated, .label-state-itemcreated { color: red !important; }
 .state-proposed, .label-state-proposed { color: #ff6c00 !important; }
 .state-validated, .label-state-validated { color: blue !important; }
-.state-presented, .label-state-presented { color: black !important; }
+.state-presented, .label-state-presented { color: brown !important; }
+.state-itemfrozen, .label-state-itemfrozen, .state-frozen, .label-state-frozen { color: cornflowerBlue !important; }
+.state-itempublished, .label-state-itempublished, .state-published, .label-state-published { color: darkgoldenrod !important; }
 .state-accepted, .label-state-accepted { color: #64c168 !important; }
 .state-confirmed, .label-state-confirmed { color: green !important; }
 .state-delayed, .label-state-delayed { color: grey !important; }
@@ -106,7 +108,9 @@ margin-top: -1.9em;
 .transition-deactivate {color: red !important; }
 .transition-propose { color: #ff6c00 !important; }
 .transition-validate { color: blue !important; }
-.transition-present { color: black !important; }
+.transition-present { color: brown !important; }
+.transition-itemfreeze, .transition-freeze { color: cornflowerBlue !important; }
+.transition-itempublish, .transition-publish { color: darkgoldenrod !important; }
 .transition-accept { color: #64c168 !important; }
 .transition-confirm { color: green !important; }
 .transition-delay { color: grey !important; }
