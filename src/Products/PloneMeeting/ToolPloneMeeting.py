@@ -1518,15 +1518,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 for annex in newItem.objectValues('MeetingFile'):
                     self.portal_skins.PloneMeeting.removeGivenObject(annex)
             else:
-                # Recreate the references to annexes: the copy/paste does
-                # not handle this correctly.
+                # Recreate the references to annexes: the references can NOT be kept
+                # on copy because it would be references to original annexes
+                # and we need references to freshly created annexes
                 for annexType in ('Annexes', 'AnnexesDecision'):
                     exec 'oldAnnexes = copiedItem.get%s()' % annexType
                     newAnnexes = []
                     for annex in oldAnnexes:
                         newAnnex = getattr(newItem, annex.id)
-                        newAnnex.setMeetingFileType(
-                            annex.getMeetingFileType())
                         newAnnexes.append(newAnnex)
                     exec 'newItem.set%s(newAnnexes)' % annexType
             # The copy/paste has transferred history. We must clean the history

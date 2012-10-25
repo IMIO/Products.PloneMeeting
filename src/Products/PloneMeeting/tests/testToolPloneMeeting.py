@@ -133,22 +133,57 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def testPasteItems(self):
         '''Paste objects (previously copied) in destFolder.'''
-        login(self.portal, 'pmManager')
+        login(self.portal, 'pmCreator1')
         item1 = self.create('MeetingItem')
+        # Add annexes to item1
+        self.addAnnex(item1)
+        self.addAnnex(item1)
         item2 = self.create('MeetingItem')
+        # Add one annex
+        self.addAnnex(item2)
+        # Add advices to item2
+        self.do(item2, 'propose')
+        login(self.portal, 'pmReviewer1')
+        self.do(item2, 'validate')
+        login(self.portal, 'pmReviewer2')
+        item2.editAdvice(group=self.portal.portal_plonemeeting.vendors, adviceType='positive', comment='My comment')
+        login(self.portal, 'pmCreator1')
         destFolder = item1.getParentNode()
-        copiedData = destFolder.manage_copyObjects(ids=[item1.id, item2.id, ])
-        res = self.tool.pasteItems(destFolder, copiedData)
-        self.assertEquals(set([item1, item2, res[0], res[1]]),
+        # Copy items
+        copiedData1 = destFolder.manage_copyObjects(ids=[item1.id, ])
+        copiedData2 = destFolder.manage_copyObjects(ids=[item2.id, ])
+        res1 = self.tool.pasteItems(destFolder, copiedData1, copyAnnexes=True)[0]
+        res2 = self.tool.pasteItems(destFolder, copiedData2)[0]
+        self.assertEquals(set([item1, item2, res1, res2]),
                           set(destFolder.objectValues()))
         # By default, the history is kept by the copy/paste so we should have 2
         # values relative to the 'itemcreated' action
         # But here, the workflow_history is cleaned by ToolPloneMeeting.pasteItems
         # and only contains informations about the current workflow and the actions in it
-        itemWorkflow = self.tool.getMeetingConfig(item1).getItemWorkflow()
+        itemWorkflow = self.tool.getMeetingConfig(res1).getItemWorkflow()
         # The workflow_history only contains one action, the 'itemcreated' action
-        self.assertEquals(len(res[0].workflow_history[itemWorkflow]), 1)
-        self.assertEquals(len(res[1].workflow_history[itemWorkflow]), 1)
+        self.assertEquals(len(res1.workflow_history[itemWorkflow]), 1)
+        self.assertEquals(len(res2.workflow_history[itemWorkflow]), 1)
+        # Annexes are copied for item1
+        # and that existing references are correctly kept
+        self.assertEquals(len(res1.getAnnexes()), 2)
+        # Check also that the annexIndex is correct
+        self.assertEquals(len(res1.annexIndex), 2)
+        # And that indexed and references values are actually the right ones...
+        self.failUnless(res1.getAnnexes()[0].absolute_url().startswith(res1.absolute_url()))
+        res1AnnexesUids = [annex.UID() for annex in res1.getAnnexes()]
+        item1AnnexesUids = [annex.UID() for annex in item1.getAnnexes()]
+        self.failUnless(res1.annexIndex[0]['uid'] in res1AnnexesUids)
+        self.failIf(len(set(item1AnnexesUids).intersection(set(res1AnnexesUids))) != 0)
+        #Now check item2 : no annexes nor advices
+        self.assertEquals(len(res2.getAnnexes()), 0)
+        self.assertEquals(len(res2.annexIndex), 0)
+        self.assertEquals(len(res2.advices), 0)
+        # Now check the 'keepReferencesOnCopy' attribute of MeetingFile.meetingFileType
+        self.failUnless(res1.getAnnexes()[0].getMeetingFileType())
+        self.failUnless(res1.getAnnexes()[1].getMeetingFileType())
+
+
 
     def testShowPloneMeetingTab(self):
         '''Test when PM tabs are shown'''
