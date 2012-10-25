@@ -60,6 +60,10 @@ msgstr "Kopiere TOP"
 msgid "CopyItem"
 msgstr "Kopiere TOP"
 
+#. Default: "Created"
+msgid "Created"
+msgstr ""
+
 #. Default: "Creator"
 msgid "Creator"
 msgstr "Ersteller"

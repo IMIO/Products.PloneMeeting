@@ -29,14 +29,12 @@ jQuery(function($) {
      subtype: 'ajax',
   });
 });
-
-
-
 // as this method is called on the onmousover event of the ajax-frame
 // remove the event after first call to avoid it being called more than once
 $('div.ajax-listitems-frame').each(function(){
     $(this).removeAttr('onmouseover');
     })
+
 }
 
 function initializePMOverlaysOnMeeting(){

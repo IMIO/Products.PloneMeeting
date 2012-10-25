@@ -2444,7 +2444,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Make sure every Rich fields are 'text/html'
         # sometimes (...) if empty, contentType is wrongly set to 'text/plain'...
         for field in self.Schema().filterFields(default_content_type='text/html'):
-            field.setContentType(self, 'text/html')
+            self.setContentType('text/html', field.getName())
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         # Items that are created in the tool for creating recurring items

@@ -569,8 +569,10 @@
 
 <tal:comment replace="nothing">
   This Ajax-called macro displays an object's history.
+  XXX WARNING this is no more use and will be totaly removed while removing the PM content historisation functionnality.
+  XXX WARNING For now, this is adapted in browser/templates/content_history.pt
 </tal:comment>
-<metal:history define-macro="history" i18n:domain="PloneMeeting"
+<!--metal:history define-macro="history" i18n:domain="PloneMeeting"
       tal:define="startNumber request/startNumber|python:0;
                   startNumber python: int(startNumber);
                   batchSize   python: int(request.get('maxPerPage'));
@@ -631,10 +633,11 @@
     </tal:event>
   </table>
   </tal:history>
-</metal:history>
+</metal:history-->
 
-<tal:comment replace="nothing">Object history</tal:comment>
-<tal:history metal:define-macro="objectHistory" i18n:domain="PloneMeeting"
+<tal:comment replace="nothing">Object history
+XXX WARNING this is no more use and will be totaly removed while removing the PM content historisation functionnality</tal:comment>
+<!--tal:history metal:define-macro="objectHistory" i18n:domain="PloneMeeting"
     tal:define="expanded python: request.get('objectHistory', 'collapsed') == 'expanded';
                 historyMaxPerPage python: 6;"
     tal:condition="context/hasHistory">
@@ -650,4 +653,4 @@
       </script>
    </div>
   </span>
-</tal:history>
+</tal:history-->

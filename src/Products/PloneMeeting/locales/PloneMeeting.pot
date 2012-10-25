@@ -3993,3 +3993,7 @@ msgstr ""
 #. Default: "Choose an element in the list"
 msgid "label_choose_element_in_list"
 msgstr ""
+
+#. Default: "Created"
+msgid "Created"
+msgstr ""

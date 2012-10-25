@@ -299,7 +299,6 @@
     <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
   </h1>
   <div tal:replace="structure provider:plone.belowcontenttitle"></div>
-  <metal:field use-macro="here/hs_macros/macros/objectHistory" />
   <div tal:replace="structure provider:plone.abovecontentbody"></div>
 
   <div class="discreet">

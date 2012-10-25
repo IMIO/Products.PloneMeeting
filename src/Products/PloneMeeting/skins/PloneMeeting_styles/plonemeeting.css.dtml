@@ -98,7 +98,21 @@ margin-top: -1.9em;
 .state-confirmed, .label-state-confirmed { color: green !important; }
 .state-delayed, .label-state-delayed { color: grey !important; }
 .state-refused, .label-state-refused { color: violet !important; }
-.state-cloture, .label-state-cloture { color: black !important; }
+.state-closed, .label-state-closed { color: black !important; }
+/* Colors on transitions, used in the item wf history */
+/* this correspond to the element creation */
+.transition-none { color: red !important; }
+.transition-activate {}
+.transition-deactivate {color: red !important; }
+.transition-propose { color: #ff6c00 !important; }
+.transition-validate { color: blue !important; }
+.transition-present { color: black !important; }
+.transition-accept { color: #64c168 !important; }
+.transition-confirm { color: green !important; }
+.transition-delay { color: grey !important; }
+.transition-refuse { color: violet !important; }
+.transition-close { color: black !important; }
+
 .somethingtodo { color: red !important; }
 .selectRow { }
 .itemTitle { font-size: 100%; font-weight: bold; margin: 0.2em 0.1em 0 0.1em; }

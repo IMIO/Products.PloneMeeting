@@ -60,6 +60,10 @@ msgstr ""
 msgid "CopyItem"
 msgstr ""
 
+#. Default: "Created"
+msgid "Created"
+msgstr ""
+
 #. Default: "Creator"
 msgid "Creator"
 msgstr "Aanmaker"

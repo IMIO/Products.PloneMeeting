@@ -26,6 +26,14 @@
              expression=""
              id="plonemeetingpopups.js"
              inline="False"/>
+
+ <javascript cacheable="True"
+             compression="safe"
+             cookable="True"
+             enabled="True"
+             expression=""
+             id="plonemeetingnasties.js"
+             inline="False"/>
  <!-- ##/code-section jsregistry.xml -->
 
 </object>

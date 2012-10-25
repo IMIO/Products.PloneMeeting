@@ -60,8 +60,4 @@ class DocumentBylineViewlet(DocumentBylineViewlet):
                                              name=u'plone_context_state')
         self.anonymous = self.portal_state.anonymous()
 
-    def show_history(self):
-        # HS change: never show history, HS has its own way to show it.
-        return False
-
 # ------------------------------------------------------------------------------

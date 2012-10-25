@@ -33,14 +33,14 @@
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         permission="zope2.View"
         />
-    <browser:viewlet name="plone.belowcontenttitle.documentbyline"
+    <!-- browser:viewlet name="plone.belowcontenttitle.documentbyline"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class=".viewlets.DocumentBylineViewlet" permission="zope2.View"/>
     <browser:viewlet name="plone.belowcontenttitle.documentbyline"
         for="Products.PloneMeeting.interfaces.IMeeting"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
-        class=".viewlets.DocumentBylineViewlet" permission="zope2.View"/>
+        class=".viewlets.DocumentBylineViewlet" permission="zope2.View"/-->
 
     <!-- Change some Plone viewlets from viewlet container -->
     <browser:viewlet

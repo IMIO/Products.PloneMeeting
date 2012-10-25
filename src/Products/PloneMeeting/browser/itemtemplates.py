@@ -54,12 +54,12 @@ class ItemTemplateView(BrowserView):
         if cfg:
             templates = cfg.getItems(usage='as_template_item')
             if templates:
+                #check if the current user can use the template
                 tool = self.getPloneMeetingTool()
                 member = tool.portal_membership.getAuthenticatedMember()
                 memberGroups = tool.getGroups(member.getId())
                 memberGroupIds = [group.id for group in memberGroups]
                 for template in templates:
-                    #check if the current user can use the template
                     templateRestrictedGroups = template.getTemplateUsingGroups()
                     if not templateRestrictedGroups or \
                        set(memberGroupIds).intersection(templateRestrictedGroups):

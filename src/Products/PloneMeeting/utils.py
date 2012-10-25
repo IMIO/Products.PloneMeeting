@@ -991,7 +991,7 @@ def getHistory(obj, startNumber=0, batchSize=5):
     '''Returns the history for this object, sorted in reverse order (most
        recent change first) if p_reverse is True.'''
     res = []
-    history = list(obj.workflow_history[obj.getWorkflowName()][1:])
+    history = list(obj.workflow_history[obj.getWorkflowName()])
     history.reverse()
     stopIndex = startNumber + batchSize - 1
     i = -1

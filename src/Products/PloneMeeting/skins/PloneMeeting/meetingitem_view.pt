@@ -93,7 +93,6 @@
     <div tal:replace="structure provider:plone.abovecontenttitle" />
     <metal:header use-macro="here/hs_macros/macros/itemHeader"/>
     <div tal:replace="structure provider:plone.belowcontenttitle" />
-    <metal:field use-macro="here/hs_macros/macros/objectHistory" />
 
     <tal:comment replace="nothing">Form used for going to meetingitem_view for an item
         whose number is given by the user.</tal:comment>

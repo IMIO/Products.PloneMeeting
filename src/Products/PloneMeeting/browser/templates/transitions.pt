@@ -1,33 +1,28 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
       lang="en"
-      metal:use-macro="here/main_template/macros/master"
       i18n:domain="PloneMeeting">
 
-<head>
-</head>
-
 <body>
-<metal:main fill-slot="main">
-<metal:main_macro define-macro="main">
-    <metal:body define-macro="body_macro">
-  <h1 class="documentFirstHeading" tal:content="context/Title">Title</h1>
-  <form id="confirmTransitionForm" method="post"
-        tal:attributes="action python:context.absolute_url() + '/@@triggertransition'">
-  <input type="hidden" name="objectUid" tal:attributes="value context/UID"/>
-  <input type="hidden" name="transition" tal:attributes="value view/initTransition"/>
-  <input type="hidden" name="iStartNumber" tal:attributes="value view/initIStartNumber"/>
-  <input type="hidden" name="lStartNumber" tal:attributes="value view/initLStartNumber"/>
-  <tal:comment replace="nothing">Explanation comment</tal:comment>
-  <p i18n:translate="">workflow_confirm</p>
-  <br/><label for="comment" i18n:translate="transition_comment"></label>
-  <textarea name="comment" rows="8"></textarea><br/><br/>
-  <div align="center">
-    <input type="hidden" name="form.submitted:boolean" value="True" />
-    <input type="submit" class="context" value="Save" i18n:attributes="value" i18n:domain="plone"/>
-  </div>
-  </form>
-</metal:body>
-</metal:main_macro>
-</metal:main>
+    <div id="content">
+        <h1 class="documentFirstHeading" tal:content="context/Title">Title</h1>
+        <form id="confirmTransitionForm" method="post"
+              tal:attributes="action python:context.absolute_url() + '/@@triggertransition'">
+        <input type="hidden" name="objectUid" tal:attributes="value context/UID"/>
+        <input type="hidden" name="transition" tal:attributes="value view/initTransition"/>
+        <input type="hidden" name="iStartNumber" tal:attributes="value view/initIStartNumber"/>
+        <input type="hidden" name="lStartNumber" tal:attributes="value view/initLStartNumber"/>
+        <tal:comment replace="nothing">Explanation comment</tal:comment>
+        <p i18n:translate="">workflow_confirm</p>
+        <br/><label for="comment" i18n:translate="transition_comment"></label>
+        <textarea name="comment" rows="8"></textarea><br/><br/>
+        <div align="center">
+          <input type="hidden" name="form.submitted:boolean" value="True" />
+          <input type="submit" class="context" value="Save" i18n:attributes="value" i18n:domain="plone"/>
+        </div>
+        </form>
+    </div>
 </body>
 </html>

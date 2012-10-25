@@ -20,5 +20,13 @@
         permission="cmf.ManagePortal"
         />
 
+    <!-- Override the contenthistory template displayed in the history popup
+         to display things as a table -->
+    <browser:view
+        for="*"
+        name="contenthistory"
+        class=".browser.views.PloneMeetingContentHistoryView"
+        permission="zope2.View"
+        />
 
 </configure>

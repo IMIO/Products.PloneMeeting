@@ -60,6 +60,10 @@ msgstr "Copier points"
 msgid "CopyItem"
 msgstr "Copier"
 
+#. Default: "Created"
+msgid "Created"
+msgstr "Création"
+
 #. Default: "Creator"
 msgid "Creator"
 msgstr "Créateur"
