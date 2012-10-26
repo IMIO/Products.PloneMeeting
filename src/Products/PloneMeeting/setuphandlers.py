@@ -211,10 +211,6 @@ def postInstall(context):
     setattr(SetupTool.manage_deleteImportSteps.im_func, '__doc__', 'Do.')
     setattr(SetupTool.manage_deleteExportSteps.im_func, '__doc__', 'Do.')
 
-    # Hide some Kupu buttons
-    #saveButton = {'id':'save-button', 'visible':False, 'override':''}
-    #site.kupu_library_tool.set_toolbar_filters([saveButton], None)
-
     # Add to the tool the dict allowing to remember user accesses to items and
     # annexes
     if not hasattr(site.portal_plonemeeting.aq_base, 'accessInfo'):
@@ -233,6 +229,8 @@ def postInstall(context):
     # re-add them manually here...
     for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
         meetingConfig.registerPortalTypes()
+        # Update the cloneToOtherMeetingConfig actions visibility
+        meetingConfig.updateCloneToOtherMCActions()
         # add default portal_tabs
         meetingConfig.createTab()
         # Perform workflow adaptations if required
