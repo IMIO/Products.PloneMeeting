@@ -111,7 +111,7 @@
     </tal:mainConfig>
 
     <tal:data condition="python: pageName=='data'">
-      <p i18n:translate="meetingconfig_data_descr"></p>
+      <p i18n:translate="meetingconfig_data_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('usedItemAttributes')">
@@ -521,7 +521,7 @@
     </tal:data>
 
     <tal:workflow condition="python: pageName=='workflow'">
-      <p i18n:translate="meetingconfig_workflow_descr"></p>
+      <p i18n:translate="meetingconfig_workflow_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('itemWorkflow')">
@@ -558,7 +558,7 @@
     </tal:workflow>
 
     <tal:gui condition="python: pageName=='gui'">
-      <p i18n:translate="meetingconfig_gui_descr"></p>
+      <p i18n:translate="meetingconfig_gui_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('itemTopicStates')">
@@ -730,7 +730,7 @@
     </tal:gui>
 
     <tal:mail condition="python: pageName=='mail'">
-      <p i18n:translate="meetingconfig_mail_descr"></p>
+      <p i18n:translate="meetingconfig_mail_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('mailMode')">
@@ -754,7 +754,7 @@
     </tal:mail>
 
     <tal:tasks condition="python: pageName=='tasks'">
-      <p i18n:translate="tasks_descr"></p>
+      <p i18n:translate="tasks_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('tasksMacro')">
@@ -769,7 +769,7 @@
     </tal:tasks>
 
     <tal:advices condition="python: pageName=='advices'">
-      <p i18n:translate="meetingconfig_advice_descr"></p>
+      <p i18n:translate="meetingconfig_advice_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top" colspan="3">
           <td tal:define="field python:here.getField('useAdvices')">
@@ -821,7 +821,7 @@
     </tal:advices>
 
     <tal:votes condition="python: pageName=='votes'">
-      <p i18n:translate="meetingconfig_votes_descr"></p>
+      <p i18n:translate="meetingconfig_votes_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('useVotes')">
@@ -847,7 +847,7 @@
     </tal:votes>
 
     <tal:users condition="python: pageName=='users'">
-    <p i18n:translate="meetingconfig_users_descr"></p>
+    <p i18n:translate="meetingconfig_users_descr" class='pageNameDescr'></p>
 
     <tal:comment replace="nothing">Meeting users</tal:comment>
     <a name="meetingusers"></a>
@@ -942,7 +942,7 @@
     </tal:users>
 
     <tal:doc condition="python: pageName=='doc'">
-    <p i18n:translate="meetingconfig_doc_descr"></p>
+    <p i18n:translate="meetingconfig_doc_descr" class='pageNameDescr'></p>
 
       <a name="podtemplates"></a>
       <fieldset>
