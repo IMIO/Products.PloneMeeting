@@ -2441,10 +2441,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Check if some copyGroups must be automatically added
         if self.isCopiesEnabled():
             self.addAutoCopyGroups()
-        # Make sure every Rich fields are 'text/html'
-        # sometimes (...) if empty, contentType is wrongly set to 'text/plain'...
-        for field in self.Schema().filterFields(default_content_type='text/html'):
-            self.setContentType('text/html', field.getName())
+        # Make sure we have 'text/html' for every Rich fields
+        self.forceHTMLContentTypeForEmptyRichFields()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         # Items that are created in the tool for creating recurring items
@@ -2469,6 +2467,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.transformAllRichTextFields()
         # Add a line in history if historized fields have changed
         addDataChange(self)
+        # Make sure we have 'text/html' for every Rich fields
+        self.forceHTMLContentTypeForEmptyRichFields()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         if self.isDefinedInTool():
@@ -2478,6 +2478,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Item at %s edited by "%s".' % \
                     (self.absolute_url_path(), userId))
+
+    def forceHTMLContentTypeForEmptyRichFields(self):
+        '''
+          Will saving a empty Rich field ('text/html'), the contentType is set back to 'text/plain'...
+          Force it to 'text/html' if the field is empty
+        '''
+        for field in self.Schema().filterFields(default_content_type='text/html'):
+            if not field.getRaw(self):
+                field.setContentType(self, 'text/html')
 
     security.declarePublic('updateHistory')
     def updateHistory(self, action, subObj, **kwargs):
