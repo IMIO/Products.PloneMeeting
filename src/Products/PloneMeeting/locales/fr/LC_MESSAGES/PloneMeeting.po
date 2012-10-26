@@ -608,7 +608,7 @@ msgstr "Identifiant de la version de la configuration liée à cette séance"
 
 #. Default: "Meeting configs to clone items to"
 msgid "PloneMeeting_label_meetingConfigsToCloneTo"
-msgstr "Configurations de séance vers lesquelles les points de cette séance peuvent être envoyés"
+msgstr "Configurations de séance vers lesquelles les points de cette configuration de séance peuvent être envoyés"
 
 #. Default: "Title of the folder that PloneMeeting creates in each user folder"
 msgid "PloneMeeting_label_meetingFolderTitle"
