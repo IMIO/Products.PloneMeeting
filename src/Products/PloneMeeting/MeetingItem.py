@@ -471,6 +471,7 @@ schema = Schema((
     TextField(
         name='description',
         widget=RichWidget(
+            rows=15,
             label='Description',
             label_msgid='PloneMeeting_label_description',
             i18n_domain='PloneMeeting',
@@ -486,6 +487,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.attributeIsUsed('detailedDescription')",
+            rows=15,
             label='Detaileddescription',
             label_msgid='PloneMeeting_label_detailedDescription',
             i18n_domain='PloneMeeting',
@@ -635,6 +637,7 @@ schema = Schema((
     TextField(
         name='decision',
         widget=RichWidget(
+            rows=15,
             label='Decision',
             label_msgid='PloneMeeting_label_decision',
             i18n_domain='PloneMeeting',
@@ -679,6 +682,7 @@ schema = Schema((
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
             condition="python: here.attributeIsUsed('observations')",
+            rows=15,
             label='Observations',
             i18n_domain='PloneMeeting',
         ),

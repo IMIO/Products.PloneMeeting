@@ -6,28 +6,28 @@
         cookie_persistence="False"
         request_varname="plone_skin">
 
- <object name="plonemeeting_templates"
-         meta_type="Filesystem Directory View"
-         directory="PloneMeeting/skins/plonemeeting_templates"/>
  <object name="plonemeeting_images"
          meta_type="Filesystem Directory View"
          directory="PloneMeeting/skins/plonemeeting_images"/>
- <object name="plonemeeting_plone"
-         meta_type="Filesystem Directory View"
-         directory="PloneMeeting/skins/plonemeeting_plone"/>
  <object name="plonemeeting_styles"
          meta_type="Filesystem Directory View"
          directory="PloneMeeting/skins/plonemeeting_styles"/>
+ <object name="plonemeeting_templates"
+         meta_type="Filesystem Directory View"
+         directory="PloneMeeting/skins/plonemeeting_templates"/>
+ <object name="plonemeeting_plone"
+         meta_type="Filesystem Directory View"
+         directory="PloneMeeting/skins/plonemeeting_plone"/>
  
  <skin-path name="*">
   <layer insert-after="custom" 
-         name="plonemeeting_templates"/>
-  <layer insert-after="custom" 
          name="plonemeeting_images"/>
   <layer insert-after="custom" 
-         name="plonemeeting_plone"/>
-  <layer insert-after="custom" 
          name="plonemeeting_styles"/>
+  <layer insert-after="custom" 
+         name="plonemeeting_templates"/>
+  <layer insert-after="custom" 
+         name="plonemeeting_plone"/>
  </skin-path>
 
 </object>

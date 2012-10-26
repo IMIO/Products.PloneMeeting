@@ -678,6 +678,7 @@ schema = Schema((
         widget=RichWidget(
             condition="python: here.showObs('observations')",
             label_msgid="PloneMeeting_meetingObservations",
+            rows=15,
             label='Observations',
             i18n_domain='PloneMeeting',
         ),
@@ -710,6 +711,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.showObs('preObservations')",
+            rows=15,
             label='Preobservations',
             label_msgid='PloneMeeting_label_preObservations',
             i18n_domain='PloneMeeting',
