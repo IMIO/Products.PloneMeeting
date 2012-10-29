@@ -1869,7 +1869,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # where a recurring item is created with a proposingGroup the
             # MeetingManager is not in as a creator...
             # we must be sure that the item is removed in every case.
-            item.portal_skins.PloneMeeting.removeGivenObject(item)
+            item.portal_skins.plonemeeting_templates.removeGivenObject(item)
             return True
         else:
             wfTool = item.portal_workflow

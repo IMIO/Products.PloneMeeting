@@ -379,7 +379,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(newItem.getCategory() == i1.getCategory())
         #if we remove the newItem, the reference in the original item annotation is removed
         #and the original item is sendable again
-        self.portal.portal_skins.PloneMeeting.delete_givenuid(newUID)
+        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(newUID)
         self.failIf(annotations.has_key(annotationKey))
         self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # An item is automatically sent to the other meetingConfigs when it is 'accepted'
@@ -408,7 +408,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # MeetingItem.itemPositiveDecidedStates
         # by default, the only positive state is 'accepted'
         for state in MeetingItem.itemPositiveDecidedStates:
-            self.portal.portal_skins.PloneMeeting.delete_givenuid(newUID)
+            self.portal.portal_skins.plonemeeting_templates.delete_givenuid(newUID)
             self.do(i1, 'backToItemFrozen')
             self.failIf(i1._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
             self.do(i1, self._getTransitionToReachState(i1, state))

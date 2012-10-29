@@ -48,7 +48,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         newGroupId = newGroup.getId()
         self.tool.REQUEST['template_id'] = '.'
         # As scripts in portal_skins are not acquirable in tests, make like if it was a method of the tool
-        folder_position = self.portal.portal_skins.PloneMeeting_plone.folder_position
+        folder_position = self.portal.portal_skins.plonemeeting_plone.folder_position
         self.tool.folder_position = folder_position
         # After creation, the new MeetingGroup is in last position
         self.assertEquals(self.tool.objectIds('MeetingGroup'),
