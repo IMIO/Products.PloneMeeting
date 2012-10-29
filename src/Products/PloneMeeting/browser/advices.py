@@ -50,6 +50,9 @@ class AddEditAdvice(BrowserView):
             return self.context.advices[self.request.form.get('groupId')]['comment'].replace('&nbsp;;', ' ').replace('\'', '\\\'')
 
     def __call__(self):
+        # check that we can actually access this form, aka the current user has an advice to add or edit
+        if not self.initMeetingGroupId():
+            self.request.RESPONSE.redirect(self.context.absolute_url())
         form = self.request.form
         submitted = form.get('form.submitted', False)
         if submitted:

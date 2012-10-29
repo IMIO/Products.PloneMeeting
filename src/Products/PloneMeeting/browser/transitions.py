@@ -22,6 +22,9 @@ class ConfirmTransitionView(BrowserView):
         self.groupId = self.request.form.get('groupId', '')
 
     def __call__(self):
+        # check that the user has actually a transition to trigger with confirmation
+        if not self.initTransition():
+            self.request.RESPONSE.redirect(self.context.absolute_url())
         form = self.request.form
         # either we received form.submitted=False from the request because we are triggering
         # a transition that does not need a confirmation or we clicked on the save button of
@@ -31,11 +34,19 @@ class ConfirmTransitionView(BrowserView):
             self.tool.triggerTransition()
         return self.index()
 
+    @memoize
     def initTransition(self):
         '''
           Initialize values for the 'transition' form field
         '''
-        return self.request.get('transition')
+        res = ''
+        tool = self.getPloneMeetingTool()
+        availableTransitions = tool.getTransitionsFor(self.context)
+        for availableTransition in availableTransitions:
+            if self.request.get('transition') == availableTransition['name'] and \
+               availableTransition['confirm'] == True:
+                res = self.request.get('transition')
+        return res
 
     def initIStartNumber(self):
         '''

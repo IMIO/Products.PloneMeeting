@@ -20,6 +20,9 @@ class ItemTemplateView(BrowserView):
         self.meetingConfig = self.getCurrentMeetingConfig()
 
     def __call__(self):
+        # check that the user can actually create an item from a template
+        if not self.getTemplateItems():
+            self.request.RESPONSE.redirect(self.context.absolute_url())
         form = self.request.form
         submitted = form.get('form.submitted', False)
         if submitted:
