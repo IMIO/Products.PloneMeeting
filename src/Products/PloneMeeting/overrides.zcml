@@ -38,7 +38,7 @@
     <browser:view
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="contenthistory"
-        class=".browser.views.PloneMeetingContentHistoryView"
+        class=".browser.overrides.PloneMeetingContentHistoryView"
         permission="zope2.View"
         />
 
