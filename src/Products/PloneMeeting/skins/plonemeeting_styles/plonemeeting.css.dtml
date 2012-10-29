@@ -502,6 +502,11 @@ cursor:pointer;
     width: 25px;
 }
 
+.popups_field_descr {
+    font-style: italic;
+    color: &dtml-discreetColor;;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
