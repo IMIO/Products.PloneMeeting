@@ -1516,7 +1516,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if not copyAnnexes:
                 # Delete the annexes that have been copied.
                 for annex in newItem.objectValues('MeetingFile'):
-                    self.portal_skins.PloneMeeting.removeGivenObject(annex)
+                    self.portal_skins.plonemeeting_templates.removeGivenObject(annex)
             else:
                 # Recreate the references to annexes: the references can NOT be kept
                 # on copy because it would be references to original annexes
