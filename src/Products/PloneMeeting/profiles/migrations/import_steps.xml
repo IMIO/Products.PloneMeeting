@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<import-steps>
-  <import-step id="migrateToPloneMeeting_3_0" version="20120824-01"
-               handler="Products.PloneMeeting.profiles.migrations.migrate_to_3_0.migrate"
-               title="Migrate to PloneMeeting 3.0.">
-      Migrate to PloneMeeting 3.0 (Plone4) for production sites running v2.1.2 (Plone3).
-  </import-step>
-</import-steps>

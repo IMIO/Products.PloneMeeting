@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('PloneMeeting')
-from Products.PloneMeeting.profiles.migrations import Migrator
+from Products.PloneMeeting.migrations import Migrator
 
 
 # The migration class ----------------------------------------------------------
@@ -91,6 +91,5 @@ def migrate(context):
        1) Patches security of File objects;
        2) Migrate MeetingFiles to Blobs.
     '''
-    if context.readDataFile("PloneMeeting_migrations_marker.txt") is None:return
     Migrate_To_3_0(context).run()
 # ------------------------------------------------------------------------------

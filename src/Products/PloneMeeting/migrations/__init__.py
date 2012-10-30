@@ -26,9 +26,8 @@ class Migrator:
     '''Abstract class for creating a migrator.'''
     def __init__(self, context):
         self.context = context
-        self.portal = context.getSite()
+        self.portal = context.portal_url.getPortalObject()
         self.tool = getToolByName(self.portal, 'portal_plonemeeting')
-        self._profile_path = context._profile_path
         self.startTime = time.time()
 
     def run(self):
