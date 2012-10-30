@@ -32,6 +32,7 @@ from appy.shared.xml_parser import XmlUnmarshaller
 from appy.shared.dav import Resource
 from appy.shared.utils import typeLetters, copyData, FolderDeleter
 from appy.pod import convertToXhtml
+from zope.i18n import translate
 from Products.PloneMeeting import FakeBrain
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.profiles import *
@@ -277,15 +278,15 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
         d = 'PloneMeeting'
         res = [
           # Use it for importing meetings
-          ("import", translate('extapp_usage_import', domain=d, context=self)),
+          ("import", translate('extapp_usage_import', domain=d, context=self.REQUEST)),
           # Use it as a target for exporting meetings
-          ("export", translate('extapp_usage_export', domain=d, context=self)),
+          ("export", translate('extapp_usage_export', domain=d, context=self.REQUEST)),
           # Use it as a target for sending a notification
-          ("notify", translate('extapp_usage_notify', domain=d, context=self)),
+          ("notify", translate('extapp_usage_notify', domain=d, context=self.REQUEST)),
           # Use it as a place for performing searches
-          ("search", translate('extapp_usage_search', domain=d, context=self)),
+          ("search", translate('extapp_usage_search', domain=d, context=self.REQUEST)),
           # Use it as a database of users for keeping ours in sync with it
-          ("users", translate('extapp_usage_users', domain=d, context=self)),
+          ("users", translate('extapp_usage_users', domain=d, context=self.REQUEST)),
         ]
         return DisplayList(tuple(res))
 
@@ -311,13 +312,13 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
     def validate_secondUrl(self, value):
         '''secondUrl is mandatory if 'search' is among usages.'''
         if ('search' in self.REQUEST.get('usages')) and not value:
-            return translate('second_url_mandatory', domain='PloneMeeting', context=self)
+            return translate('second_url_mandatory', domain='PloneMeeting', context=self.REQUEST)
         return None
 
     def validate_notifyPassword(self, value):
         '''Password is mandatory if notifyLogin is filled.'''
         if self.REQUEST.get('notifyLogin', None) and not value:
-            return translate('password_mandatory', domain='PloneMeeting', context=self)
+            return translate('password_mandatory', domain='PloneMeeting', context=self.REQUEST)
         return None
 
     def _unmarshall(self, data, classes={}):
