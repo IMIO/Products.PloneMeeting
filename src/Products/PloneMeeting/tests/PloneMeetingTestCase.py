@@ -177,6 +177,10 @@ class PloneMeetingTestCase(unittest.TestCase):
         obj = getattr(folder, folder.invokeFactory(contentType, **attrs))
         if objectType == 'Meeting':
             self.setCurrentMeeting(obj)
+        elif objectType == 'MeetingItem':
+            # optionalAdvisers are not set (???) by invokeFactory...
+            if 'optionalAdvisers' in attrs:
+                obj.setOptionalAdvisers(attrs['optionalAdvisers'])
         # Some attributes in attrs are not taken into account. 
         # The setAttributes method can set attrs after the object is created.
         if hasattr(obj.aq_inner, 'processForm'):

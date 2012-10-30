@@ -156,6 +156,28 @@ class testAdvices(PloneMeetingTestCase):
         login(self.portal, 'pmReviewer2')
         self.assertEquals(item1.getAdvicesToGive(), ([], []))
 
+    def testGiveAdviceOnCreatedItem(self):
+        '''This test the MeetingItem.getAdvicesToGive method.
+           MeetingItem.getAdvicesToGive returns 2 lists : first with addable advices and
+           the second with editable/deletable advices.'''
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        self.meetingConfig.setItemAdviceStates(('itemcreated', 'proposed', 'validated',))
+        self.meetingConfig.setItemAdviceEditStates(('itemcreated', 'proposed', 'validated',))
+        self.meetingConfig.setItemAdviceViewStates(('itemcreated', 'proposed', 'validated',))
+        login(self.portal, 'pmCreator1')
+        # create an item and ask the advice of group 'vendors'
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': ('vendors',)
+        }
+        item1 = self.create('MeetingItem', **data)
+        self.assertEquals(item1.needsAdvices(), True)
+        # check than the adviser can see the item
+        login(self.portal, 'pmReviewer2')
+        self.failUnless(self.hasPermission('View', item1))
+        self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
