@@ -50,14 +50,3 @@ class WorkflowState(ViewletBase):
     index = ViewPageTemplateFile("templates/workflowstate.pt")
 
 # ------------------------------------------------------------------------------
-class DocumentBylineViewlet(DocumentBylineViewlet):
-
-    index = ViewPageTemplateFile("templates/document_byline.pt")
-
-    def update(self):
-        super(DocumentBylineViewlet, self).update()
-        self.context_state = getMultiAdapter((self.context, self.request),
-                                             name=u'plone_context_state')
-        self.anonymous = self.portal_state.anonymous()
-
-# ------------------------------------------------------------------------------

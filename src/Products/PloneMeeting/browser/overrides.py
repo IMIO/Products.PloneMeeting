@@ -1,4 +1,4 @@
-from plone.app.layout.viewlets.content import ContentHistoryView
+from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
@@ -60,3 +60,20 @@ class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
             return {'portal' : valid_actions[-1][1]}
 
         return {'portal' : default_tab}
+
+class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
+    '''
+      Overrides the DocumentBylineViewlet to hide it for some layouts.
+    '''
+
+    def show(self):
+        oldShow = super(PloneMeetingDocumentBylineViewlet, self).show()
+        if not oldShow:
+            return False
+        else:
+            # add our own conditions
+            # the documentByLine should be hidden on some layouts
+            currentLayout = self.context.getLayout()
+            if currentLayout in ['meetingfolder_redirect_view',]:
+                return False
+        return True
