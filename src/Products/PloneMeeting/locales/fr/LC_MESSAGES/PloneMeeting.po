@@ -2358,6 +2358,10 @@ msgstr "En création"
 msgid "itemfreeze"
 msgstr "Geler"
 
+#. Default: "The item has been frozen."
+msgid "itemfreeze_done_descr"
+msgstr "Le point a été gelé."
+
 #. Default: "Published (frozen)"
 msgid "itemfrozen"
 msgstr "Publié (gelé)"

@@ -1,15 +1,33 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xml:lang="en-US" lang="en-US"
+      xml:lang="en"
+      lang="en"
       xmlns:tal="http://xml.zope.org/namespaces/tal"
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       xmlns:i18n="http://xml.zope.org/namespaces/i18n"
       metal:use-macro="here/main_template/macros/master"
       i18n:domain="PloneMeeting">
 
-<body>
-  <metal:main fill-slot="main"
-     tal:define="tool python: context.portal_plonemeeting;
-                 member tool/getUser">
+  <body >
+  <metal:title fill-slot="content-title"
+               tal:define="itemNumber python: context.getItemNumber(relativeTo='meeting')">
+   <metal:header use-macro="here/hs_macros/macros/itemHeader"/>
+  </metal:title>
+  <metal:description fill-slot="content-description">
+   <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>
+  </metal:description>
+
+  <metal:fill fill-slot="content-core">
+    <metal:main_macro define-macro="body"
+                      tal:define="tool python: context.portal_plonemeeting;
+                                  member tool/getUser;
+                                  dummy context/checkPrivacyViewable;
+                                  meetingConfig python:tool.getMeetingConfig(context);
+                                  meeting context/getMeeting;
+                                  showColors tool/showColorsForUser;
+                                  usedAttrs meetingConfig/getUsedItemAttributes;
+                                  usedMeetingAttributes meetingConfig/getUsedMeetingAttributes;
+                                  bilingual python: 'secondLanguage' in tool.getModelAdaptations();
+                                  langs python: tool.getAvailableInterfaceLanguages(True, True);">
 
   <script language="javascript"
     tal:content="python: 'ploneEditor = \'%s\';' % member.getProperty('wysiwyg_editor', '')">
@@ -79,20 +97,6 @@
   }
   -->
   </script>
-  <div metal:define-macro="body"
-       tal:define="dummy context/checkPrivacyViewable;
-                   meetingConfig python:tool.getMeetingConfig(context);
-                   meeting context/getMeeting;
-                   showColors tool/showColorsForUser;
-                   usedAttrs meetingConfig/getUsedItemAttributes;
-                   usedMeetingAttributes meetingConfig/getUsedMeetingAttributes;
-                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
-                   langs python: tool.getAvailableInterfaceLanguages(True, True);
-                   itemNumber python: context.getItemNumber(relativeTo='meeting')">
-    <tal:comment replace="nothing">Item header (title, reference, etc)</tal:comment>
-    <div tal:replace="structure provider:plone.abovecontenttitle" />
-    <metal:header use-macro="here/hs_macros/macros/itemHeader"/>
-    <div tal:replace="structure provider:plone.belowcontenttitle" />
 
     <tal:comment replace="nothing">Form used for going to meetingitem_view for an item
         whose number is given by the user.</tal:comment>
@@ -102,8 +106,6 @@
         <input type="hidden" name="meetingUid"/>
         <input type="hidden" name="idType" value="number"/>
     </form>
-
-    <div tal:replace="structure provider:plone.abovecontentbody" />
 
     <tal:comment replace="nothing">Show navigation between items of the same meeting</tal:comment>
     <div align="center" tal:condition="python: meeting">
@@ -373,9 +375,8 @@
     <tal:comment replace="nothing">Remember in session when this item was last accessed</tal:comment>
     <span tal:define="dummy python: tool.rememberAccess(context.UID())"></span>
 
-    <div tal:replace="structure provider:plone.belowcontentbody" />
 
-   </div>
- </metal:main>
-</body>
+       </metal:main_macro>
+    </metal:fill>
+  </body>
 </html>

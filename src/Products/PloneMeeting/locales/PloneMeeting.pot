@@ -3389,6 +3389,10 @@ msgstr ""
 msgid "freeze"
 msgstr ""
 
+#. Default: "The item has been frozen."
+msgid "itemfreeze_done_descr"
+msgstr ""
+
 #. Default: "The published agenda has been frozen."
 msgid "freeze_done_descr"
 msgstr ""

@@ -10,9 +10,34 @@
     <tal:disable define="dummy python:request.set('disable_border', 1)"/>
   </div>
 
-<body metal:fill-slot="main"
+  <metal:title fill-slot="content-title">
+  <tal:comment replace="nothing">Title, with number of items</tal:comment>
+  <h1 class="documentFirstHeading">
+    <span tal:content="python: context.portal_plonemeeting.formatDate(context.getDate(), prefixed=True)"
+          tal:omit-tag="">Meeting title</span>&nbsp;-
+    <span tal:condition="python:not here.adapted().isDecided()"
+          tal:content="python: here.translate('agenda', domain='PloneMeeting')"></span>
+    <span tal:condition="python:here.adapted().isDecided()"
+          tal:content="python: here.translate('decisions', domain='PloneMeeting')"></span>
+    <tal:comment replace="nothing">Display number of items in the meeting</tal:comment>
+    <span class="discreet">(<span tal:replace="python: context.getItemsCount()"></span>
+      <span i18n:translate="">items_count</span>)
+    </span>
+    <tal:comment replace="nothing">Edit the meeting</tal:comment>
+    <a tal:define="member context/@@plone_portal_state/member"
+       tal:condition="python: member.has_permission('Modify portal content', context)"
+       tal:attributes="href python: here.absolute_url() + '/edit'">
+      <img src="edit.gif" title="Edit" i18n:attributes="title" />
+    </a>
+    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
+  </h1>  </metal:title>
+  <metal:description fill-slot="content-description">
+   <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>
+  </metal:description>
+
+<body metal:fill-slot="content-core"
       tal:define="tool python: context.portal_plonemeeting;
-                  member tool/getUser;
+                  member context/@@plone_portal_state/member;
                   meetingConfig python:tool.getMeetingConfig(context);
                   meetingUid context/UID;
                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
@@ -251,8 +276,6 @@
   </script>
   <script language="javascript" tal:content="context/getJsItemUids"></script>
  
-  <div tal:replace="structure provider:plone.abovecontenttitle" />
-
   <tal:comment replace="nothing">Form used for moving an item up or down in an items list.</tal:comment>
   <form name="formMoveMeetingItem" method="POST"
         tal:attributes="action python: context.absolute_url_path() + '/meeting_changeitemsorder'">
@@ -278,28 +301,6 @@
       <input type="hidden" name="meetingUid"/>
       <input type="hidden" name="idType" value="number"/>
   </form>
-
-  <tal:comment replace="nothing">Title, with number of items</tal:comment>
-  <h1 class="documentFirstHeading">
-    <span tal:content="python: tool.formatDate(context.getDate(), prefixed=True)"
-          tal:omit-tag="">Meeting title</span>&nbsp;-
-    <span tal:condition="python:not here.adapted().isDecided()"
-          tal:content="python: here.translate('agenda', domain='PloneMeeting')"></span>
-    <span tal:condition="python:here.adapted().isDecided()"
-          tal:content="python: here.translate('decisions', domain='PloneMeeting')"></span>
-    <tal:comment replace="nothing">Display number of items in the meeting</tal:comment>
-    <span class="discreet">(<span tal:replace="python: context.getItemsCount()"></span>
-      <span i18n:translate="">items_count</span>)
-    </span>
-    <tal:comment replace="nothing">Edit the meeting</tal:comment>
-    <a tal:condition="python: member.has_permission('Modify portal content', context)"
-       tal:attributes="href python: here.absolute_url() + '/edit'">
-      <img src="edit.gif" title="Edit" i18n:attributes="title" />
-    </a>
-    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
-  </h1>
-  <div tal:replace="structure provider:plone.belowcontenttitle"></div>
-  <div tal:replace="structure provider:plone.abovecontentbody"></div>
 
   <div class="discreet">
   <tal:comment replace="nothing">Place</tal:comment>
@@ -504,8 +505,6 @@
   <img tal:attributes="src string: $portal_url/refuse.png"
        align="left"><p>&nbsp;<span i18n:translate="">hide_meeting_view_page</span></p>
   </tal:mustHidePage>
-
-  <div tal:replace="structure provider:plone.belowcontentbody" />
 
 </body>
 </html>

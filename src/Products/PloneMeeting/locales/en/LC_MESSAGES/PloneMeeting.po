@@ -2361,6 +2361,10 @@ msgstr "Created"
 msgid "itemfreeze"
 msgstr "Freeze"
 
+#. Default: "The item has been frozen."
+msgid "itemfreeze_done_descr"
+msgstr ""
+
 #. Default: "Published (frozen)"
 msgid "itemfrozen"
 msgstr "Published (frozen)"

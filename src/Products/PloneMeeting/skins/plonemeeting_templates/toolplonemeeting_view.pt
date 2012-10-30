@@ -43,7 +43,7 @@
       </legend>
       <table>
         <tr valign="top">
-          <td><p class="discreet" i18n:translate="meeting_configurations_descr"></p></td>
+          <td><p class="discreet" i18n:translate="meeting_configurations_descr"></p><br /></td>
         </tr>
         <tr>
           <td>
@@ -113,7 +113,7 @@
       </legend>
       <table width="100%">
         <tr valign="top" id="groupDoc" style="display:none">
-          <td><p class="discreet" i18n:translate="meeting_groups_descr"></p></td>
+          <td><p class="discreet" i18n:translate="meeting_groups_descr"></p><br /></td>
         </tr>
         <tr>
           <td>
@@ -188,7 +188,7 @@
       <legend>
          <span i18n:translate="oo_config"></span>
       </legend>
-      <p class="discreet" i18n:translate="oo_config_descr"></p>
+      <p class="discreet" i18n:translate="oo_config_descr"></p><br />
       <table width="100%">
         <tr valign="top">
           <td tal:define="field python:here.getField('unoEnabledPython')">
@@ -206,7 +206,7 @@
       <legend>
          <span i18n:translate="navig_params"></span>
       </legend>
-      <p class="discreet" i18n:translate="navig_params_descr"></p>
+      <p class="discreet" i18n:translate="navig_params_descr"></p><br />
       <table width="100%">
         <tr valign="top">
           <td tal:define="field python:here.getField('ploneDiskAware')">
@@ -234,7 +234,7 @@
       </legend>
       <table width="100%">
         <tr valign="top">
-          <td><p class="discreet" i18n:translate="external_applications_descr"></p></td>
+          <td><p class="discreet" i18n:translate="external_applications_descr"></p><br /></td>
         </tr>
         <tr>
           <td>

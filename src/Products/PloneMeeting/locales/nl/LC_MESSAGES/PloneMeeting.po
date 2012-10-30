@@ -2362,6 +2362,10 @@ msgstr "Aangemaakt"
 msgid "itemfreeze"
 msgstr "Bevries"
 
+#. Default: "The item has been frozen."
+msgid "itemfreeze_done_descr"
+msgstr ""
+
 #. Default: "Published (frozen)"
 msgid "itemfrozen"
 msgstr "Gepubliceerd (bevroren)"

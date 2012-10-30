@@ -1,20 +1,26 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xml:lang="en-US" lang="en-US"
+      xml:lang="en"
+      lang="en"
       xmlns:tal="http://xml.zope.org/namespaces/tal"
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      metal:use-macro="here/main_template/macros/master"
       i18n:domain="PloneMeeting">
 
-<body>
+  <body >
+  <metal:title fill-slot="content-title">
+    <h1 class="documentFirstHeading">
+        <span tal:content="context/getName"></span>
+        <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
+    </h1>
+  </metal:title>
+  <metal:description fill-slot="content-description">
+   <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>
+  </metal:description>
 
-  <div metal:define-macro="header">
-  <h1 class="documentFirstHeading">
-    <span tal:content="context/getName"></span>
-    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
-  </h1>
-  </div>
-  <div metal:define-macro="body"
-       tal:define="mode python:'view';
+  <metal:fill fill-slot="content-core">
+    <metal:main_macro define-macro="body"
+                      tal:define="mode python:'view';
                    pageName request/pageName|string:default;
                    member context/portal_plonemeeting/getUser;
                    schematas here/Schemata;
@@ -1026,12 +1032,10 @@
       </fieldset>
     </tal:doc>
 
-  <br/>
-  </div>
-  <div metal:define-macro="folderlisting">
-    <tal:back condition="python: request.get('pageName', 'default') == 'default'">
-      <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
-    </tal:back>
-  </div>
-</body>
+    <br/>
+    <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
+
+       </metal:main_macro>
+    </metal:fill>
+  </body>
 </html>
