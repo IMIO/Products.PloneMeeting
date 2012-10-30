@@ -2357,7 +2357,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                groupId not in advisers:
                 del self.advices[groupId]
         # Update advice-related local roles.
-        # First, remove MeetingObserverLocal local roles granted to advisers.
+        # First, remove MeetingPowerObserverLocal local roles granted to advisers.
         toRemove = []
         for principalId, localRoles in self.get_local_roles():
             if principalId.endswith('_advisers'):
