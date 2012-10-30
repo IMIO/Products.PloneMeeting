@@ -2356,12 +2356,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if (self.advices[groupId]['type'] == 'not_given') and \
                groupId not in advisers:
                 del self.advices[groupId]
-        # Update advice-related local roles. First, remove all local roles
-        # granted to advisers.
+        # Update advice-related local roles.
+        # First, remove MeetingObserverLocal local roles granted to advisers.
         toRemove = []
         for principalId, localRoles in self.get_local_roles():
             if principalId.endswith('_advisers'):
-                toRemove.append(principalId)
+                # Only remove 'MeetingPowerObserverLocal' as _advisers groups could
+                # have other local roles given by other functionnalities like "copyGroups"
+                if len(localRoles) > 1 and 'MeetingPowerObserverLocal' in localRoles:
+                    advisersLocalRoles = list(localRoles)
+                    advisersLocalRoles.remove('MeetingPowerObserverLocal')
+                    self.manage_setLocalRoles(principalId, advisersLocalRoles)
+                elif 'MeetingPowerObserverLocal' in localRoles:
+                    toRemove.append(principalId)
         self.manage_delLocalRoles(toRemove)
         # Then, add local roles for advisers.
         itemState = self.queryState()
@@ -2422,7 +2429,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # MeetingGroup that must give an advice; every value is a dict with some
         # information about the advice (creator, comment, date, etc)
         self.advices = PersistentMapping()
-        self.updateAdvices()
         # The following field allows to store events that occurred in the life
         # of an item, like annex deletions or additions.
         self.itemHistory = PersistentList()
@@ -2438,6 +2444,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([user.getId()])
         self.manage_addLocalRoles(user.getId(), ('Owner',))
         self.updateLocalRoles()
+        # Update advices after updateLocalRoles because updateLocalRoles
+        # reinitialize existing local roles
+        self.updateAdvices()
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields

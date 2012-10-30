@@ -468,6 +468,39 @@ class testMeetingItem(PloneMeetingTestCase):
         # as not in self.meetingConfig.selectableCopyGroups
         self.failUnless(i5.getCopyGroups()==('developers_reviewers',))
 
+    def testUpdateAdvices(self):
+        '''Test if local roles for adviser groups, are still correct when an item is edited
+           Only 'MeetingPowerObserverLocal' local role should be impacted
+        '''
+        login(self.portal, 'pmManager')
+        i1 = self.create('MeetingItem')
+        self.do(i1, 'propose')
+        # add developers in optionalAdvisers
+        i1.setOptionalAdvisers('developers')
+        i1.updateAdvices()
+        for principalId, localRoles in i1.get_local_roles():
+            if principalId.endswith('_advisers'):
+                self.failUnless(('MeetingPowerObserverLocal',) == localRoles)
+        # add copy groups and update all local_roles (copy and adviser)
+        self.meetingConfig.setSelectableCopyGroups(('developers_advisers', 'vendors_advisers'))
+        self.meetingConfig.setUseCopies(True)
+        i1.setCopyGroups(('developers_advisers', 'vendors_advisers'))
+        i1.updateLocalRoles()
+        i1.updateAdvices()
+        for principalId, localRoles in i1.get_local_roles():
+            if principalId == 'developers_advisers':
+                self.failUnless(('MeetingObserverLocalCopy','MeetingPowerObserverLocal')==localRoles)
+            if principalId == 'vendors_advisers':
+                self.failUnless(('MeetingObserverLocalCopy',)==localRoles)
+        # now, remove developers in optionalAdvisers
+        i1.setOptionalAdvisers(())
+        i1.updateAdvices()
+        for principalId, localRoles in i1.get_local_roles():
+            if principalId == 'developers_advisers':
+                self.failUnless(('MeetingObserverLocalCopy',)==localRoles)
+            if principalId == 'vendors_advisers':
+                self.failUnless(('MeetingObserverLocalCopy',)==localRoles)
+                
     def testItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.'''
         # Use the 'plonegov-assembly' meetingConfig

@@ -61,15 +61,18 @@ class Migrate_To_3_0(Migrator):
         logger.info("MeetingFiles have been migrated to Blobs.")
 
     def _updateAdvices(self):
-        '''We use a new role to manage advices, 'MeetingAdviser' instead of
+        '''We use a new role to manage advices, 'MeetingPowerObserverLocal' instead of
            'MeetingObserverLocal', we need to update every advices for this to
            be taken into account.'''
         brains = self.portal.portal_catalog(meta_type='MeetingItem')
         logger.info('Updating every advices for %s MeetingItem objects...' % len(brains))
         for brain in brains:
             obj = brain.getObject()
+            # Reinitialize local roles
+            obj.updateLocalRoles()
+            # Adapt local roles around _advisers
             obj.updateAdvices()
-            # Update security as local_roles are set by updateAdvices
+            # Update security as local_roles are modified by updateAdvices
             obj.reindexObject(idxs=['allowedRolesAndUsers',])
         logger.info('MeetingItems advices have been updated.')
 
