@@ -111,20 +111,20 @@
     </fieldset>
 
    <tal:comment replace="nothing">Buttons for triggering actions on this external application</tal:comment>
-   <br/><br/><form tal:define="usages context/getUsages">
+   <br/><form tal:define="usages context/getUsages">
      <input tal:condition="python: 'notify' in usages" i18n:attributes="value"
-            type="submit" name="davsend_test" value="send_test_request_external_app"/>
+            class="context" type="submit" name="davsend_test" value="send_test_request_external_app"/>
      <input tal:condition="python: 'export' in usages" i18n:attributes="value"
-            type="submit" name="localget_meetings" value="localget_meetings"/>
+            class="context" type="submit" name="localget_meetings" value="localget_meetings"/>
      <input tal:condition="python: 'import' in usages" i18n:attributes="value"
-            type="submit" name="davsync_tool" value="davsync_tool"/>&nbsp;
+            class="context" type="submit" name="davsync_tool" value="davsync_tool"/>&nbsp;
      <input tal:condition="python: 'import' in usages" i18n:attributes="value"
-            type="submit" name="davget_groups" value="davget_groups"/>&nbsp;
+            class="context" type="submit" name="davget_groups" value="davget_groups"/>&nbsp;
      <input tal:condition="python: ('import' in usages) and tool.objectIds('MeetingGroup')"
-            type="submit" name="davget_meetings" value="davget_meetings" i18n:attributes="value"/>
+            class="context" type="submit" name="davget_meetings" value="davget_meetings" i18n:attributes="value"/>
      <input tal:condition="python: ('users' in usages)" i18n:attributes="value"
-            type="submit" name="davsync_users" value="davsync_users"/>
-   </form>
+            class="context" type="submit" name="davsync_users" value="davsync_users"/>
+   </form><br />
 
    <tal:comment replace="nothing">Message after triggering a notification test message</tal:comment>
    <tal:notify condition="request/davsend_test|nothing">
@@ -170,7 +170,7 @@
                <input type="hidden" name="configUrl" tal:attributes="value meeting/configUrl"/>
                <input type="hidden" name="configId" tal:attributes="value meeting/configId"/>
                <input tal:condition="toImport" type="submit" name="davimport_meeting"
-                      value="davimport_meeting" i18n:attributes="value"/>
+                      class="context" value="davimport_meeting" i18n:attributes="value"/>
              </form>
            </td>
            <td align="center">
@@ -209,7 +209,7 @@
            <td>
              <form>
                <input type="hidden" name="meetingUid" tal:attributes="value meetingBrain/UID"/>
-               <input type="submit" name="davexport_meeting" value="davexport_meeting" i18n:attributes="value"/>
+               <input class="context" type="submit" name="davexport_meeting" value="davexport_meeting" i18n:attributes="value"/>
              </form>
            </td>
            <td align="center"><input type="checkbox" checked="checked" class="noborder" name="masterUrl"/></td>
@@ -251,7 +251,7 @@
            <td>
              <form>
                <input type="hidden" name="groupUrl" tal:attributes="value python: group[4]"/>
-               <input type="submit" name="davimport_group" value="davimport_meeting" i18n:attributes="value"/>
+               <input class="context" type="submit" name="davimport_group" value="davimport_meeting" i18n:attributes="value"/>
              </form>
            </td>
            <td align="center"><input type="checkbox" checked="checked" class="noborder" name="masterUrl"
