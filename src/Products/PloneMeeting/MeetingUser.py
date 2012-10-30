@@ -343,8 +343,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def listGenders(self):
         '''Lists the genders (M, F).'''
         res = DisplayList((
-                ("m",translate('gender_m', domain='PloneMeeting', context=self)),
-                ("f", translate('gender_f', domain='PloneMeeting', context=self)),
+                ("m",translate('gender_m', domain='PloneMeeting', context=self.REQUEST)),
+                ("f", translate('gender_f', domain='PloneMeeting', context=self.REQUEST)),
               ))
         return res
 
@@ -354,10 +354,10 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         d = 'PloneMeeting'
         _ = self.translate
         res = DisplayList((
-          ("assemblyMember", _('meeting_user_usage_assemblyMember', domain=d)),
-          ("signer", _('meeting_user_usage_signer', domain=d)),
-          ("voter", _("meeting_user_usage_voter", domain=d)),
-          ("asker", _("meeting_user_usage_asker", domain=d)),
+          ("assemblyMember", _('meeting_user_usage_assemblyMember', domain=d, context=self.REQUEST)),
+          ("signer", _('meeting_user_usage_signer', domain=d, context=self.REQUEST)),
+          ("voter", _("meeting_user_usage_voter", domain=d, context=self.REQUEST)),
+          ("asker", _("meeting_user_usage_asker", domain=d, context=self.REQUEST)),
         ))
         return res
 
