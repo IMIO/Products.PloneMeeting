@@ -861,89 +861,84 @@
       <legend>
         <span i18n:translate="users"></span>
       </legend>
-    <table tal:define="mFolder python:context.meetingusers;
-                       mFolderUrl mFolder/absolute_url" width="100%">
+      <table class="vertical listing" width="100%"
+            tal:define="mFolder python:context.meetingusers;
+                   mFolderUrl mFolder/absolute_url">
+      <thead>
       <tr>
-        <td>
-        <table class="vertical listing" align="right" width="100%">
-          <tr>
-            <th width="20%" i18n:translate="listingheader_title"></th>
-            <th width="20%" i18n:translate="plonemeeting_identifier"></th>
-            <th width="20%" i18n:translate="PloneMeeting_label_duty"></th>
-            <th width="20%" i18n:translate="PloneMeeting_label_usages"></th>
-            <th width="50px" i18n:translate="pod_template_is_active"></th>
-            <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
-          </tr>
-          <tr tal:condition="python: not mFolder.objectValues('MeetingUser')">
-            <td colspan="6" align="center" i18n:translate="">no_meeting_user</td>
-          </tr>
-          <tal:loop repeat="mUser python:mFolder.objectValues('MeetingUser')">
-          <tr tal:define="isActive python: here.portal_workflow.getInfoFor(mUser, 'review_state') == 'active'"
-              tal:attributes="class python: isActive and 'state-active' or 'state-inactive'">
-            <td><a tal:attributes="href mUser/absolute_url" tal:content="mUser/Title"></a></td>
-            <td tal:content="mUser/getId"></td>
-            <td tal:content="python: mUser.getBilingual('duty')"></td>
-            <td tal:define="usageIds mUser/getUsages"
-                tal:content="python: ', '.join([context.translate('meeting_user_usage_%s' % u, domain='PloneMeeting') for u in usageIds])">
-            </td>
-            <tal:comment replace="nothing">Active ?</tal:comment>
-            <td i18n:domain="plone">
-              <span tal:condition="isActive" i18n:translate="">Yes</span>
-              <span tal:condition="not: isActive" i18n:translate="">No</span>
-            </td>
-            <td align="right"
-                tal:define="moveUrl python: mFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=users'"
-                tal:condition="python: member.has_permission('Modify portal content', mUser)">
-              <form name="deleteItemForm" action="delete_givenuid">
-              <!-- Edit the user -->
-              <a tal:attributes="href python: mUser.absolute_url() + '/edit'">
-                <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
-              </a>
-              <!-- Delete the user -->
-                <input type="hidden" name="selected_uid" tal:attributes="value mUser/UID"/>
-                  <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
-                       tal:attributes="src string:$portal_url/delete.png"
-                       onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-              <!-- Move the user bottom -->
-              <a tal:condition="python: mFolder.getObjectPosition(mUser.id) < len(mFolder.objectValues())-1"
-                 tal:attributes="href python: moveUrl % ('bottom', mUser.id)">
-                 <img src="arrowBottom.png" title="title_move_item_bottom" i18n:attributes="title" />
-              </a>
-              <!-- Move the user down -->
-              <a tal:condition="python: mFolder.getObjectPosition(mUser.id) < len(mFolder.objectValues())-1"
-                 tal:attributes="href python: moveUrl % ('down', mUser.id)">
-                 <img src="arrowDown.png" title="title_move_item_down"
-                      i18n:domain="plone" i18n:attributes="title" />
-              </a>
-              <!-- Move the user up -->
-              <a tal:condition="python: mFolder.getObjectPosition(mUser.id) > 0"
-                 tal:attributes="href python: moveUrl % ('up', mUser.id)">
-                 <img src="arrowUp.png" title="title_move_item_up"
-                      i18n:domain="plone" i18n:attributes="title" />
-              </a>
-              <!-- Move the user top -->
-              <a tal:condition="python: mFolder.getObjectPosition(mUser.id) > 0"
-                 tal:attributes="href python: moveUrl % ('top', mUser.id)">
-                 <img src="arrowTop.png" title="title_move_item_up" i18n:attributes="title" />
-              </a>
-              </form>
-            </td>
-          </tr>
-          </tal:loop>
-          </table>
-        </td>
+        <th width="20%" i18n:translate="listingheader_title"></th>
+        <th width="20%" i18n:translate="plonemeeting_identifier"></th>
+        <th width="20%" i18n:translate="PloneMeeting_label_duty"></th>
+        <th width="20%" i18n:translate="PloneMeeting_label_usages"></th>
+        <th width="50px" i18n:translate="pod_template_is_active"></th>
+        <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
       </tr>
-      <tr>
-        <td align="right">
-          <form name="addUserForm"
-                tal:attributes="action python: context.absolute_url() + '/addUser'">
-            <label for="userid" i18n:translate="plonemeeting_identifier"></label>
-            <input type="text" name="userid"/>
-            <input type="submit" value="add_object" i18n:attributes="value"/>
+      </thead>
+      <tr tal:condition="python: not mFolder.objectValues('MeetingUser')">
+        <td colspan="6" align="center" i18n:translate="">no_meeting_user</td>
+      </tr>
+      <tal:loop repeat="mUser python:mFolder.objectValues('MeetingUser')">
+      <tr tal:define="isActive python: here.portal_workflow.getInfoFor(mUser, 'review_state') == 'active'"
+          tal:attributes="class python: isActive and 'state-active' or 'state-inactive'">
+        <td><a tal:attributes="href mUser/absolute_url" tal:content="mUser/Title"></a></td>
+        <td tal:content="mUser/getId"></td>
+        <td tal:content="python: mUser.getBilingual('duty')"></td>
+        <td tal:define="usageIds mUser/getUsages"
+            tal:content="python: ', '.join([context.translate('meeting_user_usage_%s' % u, domain='PloneMeeting') for u in usageIds])">
+        </td>
+        <tal:comment replace="nothing">Active ?</tal:comment>
+        <td i18n:domain="plone">
+          <span tal:condition="isActive" i18n:translate="">Yes</span>
+          <span tal:condition="not: isActive" i18n:translate="">No</span>
+        </td>
+        <td align="right"
+            tal:define="moveUrl python: mFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=users'"
+            tal:condition="python: member.has_permission('Modify portal content', mUser)">
+          <form name="deleteItemForm" action="delete_givenuid">
+          <!-- Edit the user -->
+          <a tal:attributes="href python: mUser.absolute_url() + '/edit'">
+            <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+          </a>
+          <!-- Delete the user -->
+            <input type="hidden" name="selected_uid" tal:attributes="value mUser/UID"/>
+              <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
+                   tal:attributes="src string:$portal_url/delete.png"
+                   onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
+          <!-- Move the user bottom -->
+          <a tal:condition="python: mFolder.getObjectPosition(mUser.id) < len(mFolder.objectValues())-1"
+             tal:attributes="href python: moveUrl % ('bottom', mUser.id)">
+             <img src="arrowBottom.png" title="title_move_item_bottom" i18n:attributes="title" />
+          </a>
+          <!-- Move the user down -->
+          <a tal:condition="python: mFolder.getObjectPosition(mUser.id) < len(mFolder.objectValues())-1"
+             tal:attributes="href python: moveUrl % ('down', mUser.id)">
+             <img src="arrowDown.png" title="title_move_item_down"
+                  i18n:domain="plone" i18n:attributes="title" />
+          </a>
+          <!-- Move the user up -->
+          <a tal:condition="python: mFolder.getObjectPosition(mUser.id) > 0"
+             tal:attributes="href python: moveUrl % ('up', mUser.id)">
+             <img src="arrowUp.png" title="title_move_item_up"
+                  i18n:domain="plone" i18n:attributes="title" />
+          </a>
+          <!-- Move the user top -->
+          <a tal:condition="python: mFolder.getObjectPosition(mUser.id) > 0"
+             tal:attributes="href python: moveUrl % ('top', mUser.id)">
+             <img src="arrowTop.png" title="title_move_item_up" i18n:attributes="title" />
+          </a>
           </form>
         </td>
       </tr>
-    </table>
+      </tal:loop>
+      </table>
+
+      <form name="addUserForm"
+            tal:attributes="action python: context.absolute_url() + '/addUser'"
+            style="text-align:right;">
+        <label for="userid" i18n:translate="plonemeeting_identifier"></label>
+        <input type="text" name="userid"/>
+        <input class="context" type="submit" value="add_object" i18n:attributes="value"/>
+      </form>
     </fieldset>
     </tal:users>
 

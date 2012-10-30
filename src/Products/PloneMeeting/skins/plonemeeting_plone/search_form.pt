@@ -324,9 +324,9 @@
           </table>
         </td>
       </tr>
-      <tr align="right">
+      <tr>
         <td colspan="3"><br class="discreet"/>
-          <input type="submit" name="performSearch" value="Search"
+          <input class="searchButton" type="submit" name="performSearch" value="Search"
                  i18n:attributes="value" i18n:domain="plone"/>
         </td>
       </tr>
