@@ -35,6 +35,11 @@ msgstr "Annexes (to the decision)"
 msgid "CopyItem"
 msgstr ""
 
+# Creation action displayed in history
+#. Default: "Created"
+msgid "Created"
+msgstr ""
+
 #. Default: "Creator"
 msgid "Creator"
 msgstr "Creator"

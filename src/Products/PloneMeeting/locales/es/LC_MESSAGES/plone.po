@@ -35,6 +35,11 @@ msgstr "Anexos (a la decisión)"
 msgid "CopyItem"
 msgstr "Copiar tema"
 
+# Creation action displayed in history
+#. Default: "Created"
+msgid "Created"
+msgstr ""
+
 #. Default: "Creator"
 msgid "Creator"
 msgstr "Creador"

@@ -32,6 +32,11 @@ msgstr "Anhängen (an diesen Beschluss)"
 msgid "CopyItem"
 msgstr "Kopiere TOP"
 
+# Creation action displayed in history
+#. Default: "Created"
+msgid "Created"
+msgstr ""
+
 #. Default: "Creator"
 msgid "Creator"
 msgstr "Ersteller"

@@ -1746,6 +1746,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         for configId in self.getMeetingConfigsToCloneTo():
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
+            existingActionIds = [act.id for act in item_portal_type.listActions()]
+            if actionId in existingActionIds:
+                continue
+            else:
+                logger.info('Adding action %s on portal_type %s' % (actionId, self.getItemTypeName()))
             urlExpr = 'string:${object/absolute_url}/cloneToOtherMeeting' \
                       'Config?destMeetingConfigId=%s' % configId
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
@@ -1754,13 +1759,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             label = translate('clone_to', domain='PloneMeeting', context=self.REQUEST)
             cfg = getattr(self.portal_plonemeeting, configId)
             actionName = '%s %s' % (label.encode('utf-8'), cfg.Title())
-            item_portal_type.addAction(id=actionId, name=actionName,
-                category='object_buttons', action=urlExpr, condition=availExpr,
-                permission=('View',), visible=True)
-            # Add a corresponding action icon
-            self.portal_actionicons.addActionIcon(
-                'object_buttons', actionId, '%s.png' % actionId,
-                title=actionName)
+            item_portal_type.addAction(id=actionId,
+                                       name=actionName,
+                                       category='object_buttons',
+                                       action=urlExpr,
+                                       icon_expr='string:${portal_url}/%s.png' % actionId,
+                                       condition=availExpr,
+                                       permission=('View',),
+                                       visible=True)
 
     security.declarePrivate('updateTopics')
     def updateTopics(self):

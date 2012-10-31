@@ -20,7 +20,7 @@
   <genericsetup:upgradeStep
       title="Go to PloneMeeting 3.0"
       description=""
-      source="2.1.2"
+      source="*"
       destination="3.0"
       handler="Products.PloneMeeting.migrations.migrate_to_3_0.migrate"
       profile="Products.PloneMeeting:default" />

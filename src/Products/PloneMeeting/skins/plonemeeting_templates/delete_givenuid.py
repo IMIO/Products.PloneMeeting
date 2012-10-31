@@ -18,7 +18,7 @@ user = context.portal_membership.getAuthenticatedMember()
 # Get the object to delete
 obj = context.uid_catalog(UID=selected_uid)[0].getObject()
 objectUrl = obj.absolute_url()
-parent = obj.getParentNode()
+parent = obj.aq_inner.aq_parent
 grandParent = None
 
 event = rq.get('event_time', '')
@@ -51,7 +51,6 @@ if mayDelete:
         if obj.hasMeeting():
             obj.getMeeting().removeItem(obj)
     elif obj.meta_type == 'MeetingFile':
-        item = obj.getItem()
         if item:
             item.updateAnnexIndex(obj, removeAnnex=True)
             item.updateHistory(
@@ -80,7 +79,7 @@ if mayDelete:
     # behaviour where a user needs to have the 'Delete objects' permission
     # on the object AND on his container to be able to remove the object.
     # if we check that we can really remove it, call a script to do the
-    # work. This just to be sure that we have "Delete objects" on the container.
+    # work. This just to be sure that we have "Delete objects" on the content.
     if user.has_permission("Delete objects", obj):
         try:
             context.removeGivenObject(obj)

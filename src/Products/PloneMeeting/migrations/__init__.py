@@ -65,9 +65,13 @@ class Migrator:
                         'object of the database...')
             self.portal.portal_workflow.updateRoleMappings()
 
-    def reinstall(self, products=['PloneMeeting']):
-        '''Allows to reinstall a series of p_products.'''
-        logger.info('Reinstalling product(s) %s...' % ','.join(products))
-        self.portal.portal_quickinstaller.reinstallProducts(products)
+    def reinstall(self, profiles=[u'profile-Products.PloneMeeting:default',]):
+        '''Allows to reinstall a series of p_profiles.'''
+        logger.info('Reinstalling product(s) %s...' % ', '.join([profile[8:] for profile in profiles]))
+        for profile in profiles:
+            try:
+                self.portal.portal_setup.runAllImportStepsFromProfile(profile)
+            except KeyError:
+                logger.error('Profile %s not found!' % profile)
         logger.info('Done.')
 # ------------------------------------------------------------------------------

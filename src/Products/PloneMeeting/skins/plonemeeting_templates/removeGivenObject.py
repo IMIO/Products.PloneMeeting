@@ -8,4 +8,4 @@
 ##title=Deletes an object
 
 parent = obj.aq_inner.aq_parent
-parent.manage_delObjects([obj.getId()])
+parent.manage_delObjects([obj.getId(),])

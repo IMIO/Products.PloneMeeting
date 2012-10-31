@@ -14,6 +14,11 @@ msgstr ""
 "Preferred-Encodings: utf-8 latin1\n"
 "Domain: plone\n"
 
+# Creation action displayed in history
+#. Default: "Created"
+msgid "Created"
+msgstr ""
+
 # Workflow states
 #. Default: "Created"
 msgid "created"
