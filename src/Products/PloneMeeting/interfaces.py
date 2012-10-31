@@ -3,6 +3,13 @@
 from zope.interface import Interface
 
 ##code-section HEAD
+from zope.publisher.interfaces.browser import IBrowserRequest
+
+class IPloneMeetingLayer(IBrowserRequest):
+    """
+      Define a layer so some elements are only added for it
+    """
+    pass
 ##/code-section HEAD
 
 class IMeetingItem(Interface):

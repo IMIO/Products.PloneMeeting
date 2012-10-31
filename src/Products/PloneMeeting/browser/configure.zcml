@@ -39,11 +39,13 @@
         name="plone.abovecontenttitle.documentactions"
         manager="plone.app.layout.viewlets.interfaces.IAboveContentTitle"
         class="plone.app.layout.viewlets.content.DocumentActionsViewlet"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"/>
     <browser:viewlet
         name="plone.belowcontentbody.contenthistory"
         manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
         class="plone.app.layout.viewlets.content.ContentHistoryViewlet"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"/>
 
     <!-- Overlays views -->
@@ -59,6 +61,7 @@
         name="createitemfromtemplate"
         class=".itemtemplates.ItemTemplateView"
         permission="zope2.View"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         template="templates/itemtemplates.pt"
       />
     <browser:page
@@ -66,6 +69,7 @@
         name="triggertransition"
         class=".transitions.ConfirmTransitionView"
         permission="zope2.View"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         template="templates/transitions.pt"
       />
 
@@ -99,6 +103,7 @@
         name="plonemeeting_topic_view"
         class=".views.PloneMeetingTopicView"
         template="templates/plonemeeting_topic_view.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
     <!-- PloneMeeting-specific portlets -->

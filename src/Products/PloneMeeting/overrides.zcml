@@ -8,6 +8,7 @@
         view="plone.app.layout.globals.interfaces.IViewView"
         manager="plone.app.layout.viewlets.interfaces.IContentViews"
         class="plone.app.layout.viewlets.common.ContentActionsViewlet"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal"
         />
 
@@ -17,6 +18,7 @@
         view="plone.app.content.browser.interfaces.IFolderContentsView"
         manager="plone.app.layout.viewlets.interfaces.IContentViews"
         class="plone.app.layout.viewlets.common.ContentActionsViewlet"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal"
         />
 
@@ -24,6 +26,7 @@
         name="plone.global_sections"
         manager="plone.app.layout.viewlets.interfaces.IPortalHeader"
         class=".browser.overrides.PloneMeetingGlobalSectionsViewlet"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
 
@@ -33,12 +36,14 @@
         for="Products.PloneMeeting.interfaces.IMeeting"
         name="contenthistory"
         class=".browser.overrides.PloneMeetingContentHistoryView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
     <browser:view
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="contenthistory"
         class=".browser.overrides.PloneMeetingContentHistoryView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
     <!-- Render the document byline -->
@@ -46,6 +51,7 @@
         name="plone.belowcontenttitle.documentbyline"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class=".browser.overrides.PloneMeetingDocumentBylineViewlet"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
 </configure>
