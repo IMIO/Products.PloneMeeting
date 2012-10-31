@@ -1407,10 +1407,6 @@ msgstr "Die Nummerierung der TOP ist fehlerhaft. Sie haben entweder TOP hinzugef
 msgid "corruptedTitle"
 msgstr "Der Titel eines TOP ist inkorrekt. Bitte überprüfen Sie ob jeder Titel mit einer Nummer anfängt, gefolgt von einem Punkt und dem Titel des TOPs. Versichern Sie sich bitte ebenfalls, dass sie keine Styling-Informationen zur Nummer oder zum Titel (fettdruck, unterstrichen, kursiv, usw.) zugefügt haben."
 
-#. Default: "Create from delayed item"
-msgid "create_from_predecessor"
-msgstr "Erstellen aus einem verschobenen TOP"
-
 #. Default: "This item has been created from a delayed item."
 msgid "create_from_predecessor_comments"
 msgstr "Dieser TOP wurde durch einen verschobenen TOP erstellt"

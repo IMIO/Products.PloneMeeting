@@ -265,7 +265,7 @@
 
         <tal:comment replace="nothing">State</tal:comment>
         <td tal:condition="python: 'state' in visibleColumns"
-            tal:content="python: meetingItem.queryState()" i18n:translate=""></td>
+            tal:content="python: meetingItem.queryState()" i18n:domain="plone" i18n:translate=""></td>
 
         <tal:comment replace="nothing">Category (or proposing group)</tal:comment>
         <td tal:condition="python: 'categoryOrProposingGroup' in visibleColumns">

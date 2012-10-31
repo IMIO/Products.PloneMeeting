@@ -277,6 +277,10 @@ msgstr "Confirmer"
 msgid "confirmed"
 msgstr "Confirmé"
 
+#. Default: "Create from delayed item"
+msgid "create_from_predecessor"
+msgstr "Créer depuis un point reporté"
+
 #. Default: "Create a plonegov item from a plonemeeting item"
 msgid "create_to_plonegov-assembly_from_plonemeeting-assembly"
 msgstr "Envoyer à l'assemblée PloneGov"

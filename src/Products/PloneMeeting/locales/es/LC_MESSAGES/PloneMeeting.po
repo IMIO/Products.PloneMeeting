@@ -1410,10 +1410,6 @@ msgstr "Allí hay un problema relacionado a los temas numerados. Tampoco usted t
 msgid "corruptedTitle"
 msgstr "El titulo de un tema es incorrecto. Por verifique que cada titulo inicia en un número seguido de un punto y el titulo del tema. Verifique también que usted no halla agregado el estilo de información a el número o el titulo (negrita, subrayado, cursiva, etc)."
 
-#. Default: "Create from delayed item"
-msgid "create_from_predecessor"
-msgstr "Crear desde un tema retardado"
-
 #. Default: "This item has been created from a delayed item."
 msgid "create_from_predecessor_comments"
 msgstr "Este tema ha sido creado desde un tema demorado."

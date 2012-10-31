@@ -3421,10 +3421,6 @@ msgstr ""
 msgid "backToRefused_done_descr"
 msgstr ""
 
-#. Default: "Create from delayed item"
-msgid "create_from_predecessor"
-msgstr ""
-
 #. Default: "The validation deadline for meeting publication has not been respected"
 msgid "publish_freeze_ko"
 msgstr ""

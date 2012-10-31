@@ -1406,10 +1406,6 @@ msgstr "There is a problem related to items numbering. Either you've added or de
 msgid "corruptedTitle"
 msgstr "The title of an item is wrong. Please check that each title begins with a number followed by a dot and the item title. Check also that you did not add style information to the number or the title (bold, underline, italic, etc)."
 
-#. Default: "Create from delayed item"
-msgid "create_from_predecessor"
-msgstr "Create from delayed item"
-
 #. Default: "This item has been created from a delayed item."
 msgid "create_from_predecessor_comments"
 msgstr "This item has been created from a delayed item."

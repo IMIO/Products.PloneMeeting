@@ -491,6 +491,10 @@ msgstr ""
 msgid "can_not_delete_object"
 msgstr ""
 
+#. Default: "Create from delayed item"
+msgid "create_from_predecessor"
+msgstr ""
+
 #. Default: "Create a plonmeeting item from a plonegov item"
 msgid "create_to_plonemeeting-assembly_from_plonegov-assembly"
 msgstr ""

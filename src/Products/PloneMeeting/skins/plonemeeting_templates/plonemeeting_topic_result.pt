@@ -203,7 +203,7 @@
 
         <tal:comment replace="nothing">State</tal:comment>
         <td tal:condition="python: 'state' in visibleColumns"
-            tal:content="brain/review_state" i18n:translate=""></td>
+            tal:content="brain/review_state" i18n:domain="plone" i18n:translate=""></td>
 
         <tal:itemOrMeeting condition="python: not isDistant and (resultMetaType in ('MeetingItem', 'Meeting')) and (topic.id != 'searchalldecisions')">
         <tal:comment replace="nothing">For performance reasons, when displaying all decisions, we avoid waking up

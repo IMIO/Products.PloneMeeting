@@ -1406,17 +1406,13 @@ msgstr "Il y a un problème de numérotation. Soit vous avez ajouté ou supprim�
 msgid "corruptedTitle"
 msgstr "Un titre pose problème. Veuillez vérifier que chaque titre commence par un numéro suivi d'un point et du titre du point. Vérifiez également que vous n'avez pas ajouté d'informations de mise en forme dans le numéro ou le titre (gras, souligné, italique, etc)."
 
-#. Default: "Create from delayed item"
-msgid "create_from_predecessor"
-msgstr "Créer depuis un point reporté"
-
 #. Default: "This item has been created from a delayed item."
 msgid "create_from_predecessor_comments"
 msgstr "Ce point a été créé suite au report d'un autre point."
 
 #. Default: "create a meeting"
 msgid "create_meeting"
-msgstr "créer une séance"
+msgstr "Créer une séance"
 
 #. Default: "Create an item"
 msgid "create_meeting_item"
