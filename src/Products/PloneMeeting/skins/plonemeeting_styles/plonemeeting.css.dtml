@@ -74,10 +74,11 @@ tr.even table.advices td {
   background-color: white !important;
 }
 
-.no-style-table td {
+table.no-style-table td {
   border: 0 !important;
   padding: 0 !important;
   margin: 0 !important;
+  vertical-align: middle;
 }
 .itemsNavigation {margin-bottom: 0.3em; margin-top: 0.3em; }
 #archetypes-fieldname-title2 input { font-size: 160%; width:99%;}
