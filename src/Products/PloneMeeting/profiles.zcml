@@ -41,13 +41,6 @@
       provides="Products.GenericSetup.interfaces.EXTENSION"
       for="Products.CMFPlone.interfaces.IPloneSiteRoot" />
 
-  <genericsetup:registerProfile
-      name="migrations"
-      title="PloneMeeting / Migrations"
-      directory="profiles/migrations"
-      description="PloneMeeting profile for performing migrations"
-      provides="Products.GenericSetup.interfaces.EXTENSION"
-      for="Products.CMFCore.interfaces.ISiteRoot" />
   <!-- ##/code-section profiles.zcml-bottom -->
 
 </configure>
