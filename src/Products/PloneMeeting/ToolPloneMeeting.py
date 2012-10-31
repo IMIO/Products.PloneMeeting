@@ -1860,7 +1860,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     tInfo = {
                         'id': transition.id,
                         'title': translate(transition.title,
-                                           domain='PloneMeeting', context=self.REQUEST),
+                                           domain='plone', context=self.REQUEST),
                         'description': transition.description,
                         'name': transition.actbox_name, 'may_trigger': True,
                         'confirm': preName in toConfirm,

@@ -31,14 +31,6 @@ msgstr "Annexes"
 msgid "AnnexesDecision"
 msgstr "Annexes (to the decision)"
 
-#. Default: "Annexes (decision)"
-msgid "AnnexesDecisionShort"
-msgstr "Annexes (decision)"
-
-#. Default: "Copy PloneMeeting"
-msgid "Copy PloneMeeting"
-msgstr ""
-
 #. Default: "CopyItem"
 msgid "CopyItem"
 msgstr ""
@@ -105,14 +97,6 @@ msgstr "PloneMeeting assembly"
 msgid "MeetingUser"
 msgstr "User characteristics"
 
-#. Default: "Paste"
-msgid "Paste PloneMeeting"
-msgstr "Paste"
-
-#. Default: "PloneMeeting Delete"
-msgid "PloneMeeting Delete"
-msgstr ""
-
 #. Default: "PloneMeeting 'folder' view"
 msgid "PloneMeetingFolderView"
 msgstr "PloneMeeting 'folder' view"
@@ -126,10 +110,6 @@ msgstr "Document template"
 #, fuzzy
 msgid "State"
 msgstr "State"
-
-#. Default: "To do"
-msgid "To do"
-msgstr ""
 
 #. Default: "You can not copy this element : '${title}' is not an item."
 msgid "You can not copy this element : '${title}' is not an item."
@@ -148,10 +128,6 @@ msgstr "On creation"
 msgid "accept"
 msgstr "Accept"
 
-#. Default: "The decision linked to this item has been accepted."
-msgid "accept_done_descr"
-msgstr "The decision linked to this item has been accepted."
-
 #. Default: "Accepted"
 msgid "accepted"
 msgstr "Accepted"
@@ -159,10 +135,6 @@ msgstr "Accepted"
 #. Default: "Activate"
 msgid "activate"
 msgstr "Activate"
-
-#. Default: "The element has been activated."
-msgid "activate_done_descr"
-msgstr ""
 
 #. Default: "Active"
 msgid "active"
@@ -176,10 +148,6 @@ msgstr "Advices"
 msgid "archive"
 msgstr "Archive"
 
-#. Default: "The definitive decisions have been archived for this meeting."
-msgid "archive_done_descr"
-msgstr "The definitive decisions have been archived for this meeting."
-
 #. Default: "Archived"
 msgid "archived"
 msgstr "Archived"
@@ -188,129 +156,65 @@ msgstr "Archived"
 msgid "backToAccepted"
 msgstr "Correct"
 
-#. Default: "You just canceled the fact that the decision linked to this item, that is accepted, is confirmed."
-msgid "backToAccepted_done_descr"
-msgstr "You just canceled the confirmation of the accepted decision linked to this item."
-
 #. Default: "Correct"
 msgid "backToClosed"
 msgstr "Correct"
-
-#. Default: "The archiving of definitive decisions has been canceled."
-msgid "backToClosed_done_descr"
-msgstr "The archiving of definitive decisions has been canceled."
 
 #. Default: "Correct"
 msgid "backToConfirmed"
 msgstr "Correct"
 
-#. Default: "The archiving of this item and its decision has been canceled."
-msgid "backToConfirmed_done_descr"
-msgstr "The archiving of this item and its decision has been canceled."
-
 #. Default: "Correct"
 msgid "backToCreated"
 msgstr "Correct"
-
-#. Default: "The publication of the meeting agenda has been canceled."
-msgid "backToCreated_done_descr"
-msgstr "The publication of the meeting agenda has been canceled."
 
 #. Default: "Correct"
 msgid "backToDecided"
 msgstr "Correct"
 
-#. Default: "The publication of definitive decisions has been canceled."
-msgid "backToDecided_done_descr"
-msgstr "The publication of definitive decisions has been canceled."
-
 #. Default: "Correct"
 msgid "backToDelayed"
 msgstr "Correct"
-
-#. Default: "The archiving of this item and its decision has been canceled."
-msgid "backToDelayed_done_descr"
-msgstr "The archiving of this item and its decision has been canceled."
 
 #. Default: "Correct"
 msgid "backToFrozen"
 msgstr "Correct"
 
-#. Default: "The publication of temporary decisions has been canceled."
-msgid "backToFrozen_done_descr"
-msgstr "The publication of temporary decisions has been canceled."
-
 #. Default: "Correct"
 msgid "backToItemCreated"
 msgstr "Correct"
-
-#. Default: "This item is back in its initial state. The person who created it (or another creator within the same group) can now modify it and will need to propose it again once finished."
-msgid "backToItemCreated_done_descr"
-msgstr "This item is back in its initial state. The person who created it (or another creator within the same group) can now modify it and will need to propose it again once finished."
 
 #. Default: "Correct"
 msgid "backToItemFrozen"
 msgstr "Correct"
 
-#. Default: "The decision taken on this item has been canceled."
-msgid "backToItemFrozen_done_descr"
-msgstr "The decision taken on this item has been canceled."
-
 #. Default: "Correct"
 msgid "backToItemPublished"
 msgstr "Correct"
-
-#. Default: "This published item is not frozen anymore."
-msgid "backToItemPublished_done_descr"
-msgstr "This published item is not frozen anymore."
 
 #. Default: "Correct"
 msgid "backToPresented"
 msgstr "Correct"
 
-#. Default: "Validation has been canceled."
-msgid "backToPresented_done_descr"
-msgstr "Validation has been canceled."
-
 #. Default: "Correct"
 msgid "backToPrevalidated"
 msgstr "Correct"
-
-#. Default: "Validation has been canceled."
-msgid "backToPrevalidated_done_descr"
-msgstr "Validation has been canceled."
 
 #. Default: "Correct"
 msgid "backToProposed"
 msgstr "Correct"
 
-#. Default: "This item is not reviewed anymore: (the) meeting manager(s) can't see it anymore. After the needed modification will have been done on it, this item will need to be reviewed again."
-msgid "backToProposed_done_descr"
-msgstr "This item is not reviewed anymore: (the) meeting manager(s) can't see it anymore. After the needed modification will have been done on it, this item will need to be reviewed again."
-
 #. Default: "Correct"
 msgid "backToPublished"
 msgstr "Correct"
-
-#. Default: "The meeting agenda is not frozen anymore."
-msgid "backToPublished_done_descr"
-msgstr "The meeting agenda is not frozen anymore."
 
 #. Default: "Correct"
 msgid "backToRefused"
 msgstr "Correct"
 
-#. Default: "The archiving of this item and its decision has been canceled."
-msgid "backToRefused_done_descr"
-msgstr "The archiving of this item and its decision has been canceled."
-
 #. Default: "Correct"
 msgid "backToValidated"
 msgstr "Correct"
-
-#. Default: "The item has been removed from the meeting agenda."
-msgid "backToValidated_done_descr"
-msgstr "The item has been removed from the meeting agenda."
 
 #. Default: "Forgot password?"
 msgid "box_forgot_password_option"
@@ -356,17 +260,9 @@ msgstr "You can not delete this element!"
 msgid "cannot_paste_item_from_other_mc"
 msgstr ""
 
-#. Default: "This removal may not occur. Possible reasons: you try to remove a meeting already containing items, or an item already presented into a meeting."
-msgid "cant_delete_object"
-msgstr "This removal may not occur. Possible reasons: you try to remove a meeting already containing items, or an item already presented into a meeting."
-
 #. Default: "Close"
 msgid "close"
 msgstr "Close"
-
-#. Default: "The definitive decisions have been published for this meeting."
-msgid "close_done_descr"
-msgstr "The definitive decisions have been published for this meeting."
 
 #. Default: "Closed"
 msgid "closed"
@@ -376,24 +272,24 @@ msgstr "Closed"
 msgid "confirm"
 msgstr "Confirm"
 
-#. Default: "The acceptance of the decision linked to this item has been confirmed."
-msgid "confirm_done_descr"
-msgstr "The acceptance of the decision linked to this item has been confirmed."
-
 #. Default: "Confirmed"
 msgid "confirmed"
 msgstr "Confirmed"
-
-#. Default: "Create from delayed item"
-msgid "create_from_predecessor"
-msgstr "Create from delayed item"
 
 #. Default: "Create a plonegov item from a plonemeeting item"
 msgid "create_to_plonegov-assembly_from_plonemeeting-assembly"
 msgstr ""
 
+#. Default: "Item created from a Plonemeeting assembly item"
+msgid "create_to_plonegov-assembly_from_plonemeeting-assembly_comments"
+msgstr ""
+
 #. Default: "Create a plonmeeting item from a plonegov item"
 msgid "create_to_plonemeeting-assembly_from_plonegov-assembly"
+msgstr ""
+
+#. Default: "Item created from a Plonegov assembly item"
+msgid "create_to_plonemeeting-assembly_from_plonegov-assembly_comments"
 msgstr ""
 
 # Workflow states
@@ -409,25 +305,13 @@ msgstr "Data"
 msgid "deactivate"
 msgstr "Deactivate"
 
-#. Default: "The element has been deactivated."
-msgid "deactivate_done_descr"
-msgstr ""
-
 #. Default: "Decide"
 msgid "decide"
 msgstr "Decide"
 
-#. Default: "The temporary decisions have been published for this meeting."
-msgid "decide_done_descr"
-msgstr "The temporary decisions have been published for this meeting."
-
 #. Default: "Decided"
 msgid "decided"
 msgstr "Decided"
-
-#. Default: "Decision is empty for item ${itemNumber}."
-msgid "decision_is_empty"
-msgstr "Decision is empty for item ${itemNumber}."
 
 # Meeting config schemata
 #. Default: "General"
@@ -437,10 +321,6 @@ msgstr "General"
 #. Default: "Delay"
 msgid "delay"
 msgstr "Delay"
-
-#. Default: "The item has been flagged as 'delayed'. Moreover, it has been duplicated: the proposing group will be able to propose its copy to another meeting. Note that if you cancel this action, the copy will not be deleted."
-msgid "delay_done_descr"
-msgstr "The item has been flagged as 'delayed'. Moreover, it has been duplicated: the proposing group will be able to propose its copy to another meeting. Note that if you cancel this action, the copy will not be deleted."
 
 #. Default: "Delayed"
 msgid "delayed"
@@ -475,17 +355,9 @@ msgstr "Documents"
 msgid "freeze"
 msgstr "Freeze"
 
-#. Default: "The published agenda has been frozen."
-msgid "freeze_done_descr"
-msgstr "The published agenda has been frozen."
-
 #. Default: "Published (frozen)"
 msgid "frozen"
 msgstr "Published (frozen)"
-
-#. Default: "Get a document"
-msgid "generate_doc"
-msgstr "Get a document"
 
 #. Default: "User interface"
 msgid "gui"
@@ -505,26 +377,9 @@ msgstr "${itemtype} to create or edit"
 msgid "inactive"
 msgstr "Inactive"
 
-#. Default: "The item has been duplicated: you currently see the duplicated item."
-#, fuzzy
-msgid "item_duplicated"
-msgstr "The item has been deleted: you currently see the duplicated item."
-
-#. Default: "The item has been duplicated and a link to the original item has been kept: you currently see the duplicated item."
-msgid "item_duplicated_and_link_kept"
-msgstr ""
-
-#. Default: "In order to perform this action, at least one item should be inserted into this meeting."
-msgid "item_required_to_publish"
-msgstr "In order to perform this action, at least one item should be inserted into this meeting."
-
 #. Default: "Archive"
 msgid "itemarchive"
 msgstr "Archive"
-
-#. Default: "The item and its decicion have been archived."
-msgid "itemarchive_done_descr"
-msgstr "The item and its decicion have been archived."
 
 #. Default: "Archived"
 msgid "itemarchived"
@@ -546,18 +401,9 @@ msgstr "Published (frozen)"
 msgid "itempublish"
 msgstr "Publish"
 
-#. Default: "This item has been published."
-msgid "itempublish_done_descr"
-msgstr "This item has been published."
-
 #. Default: "Published"
 msgid "itempublished"
 msgstr "Published"
-
-# Misc
-#. Default: "Creator(s)"
-msgid "label_creators"
-msgstr "Creator(s)"
 
 #. Default: "Edit"
 msgid "label_edit"
@@ -579,49 +425,13 @@ msgstr "Advanced search"
 msgid "late"
 msgstr "Late"
 
-#. Default: "Last modification"
-msgid "listingheader_modified"
-msgstr "Last modification"
-
-#. Default: "Size"
-msgid "listingheader_size"
-msgstr "Size"
-
-#. Default: "Title"
-msgid "listingheader_title"
-msgstr "Title"
-
 #. Default: "Emails"
 msgid "mail"
 msgstr "Emails"
 
-#. Default: "At least one mandatory advice for this item is not positive or has not been given."
-msgid "mandatory_advice_ko"
-msgstr "At least one mandatory advice for this item is not positive or has not been given."
-
-#. Default: "In order to perform this action, the meeting date must be in the past."
-msgid "meeting_in_past"
-msgstr "In order to perform this action, the meeting date must be in the past."
-
-#. Default: "A meeting having the same date and hour already exists. Please choose another date and/or hour."
-msgid "meeting_with_same_date_exists"
-msgstr "A meeting having the same date and hour already exists. Please choose another date and/or hour."
-
-#. Default: "If you deactivate the meetingGroup, every users of every linked Plone groups will be transfered to the '_observers' group so they only have 'read access' to the existing items and can not create new items anymore.  Moreover, this group will be removed from selectable copy groups."
-msgid "meetinggroup_users_transfered_to_observers_plonegroup_if_disabled"
-msgstr ""
-
 #. Default: "Metadata"
 msgid "metadata"
 msgstr "Metadata"
-
-#. Default: "This element was updated since the last time you visited this page."
-msgid "notConsultedYet"
-msgstr "This element was updated since the last time you visited this page."
-
-#. Default: "You are a registered user but your account has not been activated yet. Please contact the system administrator."
-msgid "notPloneMeetingUser"
-msgstr "You are a registered user but your account has not been activated yet. Please contact the system administrator."
 
 #. Default: "The element was deleted."
 msgid "object_deleted"
@@ -635,10 +445,6 @@ msgstr ""
 msgid "present"
 msgstr "Present"
 
-#. Default: "The item has been inserted into the meeting agenda."
-msgid "present_done_descr"
-msgstr "The item has been inserted into the meeting agenda."
-
 #. Default: "Presented"
 msgid "presented"
 msgstr "Presented"
@@ -646,10 +452,6 @@ msgstr "Presented"
 #. Default: "Pre-validate"
 msgid "prevalidate"
 msgstr "Pre-validate"
-
-#. Default: "Your item has been pre-reviewed: it is now visible to (a) reviewer(s), that may decide to validate it."
-msgid "prevalidate_done_descr"
-msgstr "Your item has been pre-reviewed: it is now visible to (a) reviewer(s), that may decide to validate it."
 
 #. Default: "Pre-validated"
 msgid "prevalidated"
@@ -659,10 +461,6 @@ msgstr "Pre-validated"
 msgid "propose"
 msgstr "Propose"
 
-#. Default: "Your item has been proposed. It must now be reviewed by someone in your group before being visible to a meeting manager. If you are yourself reviewer in your group, the 'validate' button is shown below."
-msgid "propose_done_descr"
-msgstr "Your item has been proposed. It must now be reviewed by someone in your group before being visible to a meeting manager. If you are yourself reviewer in your group, the 'validate' button is shown below."
-
 #. Default: "Proposed"
 msgid "proposed"
 msgstr "Proposed"
@@ -670,18 +468,6 @@ msgstr "Proposed"
 #. Default: "Publish"
 msgid "publish"
 msgstr "Publish"
-
-#. Default: "The validation deadline for meeting freezing has not been respected"
-msgid "publish_deadline_ko"
-msgstr "The validation deadline for meeting freezing has not been respected"
-
-#. Default: "The meeting agenda has been published."
-msgid "publish_done_descr"
-msgstr "The meeting agenda has been published."
-
-#. Default: "The validation deadline for meeting publication has not been respected"
-msgid "publish_freeze_ko"
-msgstr "The validation deadline for meeting publication has not been respected"
 
 #. Default: "Published"
 msgid "published"
@@ -691,10 +477,6 @@ msgstr "Published"
 msgid "refuse"
 msgstr "Refuse"
 
-#. Default: "The decision linked to this item has been refused."
-msgid "refuse_done_descr"
-msgstr "The decision linked to this item has been refused."
-
 #. Default: "Refused"
 msgid "refused"
 msgstr "Refused"
@@ -703,38 +485,9 @@ msgstr "Refused"
 msgid "republish"
 msgstr "Republish"
 
-#. Default: "The meeting agenda has been published again."
-msgid "republish_done_descr"
-msgstr "The meeting agenda has been published again."
-
-#. Default: "Unable to send this item to the ${meetingConfigTitle} meetingConfig because the user to create the item to does not have a personal folder in this meetingConfig.  If necessary, the concerned user can connect for this folder to be created automatically."
-msgid "sendto_inexistent_destfolder_error"
-msgstr ""
-
-#. Default: "The item has been successfully transfered to the plonegov assembly."
-msgid "sendto_plonegov-assembly_success"
-msgstr ""
-
-#. Default: "The item has been successfully transfered to the plonemeeting assembly."
-msgid "sendto_plonemeeting-assembly_success"
-msgstr ""
-
-#. Default: "Item sent to ${meetingConfigTitle}"
-msgid "sentto_othermeetingconfig"
-msgstr ""
-
-# This way, the "typedescription macro in base_edit does not display 'Meeting' above the title.
-#. Default: "Show / hide details"
-msgid "show_or_hide_details"
-msgstr "Show / hide details"
-
 #. Default: "Tasks"
 msgid "tasks"
 msgstr "Tasks"
-
-#. Default: "This item is an oral question"
-msgid "this_item_is_an_oral_question"
-msgstr ""
 
 #. Default: "Transfer"
 msgid "transfer"
@@ -747,10 +500,6 @@ msgstr "Users"
 #. Default: "Validate"
 msgid "validate"
 msgstr "Validate"
-
-#. Default: "Your item has been reviewed: it is now visible to (a) meeting manager(s), that may decide to present it to a meeting."
-msgid "validate_done_descr"
-msgstr "Your item has been reviewed: it is now visible to (a) meeting manager(s), that may decide to present it to a meeting."
 
 #. Default: "Validated"
 msgid "validated"

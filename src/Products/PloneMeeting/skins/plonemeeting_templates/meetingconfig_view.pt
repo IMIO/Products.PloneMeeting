@@ -37,7 +37,7 @@
         tal:content="fieldset" i18n:translate=""></span></b>
       </tal:currentFieldset>
       <tal:edit condition="python: fieldset in fieldsets">
-      <input type="image" i18n:domain="plone" title="Edit" i18n:attributes="title" 
+      <input type="image" title="Edit" i18n:attributes="title" 
              style="cursor:pointer" class="imageInput" 
              tal:attributes="src string: $portal_url/edit.gif; 
                              onClick python: 'href: window.location=\'%s/base_edit?fieldset=%s\'' % (context.absolute_url(), fieldset)"/>
@@ -70,7 +70,7 @@
           <!-- I cannot use the standard macro for displaying this field because the
                widget condition prevents the widget from being displayed. -->
           <td tal:define="field python:here.getField('shortName')">
-            <b i18n:domain="PloneMeeting" i18n:translate="PloneMeeting_label_shortName"></b>:
+            <b i18n:translate="PloneMeeting_label_shortName"></b>:
             <span tal:content="context/getShortName"/>
           </td>
         </tr>
@@ -168,7 +168,7 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td colspan="2" tal:define="field python:here.getField('allItemTags')">
-            <b i18n:domain="PloneMeeting" i18n:translate="PloneMeeting_label_allItemTags"></b>:
+            <b i18n:translate="PloneMeeting_label_allItemTags"></b>:
             <span tal:content="python: ', '.join(context.getAllItemTags().split('\n'))" />
           </td>
         </tr>
@@ -217,7 +217,7 @@
       <table tal:define="fFolder python:context.meetingfiletypes;
                          fFolderUrl fFolder/absolute_url" width="100%">
         <tr valign="top">
-          <td><p class="discreet" i18n:translate="meeting_file_types_descr"></p></td>
+          <td><p class="discreet" i18n:translate="meeting_file_types_descr"></p><br /></td>
         </tr>
         <tr>
           <td>
@@ -225,7 +225,7 @@
             <tr>
               <th i18n:translate="listingheader_title"></th>
               <th width="50px" i18n:translate="group_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions"></th>
             </tr>
             <tr tal:condition="python: not fFolder.objectValues('MeetingFileType')">
               <td colspan="3" align="center" i18n:translate="">no_meeting_file_type</td>
@@ -245,11 +245,11 @@
                 <!-- Edit the file type -->
                 <form name="deleteFTForm" action="delete_givenuid">
                   <a tal:attributes="href python: mft.absolute_url() + '/edit'">
-                    <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+                    <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                   </a>
                   <!-- Delete the file type -->
                   <input type="hidden" name="selected_uid" tal:attributes="value mft/UID" />
-                  <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
+                  <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <!-- Move the file type bottom -->
@@ -260,14 +260,12 @@
                 <!-- Move the file type down -->
                 <a tal:condition="python: fFolder.getObjectPosition(mft.id) < len(fFolder.objectValues())-1"
                    tal:attributes="href python: moveUrl % ('down', mft.id)">
-                   <img src="arrowDown.png" title="title_move_item_down"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowDown.png" title="title_move_item_down" i18n:attributes="title" />
                 </a>
                 <!-- Move the file type item up -->
                 <a tal:condition="python: fFolder.getObjectPosition(mft.id) > 0"
                    tal:attributes="href python: moveUrl % ('up', mft.id)">
-                   <img src="arrowUp.png" title="title_move_item_up"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowUp.png" title="title_move_item_up" i18n:attributes="title" />
                 </a>
                 <!-- Move the file type item top -->
                 <a tal:condition="python: fFolder.getObjectPosition(mft.id) > 0"
@@ -297,7 +295,7 @@
       <table tal:define="cFolder python:context.categories;
                          cFolderUrl cFolder/absolute_url" width="100%">
         <tr valign="top">
-          <td><p class="discreet" i18n:translate="categories_descr"></p></td>
+          <td><p class="discreet" i18n:translate="categories_descr"></p><br /></td>
         </tr>
         <tr>
           <td>
@@ -305,7 +303,7 @@
             <tr>
               <th i18n:translate="listingheader_title"></th>
               <th width="50px" i18n:translate="config_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions"></th>
             </tr>
             <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
               <td colspan="3" align="center" i18n:translate="">no_category</td>
@@ -324,11 +322,11 @@
                 <!-- Edit the category -->
                 <form name="deleteCatForm" action="delete_givenuid">
                 <a tal:attributes="href python: categ.absolute_url() + '/edit'">
-                  <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+                  <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                 </a>
                 <!-- Delete the category -->
                   <input type="hidden" name="selected_uid" tal:attributes="value categ/UID"/>
-                    <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
+                    <img title="label_remove" i18n:attributes="title"
                          tal:attributes="src string:$portal_url/delete.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <!-- Move the category bottom -->
@@ -339,14 +337,12 @@
                 <!-- Move the category down -->
                 <a tal:condition="python: cFolder.getObjectPosition(categ.id) < len(cFolder.objectValues())-1"
                    tal:attributes="href python: moveUrl % ('down', categ.id)">
-                   <img src="arrowDown.png" title="title_move_item_down"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowDown.png" title="title_move_item_down" i18n:attributes="title" />
                 </a>
                 <!-- Move the item up -->
                 <a tal:condition="python: cFolder.getObjectPosition(categ.id) > 0"
                    tal:attributes="href python: moveUrl % ('up', categ.id)">
-                   <img src="arrowUp.png" title="title_move_item_up"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowUp.png" title="title_move_item_up" i18n:attributes="title" />
                 </a>
                 <!-- Move the item top -->
                 <a tal:condition="python: cFolder.getObjectPosition(categ.id) > 0"
@@ -376,7 +372,7 @@
       <table tal:define="cFolder python:context.classifiers;
                          cFolderUrl cFolder/absolute_url" width="100%">
         <tr valign="top">
-          <td><p class="discreet" i18n:translate="classifiers_descr"></p></td>
+          <td><p class="discreet" i18n:translate="classifiers_descr"></p><br /></td>
         </tr>
         <tr>
           <td>
@@ -385,7 +381,7 @@
               <th i18n:translate="listingheader_title"></th>
               <th width="20%" i18n:translate="PloneMeeting_label_categoryId"></th>
               <th width="50px" i18n:translate="group_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions"></th>
             </tr>
             <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
               <td colspan="4" align="center" i18n:translate="">no_classifier</td>
@@ -407,11 +403,11 @@
                 <form name="deleteCatForm" action="delete_givenuid">
                 <!-- Edit the category -->
                 <a tal:attributes="href python: categ.absolute_url() + '/edit'">
-                  <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+                  <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                 </a>
                 <!-- Delete the category -->
                   <input type="hidden" name="selected_uid" tal:attributes="value categ/UID"/>
-                    <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
+                    <img title="label_remove" i18n:attributes="title"
                          tal:attributes="src string:$portal_url/delete.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <!-- Move the category bottom -->
@@ -422,14 +418,12 @@
                 <!-- Move the category down -->
                 <a tal:condition="python: cFolder.getObjectPosition(categ.id) < len(cFolder.objectValues())-1"
                    tal:attributes="href python: moveUrl % ('down', categ.id)">
-                   <img src="arrowDown.png" title="title_move_item_down"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowDown.png" title="title_move_item_down" i18n:attributes="title" />
                 </a>
                 <!-- Move the item up -->
                 <a tal:condition="python: cFolder.getObjectPosition(categ.id) > 0"
                    tal:attributes="href python: moveUrl % ('up', categ.id)">
-                   <img src="arrowUp.png" title="title_move_item_up"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowUp.png" title="title_move_item_up" i18n:attributes="title" />
                 </a>
                 <!-- Move the item top -->
                 <a tal:condition="python: cFolder.getObjectPosition(categ.id) > 0"
@@ -460,7 +454,7 @@
       <table tal:define="rFolder python:context.recurringitems;
                          rFolderUrl rFolder/absolute_url" width="100%">
         <tr valign="top">
-          <td><p class="discreet" i18n:translate="recurring_items_descr"></p></td>
+          <td><p class="discreet" i18n:translate="recurring_items_descr"></p><br /></td>
         </tr>
         <tr>
           <td>
@@ -470,7 +464,7 @@
               <th width="25%" i18n:translate="PloneMeeting_label_description"></th>
               <th width="15%" i18n:translate="PloneMeeting_label_usages"></th>
               <th width="25%" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe"></th>
-              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions"></th>
             </tr>
             <tr tal:condition="python: not rFolder.objectValues('MeetingItem')">
               <td colspan="5" align="center" i18n:translate="">no_recurring_item</td>
@@ -480,18 +474,18 @@
               <td tal:content="structure item/Description"></td>
               <td><ul><li tal:repeat="usage item/getUsages" tal:content="usage" i18n:translate=""></li></ul>
               </td>
-              <td tal:content="item/getMeetingTransitionInsertingMe" i18n:translate=""></td>
+              <td><span tal:content="python: 'as_recurring_item' in item.getUsages() and item.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
               <td align="right"
                   tal:define="moveUrl python: rFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=data#recItems'"
                   tal:condition="python: member.has_permission('Modify portal content', item)">
                 <form name="deleteItemForm" action="delete_givenuid">
                 <!-- Edit the item -->
                 <a tal:attributes="href python: item.absolute_url() + '/edit'">
-                  <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+                  <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                 </a>
                 <!-- Delete the item -->
                   <input type="hidden" name="selected_uid" tal:attributes="value item/UID"/>
-                    <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
+                    <img title="label_remove" i18n:attributes="title"
                          tal:attributes="src string:$portal_url/delete.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <!-- Move the item bottom -->
@@ -502,14 +496,12 @@
                 <!-- Move the item down -->
                 <a tal:condition="python: rFolder.getObjectPosition(item.id) < len(rFolder.objectValues())-1"
                    tal:attributes="href python: moveUrl % ('down', item.id)">
-                   <img src="arrowDown.png" title="title_move_item_down"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowDown.png" title="title_move_item_down" i18n:attributes="title" />
                 </a>
                 <!-- Move the item up -->
                 <a tal:condition="python: rFolder.getObjectPosition(item.id) > 0"
                    tal:attributes="href python: moveUrl % ('up', item.id)">
-                   <img src="arrowUp.png" title="title_move_item_up"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowUp.png" title="title_move_item_up" i18n:attributes="title" />
                 </a>
                 <!-- Move the item top -->
                 <a tal:condition="python: rFolder.getObjectPosition(item.id) > 0"
@@ -645,7 +637,7 @@
         <table tal:define="tFolder python:context.topics;
                            tFolderUrl tFolder/absolute_url" width="100%">
         <tr valign="top">
-         <td width="50%"><p class="discreet" i18n:translate="topics_descr"></p></td>
+         <td width="50%"><p class="discreet" i18n:translate="topics_descr"></p><br /></td>
         </tr>
         <tr valign="top">
           <td>
@@ -656,7 +648,7 @@
               <th i18n:translate="topic_search_script">Topic search script</th>
               <th i18n:translate="topic_tal_expression">Topic tal expression</th>
               <th width="50px" i18n:translate="pod_template_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions"></th>
             </tr>
 
             <!-- No topic is defined -->
@@ -695,11 +687,11 @@
                 <!-- Edit the topic-->
                 <form name="deleteTopicForm" action="delete_givenuid">
                   <a tal:attributes="href python: topic.absolute_url() + '/edit'">
-                    <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+                    <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                   </a>
                   <!-- Delete the topic -->
                   <input type="hidden" name="selected_uid" tal:attributes="value topic/UID" />
-                  <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
+                  <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <!-- Move the topic bottom -->
@@ -710,14 +702,12 @@
                 <!-- Move the topic down -->
                 <a tal:condition="python: tFolder.getObjectPosition(topic.id) < len(tFolder.objectValues())-1"
                    tal:attributes="href python: moveUrl % ('down', topic.id)">
-                   <img src="arrowDown.png" title="title_move_item_down"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowDown.png" title="title_move_item_down" i18n:attributes="title" />
                 </a>                
                 <!-- Move the topic up -->
                 <a tal:condition="python: tFolder.getObjectPosition(topic.id) > 0"
                    tal:attributes="href python: moveUrl % ('up', topic.id)">
-                   <img src="arrowUp.png" title="title_move_item_up"
-                        i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowUp.png" title="title_move_item_up" i18n:attributes="title" />
                 </a>
                 <!-- Move the topic top -->
                 <a tal:condition="python: tFolder.getObjectPosition(topic.id) > 0"
@@ -871,7 +861,7 @@
         <th width="20%" i18n:translate="PloneMeeting_label_duty"></th>
         <th width="20%" i18n:translate="PloneMeeting_label_usages"></th>
         <th width="50px" i18n:translate="pod_template_is_active"></th>
-        <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+        <th width="130px" i18n:translate="heading_actions"></th>
       </tr>
       </thead>
       <tr tal:condition="python: not mFolder.objectValues('MeetingUser')">
@@ -897,11 +887,11 @@
           <form name="deleteItemForm" action="delete_givenuid">
           <!-- Edit the user -->
           <a tal:attributes="href python: mUser.absolute_url() + '/edit'">
-            <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+            <img src="edit.gif" title="label_edit" i18n:attributes="title" />
           </a>
           <!-- Delete the user -->
             <input type="hidden" name="selected_uid" tal:attributes="value mUser/UID"/>
-              <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
+              <img title="label_remove" i18n:attributes="title"
                    tal:attributes="src string:$portal_url/delete.png"
                    onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
           <!-- Move the user bottom -->
@@ -912,14 +902,12 @@
           <!-- Move the user down -->
           <a tal:condition="python: mFolder.getObjectPosition(mUser.id) < len(mFolder.objectValues())-1"
              tal:attributes="href python: moveUrl % ('down', mUser.id)">
-             <img src="arrowDown.png" title="title_move_item_down"
-                  i18n:domain="plone" i18n:attributes="title" />
+             <img src="arrowDown.png" title="title_move_item_down" i18n:attributes="title" />
           </a>
           <!-- Move the user up -->
           <a tal:condition="python: mFolder.getObjectPosition(mUser.id) > 0"
              tal:attributes="href python: moveUrl % ('up', mUser.id)">
-             <img src="arrowUp.png" title="title_move_item_up"
-                  i18n:domain="plone" i18n:attributes="title" />
+             <img src="arrowUp.png" title="title_move_item_up" i18n:attributes="title" />
           </a>
           <!-- Move the user top -->
           <a tal:condition="python: mFolder.getObjectPosition(mUser.id) > 0"
@@ -957,7 +945,7 @@
       <table tal:define="pFolder python:context.podtemplates;
                          pFolderUrl pFolder/absolute_url" width="100%">
         <tr valign="top">
-          <td><p class="discreet" i18n:translate="pod_templates_descr"></p></td>
+          <td><p class="discreet" i18n:translate="pod_templates_descr"></p><br /></td>
         </tr>
         <tr>
           <td>
@@ -966,7 +954,7 @@
               <th width="20px"></th>
               <th i18n:translate="listingheader_title"></th>
               <th width="50px"  i18n:translate="pod_template_is_active"></th>
-              <th width="130px"  i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px"  i18n:translate="heading_actions"></th>
             </tr>
 
             <tal:comment replace="nothing">No template is defined.</tal:comment>
@@ -989,11 +977,11 @@
                 <tal:comment replace="nothing">Edit the pod template</tal:comment>
                 <form name="deletePodTemplateForm" action="delete_givenuid">
                   <a tal:attributes="href python: podt.absolute_url() + '/edit'">
-                    <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+                    <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                   </a>
                   <tal:comment replace="nothing">Delete it</tal:comment>
                   <input type="hidden" name="selected_uid" tal:attributes="value podt/UID" />
-                  <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
+                  <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <tal:comment replace="nothing">Move it bottom</tal:comment>
@@ -1004,12 +992,12 @@
                 <tal:comment replace="nothing">Move it down</tal:comment>
                 <a tal:condition="python: pFolder.getObjectPosition(podt.id) < len(pFolder.objectValues())-1"
                    tal:attributes="href python: moveUrl % ('down', podt.id)">
-                   <img src="arrowDown.png" title="title_move_item_down" i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowDown.png" title="title_move_item_down" i18n:attributes="title" />
                 </a>
                 <tal:comment replace="nothing">Move it up</tal:comment>
                 <a tal:condition="python: pFolder.getObjectPosition(podt.id) > 0"
                    tal:attributes="href python: moveUrl % ('up', podt.id)">
-                   <img src="arrowUp.png" title="title_move_item_up" i18n:domain="plone" i18n:attributes="title" />
+                   <img src="arrowUp.png" title="title_move_item_up" i18n:attributes="title" />
                 </a>
                 <tal:comment replace="nothing">Move it top</tal:comment>
                 <a tal:condition="python: pFolder.getObjectPosition(podt.id) > 0"

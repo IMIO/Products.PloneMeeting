@@ -131,7 +131,7 @@ class MeetingWorkflowConditions:
     def mayPublish(self):
         if not checkPermission(ReviewPortalContent, self.context): return False
         if not self.context.getRawItems():
-            return No(self.context.translate('item_required_to_publish'))
+            return No(translate('item_required_to_publish', domain="PloneMeeting", context=self.context.REQUEST))
         return True
 
     security.declarePublic('mayFreeze')
@@ -143,7 +143,7 @@ class MeetingWorkflowConditions:
         '''May decisions on this meeting be taken?'''
         if checkPermission(ReviewPortalContent, self.context):
             if not self.context.getDate().isPast():
-                return No(self.context.translate('meeting_in_past'))
+                return No(translate('meeting_in_past', domain="PloneMeeting", context=self.context.REQUEST))
             # Check that all items are OK.
             res = True
             msgs = []

@@ -1,7 +1,7 @@
 <tal:comment replace="nothing">
   This Ajax-called macro displays an object's history.
 </tal:comment>
-<div id="content" define-macro="history" i18n:domain="PloneMeeting"
+<div id="content" define-macro="history" i18n:domain="plone"
       tal:define="historyInfo python: context.getHistory(0, batchSize=1000);
                   objs        historyInfo/events;
                   showColors  python: context.portal_plonemeeting.showColorsForUser();">
@@ -10,11 +10,11 @@
   <tal:history condition="objs">
   <table class="listing nosort" style="width: 100%">
    <thead>
-    <tr i18n:domain="plone">
+    <tr>
       <th i18n:translate="listingheader_action" width="125px">Action</th>
       <th i18n:translate="listingheader_performed_by" width="175px">Performed by</th>
       <th i18n:translate="listingheader_date_and_time" width="150px">Date and time</th>
-      <th i18n:translate="history_details" i18n:domain="PloneMeeting">Details</th>
+      <th i18n:translate="history_details">Details</th>
     </tr>
    </thead>
    <tbody>
@@ -40,8 +40,8 @@
                       username actor/username|nothing"
           tal:content="python:fullname or username or actorid"/>
       <td tal:content="python:context.restrictedTraverse('@@plone').toLocalizedTime(event['time'],long_format=True)"/>
-      <td tal:condition="not: isDataChange"><tal:comment condition="rhComments" tal:content="structure rhComments"/>
-        <tal:noComment condition="not: rhComments" i18n:translate="no_comments" i18n:domain="plone"/></td>
+      <td tal:condition="not: isDataChange"><tal:comment condition="rhComments" i18n:translate="" tal:content="structure rhComments"/>
+        <tal:noComment condition="not: rhComments" i18n:translate="no_comments"/></td>
       <td tal:condition="isDataChange">
         <tal:comment replace="nothing">
           Display the previous values of the fields whose value were modified in this change.</tal:comment>

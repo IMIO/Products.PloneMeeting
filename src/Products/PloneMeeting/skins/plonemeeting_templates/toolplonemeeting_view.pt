@@ -51,7 +51,7 @@
             <tr>
               <th i18n:translate="listingheader_title"></th>
               <th width="50px" i18n:translate="config_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions"></th>
             </tr>
             <tr tal:condition="python: not context.objectValues('MeetingConfig')">
               <td colspan="3" align="center" i18n:translate="">no_meeting_config</td>
@@ -70,24 +70,22 @@
                 <form name="deleteMGForm" action="delete_givenuid">
                 <!-- Edit meeting config -->
                 <a tal:attributes="href python: meetingConfig.absolute_url() + '/edit'">
-                  <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+                  <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                 </a>
                 <!-- Delete the meeting config -->
                 <input type="hidden" name="selected_uid" tal:attributes="value meetingConfig/UID" />
-                 <img title="label_remove_meetingconfig" i18n:domain="PloneMeeting" i18n:attributes="title"
+                 <img title="label_remove_meetingconfig" i18n:attributes="title"
                       tal:attributes="src string:$portal_url/delete.png"
                       onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <!-- Move the config down -->
                 <a tal:condition="python: meetingConfig.id != context.objectIds('MeetingConfig')[-1]"
                    tal:attributes="href python: moveUrl % ('down', meetingConfig.id)">
-                    <img src="arrowDown.png" title="title_move_item_down"
-                         i18n:domain="plone" i18n:attributes="title" />
+                    <img src="arrowDown.png" title="title_move_item_down" i18n:attributes="title" />
                 </a>
                 <!-- Move the config up -->
                 <a tal:condition="python: meetingConfig.id != context.objectIds('MeetingConfig')[0]"
                    tal:attributes="href python: moveUrl % ('up', meetingConfig.id)">
-                    <img src="arrowUp.png" title="title_move_item_up"
-                         i18n:domain="plone" i18n:attributes="title" />
+                    <img src="arrowUp.png" title="title_move_item_up" i18n:attributes="title" />
                 </a>
                 </form>
               </td>
@@ -122,7 +120,7 @@
               <th i18n:translate="listingheader_title"></th>
               <th width="10%" i18n:translate="PloneMeeting_label_acronym"></th>
               <th width="50px" i18n:translate="group_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions" i18n:domain="plone"></th>
+              <th width="130px" i18n:translate="heading_actions"></th>
             </tr>
             <tr tal:condition="python: not context.objectValues('MeetingGroup')">
               <td colspan="4" align="center" i18n:translate="">no_meeting_group</td>
@@ -144,11 +142,11 @@
                 <!-- Edit the meeting group -->
                 <form name="deleteMGForm" action="delete_givenuid">
                 <a tal:attributes="href python: meetingGroup.absolute_url() + '/edit'">
-                  <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+                  <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                 </a>
                 <!-- Delete the meeting group -->
                 <input type="hidden" name="selected_uid" tal:attributes="value meetingGroup/UID" />
-                 <img title="label_remove_meetinggroup" i18n:domain="PloneMeeting" i18n:attributes="title"
+                 <img title="label_remove_meetinggroup" i18n:attributes="title"
                       tal:attributes="src string:$portal_url/delete.png"
                       onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <!-- Move the config bottom -->
@@ -159,14 +157,12 @@
                 <!-- Move the group down -->
                 <a tal:condition="python: meetingGroup.id != context.objectIds('MeetingGroup')[-1]"
                    tal:attributes="href python: moveUrl % ('down', meetingGroup.id)">
-                  <img src="arrowDown.png" title="title_move_item_down"
-                       i18n:domain="plone" i18n:attributes="title" />
+                  <img src="arrowDown.png" title="title_move_item_down" i18n:attributes="title" />
                 </a>
                 <!-- Move the group up -->
                 <a tal:condition="python: meetingGroup.id != context.objectIds('MeetingGroup')[0]"
                    tal:attributes="href python: moveUrl % ('up', meetingGroup.id)">
-                  <img src="arrowUp.png" title="title_move_item_up"
-                       i18n:domain="plone" i18n:attributes="title" />
+                  <img src="arrowUp.png" title="title_move_item_up" i18n:attributes="title" />
                 </a>
                 <!-- Move the config top-->
                 <a tal:condition="python: meetingGroup.id != context.objectIds('MeetingGroup')[0]"
@@ -266,10 +262,10 @@
               <td align="right">
                 <tal:actions condition="python: member.has_permission('Modify portal content', extApp)">
                   <a tal:attributes="href python: extApp.absolute_url() + '/edit'">
-                  <img src="edit.gif" title="label_edit" i18n:domain="plone" i18n:attributes="title" />
+                  <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                   </a>
                   <a tal:attributes="href python: extApp.absolute_url() + '/delete_confirmation'">
-                  <img title="label_remove" i18n:domain="plone" i18n:attributes="title"
+                  <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete.png"/>
                   </a>
                 </tal:actions>

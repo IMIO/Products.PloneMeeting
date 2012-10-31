@@ -232,7 +232,7 @@ class MeetingItemWorkflowConditions:
             # Verify if all mandatory advices have been given on this item.
             if self.context.enforceAdviceMandatoriness() and \
                not self.context.mandatoryAdvicesAreOk():
-                res = No(self.context.translate('mandatory_advice_ko', domain="plone",
+                res = No(translate('mandatory_advice_ko', domain="PloneMeeting",
                                                 context=self.context.REQUEST))
         return res
 
@@ -250,7 +250,7 @@ class MeetingItemWorkflowConditions:
                 else:
                     itemNumber= self.context.getItemNumber(relativeTo='meeting')
                     res = No(translate('decision_is_empty', mapping={'itemNumber': itemNumber},
-                                       domain="plone", context=self.context.REQUEST))
+                                       domain="PloneMeeting", context=self.context.REQUEST))
         return res
 
     security.declarePublic('mayDelay')
@@ -2785,7 +2785,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # we return a clear message
             plone_utils.addPortalMessage(translate('sendto_inexistent_destfolder_error',
                                          mapping={'meetingConfigTitle': destMeetingConfig.Title()},
-                                         domain="plone", context=self.REQUEST),
+                                         domain="PloneMeeting", context=self.REQUEST),
                                          type='error')
             backUrl = self.REQUEST['HTTP_REFERER'] or self.absolute_url()
             return self.REQUEST.RESPONSE.redirect(backUrl)
@@ -2814,7 +2814,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         mapping = {'meetingConfigTitle': destMeetingConfig.Title(),}
         newItem.sendMailIfRelevant('itemClonedToThisMC','Modify portal content',\
                                    isRole=False, mapping=mapping)
-        plone_utils.addPortalMessage(translate('sendto_%s_success', domain="plone", context=self.REQUEST) % \
+        plone_utils.addPortalMessage(translate('sendto_%s_success', domain="PloneMeeting", context=self.REQUEST) % \
                                      destMeetingConfigId, type='info')
         backUrl = self.REQUEST['HTTP_REFERER'] or self.absolute_url()
         return self.REQUEST.RESPONSE.redirect(backUrl)

@@ -2,6 +2,6 @@
 <div class="pm_workflowstate">
   <span i18n:translate="label_state"></span>&nbsp;
   <span tal:define="state view/getObjectState"
-        tal:content="state" i18n:translate="" i18n:domain="PloneMeeting"
+        tal:content="state" i18n:translate="" i18n:domain="plone"
         tal:attributes="class python: view.getElementClass(state)"></span>
 </metal:workflowState>

@@ -40,7 +40,6 @@
                   showBudgetInfos     python: not isFake and not isDistant and ('budgetInfos' in visibleColumns);
                   showActions         python: not isFake and not isDistant and (topic.id != 'searchalldecisions') and ('actions' in visibleColumns)">
     <tr>
-          
       <tal:comment replace="nothing">Title</tal:comment>
       <th class="pm_listing_th_title" tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
         <span i18n:translate="listingheader_title"></span>
@@ -72,7 +71,7 @@
 
       <tal:comment replace="nothing">toDiscuss</tal:comment>
       <th class="pm_listing_th_toDiscuss" tal:condition="showToDiscuss"
-          i18n:translate="nothing" i18n:domain="PloneMeeting">
+          i18n:translate="nothing">
           <img src="toDiscussYes.png" title="Item to discuss?" tal:attributes="src string:$portal_url/toDiscussYes.png" i18n:attributes="title PloneMeeting_label_toDiscuss" />
       </th>
 
@@ -129,7 +128,7 @@
 
       <tal:comment replace="nothing">itemIsSigned</tal:comment>
       <th class="pm_listing_th_itemIsSigned" tal:condition="showItemIsSigned"
-          i18n:translate="nothing" i18n:domain="PloneMeeting">
+          i18n:translate="nothing">
           <img src="itemIsSignedYes.png" title="Item is signed?" tal:attributes="src string:$portal_url/itemIsSignedYes.png" i18n:attributes="title PloneMeeting_label_itemIsSigned" />
       </th>
 
@@ -212,7 +211,7 @@
         <tal:wakeUpObject define="obj brain/getObject">
 
         <tal:comment replace="nothing">toDiscuss</tal:comment>
-        <td tal:condition="showToDiscuss" align="center" i18n:domain="PloneMeeting">
+        <td tal:condition="showToDiscuss" align="center">
           <img tal:condition="obj/getToDiscuss" name="discussNo" 
                title="to_discuss_yes" i18n:attributes="title"
                tal:attributes="src string: $portal_url/toDiscussYes.png;"/>
@@ -293,7 +292,7 @@
         </td>
 
         <tal:comment replace="nothing">"itemIsSigned" field</tal:comment>
-        <td align="center" class="ItemIsSigned" tal:condition="python: showItemIsSigned" i18n:domain="PloneMeeting">
+        <td align="center" class="ItemIsSigned" tal:condition="python: showItemIsSigned">
         <tal:defines define="contextType obj/meta_type;
                              meetingItem python: obj;
                              ajaxEdit showActions">

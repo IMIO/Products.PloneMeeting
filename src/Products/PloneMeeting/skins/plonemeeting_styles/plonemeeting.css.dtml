@@ -477,7 +477,7 @@ cursor:pointer;
 }
 
 .pm_listing_th_proposingGroup, .pm_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_proposingGroup {
-    width: 150px;
+    width: 155px;
 }
 .pm_listing_th_creationDate {
     width: 135px;

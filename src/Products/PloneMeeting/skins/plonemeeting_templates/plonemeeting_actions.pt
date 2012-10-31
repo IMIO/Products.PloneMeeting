@@ -1,6 +1,6 @@
 <tal:comment replace="nothing">Requires "itemOrMeeting", optional "showIcons"</tal:comment>
 
-<div metal:define-macro="ploneMeetingActions" i18n:domain="PloneMeeting"
+<div metal:define-macro="ploneMeetingActions" i18n:domain="plone"
      tal:define="showIcons showIcons|nothing;
                  showArrows showArrows|nothing;
                  mayChangeOrder mayChangeOrder|nothing;
@@ -73,12 +73,12 @@
         <form name="deleteUidForm" action="delete_givenuid">
             <input type="hidden" name="selected_uid" tal:attributes="value itemOrMeeting/UID" />
             <tal:comment replace="nothing">Icon</tal:comment>
-            <img tal:condition="showIcons" i18n:attributes="title" title="Delete" i18n:domain="plone"
+            <img tal:condition="showIcons" i18n:attributes="title" title="Delete"
                  tal:attributes="src string: $portal_url/delete.png"
                  onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
 
             <tal:comment replace="nothing">Button</tal:comment>
-            <input tal:condition="not: showIcons" type="button" i18n:attributes="value" value="Delete" i18n:domain="plone"
+            <input tal:condition="not: showIcons" type="button" i18n:attributes="value" value="Delete"
                    onClick="javascript:confirmDeleteObject(this);" class="hsButton hsButtonAction hsButtonAction_delete"/>
         </form>
       </td>
