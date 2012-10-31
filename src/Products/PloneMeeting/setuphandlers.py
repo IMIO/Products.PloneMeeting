@@ -263,13 +263,6 @@ def postInstall(context):
     for transformId in transformsToDisable:
         if hasattr(pt.aq_base, transformId):
             pt.manage_delObjects([transformId])
-    # Prevent Plone from merging plonemeeting.js with other JSs, it leads to
-    # errors with some browsers.
-    jsFile = pjs.getResource('plonemeeting.js')
-    jsFile.setCookable(False)
-    jsFile.setCacheable(False)
-    jsFile.setCompression("none")
-    logger.info('Installation completed.')
 
     # Grant role "Member" to virtual group AuthenticatedMembers. This way, LDAP
     # plugin can be used without using sub-plugins "Roles" and

@@ -11,9 +11,9 @@
  -->
 
  <!-- ##code-section jsregistry.xml -->
- <javascript cacheable="True"
+ <javascript cacheable="False"
              compression="safe"
-             cookable="True"
+             cookable="False"
              enabled="True"
              expression=""
              inline="False"
