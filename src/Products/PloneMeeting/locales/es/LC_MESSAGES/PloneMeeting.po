@@ -1161,6 +1161,10 @@ msgstr ""
 msgid "assembly_descr"
 msgstr "Defina aquí la asamblea por defecto (por ejemplo, puede escribir una lista de nombres y apellidos separados por dos puntos o líneas nuevas) que se seleccionará automáticamente en la creación de nuevas reuniones. Si desea una forma más estructurada para definir a los asistentes, ausentes y personas excusadas en una reunión, no llene este campo, crear, en la pestaña \"datos\", los usuarios especial que tienen la característica de 'miembro de la asamblea' y seleccione, en la misma pestaña, los atributos  'asistentes', 'ausentes' y / o 'excusado' como atributos que se utilizan para una reunión."
 
+#. Default: "Use 'CTRL+click' to select several associated groups."
+msgid "associated_group_item_descr"
+msgstr ""
+
 #. Default: "Associated groups' acronyms"
 msgid "associated_groups_acronyms"
 msgstr "Acrónimos de grupos de asociados"

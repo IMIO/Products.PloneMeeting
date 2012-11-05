@@ -112,6 +112,10 @@ msgstr ""
 msgid "PloneMeeting_label_associatedGroups"
 msgstr ""
 
+#. Default: "Use 'CTRL+click' to select several associated groups."
+msgid "associated_group_item_descr"
+msgstr ""
+
 #. Default: "Preferred meeting"
 msgid "PloneMeeting_label_preferredMeeting"
 msgstr ""

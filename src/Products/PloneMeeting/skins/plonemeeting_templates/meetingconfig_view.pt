@@ -1015,6 +1015,10 @@
       </fieldset>
     </tal:doc>
 
+    <div metal:define-macro="folderlisting">
+      <tal:comment replace="nothing">Hide the folder_listing</tal:comment>
+    </div>
+
     <br/>
     <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
 

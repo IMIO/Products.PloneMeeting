@@ -58,6 +58,10 @@ msgstr "Externe Anwendung"
 msgid "Login failed"
 msgstr "Login fehlgeschlagen"
 
+#. Default: "Meeting"
+msgid "Meeting"
+msgstr "Sitzung"
+
 #. Default: "Category"
 msgid "MeetingCategory"
 msgstr "Kategorie"
@@ -78,6 +82,11 @@ msgstr "Dateityp"
 #. Default: "PloneMeeting group"
 msgid "MeetingGroup"
 msgstr "PloneMeeting Gruppe"
+
+#. Default: "Item"
+#, fuzzy
+msgid "MeetingItem"
+msgstr "Sitzungspunkt"
 
 #. Default: "Item"
 msgid "MeetingItemPga"

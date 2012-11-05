@@ -1158,6 +1158,10 @@ msgstr ""
 msgid "assembly_descr"
 msgstr ""
 
+#. Default: "Use 'CTRL+click' to select several associated groups."
+msgid "associated_group_item_descr"
+msgstr ""
+
 #. Default: "Associated groups' acronyms"
 msgid "associated_groups_acronyms"
 msgstr "Bijbehorende groepenacroniemen"

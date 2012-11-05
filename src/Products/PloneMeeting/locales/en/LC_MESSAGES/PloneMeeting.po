@@ -1157,6 +1157,10 @@ msgstr ""
 msgid "assembly_descr"
 msgstr "Define here the default assembly (for example you may type a list of names and first names separated by colons or new lines) that will be automatically selected on newly created meetings. If you want a more structured way to define attendees, absents and excused people on a meeting, do not fill this field, create, in the tab 'data', special users having characteristic 'assembly member' and select, in the same tab, 'attendees', 'absents' and/or 'excused' attributes as attributes used for a meeting."
 
+#. Default: "Use 'CTRL+click' to select several associated groups."
+msgid "associated_group_item_descr"
+msgstr "Use 'CTRL+click' to select several associated groups."
+
 #. Default: "Associated groups' acronyms"
 msgid "associated_groups_acronyms"
 msgstr "Associated groups' acronyms"

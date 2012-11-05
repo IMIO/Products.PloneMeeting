@@ -61,6 +61,10 @@ msgstr "Externe applicatie"
 msgid "Login failed"
 msgstr "Login mislukt"
 
+#. Default: "Meeting"
+msgid "Meeting"
+msgstr ""
+
 #. Default: "Category"
 msgid "MeetingCategory"
 msgstr "Categorie"
@@ -81,6 +85,10 @@ msgstr "Bestandstype"
 #. Default: "PloneMeeting group"
 msgid "MeetingGroup"
 msgstr "PloneMeeting groep"
+
+#. Default: "Item"
+msgid "MeetingItem"
+msgstr ""
 
 #. Default: "Item"
 msgid "MeetingItemPga"

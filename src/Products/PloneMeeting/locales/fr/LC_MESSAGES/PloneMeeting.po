@@ -1157,6 +1157,10 @@ msgstr "Assemblée définie sur la séance"
 msgid "assembly_descr"
 msgstr "Définissez ici l'assemblée par défaut (par exemple, une liste de noms et prénoms séparés par des virgules ou des retours à la ligne) qui sera automatiquement sélectionnée pour chaque séance nouvellement créée. Si vous souhaitez une manière plus structurée de définir les présents, absents et excusés à une séance, n'utilisez pas ce champ, allez dans l'onglet 'données', définissez-y des utilisateurs spéciaux ayant la caractéristique 'membre d'assemblée' et, dans le même onglet, sélectionnez les attributs 'présents', 'absents' et/ou 'excusés' dans la liste des attributs optionnels sur une séance."
 
+#. Default: "Use 'CTRL+click' to select several associated groups."
+msgid "associated_group_item_descr"
+msgstr "Choisissez-en plusieurs en maintenant la touche 'Ctrl' enfoncée."
+
 #. Default: "Associated groups' acronyms"
 msgid "associated_groups_acronyms"
 msgstr "Acronymes des groupes associés"
@@ -2336,7 +2340,6 @@ msgstr "Sera importé cette nuit."
 msgid "meeting_in_past"
 msgstr "Cette action ne peut être effectuée tant que la séance n'a pas eu lieu."
 
-# MeetingItem
 #. Default: "Meeting of"
 msgid "meeting_of"
 msgstr "Séance du"

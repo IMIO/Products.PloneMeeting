@@ -108,7 +108,7 @@
   <tal:comment replace="nothing">Explain which item is currently shown.
    Show total number of items only if the user has the permission to view the last item).</tal:comment>
   <span class="discreet">
-    <span i18n:translate="">MeetingItem</span>&nbsp;
+    <span i18n:domain="plone" i18n:translate="">MeetingItem</span>&nbsp;
     <span tal:replace="itemNumber"/><span tal:condition="python: lastItemUid!=False"> / <span tal:replace="totalNbOfItems"/></span>
   </span>
   <tal:comment replace="nothing">Go to the next item</tal:comment>

@@ -278,6 +278,14 @@ msgstr ""
 msgid "MeetingItemPma"
 msgstr ""
 
+#. Default: "Meeting"
+msgid "Meeting"
+msgstr ""
+
+#. Default: "Item"
+msgid "MeetingItem"
+msgstr ""
+
 #. Default: "External application"
 msgid "ExternalApplication"
 msgstr ""

@@ -1158,6 +1158,10 @@ msgstr ""
 msgid "assembly_descr"
 msgstr "Definieren Sie hier die Standardsitzungsteilnehmer (Sie können zum Beispiel eine Liste von Nach- und Vornamen getrennt durch Semikolons oder Zeilenumbrüche eingeben) diese werden im 'Versammlung'-Feld jeder neu erstellten Sitzung automatisch eingefügt. Wenn Sie eine strukturiertere Art benötigen um Sitzungsteilnehmer zu verwalten wie abwesend, anwesend und entschuldigt, füllen Sie dieses Feld nicht aus. Erstellen Sie dann im Tab 'Daten', spezielle Benutzer, die verschiedene Attribute haben können wie Sitzungsteilnehmer, Unterschreiben, Abstimmen. Diese können dann in den Sitzungen ausgewählt werden."
 
+#. Default: "Use 'CTRL+click' to select several associated groups."
+msgid "associated_group_item_descr"
+msgstr ""
+
 #. Default: "Associated groups' acronyms"
 msgid "associated_groups_acronyms"
 msgstr "Akronyme der zugehörigen Gruppen"

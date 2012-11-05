@@ -61,6 +61,10 @@ msgstr "Aplicación externa"
 msgid "Login failed"
 msgstr "Inicio de sesión fallido"
 
+#. Default: "Meeting"
+msgid "Meeting"
+msgstr "Reunión"
+
 #. Default: "Category"
 msgid "MeetingCategory"
 msgstr "Categorías de reunión"
@@ -81,6 +85,10 @@ msgstr "Tipo de archivo de reunión"
 #. Default: "PloneMeeting group"
 msgid "MeetingGroup"
 msgstr "Grupo de PloneMeeting"
+
+#. Default: "Item"
+msgid "MeetingItem"
+msgstr "Tema de reunión"
 
 #. Default: "Item"
 msgid "MeetingItemPga"
