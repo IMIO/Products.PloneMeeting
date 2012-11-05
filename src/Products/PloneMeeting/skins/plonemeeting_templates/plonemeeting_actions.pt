@@ -28,8 +28,7 @@
                                           + (confirm=='false' and '&form.submitted=boolean:True' or '');
                              class python: confirm=='true' and 'link-overlay-pm transition-overlay' or ''">
             <tal:comment replace="nothing">Icon</tal:comment>
-            <img style="cursor:pointer"
-                 tal:condition="python: showIcons and hasattr(portal, imageName)"
+            <img tal:condition="python: showIcons and hasattr(portal, imageName)"
                  tal:attributes="src string: $portal_url/$imageName;
                                  title python: transition['title'];"/>
             <tal:comment replace="nothing">Button</tal:comment>
