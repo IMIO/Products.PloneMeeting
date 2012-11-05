@@ -210,6 +210,7 @@ schema = Schema((
     TextField(
         name='colorSystemDisabledFor',
         default= defValues.colorSystemDisabledFor,
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="ColorSystemDisabledFor",
             description_msgid="color_system_disabled_for_descr",
@@ -217,6 +218,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_colorSystemDisabledFor',
             i18n_domain='PloneMeeting',
         ),
+        default_content_type='text/plain',
     ),
     BooleanField(
         name='restrictUsers',
@@ -232,6 +234,7 @@ schema = Schema((
     TextField(
         name='unrestrictedUsers',
         default= defValues.unrestrictedUsers,
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="UnrestrictedUsers",
             description_msgid="unrestricted_users_descr",
@@ -239,6 +242,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_unrestrictedUsers',
             i18n_domain='PloneMeeting',
         ),
+        default_content_type='text/plain',
     ),
     StringField(
         name='dateFormat',

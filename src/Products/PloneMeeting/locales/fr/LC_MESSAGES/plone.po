@@ -107,6 +107,10 @@ msgstr "Assemblée PloneMeeting"
 msgid "MeetingUser"
 msgstr "Caractéristiques utilisateur"
 
+#. Default: "No meeting to delete."
+msgid "No meeting to delete."
+msgstr "Aucune séance à supprimer."
+
 #. Default: "PloneMeeting 'folder' view"
 msgid "PloneMeetingFolderView"
 msgstr "Vue PloneMeeting de type 'dossier'"

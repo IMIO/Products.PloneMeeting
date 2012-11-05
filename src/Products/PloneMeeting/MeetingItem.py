@@ -508,6 +508,7 @@ schema = Schema((
     ),
     TextField(
         name='budgetInfos',
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('budgetInfos')",
             description="BudgetInfos",
@@ -516,8 +517,10 @@ schema = Schema((
             label_msgid='PloneMeeting_label_budgetInfos',
             i18n_domain='PloneMeeting',
         ),
-        optional=True,
+        default_content_type='text/plain',
         default_method="getDefaultBudgetInfo",
+        default_output_type='text/html',
+        optional=True,
     ),
     StringField(
         name='category',
@@ -606,7 +609,7 @@ schema = Schema((
     StringField(
         name='itemKeywords',
         widget=StringField._properties['widget'](
-            size= 100,
+            size= 50,
             condition="python: here.attributeIsUsed('itemKeywords')",
             label='Itemkeywords',
             label_msgid='PloneMeeting_label_itemKeywords',
@@ -772,7 +775,7 @@ schema = Schema((
     ),
     TextField(
         name='itemAssembly',
-        allowable_content_types="text/plain",
+        allowable_content_types=('text/plain',),
         optional=True,
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
@@ -787,6 +790,7 @@ schema = Schema((
     ),
     TextField(
         name='itemSignatures',
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             condition="python: (member.has_role('MeetingManager') or member.has_role('Manager')) and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures')",
             description="ItemSignaturesDescrMethod",
@@ -795,6 +799,8 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemSignatures',
             i18n_domain='PloneMeeting',
         ),
+        default_output_type='text/html',
+        default_content_type='text/plain',
     ),
     LinesField(
         name='itemSignatories',

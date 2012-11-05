@@ -43,11 +43,13 @@ schema = Schema((
 
     TextField(
         name='description',
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             label='Description',
             label_msgid='PloneMeeting_label_description',
             i18n_domain='PloneMeeting',
         ),
+        default_content_type='text/plain',
         accessor="Description",
     ),
     StringField(

@@ -58,6 +58,7 @@ schema = Schema((
 
     TextField(
         name='description',
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="PodTemplateDescription",
             description_msgid="pod_template_description",
@@ -65,6 +66,8 @@ schema = Schema((
             label_msgid='PloneMeeting_label_description',
             i18n_domain='PloneMeeting',
         ),
+        default_output_type='text/html',
+        default_content_type='text/plain',
         accessor="Description",
     ),
     FileField(
@@ -133,6 +136,7 @@ schema = Schema((
     ),
     TextField(
         name='mailingLists',
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="PTMailingLists",
             description_msgid="pt_mailing_lists_descr",
@@ -140,6 +144,8 @@ schema = Schema((
             label_msgid='PloneMeeting_label_mailingLists',
             i18n_domain='PloneMeeting',
         ),
+        default_output_type='text/html',
+        default_content_type='text/plain',
     ),
 
 ),

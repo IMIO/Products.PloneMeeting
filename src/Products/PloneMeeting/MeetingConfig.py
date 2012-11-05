@@ -128,6 +128,7 @@ schema = Schema((
     TextField(
         name='assembly',
         default= defValues.assembly,
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Assembly",
             description_msgid="assembly_descr",
@@ -135,10 +136,12 @@ schema = Schema((
             label_msgid='PloneMeeting_label_assembly',
             i18n_domain='PloneMeeting',
         ),
+        default_content_type='text/plain',
     ),
     TextField(
         name='signatures',
         default= defValues.signatures,
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Signatures",
             description_msgid="signatures_descr",
@@ -146,10 +149,12 @@ schema = Schema((
             label_msgid='PloneMeeting_label_signatures',
             i18n_domain='PloneMeeting',
         ),
+        default_content_type='text/plain',
     ),
     TextField(
         name='certifiedSignatures',
         default= defValues.certifiedSignatures,
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="CertifiedSignatures",
             description_msgid="certified_signatures_descr",
@@ -157,10 +162,12 @@ schema = Schema((
             label_msgid='PloneMeeting_label_certifiedSignatures',
             i18n_domain='PloneMeeting',
         ),
+        default_content_type='text/plain',
     ),
     TextField(
         name='places',
         default= defValues.places,
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Places",
             description_msgid="places_descr",
@@ -168,10 +175,12 @@ schema = Schema((
             label_msgid='PloneMeeting_label_places',
             i18n_domain='PloneMeeting',
         ),
+        default_content_type='text/plain',
     ),
     TextField(
         name='budgetDefault',
         default= defValues.budgetDefault,
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="BudgetDefault",
             description_msgid="config_budget_default_descr",
@@ -179,6 +188,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_budgetDefault',
             i18n_domain='PloneMeeting',
         ),
+        default_content_type='text/plain',
     ),
     StringField(
         name='folderTitle',
@@ -416,6 +426,7 @@ schema = Schema((
     TextField(
         name='itemReferenceFormat',
         default= defValues.itemReferenceFormat,
+        allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="ItemReferenceFormat",
             description_msgid="item_reference_format_descr",
@@ -424,6 +435,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        default_content_type='text/plain',
     ),
     StringField(
         name='sortingMethodOnAddItem',
@@ -443,6 +455,7 @@ schema = Schema((
     TextField(
         name='allItemTags',
         default= defValues.allItemTags,
+        schemata="data",
         widget=TextAreaWidget(
             description="AllItemTags",
             description_msgid="all_item_tags_descr",
@@ -450,7 +463,8 @@ schema = Schema((
             label_msgid='PloneMeeting_label_allItemTags',
             i18n_domain='PloneMeeting',
         ),
-        schemata="data",
+        default_content_type='text/plain',
+        allowable_content_types=('text/plain',),
     ),
     BooleanField(
         name='sortAllItemTags',

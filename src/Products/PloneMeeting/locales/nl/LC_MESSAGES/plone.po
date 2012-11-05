@@ -110,6 +110,10 @@ msgstr "PloneMeeting assembly"
 msgid "MeetingUser"
 msgstr ""
 
+#. Default: "No meeting to delete."
+msgid "No meeting to delete."
+msgstr ""
+
 #. Default: "PloneMeeting 'folder' view"
 msgid "PloneMeetingFolderView"
 msgstr "PloneMeeting 'map' weergave"

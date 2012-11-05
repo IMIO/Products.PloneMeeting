@@ -158,7 +158,7 @@
              tal:condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
           <tal:defines define="redefinedItemAssembly python: context.getItemAssembly(real=True).strip().replace('\n', '<br/>')">
           <i tal:attributes="class python: redefinedItemAssembly and 'highlightRedefinedValue' or ''"><span i18n:translate="item_attendees"></span></i>:&nbsp;&nbsp;
-             <span tal:replace="structure python: context.getItemAssembly().strip().replace('\n', '<br/>')"/>
+             <span tal:replace="structure context/getItemAssembly"/>
           </tal:defines>
         </div>
 
@@ -263,7 +263,7 @@
              tal:condition="python: meeting and ('signatures' in usedMeetingAttributes)">
           <tal:defines define="redefinedItemSignatures python: context.getItemSignatures(real=True).strip().replace('\n', '<br/>')">
           <i tal:attributes="class python: redefinedItemSignatures and 'highlightRedefinedValue' or ''"><span i18n:translate="meeting_signatures"></span></i>:&nbsp;&nbsp;
-             <span tal:replace="structure python: context.getItemSignatures().strip().replace('\n', '<br/>')"/>
+             <span tal:replace="structure context/getItemSignatures"/>
           </tal:defines>
         </div>
         </td>

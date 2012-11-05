@@ -573,13 +573,15 @@ schema = Schema((
     ),
     TextField(
         name='signatures',
+        allowable_content_types=('text/plain',),
+        optional=True,
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('signatures')",
             label_msgid="meeting_signatures",
             label='Signatures',
             i18n_domain='PloneMeeting',
         ),
-        optional=True,
+        default_content_type='text/plain',
         default_method="getDefaultSignatures",
     ),
     LinesField(
