@@ -285,7 +285,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.setMeetingConfigsToCloneTo(())
         self.meetingConfig.at_post_edit_script()
         self.failIf(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
-
         #activate it and test now
         self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
         self.meetingConfig.at_post_edit_script()        
@@ -413,6 +412,84 @@ class testMeetingItem(PloneMeetingTestCase):
             self.failUnless(i1._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
             self.failUnless(otherMeetingConfigId in i1._getOtherMeetingConfigsImAmClonedIn())
             newUID = annotations[annotationKey]
+
+    def testSendItemToOtherMCWithAnnexes(self):
+        '''Test that sending an item to another MeetingConfig behaves normaly with annexes.
+           This is a complementary test to testToolPloneMeeting.testCloneItemWithContent.
+           Here we test the fact that the item is sent to another MeetingConfig.'''
+        # Activate the functionnality
+        login(self.portal, 'admin')
+        self.meetingConfig.setUseGroupsAsCategories(False)
+        otherMeetingConfigId = self.meetingConfig2.getId()
+        self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
+        self.meetingConfig.at_post_edit_script()
+        login(self.portal, 'pmManager')
+        meetingDate = DateTime('2008/06/12 08:00:00')
+        m1 = self.create('Meeting', date=meetingDate)
+        # A creator creates an item
+        login(self.portal, 'pmCreator1')
+        self.tool.getPloneMeetingFolder(otherMeetingConfigId)
+        i1 = self.create('MeetingItem')
+        i1.setCategory('development')
+        i1.setDecision('<p>My decision</p>', mimetype='text/html')
+        i1.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
+        # Add annexes
+        annex1 = self.addAnnex(i1, annexType='item-annex')
+        annex2 = self.addAnnex(i1, annexType='overhead-analysis')
+        # Propose the item
+        self.do(i1, i1.wfConditions().transitionsForPresentingAnItem[0])
+        login(self.portal, 'pmReviewer1')
+        # Trigger transitions until the item is in state 'validated'
+        while not i1.queryState() == 'validated':
+            for tr in i1.wfConditions().transitionsForPresentingAnItem[1:-1]:
+                self.do(i1, tr)
+        login(self.portal, 'pmManager')
+        # Accept the item
+        self.do(i1, 'present')
+        # Do necessary transitions on the meeting before being able to accept an item
+        necessaryMeetingTransitionsToAcceptItem = self._getNecessaryMeetingTransitionsToAcceptItem()
+        for transition in necessaryMeetingTransitionsToAcceptItem:
+            self.do(m1, transition)
+            self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
+        decisionAnnex1 = self.addAnnex(i1, decisionRelated=True)
+        decisionAnnex2 = self.addAnnex(i1, annexType='marketing-annex', decisionRelated=True)
+        self.do(i1, 'accept')
+        # Get the new item
+        annotations = IAnnotations(i1)
+        annotationKey = i1._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
+        newUID = annotations[annotationKey]
+        newItem = self.portal.uid_catalog(UID=newUID)[0].getObject()
+        # Check that annexes are actually correctly sent too
+        self.failUnless(len(newItem.getAnnexes()) == 2)
+        self.failUnless(len(newItem.getAnnexesDecision()) == 2)
+        # As annexes are references from the item, check that these are not 
+        self.assertEquals(set([newItem]),
+            set(newItem.getParentNode().objectValues()))
+        # Especially test that references are ok about the MeetingFileTypes
+        existingMeetingFileTypeUids = [ft.UID() for ft in self.meetingConfig.getFileTypes()]
+        existingMeetingFileTypeDecisionUids = [ft.UID() for ft in self.meetingConfig.getFileTypes(decisionRelated=True)]
+        self.failUnless(annex1.getMeetingFileType().UID() in existingMeetingFileTypeUids)
+        self.failUnless(annex2.getMeetingFileType().UID() in existingMeetingFileTypeUids)
+        self.failUnless(decisionAnnex1.getMeetingFileType().UID() in existingMeetingFileTypeDecisionUids)
+        # the MeetingFileType of decisionAnnex1 is deactivated
+        self.failIf(decisionAnnex2.getMeetingFileType().UID() in existingMeetingFileTypeDecisionUids)
+        # Now check the MeetingFileType of new annexes
+        # annex1 was of annexType "item-annex" that exists in the new MeetingConfig
+        # so it stays "item-annex" but the one in the new MeetingConfig
+        self.assertEquals(newItem.objectValues('MeetingFile')[0].getMeetingFileType().UID(),
+                          getattr(self.meetingConfig2.meetingfiletypes, 'item-annex').UID())
+        # annex2 was of annexType "overhead-analysis" that does NOT exist in the new MeetingConfig
+        # so the MeetingFileType of the annex2 will be the default one, the first available
+        self.assertEquals(newItem.objectValues('MeetingFile')[1].getMeetingFileType().UID(),
+                          self.meetingConfig2.getFileTypes()[0].UID())
+        # annexDecision1 was of annexType "decision-annex" that exists in the new MeetingConfig
+        # so it stays "decision-annex" but the one in the new MeetingConfig
+        self.assertEquals(newItem.objectValues('MeetingFile')[2].getMeetingFileType().UID(),
+                          getattr(self.meetingConfig2.meetingfiletypes, 'decision-annex').UID())
+        # annexDecision2 was of annexType "marketing-annex" that does NOT exist in the new MeetingConfig
+        # so the MeetingFileType of the annexDecision2 will be the default one, the first available
+        self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType().UID(),
+                          self.meetingConfig2.getFileTypes(decisionRelated=True)[0].UID())
 
     def _getTransitionToReachState(self, obj, state):
         '''Given a state, return a transition that will set the obj in this state.'''

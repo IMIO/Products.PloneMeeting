@@ -183,8 +183,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.failUnless(res1.getAnnexes()[0].getMeetingFileType())
         self.failUnless(res1.getAnnexes()[1].getMeetingFileType())
 
-
-
     def testShowPloneMeetingTab(self):
         '''Test when PM tabs are shown'''
         # By default, 2 meetingConfigs are created active
