@@ -161,16 +161,8 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
 
     security.declarePublic('getItem')
     def getItem(self):
-        '''Returns the linked item.'''
-        # getBRefs returns links of the ReferenceField
-        res = self.getBRefs('ItemAnnexes')
-        if res:
-            res = res[0]
-        else:
-            res = self.getBRefs('DecisionAnnexes')
-            if res:
-                res = res[0]
-        return res
+        '''Returns the linked item.  Annexes are located in the item...'''
+        return self.aq_inner.aq_parent
 
     security.declareProtected(View, 'index_html')
     def index_html(self, REQUEST=None, RESPONSE=None):
@@ -210,9 +202,13 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
 
     security.declarePublic('isDecisionRelated')
     def isDecisionRelated(self):
-        if self.reference_catalog.getBackReferences(self, 'ItemAnnexes'):
-            return False
-        else: return True
+        '''
+          Check that the corresponding MeetingFileType is decision related or not...
+        '''
+        mft = self.getMeetingFileType()
+        if mft and mft.getDecisionRelated() == True:
+            return True
+        else: return False
 
     security.declarePublic('getAnnexInfo')
     def getAnnexInfo(self):
@@ -356,6 +352,29 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                 os.remove(resultFileName)
         return extractedText
 
+    security.declarePrivate('_updateAnnexMeetingFileType')
+    def _updateMeetingFileType(self, meetingConfig):
+        '''
+          Update the linked MeetingFileType of the annex while an item is sent from
+          a MeetingConfig to another : find a corresponding MeetingFileType in the new MeetingConfig :
+          - either we have a corresponding MeetingFileType (same id)
+          - or if we can not get a corresponding MeetingFileType, we use the default one (the first found).
+          Returns True if the meetingFileType was actually updated
+        '''
+        decisionRelated = self.isDecisionRelated()
+        existingFileTypesUids = [ft.UID() for ft in meetingConfig.meetingfiletypes.getFileTypes(decisionRelated=decisionRelated, onlyActive=False)]
+        existingFileTypesIds = [ft.getId() for ft in meetingConfig.meetingfiletypes.getFileTypes(decisionRelated=decisionRelated)]
+        mft = self.getMeetingFileType()
+        if not mft or not mft.UID() in existingFileTypesUids:
+            # get the corresponding meetingFileType in the current meetingConfig
+            # or use the default meetingFileType
+            if mft and mft.id in existingFileTypesIds:
+                # a corresponding meetingFileType has been found, use it
+                correspondingFileType = getattr(meetingConfig.meetingfiletypes, mft.id)
+            else:
+                correspondingFileType = getattr(meetingConfig.meetingfiletypes, existingFileTypesIds[0])
+            self.setMeetingFileType(correspondingFileType)
+            return True
 
 
 registerType(MeetingFile, PROJECTNAME)

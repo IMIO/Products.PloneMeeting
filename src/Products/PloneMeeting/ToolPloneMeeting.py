@@ -1529,6 +1529,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     newAnnexes = []
                     for annex in oldAnnexes:
                         newAnnex = getattr(newItem, annex.id)
+                        # In case the item is copied from another MeetingConfig, we need
+                        # to update every annex.meetingFileType because it still refers
+                        # the meetingFileType in the old MeetingConfig the item is copied from
+                        if newPortalType:
+                            newAnnex._updateMeetingFileType(meetingConfig)
                         newAnnexes.append(newAnnex)
                     exec 'newItem.set%s(newAnnexes)' % annexType
             # The copy/paste has transferred history. We must clean the history

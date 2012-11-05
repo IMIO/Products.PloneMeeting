@@ -26,6 +26,31 @@ class Migrate_To_3_0(Migrator):
             patched += 1
         logger.info('Done (%d file(s) patched).' % patched)
 
+    def _correctAnnexesMeetingFileTypes(self):
+        '''While an item was cloned to another MeetingConfig, the annexes where copied too
+           but the reference to the MeetingFileType was kept and so refering the other MeetingConfig
+           where the MeetingFileTypes are stored...
+           Scan every items and make sure the annex is defined in the correct MeetingConfig, aka the
+           current MeetingConfig the annex is relying on.
+           If an annexType does not exist in the new MeetingConfig, the default annexType (the
+           first found) is used.'''
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            itemTypeName = cfg.getItemTypeName()
+            brains = self.portal.portal_catalog(portal_type=itemTypeName)
+            logger.info('Updating every annexes for %s %s objects...' % (len(brains), itemTypeName))
+            updated = 0
+            for brain in brains:
+                changed = False
+                item = brain.getObject()
+                for annex in (item.getAnnexes() + item.getAnnexesDecision()):
+                    annexUpdated = annex._updateMeetingFileType(cfg)
+                    if annexUpdated:
+                        changed = True
+                if changed:
+                    item.updateAnnexIndex()
+                    updated += 1
+            logger.info('Done (%d %s updated).' % (updated, itemTypeName))
+
     def _migrateMeetingFilesToBlobs(self):
         '''Migrate MeetingFiles to Blobs.'''
         # Call an helper method of plone.app.blob that does "inplace" migration
@@ -83,6 +108,7 @@ class Migrate_To_3_0(Migrator):
                                  u'profile-plonetheme.imioapps:default',
                                  u'profile-plonetheme.imioapps:plonemeetingskin',])
         self._patchFileSecurity()
+        self._correctAnnexesMeetingFileTypes()
         self._migrateMeetingFilesToBlobs()
         self._updateAdvices()
         self.finish()
