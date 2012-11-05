@@ -6,10 +6,6 @@
       metal:use-macro="here/main_template/macros/master"
       i18n:domain="PloneMeeting">
 
-  <div metal:fill-slot="top_slot">
-    <tal:disable define="dummy python:request.set('disable_border', 1)"/>
-  </div>
-
   <metal:title fill-slot="content-title">
   <tal:comment replace="nothing">Title, with number of items</tal:comment>
   <h1 class="documentFirstHeading">
@@ -23,14 +19,9 @@
     <span class="discreet">(<span tal:replace="python: context.getItemsCount()"></span>
       <span i18n:translate="">items_count</span>)
     </span>
-    <tal:comment replace="nothing">Edit the meeting</tal:comment>
-    <a tal:define="member context/@@plone_portal_state/member"
-       tal:condition="python: member.has_permission('Modify portal content', context)"
-       tal:attributes="href python: here.absolute_url() + '/edit'">
-      <img src="edit.gif" title="Edit" i18n:attributes="title" />
-    </a>
     <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
-  </h1>  </metal:title>
+  </h1>
+  </metal:title>
   <metal:description fill-slot="content-description">
    <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>
   </metal:description>
