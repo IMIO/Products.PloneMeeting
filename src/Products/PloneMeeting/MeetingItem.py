@@ -10,8 +10,7 @@
 #
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<gbastien@commune.sambreville.be>, Stephan GEULETTE
-<stephan.geulette@uvcw.be>"""
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
@@ -1257,6 +1256,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = meetingConfig.getToDiscussDefault()
         return res
 
+    security.declarePublic('getMeeting')
+    def getMeeting(self, brain=False):
+        '''Returns the linked meeting if it exists.'''
+        # getBRefs returns linked *objects* through a relationship defined in
+        # a ReferenceField, while reference_catalog.getBackReferences returns
+        # *brains*.
+        if brain: # Faster
+            res = self.reference_catalog.getBackReferences(self, 'MeetingItems')
+        else:
+            res = self.getBRefs('MeetingItems')
+        if res:
+            res = res[0]
+        else:
+            if brain:
+                res = self.reference_catalog.getBackReferences(
+                    self, 'MeetingLateItems')
+            else:
+                res = self.getBRefs('MeetingLateItems')
+            if res:
+                res = res[0]
+            else:
+                res = None
+        return res
+
     security.declarePublic('getMeetingsAcceptingItems')
     def getMeetingsAcceptingItems(self):
         '''Check docstring in interfaces.py.'''
@@ -1489,30 +1512,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             ("public", translate('ip_public', domain=d, context=self.REQUEST)),
             ("secret", translate('ip_secret', domain=d, context=self.REQUEST)),
         ))
-        return res
-
-    security.declarePublic('getMeeting')
-    def getMeeting(self, brain=False):
-        '''Returns the linked meeting if it exists.'''
-        # getBRefs returns linked *objects* through a relationship defined in
-        # a ReferenceField, while reference_catalog.getBackReferences returns
-        # *brains*.
-        if brain: # Faster
-            res = self.reference_catalog.getBackReferences(self, 'MeetingItems')
-        else:
-            res = self.getBRefs('MeetingItems')
-        if res:
-            res = res[0]
-        else:
-            if brain:
-                res = self.reference_catalog.getBackReferences(
-                    self, 'MeetingLateItems')
-            else:
-                res = self.getBRefs('MeetingLateItems')
-            if res:
-                res = res[0]
-            else:
-                res = None
         return res
 
     security.declarePublic('hasMeeting')

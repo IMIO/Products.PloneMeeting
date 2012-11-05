@@ -10,8 +10,7 @@
 #
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<gbastien@commune.sambreville.be>, Stephan GEULETTE
-<stephan.geulette@uvcw.be>"""
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
@@ -669,6 +668,60 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.createMeetingConfigFolder(meetingConfigId, userId)
         return getattr(root_folder, meetingConfigId)
 
+    security.declarePublic('createMeetingConfig')
+    def createMeetingConfig(self, configData, source):
+        '''Creates a new meeting configuration from p_configData which is a
+           MeetingConfigDescriptor instance. If p_source is a string, it
+           corresponds to the absolute path of a profile; additional (binary)
+           data like images or templates that need to be attached to some
+           sub-objects of the meeting config will be searched there. If not, it
+           corresponds to an ExternalApplication instance; additional data has
+           been already gathered (in memory, as FileWrapper instances) from
+           another Plone site which is was used as base for copying a meeting
+           configuration in this site.'''
+        cData = configData.getData()
+        self.invokeFactory('MeetingConfig', **cData)
+        cfg = getattr(self, configData.id)
+        # TextArea fields are not set properly.
+        for field in cfg.Schema().fields():
+            fieldName = field.getName()
+            widgetName = field.widget.getName()
+            if (widgetName == 'TextAreaWidget') and fieldName in cData:
+                field.set(cfg, cData[fieldName], mimetype='text/html')
+
+        # Validates meeting config (validation seems not to be triggered
+        # automatically when an object is created from code).
+        errors = cfg.schema.validate(cfg)
+        if errors:
+            raise PloneMeetingError(MEETING_CONFIG_ERROR % cfg.getId(), errors)
+        cfg._at_creation_flag = False # It seems that this flag,
+        # internal to Archetypes, is not set when the meeting config is
+        # created from code, not through-the-web. So we force it here.
+        # This way, once we will update the meeting config through-the-web,
+        # at_post_create_script will not be called again, but
+        # at_post_edit_script instead.
+        cfg.at_post_create_script()
+        # when the object is created through-the-web.
+        if not configData.active:
+            self.portal_workflow.doActionFor(cfg, 'deactivate')
+        # Adds the sub-objects within the config: categories, classifiers,...
+        for descr in configData.categories: cfg.addCategory(descr, False)
+        for descr in configData.classifiers: cfg.addCategory(descr, True)
+        for descr in configData.recurringItems: cfg.addRecurringItem(descr)
+        for descr in configData.meetingFileTypes: cfg.addFileType(descr, source)
+        for descr in configData.podTemplates: cfg.addPodTemplate(descr, source)
+        for mud in configData.meetingUsers:
+            mu = cfg.addMeetingUser(mud, source)
+            # Plone bug - index "usages" is not correctly initialized.
+            oldUsages = mu.getUsages()
+            mu.setUsages(())
+            mu.reindexObject()
+            mu.setUsages(oldUsages)
+            mu.reindexObject()
+        # Perform workflow adaptations on this meetingConfig
+        performWorkflowAdaptations(self.getParentNode(), cfg, logger)
+        return cfg
+
     security.declarePublic('createMeetingConfigFolder')
     def createMeetingConfigFolder(self, meetingConfigId, userId):
         '''Creates, within the "My meetings" folder, the sub-folder
@@ -745,60 +798,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             except AttributeError:
                 res = None
         return res
-
-    security.declarePublic('createMeetingConfig')
-    def createMeetingConfig(self, configData, source):
-        '''Creates a new meeting configuration from p_configData which is a
-           MeetingConfigDescriptor instance. If p_source is a string, it
-           corresponds to the absolute path of a profile; additional (binary)
-           data like images or templates that need to be attached to some
-           sub-objects of the meeting config will be searched there. If not, it
-           corresponds to an ExternalApplication instance; additional data has
-           been already gathered (in memory, as FileWrapper instances) from
-           another Plone site which is was used as base for copying a meeting
-           configuration in this site.'''
-        cData = configData.getData()
-        self.invokeFactory('MeetingConfig', **cData)
-        cfg = getattr(self, configData.id)
-        # TextArea fields are not set properly.
-        for field in cfg.Schema().fields():
-            fieldName = field.getName()
-            widgetName = field.widget.getName()
-            if (widgetName == 'TextAreaWidget') and fieldName in cData:
-                field.set(cfg, cData[fieldName], mimetype='text/html')
-
-        # Validates meeting config (validation seems not to be triggered
-        # automatically when an object is created from code).
-        errors = cfg.schema.validate(cfg)
-        if errors:
-            raise PloneMeetingError(MEETING_CONFIG_ERROR % cfg.getId(), errors)
-        cfg._at_creation_flag = False # It seems that this flag,
-        # internal to Archetypes, is not set when the meeting config is
-        # created from code, not through-the-web. So we force it here.
-        # This way, once we will update the meeting config through-the-web,
-        # at_post_create_script will not be called again, but
-        # at_post_edit_script instead.
-        cfg.at_post_create_script()
-        # when the object is created through-the-web.
-        if not configData.active:
-            self.portal_workflow.doActionFor(cfg, 'deactivate')
-        # Adds the sub-objects within the config: categories, classifiers,...
-        for descr in configData.categories: cfg.addCategory(descr, False)
-        for descr in configData.classifiers: cfg.addCategory(descr, True)
-        for descr in configData.recurringItems: cfg.addRecurringItem(descr)
-        for descr in configData.meetingFileTypes: cfg.addFileType(descr, source)
-        for descr in configData.podTemplates: cfg.addPodTemplate(descr, source)
-        for mud in configData.meetingUsers:
-            mu = cfg.addMeetingUser(mud, source)
-            # Plone bug - index "usages" is not correctly initialized.
-            oldUsages = mu.getUsages()
-            mu.setUsages(())
-            mu.reindexObject()
-            mu.setUsages(oldUsages)
-            mu.reindexObject()
-        # Perform workflow adaptations on this meetingConfig
-        performWorkflowAdaptations(self.getParentNode(), cfg, logger)
-        return cfg
 
     security.declarePublic('getDefaultMeetingConfig')
     def getDefaultMeetingConfig(self):
