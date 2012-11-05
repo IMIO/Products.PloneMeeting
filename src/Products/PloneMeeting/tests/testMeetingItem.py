@@ -279,14 +279,12 @@ class testMeetingItem(PloneMeetingTestCase):
         # let's activate the functionnality
         self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
         self.meetingConfig.at_post_edit_script()
-        #an action and an actionicon are created
+        #an action is created
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
-        self.failUnless(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
         #actions and actionicons are removed if we deactivate the functionnality
         self.meetingConfig.setMeetingConfigsToCloneTo(())
         self.meetingConfig.at_post_edit_script()
         self.failIf(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
-        self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
 
         #activate it and test now
         self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
