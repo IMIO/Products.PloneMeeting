@@ -292,11 +292,9 @@
 <div metal:define-macro="hsWelcome" i18n:domain="PloneMeeting" tal:define="frontPage python: getattr(context, 'front-page', None)">
   <tal:comment replace="nothing">Try to get a document called plonemeeting-welcome at the root of the site, either display a default message</tal:comment>
   <tal:hasFrontPageDocument condition="frontPage">
-    <h1 class="documentFirstHeading" tal:content="frontPage/Title">Welcome title</h1>
     <p tal:replace="structure frontPage/getText">Welcome text</p>
   </tal:hasFrontPageDocument>
   <tal:noFrontPageDocument condition="not: frontPage">
-    <h1 class="documentFirstHeading" i18n:translate="">hs_welcome_title</h1>
     <p><span i18n:translate="">hs_welcome_body</span></p>
   </tal:noFrontPageDocument>
 </div>

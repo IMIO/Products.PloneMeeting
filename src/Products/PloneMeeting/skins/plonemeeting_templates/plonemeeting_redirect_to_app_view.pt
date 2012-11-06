@@ -5,11 +5,11 @@
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       xmlns:i18n="http://xml.zope.org/namespaces/i18n"
       metal:use-macro="here/main_template/macros/master"
-      i18n:domain="plone">
+      i18n:domain="PloneMeeting">
 
   <body>
-  <metal:title fill-slot="content-title">
-   <tal:comment replace="nothing">Just hide the title as shown by default by Plone</tal:comment>
+  <metal:title fill-slot="content-title" tal:define="frontPage python: getattr(context, 'front-page', None)">
+    <h1 class="documentFirstHeading" tal:content="frontPage/Title" tal:on-error="python: context.utranslate('hs_welcome_title', domain='PloneMeeting')">Welcome title</h1>
   </metal:title>
   <metal:description fill-slot="content-description">
    <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>
