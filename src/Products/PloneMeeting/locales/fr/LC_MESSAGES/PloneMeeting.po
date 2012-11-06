@@ -1990,6 +1990,14 @@ msgstr "Sur le workflow gouvernant les points, une série d'expressions booléen
 msgid "item_did_not_move"
 msgstr "Aucun déplacement n'a eu lieu parce que vous avez spécifié le numéro du point ou un de plus. Si vous spécifiez un certain numéro X, le point ira se positionner avant l'ancien point ayant le numéro X et les autres seront décalés. Si vous voulez déplacer le point à la fin de la liste des points, vous devez spécifier un de plus que le numéro du dernier point. Notez que, dans le cas où deux listes de points apparaissent, vous ne pouvez pas déplacer un point d'une liste à l'autre."
 
+#. Default: "The item has been duplicated: you currently see the duplicated item."
+msgid "item_duplicated"
+msgstr "Point dupliqué : vous voyez actuellement le nouveau point."
+
+#. Default: "The item has been duplicated and a link to the original item has been kept: you currently see the duplicated item."
+msgid "item_duplicated_and_link_kept"
+msgstr "Point dupliqué et lien vers le point original gardé : vous voyez actuellement le nouveau point."
+
 #. Default: "You can't make this move. If you specify a number X, the item will go just before the previous item having number X, and the other items will be shifted. If you want to move an item at the end of the list, you must specify the number of the last item plus one. Note that when two items lists are shown, you can't move items from one list to the other."
 msgid "item_illegal_move"
 msgstr "Vous ne pouvez effectuer ce déplacement. Si vous spécifiez un certain numéro X, le point ira se positionner avant l'ancien point ayant le numéro X et les autres seront décalés. Si vous voulez déplacer le point à la fin de la liste des points, vous devez spécifier un de plus que le numéro du dernier point. Notez que, dans le cas où deux listes de points apparaissent, vous ne pouvez pas déplacer un point d'une liste à l'autre."

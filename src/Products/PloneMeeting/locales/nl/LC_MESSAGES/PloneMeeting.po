@@ -1993,6 +1993,14 @@ msgstr "On the item workflow, some boolean expressions guard the execution of th
 msgid "item_did_not_move"
 msgstr "No move occurred because you specified the item number or this number plus one. If you specify a number X, the item will go just before the previous item having number X, and the other items will be shifted. If you want to move an item at the end of the list, you must specify the number of the last item plus one. Note that when two items lists are shown, you can't move items from one list to the other."
 
+#. Default: "The item has been duplicated: you currently see the duplicated item."
+msgid "item_duplicated"
+msgstr ""
+
+#. Default: "The item has been duplicated and a link to the original item has been kept: you currently see the duplicated item."
+msgid "item_duplicated_and_link_kept"
+msgstr ""
+
 #. Default: "You can't make this move. If you specify a number X, the item will go just before the previous item having number X, and the other items will be shifted. If you want to move an item at the end of the list, you must specify the number of the last item plus one. Note that when two items lists are shown, you can't move items from one list to the other."
 msgid "item_illegal_move"
 msgstr "You can't make this move. If you specify a number X, the item will go just before the previous item having number X, and the other items will be shifted. If you want to move an item at the end of the list, you must specify the number of the last item plus one. Note that when two items lists are shown, you can't move items from one list to the other."

@@ -3637,3 +3637,11 @@ msgstr ""
 #. Default: "Choose an element in the list"
 msgid "label_choose_element_in_list"
 msgstr ""
+
+#. Default: "The item has been duplicated: you currently see the duplicated item."
+msgid "item_duplicated"
+msgstr ""
+
+#. Default: "The item has been duplicated and a link to the original item has been kept: you currently see the duplicated item."
+msgid "item_duplicated_and_link_kept"
+msgstr ""
