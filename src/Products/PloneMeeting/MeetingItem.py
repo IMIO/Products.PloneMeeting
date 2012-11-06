@@ -543,10 +543,10 @@ schema = Schema((
             condition="python: here.attributeIsUsed('classifier')",
             allow_search=True,
             allow_browse=True,
-            startup_directory="getCategoriesFolder",
+            startup_directory_method="classifierStartupDirectory",
             force_close_on_insert=True,
-            macro="classifier_referencebrowser",
-            helper_js=('classifier_referencebrowser.js',),
+            restrict_browsing_to_startup_directory=True,
+            base_query="classifierBaseQuery",
             label='Classifier',
             label_msgid='PloneMeeting_label_classifier',
             i18n_domain='PloneMeeting',
@@ -1025,6 +1025,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if signatory and signatory in absents:
                     return translate('signatories_absents_mismatch',
                                      domain='PloneMeeting', context=self.REQUEST)
+
+    def classifierStartupDirectory(self):
+        '''Returns the startup_directory for the classifier referencebrowserwidget.'''
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        return self.portal_url.getRelativeContentURL(cfg.classifiers)
+
+    security.declarePublic('classifierBaseQuery')
+    def classifierBaseQuery(self):
+        '''base_query for the 'classifier' field.
+           Here, we restrict the widget to search in the MeetingConfig's classifiers directory only.'''
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        dict = {}
+        dict['path'] = {'query':'/'.join(cfg.getPhysicalPath() + ('classifiers',))}
+        return dict
 
     security.declarePublic('getDefaultBudgetInfo')
     def getDefaultBudgetInfo(self):

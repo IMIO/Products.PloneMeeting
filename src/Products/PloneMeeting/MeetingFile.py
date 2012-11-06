@@ -352,7 +352,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                 os.remove(resultFileName)
         return extractedText
 
-    security.declarePrivate('_updateAnnexMeetingFileType')
     def _updateMeetingFileType(self, meetingConfig):
         '''
           Update the linked MeetingFileType of the annex while an item is sent from
@@ -375,6 +374,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                 correspondingFileType = getattr(meetingConfig.meetingfiletypes, existingFileTypesIds[0])
             self.setMeetingFileType(correspondingFileType)
             return True
+
 
 
 registerType(MeetingFile, PROJECTNAME)
