@@ -508,6 +508,11 @@ cursor:pointer;
     color: &dtml-discreetColor;;
 }
 
+.itemAdvicesCell {
+    padding-left: 0.3em;
+    vertical-align: top;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

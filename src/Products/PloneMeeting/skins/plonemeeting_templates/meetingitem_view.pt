@@ -299,11 +299,11 @@
                        hasAnnexesDecision python: context.hasAnnexesWhere(decisionRelated=True);
                        hasAdvices python: meetingConfig.getUseAdvices() and context.needsAdvices()" valign="top"
            tal:condition="python: hasAnnexes or hasAnnexesDecision or hasAdvices">
-     <tr >
-      <td width="50%" tal:condition="python: hasAnnexes or hasAnnexesDecision">
-       <fieldset>
+     <tr>
+      <td class="itemAnnexesCell" width="50%" tal:condition="python: hasAnnexes or hasAnnexesDecision">
+       <fieldset style="margin: 0;">
         <legend i18n:translate="existing_annexes">Annexes</legend>
-        <table cellpadding="0" cellspacing="0">
+        <table class="no-style-table" cellpadding="0" cellspacing="0">
          <tr>
            <td><metal:annexes use-macro="here/annexes_macros/macros/annexesIcons"/></td>
            <td tal:define="decisionRelated python:True"
@@ -314,18 +314,18 @@
         </table>
        </fieldset>
       </td>
-      <td width="50%" tal:condition="python: not (hasAnnexes or hasAnnexesDecision) and hasAdvices">
+      <td class="itemAdvicesAloneCell" width="50%" tal:condition="python: not (hasAnnexes or hasAnnexesDecision) and hasAdvices">
        <tal:comment replace="nothing">
          Display an empty panel of annexes. Else, advices popup menus will go out of the screen.
        </tal:comment>
-       <fieldset>
+       <fieldset style="margin: 0;">
         <legend i18n:translate="existing_annexes">Annexes</legend>
         <div i18n:translate="no_annexes" class="discreet">No annexes</div>
        </fieldset>
       </td>
       <tal:comment replace="nothing">Advices</tal:comment>
-      <td width="50%" tal:condition="hasAdvices">
-       <fieldset>
+      <td class="itemAdvicesCell" width="50%" tal:condition="hasAdvices">
+       <fieldset style="margin: 0;" >
         <legend i18n:translate="advices">Advices</legend>
         <metal:advices use-macro="here/advices_macros/macros/advicesIcons"/>
        </fieldset>
