@@ -58,7 +58,7 @@
 </div>
 
 <tal:comment replace="nothing">Macro that shows the navigation controls on meetingitem_view</tal:comment>
-<metal:itemnav define-macro="item" i18n:domain="PloneMeeting" tal:condition="mayView"
+<div class="navigateItem" metal:define-macro="item" i18n:domain="PloneMeeting" tal:condition="mayView"
                tal:define="meeting context/getMeeting;
                            mayView python: context.portal_plonemeeting.checkMayView(meeting);
                            itemNumber python: context.getItemNumber(relativeTo='meeting');
@@ -125,7 +125,7 @@
   <span class="discreet" tal:condition="python: lastItemUid!=False">&nbsp;&nbsp;<span i18n:translate="">goto_item</span>&nbsp;&nbsp;<input type="text" size="1"/><img
       tal:attributes="src string: $portal_url/gotoItem.png;
                       onClick python: 'gotoItem(this.previousSibling, %d, \'%s\')' % (meeting.numberOfItems() + meeting.numberOfItems(True), meeting.UID())" style="cursor:pointer"/></span>
-</metal:itemnav>
+</div>
 
 <tal:comment replace="nothing">
     Macro that shows the navigation within query results (topic or advanced search)

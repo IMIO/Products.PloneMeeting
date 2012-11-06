@@ -83,6 +83,14 @@ table.no-style-table td {
 .itemsNavigation {margin-bottom: 0.3em; margin-top: 0.3em; }
 #archetypes-fieldname-title2 input { font-size: 160%; width:99%;}
 
+.navigateItem {
+    text-align: center;
+}
+
+.navigateItem img {
+    vertical-align: baseline;
+}
+
 .pm_workflowstate {
 float: right;
 margin-top: -1.9em;

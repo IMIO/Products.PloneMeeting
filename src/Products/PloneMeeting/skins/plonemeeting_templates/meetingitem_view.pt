@@ -108,9 +108,9 @@
     </form>
 
     <tal:comment replace="nothing">Show navigation between items of the same meeting</tal:comment>
-    <div align="center" tal:condition="python: meeting">
-      <metal:itemNavigation use-macro="context/hs_navigate/macros/item"/>
-    </div>
+    <tal:itemNavigation tal:condition="python: meeting">
+      <metal:itemNavigation  use-macro="context/hs_navigate/macros/item"/>
+    </tal:itemNavigation>
 
     <table width="100%">
       <tr valign="top">
