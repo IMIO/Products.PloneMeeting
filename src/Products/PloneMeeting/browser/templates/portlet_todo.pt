@@ -11,9 +11,9 @@
          <dd class="portletSection">
          <strong><span i18n:translate="" tal:content="python: topic.Title() or topic.getId()">Topic title</span></strong>
         </dd>
-        <dt class="portletCell" tal:condition="not: brains">
+        <dd class="portletCell" tal:condition="not: brains">
          <span class="discreet" i18n:translate="nothing_to_do">Nothing to do</span>
-        </dt>
+        </dd>
         <tal:loop repeat="brain brains">
         <dd class="portletCell" tal:condition="brains"
                                 tal:define="oddrow repeat/brain/odd"
@@ -23,7 +23,7 @@
            </acronym>
         </dd>
         </tal:loop>
-        <dd tal:condition="brains" class="portletCell"><div align="right"><a href="#" tal:attributes="href topic_url" i18n:translate="see_everything">See everything...</a></div></dd>
+        <dd tal:condition="brains" class="portletCell"><a class="todoSeeAll" style="text-align: right;" href="#" tal:attributes="href topic_url" i18n:translate="see_everything">See everything...</a></dd>
        </tal:block>
     </tal:block>
 </dl>
