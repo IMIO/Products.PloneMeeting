@@ -440,6 +440,12 @@ padding-top: 0.2em;
 padding-bottom: 0.2em;
 }
 
+.todoSeeAll {
+display: block;
+text-align: right;
+font-size: 95%;
+}
+
 .pod_template_icon_odt {
 background: transparent url(&dtml-portal_url;/odt.png) no-repeat scroll 0 3px;
 padding: 3px 0px 2px 20px;
