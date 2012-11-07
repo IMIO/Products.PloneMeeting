@@ -127,7 +127,7 @@
     <tr tal:condition="python: nbOfMeetings > maxShownMeetings">
      <td class="portletCell">
       <form name="gotoMeetingForm">
-        <select name="selectMeeting" onChange="location.href=gotoMeetingForm.selectMeeting.options[selectedIndex].value">
+        <select style="width: 90%" name="selectMeeting" onChange="location.href=gotoMeetingForm.selectMeeting.options[selectedIndex].value">
           <option i18n:translate="make_a_choice"
                   tal:attributes="value python:meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=searchallmeetings'"></option>
           <option tal:repeat="meetingBrain meetingBrains"
