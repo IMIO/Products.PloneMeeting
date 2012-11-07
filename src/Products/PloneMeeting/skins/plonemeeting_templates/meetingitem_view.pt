@@ -115,21 +115,21 @@
     <table width="100%">
       <tr valign="top">
         <td width="50%">
+
         <tal:comment replace="nothing">Classifier</tal:comment>
-        <table class="discreet" tal:condition="python: 'classifier' in usedAttrs"
-               cellpadding="0" cellspacing="0">
-          <tr valign="top">
-            <td><i><span i18n:translate="PloneMeeting_label_classifier"></span></i>&nbsp;:&nbsp;&nbsp;</td>
-            <td tal:condition="context/getClassifier" tal:content="python: context.getClassifier().Title()"></td>
-            <td tal:condition="not: context/getClassifier">-</td>
-          </tr>
-        </table>
+        <div class="discreet"
+             tal:condition="python: 'classifier' in usedAttrs"
+             tal:define="classifier context/getClassifier">
+          <i><span i18n:translate="PloneMeeting_label_classifier"></span></i>:&nbsp;&nbsp;
+             <span tal:condition="classifier" tal:content="classifier/Title">-</span>
+             <span tal:condition="not: classifier">-</span>
+        </div>
+
 
         <tal:comment replace="nothing">Category or proposing group (if group is used as category)</tal:comment>
         <div class="discreet" tal:define="cat python: context.getCategory(True)" tal:condition="python: cat">
           <i><span tal:condition="not: meetingConfig/getUseGroupsAsCategories"
-                   i18n:translate="MeetingCategory"></span>
-             <span tal:condition="meetingConfig/getUseGroupsAsCategories"
+                   i18n:translate="MeetingCategory"></span><span tal:condition="meetingConfig/getUseGroupsAsCategories"
                    i18n:translate="PloneMeeting_label_proposingGroup"></span></i>:&nbsp;&nbsp;
              <span tal:content="python: cat.getName()"></span>
         </div>
