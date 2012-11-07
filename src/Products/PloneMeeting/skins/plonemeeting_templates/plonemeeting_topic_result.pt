@@ -121,7 +121,7 @@
           tal:attributes="width python:meetingConfig.getAdvicesIconsWidth()"></th>
 
       <tal:comment replace="nothing">Related meeting</tal:comment>
-      <th class="pm_listing_th_relatedMeeting" tal:condition="showRelatedMeeting" i18n:translate="Meeting"></th>
+      <th class="pm_listing_th_relatedMeeting" tal:condition="showRelatedMeeting" i18n:domain="plone" i18n:translate="Meeting"></th>
 
       <tal:comment replace="nothing">Preferred meeting</tal:comment>
       <th class="pm_listing_th_preferredMeeting" tal:condition="showPrefMeeting" i18n:translate="PloneMeeting_label_preferredMeeting"></th>
