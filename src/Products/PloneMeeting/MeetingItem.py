@@ -1395,8 +1395,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.isPrivacyViewable():
             raise Unauthorized
 
-    security.declarePublic('getExtraFieldsToCopyWhenCloningToOtherMC')
-    def getExtraFieldsToCopyWhenCloningToOtherMC(self):
+    security.declarePublic('getExtraFieldsToCopyWhenCloning')
+    def getExtraFieldsToCopyWhenCloning(self):
         '''Check doc in interfaces.py.'''
         return []
 
@@ -2760,6 +2760,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Copy/paste item into the folder
         sourceFolder = self.getParentNode()
         copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
+        # Check if an external plugin want to add some fieldsToCopy
+        copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning()
         res = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
                               newOwnerId=newOwnerId, copyFields=copyFields,
                               newPortalType=newPortalType)[0]
@@ -2818,8 +2820,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Copy also budget related fields if used in the destMeetingConfig
         if 'budgetInfos' in destMeetingConfig.getUsedItemAttributes():
             fieldsToCopy = fieldsToCopy + ['budgetRelated', 'budgetInfos']
-        # Check if an external plugin want to add some fieldsToCopy
-        fieldsToCopy = fieldsToCopy + self.adapted().getExtraFieldsToCopyWhenCloningToOtherMC()
         newItem = self.clone(copyAnnexes=True, newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
