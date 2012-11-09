@@ -23,7 +23,6 @@
            </acronym>
         </dd>
         </tal:loop>
-        <dd class="portletCell"></dd>
        </tal:block>
     </tal:block>
 </dl>
