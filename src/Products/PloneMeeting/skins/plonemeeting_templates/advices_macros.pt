@@ -7,7 +7,9 @@
                  advicesToAdd python: adviceInfo[0];
                  advicesToEdit python: adviceInfo[1]">
 
-  <table class="contentActionsAX no-style-table" cellpadding="0" cellspacing="0"
+  <table width="#"
+         class="contentActionsAX no-style-table" cellpadding="0" cellspacing="0"
+         tal:attributes="width python: 10 + (advicesToAdd and 1 or 0) * 15 + len(advicesByType) * 26"
          tal:condition="advicesByType">
     <tr>
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>

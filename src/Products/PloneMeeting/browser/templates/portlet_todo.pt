@@ -9,7 +9,7 @@
        <tal:block define="brains python: view.getBrainsForPortletTodo(topic);
         topic_url python: meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=%s' % topic.getId()">
          <dd class="portletSection">
-         <strong><span i18n:translate="" tal:content="python: topic.Title() or topic.getId()">Topic title</span></strong>
+         <strong><span i18n:translate="" tal:content="python: topic.Title() or topic.getId()">Topic title</span><span tal:condition="brains">&nbsp;<a href="#" style="display: inline;" tal:attributes="href topic_url" title="see_everything" i18n:attributes="title"><img src="see_everything.png" /></a></span></strong>
         </dd>
         <dd class="portletCell" tal:condition="not: brains">
          <span class="discreet" i18n:translate="nothing_to_do">Nothing to do</span>
@@ -23,7 +23,7 @@
            </acronym>
         </dd>
         </tal:loop>
-        <dd tal:condition="brains" class="portletCell"><a class="todoSeeAll" style="text-align: right;" href="#" tal:attributes="href topic_url" i18n:translate="see_everything">See everything...</a></dd>
+        <dd class="portletCell"></dd>
        </tal:block>
     </tal:block>
 </dl>
