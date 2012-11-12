@@ -12,6 +12,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Use communesplone.iconified_document_actions
 - Display action icon on action buttons (do not use portal_actionicons anymore)
 - Advices are now askable when the item is in his initial workflow state
+- Display the elements history in the default Plone4 popup
 
 2.1.4dev
 --------
