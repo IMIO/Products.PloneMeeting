@@ -27,7 +27,7 @@ if context.cb_dataValid:
         raise
     except ValueError, error:
         msg = _(error) or _(u'Disallowed to paste item(s).')
-    except (Unauthorized, 'Unauthorized'):
+    except Unauthorized:
         msg=_(u'Unauthorized to paste item(s).')
     except: # fallback
         msg=_(u'Paste could not find clipboard content.')

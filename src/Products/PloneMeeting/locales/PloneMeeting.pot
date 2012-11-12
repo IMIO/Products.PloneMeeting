@@ -3645,3 +3645,7 @@ msgstr ""
 #. Default: "The item has been duplicated and a link to the original item has been kept: you currently see the duplicated item."
 msgid "item_duplicated_and_link_kept"
 msgstr ""
+
+#. Default: "Select in the list the type of item you want to add"
+msgid "Select an item to add"
+msgstr ""

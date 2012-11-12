@@ -1438,9 +1438,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         meetingConfig = self.getMeetingConfig(destFolder)
         itemTypeName = meetingConfig.getItemTypeName()
         for itemPath in itemPaths:
-            item = self.restrictedTraverse('/'.join(itemPath))
+            # we use unrestrictedTraverse because the item's parent (folder) could
+            # not be readable but the item well...
+            item = self.unrestrictedTraverse('/'.join(itemPath))
             if not item.portal_type == itemTypeName:
-                raise ValueError, 'cannot_paste_item_from_other_mc'
+                raise ValueError("cannot_paste_item_from_other_mc")
         if applyPaste:
             self.pasteItems(destFolder, copiedData, copyAnnexes,
                                       newOwnerId, copyFields)

@@ -26,19 +26,22 @@ function hidePloneMeetingSelectBox(selectName, idImage, msg, value, predefined_t
   btnText.innerHTML = msg;
 
   // Display
-  btnImage.src = newImage.src;
+  if (newImage!=null) {btnImage.src = newImage.src;};
   document.getElementById(ploneMeetingSelectBoxes[selectName]["hidden"]).value = value;
-  document.annexForm.annex_title.value = predefined_title
+  annex_title = document.getElementById("annex_title");
+  if (annex_title) {
+   annex_title.value = predefined_title;
+  }
 }
 
 function ploneMeetingSelectOnMouseOverItem(obj) {
-  // Set the "selected" style
-  obj.className = "ploneMeetingSelectItem ploneMeetingSelectItemUnselected";
+  // Set the "selected" style, without touching other possibily existing classes
+  obj.className = obj.className.replace("ploneMeetingSelectItem",  "ploneMeetingSelectItem ploneMeetingSelectItemUnselected");
 }
 
 function ploneMeetingSelectOnMouseOutItem(obj) {
-  // Set the default style (unselected)
-  obj.className = "ploneMeetingSelectItem";
+  // Set the default style (unselected), without touching other possibily existing classes
+  obj.className = obj.className.replace("ploneMeetingSelectItem ploneMeetingSelectItemUnselected", "ploneMeetingSelectItem");
 }
 
 function getEnclosingForm(elem) {

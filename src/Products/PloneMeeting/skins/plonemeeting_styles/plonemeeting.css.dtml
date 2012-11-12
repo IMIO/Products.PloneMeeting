@@ -467,7 +467,6 @@ padding: 3px 0px 2px 20px;
 }
 
 .input_disabled {
-background: url("&dtml-portal_url;/linkOpaqueDisabled.gif") no-repeat scroll 9px 1px white !important;
 color: grey !important;
 border-color: lightgrey !important;
 cursor: not-allowed !important;

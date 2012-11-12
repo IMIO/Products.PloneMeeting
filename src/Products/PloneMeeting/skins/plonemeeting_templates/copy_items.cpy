@@ -23,9 +23,9 @@ if not mtool.checkPermission('Copy or Move', context):
             mapping={u'title' : context.title_or_id()})
     raise Unauthorized, msg
 
-parent = context.aq_inner.aq_parent
+parent = context.getParentNode()
 try:
-    parent.manage_copyObjects(context.getId(), REQUEST)
+    parent.manage_copyObjects(context.getId(), REQUEST=None)
 except CopyError:
     message = _(u'${title} is not copyable.',
                 mapping={u'title' : context.title_or_id()})
@@ -33,7 +33,7 @@ except CopyError:
     return state.set(status = 'failure')
 
 message = _(u'${title} copied.',
-            mapping={u'title' : context.title_or_id()})
+            mapping={u'title' : unicode(context.Title(), 'utf-8')})
 transaction_note('Copied object %s' % context.absolute_url())
 
 context.plone_utils.addPortalMessage(message)

@@ -932,6 +932,10 @@ msgstr "Document templates"
 msgid "RecurringItems"
 msgstr "Predefined items"
 
+#. Default: "Select in the list the type of item you want to add"
+msgid "Select an item to add"
+msgstr ""
+
 #. Default: "state"
 msgid "State"
 msgstr "State"

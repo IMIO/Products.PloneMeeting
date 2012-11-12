@@ -88,7 +88,6 @@ msgid "Number of items to display"
 msgstr "Nombre d'élémént à afficher"
 
 #. Default: "Paste item(s)"
-#, fuzzy
 msgid "Paste PloneMeeting"
 msgstr "Coller"
 
@@ -931,6 +930,10 @@ msgstr "Canevas de documents"
 #. Default: "Predefined items"
 msgid "RecurringItems"
 msgstr "Points prédéfinis"
+
+#. Default: "Select in the list the type of item you want to add"
+msgid "Select an item to add"
+msgstr "Sélectionnez dans la liste le type d'élément que vous souhaitez créer"
 
 #. Default: "state"
 msgid "State"

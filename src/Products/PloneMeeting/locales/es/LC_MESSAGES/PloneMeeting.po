@@ -935,6 +935,10 @@ msgstr "Plantillas de documento"
 msgid "RecurringItems"
 msgstr "Temas predefinidos"
 
+#. Default: "Select in the list the type of item you want to add"
+msgid "Select an item to add"
+msgstr ""
+
 #. Default: "state"
 #, fuzzy
 msgid "State"
