@@ -140,7 +140,7 @@
     </tr>
 
     <tr tal:condition="python: nbOfMeetings==0">
-      <td class="portletCell"><i i18n:translate="no_meeting"></i></td>
+      <td class="portletCell"><i class="discreet" i18n:translate="no_meeting"></i></td>
     </tr>
   </tal:links>
   </tal:meetings>
