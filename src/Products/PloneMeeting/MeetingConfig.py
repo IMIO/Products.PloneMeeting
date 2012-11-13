@@ -1621,6 +1621,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
             portalType = getattr(pt, portalTypeName)
             basePortalType = getattr(pt, metaTypeName)
+            portalType.i18n_domain = basePortalType.i18n_domain
+            portalType.content_icon = basePortalType.content_icon
+            portalType.content_meta_type = basePortalType.content_meta_type
+            portalType.factory = basePortalType.factory
+            portalType.immediate_view = basePortalType.immediate_view
+            portalType.product = basePortalType.product
+            portalType.filter_content_types = basePortalType.filter_content_types
+            portalType.allowed_content_types = basePortalType.allowed_content_types
+            portalType.allow_discussion = basePortalType.allow_discussion
+            portalType.default_view = basePortalType.default_view
+            portalType.view_methods = basePortalType.view_methods
+            portalType._aliases = basePortalType._aliases
             portalType._actions = tuple(basePortalType._cloneActions())
 
     security.declarePrivate('registerPortalTypes')

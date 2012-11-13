@@ -98,8 +98,16 @@
         permission="zope2.View"
         allowed_attributes="toggle" />
 
+    <!-- the plonemeeting_topic_view used to display list of items (my items, all items, ...) -->
     <browser:page
         for="Products.ATContentTypes.interfaces.folder.IATFolder"
+        name="plonemeeting_topic_view"
+        class=".views.PloneMeetingTopicView"
+        template="templates/plonemeeting_topic_view.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
         name="plonemeeting_topic_view"
         class=".views.PloneMeetingTopicView"
         template="templates/plonemeeting_topic_view.pt"

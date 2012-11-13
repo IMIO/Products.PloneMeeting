@@ -9,6 +9,43 @@ class Migrate_To_3_0(Migrator):
     def __init__(self, context):
         Migrator.__init__(self, context)
 
+    def _updateRegistries(self):
+        '''Make sure some elements are enabled and remove no found elements.'''
+        # popuforms.py must be enabled in portal_javascript
+        logger.info('Updating registries...')
+        jstool = self.portal.portal_javascripts
+        popupforms = jstool.getResource('popupforms.js')
+        if popupforms:
+            popupforms.setEnabled(True)
+        # clean portal_javascripts
+        for script in jstool.getResources():
+            scriptId = script.getId()
+            resourceExists = script.isExternal or self.portal.restrictedTraverse(scriptId, False) and True
+            if not resourceExists:
+                # we found a notFound resource, remove it
+                logger.info('Removing %s from portal_javascripts' % scriptId)
+                jstool.unregisterResource(scriptId)
+        jstool.cookResources()
+        # clean portal_css
+        csstool = self.portal.portal_css
+        for sheet in csstool.getResources():
+            sheetId = sheet.getId()
+            resourceExists = sheet.isExternal or self.portal.restrictedTraverse(sheetId, False) and True
+            if not resourceExists:
+                # we found a notFound resource, remove it
+                logger.info('Removing %s from portal_css' % sheetId)
+                csstool.unregisterResource(sheetId)
+        csstool.cookResources()
+        # clean portal_setup
+        setuptool = self.portal.portal_setup
+        for stepId in setuptool.getSortedImportSteps():
+            stepMetadata = setuptool.getImportStepMetadata(stepId)
+            # remove invalid steps
+            if stepMetadata['invalid']:
+                logger.info('Removing %s step from portal_setup' % stepId)
+                setuptool._import_registry.unregisterStep(stepId)
+        logger.info('Registries have been updated')
+
     def _patchFileSecurity(self):
         '''Plone 4 migration requires every ATFile object to be deletable by
            admin, because it converts it to a blob. From a PM point of view,
@@ -73,7 +110,7 @@ class Migrate_To_3_0(Migrator):
         brains = self.portal.portal_catalog(meta_type='MeetingItem')
         for brain in brains:
             item = brain.getObject()
-            annexes = item.getAnnexes()
+            annexes = item.getAnnexes() + item.getAnnexesDecision()
             if not annexes:
                 continue
             title_to_uid_mapping = {}
@@ -107,6 +144,7 @@ class Migrate_To_3_0(Migrator):
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
                                  u'profile-plonetheme.imioapps:default',
                                  u'profile-plonetheme.imioapps:plonemeetingskin',])
+        self._updateRegistries()
         self._patchFileSecurity()
         self._correctAnnexesMeetingFileTypes()
         self._migrateMeetingFilesToBlobs()

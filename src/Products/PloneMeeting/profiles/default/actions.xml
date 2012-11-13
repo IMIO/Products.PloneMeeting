@@ -111,6 +111,17 @@
     <property name="permissions">
      <element value="Manage portal"/>
     </property>
+    <property name="visible">True</property>
+   </object>
+   <object name="local_roles" meta_type="CMF Action">
+    <property name="available_expr">python: not here.portal_plonemeeting.isInPloneMeeting(here, True)</property>
+   </object>
+  </object>
+
+  <!-- Manage portal_tabs actions. -->
+  <object name="portal_tabs" meta_type="CMF Action Category">
+   <object name="index_html" meta_type="CMF Action">
+    <property name="visible">True</property>
    </object>
   </object>
 

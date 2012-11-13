@@ -219,15 +219,11 @@ def postInstall(context):
     site.portal_properties.site_properties.manage_changeProperties(
         disable_folder_sections=True)
 
-    # Prevent the "sharing" tab from being shown on any HubSessions-related page
-    site.portal_actions.object.local_roles.manage_changeProperties(
-        available_expr = "python: not here.portal_plonemeeting." \
-                         "isInPloneMeeting(here, True)")
-
     # portal_quickinstaller removes some installed elements when reinstalling...
     # re-add them manually here...
     for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
         meetingConfig.registerPortalTypes()
+        meetingConfig.updatePortalTypes()
         # Update the cloneToOtherMeetingConfig actions visibility
         meetingConfig.updateCloneToOtherMCActions()
         # add default portal_tabs
