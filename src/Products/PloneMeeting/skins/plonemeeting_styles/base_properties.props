@@ -2,7 +2,7 @@ title:string=Plone's color, font, logo and border defaults
 
 plone_skin:string=Plone Default
 
-logoName:string=logo.jpg
+logoName:string=logo.gif
 
 fontFamily:string="Lucida Grande", Verdana, Lucida, Helvetica, Arial, sans-serif
 fontBaseSize:string=69%
