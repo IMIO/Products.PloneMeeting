@@ -115,7 +115,7 @@ def initializeTool(context):
     # pqi.listInstalledProducts()
     if not pqi.isProductInstalled('PloneMeeting'):
         profileId = u'profile-Products.PloneMeeting:default'
-        context.runAllImportStepsFromProfile(profileId)
+        context.getSite().portal_setup.runAllImportStepsFromProfile(profileId)
     # Initialises data from the profile.
     return ToolInitializer(context, PROJECTNAME).run()
 # ------------------------------------------------------------------------------
