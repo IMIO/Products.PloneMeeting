@@ -25,6 +25,8 @@ import os.path
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
 
+from zope.annotation.interfaces import IAnnotations
+
 from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
 
@@ -118,6 +120,18 @@ class PloneMeetingTestCase(unittest.TestCase):
            Note that p_obj may be a list of object instead of a single object.
            In this case, the method returns True if the currently logged user
            has p_permission on every object of the list.'''
+        # borg localroles are memoized...
+        # so while checking local roles twice, there could be problems...
+        # remove memoized localroles
+        annotations = IAnnotations(self.portal.REQUEST)
+        annotations_to_delete = []
+        for annotation in annotations.keys():
+            if annotation.startswith('borg.localrole.workspace.checkLocalRolesAllowed'):
+                annotations_to_delete.append(annotation)
+
+        for annotation_to_delete in annotations_to_delete:
+            del annotations[annotation_to_delete]
+
         sm = getSecurityManager()
         res = True
         if type(obj) in (list, tuple):

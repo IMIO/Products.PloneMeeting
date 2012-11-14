@@ -64,7 +64,9 @@ class testAdvices(PloneMeetingTestCase):
         item3 = self.create('MeetingItem', **data)
         # at this state, the item is not viewable by the advisers
         login(self.portal, 'pmReviewer2')
-        self.failIf(self.hasPermission('View', (item1, item2, item3)))
+        self.failIf(self.hasPermission('View', item1))
+        self.failIf(self.hasPermission('View', item2))
+        self.failIf(self.hasPermission('View', item3))
         # propose the items
         login(self.portal, 'pmCreator1')
         for item in (item1, item2, item3):

@@ -545,8 +545,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def testUpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
-           Only 'MeetingPowerObserverLocal' local role should be impacted
-        '''
+           Only 'MeetingPowerObserverLocal' local role should be impacted.'''
         login(self.portal, 'pmManager')
         i1 = self.create('MeetingItem')
         self.do(i1, 'propose')
@@ -575,7 +574,53 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.failUnless(('MeetingObserverLocalCopy',)==localRoles)
             if principalId == 'vendors_advisers':
                 self.failUnless(('MeetingObserverLocalCopy',)==localRoles)
-                
+
+    def testCopyGroups(self):
+        '''Test that if a group is set as copyGroups, the item is Viewable.
+           This test problem discribed here : https://dev.plone.org/ticket/13310.'''
+        self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
+        self.meetingConfig.setUseCopies(True)
+        login(self.portal, 'pmManager')
+        i1 = self.create('MeetingItem')
+        # by default 'pmCreator2' and 'pmReviewer2' can not see the item
+        login(self.portal, 'pmCreator2')
+        self.failIf(self.hasPermission('View', i1))
+        login(self.portal, 'pmReviewer2')
+        self.failIf(self.hasPermission('View', i1))
+        # validate the item
+        login(self.portal, 'pmManager')
+        self.do(i1, 'propose')
+        self.do(i1, 'validate')
+        # while validated, the item is no more viewable by vendors
+        login(self.portal, 'pmCreator2')
+        self.failIf(self.hasPermission('View', i1))
+        login(self.portal, 'pmReviewer2')
+        self.failIf(self.hasPermission('View', i1))
+        # no add copyGroups
+        login(self.portal, 'pmManager')
+        i1.setCopyGroups(('vendors_reviewers',))
+        i1.updateLocalRoles()
+        # this test https://dev.plone.org/ticket/13310
+        i1.reindexObject()
+        self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_reviewers')), 1)
+        # Vendors reviewers can see the item now
+        login(self.portal, 'pmCreator2')
+        self.failIf(self.hasPermission('View', i1))
+        login(self.portal, 'pmReviewer2')
+        self.failUnless(self.hasPermission('View', i1))
+        # remove copyGroups
+        login(self.portal, 'pmManager')
+        i1.setCopyGroups(())
+        i1.updateLocalRoles()
+        # this test https://dev.plone.org/ticket/13310
+        i1.reindexObject()
+        self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_reviewers')), 0)
+        # Vendors can not see the item anymore
+        login(self.portal, 'pmCreator2')
+        self.failIf(self.hasPermission('View', i1))
+        login(self.portal, 'pmReviewer2')
+        self.failIf(self.hasPermission('View', i1))
+
     def testItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.'''
         # Use the 'plonegov-assembly' meetingConfig
