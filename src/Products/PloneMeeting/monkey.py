@@ -3,8 +3,7 @@ from Products.contentmigration.migrator import BaseInlineMigrator as InlineMigra
 from Products.Archetypes.interfaces import ISchema
 from plone.app.blob.interfaces import IBlobField
 
-
-# MonkeyPatch this method to use .Schema() instead of .schema.  See above...
+# MonkeyPatch method to use .Schema() instead of .schema.  See below...
 def makeMigrator(context, portal_type, meta_type=None):
     """ generate a migrator for the given at-based portal type """
     if meta_type is None:
@@ -56,3 +55,44 @@ def makeMigrator(context, portal_type, meta_type=None):
     return BlobMigrator
 
 migrations.makeMigrator=makeMigrator
+
+from Products.ZCTextIndex.ZCTextIndex import ZCTextIndex
+from Products.PluginIndexes.common import safe_callable
+
+# MonkeyPatch method to avoid bug discribed here https://dev.plone.org/ticket/13310 until a new Products.ZCTextIndex is released...
+def index_object(self, documentId, obj, threshold=None):
+    """Wrapper for  index_doc()  handling indexing of multiple attributes.
+
+    Enter the document with the specified documentId in the index
+    under the terms extracted from the indexed text attributes,
+    each of which should yield either a string or a list of
+    strings (Unicode or otherwise) to be passed to index_doc().
+    """
+    # XXX We currently ignore subtransaction threshold
+
+    # needed for backward compatibility
+    try: fields = self._indexed_attrs
+    except: fields  = [ self._fieldname ]
+
+    all_texts = []
+    for attr in fields:
+        text = getattr(obj, attr, None)
+        if text is None:
+            continue
+        if safe_callable(text):
+            text = text()
+        if text is None:
+            continue
+        if text:
+            if isinstance(text, (list, tuple, )):
+                all_texts.extend(text)
+            else:
+                all_texts.append(text)
+
+    # Check that we're sending only strings
+    all_texts = filter(lambda text: isinstance(text, basestring), \
+                       all_texts)
+
+    return self.index.index_doc(documentId, all_texts)
+
+ZCTextIndex.index_object=index_object
