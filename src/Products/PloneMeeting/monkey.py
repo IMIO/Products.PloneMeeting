@@ -74,6 +74,7 @@ def index_object(self, documentId, obj, threshold=None):
     try: fields = self._indexed_attrs
     except: fields  = [ self._fieldname ]
 
+    res = 0
     all_texts = []
     for attr in fields:
         text = getattr(obj, attr, None)
@@ -93,6 +94,8 @@ def index_object(self, documentId, obj, threshold=None):
     all_texts = filter(lambda text: isinstance(text, basestring), \
                        all_texts)
 
-    return self.index.index_doc(documentId, all_texts)
+    if all_texts or self.index.length():
+        return self.index.index_doc(documentId, all_texts)
+    return res
 
 ZCTextIndex.index_object=index_object
