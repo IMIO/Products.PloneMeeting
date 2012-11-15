@@ -1,0 +1,11 @@
+Migration from PloneMeeting 2.x (Plone3) versions :
+===================================================
+
+On the PM 2.x site (old site) :
+-------------------------------
+- uninstall FCKeditor (we will use collective.ckeditor now)
+
+On the PM 3.x site (new site) :
+-------------------------------
+- launch the Plone migration to Plone4
+- launch the PloneMeeting upgrade step to PloneMeeting 3
