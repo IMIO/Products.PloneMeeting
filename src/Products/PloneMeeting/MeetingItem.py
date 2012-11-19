@@ -2073,6 +2073,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Apply custom transformations if defined
             field.set(self, self.adapted().transformRichTextField(
                       field.getName(), fieldContent))
+            field.setContentType(self, field.default_content_type)
 
     security.declarePublic('getMandatoryAdvisers')
     def getMandatoryAdvisers(self):

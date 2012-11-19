@@ -1045,7 +1045,7 @@ def setFieldFromAjax(obj, fieldName, newValue):
     field = obj.getField(fieldName)
     # Keep old value, we might need to historize it.
     previousData = rememberPreviousData(obj, fieldName)
-    field.set(obj, newValue)
+    field.getMutator(obj)(newValue, content_type='text/html')
     # Potentially store it in object history
     if previousData: addDataChange(obj, previousData)
     # Update the last modification date
