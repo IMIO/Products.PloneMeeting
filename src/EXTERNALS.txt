@@ -1,7 +1,3 @@
 #
 # taken into account by: svn propset svn:externals -F ./EXTERNALS.txt .
 #
-appy http://svn.communesplone.org/svn/communesplone/appy/tags/0.8.0/
-communesplone.iconified_document_actions http://svn.communesplone.org/svn/communesplone/communesplone.iconified_document_actions/trunk/
-communesplone.layout http://svn.communesplone.org/svn/communesplone/communesplone.layout/trunk
-plonetheme.imioapps http://svn.communesplone.org/svn/communesplone/plonetheme.imioapps/trunk
