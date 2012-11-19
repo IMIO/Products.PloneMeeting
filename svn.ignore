@@ -3,6 +3,8 @@
 #
 .installed.cfg
 bin
+var
+devel
 .mr.developer.cfg
 develop-eggs
 downloads
