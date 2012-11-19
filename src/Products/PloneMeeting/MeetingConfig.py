@@ -1776,8 +1776,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             existingActionIds = [act.id for act in item_portal_type.listActions()]
             if actionId in existingActionIds:
                 continue
-            else:
-                logger.info('Adding action %s on portal_type %s' % (actionId, self.getItemTypeName()))
             urlExpr = 'string:${object/absolute_url}/cloneToOtherMeeting' \
                       'Config?destMeetingConfigId=%s' % configId
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
