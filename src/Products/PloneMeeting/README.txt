@@ -7,14 +7,13 @@ Index
 
 1. Overview
 ===========
-PloneMeeting is a Plone 3.x product (since PloneMeeting 2.x) that allows to manage agendas and decisions
+PloneMeeting is a Plone 4.x product (since PloneMeeting 3.x) that allows to manage agendas and decisions
 of any decision-making organism (a city counsil, a board of ministers, a board
 of directors, the general assembly of a non-profit organisation or NGO...)
 
 The following techniques are used: 
- - Plone 3.x 
- - Zope 2.10.x
- - Python 2.4
+ - Plone 4.x 
+ - Python 2.6
  - appy.pod
 
 Special thanks goes to:
@@ -42,5 +41,5 @@ Please look at LICENSE.txt, LICENSE.ZPL and LICENSE.GPL
 The authors,
 
         Gaetan DELANNAY - 2008, 2009, 2010 <gaetan.delannay@geezteem.com>, 
-        Gauthier BASTIEN - 2008, 2009, 2010 <gbastien@commune.sambreville.be>, 
-        Stephan GEULETTE - 2008, 2009, 2010 <stephan.geulette@uvcw.be>
+        Gauthier BASTIEN - 2008-2012 <g.bastien@imio.be>, 
+        Stephan GEULETTE - 2008-2012 <s.geulette@imio.be>
