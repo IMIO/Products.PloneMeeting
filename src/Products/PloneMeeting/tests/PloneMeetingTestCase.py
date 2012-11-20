@@ -84,8 +84,8 @@ class PloneMeetingTestCase(unittest.TestCase):
             meetingConfig.setMailMeetingEvents([])
         logout()
         # Set the default meeting config
-        self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly')
-        self.meetingConfig2 = getattr(self.tool, 'plonegov-assembly')
+        self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly', None)
+        self.meetingConfig2 = getattr(self.tool, 'plonegov-assembly', None)
         # Set the default file and file type for adding annexes
         self.annexFile = 'README.txt'
         self.annexFileType = 'financial-analysis'
