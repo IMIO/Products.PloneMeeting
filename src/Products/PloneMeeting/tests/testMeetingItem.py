@@ -430,11 +430,11 @@ class testMeetingItem(PloneMeetingTestCase):
         login(self.portal, 'pmCreator1')
         self.tool.getPloneMeetingFolder(otherMeetingConfigId)
         i1 = self.create('MeetingItem')
-        i1.setCategory('development')
+        i1.setCategory(self.meetingConfig.categories.objectValues()[2].getId())
         i1.setDecision('<p>My decision</p>', mimetype='text/html')
         i1.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
         # Add annexes
-        annex1 = self.addAnnex(i1, annexType='item-annex')
+        annex1 = self.addAnnex(i1, annexType=self.annexFileType)
         annex2 = self.addAnnex(i1, annexType='overhead-analysis')
         # Propose the item
         self.do(i1, i1.wfConditions().transitionsForPresentingAnItem[0])
@@ -477,7 +477,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # annex1 was of annexType "item-annex" that exists in the new MeetingConfig
         # so it stays "item-annex" but the one in the new MeetingConfig
         self.assertEquals(newItem.objectValues('MeetingFile')[0].getMeetingFileType().UID(),
-                          getattr(self.meetingConfig2.meetingfiletypes, 'item-annex').UID())
+                          getattr(self.meetingConfig2.meetingfiletypes, self.annexFileType).UID())
         # annex2 was of annexType "overhead-analysis" that does NOT exist in the new MeetingConfig
         # so the MeetingFileType of the annex2 will be the default one, the first available
         self.assertEquals(newItem.objectValues('MeetingFile')[1].getMeetingFileType().UID(),
@@ -485,7 +485,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # annexDecision1 was of annexType "decision-annex" that exists in the new MeetingConfig
         # so it stays "decision-annex" but the one in the new MeetingConfig
         self.assertEquals(newItem.objectValues('MeetingFile')[2].getMeetingFileType().UID(),
-                          getattr(self.meetingConfig2.meetingfiletypes, 'decision-annex').UID())
+                          getattr(self.meetingConfig2.meetingfiletypes, self.annexFileTypeDecision).UID())
         # annexDecision2 was of annexType "marketing-annex" that does NOT exist in the new MeetingConfig
         # so the MeetingFileType of the annexDecision2 will be the default one, the first available
         self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType().UID(),
