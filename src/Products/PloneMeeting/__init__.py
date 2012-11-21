@@ -80,33 +80,6 @@ class FakeBrain:
     def getRID(self): return self.url
 class PloneMeetingError(Exception): pass
 
-# This is a monkey patch of Globals.package_home as called by the
-# PlacelessTranslationService. Before Plone 3, PloneMeeting's i18n labels could
-# override Plone labels because "PloneMeeting" was, in alphabetical order,
-# before Plone packages containing i18n labels. With Plone 3, Plone packages are
-# named "plone.app.*"; the "app" part is taken into account, and so comes
-# before "PloneMeeting", which is lowerized (if not lowerized, "PloneMeeting"
-# comes before "app", try "PloneMeeting" < "app" in a Python shell). So at the
-# end of this file, we make Zope believe that the PloneMeeting product is called
-# "HubSessions"; and in the following monkey-patched function, if module name
-# is "HubSessions", we make the correspondence with the real module, named
-# Products.PloneMeeting.
-import Products.PlacelessTranslationService, sys
-def hs_package_home(globals_dict):
-    __name__=globals_dict['__name__']
-    if __name__.startswith('HubSessions.'):
-        m = sys.modules['Products.%s' % __name__[12:]]
-    else:
-        m=sys.modules[__name__]
-    if hasattr(m,'__path__'):
-        r=m.__path__[0]
-    elif "." in __name__:
-        r=sys.modules[__name__[:__name__.rfind('.')]].__path__[0]
-    else:
-        r=__name__
-    return os.path.abspath(r)
-Products.PlacelessTranslationService.package_home = hs_package_home
-
 # Another monkey patch in the "isURL" validator: why is the "file" protocol
 # excluded?
 from Products.validation.validators.BaseValidators import \
