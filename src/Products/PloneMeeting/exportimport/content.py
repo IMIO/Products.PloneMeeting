@@ -27,9 +27,6 @@ __docformat__ = 'plaintext'
    profiles/default for more information.'''
 
 # ------------------------------------------------------------------------------
-import os.path
-from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting import PloneMeetingError
 from zExceptions import BadRequest
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
@@ -48,6 +45,7 @@ class ToolInitializer:
 
     def __init__(self, context, productname):
         self.profilePath = context._profile_path
+        # productname is like Products.MyProfile or mypackage.specialprofile
         self.productname = productname
         self.site = context.getSite()
         self.tool = self.site.portal_plonemeeting
@@ -64,11 +62,10 @@ class ToolInitializer:
         pp = self.profilePath
         if not pp:
             return
-        profileModule = pp[pp.rfind(self.productname):].replace('/', '.')
+        profileModule = pp[pp.rfind(self.productname.replace('.', '/')):].replace('/', '.')
         profileModule = profileModule.replace('\\', '.')
         try:
-            module_path = 'from Products.%s.import_data import data' % \
-                          profileModule
+            module_path = 'from %s.import_data import data' % profileModule
             exec module_path
             return data
         except ImportError:

@@ -1545,11 +1545,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             firstEvent['actor'] = newOwnerId or self.Creator()
             firstEvent['time'] = DateTime()
             newItem.workflow_history[wfName] = (firstEvent, )
+
             # The copy/paste has transferred annotations, we do not need them.
             annotations = IAnnotations(newItem)
             for ann in annotations:
                 if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
                     del annotations[ann]
+
             # Change the proposing group if the item owner does not belong to
             # the defined proposing group.
             userGroups = self.getGroups(userId=newOwnerId, suffix="creators")
