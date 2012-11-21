@@ -227,7 +227,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item2.setDecision(self.decisionText)
         item3.setDecision(self.decisionText)
-        self.addAnnex(item2, annexPath='profiles/default/metadata.xml', decisionRelated=True)
+        self.addAnnex(item2, decisionRelated=True)
         # check that a delayed item is duplicated
         self.assertEquals(len(item3.getBRefs('ItemPredecessor')), 0)
         self.do(item3, 'delay')

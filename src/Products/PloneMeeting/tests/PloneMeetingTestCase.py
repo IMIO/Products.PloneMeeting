@@ -87,9 +87,12 @@ class PloneMeetingTestCase(unittest.TestCase):
         self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly', None)
         self.meetingConfig2 = getattr(self.tool, 'plonegov-assembly', None)
         # Set the default file and file type for adding annexes
-        self.annexFile = 'README.txt'
+        self.annexFile = 'INSTALL.TXT'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
+
+    def tearDown(self):
+        self._cleanExistingTmpAnnexFile()
 
     def createUser(self, username, roles):
         '''Creates a user named p_username with some p_roles.'''
@@ -222,7 +225,16 @@ class PloneMeetingTestCase(unittest.TestCase):
         if hasattr(obj.aq_inner, 'at_post_edit_script'):
             obj.at_post_edit_script()
 
-    def addAnnex(self, item, annexPath=None, annexType=None, annexTitle=None,
+    def _cleanExistingTmpAnnexFile(self):
+        '''While adding in annex (see code around shutil in addAnnex),
+           a temporary file is created.  In case we check assertRaise(Unauthorized, addAnnex, ...)
+           the temporary file is not removed, so make sure it is...'''
+        originalAnnexPath = os.path.join(self.pmFolder, self.annexFile)
+        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.txt'
+        if os.path.exists(newAnnexPath):
+            os.remove(newAnnexPath)
+
+    def addAnnex(self, item, annexType=None, annexTitle=None,
                  decisionRelated=False):
         '''Adds an annex to p_item. The uploaded file has name p_annexPath,
            which is a path relative to the folder that corresponds to package
@@ -230,14 +242,11 @@ class PloneMeetingTestCase(unittest.TestCase):
            uploaded (see self.annexFile). If no p_annexType is provided,
            self.annexFileType is used. If no p_annexTitle is specified, the
            predefined title of the annex type is used.'''
-        # Find the needed information for creating the annex
-        if annexPath == None:
-            annexPath = self.annexFile
         #copy the default annexFile because ZODB.blob removes (os.remove) a FileUpload
         #after having used it...
         from shutil import copyfile
-        originalAnnexPath = os.path.join(self.pmFolder, annexPath)
-        newAnnexPath = originalAnnexPath[:-4] + '_tmp' + '.txt'
+        originalAnnexPath = os.path.join(self.pmFolder, self.annexFile)
+        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.txt'
         copyfile(originalAnnexPath, newAnnexPath)
         annexPath = newAnnexPath
         annexFile = FileUpload(TestFile(
