@@ -45,8 +45,9 @@ class ToolInitializer:
 
     def __init__(self, context, productname):
         self.profilePath = context._profile_path
-        # productname is like Products.MyProfile or mypackage.specialprofile
-        self.productname = productname
+        # productname default's name space is 'Products'.
+        # If a name space is found, then Products namespace is not used
+        self.productname = '.' in productname and productname or 'Products.%s' % productname
         self.site = context.getSite()
         self.tool = self.site.portal_plonemeeting
         self.profileData = self.getProfileData()
