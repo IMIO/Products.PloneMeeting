@@ -3,6 +3,18 @@ How to extend PloneMeeting content_type schema?
 
 - create a pm_updates.py file in the "model" directory of you external extension
 - create a callable method updating a PM content_type schema and call it :
+- by convention, we call these methods "update_xxx_schema" where xxx is the short version of the content_type :
+
+MeetingItem:            item
+Meeting:                meeting
+MeetingCategory:        category
+MeetingFile:            file
+MeetingFileType':       filetype
+ToolPloneMeeting':      tool
+ExternalApplication:    extapp
+MeetingGroup:           group
+PodTemplate:            pod
+MeetingUser:            muser
 
 >>> from Products.PloneMeeting.Meeting import Meeting
 >>> 
@@ -18,6 +30,12 @@ How to extend PloneMeeting content_type schema?
 >>> Meeting.schema = update_meeting_schema(Meeting.schema)
 
 This way, the description_msgid of the Meeting schema is changed.  You can do anything AT.schema can handle.
+
+At the end of the pm_updates.py file, we need to call a special method on Products.PloneMeeting that will register
+again PloneMeeting content_types classes to be sure that everythning is ok with the adapted schemas :
+
+>>> from Products.PloneMeeting.config import registerClasses
+>>> registerClasses()
 
 
 How to override existing methods using "adapted"?
