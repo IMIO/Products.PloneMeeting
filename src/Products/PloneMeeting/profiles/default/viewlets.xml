@@ -1,5 +1,12 @@
 <?xml version="1.0"?>
 <object>
+  <!-- purge (unhide every viewlets) some viewletmanager... -->
+  <hidden manager="plone.abovecontent" skinname="*" purge="True" />
+  <hidden manager="plone.contentviews" skinname="*" purge="True" />
+  <hidden manager="plone.abovecontentbody" skinname="*" purge="True" />
+  <hidden manager="plone.belowcontentbody" skinname="*" purge="True" />
+  <hidden manager="plone.portalfooter" skinname="*" purge="True" />
+  <!-- hide some viewlets... -->
   <hidden manager="plone.abovecontenttitle" skinname="*">
     <viewlet name="plone.abovecontenttitle.documentactions" />
   </hidden>
