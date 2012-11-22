@@ -37,6 +37,10 @@ again PloneMeeting content_types classes to be sure that everythning is ok with 
 >>> from Products.PloneMeeting.config import registerClasses
 >>> registerClasses()
 
+In the __init__py file of your package, make sure this code is imported so it is executed :
+
+>>> import model.pm_updates
+
 
 How to override existing methods using "adapted"?
 =================================================
