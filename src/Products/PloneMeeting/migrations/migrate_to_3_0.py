@@ -9,6 +9,15 @@ class Migrate_To_3_0(Migrator):
     def __init__(self, context):
         Migrator.__init__(self, context)
 
+    def _configureCKeditor(self):
+        '''Make sure CKeditor is the new default editor used by everyone...'''
+        logger.info('Defining CKeditor as the new default editor for every users...')
+        try:
+            self.portal.cputils_configure_ckeditor()
+        except AttributeError:
+            raise Exception, "Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "\
+                                  "installed and that the cputils_configure_ckeditor method is available"
+
     def _updateRegistries(self):
         '''Make sure some elements are enabled and remove no found elements.'''
         # popuforms.py must be enabled in portal_javascript
@@ -144,6 +153,7 @@ class Migrate_To_3_0(Migrator):
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
                                  u'profile-plonetheme.imioapps:default',
                                  u'profile-plonetheme.imioapps:plonemeetingskin',])
+        self._configureCKeditor()
         self._updateRegistries()
         self._patchFileSecurity()
         self._correctAnnexesMeetingFileTypes()
