@@ -1,1 +1,1 @@
-Must be generated with ArchGenXML 1.5.2
+Must be generated with ArchGenXML

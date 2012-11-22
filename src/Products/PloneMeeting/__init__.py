@@ -90,7 +90,6 @@ for valid in baseValidators:
         del valid.regex[0]
         valid.regex_strings = (r'(%s)s?://[^\s\r\n]+' % '|'.join(protocols),)
         valid.compileRegex()
-from Products.PloneMeeting.model.extender import ModelExtender
 ##/code-section custom-init-head
 
 
@@ -151,13 +150,5 @@ def initialize(context):
     for elem in dir(FakeBrain):
         if not elem.startswith('__'): FakeBrain.security.declarePublic(elem)
     InitializeClass(FakeBrain)
-    # Perform plugin-specific model adaptations
-    for klass in all_content_types:
-        klass.schema = ModelExtender(klass.schema, klass.__name__).run()
-    # Classes have already been registered, but we register them again here
-    # because we have potentially applied some schema adaptations (see above).
-    # Class registering includes generation of accessors and mutators, for
-    # example, so this is why we need to do it again now.
-    registerClasses()
     ##/code-section custom-init-bottom
 

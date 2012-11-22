@@ -1,0 +1,26 @@
+How to extend PloneMeeting content_type schema?
+===============================================
+
+- create a pm_updates.py file in the "model" directory of you external extension
+- create a callable method updating a PM content_type schema and call it :
+
+>>> from Products.PloneMeeting.Meeting import Meeting
+>>> 
+>>> def update_meeting_schema(baseSchema):
+>>>    
+>>>     specificSchema = Schema((
+>>>     ),)
+>>> 
+>>>     baseSchema['assembly'].widget.description_msgid = "assembly_meeting_descr"
+>>> 
+>>>     completeSchema = baseSchema + specificSchema.copy()
+>>>     return completeSchema
+>>> Meeting.schema = update_meeting_schema(Meeting.schema)
+
+This way, the description_msgid of the Meeting schema is changed.  You can do anything AT.schema can handle.
+
+
+How to override existing methods using "adapted"?
+=================================================
+
+Todo...
