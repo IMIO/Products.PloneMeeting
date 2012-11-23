@@ -30,7 +30,6 @@ p {line-height: 1em;}
   border-color: &dtml-globalBorderColor;;
   background-color: white;
   padding: 0px;
-  font-height: 110%;
   color: &dtml-fontColor;;
   display: none;
   position: absolute;

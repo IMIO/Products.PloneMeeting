@@ -4,29 +4,22 @@
       i18n:domain="PloneMeeting">
 <body>
 
-<div metal:define-macro="portlet">
-<metal:block metal:use-macro="here/global_defines/macros/defines" />
-<tal:portlet define="tool view/getPloneMeetingTool;
-                     inTool view/inTool;
-                     currentDateTime view/getCurrentDateTime;
-                     userIsAmongCreators python: tool.userIsAmong('creators');
-                     meetingConfig view/getCurrentMeetingConfig;
-                     isArchiveSite tool/isArchiveSite;
-                     meetingFolder view/getPloneMeetingFolder;
-                     itemStates meetingConfig/getItemTopicStates|nothing;
-                     templateItems view/templateItems;
-                     ploneDiskAware tool/getPloneDiskAware;
-                     portal_url tool/getSiteUrl;
-                     member tool/getUser">
+<dl class="portlet portletPloneMeeting"
+    tal:define="tool view/getPloneMeetingTool;
+                inTool view/inTool;
+                currentDateTime view/getCurrentDateTime;
+                userIsAmongCreators python: tool.userIsAmong('creators');
+                meetingConfig view/getCurrentMeetingConfig;
+                isArchiveSite tool/isArchiveSite;
+                meetingFolder view/getPloneMeetingFolder;
+                itemStates meetingConfig/getItemTopicStates|nothing;
+                templateItems view/templateItems;
+                ploneDiskAware tool/getPloneDiskAware;
+                portal_url tool/getSiteUrl;
+                member tool/getUser">
 
-<table cellpadding="0" cellspacing="0" class="portlet portletHs" width="100%">
- <tal:comment replace="nothing">Header</tal:comment>
- <tr class="portletHeader">
-   <td>
-    <table cellpadding="0" cellspacing="0" width="97%" align="center">
-      <tr>
-       <td class="portletSection" i18n:translate="app_name"></td>
-       <td style="text-align: right">
+    <dt class="portletHeader"><tal:app_name i18n:translate="app_name">PloneMeeting</tal:app_name>
+     <div style="float:right;">
          <img style="cursor:pointer"
               tal:condition="python: meetingConfig"
               tal:attributes="onClick python: 'href: window.location=\'%s\'' % meetingFolder.absolute_url();
@@ -44,11 +37,11 @@
               i18n:attributes="title"
               tal:attributes="onClick python: 'href: window.location=\'%s/search_form\'' % meetingFolder.absolute_url();
                               src string:$portal_url/search.gif"/>
-       </td>
-      </tr>
-    </table>
-  </td>
- </tr>
+     </div>
+    </dt>
+
+<table cellpadding="0" cellspacing="0" width="100%">
+
 
  <tal:comment replace="nothing">Section: items</tal:comment>
  <tal:items condition="python: not inTool and not isArchiveSite and (itemStates or userIsAmongCreators)">
@@ -197,6 +190,8 @@
 </table>
 
 <tal:comment replace="nothing">Here we define code corresponding to popups</tal:comment>
+<tal:comment replace="nothing">All this will be removed when corresponding functionnalities will be adapted.
+"deleteDialog" is for managing elements history (removing an element from an history) and byebye user is about MeetingUsers management</tal:comment>
 <div id="hsGrey" class="hsGrey"></div>
 <div id="deleteDialog" class="hsDialog">
   <form id="deleteForm" method="post"
@@ -230,7 +225,6 @@
   </div>
 </div>
 <script language="javascript" tal:content="tool/getJavascriptMessages"></script>
-</tal:portlet>
-</div>
+</dl>
 </body>
 </html>
