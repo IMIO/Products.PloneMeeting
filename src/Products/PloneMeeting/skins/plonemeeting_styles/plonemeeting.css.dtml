@@ -129,7 +129,6 @@ margin-top: -1.9em;
 .selectRow { }
 .itemTitle { font-size: 100%; font-weight: bold; margin: 0.2em 0.1em 0 0.1em; }
 .itemDescription { margin: 0 0.1em; }
-.portletHs { border: 1px solid #8cacbb; }
 .portlet tr { height: 1.4em !important; }
 .portlet a:hover {text-decoration: underline; }
 .portletHeader { padding: 1px 0.5em; text-transform: none; font-weight: bold; }
