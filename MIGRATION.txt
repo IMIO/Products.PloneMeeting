@@ -9,3 +9,4 @@ On the PM 3.x site (new site) :
 -------------------------------
 - launch the Plone migration to Plone4
 - launch the PloneMeeting upgrade step to PloneMeeting 3
+- uninstall Kupu (was not uninstallable in Plone3, but well in Plone4) if not used
