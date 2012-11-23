@@ -524,6 +524,11 @@ cursor:pointer;
     vertical-align: top;
 }
 
+/* avoid the select box listing meetings in the portlet_plonemeeting breaking it in smaller resolutions */
+.portletPloneMeeting .portletCell > form > select {
+    width: 95%;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
