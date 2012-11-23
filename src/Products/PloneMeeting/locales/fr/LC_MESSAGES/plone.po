@@ -374,7 +374,7 @@ msgstr "Geler"
 
 #. Default: "Published (frozen)"
 msgid "frozen"
-msgstr "Publiée (gelée)"
+msgstr "Gelée"
 
 #. Default: "User interface"
 msgid "gui"
