@@ -219,6 +219,11 @@ def postInstall(context):
     site.portal_properties.site_properties.manage_changeProperties(
         disable_folder_sections=True)
 
+    # Specify that we have many groups
+    site.portal_properties.site_properties.manage_changeProperties(
+        many_groups=True)
+
+
     # portal_quickinstaller removes some installed elements when reinstalling...
     # re-add them manually here...
     for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
