@@ -28,7 +28,6 @@
     for="Products.PloneMeeting.interfaces.IMeetingFile"
     factory="plone.app.blob.subtypes.file.SchemaExtender" />
 
-           
   <subscriber for=".interfaces.IMeetingItem
                    zope.app.container.interfaces.IObjectAddedEvent"
               handler=".MeetingItem.onAddMeetingItem"/>
@@ -53,8 +52,7 @@
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
   <five:deprecatedManageAddDelete class=".MeetingFile.MeetingFile" />
   <five:deprecatedManageAddDelete class=".MeetingFileType.MeetingFileType" />
-  <five:deprecatedManageAddDelete
-                             class=".ExternalApplication.ExternalApplication" />
+  <five:deprecatedManageAddDelete class=".ExternalApplication.ExternalApplication" />
   <five:deprecatedManageAddDelete class=".MeetingCategory.MeetingCategory" />
   <five:deprecatedManageAddDelete class=".MeetingGroup.MeetingGroup" />
   <five:deprecatedManageAddDelete class=".MeetingConfig.MeetingConfig" />
