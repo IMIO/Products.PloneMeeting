@@ -985,14 +985,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         OrderedBaseFolder.__init__(self, *args, **kwargs)
         self.annexIndex = PersistentList()
 
-    def getDecision(self, keepWithNext=False):
+    def getDecision(self, keepWithNext=False, **kwargs):
         '''Overridden version of 'decision' field accessor. It allows to specify
            p_keepWithNext=True. In that case, the last paragraph of bullet in
            field "decision" will get a specific CSS class that will keep it with
            next paragraph. Useful when including the decision in a document
            template and avoid having the signatures, just below it, being alone
            on the next page.'''
-        res = self.getField('decision').get(self)
+        res = self.getField('decision').get(self, **kwargs)
         if keepWithNext: res = self.signatureNotAlone(res)
         return res
 
@@ -1220,7 +1220,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('getItemNumber')
-    def getItemNumber(self, relativeTo='itemsList'):
+    def getItemNumber(self, relativeTo='itemsList', **kwargs):
         '''This accessor for 'itemNumber' field is overridden in order to allow
            to get the item number in various flavours:
            - the item number relative to the items list into which it is
@@ -1230,7 +1230,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - the item number relative to the whole meeting config:
              p_relativeTo="meetingConfig"'''
         if not self.hasMeeting(): return
-        res = self.getField('itemNumber').get(self)
+        res = self.getField('itemNumber').get(self, **kwargs)
         if relativeTo == 'itemsList':
             pass
         elif relativeTo == 'meeting':
@@ -1573,7 +1573,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePublic('getCategory')
-    def getCategory(self, theObject=False):
+    def getCategory(self, theObject=False, **kwargs):
         '''Returns the category of this item. When used by Archetypes,
            this method returns the category Id; when used elsewhere in
            the PloneMeeting code (with p_theObject=True), it returns
@@ -1584,7 +1584,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if tool.getMeetingConfig(self).getUseGroupsAsCategories():
                 res = getattr(tool, self.getProposingGroup())
             else:
-                categoryId = self.getField('category').get(self)
+                categoryId = self.getField('category').get(self, **kwargs)
                 res = getattr(tool.getMeetingConfig(self).categories,
                               categoryId)
             if not theObject:
@@ -1594,10 +1594,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getProposingGroup')
-    def getProposingGroup(self, theObject=False):
+    def getProposingGroup(self, theObject=False, **kwargs):
         '''This redefined accessor may return the proposing group id or the real
            group if p_theObject is True.'''
-        res = self.getField('proposingGroup').get(self) # = group id
+        res = self.getField('proposingGroup').get(self, **kwargs) # = group id
         if res and theObject:
             res = getattr(self.portal_plonemeeting, res)
         return res
@@ -1765,10 +1765,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getItemSignatures')
-    def getItemSignatures(self, real=False):
+    def getItemSignatures(self, real=False, **kwargs):
         '''Gets the signatures for this item. If no signature is defined,
            meeting signatures are returned.'''
-        res = self.getField('itemSignatures').get(self)
+        res = self.getField('itemSignatures').get(self, **kwargs)
         if real:
             return res
         if not res and self.hasMeeting():
@@ -1795,10 +1795,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getItemAssembly')
-    def getItemAssembly(self, real=False):
+    def getItemAssembly(self, real=False, **kwargs):
         '''Returns the assembly for this item. If no assembly is defined,
            meeting assembly are returned.'''
-        res = self.getField('itemAssembly').get(self)
+        res = self.getField('itemAssembly').get(self, **kwargs)
         if real:
             return res
         if not res and self.hasMeeting():
@@ -1959,6 +1959,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+
     security.declarePublic('getInsertOrder')
     def getInsertOrder(self, sortOrder, meeting, late):
         '''When inserting an item into a meeting, depending on the sort method
@@ -2168,10 +2169,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res).sortedByValue()
 
     security.declarePublic('getItemInitiator')
-    def getItemInitiator(self, theObject=False):
+    def getItemInitiator(self, theObject=False, **kwargs):
         '''Returns the itemInitiator id or the MeetingUser object if p_theObject
            is True.'''
-        res = self.getField('itemInitiator').get(self)
+        res = self.getField('itemInitiator').get(self, **kwargs)
         if res and theObject:
             mc = self.portal_plonemeeting.getMeetingConfig(self)
             res = getattr(mc.meetingusers, res)

@@ -816,7 +816,7 @@ class NightWork:
 
 # ------------------------------------------------------------------------------
 mainTypes = ('MeetingItem', 'Meeting', 'MeetingFile')
-def getFieldContent(obj, name, force=None, sep='-'):
+def getFieldContent(obj, name, force=None, sep='-', **kwargs):
     '''Returns the content of p_field on p_obj. If content if available in
        2 languages, return the one that corresponds to user language, excepted
        if p_force is integer 1 or 2: in this case it returns content in language
@@ -824,11 +824,11 @@ def getFieldContent(obj, name, force=None, sep='-'):
        separated with p_sep.'''
     global mainTypes
     if force:
-        if force == 1: return obj.getField(name).get(obj)
-        elif force == 2: return obj.getField(name+'2').get(obj)
+        if force == 1: return obj.getField(name).get(obj, **kwargs)
+        elif force == 2: return obj.getField(name+'2').get(obj, **kwargs)
         elif force == 'all':
-            return '%s%s%s' % (obj.getField(name).get(obj), sep,
-                               obj.getField(name+'2').get(obj))
+            return '%s%s%s' % (obj.getField(name).get(obj, **kwargs), sep,
+                               obj.getField(name+'2').get(obj, **kwargs))
     field = obj.getField(name)
     # Is content of this field bilingual?
     tool = obj.portal_plonemeeting
@@ -845,7 +845,7 @@ def getFieldContent(obj, name, force=None, sep='-'):
         if (userLanguage not in languages) or (userLanguage == languages[0]):
             return field.get(obj)
         else:
-            return obj.getField(field.getName()+'2').get(obj)
+            return obj.getField(field.getName()+'2').get(obj, **kwargs)
 
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,

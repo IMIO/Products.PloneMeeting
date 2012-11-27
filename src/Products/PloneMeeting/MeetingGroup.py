@@ -317,28 +317,28 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     def onTransferred(self, extApp): '''See doc in interfaces.py.'''
 
     security.declarePublic('getItemAdviceStates')
-    def getItemAdviceStates(self, cfg=None):
+    def getItemAdviceStates(self, cfg=None, **kwargs):
         '''This is an overridden version of the Archetypes accessor for field
            "itemAdviceStates". When called by Archetypes (with no arg), it
            simply returns the content of field MeetingGroup.itemAdviceStates.
            When called with a meeting p_cfg, if MeetingGroup.itemAdviceStates
            is not empty it returns it; else, it returns the global, default list
            in cfg.itemAdviceStates.'''
-        res = self.getField('itemAdviceStates').get(self)
+        res = self.getField('itemAdviceStates').get(self, **kwargs)
         if not res and cfg: res = cfg.getItemAdviceStates()
         return res
 
     security.declarePublic('getItemAdviceEditStates')
-    def getItemAdviceEditStates(self, cfg=None):
+    def getItemAdviceEditStates(self, cfg=None, **kwargs):
         '''See docstring of previous method.'''
-        res = self.getField('itemAdviceEditStates').get(self)
+        res = self.getField('itemAdviceEditStates').get(self, **kwargs)
         if not res and cfg: res = cfg.getItemAdviceEditStates()
         return res
 
     security.declarePublic('getItemAdviceViewStates')
-    def getItemAdviceViewStates(self, cfg=None):
+    def getItemAdviceViewStates(self, cfg=None, **kwargs):
         '''See docstring of previous method.'''
-        res = self.getField('itemAdviceViewStates').get(self)
+        res = self.getField('itemAdviceViewStates').get(self, **kwargs)
         if not res and cfg: res = cfg.getItemAdviceViewStates()
         return res
 

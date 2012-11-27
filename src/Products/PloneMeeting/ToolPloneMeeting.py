@@ -557,11 +557,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             startNeutral=False)
 
     security.declarePublic('getAvailableInterfaceLanguages')
-    def getAvailableInterfaceLanguages(self, splitted=False, names=False):
+    def getAvailableInterfaceLanguages(self, splitted=False, names=False, **kwargs):
         '''We override the default accessor for field
            "availableInterfaceLanguages", so we can get the splitted version
            of the field content.'''
-        res = self.getField('availableInterfaceLanguages').get(self)
+        res = self.getField('availableInterfaceLanguages').get(self, **kwargs)
         if not splitted or not res: return res
         splitted = res.split(',')
         if not names: return splitted
