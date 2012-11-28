@@ -25,6 +25,8 @@ import os.path
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
 
+from DateTime.DateTime import DateTime
+
 from zope.annotation.interfaces import IAnnotations
 
 from plone.app.testing.helpers import setRoles
@@ -90,6 +92,11 @@ class PloneMeetingTestCase(unittest.TestCase):
         self.annexFile = 'INSTALL.TXT'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
+        self.meetingManagerId = 'pmManager'
+        self.defaultCreatorId = 'pmCreator1'
+        self.defaultCreatorId2 = 'pmCreator2'
+        self.defaultReviewerId = 'pmReviewer1'
+        self.defaultReviewerId2 = 'pmReviewer2'
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()
@@ -205,6 +212,36 @@ class PloneMeetingTestCase(unittest.TestCase):
             # but processForm manage the _at_creation_flag
             obj.processForm()
         return obj
+
+    def _createMeetingWithItems(self):
+        '''Create a meeting with a bunch of items.'''
+        meetingDate = DateTime()
+        meeting = self.create('Meeting', date=meetingDate)
+        item1 = self.create('MeetingItem') # id=o2
+        item1.setProposingGroup('vendors')
+        item1.setAssociatedGroups(('developers',))
+        item1.setPrivacy('public')
+        item1.setCategory('research')
+        item2 = self.create('MeetingItem') # id=o3
+        item2.setProposingGroup('developers')
+        item2.setPrivacy('public')
+        item2.setCategory('development')
+        item3 = self.create('MeetingItem') # id=o4
+        item3.setProposingGroup('vendors')
+        item3.setPrivacy('secret')
+        item3.setCategory('development')
+        item4 = self.create('MeetingItem') # id=o5
+        item4.setProposingGroup('developers')
+        item4.setPrivacy('secret')
+        item4.setCategory('events')
+        item5 = self.create('MeetingItem') # id=o6
+        item5.setProposingGroup('vendors')
+        item5.setPrivacy('public')
+        item5.setCategory('events')
+        for item in (item1, item2, item3, item4, item5):
+            for tr in item.wfConditions().transitionsForPresentingAnItem:
+                self.do(item, tr)
+        return meeting
 
     def setAttributes(self, obj, **attrs):
         '''Set the attributes contained in p_attrs on an object p_obj. Some

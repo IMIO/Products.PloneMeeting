@@ -289,7 +289,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
         for stateName in noDeleteStates:
             if stateName not in wf.states: continue
             state = wf.states[stateName]
-            state.setPermission('Delete objects', 0, ['Manager'])
+            state.setPermission('Delete objects', 0, ['MeetingMember', 'Manager'])
         logger.info(WF_APPLIED % "only_creator_may_delete")
 
     # "no_global_observation" means that during the whole decision process,

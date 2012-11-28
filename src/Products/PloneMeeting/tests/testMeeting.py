@@ -32,36 +32,6 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testMeeting(PloneMeetingTestCase):
     '''Tests various aspects of Meetings management.'''
 
-    def _createMeetingWithItems(self):
-        '''Create a meeting with a bunch of items.'''
-        meetingDate = DateTime().strftime('%y/%m/%d %H:%M:00')
-        meeting = self.create('Meeting', date=meetingDate)
-        item1 = self.create('MeetingItem') # id=o2
-        item1.setProposingGroup('vendors')
-        item1.setAssociatedGroups(('developers',))
-        item1.setPrivacy('public')
-        item1.setCategory('research')
-        item2 = self.create('MeetingItem') # id=o3
-        item2.setProposingGroup('developers')
-        item2.setPrivacy('public')
-        item2.setCategory('development')
-        item3 = self.create('MeetingItem') # id=o4
-        item3.setProposingGroup('vendors')
-        item3.setPrivacy('secret')
-        item3.setCategory('development')
-        item4 = self.create('MeetingItem') # id=o5
-        item4.setProposingGroup('developers')
-        item4.setPrivacy('secret')
-        item4.setCategory('events')
-        item5 = self.create('MeetingItem') # id=o6
-        item5.setProposingGroup('vendors')
-        item5.setPrivacy('public')
-        item5.setCategory('events')
-        for item in (item1, item2, item3, item4, item5):
-            for tr in item.wfConditions().transitionsForPresentingAnItem:
-                self.do(item, tr)
-        return meeting
-
     def testInsertItem(self):
         '''Tests that items are inserted at the right place into the meeting.
            In the test profile, groups order is like this:
