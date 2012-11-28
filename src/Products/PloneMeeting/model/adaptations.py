@@ -326,8 +326,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # "creator_edits_unless_closed" allows the creator of an item to edit it
     # (decision included) unless the meeting is closed. To be more precise,
     # the creator will not be able to edit the item if it is delayed, refused,
-    # confirmed or archived. In the standard worflow, as soon as the item is
-    # proposed, its creator looses it ability to modify it.
+    # confirmed or archived. In the standard workflow, as soon as the item is
+    # proposed, its creator looses his ability to modify it.
     if 'creator_edits_unless_closed' in adaptations:
         wf = itemWorkflow
         for stateName in wf.states:

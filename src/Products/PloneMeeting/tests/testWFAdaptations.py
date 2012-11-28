@@ -475,6 +475,44 @@ class testWFAdaptations(PloneMeetingTestCase):
         login(self.portal, self.defaultCreatorId2)
         self.failUnless(self.hasPermission('View', i1))
 
+    def test_creator_edits_unless_closed(self):
+        '''Test the workflowAdaptation 'creator_edits_unless_closed'.'''
+        login(self.portal, self.meetingManagerId)
+        # check while the wfAdaptation is not activated
+        self._creator_edits_unless_closed_inactive()
+        # activate the wfAdaptation and check
+        self.meetingConfig.setWorkflowAdaptations('creator_edits_unless_closed')
+        logger = logging.getLogger('MeetingCommunes: test')
+        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        self._creator_edits_unless_closed_active()
+
+    def _creator_edits_unless_closed_inactive(self):
+        '''Tests while 'creator_edits_unless_closed' wfAdaptation is inactive.'''
+        # by default, the item creator can just edit a created item, no more after
+        login(self.portal, self.defaultCreatorId)
+        i1 = self.create('MeetingItem')
+        self.failUnless(self.hasPermission('Modify portal content', i1))
+        login(self.portal, self.meetingManagerId)
+        self.create('Meeting', date=DateTime())
+        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+            login(self.portal, self.meetingManagerId)
+            self.do(i1, tr)
+            login(self.portal, self.defaultCreatorId)
+            self.failIf(self.hasPermission('Modify portal content', i1))
+
+    def _creator_edits_unless_closed_active(self):
+        '''Tests while 'creator_edits_unless_closed' wfAdaptation is active.'''
+        login(self.portal, self.defaultCreatorId)
+        i1 = self.create('MeetingItem')
+        self.failUnless(self.hasPermission('Modify portal content', i1))
+        login(self.portal, self.meetingManagerId)
+        self.create('Meeting', date=DateTime())
+        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+            login(self.portal, self.meetingManagerId)
+            self.do(i1, tr)
+            login(self.portal, self.defaultCreatorId)
+            self.failUnless(self.hasPermission('Modify portal content', i1))
+
 
 
 def test_suite():
