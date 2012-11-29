@@ -540,29 +540,6 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 self.failIf(self.hasPermission('Modify portal content', i1))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def test_local_meeting_managers(self):
         '''Test the workflowAdaptation 'local_meeting_managers'.'''
         # create a MeetingManager and put it in another _creators group than
