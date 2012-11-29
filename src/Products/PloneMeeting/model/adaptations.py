@@ -21,6 +21,10 @@ viewPermissions = ('View', 'Access contents information')
 WF_APPLIED = 'Workflow change "%s" applied.'
 WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
 
+# list of states the creator can no more edit the item even while using the 'creator_edits_unless_closed' wfAdaptation
+# this is made to be overrided if necessary
+WF_NOT_CREATOR_EDITS_UNLESS_CLOSED = ('delayed', 'refused', 'confirmed', 'itemarchived')
+
 def grantPermission(state, perm, role):
     '''For a given p_state, this function ensures that p_role is among roles
        who are granted p_perm.'''
@@ -331,7 +335,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     if 'creator_edits_unless_closed' in adaptations:
         wf = itemWorkflow
         for stateName in wf.states:
-            if stateName in ('delayed', 'refused', 'confirmed', 'itemarchived'):
+            if stateName in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
                 continue
             # Grant write access to item creator
             state = wf.states[stateName]

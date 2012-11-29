@@ -97,6 +97,7 @@ class PloneMeetingTestCase(unittest.TestCase):
         self.defaultCreatorId2 = 'pmCreator2'
         self.defaultReviewerId = 'pmReviewer1'
         self.defaultReviewerId2 = 'pmReviewer2'
+        self.transitionsToCloseAMeeting = ('publish', 'freeze', 'decide', 'close', 'archive')
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()

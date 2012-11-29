@@ -32,6 +32,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.config import WriteDecision
+from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED
 
 class testWFAdaptations(PloneMeetingTestCase):
     '''Tests the different existing wfAdaptations.  Also made to be back tested by extension profiles...
@@ -491,27 +492,56 @@ class testWFAdaptations(PloneMeetingTestCase):
         # by default, the item creator can just edit a created item, no more after
         login(self.portal, self.defaultCreatorId)
         i1 = self.create('MeetingItem')
+        i1.setDecision('<p>My decision</p>')
         self.failUnless(self.hasPermission('Modify portal content', i1))
         login(self.portal, self.meetingManagerId)
-        self.create('Meeting', date=DateTime())
+        m1 = self.create('Meeting', date=DateTime())
         for tr in i1.wfConditions().transitionsForPresentingAnItem:
             login(self.portal, self.meetingManagerId)
             self.do(i1, tr)
             login(self.portal, self.defaultCreatorId)
+            # the creator can no more modify the item
+            self.failIf(self.hasPermission('Modify portal content', i1))
+        for tr in self.transitionsToCloseAMeeting:
+            login(self.portal, self.meetingManagerId)
+            if tr in self.transitions(m1):
+                self.do(m1, tr)
+            else:
+                continue
+            login(self.portal, self.defaultCreatorId)
+            # the creator can no more modify the item
             self.failIf(self.hasPermission('Modify portal content', i1))
 
     def _creator_edits_unless_closed_active(self):
         '''Tests while 'creator_edits_unless_closed' wfAdaptation is active.'''
         login(self.portal, self.defaultCreatorId)
         i1 = self.create('MeetingItem')
+        i1.setDecision("<p>My decision</p>")
         self.failUnless(self.hasPermission('Modify portal content', i1))
         login(self.portal, self.meetingManagerId)
-        self.create('Meeting', date=DateTime())
+        m1 = self.create('Meeting', date=DateTime())
         for tr in i1.wfConditions().transitionsForPresentingAnItem:
             login(self.portal, self.meetingManagerId)
             self.do(i1, tr)
             login(self.portal, self.defaultCreatorId)
-            self.failUnless(self.hasPermission('Modify portal content', i1))
+            # the creator can still modify the item if certain states
+            # by default every state before "present"
+            if not i1.queryState() in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
+                self.failUnless(self.hasPermission('Modify portal content', i1))
+            else:
+                self.failIf(self.hasPermission('Modify portal content', i1))
+        for tr in self.transitionsToCloseAMeeting:
+            login(self.portal, self.meetingManagerId)
+            if tr in self.transitions(m1):
+                self.do(m1, tr)
+            else:
+                continue
+            login(self.portal, self.defaultCreatorId)
+            # the creator can still modify the item if certain states
+            if not i1.queryState() in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
+                self.failUnless(self.hasPermission('Modify portal content', i1))
+            else:
+                self.failIf(self.hasPermission('Modify portal content', i1))
 
 
 
