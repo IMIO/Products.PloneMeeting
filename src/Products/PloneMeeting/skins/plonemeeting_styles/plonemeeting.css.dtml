@@ -529,6 +529,11 @@ cursor:pointer;
     width: 95%;
 }
 
+/* define the width of the input containing the number of the item on the meeting_view */
+span#meetingItems INPUT, span#lateItems INPUT {
+    width: 2.5em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
