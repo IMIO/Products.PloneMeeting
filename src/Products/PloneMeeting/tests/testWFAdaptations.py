@@ -42,7 +42,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.'''
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._no_publication_inactive()
         # activate the wfAdaptation and check
@@ -91,7 +91,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_no_proposal(self):
         '''Test the workflowAdaptation 'no_proposal'.'''
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._no_proposal_inactive()
         # activate the wfAdaptation and check
@@ -117,7 +117,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pre_validation(self):
         '''Test the workflowAdaptation 'pre_validation'.'''
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._pre_validation_inactive()
         # activate the wfAdaptation and check
@@ -145,7 +145,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # XXX force 'MeetingManager' to login again either
         # he is not considered in the _prereviewers group by the method
         # member.getGroups()
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         i1 = self.create('MeetingItem')
         # by default a 'propose' transition exists
         self.do(i1, 'propose')
@@ -155,7 +155,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_creator_initiated_decisions(self):
         '''Test the workflowAdaptation 'creator_initiated_decisions'.'''
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._creator_initiated_decisions_inactive()
         # activate the wfAdaptation and check
@@ -166,19 +166,19 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _creator_initiated_decisions_inactive(self):
         '''Tests while 'creator_initiated_decisions' wfAdaptation is inactive.'''
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         self.failIf(self.hasPermission(WriteDecision, i1))
 
     def _creator_initiated_decisions_active(self):
         '''Tests while 'creator_initiated_decisions' wfAdaptation is active.'''
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         self.failUnless(self.hasPermission(WriteDecision, i1))
 
     def test_items_come_validated(self):
         '''Test the workflowAdaptation 'items_come_validated'.'''
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._items_come_validated_inactive()
         # activate the wfAdaptation and check
@@ -189,14 +189,14 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _items_come_validated_inactive(self):
         '''Tests while 'items_come_validated' wfAdaptation is inactive.'''
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         self.assertEquals(i1.queryState(), 'itemcreated')
         self.assertEquals(self.transitions(i1), ['propose',])
 
     def _items_come_validated_active(self):
         '''Tests while 'items_come_validated' wfAdaptation is active.'''
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         self.assertEquals(i1.queryState(), 'validated')
         self.assertEquals(self.transitions(i1), [])
@@ -213,7 +213,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _archiving_inactive(self):
         '''Tests while 'archiving' wfAdaptation is inactive.'''
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         self.assertEquals(i1.queryState(), 'itemcreated')
         # we have transitions
@@ -221,7 +221,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _archiving_active(self):
         '''Tests while 'archiving' wfAdaptation is active.'''
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         self.assertEquals(i1.queryState(), 'itemarchived')
         self.failIf(self.transitions(i1))
@@ -241,19 +241,19 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _only_creator_may_delete_inactive(self):
         '''Tests while 'only_creator_may_delete' wfAdaptation is inactive.'''
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         i1 = self.create('MeetingItem')
         self.assertEquals(i1.queryState(), 'itemcreated')
         # we have transitions
         self.failUnless(self.hasPermission('Delete objects', i1))
         self.do(i1, 'propose')
         self.failIf(self.hasPermission('Delete objects', i1))
-        login(self.portal, self.defaultReviewerId2)
+        login(self.portal, 'pmReviewer2')
         # the Reviewer can delete
         self.failUnless(self.hasPermission('Delete objects', i1))
         self.do(i1, 'validate')
         self.failIf(self.hasPermission('Delete objects', i1))
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         # the MeetingManager can delete
         self.failUnless(self.hasPermission('Delete objects', i1))
         # God can delete too...
@@ -262,21 +262,21 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _only_creator_may_delete_active(self):
         '''Tests while 'only_creator_may_delete' wfAdaptation is active.'''
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         i1 = self.create('MeetingItem')
         self.assertEquals(i1.queryState(), 'itemcreated')
         # we have transitions
         self.failUnless(self.hasPermission('Delete objects', i1))
         self.do(i1, 'propose')
         self.failUnless(self.hasPermission('Delete objects', i1))
-        login(self.portal, self.defaultReviewerId2)
+        login(self.portal, 'pmReviewer2')
         # the Reviewer can NOT delete
         self.failIf(self.hasPermission('Delete objects', i1))
         self.do(i1, 'validate')
         self.failIf(self.hasPermission('Delete objects', i1))
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('Delete objects', i1))
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         # the MeetingManager can NOT delete
         self.failIf(self.hasPermission('Delete objects', i1))
         # God can delete too...
@@ -296,70 +296,70 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _no_global_observation_inactive(self):
         '''Tests while 'no_global_observation' wfAdaptation is inactive.'''
         # when the item is 'itempublished', everybody (having MeetingObserverGlobal role) can see the items
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         # propose the item
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         self.do(i1, 'propose')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         # validate the item
-        login(self.portal, self.defaultReviewerId)
+        login(self.portal, 'pmReviewer1')
         self.do(i1, 'validate')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         # present the item and publish the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         self.do(i1, 'present')
         self.do(m1, 'publish')
         #now every items are visible by everyone
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         self.failUnless(self.hasPermission('View', i1))
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
-        login(self.portal, self.defaultReviewerId)
+        login(self.portal, 'pmReviewer1')
         self.failUnless(self.hasPermission('View', i1))
-        login(self.portal, self.defaultReviewerId2)
+        login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', i1))
 
     def _no_global_observation_active(self):
         '''Tests while 'no_global_observation' wfAdaptation is active.'''
         # when the item is 'itempublished', everybody (having MeetingObserverGlobal role) can see the items
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         # propose the item
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         self.do(i1, 'propose')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         # validate the item
-        login(self.portal, self.defaultReviewerId)
+        login(self.portal, 'pmReviewer1')
         self.do(i1, 'validate')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         # present the item and publish the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         self.do(i1, 'present')
         self.do(m1, 'publish')
         #now every items are NOT visible by everyone, just relevant users
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         self.failUnless(self.hasPermission('View', i1))
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
-        login(self.portal, self.defaultReviewerId)
+        login(self.portal, 'pmReviewer1')
         self.failUnless(self.hasPermission('View', i1))
-        login(self.portal, self.defaultReviewerId2)
+        login(self.portal, 'pmReviewer2')
         self.failIf(self.hasPermission('View', i1))
 
     def test_everyone_reads_all(self):
         '''Test the workflowAdaptation 'everyone_reads_all'.'''
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._everyone_reads_all_inactive()
         # activate the wfAdaptation and check
@@ -372,52 +372,52 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'everyone_reads_all' wfAdaptation is inactive.'''
         # when the meeting/item is 'published' and in following states,
         # everybody (having MeetingObserverGlobal role) can see the items
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         i1 = self.create('MeetingItem')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         # propose the item
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(i1, 'propose')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         # validate the item
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(i1, 'validate')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         # present the item and publish the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         self.do(i1, 'present')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(m1, 'publish')
         #now every items are visible by everyone
         # when meeting/items are published/frozen/decided/...
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # freeze the meeting and so the item
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(m1, 'freeze')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # decide the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         i1.setDecision('<p>My decision</p>')
         self.do(m1, 'decide')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # close the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(m1, 'close')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # archive the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(m1, 'archive')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
 
     def _everyone_reads_all_active(self):
@@ -425,57 +425,57 @@ class testWFAdaptations(PloneMeetingTestCase):
         # when the meeting/item is 'published' and in following states,
         # everybody (having MeetingObserverGlobal role) can see the items
         # if activated, everyone can even see everything before
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         i1 = self.create('MeetingItem')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # propose the item
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(i1, 'propose')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # validate the item
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(i1, 'validate')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # present the item and publish the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         self.do(i1, 'present')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(m1, 'publish')
         #now every items are visible by everyone
         # when meeting/items are published/frozen/decided/...
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # freeze the meeting and so the item
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(m1, 'freeze')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # decide the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         i1.setDecision('<p>My decision</p>')
         self.do(m1, 'decide')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # close the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(m1, 'close')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
         # archive the meeting
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         self.do(m1, 'archive')
-        login(self.portal, self.defaultCreatorId2)
+        login(self.portal, 'pmCreator2')
         self.failUnless(self.hasPermission('View', i1))
 
     def test_creator_edits_unless_closed(self):
         '''Test the workflowAdaptation 'creator_edits_unless_closed'.'''
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._creator_edits_unless_closed_inactive()
         # activate the wfAdaptation and check
@@ -487,40 +487,40 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _creator_edits_unless_closed_inactive(self):
         '''Tests while 'creator_edits_unless_closed' wfAdaptation is inactive.'''
         # by default, the item creator can just edit a created item, no more after
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         i1.setDecision('<p>My decision</p>')
         self.failUnless(self.hasPermission('Modify portal content', i1))
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         for tr in i1.wfConditions().transitionsForPresentingAnItem:
-            login(self.portal, self.meetingManagerId)
+            login(self.portal, 'pmManager')
             self.do(i1, tr)
-            login(self.portal, self.defaultCreatorId)
+            login(self.portal, 'pmCreator1')
             # the creator can no more modify the item
             self.failIf(self.hasPermission('Modify portal content', i1))
         for tr in self.transitionsToCloseAMeeting:
-            login(self.portal, self.meetingManagerId)
+            login(self.portal, 'pmManager')
             if tr in self.transitions(m1):
                 self.do(m1, tr)
             else:
                 continue
-            login(self.portal, self.defaultCreatorId)
+            login(self.portal, 'pmCreator1')
             # the creator can no more modify the item
             self.failIf(self.hasPermission('Modify portal content', i1))
 
     def _creator_edits_unless_closed_active(self):
         '''Tests while 'creator_edits_unless_closed' wfAdaptation is active.'''
-        login(self.portal, self.defaultCreatorId)
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         i1.setDecision("<p>My decision</p>")
         self.failUnless(self.hasPermission('Modify portal content', i1))
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         for tr in i1.wfConditions().transitionsForPresentingAnItem:
-            login(self.portal, self.meetingManagerId)
+            login(self.portal, 'pmManager')
             self.do(i1, tr)
-            login(self.portal, self.defaultCreatorId)
+            login(self.portal, 'pmCreator1')
             # the creator can still modify the item if certain states
             # by default every state before "present"
             if not i1.queryState() in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
@@ -528,12 +528,12 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 self.failIf(self.hasPermission('Modify portal content', i1))
         for tr in self.transitionsToCloseAMeeting:
-            login(self.portal, self.meetingManagerId)
+            login(self.portal, 'pmManager')
             if tr in self.transitions(m1):
                 self.do(m1, tr)
             else:
                 continue
-            login(self.portal, self.defaultCreatorId)
+            login(self.portal, 'pmCreator1')
             # the creator can still modify the item if certain states
             if not i1.queryState() in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
                 self.failUnless(self.hasPermission('Modify portal content', i1))
@@ -563,7 +563,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _local_meeting_managers_inactive(self):
         '''Tests while 'local_meeting_managers' wfAdaptation is inactive.'''
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         self.failUnless(self.hasPermission('View', m1))
         self.failUnless(self.hasPermission('Modify portal content', m1))
@@ -575,7 +575,7 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _local_meeting_managers_active(self):
         '''Tests while 'local_meeting_managers' wfAdaptation is active.'''
         # the meeting creator can manage the 
-        login(self.portal, self.meetingManagerId)
+        login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         self.failUnless(self.hasPermission('View', m1))
         self.failUnless(self.hasPermission('Modify portal content', m1))

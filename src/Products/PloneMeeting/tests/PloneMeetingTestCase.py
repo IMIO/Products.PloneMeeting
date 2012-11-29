@@ -91,11 +91,6 @@ class PloneMeetingTestCase(unittest.TestCase):
         self.annexFile = 'INSTALL.TXT'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
-        self.meetingManagerId = 'pmManager'
-        self.defaultCreatorId = 'pmCreator1'
-        self.defaultCreatorId2 = 'pmCreator2'
-        self.defaultReviewerId = 'pmReviewer1'
-        self.defaultReviewerId2 = 'pmReviewer2'
         self.transitionsToCloseAMeeting = ('publish', 'freeze', 'decide', 'close', 'archive')
 
     def tearDown(self):
