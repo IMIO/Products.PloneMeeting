@@ -55,39 +55,23 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'no_publication' wfAdaptation is inactive.'''
         m1 = self._createMeetingWithItems()
         i1 = m1.getItems()[0]
-        i2 = m1.getItems()[1]
+        while not 'publish' in self.transitions(m1):
+            for tr in self.transitionsToCloseAMeeting:
+                if tr in self.transitions(m1):
+                    self.do(m1, tr)
+                    break
         self.failUnless('publish' in self.transitions(m1))
         self.do(m1, 'publish')
         self.assertEqual(i1.queryState(), 'itempublished')
-        # check that everything is working fine until the 'end' of the wf
-        self.do(m1, 'freeze')
-        # linked items are 'itemfrozen'
-        self.assertEquals(i1.queryState(), 'itemfrozen')
-        for item in m1.getItems():
-            item.setDecision('<p>A decision</p>')
-        self.do(i1, 'refuse')
-        self.do(m1, 'decide')
-        self.assertEquals(i2.queryState(), 'accepted')
-        self.do(m1, 'close')
-        self.assertEquals(i2.queryState(), 'confirmed')
 
     def _no_publication_active(self):
         '''Tests while 'no_publication' wfAdaptation is active.'''
         m1 = self._createMeetingWithItems()
-        i1 = m1.getItems()[0]
-        i2 = m1.getItems()[1]
         self.failIf('publish' in self.transitions(m1))
-        # check that everything is working fine until the 'end' of the wf
-        self.do(m1, 'freeze')
-        # linked items are 'itemfrozen'
-        self.assertEquals(i1.queryState(), 'itemfrozen')
-        for item in m1.getItems():
-            item.setDecision('<p>A decision</p>')
-        self.do(i1, 'refuse')
-        self.do(m1, 'decide')
-        self.assertEquals(i2.queryState(), 'accepted')
-        self.do(m1, 'close')
-        self.assertEquals(i2.queryState(), 'confirmed')
+        for tr in self.transitionsToCloseAMeeting:
+            if tr in self.transitions(m1):
+                self.do(m1, tr)
+                self.failIf('publish' in self.transitions(m1))
 
     def test_no_proposal(self):
         '''Test the workflowAdaptation 'no_proposal'.'''
