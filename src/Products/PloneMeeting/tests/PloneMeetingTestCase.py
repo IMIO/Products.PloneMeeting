@@ -68,7 +68,6 @@ class PloneMeetingTestCase(unittest.TestCase):
         self.wfTool = self.portal.portal_workflow
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Create admin user
-        # Do not use 'userFolderAddUser' to avoid bug in Container
         self.createUser('admin', ('Member','Manager'))
         # Import the test profile
         login(self.portal, 'admin')

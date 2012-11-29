@@ -203,7 +203,6 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_archiving(self):
         '''Test the workflowAdaptation 'archiving'.'''
-        login(self.portal, self.meetingManagerId)
         # check while the wfAdaptation is not activated
         self._archiving_inactive()
         # activate the wfAdaptation and check
@@ -232,7 +231,6 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_only_creator_may_delete(self):
         '''Test the workflowAdaptation 'archiving'.'''
-        login(self.portal, self.meetingManagerId)
         # check while the wfAdaptation is not activated
         self._only_creator_may_delete_inactive()
         # activate the wfAdaptation and check
@@ -287,7 +285,6 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_no_global_observation(self):
         '''Test the workflowAdaptation 'no_global_observation'.'''
-        login(self.portal, self.meetingManagerId)
         # check while the wfAdaptation is not activated
         self._no_global_observation_inactive()
         # activate the wfAdaptation and check
@@ -542,6 +539,77 @@ class testWFAdaptations(PloneMeetingTestCase):
                 self.failUnless(self.hasPermission('Modify portal content', i1))
             else:
                 self.failIf(self.hasPermission('Modify portal content', i1))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def test_local_meeting_managers(self):
+        '''Test the workflowAdaptation 'local_meeting_managers'.'''
+        # create a MeetingManager and put it in another _creators group than
+        # the default MeetingManager
+        self.createUser('pmManager2', ['Member', 'MeetingManager',])
+        self.portal.portal_membership.getMemberById('pmManager2')
+        self.portal.portal_groups.addPrincipalToGroup('pmManager2', 'vendors_creators')
+        login(self.portal, 'pmManager2')
+        # create a MeetingManager in the same group than default MeetingManager
+        self.createUser('pmManager3', ['Member', 'MeetingManager',])
+        self.portal.portal_membership.getMemberById('pmManager3')
+        self.portal.portal_groups.addPrincipalToGroup('pmManager3', 'developers_creators')
+        login(self.portal, 'pmManager3')
+        # check while the wfAdaptation is not activated
+        self._local_meeting_managers_inactive()
+        # activate the wfAdaptation and check
+        self.meetingConfig.setWorkflowAdaptations('local_meeting_managers')
+        logger = logging.getLogger('MeetingCommunes: test')
+        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        self._local_meeting_managers_active()
+
+    def _local_meeting_managers_inactive(self):
+        '''Tests while 'local_meeting_managers' wfAdaptation is inactive.'''
+        login(self.portal, self.meetingManagerId)
+        m1 = self.create('Meeting', date=DateTime())
+        self.failUnless(self.hasPermission('View', m1))
+        self.failUnless(self.hasPermission('Modify portal content', m1))
+        # every MeetingManagers can access created meetings
+        login(self.portal, 'pmManager2')
+        self.failUnless(self.hasPermission('View', m1))
+        self.failUnless(self.hasPermission('Modify portal content', m1))
+
+    def _local_meeting_managers_active(self):
+        '''Tests while 'local_meeting_managers' wfAdaptation is active.'''
+        # the meeting creator can manage the 
+        login(self.portal, self.meetingManagerId)
+        m1 = self.create('Meeting', date=DateTime())
+        self.failUnless(self.hasPermission('View', m1))
+        self.failUnless(self.hasPermission('Modify portal content', m1))
+        # only MeetingManagers of the same groups can access created meetings
+        login(self.portal, 'pmManager2')
+        self.failIf(self.hasPermission('View', m1))
+        self.failIf(self.hasPermission('Modify portal content', m1))
+        # same group MeetingManagers can access the Meeting
+        login(self.portal, 'pmManager3')
+        self.failUnless(self.hasPermission('View', m1))
+        self.failUnless(self.hasPermission('Modify portal content', m1))
 
 
 
