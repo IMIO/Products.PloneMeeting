@@ -81,8 +81,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf('publish' in self.transitions(m1))
         for tr in self.transitionsToCloseAMeeting:
             if tr in self.transitions(m1):
+                lastTriggeredTransition = tr
                 self.do(m1, tr)
                 self.failIf('publish' in self.transitions(m1))
+        # check that we are able to reach the end of the wf process
+        self.assertEquals(lastTriggeredTransition, self.transitionsToCloseAMeeting[-1])
 
     def testWFA_no_proposal(self):
         '''Test the workflowAdaptation 'no_proposal'.

@@ -34,7 +34,7 @@ def grantPermission(state, perm, role):
         roles.append(role)
         state.setPermission(perm, 0, roles)
 
-def performWorkflowAdaptations(site, meetingConfig, logger):
+def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=None):
     '''This function applies workflow changes as specified by the
        p_meetingConfig.'''
     # Hereafter, adaptations are applied in some meaningful sequence:
@@ -44,7 +44,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # a potentially modified set of states and transitions. Conflictual
     # combinations of adaptations exist, wrong combination of adaptations is
     # performed in meetingConfig.validate_workflowAdaptations.
-    adaptations = meetingConfig.getWorkflowAdaptations()
+    # If p_specificAdaptation is passed, just the relevant wfAdaptation is applied.
+    wfAdaptations = specificAdaptation and [specificAdaptation,] or meetingConfig.getWorkflowAdaptations()
     #while reinstalling a separate profile, the workflow could not exist
     meetingWorkflow = getattr(site.portal_workflow, meetingConfig.getMeetingWorkflow(), None)
     if not meetingWorkflow:
@@ -55,7 +56,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
         logger.warning(WF_DOES_NOT_EXIST_WARNING % meetingConfig.getItemWorkflow())
         return
 
-    error = meetingConfig.validate_workflowAdaptations(adaptations)
+    error = meetingConfig.validate_workflowAdaptations(wfAdaptations)
     if error: raise Exception(error)
 
     # "no_publication" removes state 'published' in the meeting workflow and
@@ -65,7 +66,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # published, and re-publish (=freeze) a finalized version, ie, some hours
     # or minutes before the meeting begins. This adaptation is for people that
     # do not like this idea.
-    if 'no_publication' in adaptations:
+    if 'no_publication' in wfAdaptations:
         # First, update the meeting workflow
         wf = meetingWorkflow
         # Delete transitions 'publish' and 'backToPublished'
@@ -99,7 +100,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
 
     # "no_proposal" removes state 'proposed' in the item workflow: this way,
     # people can directly validate items after they have been created.
-    if 'no_proposal' in adaptations:
+    if 'no_proposal' in wfAdaptations:
         wf = itemWorkflow
         # Delete transitions 'propose' and 'backToProposed'
         for tr in ('propose', 'backToProposed'):
@@ -119,7 +120,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # itemcreated -> proposed -> *prevalidated* -> validated.
     # It implies the creation of a new role "MeetingPreReviewer", and use of
     # MeetingGroup-related Plone groups suffixed with "_prereviewers".
-    if 'pre_validation' in adaptations:
+    if 'pre_validation' in wfAdaptations:
         # Add role 'MeetingPreReviewer'
         site = meetingConfig.getParentNode().getParentNode()
         roleManager = site.acl_users.portal_role_manager
@@ -215,23 +216,23 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # "creator_initiated_decisions" means that decisions (field item.decision)
     # are already pre-encoded (as propositions) by the proposing group.
     # (De-)activation of adaptation "pre_validation" impacts this one.
-    if 'creator_initiated_decisions' in adaptations:
+    if 'creator_initiated_decisions' in wfAdaptations:
         wf = itemWorkflow
         # Creator can read and write the "decision" field on item creation.
         grantPermission(wf.states['itemcreated'], WriteDecision,'MeetingMember')
         grantPermission(wf.states['itemcreated'], ReadDecision, 'MeetingMember')
         # (Pre)reviewer can write the "decision" field once proposed.
         writer = 'MeetingReviewer'
-        if 'pre_validation' in adaptations: writer = 'MeetingPreReviewer'
+        if 'pre_validation' in wfAdaptations: writer = 'MeetingPreReviewer'
         if 'proposed' in wf.states:
             grantPermission(wf.states['proposed'], WriteDecision, writer)
         # Reviewer can write the "decision" field once prevalidated
-        if 'pre_validation' in adaptations:
+        if 'pre_validation' in wfAdaptations:
             grantPermission(wf.states['prevalidated'], WriteDecision,
                             'MeetingReviewer')
         # Group-related roles can read the decision during the whole process.
         groupRoles = ['MeetingMember','MeetingReviewer','MeetingObserverLocal']
-        if 'pre_validation' in adaptations:
+        if 'pre_validation' in wfAdaptations:
             groupRoles.append('MeetingPreReviewer')
         for stateName in groupDecisionReadStates:
             if stateName not in wf.states: continue
@@ -246,7 +247,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # initial state becomes "validated". This can be used, for example, when
     # chaining several HubSessions: items may have been validated in another
     # HubSessions, and transferred in this one.
-    if 'items_come_validated' in adaptations:
+    if 'items_come_validated' in wfAdaptations:
         wf = itemWorkflow
         # State 'validated' becomes the initial state
         wf.initial_state = 'validated'
@@ -260,7 +261,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
 
     # "archiving" transforms item and meeting workflow into simple, one-state
     # workflows for setting up an archive site.
-    if 'archiving' in adaptations:
+    if 'archiving' in wfAdaptations:
         # Keep only final state (itemarchived) in item workflow
         wf = itemWorkflow
         # State 'itemarchived' becomes the initial state
@@ -288,7 +289,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # "only_creator_may_delete" grants the permission to delete items to
     # creators only (=role MeetingMember)(and also to God=Manager).
     # (De-)activation of adaptation "pre_validation" impacts this one.
-    if 'only_creator_may_delete' in adaptations:
+    if 'only_creator_may_delete' in wfAdaptations:
         wf = itemWorkflow
         for stateName in noDeleteStates:
             if stateName not in wf.states: continue
@@ -300,7 +301,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # every proposing group will only be able to consult items and decisions
     # related to their group, never those from other groups. So there is no
     # "global" observation of items and decisions.
-    if 'no_global_observation' in adaptations:
+    if 'no_global_observation' in wfAdaptations:
         # Modify the meetingitem workflow: once a meeting has been published,
         # remove any permission for role "MeetingObserverGlobal".
         wf = itemWorkflow
@@ -317,7 +318,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
 
     # "everyone_reads_all" grants, in meeting and item workflows, view access
     # to MeetingObserverGlobal in any state.
-    if 'everyone_reads_all' in adaptations:
+    if 'everyone_reads_all' in wfAdaptations:
         wfs = (itemWorkflow, meetingWorkflow)
         for wf in wfs:
             for stateName in wf.states:
@@ -332,7 +333,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # the creator will not be able to edit the item if it is delayed, refused,
     # confirmed or archived. In the standard workflow, as soon as the item is
     # proposed, its creator looses his ability to modify it.
-    if 'creator_edits_unless_closed' in adaptations:
+    if 'creator_edits_unless_closed' in wfAdaptations:
         wf = itemWorkflow
         for stateName in wf.states:
             if stateName in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
@@ -352,7 +353,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger):
     # meeting creator. This notion of "local meeting manager" allows different
     # groups to create and manage meetings, instead of a single global meeting
     # manager.
-    if 'local_meeting_managers' in adaptations:
+    if 'local_meeting_managers' in wfAdaptations:
         # Create role 'MeetingManagerLocal' if it does not exist.
         site = meetingConfig.getParentNode().getParentNode()
         roleManager = site.acl_users.portal_role_manager
