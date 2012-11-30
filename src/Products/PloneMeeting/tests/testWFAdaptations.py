@@ -79,6 +79,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'no_publication' wfAdaptation is active.'''
         m1 = self._createMeetingWithItems()
         self.failIf('publish' in self.transitions(m1))
+        for item in m1.getItems():
+            item.setDecision('<p>My decision<p>')
         for tr in self.transitionsToCloseAMeeting:
             if tr in self.transitions(m1):
                 lastTriggeredTransition = tr
