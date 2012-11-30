@@ -40,7 +40,7 @@ class testWFAdaptations(PloneMeetingTestCase):
        This way, an external profile will just override the called submethods if necessary.
        This way too, we will be able to check multiple activated wfAdaptations.'''
 
-    def test_availableWFAdaptations(self):
+    def testWFA_availableWFAdaptations(self):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
         self.assertEquals(set(self.meetingConfig.listWorkflowAdaptations()),
@@ -377,106 +377,77 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'everyone_reads_all' wfAdaptation is inactive.'''
         # when the meeting/item is 'published' and in following states,
         # everybody (having MeetingObserverGlobal role) can see the items
-        login(self.portal, 'pmManager')
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         i1.setDecision('<p>My decision</p>')
-        login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
-        # propose the item
-        login(self.portal, 'pmManager')
-        self.do(i1, 'propose')
-        login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
-        # validate the item
-        login(self.portal, 'pmManager')
-        self.do(i1, 'validate')
-        login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
-        # present the item and publish the meeting
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        self.do(i1, 'present')
-        login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
-        login(self.portal, 'pmManager')
-        self.do(m1, 'publish')
-        #now every items are visible by everyone
-        # when meeting/items are published/frozen/decided/...
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # freeze the meeting and so the item
-        login(self.portal, 'pmManager')
-        self.do(m1, 'freeze')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # decide the meeting
-        login(self.portal, 'pmManager')
-        self.do(m1, 'decide')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # close the meeting
-        login(self.portal, 'pmManager')
-        self.do(m1, 'close')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # archive the meeting
-        login(self.portal, 'pmManager')
-        self.do(m1, 'archive')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
+        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+            login(self.portal, 'pmManager')
+            self.do(i1, tr)
+            login(self.portal, 'pmCreator1')
+            self.failUnless(self.hasPermission('View', i1))
+            login(self.portal, 'pmCreator2')
+            self.failIf(self.hasPermission('View', i1))
+        # now here i1 is "presented"
+        # once meeting/items are "published", it is visible by everybody
+        isPublished = False
+        for tr in self.transitionsToCloseAMeeting:
+            login(self.portal, 'pmManager')
+            if tr in self.transitions(m1):
+                self.do(m1, tr)
+            else:
+                continue
+            login(self.portal, 'pmCreator1')
+            self.failUnless(self.hasPermission('View', i1))
+            if not isPublished and m1.queryState() == 'published':
+                isPublished = True
+            if isPublished:
+                login(self.portal, 'pmCreator2')
+                self.failUnless(self.hasPermission('View', i1))
+            else:
+                login(self.portal, 'pmCreator2')
+                self.failIf(self.hasPermission('View', i1))
+        #check that the meeting have been published
+        self.failUnless(isPublished)
 
     def _everyone_reads_all_active(self):
         '''Tests while 'everyone_reads_all' wfAdaptation is inactive.'''
         # when the meeting/item is 'published' and in following states,
         # everybody (having MeetingObserverGlobal role) can see the items
         # if activated, everyone can even see everything before
-        login(self.portal, 'pmManager')
+        '''Tests while 'everyone_reads_all' wfAdaptation is inactive.'''
+        # when the meeting/item is 'published' and in following states,
+        # everybody (having MeetingObserverGlobal role) can see the items
+        login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # propose the item
-        login(self.portal, 'pmManager')
-        self.do(i1, 'propose')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # validate the item
-        login(self.portal, 'pmManager')
-        self.do(i1, 'validate')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # present the item and publish the meeting
+        i1.setDecision('<p>My decision</p>')
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        self.do(i1, 'present')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        login(self.portal, 'pmManager')
-        self.do(m1, 'publish')
-        #now every items are visible by everyone
-        # when meeting/items are published/frozen/decided/...
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # freeze the meeting and so the item
-        login(self.portal, 'pmManager')
-        self.do(m1, 'freeze')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # decide the meeting
-        login(self.portal, 'pmManager')
-        i1.setDecision('<p>My decision</p>')
-        self.do(m1, 'decide')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # close the meeting
-        login(self.portal, 'pmManager')
-        self.do(m1, 'close')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
-        # archive the meeting
-        login(self.portal, 'pmManager')
-        self.do(m1, 'archive')
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('View', i1))
+        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+            login(self.portal, 'pmManager')
+            self.do(i1, tr)
+            login(self.portal, 'pmCreator1')
+            self.failUnless(self.hasPermission('View', i1))
+            login(self.portal, 'pmCreator2')
+            self.failUnless(self.hasPermission('View', i1))
+        # now here i1 is "presented"
+        # once meeting/items are "published", it is visible by everybody
+        isPublished = False
+        for tr in self.transitionsToCloseAMeeting:
+            login(self.portal, 'pmManager')
+            if tr in self.transitions(m1):
+                self.do(m1, tr)
+            else:
+                continue
+            login(self.portal, 'pmCreator1')
+            self.failUnless(self.hasPermission('View', i1))
+            if not isPublished and m1.queryState() == 'published':
+                isPublished = True
+            login(self.portal, 'pmCreator2')
+            self.failUnless(self.hasPermission('View', i1))
+        #check that the meeting have been published
+        self.failUnless(isPublished)
 
     def testWFA_creator_edits_unless_closed(self):
         '''Test the workflowAdaptation 'creator_edits_unless_closed'.'''
@@ -582,15 +553,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         # the meeting creator can manage the 
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        self.failUnless(self.hasPermission('View', m1))
         self.failUnless(self.hasPermission('Modify portal content', m1))
         # only MeetingManagers of the same groups can access created meetings
         login(self.portal, 'pmManager2')
-        self.failIf(self.hasPermission('View', m1))
         self.failIf(self.hasPermission('Modify portal content', m1))
         # same group MeetingManagers can access the Meeting
         login(self.portal, 'pmManager3')
-        self.failUnless(self.hasPermission('View', m1))
         self.failUnless(self.hasPermission('Modify portal content', m1))
 
 
