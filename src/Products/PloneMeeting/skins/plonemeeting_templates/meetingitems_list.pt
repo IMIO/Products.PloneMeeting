@@ -345,7 +345,7 @@
       </tr>
      </tal:mayViewItem> 
     </tal:showItem>
-    <tr><td colspan="30" tal:condition="not: shownItems" i18n:translate="no_shown_items"/></tr>
+    <tr tal:condition="not: shownItems"><td colspan="30" i18n:translate="no_shown_items"/>No shwon items</tr>
    </table>
    </div>
    <metal:navigate use-macro="context/hs_navigate/macros/meetingItems"/>
