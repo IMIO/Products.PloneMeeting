@@ -54,11 +54,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'no_publication'.
            This test check the removal of the 'published' state in the meeting/item WF.'''
         login(self.portal, 'pmManager')
-        # check while the wfAdaptation is not activated
+        # check while the wfAdaptation is not activated        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_publication_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_publication')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_publication_active()
 
@@ -97,7 +97,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._no_proposal_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_proposal')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_proposal_active()
 
@@ -124,7 +124,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._pre_validation_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('pre_validation')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         # define pmManager as a prereviewer
         member = self.portal.portal_membership.getAuthenticatedMember()
@@ -163,7 +163,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._creator_initiated_decisions_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('creator_initiated_decisions')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._creator_initiated_decisions_active()
 
@@ -186,7 +186,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._items_come_validated_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('items_come_validated')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._items_come_validated_active()
 
@@ -210,7 +210,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._archiving_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('archiving')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._archiving_active()
 
@@ -238,7 +238,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._only_creator_may_delete_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('only_creator_may_delete')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._only_creator_may_delete_active()
 
@@ -292,7 +292,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._no_global_observation_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_global_observation')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_global_observation_active()
 
@@ -374,7 +374,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._everyone_reads_all_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('everyone_reads_all')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._everyone_reads_all_active()
 
@@ -461,7 +461,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._creator_edits_unless_closed_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('creator_edits_unless_closed')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._creator_edits_unless_closed_active()
 
@@ -538,7 +538,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._local_meeting_managers_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('local_meeting_managers')
-        logger = logging.getLogger('MeetingCommunes: test')
+        logger = logging.getLogger('PloneMeeting: test')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._local_meeting_managers_active()
 
