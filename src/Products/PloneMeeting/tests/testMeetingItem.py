@@ -604,9 +604,11 @@ class testMeetingItem(PloneMeetingTestCase):
         login(self.portal, 'pmManager')
         i1.setCopyGroups(('vendors_reviewers',))
         i1.updateLocalRoles()
-        # this test https://dev.plone.org/ticket/13310
         i1.reindexObject()
+        # getCopyGroups is a KeywordIndex, test different cases
         self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_reviewers')), 1)
+        self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_creators')), 0)
+        self.assertEquals(len(self.portal.portal_catalog(getCopyGroups=('vendors_creators', 'vendors_reviewers',))), 1)
         # Vendors reviewers can see the item now
         login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))

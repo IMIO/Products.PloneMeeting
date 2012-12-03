@@ -1966,7 +1966,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for state in group.getItemAdviceStates(self): itemStates.add(state)
         # Create query parameters
         params = {'portal_type'  : self.getItemTypeName(),
-                  'indexAdvisers': ' OR '.join(groupIds),
+                  # KeywordIndex 'indexAdvisers' use 'OR' by default
+                  'indexAdvisers': groupIds,
                   'sort_on'      : sortKey, 'sort_order': sortOrder,
                   'review_state' : list(itemStates),
                  }
@@ -1985,7 +1986,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         groupIds = [g.id + '1' for g in groups]
         # Create query parameters
         params = {'portal_type'   : self.getItemTypeName(),
-                  'indexAdvisers' : ' OR '.join(groupIds),
+                  # KeywordIndex 'indexAdvisers' use 'OR' by default
+                  'indexAdvisers' : groupIds,
                   'sort_on'       : sortKey, 'sort_order': sortOrder,
                   'review_state'  : self.getItemTopicStates(),
                  }
@@ -2002,7 +2004,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         member = self.portal_membership.getAuthenticatedMember()
         userGroups = self.portal_groups.getGroupsForPrincipal(member)
         params = {'portal_type'   : self.getItemTypeName(),
-                  'getCopyGroups' : ' OR '.join(userGroups),
+                  # KeywordIndex 'getCopyGroups' use 'OR' by default
+                  'getCopyGroups' : userGroups,
                   'sort_on'       : sortKey, 'sort_order': sortOrder,
                   'review_state'  : self.getItemTopicStates(),
                  }
@@ -2435,7 +2438,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the active MeetingUsers having at least one usage among
            p_usage.'''
         brains = self.portal_catalog(portal_type='MeetingUser',
-            getConfigId=self.id, indexUsages=' OR '.join(usages),
+            # KeywordIndex 'indexUsages' use 'OR' by default
+            getConfigId=self.id, indexUsages=usages,
             review_state='active', sort_on='getObjPositionInParent')
         return [b.getObject() for b in brains]
 

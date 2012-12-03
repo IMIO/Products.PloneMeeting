@@ -40,24 +40,26 @@ pmGroupProperties = ('meetingRole', 'meetingGroupId')
 noSearchTypes = ('Folder',)
 podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 # Indexes used by HubSessions
+# XXX warning, do ONLY use ZCTextIndex for real text values,
+# NOT returning empty tuple/list like () or [] but empty values like ''
 indexInfo = { # MeetingItem-related indexes
               'getTitle2'           : 'ZCTextIndex',
               'getCategory'         : 'FieldIndex',
               'getItemIsSigned'     : 'FieldIndex',
               'getRawClassifier'    : 'FieldIndex',
               'getProposingGroup'   : 'FieldIndex',
-              'getAssociatedGroups' : 'ZCTextIndex',
+              'getAssociatedGroups' : 'KeywordIndex',
               'getPreferredMeeting' : 'FieldIndex',
               'getDecision'         : 'ZCTextIndex',
-              'getCopyGroups'       : 'ZCTextIndex',
-              'indexAdvisers'       : 'ZCTextIndex',
+              'getCopyGroups'       : 'KeywordIndex',
+              'indexAdvisers'       : 'KeywordIndex',
               # Meeting-related indexes
               'getDate'             : 'FieldIndex',
               # MeetingFile-related indexes
               'indexExtractedText'  : 'ZCTextIndex',
               # MeetingUser-related indexes
               'getConfigId'         : 'FieldIndex',
-              'indexUsages'         : 'ZCTextIndex',
+              'indexUsages'         : 'KeywordIndex',
             }
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # Index "indexUsages" does not use Archetype-generated getter "getUsages"

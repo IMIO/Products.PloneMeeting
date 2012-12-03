@@ -79,8 +79,8 @@ class Searcher:
         associatedGroups = tuple(self.getMultiValue('associatedGroups'))
         if associatedGroups:
             operator = self.searchParams.get('ag_operator', 'or')
-            if (operator == 'or') and (len(associatedGroups) > 1):
-                associatedGroups = ' OR '.join(associatedGroups)
+            if (operator == 'and') and (len(associatedGroups) > 1):
+                associatedGroups = {'operator': 'and', 'query': associatedGroups,}
             res['getAssociatedGroups'] = associatedGroups
         categories = self.getMultiValue('categories')
         if categories:
