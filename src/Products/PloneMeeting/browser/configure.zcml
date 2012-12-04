@@ -4,7 +4,7 @@
     xmlns:plone="http://namespaces.plone.org/plone"
     >
 
-    <!-- HubSessions-specific viewlets -->
+    <!-- PloneMeeting-specific viewlets -->
     <browser:viewlet
         name="plonemeeting.podtemplates"
         for="Products.PloneMeeting.interfaces.IMeetingItem"

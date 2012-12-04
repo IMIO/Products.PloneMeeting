@@ -509,6 +509,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def at_post_create_script(self):
         self.updateLanguageSettings()
         self.adapted().onEdit(isCreated=True)
+        # give the "PloneMeeting: Add MeetingUser" permission to MeetingObserverGlobal role
+        self.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingUser'], ('Manager', 'MeetingObserverGlobal'))
 
     def validate_unoEnabledPython(self, value):
         '''Checks if the given Python interpreter exists and is uno-enabled.'''

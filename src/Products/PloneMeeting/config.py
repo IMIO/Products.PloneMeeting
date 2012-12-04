@@ -60,7 +60,7 @@ setDefaultRoles('PloneMeeting: Add MeetingItem', ('Manager', ))
 setDefaultRoles('PloneMeeting: Add Meeting', ('Manager', ))
 setDefaultRoles('PloneMeeting: Manage configuration', ('Manager', ))
 setDefaultRoles('PloneMeeting: Add MeetingFile', ('Manager', ))
-setDefaultRoles('PloneMeeting: Add MeetingUser', ('Manager', 'Member'))
+setDefaultRoles('PloneMeeting: Add MeetingUser', ('Manager', ))
 
 product_globals = globals()
 
