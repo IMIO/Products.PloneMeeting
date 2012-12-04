@@ -18,7 +18,7 @@ noDeleteStates = ('proposed', 'prevalidated', 'validated', 'presented',
                   'itempublished', 'itemfrozen', 'accepted', 'refused',
                   'delayed', 'confirmed')
 viewPermissions = ('View', 'Access contents information')
-WF_APPLIED = 'Workflow change "%s" applied.'
+WF_APPLIED = 'Workflow change "%s" applied for meetingConfig "%s".'
 WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
 
 # list of states the creator can no more edit the item even while using the 'creator_edits_unless_closed' wfAdaptation
@@ -96,7 +96,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         # Delete state 'published'
         if 'itempublished' in wf.states:
             wf.states.deleteStates(['itempublished'])
-        logger.info(WF_APPLIED % "no_publication")
+        logger.info(WF_APPLIED % ("no_publication", meetingConfig.getId()))
 
     # "no_proposal" removes state 'proposed' in the item workflow: this way,
     # people can directly validate items after they have been created.
@@ -114,7 +114,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         # Delete state 'proposed'
         if 'proposed' in wf.states:
             wf.states.deleteStates(['proposed'])
-        logger.info(WF_APPLIED % "no_proposal")
+        logger.info(WF_APPLIED % ("no_proposal", meetingConfig.getId()))
 
     # "pre_validation" adds an additional state in the item validation chain:
     # itemcreated -> proposed -> *prevalidated* -> validated.
@@ -211,7 +211,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             meetingConfig.setItemTopicStates(queryStates)
             # Update the topics definitions for taking this into account.
             meetingConfig.updateTopics()
-        logger.info(WF_APPLIED % "pre_validation")
+        logger.info(WF_APPLIED % ("pre_validation", meetingConfig.getId()))
 
     # "creator_initiated_decisions" means that decisions (field item.decision)
     # are already pre-encoded (as propositions) by the proposing group.
@@ -241,7 +241,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                     grantPermission(wf.states[stateName], ReadDecision, role)
                 except KeyError:
                     pass # State 'prevalidated' may not exist.
-        logger.info(WF_APPLIED % "creator_initiated_decisions")
+        logger.info(WF_APPLIED % ("creator_initiated_decisions", meetingConfig.getId()))
 
     # "items_come_validated" removes the early steps of the item workflow: the
     # initial state becomes "validated". This can be used, for example, when
@@ -257,7 +257,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         # Remove early states
         for st in ('itemcreated', 'proposed'):
             if st in wf.states: wf.states.deleteStates([st])
-        logger.info(WF_APPLIED % "items_come_validated")
+        logger.info(WF_APPLIED % ("items_come_validated", meetingConfig.getId()))
 
     # "archiving" transforms item and meeting workflow into simple, one-state
     # workflows for setting up an archive site.
@@ -284,7 +284,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         names = wf.states.keys()
         if 'archived' in names: names.remove('archived')
         if names: wf.states.deleteStates(names)
-        logger.info(WF_APPLIED % "archiving")
+        logger.info(WF_APPLIED % ("archiving", meetingConfig.getId()))
 
     # "only_creator_may_delete" grants the permission to delete items to
     # creators only (=role MeetingMember)(and also to God=Manager).
@@ -295,7 +295,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             if stateName not in wf.states: continue
             state = wf.states[stateName]
             state.setPermission('Delete objects', 0, ['MeetingMember', 'Manager'])
-        logger.info(WF_APPLIED % "only_creator_may_delete")
+        logger.info(WF_APPLIED % ("only_creator_may_delete", meetingConfig.getId()))
 
     # "no_global_observation" means that during the whole decision process,
     # every proposing group will only be able to consult items and decisions
@@ -314,7 +314,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 newRoles = list(roles)
                 newRoles.remove('MeetingObserverGlobal')
                 state.setPermission(permission, 0, newRoles)
-        logger.info(WF_APPLIED % "no_global_observation")
+        logger.info(WF_APPLIED % ("no_global_observation", meetingConfig.getId()))
 
     # "everyone_reads_all" grants, in meeting and item workflows, view access
     # to MeetingObserverGlobal in any state.
@@ -326,7 +326,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 for permission, roles in state.permission_roles.iteritems():
                     if permission not in viewPermissions: continue
                     grantPermission(state, permission, 'MeetingObserverGlobal')
-        logger.info(WF_APPLIED % "everyone_reads_all")
+        logger.info(WF_APPLIED % ("everyone_reads_all", meetingConfig.getId()))
 
     # "creator_edits_unless_closed" allows the creator of an item to edit it
     # (decision included) unless the meeting is closed. To be more precise,
@@ -342,7 +342,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             state = wf.states[stateName]
             grantPermission(state, 'Modify portal content', 'MeetingMember')
             grantPermission(state, WriteDecision, 'MeetingMember')
-        logger.info(WF_APPLIED % "creator_edits_unless_closed")
+        logger.info(WF_APPLIED % ("creator_edits_unless_closed", meetingConfig.getId()))
 
     # "local_meeting_managers" lets people manage meetings of their group only.
     # When this adaptation is enabled, as usual, global role MeetingManager is
@@ -380,7 +380,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 # MeetingManagerLocal role yet (will be set in at_post_create).
                 if stateName == 'created':
                     grantPermission(state, permission, 'Owner')
-        logger.info(WF_APPLIED % "local_meeting_managers")
+        logger.info(WF_APPLIED % ("local_meeting_managers", meetingConfig.getId()))
 
 # Stuff for performing model adaptations ---------------------------------------
 def companionField(name, type='simple', label=None, searchable=False,
