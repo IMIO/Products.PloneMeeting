@@ -530,7 +530,7 @@ cursor:pointer;
 }
 
 /* define the width of the input containing the number of the item on the meeting_view */
-span#meetingItems INPUT, span#lateItems INPUT {
+span#meetingItems INPUT[type=text], span#lateItems INPUT[type=text] {
     width: 2.5em;
 }
 
