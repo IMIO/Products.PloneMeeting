@@ -1037,12 +1037,12 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
                     for elem in destFolder.objectValues():
                         if elem.meta_type == 'Meeting':
                             for item in elem.getItems():
-                                elem.removeGivenObject(item)
+                                elem.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
                             for item in elem.getLateItems():
-                                elem.removeGivenObject(item)
-                        destFolder.removeGivenObject(elem)
+                                elem.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
+                        destFolder.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(elem)
                 # Then, remove the folder.
-                destFolder.getParentNode().removeGivenObject(destFolder)
+                destFolder.getParentNode().restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(destFolder)
             if raiseError: raise de
         return res
 
@@ -1085,7 +1085,6 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
            on the master site is removed from this site.'''
         logger.info(self.IMPORTING_USERS)
         # Get the users from the master site
-        rq = self.REQUEST
         url = self.getNotifyUrl() + '/portal_plonemeeting?do=getPloneUsers'
         success, response = self._sendHttpRequest(url)
         if not success:

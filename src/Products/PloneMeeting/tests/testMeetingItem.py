@@ -377,7 +377,7 @@ class testMeetingItem(PloneMeetingTestCase):
         #if we remove the newItem, the reference in the original item annotation is removed
         #and the original item is sendable again
         self.changeUser('pmCreator1')
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(newUID)
+        self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
         self.changeUser('pmManager')
         self.failIf(annotations.has_key(annotationKey))
         self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -408,7 +408,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # by default, the only positive state is 'accepted'
         for state in MeetingItem.itemPositiveDecidedStates:
             self.changeUser('pmCreator1')
-            self.portal.portal_skins.plonemeeting_templates.delete_givenuid(newUID)
+            self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
             self.changeUser('pmManager')
             self.do(i1, 'backToItemFrozen')
             self.failIf(i1._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
@@ -628,7 +628,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(self.hasPermission('View', i1))
 
     def testItemIsSigned(self):
-        '''Test the functionnality around MeetingItem.itemIsSigned field.'''
+        '''Test the functionnality around MeetingItem.itemIsSigned field.
+           Check also the @@toggle_item_is_signed view that do some unrestricted things...'''
         # Use the 'plonegov-assembly' meetingConfig
         self.setMeetingConfig(self.meetingConfig2.getId())
         mtool = getToolByName(self.portal, 'portal_membership')
@@ -653,18 +654,28 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'present')
         self.assertEquals(item.maySignItem(authMember()), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.do(meeting, 'publish')
         self.assertEquals(item.maySignItem(authMember()), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.do(meeting, 'freeze')
         self.assertEquals(item.maySignItem(authMember()), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.do(meeting, 'decide')
         # now that the item is accepted, MeetingManagers can sign it
         self.assertEquals(item.maySignItem(authMember()), True)
         item.setItemIsSigned(True)
         # a signed item can still be unsigned until the meeting is closed
         self.assertEquals(item.maySignItem(authMember()), True)
+        # call to @@toggle_item_is_signed will set it back to False (toggle)
+        item.restrictedTraverse('@@toggle_item_is_signed')(item.UID())
+        self.assertEquals(item.getItemIsSigned(), False)
+        # toggle itemIsSigned value again
+        item.restrictedTraverse('@@toggle_item_is_signed')(item.UID())
+        self.assertEquals(item.getItemIsSigned(), True)
+        # check accessing setItemIsSigned directly
         item.setItemIsSigned(False)
         self.do(meeting, 'close')
         # still able to sign an unsigned item in a closed meeting
@@ -676,6 +687,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setItemIsSigned(True)
         self.assertEquals(item.maySignItem(authMember()), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, False)
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
 
 
 def test_suite():

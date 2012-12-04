@@ -56,7 +56,7 @@
     <property name="description" i18n:translate=""></property>
     <property name="url_expr">string:paste_items:method</property>
     <property name="icon_expr"></property>
-    <property name="available_expr">object/showPasteMeetingItemAction</property>
+    <property name="available_expr">python: object.cb_dataValid() and portal.portal_plonemeeting.getMeetingConfig(object)</property>
     <property name="permissions">
      <element value="View"/>
     </property>
@@ -67,7 +67,7 @@
     <property name="description" i18n:translate=""></property>
     <property name="url_expr">string:folder_copyitems:method</property>
     <property name="icon_expr">string:$portal_url/copy_icon.gif</property>
-    <property name="available_expr">object/showFolderCopyMeetingItemAction</property>
+    <property name="available_expr">python: portal.portal_plonemeeting.getMeetingConfig(object)</property>
     <property name="permissions">
      <element value="Copy or Move"/>
     </property>

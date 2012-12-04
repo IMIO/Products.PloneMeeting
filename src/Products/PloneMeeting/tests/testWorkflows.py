@@ -24,6 +24,7 @@
 
 from DateTime import DateTime
 from AccessControl import Unauthorized
+from OFS.ObjectManager import BeforeDeleteException
 from plone.app.testing import login, logout
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
@@ -65,11 +66,11 @@ class testWorkflows(PloneMeetingTestCase):
     def testRemoveObjects(self):
         '''Tests objects removal (items, meetings, annexes...).'''
         # Create an item with annexes
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         parentFolder = item.getParentNode()
         #test that we can remove an empty item...
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(item.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.failIf(len(parentFolder.objectValues()) != 0)
         #test removal of an item with annexes
         item = self.create('MeetingItem')
@@ -78,17 +79,17 @@ class testWorkflows(PloneMeetingTestCase):
         annex2 = self.addAnnex(item)
         self.failIf(len(item.objectValues()) != 2)
         self.changeUser('pmCreator1')
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(annex2.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex2.UID())
         self.failIf(len(item.objectValues()) != 1)
         # Propose the item
         self.do(item, item.wfConditions().transitionsForPresentingAnItem[0])
         # Remove the item with annexes
         self.changeUser('pmCreator1b')
         # Check that now MeetingMember(s) can't remove the item anymore
-        self.assertRaises(Unauthorized, self.portal.portal_skins.plonemeeting_templates.delete_givenuid, item.UID())
+        self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), item.UID())
         self.changeUser('pmReviewer1')
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(annex1.UID())
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(item.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex1.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.failIf(len(parentFolder.objectValues()) != 0)
 
     def testRemoveContainer(self):
@@ -108,7 +109,7 @@ class testWorkflows(PloneMeetingTestCase):
         itemId = testfolder.invokeFactory(type_name, id='testitem',
             title='Test item', proposingGroup='developers')
         testitem = getattr(testfolder, itemId)
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(testfolder.UID())
+        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@delete_givenuid'), (testfolder.UID()))
         # The folder should not have been deleted...
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         self.failUnless(hasattr(testfolder, 'testitem'))
@@ -119,22 +120,22 @@ class testWorkflows(PloneMeetingTestCase):
         meetingId = testfolder.invokeFactory(type_name, id='testmeeting',
             title='Test meeting', date=meetingDate)
         testmeeting = getattr(testfolder, meetingId)
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(testfolder.UID())
+        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@delete_givenuid'), (testfolder.UID()))
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         self.failUnless(hasattr(testfolder, 'testitem'))
         self.failUnless(hasattr(testfolder, 'testmeeting'))
         self.assertEquals(len(testfolder.objectValues()),2)
         # Now, remove things in the good order. Remove the item and check
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(testitem.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(testitem.UID())
         self.assertEquals(len(testfolder.objectValues()),1)
         # Try to remove the folder again but with a contained meeting only
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(testfolder.UID())
+        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@delete_givenuid'), (testfolder.UID()))
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         # Remove the meeting
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(testmeeting.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(testmeeting.UID())
         self.assertEquals(len(testfolder.objectValues()),0)
         # Check that now that the testfolder is empty, we can remove it.
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(testfolder.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(testfolder.UID())
         self.failIf(hasattr(pmManagerFolder, 'testfolder'))
 
     def testWholeDecisionProcess(self):
@@ -178,7 +179,7 @@ class testWorkflows(PloneMeetingTestCase):
         # The meetingManager can add annexes, decision-related or not
         managerAnnex = self.addAnnex(item1)
         self.addAnnex(item1, decisionRelated=True)
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(managerAnnex.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(managerAnnex.UID())
         self.do(item1, 'present')
         self.changeUser('pmCreator1')
         someAnnex = self.addAnnex(item1)
@@ -370,7 +371,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.failIf(len(meeting.getLateItems()) != 1)
         # Back to created: rec item 2 is not inserted.
         # We can not 'backToCreated' a meeting if some late items are into it...
-        self.portal.portal_skins.plonemeeting_templates.delete_givenuid(meeting.getLateItems()[0].UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(meeting.getLateItems()[0].UID())
         self.do(meeting, 'backToCreated')
         self.failIf(len(meeting.getItems()) != 2)
         self.failIf(len(meeting.getLateItems()) != 0)

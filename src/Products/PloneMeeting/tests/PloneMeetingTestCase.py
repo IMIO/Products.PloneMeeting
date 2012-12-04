@@ -25,6 +25,9 @@ import os.path
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
 
+from zope.event import notify
+from zope.traversing.interfaces import BeforeTraverseEvent
+
 from DateTime.DateTime import DateTime
 
 from zope.annotation.interfaces import IAnnotations
@@ -64,6 +67,10 @@ class PloneMeetingTestCase(unittest.TestCase):
     def setUp(self):
         # Define some useful attributes
         self.portal = self.layer['portal']
+        self.request = self.layer['request']
+        # setup manually the correct browserlayer, see:
+        # https://dev.plone.org/ticket/11673
+        notify(BeforeTraverseEvent(self.portal, self.request))
         self.tool = self.portal.portal_plonemeeting
         self.wfTool = self.portal.portal_workflow
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
@@ -149,6 +156,11 @@ class PloneMeetingTestCase(unittest.TestCase):
     def changeUser(self, loginName):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
+        # remove 'plone.memoize' annotations about @@plone_portal_state
+        # or getting @@plone_portal_state.member() returns always the same user (the first logged in)
+        req_annotations = IAnnotations(self.request)
+        if req_annotations.has_key('plone.memoize'):
+            del IAnnotations(self.request)['plone.memoize']
         login(self.portal, loginName)
 
     def _generateId(self, ploneFolder):

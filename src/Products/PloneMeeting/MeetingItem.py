@@ -1070,10 +1070,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def maySignItem(self, member):
         '''Condition for editing 'itemIsSigned' field.
            As the item signature comes after the item is decided/closed,
-           we use a 'Manager' proxy roled script that is protected by
+           we use an unrestricted call in @@toggle_item_is_signed that is protected by
            this method.'''
         #bypass for the Manager role
-        if member.has_role('Manager'):
+        if 'Manager' in member.getRoles():
             return True
         item = self.getSelf()
         # Only MeetingManagers can sign an item if it is decided
@@ -1883,13 +1883,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             logger.warn(REC_ITEM_ERROR % (item.id,
                                           WRONG_TRANSITION % lastTransition))
             sendMail(None, item, 'recurringItemBadTransition')
-            # We do not use delete_givenuid here but deleteGivenObject
-            # that has a Manager proxy role because the item could be
+            # We do not use delete_givenuid here but removeGivenObject
+            # that act as an unrestricted method because the item could be
             # not accessible by the MeetingManager.  In the case for example
             # where a recurring item is created with a proposingGroup the
             # MeetingManager is not in as a creator...
             # we must be sure that the item is removed in every case.
-            item.portal_skins.plonemeeting_templates.removeGivenObject(item)
+            item.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
             return True
         else:
             wfTool = item.portal_workflow
@@ -1931,7 +1931,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             except WorkflowException, wfe:
                 logger.warn(REC_ITEM_ERROR % (item.id, str(wfe)))
                 sendMail(None, item, 'recurringItemWorkflowError')
-                item.removeGivenObject(item)
+                item.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
                 return True
 
     security.declarePublic('mayBeLinkedToTasks')

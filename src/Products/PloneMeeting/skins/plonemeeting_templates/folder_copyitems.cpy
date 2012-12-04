@@ -22,7 +22,7 @@ if REQUEST.has_key('paths'):
     ids = [p.split('/')[-1] or p.split('/')[-2] for p in REQUEST['paths']]
     
     #check that copied items are OK...
-    #only MeetingItems and self proposinggroup that current user
+    #only MeetingItems and same proposingGroup that current user
     for id in ids:
         try:
             item = getattr(context, id)

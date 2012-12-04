@@ -217,7 +217,7 @@
               <a tal:condition="mayView"
                  tal:attributes="href meeting/absolute_url"
                  tal:content="python: tool.formatDate(meeting.getDate(), prefixed=True)"></a>
-              <span tal:condition="not: mayView" tal:content="context/getLinkedMeetingTitle"></span>
+              <span tal:condition="not: mayView" tal:content="python: context.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingTitle(context)"></span>
             </tal:block>
           </tal:hasMeeting>
           <span tal:condition="python: not meeting">-</span>

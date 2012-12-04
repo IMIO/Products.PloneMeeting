@@ -102,7 +102,7 @@ class testMeeting(PloneMeetingTestCase):
                             ['recItem1', 'o3', 'o2', 'o4', 'o6'])
         #delete a linked item
         item4 = getattr(meeting, 'o4')
-        meeting.portal_skins.plonemeeting_templates.delete_givenuid(item4.UID())
+        meeting.restrictedTraverse('@@delete_givenuid')(item4.UID())
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                             ['recItem1', 'o3', 'o2', 'o6'])
 

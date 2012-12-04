@@ -553,7 +553,7 @@ function toggleItemIsSigned(UID, img_tag, baseUrl) {
 
 function asyncItemIsSigned(UID, baseUrl) {
   jq.ajax({
-    url: baseUrl + "/signItem",
+    url: baseUrl + "/@@toggle_item_is_signed",
     dataType: 'html',
     data: {UID:UID},
     success: function(data) {

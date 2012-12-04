@@ -82,22 +82,6 @@
         permission="zope2.View"
         allowed_attributes="available"/>
 
-    <browser:page
-        name="toggle_item_is_signed"
-        class=".itemsign.ItemSign"
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        attribute="toggle"
-        permission="zope2.View"
-        allowed_attributes="toggle" />
-
-    <browser:page
-        name="toggle_item_is_signed"
-        class=".itemsign.ItemSign"
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        attribute="toggle"
-        permission="zope2.View"
-        allowed_attributes="toggle" />
-
     <!-- the plonemeeting_topic_view used to display list of items (my items, all items, ...) -->
     <browser:page
         for="Products.ATContentTypes.interfaces.folder.IATFolder"
@@ -112,6 +96,36 @@
         class=".views.PloneMeetingTopicView"
         template="templates/plonemeeting_topic_view.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- this view will contains some methods doing unrestricted things.  It replaces Manager Proxy roled python Scripts -->
+    <browser:page
+        for="*"
+        name="pm_unrestricted_methods"
+        class=".views_unrestricted.UnrestrictedMethodsView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        allowed_attributes="removeGivenObject
+                            getLinkedMeetingTitle"
+        permission="zope2.View" />
+    <browser:view
+        for="*"
+        name="delete_givenuid"
+        class=".views_unrestricted.DeleteGivenUidView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+    <browser:page
+        name="toggle_item_is_signed"
+        attribute="toggle"
+        allowed_attributes="toggle"
+        class=".views_unrestricted.ItemSign"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        permission="zope2.View" />
+    <browser:page
+        name="toggle_item_is_signed"
+        attribute="toggle"
+        allowed_attributes="toggle"
+        class=".views_unrestricted.ItemSign"
+        for="Products.PloneMeeting.interfaces.IMeeting"
         permission="zope2.View" />
 
     <!-- PloneMeeting-specific portlets -->
