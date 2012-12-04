@@ -343,7 +343,7 @@
                                  value meetingItem/UID"/>
         </td>
       </tr>
-     </tal:mayViewItem> 
+     </tal:mayViewItem>
     </tal:showItem>
     <tr tal:condition="not: shownItems"><td colspan="30" class="discreet" i18n:translate="no_shown_items">No shown items</td></tr>
    </table>
