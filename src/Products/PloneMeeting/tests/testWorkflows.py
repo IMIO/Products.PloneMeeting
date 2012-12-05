@@ -26,8 +26,11 @@ from DateTime import DateTime
 from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
 from plone.app.testing import login, logout
+from zope.annotation.interfaces import IAnnotations
+from Products.statusmessages.interfaces import IStatusMessage
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
+
 
 class testWorkflows(PloneMeetingTestCase):
     '''Tests the default workflows implemented in PloneMeeting.
@@ -109,7 +112,21 @@ class testWorkflows(PloneMeetingTestCase):
         itemId = testfolder.invokeFactory(type_name, id='testitem',
             title='Test item', proposingGroup='developers')
         testitem = getattr(testfolder, itemId)
-        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@delete_givenuid'), (testfolder.UID()))
+        # BeforeDeleteException is the only exception catched by @@delete_givenuid because we manage it ourself
+        # so @@delete_givenuid add a relevant portal message but accessing removeGivenObject directly raises the BeforeDeleteException
+        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject, testfolder)
+        # check that @@delete_givenuid add relevant portalMessage
+        # first remove eventual statusmessages
+        annotations = IAnnotations(self.portal.REQUEST)
+        if annotations.has_key('statusmessages'):
+            del annotations['statusmessages']
+        statusMessages = IStatusMessage(self.portal.REQUEST)
+        # no statusMessage for now
+        self.assertEquals(len(statusMessages.show()), 0)
+        self.portal.restrictedTraverse('@@delete_givenuid')(testfolder.UID())
+        # @@delete_givenuid added one statusMessage about BeforeDeleteException
+        self.assertEquals(len(statusMessages.show()), 1)
+        self.assertEquals(statusMessages.show()[0].message, u'can_not_delete_meetingitem_container')
         # The folder should not have been deleted...
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         self.failUnless(hasattr(testfolder, 'testitem'))
@@ -120,7 +137,7 @@ class testWorkflows(PloneMeetingTestCase):
         meetingId = testfolder.invokeFactory(type_name, id='testmeeting',
             title='Test meeting', date=meetingDate)
         testmeeting = getattr(testfolder, meetingId)
-        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@delete_givenuid'), (testfolder.UID()))
+        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject, testfolder)
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         self.failUnless(hasattr(testfolder, 'testitem'))
         self.failUnless(hasattr(testfolder, 'testmeeting'))
@@ -129,7 +146,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(testitem.UID())
         self.assertEquals(len(testfolder.objectValues()),1)
         # Try to remove the folder again but with a contained meeting only
-        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@delete_givenuid'), (testfolder.UID()))
+        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject, testfolder)
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         # Remove the meeting
         self.portal.restrictedTraverse('@@delete_givenuid')(testmeeting.UID())

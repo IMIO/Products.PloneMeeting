@@ -87,10 +87,16 @@ class DeleteGivenUidView(BrowserView):
                         removeParent = True
 
             # remove the object
-            self.context.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(obj)
-            logger.info(logMsg)
-            # remove the parent object if necessary
-            if removeParent: self.context.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(parent)
+            # just manage BeforeDeleteException because we rise it ourself
+            from OFS.ObjectManager import BeforeDeleteException
+            try:
+                self.context.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(obj)
+                logger.info(logMsg)
+                # remove the parent object if necessary
+                if removeParent: self.context.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(parent)
+            except BeforeDeleteException, exc:
+                msg={'message': exc.message, 'type': 'error'}
+            # fall back to original user
         else:
             msg = {'message':'cant_delete_object', 'type':'error'}
 
