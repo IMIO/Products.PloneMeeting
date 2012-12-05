@@ -18,7 +18,7 @@
     this page. Indeed, this page is retrieved through an asynchronous XMLHttpRequest by the browser, and
     IE caches this by default.</tal:comment>
   <tal:executeAction condition="action">
-    <tal:do define="dummy python: context.get('on'+action)()" omit-tag=""/>
+    <tal:do define="dummy python: getattr(context, 'on'+action)()" omit-tag=""/>
   </tal:executeAction>
   <metal:callMacro use-macro="python: getattr(portal, page).macros.get(macro)"/>
 </tal:ajax>

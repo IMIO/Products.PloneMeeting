@@ -2994,7 +2994,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('hasVotes')
     def hasVotes(self):
         '''Return True if vote values are defined for this item.'''
-        return self.votes
+        if not self.votes:
+            return False
+        # we may also say that if every encoded votes are 'not_yet' values
+        # we consider that there is no votes
+        if self.getVotesAreSecret():
+            return bool([v for v in self.votes if (v != 'not_yet' and self.votes[v] != 0)])
+        else:
+            return bool([val for val in self.votes.values() if val != 'not_yet'])
 
     security.declarePublic('getVoteValue')
     def getVoteValue(self, userId):
@@ -3125,6 +3132,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Switches votes (secret / not secret).'''
         exec "secret = %s" % self.REQUEST['secret']
         self.setVotesAreSecret(not secret)
+        self.votes = {}
 
     security.declarePublic('mayConsultVotes')
     def mayConsultVotes(self):

@@ -456,6 +456,10 @@ msgstr ""
 msgid "switch_votes"
 msgstr ""
 
+#. Default: "You can not switch votes mode (secret / not secret) because some votes are already encoded.  Remove every votes before being able to switch."
+msgid "switch_votes_why_cannot"
+msgstr ""
+
 #. Default: "Votes"
 msgid "existing_votes"
 msgstr ""

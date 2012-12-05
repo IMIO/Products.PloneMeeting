@@ -3272,6 +3272,10 @@ msgstr "Colorize depending on state"
 msgid "switch_votes"
 msgstr "Switch mode (secret / not secret)"
 
+#. Default: "You can not switch votes mode (secret / not secret) because some votes are already encoded.  Remove every votes before being able to switch."
+msgid "switch_votes_why_cannot"
+msgstr ""
+
 #. Default: "Choose, among this list of all roles defined in your Plone site, the one that is defined by the external task module and that allows one to create tasks."
 msgid "task_creator_role_descr"
 msgstr "Choose, among this list of all roles defined in your Plone site, the one that is defined by the external task module and that allows one to create tasks."

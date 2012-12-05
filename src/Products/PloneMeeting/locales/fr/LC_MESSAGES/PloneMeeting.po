@@ -3265,6 +3265,10 @@ msgstr "Coloriser suivant l'état du workflow"
 msgid "switch_votes"
 msgstr "Basculer vers l'autre mode (secret / non secret)"
 
+#. Default: "You can not switch votes mode (secret / not secret) because some votes are already encoded.  Remove every votes before being able to switch."
+msgid "switch_votes_why_cannot"
+msgstr "Vous ne pouvez pas basculer vers l'autre mode (secret / non secret) car des votes ont déjà été encodés sur ce point.  Enlevez tous les votes pour pouvoir basculer de mode."
+
 #. Default: "Choose, among this list of all roles defined in your Plone site, the one that is defined by the external task module and that allows one to create tasks."
 msgid "task_creator_role_descr"
 msgstr "Choisissez, parmi la liste de tous les rôles définis dans votre site Plone, celui qui est livré par le module de gestion de tâches et qui permet de créer des tâches."

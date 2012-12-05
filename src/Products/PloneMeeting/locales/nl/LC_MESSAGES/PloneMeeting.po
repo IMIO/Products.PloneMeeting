@@ -3272,6 +3272,10 @@ msgstr ""
 msgid "switch_votes"
 msgstr ""
 
+#. Default: "You can not switch votes mode (secret / not secret) because some votes are already encoded.  Remove every votes before being able to switch."
+msgid "switch_votes_why_cannot"
+msgstr ""
+
 #. Default: "Choose, among this list of all roles defined in your Plone site, the one that is defined by the external task module and that allows one to create tasks."
 msgid "task_creator_role_descr"
 msgstr "Kies uit de gehele lijst van rollen gedfinieerd in je Plone site, de rol gedefinieerd door de externe taak module en deze laat toe taken aan te maken"

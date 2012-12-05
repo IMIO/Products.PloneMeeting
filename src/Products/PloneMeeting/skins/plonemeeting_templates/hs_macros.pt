@@ -513,12 +513,15 @@
     </tal:attendee>
   </tr>
   <tr>
-    <td colspan="7" style="background-color: #D9D7D9;" align="right">
+    <th colspan="7" tal:define="maySwitchVotes python: not context.hasVotes() and member.has_permission('Modify portal content', context)">
       <tal:comment replace="nothing">Switch mode (secret / not secret)</tal:comment>
       <img style="cursor:pointer;" title="switch_votes" i18n:attributes="title" align="right"
-           tal:condition="python: showVotes and not context.hasVotes() and member.has_permission('Modify portal content', context)"
+           tal:condition="python: showVotes and maySwitchVotes"
            tal:attributes="src string: $portal_url/switch.gif;
                            onClick python:'switchVotes(\'%s\', \'%s\')' % (context.absolute_url(), secret)"/>
+      <img style="cursor:help;" title="switch_votes_why_cannot" i18n:attributes="title" align="right"
+           tal:condition="python: not (showVotes and maySwitchVotes)"
+           tal:attributes="src string: $portal_url/switch_not_allowed.gif;"/>
       <tal:comment replace="nothing">Set 'yes' for everybody</tal:comment>
       <img style="cursor:pointer;" title="update_votes_yes" i18n:attributes="title"
            tal:condition="showSave" align="right"
@@ -535,8 +538,8 @@
            tal:attributes="src string:$portal_url/refresh.gif;
                            onClick python:'refreshVotes(\'%s\')' % context.absolute_url()"/>
       <i tal:condition="error" tal:content="request/peopleMsg"
-         style="color:green; margin-right: 1em;"></i>
-    </td>
+         style="color:red; margin-right: 1em;"></i>
+    </th>
   </tr>
 </table>
 </form>
