@@ -1052,6 +1052,10 @@ msgstr "Avis"
 msgid "advices_hands"
 msgstr "Mains"
 
+#. Default: "Advices on this item have been invalidated!"
+msgid "advices_invalidated"
+msgstr "Les avis de ce point ont été invalidés!"
+
 #. Default: "Standard"
 msgid "advices_standard"
 msgstr "Standard"

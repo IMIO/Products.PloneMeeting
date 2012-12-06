@@ -1053,6 +1053,10 @@ msgstr "Advices"
 msgid "advices_hands"
 msgstr "Hands"
 
+#. Default: "Advices on this item have been invalidated!"
+msgid "advices_invalidated"
+msgstr ""
+
 #. Default: "Standard"
 msgid "advices_standard"
 msgstr "Standard"

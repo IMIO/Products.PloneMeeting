@@ -35,9 +35,12 @@
 
   <fieldset tal:define="fileTypes python:[ft for ft in meetingConfig.getFileTypes(decisionRelated) if ft.adapted().isSelectable()]">
     <legend i18n:translate="add_annex">Add an annex</legend>
-
-    <div class="portalMessage" tal:condition="context/willInvalidateAdvices"
-           i18n:translate="warning_invalidate_advices_with_annex" i18n:domain="PloneMeeting"></div>
+    
+    <tal:showWarningWillInvalidateAdvices condition="context/willInvalidateAdvices">
+    <dl class="portalMessage warning">
+        <dt i18n:translate="" i18n:domain="plone">Warning</dt><dd i18n:translate="warning_invalidate_advices_with_annex" i18n:domain="PloneMeeting"></dd>
+    </dl><br />
+    </tal:showWarningWillInvalidateAdvices>
 
     <tal:oneFileType condition="python: len(fileTypes) == 1">
       <tal:comment replace="nothing">In this case we do not display the listbox that allows to choose the file type.</tal:comment>

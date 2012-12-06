@@ -3653,3 +3653,7 @@ msgstr ""
 #. Default: "Select in the list the type of item you want to add"
 msgid "Select an item to add"
 msgstr ""
+
+#. Default: "Advices on this item have been invalidated!"
+msgid "advices_invalidated"
+msgstr ""

@@ -2404,7 +2404,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 self.manage_addLocalRoles(ploneGroup, ('MeetingPowerObserverLocal',))
         # Invalidate advices if needed
-        if invalidate and getattr(self, '_v_modified', False):
+        if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
             for advice in self.advices.itervalues():
                 advice['type'] = 'not_given'
@@ -2415,6 +2415,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         recipient = tool.getMailRecipient(advice['actor'])
                         if recipient:
                             sendMail([recipient], self, 'adviceInvalidated')
+            self.plone_utils.addPortalMessage(translate('advices_invalidated',
+                                         domain="PloneMeeting", context=self.REQUEST),
+                                         type='info')
 
     security.declarePublic('indexAdvisers')
     def indexAdvisers(self):
