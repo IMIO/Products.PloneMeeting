@@ -13,7 +13,7 @@ class Migrate_To_3_0(Migrator):
         '''Make sure CKeditor is the new default editor used by everyone...'''
         logger.info('Defining CKeditor as the new default editor for every users...')
         try:
-            self.portal.cputils_configure_ckeditor()
+            self.portal.cputils_configure_ckeditor(custom='plonemeeting')
         except AttributeError:
             raise Exception, "Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "\
                                   "installed and that the cputils_configure_ckeditor method is available"
