@@ -431,6 +431,10 @@ padding-left: 0.5em;
 padding-top: 0.2em;
 padding-bottom: 0.2em;
 }
+.portletTodo dd.portletSection a:link,
+.portletTodo dd.portletSection a:visited {
+color: &dtml-fontColor;;
+}
 .portletTodo .portletCell {
 margin: 0;
 padding-left: 1em;
