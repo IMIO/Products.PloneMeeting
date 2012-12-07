@@ -44,6 +44,10 @@
                   toLocalizedTime nocall: context/@@plone/toLocalizedTime;"
       tal:attributes="onLoad python: 'javascript: askInitialItemsLists(\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\')' % (showColors, showLateItems, showAvailableItems, iStartNumber, lStartNumber, context.numberOfItems(), context.numberOfItems(True), meetingConfig.getMaxShownMeetingItems())">
 
+  <script language="javascript"
+    tal:content="python: 'ploneEditor = \'%s\';' % member.getProperty('wysiwyg_editor', '')">
+  </script>
+
   <tal:mustShowPage condition="showPage">
   <script language="javascript"
     tal:content="string:var meetingUrl = '${context/absolute_url}'">
@@ -450,13 +454,13 @@
   </fieldset>
 
   <tal:comment replace="nothing">Observations</tal:comment>
-  <tal:field define="fieldName python: 'observations'"
+  <tal:field define="fieldName python: 'observations'; ajaxEdit python:True"
              condition="python: context.showObs('observations')">
     <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
   </tal:field>
 
   <tal:comment replace="nothing">Pre-observations</tal:comment>
-  <tal:field define="fieldName python: 'preObservations'"
+  <tal:field define="fieldName python: 'preObservations'; ajaxEdit python:True"
              condition="python: context.showObs('preObservations')">
     <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
   </tal:field>

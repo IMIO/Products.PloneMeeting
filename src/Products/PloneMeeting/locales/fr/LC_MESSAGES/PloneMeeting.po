@@ -3599,7 +3599,11 @@ msgstr "Pré-validation des points"
 
 #. Default: "Warning: if you modify the title or description and save this form, all given advices will be invalidated."
 msgid "warning_invalidate_advices"
-msgstr "Attention: si vous modifiez le titre ou la description et enregistrez ce formulaire, tous les avis déjà donnés sur ce point seront invalidés."
+msgstr "Attention: si vous modifiez une donnée et cliquez sur le bouton 'Enregister' au bas du formulaire, tous les avis déjà donnés sur ce point seront invalidés!  Pour ne pas invalider les avis, cliquez sur le bouton 'Annuler' au bas du formulaire."
+
+#. Default: "If you modify this field, all given advices will be invalidated."
+msgid "warning_invalidate_advices_fastedit"
+msgstr "Si vous modifiez ce champ, tous les avis seront invalidés!  <a href="">Cliquez ici</a> pour annuler l'édition."
 
 #. Default: "Warning: if you add an annex through this form or if you delete an annex, all advices given on this item will be invalidated."
 msgid "warning_invalidate_advices_with_annex"

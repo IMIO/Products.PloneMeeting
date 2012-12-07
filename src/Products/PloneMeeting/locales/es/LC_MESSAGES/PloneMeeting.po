@@ -3614,6 +3614,10 @@ msgstr "Pre-validación de tema"
 msgid "warning_invalidate_advices"
 msgstr "Advertencia: si modifica el título o descripción y guardar este formulario, todos los consejos dados serán invalidados."
 
+#. Default: "If you modify this field, all given advices will be invalidated."
+msgid "warning_invalidate_advices_fastedit"
+msgstr ""
+
 #. Default: "Warning: if you add an annex through this form or if you delete an annex, all advices given on this item will be invalidated."
 msgid "warning_invalidate_advices_with_annex"
 msgstr "Advertencia: si se agrega un anexo a través de este formulario o si elimina un anexo, todos los consejos dados en este tema será invalidados."

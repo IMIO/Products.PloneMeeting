@@ -3610,6 +3610,10 @@ msgstr "Vor-Validierung der TOP"
 msgid "warning_invalidate_advices"
 msgstr "Achtung: wenn Sie den Titel oder die Beschreibung ändern und diese Änderungen speichern, werden alle schon abgegebenen Kommentare ungültig."
 
+#. Default: "If you modify this field, all given advices will be invalidated."
+msgid "warning_invalidate_advices_fastedit"
+msgstr ""
+
 #. Default: "Warning: if you add an annex through this form or if you delete an annex, all advices given on this item will be invalidated."
 msgid "warning_invalidate_advices_with_annex"
 msgstr "Achtung: wenn Sie einen Anhang hinzufügen oder löschen und wenn Sie diese Änderungen speichern, werden alle schon abgegebenen Kommentare ungültig."

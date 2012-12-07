@@ -1051,8 +1051,73 @@ def setFieldFromAjax(obj, fieldName, newValue):
     # Update the last modification date
     obj.modification_date = DateTime()
     # Apply XHTML transforms when relevant
-    obj.transformAllRichTextFields(onlyField=fieldName)
+    transformAllRichTextFields(obj, onlyField=fieldName)
     obj.reindexObject()
+
+# ------------------------------------------------------------------------------
+def transformAllRichTextFields(obj, onlyField=None):
+    '''Potentially, all richtext fields defined on an item (description,
+       decision, etc) or a meeting (observations, ...) may be transformed via the method
+       transformRichTextField that may be overridden by an adapter. This
+       method calls it for every rich text field defined on this obj (item or meeting), if
+       the user has the permission to update the field.'''
+    member = obj.portal_membership.getAuthenticatedMember()
+    meetingConfig = obj.portal_plonemeeting.getMeetingConfig(obj)
+    fieldsToTransform = meetingConfig.getXhtmlTransformFields()
+    transformTypes = meetingConfig.getXhtmlTransformTypes()
+    for field in obj.schema.fields():
+        if field.widget.getName() != 'RichWidget': continue
+        if onlyField and (field.getName() != onlyField): continue
+        # What is the "write" permission for this field ?
+        writePermission = 'Modify portal content'
+        if hasattr(field, 'write_permission'):
+            writePermission = field.write_permission
+        if not member.has_permission(writePermission, obj): continue
+        # Apply mandatory transforms
+        fieldContent = formatXhtmlFieldForAppy(field.get(obj))
+        # Apply standard transformations as defined in the config
+        if (field.getName() in fieldsToTransform) and \
+            not kupuFieldIsEmpty(fieldContent):
+            for transform in transformTypes:
+                exec 'fieldContent = %s(obj, fieldContent)' % transform
+        # Apply custom transformations if defined
+        field.set(obj, obj.adapted().transformRichTextField(
+                  field.getName(), fieldContent))
+        field.setContentType(obj, field.default_content_type)
+
+# ------------------------------------------------------------------------------
+def removeBlanks(obj, xhtmlContent):
+    '''This method will remove any blank line in p_xhtmlContent.'''
+    for emptyPara in KUPU_EMPTY_VALUES:
+        xhtmlContent = xhtmlContent.replace(emptyPara, '')
+    return xhtmlContent
+
+# ------------------------------------------------------------------------------
+def signatureNotAlone(obj, xhtmlContent):
+    '''This method will set, on the p_xhtmlContent's last paragraph, a
+       specific CSS class that will prevent, in ODT documents, signatures
+       to stand alone on their last page.'''
+    # A paragraph may be a "p" or "li". If it is a "p", I will add style
+    # (if not already done) "pmItemKeepWithNext"; if it is a "li" I will
+    # add style "pmParaKeepWithNext" (if not already done).
+    res = xhtmlContent
+    lastParaIndex = res.rfind('<p')
+    lastItemIndex = res.rfind('<li')
+    if (lastParaIndex != -1) or (lastItemIndex != -1):
+        # Is the last one an item or a para?
+        styleKey = 'item'
+        elemLenght = 3
+        if lastParaIndex > lastItemIndex:
+            styleKey = 'para'
+            elemLenght = 2
+        maxIndex = max(lastParaIndex, lastItemIndex)
+        kwnStyle = KEEP_WITH_NEXT_STYLES[styleKey]
+        # Does this element already have a "class" attribute?
+        if res.find('class="%s"' % kwnStyle, maxIndex) == -1:
+            # No: I add the style
+            res = res[:maxIndex+elemLenght] + (' class="%s" ' % kwnStyle) +\
+                  res[maxIndex+elemLenght:]
+    return res
 
 # ------------------------------------------------------------------------------
 def spanifyLink(htmltag):

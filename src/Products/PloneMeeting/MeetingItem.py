@@ -43,12 +43,12 @@ from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions, \
                                              IMeetingItemWorkflowActions
 from Products.PloneMeeting.utils import \
-     getWorkflowAdapter, getCustomAdapter, kupuFieldIsEmpty, fieldIsEmpty, \
+     getWorkflowAdapter, getCustomAdapter, fieldIsEmpty, \
      KUPU_EMPTY_VALUES, KEEP_WITH_NEXT_STYLES, getCurrentMeetingObject, \
      checkPermission, sendMail, sendMailIfRelevant, HubSessionsMarshaller, \
      getMeetingUsers, getFieldContent, getFieldVersion, getLastEvent, \
      rememberPreviousData, addDataChange, hasHistory, getHistory, \
-     setFieldFromAjax, formatXhtmlFieldForAppy, spanifyLink
+     setFieldFromAjax, spanifyLink, transformAllRichTextFields
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -2011,71 +2011,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return sendMailIfRelevant(self, event, permissionOrRole, isRole, \
                                   customEvent, mapping)
 
-    security.declarePrivate('removeBlanks')
-    def removeBlanks(self, xhtmlContent):
-        '''This method will remove any blank line in p_xhtmlContent.'''
-        for emptyPara in KUPU_EMPTY_VALUES:
-            xhtmlContent = xhtmlContent.replace(emptyPara, '')
-        return xhtmlContent
-
-    security.declarePrivate('signatureNotAlone')
-    def signatureNotAlone(self, xhtmlContent):
-        '''This method will set, on the p_xhtmlContent's last paragraph, a
-           specific CSS class that will prevent, in ODT documents, signatures
-           to stand alone on their last page.'''
-        # A paragraph way be a "p" or "li". If it is a "p", I will add style
-        # (if not already done) "pmItemKeepWithNext"; if it is a "li" I will
-        # add style "pmParaKeepWithNext" (if not already done).
-        res = xhtmlContent
-        lastParaIndex = res.rfind('<p')
-        lastItemIndex = res.rfind('<li')
-        if (lastParaIndex != -1) or (lastItemIndex != -1):
-            # Is the last one an item or a para?
-            styleKey = 'item'
-            elemLenght = 3
-            if lastParaIndex > lastItemIndex:
-                styleKey = 'para'
-                elemLenght = 2
-            maxIndex = max(lastParaIndex, lastItemIndex)
-            kwnStyle = KEEP_WITH_NEXT_STYLES[styleKey]
-            # Does this element already have a "class" attribute?
-            if res.find('class="%s"' % kwnStyle, maxIndex) == -1:
-                # No: I add the style
-                res = res[:maxIndex+elemLenght] + (' class="%s" ' % kwnStyle) +\
-                      res[maxIndex+elemLenght:]
-        return res
-
-    security.declarePrivate('transformAllRichTextFields')
-    def transformAllRichTextFields(self, onlyField=None):
-        '''Potentially, all richtext fields defined on an item (description,
-           decision, etc) may be transformed via the method
-           transformRichTextField that may be overridden by an adapter. This
-           method calls it for every rich text field defined on this item, if
-           the user has the permission to update the field.'''
-        member = self.portal_membership.getAuthenticatedMember()
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        fieldsToTransform = meetingConfig.getXhtmlTransformFields()
-        transformTypes = meetingConfig.getXhtmlTransformTypes()
-        for field in self.schema.fields():
-            if field.widget.getName() != 'RichWidget': continue
-            if onlyField and (field.getName() != onlyField): continue
-            # What is the "write" permission for this field ?
-            writePermission = 'Modify portal content'
-            if hasattr(field, 'write_permission'):
-                writePermission = field.write_permission
-            if not member.has_permission(writePermission, self): continue
-            # Apply mandatory transforms
-            fieldContent = formatXhtmlFieldForAppy(field.get(self))
-            # Apply standard transformations as defined in the config
-            if (field.getName() in fieldsToTransform) and \
-                not kupuFieldIsEmpty(fieldContent):
-                for transform in transformTypes:
-                    exec 'fieldContent = self.%s(fieldContent)' % transform
-            # Apply custom transformations if defined
-            field.set(self, self.adapted().transformRichTextField(
-                      field.getName(), fieldContent))
-            field.setContentType(self, field.default_content_type)
-
     security.declarePublic('getMandatoryAdvisers')
     def getMandatoryAdvisers(self):
         '''Who are the mandatory advisers for this item? We get it by
@@ -2475,7 +2410,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
-        self.transformAllRichTextFields()
+        transformAllRichTextFields(self)
         # Check if some copyGroups must be automatically added
         if self.isCopiesEnabled():
             self.addAutoCopyGroups()
@@ -2496,13 +2431,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
         self.updateLocalRoles()
-        needToInvalidate = self.portal_plonemeeting.getMeetingConfig(\
-                            self).getEnableAdviceInvalidation()
+        needToInvalidate = self.willInvalidateAdvices()
         self.updateAdvices(invalidate=needToInvalidate)
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
-        self.transformAllRichTextFields()
+        transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
         addDataChange(self)
         # Make sure we have 'text/html' for every Rich fields
@@ -3163,6 +3097,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('setFieldFromAjax')
     def setFieldFromAjax(self, fieldName, fieldValue):
         '''See doc in utils.py.'''
+            # invalidate advices if needed
+        if self.willInvalidateAdvices():
+            self.updateAdvices(invalidate=True)
         return setFieldFromAjax(self, fieldName, fieldValue)
 
     security.declarePublic('getFieldVersion')

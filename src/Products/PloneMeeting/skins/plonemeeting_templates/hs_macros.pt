@@ -11,6 +11,11 @@
        tal:attributes="src string:$portal_url/save.gif;
                        onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'hs_macros\', \'saveField\', {\'lang\':\'%s\'}, getRichTextContent)' % (fieldName, context.absolute_url(), lang)"/>
   <form tal:attributes="id string:ajax_edit_$fieldName;" class="">
+  <tal:showWarningWillInvalidateAdvices condition="python: context.meta_type == 'MeetingItem' and context.willInvalidateAdvices()">
+  <dl class="portalMessage warning">
+      <dt i18n:translate="" i18n:domain="plone">Warning</dt><dd i18n:translate="warning_invalidate_advices_fastedit" i18n:domain="PloneMeeting"></dd>
+  </dl>
+  </tal:showWarningWillInvalidateAdvices>
   <div tal:define="errors python:{};
                    schematas context/Schemata;
                    fieldsets python:[key for key in schematas.keys() if (key != 'metadata') and (schematas[key].editableFields(context, visible_only=True))];
@@ -71,8 +76,9 @@
  tal:define="fieldName request/fieldName;
              field python: context.getField(fieldName);
              lang python: request.get('lang', '');
+             needToRefreshPage python: context.meta_type=='MeetingItem' and context.willInvalidateAdvices();
              dummy python: context.setFieldFromAjax(fieldName, request.get('fieldContent'));
-             mayEdit python: member.has_permission(field.write_permission, context)">
+             mayEdit python: member.has_permission(field.write_permission, context);">
  <metal:view use-macro="context/hs_macros/macros/viewField"/>
 </metal:save>
 
@@ -97,14 +103,24 @@
                  jsCall python:'askAjaxChunk(\'%s\', \'GET\', \'%s\', \'hs_macros\'' % (hookId, jsUrl);
                  jsEdit python: '%s,\'editField\',{%s},null,initRichTextField)' % (jsCall, jsParams);
                  jsChanges python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'True\'})' % (jsCall, jsParams);
-                 jsView python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'False\'})' % (jsCall, jsParams)"
+                 jsView python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'False\'})' % (jsCall, jsParams);
+                 needToRefreshPage needToRefreshPage|nothing;"
      tal:attributes="id hookId; style python: lang and 'position: relative' or ''">
+
+<script type='text/javascript'>
+function refreshPageIfNeeded(){
+document.location.reload(true);
+}
+</script>
+
  <fieldset tal:condition="python: mayEdit or not context.fieldIsEmpty(fieldName)">
   <legend>
     <span tal:condition="lang" class="hsLanguage" tal:content="lang"></span>
     <span tal:replace="python: field.widget.Label(context)"></span>
     <img style="cursor:pointer" tal:condition="mayEdit"
-         tal:attributes="src string:$portal_url/edit.gif; onClick jsEdit"/>
+         tal:attributes="src string:$portal_url/edit.gif;
+                         onClick jsEdit;
+                         onload python: needToRefreshPage and 'javascript:refreshPageIfNeeded()' or ''"/>
     <tal:history define="hasHistory python: context.hasHistory(fieldName)" condition="hasHistory">
     <img style="cursor:pointer" title="history_changes" i18n:attributes="title"
          tal:condition="not: changes"

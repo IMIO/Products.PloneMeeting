@@ -41,7 +41,7 @@ from Products.PloneMeeting.utils import \
      HubSessionsMarshaller, addRecurringItemsIfRelevant, getLastEvent, \
      kupuEquals, getMeetingUsers, getFieldVersion, getDateFromDelta, \
      rememberPreviousData, addDataChange, hasHistory, getHistory, \
-     setFieldFromAjax
+     setFieldFromAjax, transformAllRichTextFields
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -1503,6 +1503,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # roles accordingly.
         if 'local_meeting_managers' in meetingConfig.getWorkflowAdaptations():
             self.setLocalMeetingManagers()
+        # Apply potential transformations to richtext fields
+        transformAllRichTextFields(self)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1519,12 +1521,19 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.updateMeetingUsers()
         # Add a line in history if historized fields have changed
         addDataChange(self)
+        # Apply potential transformations to richtext fields
+        transformAllRichTextFields(self)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         self.reindexObject()
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Meeting at %s edited by "%s".' % \
                     (self.absolute_url_path(), userId))
+
+    security.declareProtected('Modify portal content', 'transformRichTextField')
+    def transformRichTextField(self, fieldName, richContent):
+        '''See doc in interfaces.py.'''
+        return richContent
 
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated): '''See doc in interfaces.py.'''
@@ -1687,7 +1696,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             # In this case, I must not call at_post_edit_script (which will a.o.
             # remember access on this item) but I must still transform rich text
             # fields because the decison field was updated.
-            item.transformAllRichTextFields()
+            transformAllRichTextFields(item)
 
     security.declarePublic('setAllItemsAtOnce')
     def setAllItemsAtOnce(self, value):

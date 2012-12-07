@@ -2146,9 +2146,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for field in MeetingItem.schema.fields():
             fieldName = field.getName()
             if field.widget.getName() == 'RichWidget':
-                msg = '%s - %s' % (fieldName,
-                                   translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
-                res.append( (fieldName, msg) )
+                msg = '%s.%s -> %s' % ('MeetingItem', fieldName,
+                                      translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
+                res.append( ('%s.%s' % ('MeetingItem', fieldName), msg) )
+        for field in Meeting.schema.fields():
+            fieldName = field.getName()
+            if field.widget.getName() == 'RichWidget':
+                msg = '%s.%s -> %s' % ('Meeting', fieldName,
+                                      translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
+                res.append( ('%s.%s' % ('Meeting', fieldName), msg) )
         return DisplayList(tuple(res))
 
     security.declarePublic('listTransformTypes')

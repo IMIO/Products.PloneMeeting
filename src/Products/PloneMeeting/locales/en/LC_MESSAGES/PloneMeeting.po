@@ -3608,6 +3608,10 @@ msgstr "Item pre-validation"
 msgid "warning_invalidate_advices"
 msgstr "Warning: if you modify the title or description and save this form, all given advices will be invalidated."
 
+#. Default: "If you modify this field, all given advices will be invalidated."
+msgid "warning_invalidate_advices_fastedit"
+msgstr ""
+
 #. Default: "Warning: if you add an annex through this form or if you delete an annex, all advices given on this item will be invalidated."
 msgid "warning_invalidate_advices_with_annex"
 msgstr "Warning: if you add an annex through this form or if you delete an annex, all advices given on this item will be invalidated."

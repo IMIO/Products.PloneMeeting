@@ -13,7 +13,7 @@ class Migrate_To_3_0(Migrator):
         '''Make sure CKeditor is the new default editor used by everyone...'''
         logger.info('Defining CKeditor as the new default editor for every users...')
         try:
-            self.portal.cputils_configure_ckeditor(custom='plonemeeting')
+            self.portal.cputils_configure_ckeditor(custom='plonemeeting', force=True)
         except AttributeError:
             raise Exception, "Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "\
                                   "installed and that the cputils_configure_ckeditor method is available"
@@ -147,18 +147,36 @@ class Migrate_To_3_0(Migrator):
             obj.reindexObject(idxs=['allowedRolesAndUsers',])
         logger.info('MeetingItems advices have been updated.')
 
+    def _migrateXhtmlTransformFieldsValues(self):
+        '''Migrate every MeetingConfig.xhtmlTransformFields because before the value was a
+           fieldName of the MeetingItem but now it is a value like "Item.myFieldName" or "Meeting.myFieldName"
+           because wecan apply transformations on Meeting fields too.'''
+        logger.info('Updating every cfg.XhtmlTransformFields values...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            namesToMigrate = [name for name in cfg.getXhtmlTransformFields() if not name in cfg.listRichTextFields()]
+            if not namesToMigrate:
+                continue
+            res = []
+            # before there was only fields about the Item
+            for name in namesToMigrate:
+                logger.info('Updated %s to MeetingItem.%s' % (name, name))
+                res.append('MeetingItem.%s' % name)
+            cfg.setXhtmlTransformFields(res)
+        logger.info('Done.')
+
 
     def run(self, refreshCatalogs=True, refreshWorkflows=True):
         logger.info('Migrating to PloneMeeting 3.0...')
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
                                  u'profile-plonetheme.imioapps:default',
                                  u'profile-plonetheme.imioapps:plonemeetingskin',])
-        self._configureCKeditor()
-        self._updateRegistries()
-        self._patchFileSecurity()
-        self._correctAnnexesMeetingFileTypes()
-        self._migrateMeetingFilesToBlobs()
-        self._updateAdvices()
+        #self._configureCKeditor()
+        #self._updateRegistries()
+        #self._patchFileSecurity()
+        #self._correctAnnexesMeetingFileTypes()
+        #self._migrateMeetingFilesToBlobs()
+        #self._updateAdvices()
+        self._migrateXhtmlTransformFieldsValues()
         self.finish()
 
 # The migration function -------------------------------------------------------

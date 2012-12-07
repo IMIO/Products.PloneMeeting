@@ -564,3 +564,63 @@ function asyncItemIsSigned(UID, baseUrl) {
       }
     });
  }
+
+
+/* functions used to manage quick edit functionnality */
+function initRichTextField(rq, hook) {
+  /* Function that needs to be called when getting the edit view of a
+     rich-text field through Ajax. */
+  // Javascripts inside this zone will not be executed. So find them
+  // and trigger their execution here.
+  var scripts = cssQuery('script', hook);
+  var fieldName = rq.hook.split('_')[1];
+  for (var i=0; i<scripts.length; i++) {
+    var scriptContent = scripts[i].innerHTML;
+    if (scriptContent.search('addEventHandler') != -1) {
+      // This is a kupu field that will register an event onLoad on
+      // window but this event will never be triggered. So do it by
+      // hand.
+      currentFieldName = hook.id.split('_')[1];
+      setTimeout("initKupuField()", 1000);
+    }
+    else { eval(scriptContent); }
+  }
+  // Initialize FCK editor if it is the used editor
+  if (ploneEditor == 'FCKeditor') { FCKeditor_Plone_Init(); }
+  // Initialize CKeditor if it is the used editor
+  if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
+}
+function getRichTextContent(rq, params) {
+  /* Gets the content of a rich text field before sending it through an Ajax
+     request. */
+  var fieldName = rq.hook.split('_')[1];
+  var formId = 'ajax_edit_' + fieldName;
+  var theForm = document.getElementById(formId);
+  var theWidget = theForm[fieldName];
+  if (ploneEditor == 'Kupu') {
+    // Save the Kupu content to the field in the form.
+    window.kupu.saveDataToField(theForm, theWidget);
+    var drawer = window.document.getElementById('kupu-librarydrawer');
+    if (drawer) { drawer.parentNode.removeChild(drawer); }
+  }
+  if (ploneEditor == 'FCKeditor'){
+    if ( typeof( window.parent.FCKeditor_OnComplete ) == 'function' ) {
+      var fckObject = FCKeditorAPI.Instances[fieldName];
+      fckObject.SetStatus(FCK_STATUS_COMPLETE);
+      finalizePublication(fckObject);
+      }
+  }
+  if (ploneEditor == 'CKeditor'){
+     /* with CKeditor the value is not stored in the widget so get the data from the real CKeditor instance */
+     theWidget.value = window.parent.CKEDITOR.instances[fieldName].getData();
+  }
+  /* Disable the Plone automatic detection of changes to the form. Indeed,
+     Plone is not aware that we have sent the form, so he will try to display
+     a message, saying that changes will be lost because an unsubmitted form
+     contains changed data. */
+  window.onbeforeunload = null;
+  // Construct parameters and return them.
+  var params = "&fieldName=" + encodeURIComponent(fieldName) +
+               '&fieldContent=' + encodeURIComponent(theWidget.value);
+  return params
+}

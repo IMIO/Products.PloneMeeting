@@ -19,8 +19,11 @@
                        bilingual python: 'secondLanguage' in tool.getModelAdaptations();
                        langs python: tool.getAvailableInterfaceLanguages(True, True);">
 
-      <div class="portalMessage" tal:condition="context/willInvalidateAdvices"
-           i18n:translate="warning_invalidate_advices" i18n:domain="PloneMeeting"></div>
+      <tal:showWarningWillInvalidateAdvices condition="context/willInvalidateAdvices">
+      <dl class="portalMessage warning">
+          <dt i18n:translate="" i18n:domain="plone">Warning</dt><dd i18n:translate="warning_invalidate_advices" i18n:domain="PloneMeeting"></dd>
+      </dl><br />
+      </tal:showWarningWillInvalidateAdvices>
 
         <tal:comment replace="nothing">Title and description(s), mono- or bilingual</tal:comment>
         <tal:field define="fieldName python: 'title'">
