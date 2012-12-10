@@ -180,6 +180,79 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('View', item1))
         self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
 
+    def testAdvicesInvalidation(self):
+        '''Test the advice invalidation process.'''
+        # advisers can give an advice when item is 'proposed' or 'validated'
+        # activate advice invalidation in state 'validated'
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        self.meetingConfig.setEnableAdviceInvalidation(True)
+        self.meetingConfig.setItemAdviceInvalidateStates(('validated',))
+        login(self.portal, 'pmCreator1')
+        # create an item and ask the advice of group 'vendors'
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': ('vendors',)
+        }
+        item1 = self.create('MeetingItem', **data)
+        self.assertEquals(item1.needsAdvices(), True)
+        self.failIf(item1.willInvalidateAdvices())
+        self.do(item1, 'propose')
+        # login as adviser and add an advice
+        self.changeUser('pmReviewer2')
+        self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
+        # give an advice
+        item1.editAdvice(group=self.portal.portal_plonemeeting.vendors, adviceType='positive', comment='My comment')
+        # login as a user that can actually edit the item
+        self.changeUser('pmReviewer1')
+        self.failUnless(self.hasPermission('Modify portal content', item1))
+        # modifying the item will not invalidate the advices
+        self.failIf(item1.willInvalidateAdvices())
+        item1.setDecision(item1.getDecision() + '<p>New line</p>')
+        item1.at_post_edit_script()
+        # check that advices are still there
+        self.failUnless(item1.hasAdvices())
+        # adding an annex or editing a field thru ajax does not invalidate the item
+        annex1 = self.addAnnex(item1, annexType=self.annexFileType)
+        self.failUnless(item1.hasAdvices())
+        item1.setFieldFromAjax('decision', item1.getDecision() + '<p>Another new line</p>')
+        # validate the item
+        self.do(item1, 'validate')
+        # login as a user that can edit the item when it is 'validated'
+        self.changeUser('pmManager')
+        # now that the item is validated, editing it will invalidate advices
+        self.failUnless(item1.willInvalidateAdvices())
+        # removing an annex will invalidate the advices
+        item1.restrictedTraverse('@@delete_givenuid')(annex1.UID())
+        self.failIf(item1.hasAdvices())
+        # put advices back so we can check other case where advices are invalidated
+        item1.advices['vendors']['type'] = 'positive'
+        item1.updateAdvices()
+        self.failUnless(item1.hasAdvices())
+        # adding an annex will invalidate advices
+        self.failUnless(item1.willInvalidateAdvices())
+        annex1 = self.addAnnex(item1, annexType=self.annexFileType)
+        self.failIf(item1.hasAdvices())
+        # retrieve removed advices
+        item1.advices['vendors']['type'] = 'positive'
+        item1.updateAdvices()
+        self.failUnless(item1.hasAdvices())
+        # editing the item will invalidate advices
+        self.failUnless(item1.willInvalidateAdvices())
+        item1.setDecision(item1.getDecision() + '<p>Still another new line</p>')
+        item1.at_post_edit_script()
+        self.failIf(item1.hasAdvices())
+        # retrieve removed advices
+        item1.advices['vendors']['type'] = 'positive'
+        item1.updateAdvices()
+        self.failUnless(item1.hasAdvices())
+        # changing a field value thru ajax will invalidate advices
+        self.failUnless(item1.willInvalidateAdvices())
+        item1.setFieldFromAjax('description', '<p>My new description</p>')
+        self.failIf(item1.hasAdvices())
+        self.failIf(item1.willInvalidateAdvices())
+
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

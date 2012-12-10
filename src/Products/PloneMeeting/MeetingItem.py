@@ -44,10 +44,9 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions, \
                                              IMeetingItemWorkflowActions
 from Products.PloneMeeting.utils import \
      getWorkflowAdapter, getCustomAdapter, fieldIsEmpty, \
-     KUPU_EMPTY_VALUES, KEEP_WITH_NEXT_STYLES, getCurrentMeetingObject, \
-     checkPermission, sendMail, sendMailIfRelevant, HubSessionsMarshaller, \
-     getMeetingUsers, getFieldContent, getFieldVersion, getLastEvent, \
-     rememberPreviousData, addDataChange, hasHistory, getHistory, \
+     getCurrentMeetingObject, checkPermission, sendMail, sendMailIfRelevant, \
+     HubSessionsMarshaller, getMeetingUsers, getFieldContent, getFieldVersion, \
+     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
      setFieldFromAjax, spanifyLink, transformAllRichTextFields
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -2431,8 +2430,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
         self.updateLocalRoles()
-        needToInvalidate = self.willInvalidateAdvices()
-        self.updateAdvices(invalidate=needToInvalidate)
+        self.updateAdvices(invalidate=self.willInvalidateAdvices())
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
