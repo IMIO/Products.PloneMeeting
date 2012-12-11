@@ -47,7 +47,7 @@
 
    <metal:navigate use-macro="context/hs_navigate/macros/meetingItems"/>
 
-   <div onmouseover="javascript:initializePMOverlaysOnMeeting()" class="ajax-listitems-frame">
+   <div onmouseover="javascript:initializePMOverlaysOnMeeting()" class="ajax-pm-frame">
 
    <table class="vertical listing" width="100%" i18n:domain="PloneMeeting">
 

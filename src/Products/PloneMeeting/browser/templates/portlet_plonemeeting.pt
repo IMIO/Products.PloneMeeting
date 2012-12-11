@@ -211,20 +211,6 @@
     </div>
   </form>
 </div>
-
-
-<tal:comment replace="nothing">Confirm popup for bye-bying a user from a meeting.</tal:comment>
-<div id="confirmByebyeUser" class="hsDialog" tal:condition="python: context.meta_type == 'MeetingItem'">
-  <div align="center">
-    <input type="radio" name="byeType" id="leaves_after" class="noborder" value="leaves_after" checked="checked"/>
-    <label for="leaves_after" i18n:translate="person_byebye_descr"></label><br/>
-    <input type="radio" name="byeType" id="leaves_now" class="noborder" value="leaves_now"/>
-    <label for="leaves_now" i18n:translate="person_absent_descr"></label><br/>
-    <input type="button" value="Yes" i18n:attributes="value" i18n:domain="plone" onClick="byebyeUser()"/>
-    <input type="button" onClick="closeDialog('confirmByebyeUser')"
-           value="No" i18n:attributes="value" i18n:domain="plone"/>
-  </div>
-</div>
 <script language="javascript" tal:content="tool/getJavascriptMessages"></script>
 </dl>
 </body>

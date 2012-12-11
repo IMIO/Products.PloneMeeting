@@ -343,7 +343,7 @@
   </div>
 
   <tal:comment replace="nothing">Attendees, excused, absents, replacements</tal:comment>
-  <table id="meeting_users" class="vertical listing discreet" cellspacing="0" cellpadding="0"
+  <table id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0"
          tal:condition="python: ('attendees' in usedAttrs) and not context.getAssembly()"
          tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display:table' or 'display:none'"
          tal:define="allUsers meetingConfig/getActiveMeetingUsers;
@@ -354,6 +354,7 @@
                      lateAttendees context/getLateAttendees;
                      userReplacements context/getUserReplacements">
     <tal:comment replace="nothing">Column captions</tal:comment>
+    <thead>
     <tr>
       <th></th>
       <th i18n:translate="is_attendee"></th>
@@ -362,6 +363,8 @@
       <th tal:condition="python: 'signatories' in usedAttrs" i18n:translate="is_signer"></th>
       <th tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
     </tr>
+    </thead>
+    <tbody>
     <tr tal:repeat="mUser allUsers">
       <td><b tal:content="mUser/Title"></b></td>
       <td align="center" tal:define="aId mUser/getId">
@@ -394,6 +397,7 @@
         <span tal:condition="python: mUser.getId() in userReplacements" tal:content="python: getattr(meetingConfig.meetingusers, userReplacements[mUser.getId()]).Title()"></span>
       </td>
     </tr>
+    </tbody>
   </table>
 
   <tal:comment replace="nothing">Signatures. Backward compatibility for people that used the 'signatures' field</tal:comment>

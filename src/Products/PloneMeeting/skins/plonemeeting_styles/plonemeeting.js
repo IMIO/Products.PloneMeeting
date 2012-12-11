@@ -565,7 +565,6 @@ function asyncItemIsSigned(UID, baseUrl) {
     });
  }
 
-
 /* functions used to manage quick edit functionnality */
 function initRichTextField(rq, hook) {
   /* Function that needs to be called when getting the edit view of a

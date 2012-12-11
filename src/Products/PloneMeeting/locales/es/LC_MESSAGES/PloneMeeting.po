@@ -1695,6 +1695,14 @@ msgstr "Las aplicaciones externas pueden tener acceso, a través WebDAV, y almac
 msgid "extract_text_from_files_descr"
 msgstr "Si marca esta casilla, cada ves que un anexo sea subido dentro, su contenido será indexado. En el formulario para subir un anexo, un casilla le preguntará al usuario si el archivo corresponde a un archivo escaneado (digitalizado). Si ese es el caso, un motor de reconocimiento óptico de caracteres llamado (<a href=\"http://code.google.com/p/tesseract-ocr/\" target=\"_blank\">Tesseract</a>) se ejecutará para convertir el documento escaneado en texto. Para la instalación de Tesseract bajo Ubuntu GNU/Linux o distribuciones basadas en Debian ejecute el siguiente comando: \"sudo apt-get install tesseract-ocr\" en una consola de comando. Tesseract necesita saber el lenguaje del documento escaneado, eso también debe ser respondido por el usuario en el formulario de subida de anexo. Además de la misma instalación de Tesseract, usted debe instalar los paquetes adicionales para los idiomas particulares a usar (tesseract-ocr-fra, tesseract-ocr-ita, tesseract-ocr-eng, tesseract-ocr-spa...). Tenga en cuenta que el documento escaneado será también subido sin ser cambiado (aún los usuarios verán al descargar el archivo) <i>junto</i> con el texto extraído (que se utilizarán con fines de búsqueda)."
 
+#. Default: "Cancel edit."
+msgid "fastedit_cancel"
+msgstr ""
+
+#. Default: "Save changes."
+msgid "fastedit_save_changes"
+msgstr ""
+
 #. Default: "Please fill this field."
 msgid "field_required"
 msgstr "Por favor, rellene est campo"

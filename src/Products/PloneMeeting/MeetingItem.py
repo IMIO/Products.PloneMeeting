@@ -3121,6 +3121,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Some user (a late attendee) has entered the meeting just before
            discussing this item: we will record this info, excepted if
            request["action"] tells us to remove the info instead.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        if not tool.isManager():
+            raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']
         meeting = self.getMeeting()
@@ -3140,9 +3143,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              (request.byeType == 'leaves_now').
            We will record this info, excepted if request["action"] tells us to
            remove it instead.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        if not tool.isManager():
+            raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']
-        mustDelete = rq['actionType'] == 'delete'
+        mustDelete = rq.get('actionType') == 'delete'
         if rq['byeType'] == 'leaves_after':
             # Case 1)
             meeting = self.getMeeting()

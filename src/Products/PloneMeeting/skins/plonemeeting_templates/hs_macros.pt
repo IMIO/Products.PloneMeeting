@@ -7,15 +7,26 @@
                              fieldName request/fieldName;
                              lang python: request.get('lang', '');
                              fields python: [context.getField(fieldName)]">
-  <img align="left" style="cursor:pointer;"
-       tal:attributes="src string:$portal_url/save.gif;
-                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'hs_macros\', \'saveField\', {\'lang\':\'%s\'}, getRichTextContent)' % (fieldName, context.absolute_url(), lang)"/>
-  <form tal:attributes="id string:ajax_edit_$fieldName;" class="">
   <tal:showWarningWillInvalidateAdvices condition="python: context.meta_type == 'MeetingItem' and context.willInvalidateAdvices()">
   <dl class="portalMessage warning">
-      <dt i18n:translate="" i18n:domain="plone">Warning</dt><dd i18n:translate="warning_invalidate_advices_fastedit" i18n:domain="PloneMeeting"></dd>
+      <dt i18n:translate="" i18n:domain="plone">Warning</dt>
+      <dd i18n:translate="warning_invalidate_advices_fastedit" i18n:domain="PloneMeeting"></dd>
   </dl>
   </tal:showWarningWillInvalidateAdvices>
+  <img style="cursor:pointer;"
+       i18n:attributes="title fastedit_save_changes"
+       title="Save changes."
+       tal:attributes="src string:$portal_url/save.gif;
+                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'hs_macros\', \'saveField\', {\'lang\':\'%s\'}, getRichTextContent)' % (fieldName, context.absolute_url(), lang)"/>
+  &nbsp;
+  <img style="cursor: pointer;"
+       i18n:attributes="title fastedit_cancel"
+       title="Cancel edit."
+       tal:attributes="src string:$portal_url/cancel_edit.png;
+                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'hs_macros\', \'simplyViewField\', {\'lang\':\'%s\'}, getRichTextContent)' % (fieldName, context.absolute_url(), lang)" />
+
+  <form tal:attributes="id string:ajax_edit_$fieldName;" class="">
+
   <div tal:define="errors python:{};
                    schematas context/Schemata;
                    fieldsets python:[key for key in schematas.keys() if (key != 'metadata') and (schematas[key].editableFields(context, visible_only=True))];
@@ -91,6 +102,16 @@
              mayEdit python: member.has_permission(field.write_permission, context)">
  <metal:view use-macro="context/hs_macros/macros/viewField"/>
 </metal:field>
+<tal:comment replace="nothing">Displays the field, nothing else.</tal:comment>
+<metal:field define-macro="simplyViewField" i18n:domain="PloneMeeting"
+ tal:define="fieldName request/fieldName;
+             field python: context.getField(fieldName);
+             lang python: request.get('lang', '');
+             mayEdit python: member.has_permission(field.write_permission, context)">
+ <metal:view use-macro="context/hs_macros/macros/viewField"/>
+</metal:field>
+
+
 
 <tal:comment replace="nothing">
   This macro allows to view the content of an ajax-editable field.
@@ -343,6 +364,8 @@ document.location.reload(true);
 
 <div id="meeting_users_"
      metal:define-macro="itemPeople" i18n:domain="PloneMeeting"
+     onmouseover="javascript:initializePMOverlays()"
+     class="ajax-pm-frame"
      tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
                  meeting context/getMeeting;
                  usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes"
@@ -368,6 +391,7 @@ document.location.reload(true);
                    secret context/getVotesAreSecret;"
        id="meeting_users" class="vertical listing discreet" cellspacing="0" cellpadding="0">
   <tal:comment replace="nothing">Column headers</tal:comment>
+  <thead>
   <tr valign="top">
     <th i18n:translate="item_specific"></th>
     <th i18n:translate="is_attendee"></th>
@@ -405,6 +429,8 @@ document.location.reload(true);
       </tal:secret>
     </th>
   </tr>
+  </thead>
+  <tbody>
   <tr tal:repeat="attendee meetingAttendees">
     <tal:attendee define="aId attendee/getId;
                           isPresent python: attendee.isPresent(context, meeting)">
@@ -422,7 +448,7 @@ document.location.reload(true);
             tal:content="python: meeting.getEntranceItem(aId)"></span>
        <tal:comment replace="nothing">Remove info about user entrance into the meeting</tal:comment>
        <img tal:condition="tool/isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
-            tal:attributes="src string: $portal_url/delete.png;
+            tal:attributes="src string: $portal_url/delete_small.png;
                             onClick python:'welcomeUser(\'%s\', \'%s\', \'delete\')' % (context.absolute_url(), aId)"/>
       </tal:entered>
 
@@ -433,7 +459,7 @@ document.location.reload(true);
            tal:content="python: meeting.getDepartureItem(aId)-1"></span>
       <tal:comment replace="nothing">Remove info about user departure from the meeting</tal:comment>
       <img tal:condition="tool/isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
-           tal:attributes="src string: $portal_url/delete.png;
+           tal:attributes="src string: $portal_url/delete_small.png;
                            onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_after\')' % (context.absolute_url(), aId)"/>
       </tal:left>
 
@@ -443,7 +469,7 @@ document.location.reload(true);
            title="left_now" i18n:attributes="title"/>
       <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
       <img tal:condition="tool/isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
-           tal:attributes="src string: $portal_url/delete.png;
+           tal:attributes="src string: $portal_url/delete_small.png;
                            onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_now\')' % (context.absolute_url(), aId)"/>
       </tal:left>
 
@@ -453,12 +479,13 @@ document.location.reload(true);
            tal:attributes="src string: $portal_url/entrance.gif;
                            onClick python:'welcomeUser(\'%s\', \'%s\', \'do\')' % (context.absolute_url(), aId)"/>
       <tal:comment replace="nothing">Button for byebying a user</tal:comment>
-      <img title="person_byebye" i18n:attributes="title" style="cursor: pointer; visibility: hidden"
+      <a href="#" class="link-overlay-pm byebye-overlay" tal:attributes="href string:byebyeuser?userId=${aId}">
+       <img title="person_byebye" i18n:attributes="title" style="cursor: pointer; visibility: hidden"
            tal:condition="python: tool.isManager() and isPresent and not meeting.getDepartureItem(aId)"
            tal:attributes="src string: $portal_url/departure.gif;
                            id python: 'byebye_%s' % aId;
-                           name  python: 'byebye_%s' % aId;
-                           onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'do\')' % (context.absolute_url(), aId)"/>
+                           name  python: 'byebye_%s' % aId;" />
+      </a>
     </td>
     <td align="center" tal:condition="python: 'signatories' in usedMeetingAttributes">
       <img tal:attributes="src string: $portal_url/checked.gif"
@@ -536,7 +563,7 @@ document.location.reload(true);
            tal:attributes="src string: $portal_url/switch.gif;
                            onClick python:'switchVotes(\'%s\', \'%s\')' % (context.absolute_url(), secret)"/>
       <img style="cursor:help;" title="switch_votes_why_cannot" i18n:attributes="title" align="right"
-           tal:condition="python: not (showVotes and maySwitchVotes)"
+           tal:condition="python: not showVotes and not maySwitchVotes"
            tal:attributes="src string: $portal_url/switch_not_allowed.gif;"/>
       <tal:comment replace="nothing">Set 'yes' for everybody</tal:comment>
       <img style="cursor:pointer;" title="update_votes_yes" i18n:attributes="title"
@@ -557,6 +584,7 @@ document.location.reload(true);
          style="color:red; margin-right: 1em;"></i>
     </th>
   </tr>
+  <tbody>
 </table>
 </form>
 </div>

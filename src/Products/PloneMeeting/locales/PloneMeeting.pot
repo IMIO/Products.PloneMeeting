@@ -2319,6 +2319,13 @@ msgstr ""
 msgid "warning_invalidate_advices_fastedit"
 msgstr ""
 
+#. Default: "Cancel edit."
+msgid "fastedit_cancel"
+msgstr ""
+
+#. Default: "Save changes."
+msgid "fastedit_save_changes"
+msgstr ""
 
 #. Default: "Warning: if you add an annex through this form or if you delete an annex, all advices given on this item will be invalidated."
 msgid "warning_invalidate_advices_with_annex"

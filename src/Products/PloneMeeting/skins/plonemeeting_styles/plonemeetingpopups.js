@@ -21,20 +21,26 @@ jQuery(function($){
 
 function initializePMOverlays(){
 jQuery(function($) {
+  // Add byebye user popup
+  $('a.link-overlay-pm.byebye-overlay').prepOverlay({
+     subtype: 'ajax',
+  });
+});
+jQuery(function($) {
   // Add advice popup
   $('a.link-overlay-pm.advice-overlay').prepOverlay({
      subtype: 'ajax',
   });
 });
 jQuery(function($) {
-  // Add advice popup
+  // Add transition confirmation popup
   $('a.link-overlay-pm.transition-overlay').prepOverlay({
      subtype: 'ajax',
   });
 });
 // as this method is called on the onmousover event of the ajax-frame
 // remove the event after first call to avoid it being called more than once
-$('div.ajax-listitems-frame').each(function(){
+$('div.ajax-pm-frame').each(function(){
     $(this).removeAttr('onmouseover');
     })
 }

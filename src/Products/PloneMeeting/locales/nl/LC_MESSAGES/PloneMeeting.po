@@ -1691,6 +1691,14 @@ msgstr ""
 msgid "extract_text_from_files_descr"
 msgstr ""
 
+#. Default: "Cancel edit."
+msgid "fastedit_cancel"
+msgstr ""
+
+#. Default: "Save changes."
+msgid "fastedit_save_changes"
+msgstr ""
+
 #. Default: "Please fill this field."
 msgid "field_required"
 msgstr "Vul dit, alstublieft."

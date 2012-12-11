@@ -1951,7 +1951,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     'confirm_delete_archived_meetings',
                     'no_selected_items', 'are_you_sure'):
             res += 'var %s = "%s";\n' % (msg, translate(msg, **args))
-        # escape_for_js from portal_skins/plone_scripts/translate.py does this replace here above
+        # escape_for_js from portal_skins/plone_scripts/translate.py does the .replace() here above
         return res.replace("'", "\\'")
 
     security.declarePublic('refererIsInnerPage')

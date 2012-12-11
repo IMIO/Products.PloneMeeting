@@ -1691,6 +1691,14 @@ msgstr "External applications may access, through WebDAV, to data managed by Plo
 msgid "extract_text_from_files_descr"
 msgstr "If you check this box, every time an annex will be uploaded, its content will be indexed. In the form for uploading an annex, a checkbox will ask the user if the file corresponds to a scanned document. If it is the case, an OCR engine (<a href=\"http://code.google.com/p/tesseract-ocr/\" target=\"_blank\">Tesseract</a>) will be launched for converting the scanned file into text. For installing Tesseract under Ubuntu, type \"sudo apt-get install tesseract-ocr\" in a shell. Tesseract needs to know the language of the scanned document, so it will also be asked to the user in the form. Besides installing Tesseract in itself, you will also need to install additional packages for particular languages (tesseract-fra, tesseract-ita, tesseract-eng...). Note that the scanned document will also be uploaded unchanged (users will still see it when downloading the file) <i>together</i> with the extracted text (that will be used for search purposes)."
 
+#. Default: "Cancel edit."
+msgid "fastedit_cancel"
+msgstr ""
+
+#. Default: "Save changes."
+msgid "fastedit_save_changes"
+msgstr ""
+
 #. Default: "Please fill this field."
 msgid "field_required"
 msgstr "Please fill this field."

@@ -1692,6 +1692,14 @@ msgstr "Externe Anwendungen können mit WebDAV auf Daten die von PloneMeeting ve
 msgid "extract_text_from_files_descr"
 msgstr "Wenn Sie diese Box auswählen, wird jedesmal wenn eine Anlage nach PloneMeeting hochgeladen wird, der Inhalt der Anlage indexiert. In dem Formular wo die Anlagen hochgeladen werden, wird eine Checkbox den Benutzer fragen ob die Datei ein gescanntes Dokument ist. Wenn das der Fall ist, wird eine OCR-Maschine (<a href=\"http://code.google.com/p/tesseract-ocr/\" target=\"_blank\">Tesseract</a>) gestartet um das gescannte Dokument in Text umzuwandeln. Um Tesseract unter Ubuntu zu installieren, geben Sie \"sudo apt-get install tesseract-ocr\" in eine Shell ein. Tesseract benötigt die Sprache des gescannten Dokumentes und fragt diese im Formular ab. Neben der Installation von Tesseract benötigen Sie noch zusätzliche Pakete für andere Sprachen (tesseract-fra, tesseract-ita, tesseract-eng...). Das gescannte Dokument wird auch unverändert hochgeladen (der Benutzer wird es sehen wenn er das Dokument herunterladen will) und steht <i>zusammen</i> mit dem extrahierten Text (der für die Suchfunktion gebraucht wird)."
 
+#. Default: "Cancel edit."
+msgid "fastedit_cancel"
+msgstr ""
+
+#. Default: "Save changes."
+msgid "fastedit_save_changes"
+msgstr ""
+
 #. Default: "Please fill this field."
 msgid "field_required"
 msgstr "Bitte füllen Sie dieses Feld aus."

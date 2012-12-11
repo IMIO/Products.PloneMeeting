@@ -177,6 +177,7 @@
                            allSigners python: [u.getId() for u in meetingConfig.getActiveMeetingUsers(usages=('signer',))];
                            userReplacements context/getUserReplacements">
           <tal:comment replace="nothing">Column captions</tal:comment>
+          <thead>
           <tr>
             <th></th>
             <th i18n:translate="is_attendee"></th>
@@ -190,6 +191,8 @@
                 i18n:translate="is_signer"></th>
             <th tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
           </tr>
+          </thead>
+          <tbody>
           <tr tal:repeat="mUser allUsers">
             <td><b tal:content="mUser/Title"></b></td>
             <td align="center">
@@ -254,6 +257,7 @@
               </select>
             </td>
           </tr>
+          </tbody>
         </table>
         </tal:users>
         <tal:comment replace="nothing">Information for the pre-meeting</tal:comment>

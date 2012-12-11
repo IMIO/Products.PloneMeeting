@@ -1687,6 +1687,14 @@ msgstr "Des applications externes peuvent accéder, par WebDAV, aux données gé
 msgid "extract_text_from_files_descr"
 msgstr "Si vous cochez cette case, chaque fois qu'une annexe sera uploadée, son contenu sera indexé. Dans le formulaire d'upload, une case à cocher permettra à l'utilisateur de mentionner le fait que le fichier est un document qui a été scanné. Si c'est le cas, un moteur OCR (<a href=\"http://code.google.com/p/tesseract-ocr/\" target=\"_blank\">Tesseract</a>) sera lancé pour convertir le document scanné en véritable texte. Pour installer Tesseract sous Ubuntu, tapez la console: \"sudo apt-get install tesseract-ocr\". Tesseract nécessite de connaître la langue du document scanné: ce sera également demandé dans le formulaire d'upload. Outre l'installation de Tesseract en lui-même, vous devrez aussi installer les packages additionnels pour les langues que vous voulez supporter (tesseract-fra, tesseract-ita, tesseract-eng...). Notez que le fichier scanné inchangé sera uploadé (les utilisateurs continueront de le visualiser lorsqu'ils téléchargeront le fichier) <i>avec</i> le texte extrait (qui sera utilisé à des fins de recherche)."
 
+#. Default: "Cancel edit."
+msgid "fastedit_cancel"
+msgstr "Annuler l'édition."
+
+#. Default: "Save changes."
+msgid "fastedit_save_changes"
+msgstr "Sauvegarder les changements."
+
 #. Default: "Please fill this field."
 msgid "field_required"
 msgstr "Veuillez remplir ce champ."
@@ -3603,7 +3611,7 @@ msgstr "Attention: si vous modifiez une donnée et cliquez sur le bouton 'Enregi
 
 #. Default: "If you modify this field, all given advices will be invalidated."
 msgid "warning_invalidate_advices_fastedit"
-msgstr "Si vous modifiez ce champ, tous les avis seront invalidés!  <a href="">Cliquez ici</a> pour annuler l'édition."
+msgstr "Si vous modifiez ce champ, tous les avis seront invalidés!"
 
 #. Default: "Warning: if you add an annex through this form or if you delete an annex, all advices given on this item will be invalidated."
 msgid "warning_invalidate_advices_with_annex"
