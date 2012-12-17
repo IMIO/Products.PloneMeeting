@@ -377,7 +377,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         mUser = self.getSelf()
         if loggedUser.has_role('Manager'):
             return True
-        if item.getMeeting().isDecided():
+        meeting = item.getMeeting()
+        if item.getMeeting().queryState() in meeting.meetingClosedStates:
             return False
         else:
             meetingConfig = item.portal_plonemeeting.getMeetingConfig(item)

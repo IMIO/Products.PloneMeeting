@@ -563,7 +563,7 @@ document.location.reload(true);
            tal:attributes="src string: $portal_url/switch.gif;
                            onClick python:'switchVotes(\'%s\', \'%s\')' % (context.absolute_url(), secret)"/>
       <img style="cursor:help;" title="switch_votes_why_cannot" i18n:attributes="title" align="right"
-           tal:condition="python: not showVotes and not maySwitchVotes"
+           tal:condition="python: showSave and not maySwitchVotes"
            tal:attributes="src string: $portal_url/switch_not_allowed.gif;"/>
       <tal:comment replace="nothing">Set 'yes' for everybody</tal:comment>
       <img style="cursor:pointer;" title="update_votes_yes" i18n:attributes="title"
