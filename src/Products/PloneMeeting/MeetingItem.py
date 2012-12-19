@@ -2993,7 +2993,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 raise Exception("This user can't update votes.")
 
-
     def saveVoteCounts(self, newVoteCounts):
         '''p_newVoteCounts is a dictionary that contains, for every vote value,
            new vote counts.'''
