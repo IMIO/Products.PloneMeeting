@@ -390,19 +390,19 @@ document.location.reload(true);
                    error request/error | python:'';
                    secret context/getVotesAreSecret;
                    isManager tool/isManager"
-       id="meeting_users" class="vertical listing discreet" cellspacing="0" cellpadding="0">
+       id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0">
   <tal:comment replace="nothing">Column headers</tal:comment>
   <thead>
   <tr valign="top">
-    <th i18n:translate="item_specific"></th>
-    <th i18n:translate="is_attendee"></th>
-    <th tal:condition="python: 'signatories' in usedMeetingAttributes"
+    <th class="nosort" i18n:translate="item_specific"></th>
+    <th class="nosort" i18n:translate="is_attendee"></th>
+    <th class="nosort" tal:condition="python: 'signatories' in usedMeetingAttributes"
         i18n:translate="is_signer"></th>
-    <th tal:condition="showQuestioners" i18n:translate="PloneMeeting_label_questioners"></th>
-    <th tal:condition="showAnswerers" i18n:translate="PloneMeeting_label_answerers"></th>
-    <th tal:condition="showVotes" i18n:translate="is_voter"></th>
-    <th tal:condition="python: showVotes and not secret" i18n:translate="vote_value"></th>
-    <th tal:condition="python: showVotes and secret" align="left">
+    <th class="nosort" tal:condition="showQuestioners" i18n:translate="PloneMeeting_label_questioners"></th>
+    <th class="nosort" tal:condition="showAnswerers" i18n:translate="PloneMeeting_label_answerers"></th>
+    <th class="nosort" tal:condition="showVotes" i18n:translate="is_voter"></th>
+    <th class="nosort" tal:condition="python: showVotes and not secret" i18n:translate="vote_value"></th>
+    <th class="nosort" tal:condition="python: showVotes and secret" align="left">
       <i style="color:blue">
       <span i18n:translate="voter_count">
         <span i18n:name="numberOfVoters" tal:content="python:len(voters)"></span>

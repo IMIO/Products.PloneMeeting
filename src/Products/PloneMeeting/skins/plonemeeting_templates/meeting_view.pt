@@ -356,12 +356,12 @@
     <tal:comment replace="nothing">Column captions</tal:comment>
     <thead>
     <tr>
-      <th></th>
-      <th i18n:translate="is_attendee"></th>
-      <th tal:condition="python: 'excused' in usedAttrs" i18n:translate="is_excused"></th>
-      <th tal:condition="python: 'absents' in usedAttrs" i18n:translate="is_absent"></th>
-      <th tal:condition="python: 'signatories' in usedAttrs" i18n:translate="is_signer"></th>
-      <th tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
+      <th class="nosort"></th>
+      <th class="nosort" i18n:translate="is_attendee"></th>
+      <th class="nosort" tal:condition="python: 'excused' in usedAttrs" i18n:translate="is_excused"></th>
+      <th class="nosort" tal:condition="python: 'absents' in usedAttrs" i18n:translate="is_absent"></th>
+      <th class="nosort" tal:condition="python: 'signatories' in usedAttrs" i18n:translate="is_signer"></th>
+      <th class="nosort" tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
     </tr>
     </thead>
     <tbody>

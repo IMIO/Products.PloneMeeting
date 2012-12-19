@@ -2990,6 +2990,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meetingUser = meetingConfig.getMeetingUserFromPloneUser(userId)
             if meetingUser.adapted().mayEditVote(user, self):
                 self.votes[userId] = newVoteValues[userId]
+            else:
+                raise Exception("This user can't update votes.")
+
 
     def saveVoteCounts(self, newVoteCounts):
         '''p_newVoteCounts is a dictionary that contains, for every vote value,
@@ -3045,18 +3048,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             elif key.startswith('answerer_'):
                 answerers.append(key[9:])
         # Update questioners / answerers
-        if not self.mayEditQAs():
+        if (answerers or questioners) and not self.mayEditQAs():
             raise Exception("This user can't update this info.")
-        self.setQuestioners(questioners)
-        self.setAnswerers(answerers)
+        else:
+            self.setQuestioners(questioners)
+            self.setAnswerers(answerers)
         # Check the total number of votes
         if secret:
             if numberOfVotes != numberOfVoters:
                 rq.set('peopleMsg', self.i18n('vote_count_wrong'))
                 return
         # Update the vote values
-        if not self.mayEditVotes():
-            raise Exception("This user can't update votes.")
         rq.set('peopleMsg', translate('Changes saved.', domain="plone", context=self.REQUEST))
         rq.set('error', False)
         if secret: self.saveVoteCounts(requestVotes)
