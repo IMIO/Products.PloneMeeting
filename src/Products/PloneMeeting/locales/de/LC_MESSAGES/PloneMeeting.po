@@ -3634,7 +3634,8 @@ msgstr "Arbeitsablauf"
 msgid "workflow_adaptations_descr"
 msgstr "Wählen Sie hier einen oder mehrere Standard Änderungseinträge die angewandt werden an die ausgewählten TOP und/oder Sitzungsworkflows."
 
-#. Default: "Are you sure you want to perform this action? If yes, you can enter a comment below (optional)."
+#. Default: "Are you sure you want to ${transition_name} this element? If yes, you can enter a comment below (optional)."
+#, fuzzy
 msgid "workflow_confirm"
 msgstr "Sind Sie sicher, dass Sie diese Aktion ausführen wollen? Wenn ja, können Sie hier einen Kommentar (optional) abgeben."
 

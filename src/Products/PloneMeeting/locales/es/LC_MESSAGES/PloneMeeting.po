@@ -3638,7 +3638,8 @@ msgstr "Flujo de trabajos"
 msgid "workflow_adaptations_descr"
 msgstr "Seleccione aquí uno o más definiciones estándar de cambios que serán aplicados a los temas seleccionados y/o flujo de trabajo de reunión. Sus cambios solamente serán aplicados cuando reinstale."
 
-#. Default: "Are you sure you want to perform this action? If yes, you can enter a comment below (optional)."
+#. Default: "Are you sure you want to ${transition_name} this element? If yes, you can enter a comment below (optional)."
+#, fuzzy
 msgid "workflow_confirm"
 msgstr "¿Esta usted seguro que quiere ejecutar esta acción? Si es sí, usted puede ingresar un comentario siguiente (opcional)."
 

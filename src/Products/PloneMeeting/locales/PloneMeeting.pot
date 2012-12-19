@@ -3253,7 +3253,7 @@ msgstr ""
 msgid "hs_all"
 msgstr ""
 
-#. Default: "Are you sure you want to perform this action? If yes, you can enter a comment below (optional)."
+#. Default: "Are you sure you want to ${transition_name} this element? If yes, you can enter a comment below (optional)."
 msgid "workflow_confirm"
 msgstr ""
 

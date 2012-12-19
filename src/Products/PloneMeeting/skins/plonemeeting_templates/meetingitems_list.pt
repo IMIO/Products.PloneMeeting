@@ -112,8 +112,7 @@
           tal:condition="python: 'privacy' in visibleColumns"></th>
 
       <tal:comment replace="nothing">Advices</tal:comment>
-      <th class="pm_meeting_listing_th_advices" i18n:translate="advices" tal:condition="showAdvices"
-          tal:attributes="width python:meetingConfig.getAdvicesIconsWidth()"></th>
+      <th class="pm_meeting_listing_th_advices" i18n:translate="advices" tal:condition="showAdvices"></th>
 
       <th class="pm_meeting_listing_th_itemIsSigned" tal:condition="showItemIsSigned"
           i18n:translate="nothing" i18n:domain="PloneMeeting">

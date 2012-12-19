@@ -18,7 +18,7 @@
         <dd class="portletCell" tal:condition="brains"
                                 tal:define="oddrow repeat/brain/odd;
                                             lastRow python:repeat['topic'].last('meta_type') and repeat['brain'].last('meta_type');
-                                            dummy python: oddrow and 'portletCell odd' or 'portletCell even';
+                                            dummy python: oddrow and 'portletCell pmLink odd' or 'portletCell pmLink even';
                                             class python: lastRow and dummy + ' lastRow' or dummy;"
                                 tal:attributes="class class">
            <acronym tal:attributes="title brain/Title">

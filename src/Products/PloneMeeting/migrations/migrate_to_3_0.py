@@ -170,12 +170,12 @@ class Migrate_To_3_0(Migrator):
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
                                  u'profile-plonetheme.imioapps:default',
                                  u'profile-plonetheme.imioapps:plonemeetingskin',])
-        #self._configureCKeditor()
-        #self._updateRegistries()
-        #self._patchFileSecurity()
-        #self._correctAnnexesMeetingFileTypes()
-        #self._migrateMeetingFilesToBlobs()
-        #self._updateAdvices()
+        self._configureCKeditor()
+        self._updateRegistries()
+        self._patchFileSecurity()
+        self._correctAnnexesMeetingFileTypes()
+        self._migrateMeetingFilesToBlobs()
+        self._updateAdvices()
         self._migrateXhtmlTransformFieldsValues()
         self.finish()
 

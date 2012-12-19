@@ -221,12 +221,15 @@
         </tr>
         <tr>
           <td>
-          <table class="vertical listing" align="right" width="100%">
+          <table class="listing" align="right" width="100%">
+            <thead>
             <tr>
-              <th i18n:translate="listingheader_title"></th>
-              <th width="50px" i18n:translate="group_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" i18n:translate="listingheader_title"></th>
+              <th class="nosort" width="50px" i18n:translate="group_is_active"></th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
             </tr>
+            </thead>
+            <tbody>
             <tr tal:condition="python: not fFolder.objectValues('MeetingFileType')">
               <td colspan="3" align="center" i18n:translate="">no_meeting_file_type</td>
             </tr>
@@ -276,6 +279,7 @@
               </td>
             </tr>
             </tal:loop>
+            </tbody>
             </table>
           </td>
         </tr>
@@ -299,12 +303,15 @@
         </tr>
         <tr>
           <td>
-          <table class="vertical listing" align="right" width="100%">
+          <table class="listing" align="right" width="100%">
+            <thead>
             <tr>
-              <th i18n:translate="listingheader_title"></th>
-              <th width="50px" i18n:translate="config_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" i18n:translate="listingheader_title"></th>
+              <th class="nosort" width="50px" i18n:translate="config_is_active"></th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
             </tr>
+            </thead>
+            <tbody>
             <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
               <td colspan="3" align="center" i18n:translate="">no_category</td>
             </tr>
@@ -353,6 +360,7 @@
               </td>
             </tr>
             </tal:loop>
+            </tbody>
             </table>
           </td>
         </tr>
@@ -376,13 +384,16 @@
         </tr>
         <tr>
           <td>
-          <table class="vertical listing" align="right" width="100%">
+          <table class="listing" align="right" width="100%">
+            <thead>
             <tr>
-              <th i18n:translate="listingheader_title"></th>
-              <th width="20%" i18n:translate="PloneMeeting_label_categoryId"></th>
-              <th width="50px" i18n:translate="group_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" i18n:translate="listingheader_title"></th>
+              <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId"></th>
+              <th class="nosort" width="50px" i18n:translate="group_is_active"></th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
             </tr>
+            </thead>
+            <tbody>
             <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
               <td colspan="4" align="center" i18n:translate="">no_classifier</td>
             </tr>
@@ -434,6 +445,7 @@
               </td>
             </tr>
             </tal:loop>
+            </tbody>
             </table>
           </td>
         </tr>
@@ -458,14 +470,17 @@
         </tr>
         <tr>
           <td>
-          <table class="vertical listing" align="right" width="100%">
+          <table class="listing" align="right" width="100%">
+            <thead>
             <tr>
-              <th width="25%" i18n:translate="listingheader_title"></th>
-              <th width="25%" i18n:translate="PloneMeeting_label_description"></th>
-              <th width="15%" i18n:translate="PloneMeeting_label_usages"></th>
-              <th width="25%" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe"></th>
-              <th width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" width="25%" i18n:translate="listingheader_title"></th>
+              <th class="nosort" width="25%" i18n:translate="PloneMeeting_label_description"></th>
+              <th class="nosort" width="15%" i18n:translate="PloneMeeting_label_usages"></th>
+              <th class="nosort" width="25%" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe"></th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
             </tr>
+            </thead>
+            <tbody>
             <tr tal:condition="python: not rFolder.objectValues('MeetingItem')">
               <td colspan="5" align="center" i18n:translate="">no_recurring_item</td>
             </tr>
@@ -511,6 +526,7 @@
                 </form>
               </td>
             </tr>
+            </tbody>
             </table>
           </td>
         </tr>
@@ -641,19 +657,22 @@
         </tr>
         <tr valign="top">
           <td>
-          <table class="vertical listing" align="right" width="100%">
+          <table class="listing" align="right" width="100%">
+            <thead>
             <tr>
-              <th i18n:translate="listingheader_title"></th>
-              <th i18n:translate="topic_linked_to_type">Linked to Meeting or MeetingItem?</th>
-              <th i18n:translate="topic_search_script">Topic search script</th>
-              <th i18n:translate="topic_tal_expression">Topic tal expression</th>
-              <th width="50px" i18n:translate="pod_template_is_active"></th>
-              <th width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" i18n:translate="listingheader_title"></th>
+              <th class="nosort" i18n:translate="topic_linked_to_type">Linked to Meeting or MeetingItem?</th>
+              <th class="nosort" i18n:translate="topic_search_script">Topic search script</th>
+              <th class="nosort" i18n:translate="topic_tal_expression">Topic tal expression</th>
+              <th class="nosort" width="50px" i18n:translate="pod_template_is_active"></th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
             </tr>
+            </thead>
 
+            <tbody>
             <!-- No topic is defined -->
             <tr tal:condition="python: not tFolder.objectValues('ATTopic')">
-              <td colspan="3" align="center" i18n:translate="">no_topic_folder</td>
+              <td colspan="5" align="center" i18n:translate="">no_topic_folder</td>
             </tr>
 
             <!-- List of defined topics -->
@@ -667,7 +686,7 @@
               <td><a i18n:translate="" tal:attributes="href topic/absolute_url" tal:content="topic/Title"></a></td>
 
               <!-- Linked to type -->
-              <td><p i18n:translate="" tal:content="python: topic.getProperty('meeting_topic_type')">Meeting or Item</p></td>
+              <td><p i18n:translate="" i18n:domain="plone" tal:content="python: topic.getProperty('meeting_topic_type')">Meeting or Item</p></td>
 
               <!-- Linked search script -->
               <td><p i18n:translate="" tal:content="python: topic.getProperty('topic_search_script')">Topic search script Id</p></td>
@@ -718,6 +737,7 @@
               </td>
             </tr>
             </tal:loop>
+            </tbody>
             </table>
           </td>
         </tr>
@@ -851,17 +871,17 @@
       <legend>
         <span i18n:translate="users"></span>
       </legend>
-      <table class="vertical listing" width="100%"
+      <table class="listing" width="100%"
             tal:define="mFolder python:context.meetingusers;
                    mFolderUrl mFolder/absolute_url">
       <thead>
       <tr>
-        <th width="20%" i18n:translate="listingheader_title"></th>
-        <th width="20%" i18n:translate="plonemeeting_identifier"></th>
-        <th width="20%" i18n:translate="PloneMeeting_label_duty"></th>
-        <th width="20%" i18n:translate="PloneMeeting_label_usages"></th>
-        <th width="50px" i18n:translate="pod_template_is_active"></th>
-        <th width="130px" i18n:translate="heading_actions"></th>
+        <th class="nosort" width="20%" i18n:translate="listingheader_title"></th>
+        <th class="nosort" width="20%" i18n:translate="plonemeeting_identifier"></th>
+        <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_duty"></th>
+        <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_usages"></th>
+        <th class="nosort" width="50px" i18n:translate="pod_template_is_active"></th>
+        <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
       </tr>
       </thead>
       <tr tal:condition="python: not mFolder.objectValues('MeetingUser')">
@@ -922,8 +942,8 @@
 
       <form name="addUserForm"
             tal:attributes="action python: context.absolute_url() + '/addUser'"
-            style="text-align:right;">
-        <label for="userid" i18n:translate="plonemeeting_identifier"></label>
+            style="text-align:right; padding-top: 0.5em;">
+        <label for="userid" style="vertical-align: middle;" i18n:translate="plonemeeting_identifier"></label>
         <input type="text" name="userid"/>
         <input class="context" type="submit" value="add_object" i18n:attributes="value"/>
       </form>
@@ -949,14 +969,17 @@
         </tr>
         <tr>
           <td>
-          <table class="vertical listing" align="right" width="100%">
+          <table class="listing" align="right" width="100%">
+            <thead>
             <tr>
-              <th width="20px"></th>
-              <th i18n:translate="listingheader_title"></th>
-              <th width="50px"  i18n:translate="pod_template_is_active"></th>
-              <th width="130px"  i18n:translate="heading_actions"></th>
+              <th class="nosort" width="20px"></th>
+              <th class="nosort" i18n:translate="listingheader_title"></th>
+              <th class="nosort" width="50px"  i18n:translate="pod_template_is_active"></th>
+              <th class="nosort" width="130px"  i18n:translate="heading_actions"></th>
             </tr>
+            </thead>
 
+            <tbody>
             <tal:comment replace="nothing">No template is defined.</tal:comment>
             <tr tal:condition="python: not pFolder.objectValues('PodTemplate')">
               <td colspan="4" align="center" i18n:translate="">no_pod_folder</td>
@@ -1008,6 +1031,7 @@
               </td>
             </tr>
             </tal:loop>
+            </tbody>
             </table>
           </td>
         </tr>
@@ -1021,7 +1045,6 @@
 
     <br/>
     <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
-
        </metal:main_macro>
     </metal:fill>
   </body>

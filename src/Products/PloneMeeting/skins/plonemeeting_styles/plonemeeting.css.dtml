@@ -327,9 +327,17 @@ input[type=radio] {margin: 0;}
 /* Styles for showing content (item, annexes) differently depending on the fact
    that the user already consulted the last modifications on content or not. */
 #pmNewContent { color: Red; }
-#pmNoNewContent { color: #436976; }
-.pmLinks a:link {color: Red; text-decoration:none; }
-.pmLinks a:visited { color: #436976; text-decoration:none; }
+#pmNoNewContent { color: &dtml-linkColor; !important; }
+#content td.pmLinks a,
+#content dt.pmLinks a,
+.portletCell.pmLink.odd a,
+.portletCell.pmLink.even a,
+#content li.pmLinks a,
+#content span.pmLinks a {
+  color: red;
+  text-decoration:none;
+}
+
 .documentContent { padding: 1em 0.5em 2.5em 1em !important; }
 .documentContent p a { border-bottom: 0px solid #CCCCCC; }
 .documentEditable { margin: 0; padding: 0 !important; }
@@ -491,10 +499,10 @@ cursor:pointer;
 .pm_meeting_listing_th_checkBoxes, .pm_listing_th_advices {
     width: 1%;
 }
-
-.pm_listing_th_proposingGroup, .pm_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_categoryOrProposingGroup, .pm_meeting_listing_th_proposingGroup {
-    width: 155px;
-}
+.pm_listing_th_proposingGroup,
+.pm_listing_th_categoryOrProposingGroup,
+.pm_meeting_listing_th_categoryOrProposingGroup,
+.pm_meeting_listing_th_proposingGroup,
 .pm_listing_th_creationDate {
     width: 100px;
 }

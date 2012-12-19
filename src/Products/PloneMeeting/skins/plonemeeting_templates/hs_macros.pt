@@ -291,7 +291,7 @@ document.location.reload(true);
                                         + '&transition='
                                         + transition['name'] + '&form.submitted=boolean:True';">
           <input class="hsButton" type="button"
-                 tal:attributes="value python: transition['title'];
+                 tal:attributes="value python: transition['title'] + ' ' + context.utranslate(msgid=context.portal_type, domain='plone');
                                  size python: int(len(transition['title'])/1.2);" />
         </a>
       </td>
@@ -388,7 +388,8 @@ document.location.reload(true);
                    global showSave python:False;
                    global showRefresh python: False;
                    error request/error | python:'';
-                   secret context/getVotesAreSecret;"
+                   secret context/getVotesAreSecret;
+                   isManager tool/isManager"
        id="meeting_users" class="vertical listing discreet" cellspacing="0" cellpadding="0">
   <tal:comment replace="nothing">Column headers</tal:comment>
   <thead>
@@ -447,7 +448,7 @@ document.location.reload(true);
             title="present_since" i18n:attributes="title"/><span style="color:black"
             tal:content="python: meeting.getEntranceItem(aId)"></span>
        <tal:comment replace="nothing">Remove info about user entrance into the meeting</tal:comment>
-       <img tal:condition="tool/isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+       <img tal:condition="isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
             tal:attributes="src string: $portal_url/delete_small.png;
                             onClick python:'welcomeUser(\'%s\', \'%s\', \'delete\')' % (context.absolute_url(), aId)"/>
       </tal:entered>
@@ -458,7 +459,7 @@ document.location.reload(true);
            title="left_after" i18n:attributes="title"/><span style="color:black"
            tal:content="python: meeting.getDepartureItem(aId)-1"></span>
       <tal:comment replace="nothing">Remove info about user departure from the meeting</tal:comment>
-      <img tal:condition="tool/isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+      <img tal:condition="isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
            tal:attributes="src string: $portal_url/delete_small.png;
                            onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_after\')' % (context.absolute_url(), aId)"/>
       </tal:left>
@@ -468,20 +469,20 @@ document.location.reload(true);
       <img tal:attributes="src string: $portal_url/leaving.gif"
            title="left_now" i18n:attributes="title"/>
       <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
-      <img tal:condition="tool/isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+      <img tal:condition="isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
            tal:attributes="src string: $portal_url/delete_small.png;
                            onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_now\')' % (context.absolute_url(), aId)"/>
       </tal:left>
 
       <tal:comment replace="nothing">Button for welcoming a late attendee not yet in the meeting</tal:comment>
       <img title="person_welcome" i18n:attributes="title" style="cursor: pointer"
-           tal:condition="python: tool.isManager() and (aId in lateAttendees) and not isPresent and not meeting.getEntranceItem(aId)"
+           tal:condition="python: isManager and (aId in lateAttendees) and not isPresent and not meeting.getEntranceItem(aId)"
            tal:attributes="src string: $portal_url/entrance.gif;
                            onClick python:'welcomeUser(\'%s\', \'%s\', \'do\')' % (context.absolute_url(), aId)"/>
       <tal:comment replace="nothing">Button for byebying a user</tal:comment>
       <a href="#" class="link-overlay-pm byebye-overlay" tal:attributes="href string:byebyeuser?userId=${aId}">
        <img title="person_byebye" i18n:attributes="title" style="cursor: pointer; visibility: hidden"
-           tal:condition="python: tool.isManager() and isPresent and not meeting.getDepartureItem(aId)"
+           tal:condition="python: isManager and isPresent and not meeting.getDepartureItem(aId)"
            tal:attributes="src string: $portal_url/departure.gif;
                            id python: 'byebye_%s' % aId;
                            name  python: 'byebye_%s' % aId;" />
@@ -556,14 +557,14 @@ document.location.reload(true);
     </tal:attendee>
   </tr>
   <tr>
-    <th colspan="7" tal:define="maySwitchVotes python: not context.hasVotes() and member.has_permission('Modify portal content', context)">
+    <th colspan="7" tal:define="maySwitchVotes python: not context.hasVotes() and member.has_permission('Modify portal content', context) and isManager">
       <tal:comment replace="nothing">Switch mode (secret / not secret)</tal:comment>
       <img style="cursor:pointer;" title="switch_votes" i18n:attributes="title" align="right"
-           tal:condition="python: showVotes and maySwitchVotes"
+           tal:condition="python: isManager and maySwitchVotes"
            tal:attributes="src string: $portal_url/switch.gif;
                            onClick python:'switchVotes(\'%s\', \'%s\')' % (context.absolute_url(), secret)"/>
       <img style="cursor:help;" title="switch_votes_why_cannot" i18n:attributes="title" align="right"
-           tal:condition="python: showSave and not maySwitchVotes"
+           tal:condition="python: isManager and not maySwitchVotes"
            tal:attributes="src string: $portal_url/switch_not_allowed.gif;"/>
       <tal:comment replace="nothing">Set 'yes' for everybody</tal:comment>
       <img style="cursor:pointer;" title="update_votes_yes" i18n:attributes="title"

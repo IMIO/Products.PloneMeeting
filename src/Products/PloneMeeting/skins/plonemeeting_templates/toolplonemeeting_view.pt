@@ -48,11 +48,14 @@
         <tr>
           <td>
           <table class="vertical listing" width="100%">
+            <thead>
             <tr>
               <th i18n:translate="listingheader_title"></th>
               <th width="50px" i18n:translate="config_is_active"></th>
               <th width="130px" i18n:translate="heading_actions"></th>
             </tr>
+            </thead>
+            <tbody>
             <tr tal:condition="python: not context.objectValues('MeetingConfig')">
               <td colspan="3" align="center" i18n:translate="">no_meeting_config</td>
             </tr>
@@ -91,6 +94,7 @@
               </td>
             </tr>
             </tal:loop>
+            </tbody>
             </table>
           </td>
         </tr>
@@ -116,12 +120,15 @@
         <tr>
           <td>
           <table class="vertical listing" width="100%">
+            <thead>
             <tr>
               <th i18n:translate="listingheader_title"></th>
               <th width="10%" i18n:translate="PloneMeeting_label_acronym"></th>
               <th width="50px" i18n:translate="group_is_active"></th>
               <th width="130px" i18n:translate="heading_actions"></th>
             </tr>
+            </thead>
+            <tbody>
             <tr tal:condition="python: not context.objectValues('MeetingGroup')">
               <td colspan="4" align="center" i18n:translate="">no_meeting_group</td>
             </tr>
@@ -173,6 +180,7 @@
               </td>
             </tr>
             </tal:loop>
+            </tbody>
             </table>
           </td>
         </tr>
@@ -235,12 +243,15 @@
         <tr>
           <td>
           <table class="vertical listing" width="100%">
+            <thead>
             <tr>
               <th width="50%" i18n:translate="listingheader_title"></th>
               <th i18n:translate="PloneMeeting_label_usages"></th>
               <th width="10%" i18n:translate="pod_template_is_active"></th>
               <th width="10%" i18n:translate="heading_actions"></th>
             </tr>
+            </thead>
+            <tbody>
             <tr tal:condition="python: not context.objectValues('ExternalApplication')">
               <td colspan="4" align="center" i18n:translate="">no_external_application</td>
             </tr>
@@ -272,6 +283,7 @@
               </td>
             </tr>
             </tal:loop>
+            </tbody>
             </table>
           </td>
         </tr>
