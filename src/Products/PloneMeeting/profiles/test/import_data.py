@@ -76,6 +76,8 @@ pmReviewer1 = UserDescriptor('pmReviewer1', [])
 pmCreator2 = UserDescriptor('pmCreator2', [])
 pmReviewer2 = UserDescriptor('pmReviewer2', [])
 pmAdviser1 = UserDescriptor('pmAdviser1', [])
+voter1 = UserDescriptor('voter1', [], fullname = 'M. Voter One')
+voter2 = UserDescriptor('voter2', [], fullname = 'M. Voter Two')
 
 developers = GroupDescriptor('developers', 'Developers', 'Devel',
                              givesMandatoryAdviceOn='python:False')
@@ -96,6 +98,12 @@ vendors.observers.append(pmReviewer2)
 vendors.advisers.append(pmReviewer2)
 vendors.advisers.append(pmManager)
 
+# Do voters able to see items to vote for
+developers.observers.append(voter1)
+developers.observers.append(voter2)
+vendors.observers.append(voter1)
+vendors.observers.append(voter2)
+
 # Add a vintage group
 endUsers = GroupDescriptor('endUsers', 'End users', 'EndUsers', active=False)
 
@@ -111,6 +119,10 @@ cadranel_signer = MeetingUserDescriptor('cadranel', duty='Secrétaire',
                                        usages=['assemblyMember', 'signer'],
                                        signatureImage='SignatureCadranel.jpg',
                                        signatureIsDefault=True)
+muser_voter1  = MeetingUserDescriptor('voter1', duty='Voter1',
+                                       usages=['assemblyMember', 'voter',])
+muser_voter2  = MeetingUserDescriptor('voter2', duty='Voter2',
+                                       usages=['assemblyMember', 'voter'])
 
 # Meeting configuration
 meetingPga = MeetingConfigDescriptor(
@@ -173,12 +185,13 @@ meetingPma.allItemTags = '\n'.join(
     ('Strategic decision','Genericity mechanism', 'User interface') )
 meetingPma.sortAllItemTags = True
 meetingPma.recurringItems = (recItem, template1, template2, )
+meetingPma.useVotes = True
 meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
-                           cadranel_signer]
+                           cadranel_signer, muser_voter1, muser_voter2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'),]
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
                                  (developers, vendors, endUsers))
-data.usersOutsideGroups = [cadranel]
+data.usersOutsideGroups = [cadranel, voter1, voter2]
 # ------------------------------------------------------------------------------

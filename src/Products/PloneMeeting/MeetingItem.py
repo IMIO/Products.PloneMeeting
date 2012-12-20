@@ -3008,7 +3008,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         secret = True
         requestVotes = {}
         numberOfVotes = 0
-        numberOfVoters = len(self.getAttendees(usage='voter'))
+        voters = self.getAttendees(usage='voter')
+        voterIds = [voter.getId() for voter in voters]
+        numberOfVoters = len(voters)
         rq.set('error', True) # If everything OK, we'll set "False" in the end.
         # If allYes is True, we must set vote value "yes" for every voter.
         allYes = self.REQUEST.get('allYes') == 'true'
@@ -3018,6 +3020,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for key in rq.keys():
             if key.startswith('vote_value_'):
                 voterId = key[11:]
+                if not voterId in voterIds:
+                    raise KeyError, "Trying to set vote for unexisting voter!"
                 requestVotes[voterId] = allYes and 'yes' or rq[key]
                 secret=False
             elif key.startswith('vote_count_'):
@@ -3047,9 +3051,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             elif key.startswith('answerer_'):
                 answerers.append(key[9:])
         # Update questioners / answerers
-        if (answerers or questioners) and not self.mayEditQAs():
+        mayEditQAs = self.mayEditQAs()
+        # if something received and user can not edit QAs, raise...
+        if (answerers or questioners) and not mayEditQAs:
             raise Exception("This user can't update this info.")
-        else:
+        # if the user can update QAs, proceed
+        elif mayEditQAs:
             self.setQuestioners(questioners)
             self.setAnswerers(answerers)
         # Check the total number of votes
@@ -3063,18 +3070,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if secret: self.saveVoteCounts(requestVotes)
         else:      self.saveVoteValues(requestVotes)
 
+    def maySwitchVotes(self):
+        '''Check if current user may switch votes mode.'''
+        member = self.restrictedTraverse('@@plone_portal_state').member()
+        if not self.hasVotes() and \
+           member.has_permission('Modify portal content', self) and \
+           self.portal_plonemeeting.isManager():
+            return True
+        return False
+
     security.declarePublic('onSwitchVotes')
     def onSwitchVotes(self):
         '''Switches votes (secret / not secret).'''
-        exec "secret = %s" % self.REQUEST['secret']
-        self.setVotesAreSecret(not secret)
+        if not self.maySwitchVotes():
+            raise Unauthorized
+        secret = self.REQUEST['secret']
+        self.setVotesAreSecret(not bool(secret))
         self.votes = {}
 
     security.declarePublic('mayConsultVotes')
     def mayConsultVotes(self):
         '''Returns True if the current user may consult all votes for p_self.'''
         user = self.portal_membership.getAuthenticatedMember()
-        for mUser in self.getAttendees(usage='voter'):
+        voters = self.getAttendees(usage='voter')
+        if not voters:
+            return False
+        for mUser in voters:
             if not mUser.adapted().mayConsultVote(user, self): return False
         return True
 
@@ -3082,7 +3103,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayEditVotes(self):
         '''Returns True if the current user may edit all votes for p_self.'''
         user = self.portal_membership.getAuthenticatedMember()
-        for mUser in self.getAttendees(usage='voter'):
+        voters = self.getAttendees(usage='voter')
+        if not voters:
+            return False
+        for mUser in voters:
             if not mUser.adapted().mayEditVote(user, self): return False
         return True
 

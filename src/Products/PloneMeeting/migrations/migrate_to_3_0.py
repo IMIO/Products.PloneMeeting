@@ -20,7 +20,7 @@ class Migrate_To_3_0(Migrator):
 
     def _updateRegistries(self):
         '''Make sure some elements are enabled and remove not found elements.'''
-        # popuforms.py must be enabled in portal_javascript
+        # popuforms.js must be enabled in portal_javascript
         logger.info('Updating registries...')
         jstool = self.portal.portal_javascripts
         popupforms = jstool.getResource('popupforms.js')

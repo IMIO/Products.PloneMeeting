@@ -557,7 +557,7 @@ document.location.reload(true);
     </tal:attendee>
   </tr>
   <tr>
-    <th colspan="7" tal:define="maySwitchVotes python: not context.hasVotes() and member.has_permission('Modify portal content', context) and isManager">
+    <th colspan="7" tal:define="maySwitchVotes context/maySwitchVotes">
       <tal:comment replace="nothing">Switch mode (secret / not secret)</tal:comment>
       <img style="cursor:pointer;" title="switch_votes" i18n:attributes="title" align="right"
            tal:condition="python: isManager and maySwitchVotes"
