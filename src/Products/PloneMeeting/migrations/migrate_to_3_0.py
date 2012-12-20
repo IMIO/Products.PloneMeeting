@@ -19,7 +19,7 @@ class Migrate_To_3_0(Migrator):
                                   "installed and that the cputils_configure_ckeditor method is available"
 
     def _updateRegistries(self):
-        '''Make sure some elements are enabled and remove no found elements.'''
+        '''Make sure some elements are enabled and remove not found elements.'''
         # popuforms.py must be enabled in portal_javascript
         logger.info('Updating registries...')
         jstool = self.portal.portal_javascripts
