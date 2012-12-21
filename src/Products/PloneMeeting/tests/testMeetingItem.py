@@ -2,7 +2,7 @@
 #
 # File: testMeetingItem.py
 #
-# Copyright (c) 2007 by PloneGov
+# Copyright (c) 2012 by PloneGov
 #
 # GNU General Public License (GPL)
 #

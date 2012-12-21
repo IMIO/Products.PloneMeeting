@@ -2931,12 +2931,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Return True if vote values are defined for this item.'''
         if not self.votes:
             return False
-        # we may also say that if every encoded votes are 'not_yet' values
+        # we may also say that if every encoded votes are 'not_yet' (NOT_ENCODED_VOTE_VALUE) values
         # we consider that there is no votes
         if self.getVotesAreSecret():
-            return bool([v for v in self.votes if (v != 'not_yet' and self.votes[v] != 0)])
+            return bool([v for v in self.votes if (v != NOT_ENCODED_VOTE_VALUE and self.votes[v] != 0)])
         else:
-            return bool([val for val in self.votes.values() if val != 'not_yet'])
+            return bool([val for val in self.votes.values() if val != NOT_ENCODED_VOTE_VALUE])
 
     security.declarePublic('getVoteValue')
     def getVoteValue(self, userId):
@@ -2960,6 +2960,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res = self.votes[voteValue]
         return res
 
+    security.declarePublic('getVotePrint')
     def getVotePrint(self, voteValues=('yes', 'no', 'abstain')):
         '''Returns the "voteprint" for this item. A "voteprint" is a string that
            integrates all votes with vote values in p_voteValues. Useful for
@@ -2974,28 +2975,35 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if self.votes[voter] in voteValues:
                 # Reduce the vote value to a single letter
                 value = self.votes[voter]
-                if value == 'not_yet': v = 't'
+                if value == NOT_ENCODED_VOTE_VALUE: v = 't'
                 elif value == 'not_found': v = 'f'
                 else: v = value[0]
                 res.append('%s.%s' % (voter, v))
         return ''.join(res)
 
+    security.declarePrivate('saveVoteValues')
     def saveVoteValues(self, newVoteValues):
         '''p_newVoteValues is a dictionary that contains a bunch of new vote
            values.'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         user = self.portal_membership.getAuthenticatedMember()
+        usedVoteValues = meetingConfig.getUsedVoteValues()
         for userId in newVoteValues.iterkeys():
             # Check that the current user can update the vote of this user
             meetingUser = meetingConfig.getMeetingUserFromPloneUser(userId)
-            if meetingUser.adapted().mayEditVote(user, self):
+            if not newVoteValues[userId] in usedVoteValues:
+                raise ValueError, 'Trying to set vote with another value than ones defined in meetingConfig.usedVoteValues!'
+            elif meetingUser.adapted().mayEditVote(user, self):
                 self.votes[userId] = newVoteValues[userId]
             else:
-                raise Exception("This user can't update votes.")
+                raise Unauthorized
 
+    security.declarePrivate('saveVoteCounts')
     def saveVoteCounts(self, newVoteCounts):
         '''p_newVoteCounts is a dictionary that contains, for every vote value,
            new vote counts.'''
+        if not self.mayEditVotes():
+            raise Unauthorized
         for voteValue, voteCount in newVoteCounts.iteritems():
             self.votes[voteValue] = voteCount
 
@@ -3005,7 +3013,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            votes, questioners, answerers.'''
         rq = self.REQUEST
         # If votes are secret, we get vote counts. Else, we get vote values.
-        secret = True
+        secret = self.getVotesAreSecret()
         requestVotes = {}
         numberOfVotes = 0
         voters = self.getAttendees(usage='voter')
@@ -3018,13 +3026,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         questioners = []
         answerers = []
         for key in rq.keys():
-            if key.startswith('vote_value_'):
+            if key.startswith('vote_value_') and not secret:
                 voterId = key[11:]
                 if not voterId in voterIds:
                     raise KeyError, "Trying to set vote for unexisting voter!"
                 requestVotes[voterId] = allYes and 'yes' or rq[key]
                 secret=False
-            elif key.startswith('vote_count_'):
+            elif key.startswith('vote_count_') and secret:
                 voteValue = key[11:]
                 # If allYes, we cheat
                 if allYes:
@@ -3070,6 +3078,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if secret: self.saveVoteCounts(requestVotes)
         else:      self.saveVoteValues(requestVotes)
 
+    security.declarePublic('maySwitchVotes')
     def maySwitchVotes(self):
         '''Check if current user may switch votes mode.'''
         member = self.restrictedTraverse('@@plone_portal_state').member()
@@ -3084,8 +3093,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Switches votes (secret / not secret).'''
         if not self.maySwitchVotes():
             raise Unauthorized
-        secret = self.REQUEST['secret']
-        self.setVotesAreSecret(not bool(secret))
+        self.setVotesAreSecret(not self.getVotesAreSecret())
         self.votes = {}
 
     security.declarePublic('mayConsultVotes')

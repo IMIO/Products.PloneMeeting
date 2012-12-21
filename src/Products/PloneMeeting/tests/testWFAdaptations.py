@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# File: testAdvices.py
+# File: testWFAdaptations.py
 #
-# Copyright (c) 2012 by Imio.be
+# Copyright (c) 2012 by PloneGov
 #
 # GNU General Public License (GPL)
 #

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2008 by PloneGov
+# Copyright (c) 2012 by PloneGov
 #
 # GNU General Public License (GPL)
 #
@@ -20,7 +20,7 @@
 # 02110-1301, USA.
 #
 
-import unittest
+import unittest2
 import os.path
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
@@ -54,7 +54,7 @@ class TestFile:
         self.headers = None
 
 # ------------------------------------------------------------------------------
-class PloneMeetingTestCase(unittest.TestCase):
+class PloneMeetingTestCase(unittest2.TestCase):
     '''Base class for defining PloneMeeting test cases.'''
 
     # Some default content
