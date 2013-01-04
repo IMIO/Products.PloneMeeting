@@ -550,9 +550,10 @@ class testMeetingItem(PloneMeetingTestCase):
     def testUpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
            Only 'MeetingPowerObserverLocal' local role should be impacted.'''
+        # to ease test override, consider that we can give advices when the item is created for this test
+        self.meetingConfig.setItemAdviceStates(['itemcreated', 'proposed', 'validated',])
         login(self.portal, 'pmManager')
         i1 = self.create('MeetingItem')
-        self.do(i1, 'propose')
         # add developers in optionalAdvisers
         i1.setOptionalAdvisers('developers')
         i1.updateAdvices()
