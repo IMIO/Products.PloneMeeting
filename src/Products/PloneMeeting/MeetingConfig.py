@@ -2235,10 +2235,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getCategories')
-    def getCategories(self, classifiers=False, item=None):
+    def getCategories(self, classifiers=False, item=None, onlySelectables=True):
         '''Returns the categories defined for this meeting config or the
-           classifiers if p_classifiers is True. If p_item is not None, check
-           that the category is selectable.'''
+           classifiers if p_classifiers is True. If p_item is given, it will be used
+           by MeetingCategory.isSelectable only if p_onlySelectables is True, either we return
+           every existing MeetingCategories.'''
         if classifiers:
             catFolder = self.classifiers
         elif self.getUseGroupsAsCategories():
@@ -2246,9 +2247,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             catFolder = self.categories
         res = []
-        for cat in catFolder.objectValues('MeetingCategory'):
-            if cat.adapted().isSelectable(item):
-                res.append(cat)
+        if onlySelectables:
+            for cat in catFolder.objectValues('MeetingCategory'):
+                if cat.adapted().isSelectable(item):
+                    res.append(cat)
+        else:
+            res = catFolder.objectValues('MeetingCategory')
         return res
 
     security.declarePublic('getAdvicesIconsWidth')
