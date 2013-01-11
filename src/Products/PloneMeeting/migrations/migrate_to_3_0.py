@@ -164,12 +164,104 @@ class Migrate_To_3_0(Migrator):
             cfg.setXhtmlTransformFields(res)
         logger.info('Done.')
 
+    def _findPublishedMeetings(self):
+        '''Returns the list of uids of the Meetings that are in state 'published'
+           corresponding to the old state added by the 'add_published_state' wfAdaptation.'''
+        logger.info('Finding meetings to migrate regarding \'add_published_state\' wfAdaptation')
+        wft = self.portal.portal_workflow
+        uids = []
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # only consider cfg having the 'add_published_state'
+            if not 'add_published_state' in cfg.getWorkflowAdaptations():
+                logger.info("The 'add_published_state' wfAdaptation is not selected for the '%s' meetingConfig" % cfg.getId())
+                continue
+            # check also if the linked wf has not already been migrated
+            wf = getattr(wft, cfg.getMeetingWorkflow(), None)
+            if not wf:
+                raise Exception, "The wf '%s' defined on the '%s' meetingConfig does not exist?!" \
+                                 % (cfg.getMeetingWorkflow(), cfg.getId())
+            if 'decisions_published' in wf.transitions:
+                logger.info("The wf '%s' is already migrated (already contains the 'decisions_published' state) for the '%s' meetingConfig" % (wf.getId(), cfg.getId()))
+            # if the cfg contains the wfAdaptation and the wf is not already migrated, proceed
+            brains = self.portal.portal_catalog(portal_type=cfg.getMeetingTypeName(), review_state='published')
+            if not brains:
+                logger.info("No meeting to migrate in meetingConfig '%s'" % cfg.getId())
+            else:
+                # bypass guards for Manager
+                wf.manager_bypass=1
+                # deactivate mail notifications
+                oldMailMode = cfg.getMailMode()
+                cfg.setMailMode('deactivated')
+                # set some value in the request that will be used by the triggerTransition method here under
+                self.portal.REQUEST.set('transition', 'backToDecided')
+                self.portal.REQUEST.set('comment', 'Set back to \'decided\' during migration to PM3.0 because actual state \'published\' does not exist anymore.')
+                for brain in brains:
+                    obj = brain.getObject()
+                    uid = obj.UID()
+                    uids.append(uid)
+                    # use our tool to trigger transition so we can easily add a comment
+                    self.portal.REQUEST.set('objectUid', uid)
+                    self.portal.portal_plonemeeting.triggerTransition()
+                    logger.info("Set back meeting at '%s' to 'decided' for migration purpose" % '/'.join(obj.getPhysicalPath()))
+                logger.info("Meetings that were set back to 'decided' will be migrated after reinstall.")
+                # back to old application state
+                self.portal.REQUEST.set('transition', '')
+                self.portal.REQUEST.set('comment', '')
+                self.portal.REQUEST.set('objectUid', '')
+                wf.manager_bypass=1
+                cfg.setMailMode(oldMailMode)
+        return uids
+
+    def _migrateStatePublishedToDecisionsPublished(self, uids):
+        '''Migrate meetings having passed uids to the 'decisions_publihsed' state.
+           These are meetings that where in no more existing state 'published', set back to 'decided'
+           that we will now set to 'decisions_published'.'''
+        logger.info('Migrating given \'%d\' meeting(s) to the \'decisions_published \' state' % len(uids))
+        if not uids:
+            return
+        wft = self.portal.portal_workflow
+        tool = self.portal.portal_plonemeeting
+        # set some value in the request that will be used by the triggerTransition method here under
+        self.portal.REQUEST.set('transition', 'publish_decisions')
+        self.portal.REQUEST.set('comment', 'Set to \'decisions_published\' during migration to PM3.0 because old state \'published\' does not exist anymore.')
+        for uid in uids:
+            brains = self.portal.uid_catalog(UID=uid)
+            if not brains:
+                raise Exception, "The meeting having uid '%s' was not found in 'uid_catalog'!" % uid
+            obj = brains[0].getObject()
+            cfg = tool.getMeetingConfig(obj)
+            wf = getattr(wft, cfg.getMeetingWorkflow(), None)
+            # bypass guards for Manager
+            wf.manager_bypass=1
+            # deactivate mail notifications
+            oldMailMode = cfg.getMailMode()
+            cfg.setMailMode('deactivated')
+            self.portal.REQUEST.set('objectUid', uid)
+            self.portal.portal_plonemeeting.triggerTransition()
+            # back to old application state
+            self.portal.REQUEST.set('transition', '')
+            self.portal.REQUEST.set('comment', '')
+            self.portal.REQUEST.set('objectUid', '')
+            wf.manager_bypass=1
+            cfg.setMailMode(oldMailMode)
+        logger.info('\'%d\' meeting(s) was(were) migrated to the \'decisions_published \' state' % len(uids))
+
 
     def run(self, refreshCatalogs=True, refreshWorkflows=True):
         logger.info('Migrating to PloneMeeting 3.0...')
+        # the Meeting 'published' state has become 'decisions_published' now, so :
+        # - find Meetings in 'published' in MeetingConfigs where 'add_published_state' wfAdaptation is activbe
+        # - set them back to 'decided'
+        # - returns the list of modified uids
+        # - reinstall
+        # - set meetings (returned uids) to 'decisions_published' state
+        uids = self._findPublishedMeetings()
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
                                  u'profile-plonetheme.imioapps:default',
                                  u'profile-plonetheme.imioapps:plonemeetingskin',])
+        self._migrateStatePublishedToDecisionsPublished(uids)
+        
+        # now continue with other migrations
         self._configureCKeditor()
         self._updateRegistries()
         self._patchFileSecurity()
