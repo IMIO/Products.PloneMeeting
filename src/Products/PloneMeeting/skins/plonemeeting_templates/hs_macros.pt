@@ -389,7 +389,8 @@ document.location.reload(true);
                    global showRefresh python: False;
                    error request/error | python:'';
                    secret context/getVotesAreSecret;
-                   isManager tool/isManager"
+                   isManager tool/isManager;
+                   mayEditItem python: member.has_permission('Modify portal content', context);"
        id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0">
   <tal:comment replace="nothing">Column headers</tal:comment>
   <thead>
@@ -480,9 +481,9 @@ document.location.reload(true);
            tal:attributes="src string: $portal_url/entrance.gif;
                            onClick python:'welcomeUser(\'%s\', \'%s\', \'do\')' % (context.absolute_url(), aId)"/>
       <tal:comment replace="nothing">Button for byebying a user</tal:comment>
-      <a href="#" class="link-overlay-pm byebye-overlay" tal:attributes="href string:byebyeuser?userId=${aId}">
+      <a href="#" class="link-overlay-pm byebye-overlay" tal:attributes="href string:byebyeuser?userId=${aId}"
+         tal:condition="python: isManager and mayEditItem and isPresent and not meeting.getDepartureItem(aId)">
        <img title="person_byebye" i18n:attributes="title" style="cursor: pointer; visibility: hidden"
-           tal:condition="python: isManager and isPresent and not meeting.getDepartureItem(aId)"
            tal:attributes="src string: $portal_url/departure.gif;
                            id python: 'byebye_%s' % aId;
                            name  python: 'byebye_%s' % aId;" />
