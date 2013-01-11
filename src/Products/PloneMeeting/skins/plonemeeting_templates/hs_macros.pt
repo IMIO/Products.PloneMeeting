@@ -499,7 +499,7 @@ document.location.reload(true);
       <tal:comment replace="nothing">Show checkbox for editors</tal:comment>
       <input type="checkbox" id="questioner"
              tal:define="cbId python: 'questioner_%s' % aId"
-             tal:condition="python: mayEdiswitQAs and isPresent"
+             tal:condition="python: mayEditQAs and isPresent"
              tal:attributes="id cbId; name cbId;
                              checked python: aId in questioners"/>
     </td>
