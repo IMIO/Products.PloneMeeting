@@ -265,7 +265,7 @@ class testVotes(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.do(item1, 'validate')
         self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
+        self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
         self.do(item1, 'present')
         # votes are not secret by default
         self.failIf(item1.getVotesAreSecret())
