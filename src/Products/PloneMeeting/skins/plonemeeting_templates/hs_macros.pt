@@ -499,7 +499,7 @@ document.location.reload(true);
       <tal:comment replace="nothing">Show checkbox for editors</tal:comment>
       <input type="checkbox" id="questioner"
              tal:define="cbId python: 'questioner_%s' % aId"
-             tal:condition="python: mayEditQAs and isPresent"
+             tal:condition="python: mayEdiswitQAs and isPresent"
              tal:attributes="id cbId; name cbId;
                              checked python: aId in questioners"/>
     </td>
@@ -560,20 +560,20 @@ document.location.reload(true);
     <th colspan="7" tal:define="maySwitchVotes context/maySwitchVotes">
       <tal:comment replace="nothing">Switch mode (secret / not secret)</tal:comment>
       <img style="cursor:pointer;" title="switch_votes" i18n:attributes="title" align="right"
-           tal:condition="python: isManager and maySwitchVotes"
+           tal:condition="python: showVotes and isManager and maySwitchVotes"
            tal:attributes="src string: $portal_url/switch.gif;
                            onClick python:'switchVotes(\'%s\', \'%s\')' % (context.absolute_url(), secret)"/>
       <img style="cursor:help;" title="switch_votes_why_cannot" i18n:attributes="title" align="right"
-           tal:condition="python: isManager and not maySwitchVotes"
+           tal:condition="python: showVotes and isManager and not maySwitchVotes"
            tal:attributes="src string: $portal_url/switch_not_allowed.gif;"/>
       <tal:comment replace="nothing">Set 'yes' for everybody</tal:comment>
       <img style="cursor:pointer;" title="update_votes_yes" i18n:attributes="title"
-           tal:condition="showSave" align="right"
+           tal:condition="python: showVotes and showSave" align="right"
            tal:attributes="src string:$portal_url/yes.gif;
                            onClick python:'saveItemPeopleInfos(\'%s\', true)' % context.absolute_url()"/>
       <tal:comment replace="nothing">Save votes</tal:comment>
       <img style="cursor:pointer" title="save" i18n:attributes="title"
-           tal:condition="python: showSave or mayEditQAs" align="right"
+           tal:condition="python: showVotes and (showSave or mayEditQAs)" align="right"
            tal:attributes="src string:$portal_url/save.gif;
                            onClick python:'saveItemPeopleInfos(\'%s\')' % context.absolute_url()"/>
       <tal:comment replace="nothing">Refresh votes</tal:comment>
