@@ -460,7 +460,7 @@ document.location.reload(true);
            title="left_after" i18n:attributes="title"/><span style="color:black"
            tal:content="python: meeting.getDepartureItem(aId)-1"></span>
       <tal:comment replace="nothing">Remove info about user departure from the meeting</tal:comment>
-      <img tal:condition="isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+      <img tal:condition="python: mayEditItem and isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
            tal:attributes="src string: $portal_url/delete_small.png;
                            onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_after\')' % (context.absolute_url(), aId)"/>
       </tal:left>

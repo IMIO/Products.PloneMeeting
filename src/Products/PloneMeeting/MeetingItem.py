@@ -3155,7 +3155,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            discussing this item: we will record this info, excepted if
            request["action"] tells us to remove the info instead.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        if not tool.isManager():
+        if not tool.isManager() or not checkPermission(ModifyPortalContent, context):
             raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']
@@ -3177,7 +3177,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            We will record this info, excepted if request["action"] tells us to
            remove it instead.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        if not tool.isManager():
+        if not tool.isManager() or not checkPermission(ModifyPortalContent, context):
             raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']
