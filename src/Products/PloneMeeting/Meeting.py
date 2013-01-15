@@ -887,7 +887,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def listAssemblyMembers(self):
         '''Returns the active MeetingUsers having usage "assemblyMember".'''
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        res = ((u.id, u.Title()) for u in cfg.getActiveMeetingUsers())
+        res = ((u.id, u.Title()) for u in cfg.getMeetingUsers())
         return DisplayList(res)
 
     security.declarePublic('listSignatories')
@@ -895,15 +895,28 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Returns the active MeetingUsers having usage "signer".'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         res = ((u.id, u.Title()) for u in \
-               meetingConfig.getActiveMeetingUsers(usages=['signer',]))
+               meetingConfig.getMeetingUsers(usages=['signer',]))
         return DisplayList(res)
+
+    security.declarePublic('getAllUsedMeetingUsers')
+    def getAllUsedMeetingUsers(self):
+        '''This will return every used MeetingUsers no matter they are
+           active or not.  This make it possible to deactivate a MeetingUser
+           but still see it on old meetings.'''
+        # used MeetingUsers are users really saved in attendess, absents, excused, replacements
+        mUserIds = set(self.getAttendees()).union(set(self.getAbsents())).union(set(self.getExcused()))
+        # keep order as defined in the configuration
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        # get every potential assembly members, inactive included
+        allMeetingUsers = cfg.getMeetingUsers(usages=('assemblyMember',), onlyActive=False)
+        return [mUser for mUser in allMeetingUsers if mUser.getId() in mUserIds]
 
     security.declarePublic('getDefaultAttendees')
     def getDefaultAttendees(self):
         '''The default attendees are the active MeetingUsers in the
            corresponding meeting configuration.'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        return [u.id for u in meetingConfig.getActiveMeetingUsers()]
+        return [u.id for u in meetingConfig.getMeetingUsers()]
 
     security.declarePublic('getDefaultSignatories')
     def getDefaultSignatories(self):
@@ -911,7 +924,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            "signer" and whose "signatureIsDefault" is True.'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         res = []
-        for user in meetingConfig.getActiveMeetingUsers(usages=('signer',)):
+        for user in meetingConfig.getMeetingUsers(usages=('signer',)):
             if user.getSignatureIsDefault():
                 res.append(user.id)
         return res

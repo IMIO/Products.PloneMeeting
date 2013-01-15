@@ -346,7 +346,7 @@
   <table id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0"
          tal:condition="python: ('attendees' in usedAttrs) and not context.getAssembly()"
          tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display:table' or 'display:none'"
-         tal:define="allUsers meetingConfig/getActiveMeetingUsers;
+         tal:define="allUsers context/getAllUsedMeetingUsers;
                      attendees context/getAttendees;
                      excused context/getExcused;
                      absents context/getAbsents;

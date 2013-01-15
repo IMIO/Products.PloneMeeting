@@ -2089,7 +2089,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the active MeetingUsers having usage "asker".'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         res = []
-        for u in meetingConfig.getActiveMeetingUsers(usages=['asker',]):
+        for u in meetingConfig.getMeetingUsers(usages=['asker',]):
             value = ''
             gender = u.getGender()
             if gender:

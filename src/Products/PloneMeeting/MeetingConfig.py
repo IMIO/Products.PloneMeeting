@@ -1603,7 +1603,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Get every meeting user and check if signer is in their usages
         if self.isTemporary(): return None
         res = ((u.id, u.Title()) \
-               for u in self.getActiveMeetingUsers(usages=('signer',)))
+               for u in self.getMeetingUsers(usages=('signer',)))
         return DisplayList(res)
 
     security.declarePublic('deadlinesAreEnabled')
@@ -2443,14 +2443,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Keep only relevant topics
         return [t for t in allTopics if t in self.getToDoListTopics()]
 
-    security.declarePublic('getActiveMeetingUsers')
-    def getActiveMeetingUsers(self, usages=('assemblyMember',)):
-        '''Returns the active MeetingUsers having at least one usage among
-           p_usage.'''
+    security.declarePublic('getMeetingUsers')
+    def getMeetingUsers(self, usages=('assemblyMember',), onlyActive=True):
+        '''Returns the MeetingUsers having at least one usage among
+           p_usage.  if p_onlyActive is True, only active MeetingUsers are returned.'''
+        review_state = ('inactive', 'active',)
+        if onlyActive:
+            review_state = 'active'
         brains = self.portal_catalog(portal_type='MeetingUser',
             # KeywordIndex 'indexUsages' use 'OR' by default
             getConfigId=self.id, indexUsages=usages,
-            review_state='active', sort_on='getObjPositionInParent')
+            review_state=review_state, sort_on='getObjPositionInParent')
         return [b.getObject() for b in brains]
 
     security.declarePrivate('addCategory')
