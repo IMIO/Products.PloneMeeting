@@ -887,29 +887,38 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def listAssemblyMembers(self):
         '''Returns the active MeetingUsers having usage "assemblyMember".'''
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        res = ((u.id, u.Title()) for u in cfg.getMeetingUsers())
+        res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(includeAllActive=True))
         return DisplayList(res)
 
     security.declarePublic('listSignatories')
     def listSignatories(self):
         '''Returns the active MeetingUsers having usage "signer".'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        res = ((u.id, u.Title()) for u in \
-               meetingConfig.getMeetingUsers(usages=['signer',]))
+        res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(usages=['signer',], includeAllActive=True))
         return DisplayList(res)
 
     security.declarePublic('getAllUsedMeetingUsers')
-    def getAllUsedMeetingUsers(self):
+    def getAllUsedMeetingUsers(self, usages=['assemblyMember',], includeAllActive=False):
         '''This will return every used MeetingUsers no matter they are
            active or not.  This make it possible to deactivate a MeetingUser
-           but still see it on old meetings.'''
+           but still see it on old meetings.  If p_includeAllActive is True,
+           every active users (with usage assemblyMember) will be added so adding
+           a MeetingUser in the configuration will make it useable while editing an
+           existing meeting.'''
         # used MeetingUsers are users really saved in attendess, absents, excused, replacements
         mUserIds = set(self.getAttendees()).union(set(self.getAbsents())).union(set(self.getExcused()))
         # keep order as defined in the configuration
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
         # get every potential assembly members, inactive included
-        allMeetingUsers = cfg.getMeetingUsers(usages=('assemblyMember',), onlyActive=False)
-        return [mUser for mUser in allMeetingUsers if mUser.getId() in mUserIds]
+        allMeetingUsers = cfg.getMeetingUsers(usages=usages, onlyActive=False)
+        allActiveMeetingUsers = cfg.getMeetingUsers(usages=usages, theObjects=False)
+        allActiveMeetingUsersIds = [mUser.getId for mUser in allActiveMeetingUsers]
+        if includeAllActive:
+            # include selected users + all existing active users
+            return [mUser for mUser in allMeetingUsers if (mUser.getId() in mUserIds or mUser.getId() in allActiveMeetingUsersIds)]
+        else:
+            # only include selected users
+            return [mUser for mUser in allMeetingUsers if mUser.getId() in mUserIds]
 
     security.declarePublic('getDefaultAttendees')
     def getDefaultAttendees(self):

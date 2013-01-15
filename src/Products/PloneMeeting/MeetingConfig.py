@@ -2444,7 +2444,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return [t for t in allTopics if t in self.getToDoListTopics()]
 
     security.declarePublic('getMeetingUsers')
-    def getMeetingUsers(self, usages=('assemblyMember',), onlyActive=True):
+    def getMeetingUsers(self, usages=('assemblyMember',), onlyActive=True, theObjects=True):
         '''Returns the MeetingUsers having at least one usage among
            p_usage.  if p_onlyActive is True, only active MeetingUsers are returned.'''
         review_state = ('inactive', 'active',)
@@ -2454,6 +2454,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # KeywordIndex 'indexUsages' use 'OR' by default
             getConfigId=self.id, indexUsages=usages,
             review_state=review_state, sort_on='getObjPositionInParent')
+        if not theObjects:
+            return brains
         return [b.getObject() for b in brains]
 
     security.declarePrivate('addCategory')

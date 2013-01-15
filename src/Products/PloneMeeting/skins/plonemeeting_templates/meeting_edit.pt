@@ -168,13 +168,13 @@
         <tal:comment replace="nothing">User table: attendees, lateAttendees, absents, signatories, replacements</tal:comment>
         <tal:users condition="python: 'attendees' in usedAttrs">
         <table id="meeting_users" name="meeting_users" class="vertical listing" i18n:domain="PloneMeeting"
-               tal:define="allUsers context/getAllUsedMeetingUsers;
+               tal:define="allUsers python: context.getAllUsedMeetingUsers(includeAllActive=True);
                            attendees context/getAttendees;
                            lateAttendees context/getLateAttendees;
                            excused context/getExcused;
                            absents context/getAbsents;
                            signers context/getSignatories;
-                           allSigners python: [u.getId() for u in meetingConfig.getMeetingUsers(usages=('signer',))];
+                           allSigners python: [u.getId() for u in meetingConfig.getMeetingUsers(usages=('signer',), onlyActive=False)];
                            userReplacements context/getUserReplacements">
           <tal:comment replace="nothing">Column captions</tal:comment>
           <thead>
