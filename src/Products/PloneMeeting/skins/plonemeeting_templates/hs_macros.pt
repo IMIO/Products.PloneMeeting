@@ -449,7 +449,7 @@ document.location.reload(true);
             title="present_since" i18n:attributes="title"/><span style="color:black"
             tal:content="python: meeting.getEntranceItem(aId)"></span>
        <tal:comment replace="nothing">Remove info about user entrance into the meeting</tal:comment>
-       <img tal:condition="isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+       <img tal:condition="python: mayEditItem and isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
             tal:attributes="src string: $portal_url/delete_small.png;
                             onClick python:'welcomeUser(\'%s\', \'%s\', \'delete\')' % (context.absolute_url(), aId)"/>
       </tal:entered>
@@ -470,7 +470,7 @@ document.location.reload(true);
       <img tal:attributes="src string: $portal_url/leaving.gif"
            title="left_now" i18n:attributes="title"/>
       <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
-      <img tal:condition="isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+      <img tal:condition="python: mayEditItem and isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
            tal:attributes="src string: $portal_url/delete_small.png;
                            onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_now\')' % (context.absolute_url(), aId)"/>
       </tal:left>
