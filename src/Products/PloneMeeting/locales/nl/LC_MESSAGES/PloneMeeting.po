@@ -92,6 +92,10 @@ msgstr ""
 msgid "Paste PloneMeeting"
 msgstr "Plakken"
 
+#. Default: "Please specify a default meeting config upon active existing meeting configs to be automaatically redirected to it."
+msgid "Please specify a default meeting config upon active existing meeting configs to be automaatically redirected to it."
+msgstr ""
+
 #. Default: "PloneMeeting 'folder' view"
 msgid "PloneMeetingFolderView"
 msgstr "PloneMeeting 'map' weergave"

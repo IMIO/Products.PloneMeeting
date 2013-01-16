@@ -809,7 +809,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getDefaultMeetingConfig(self):
         '''Gets the default meeting config.'''
         res = None
-        for config in self.objectValues('MeetingConfig'):
+        activeConfigs = self.getActiveConfigs()
+        for config in activeConfigs:
             if config.isDefault:
                 res = config
                 break

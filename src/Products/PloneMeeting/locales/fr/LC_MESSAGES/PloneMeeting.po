@@ -91,6 +91,10 @@ msgstr "Nombre d'élémént à afficher"
 msgid "Paste PloneMeeting"
 msgstr "Coller"
 
+#. Default: "Please specify a default meeting config upon active existing meeting configs to be automaatically redirected to it."
+msgid "Please specify a default meeting config upon active existing meeting configs to be automaatically redirected to it."
+msgstr "Spécifiez dans la configuration de PloneMeeting une 'Configuration de séance' par défaut parmi les 'Configurations de séance' actives afin que l'utilisateur soit automatiquement redirigé vers celle-ci une fois connecté."
+
 #. Default: "PloneMeeting 'folder' view"
 msgid "PloneMeetingFolderView"
 msgstr "Vue PloneMeeting de type 'dossier'"

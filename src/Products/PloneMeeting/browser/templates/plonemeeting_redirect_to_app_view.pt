@@ -16,9 +16,9 @@
   </metal:description>
   
   <metal:fill fill-slot="content-core">
-     <metal:main_macro define-macro="body">
-       <tal:block tal:define="defaultMeetingConfig python: context.portal_plonemeeting.getDefaultMeetingConfig()"
-                  tal:condition="python: user.getId() and defaultMeetingConfig and context.portal_plonemeeting.getPloneMeetingFolder(defaultMeetingConfig.getId()).portal_type != 'Plone Site'">
+     <metal:main_macro define-macro="body" tal:define="defaultMeetingConfig view/defaultMeetingConfig;
+                                                       member context/@@plone_portal_state/member;">
+       <tal:block condition="python: member.getId() and defaultMeetingConfig and context.portal_plonemeeting.getPloneMeetingFolder(defaultMeetingConfig.getId()).portal_type != 'Plone Site'">
          <span metal:use-macro="here/hs_macros/macros/hsRedirect"/>
        </tal:block>
        <span metal:use-macro="here/hs_macros/macros/hsWelcome"/>

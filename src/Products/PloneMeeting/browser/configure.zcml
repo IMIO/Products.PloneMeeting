@@ -106,6 +106,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the plonemeeting_redirect_to_app_view.pt that redirect the connected user to the default meetingConfig just after connection -->
+    <browser:page
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="plonemeeting_redirect_to_app_view"
+        class=".views.PloneMeetingRedirectToAppView"
+        template="templates/plonemeeting_redirect_to_app_view.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- this view will contains some methods doing unrestricted things.  It replaces Manager Proxy roled python Scripts -->
     <browser:page
         for="*"

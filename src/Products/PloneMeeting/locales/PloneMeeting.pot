@@ -3669,3 +3669,8 @@ msgstr ""
 #. Default: "Advices on this item have been invalidated!"
 msgid "advices_invalidated"
 msgstr ""
+
+#. Default: "Please specify a default meeting config upon active existing meeting configs to be automaatically redirected to it."
+msgid "Please specify a default meeting config upon active existing meeting configs to be automaatically redirected to it."
+msgstr ""
+
