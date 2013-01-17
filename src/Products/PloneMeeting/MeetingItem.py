@@ -799,7 +799,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemSignatures',
             i18n_domain='PloneMeeting',
         ),
-        default_output_type='text/html',
+        default_output_type='text/plain',
         default_content_type='text/plain',
     ),
     LinesField(
@@ -2884,8 +2884,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         itemAbsents = ()
         meeting = self.getMeeting()
         if not includeAbsents:
+            # item absents are absents for the item, absents from an item before this one
+            # and lateAttendees that still not arrived
             itemAbsents = list(self.getItemAbsents()) + \
                     meeting.getDepartures(self, when='before', alsoEarlier=True)
+        # remove lateAttendees that arrived before this item
+        lateAttendees = meeting.getLateAttendees()
+        arrivedLateAttendees = meeting.getEntrances(self, when='during') + \
+                               meeting.getEntrances(self, when='before')
+        stillNotArrivedLateAttendees = set(lateAttendees).difference(set(arrivedLateAttendees))
+        itemAbsents = itemAbsents + list(stillNotArrivedLateAttendees)
         for attendee in meeting.getAttendees(True, \
                         includeDeleted=includeDeleted, \
                         includeReplacements=includeReplacements):

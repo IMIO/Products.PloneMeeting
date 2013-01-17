@@ -1008,14 +1008,15 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getEntrances')
     def getEntrances(self, item, when='after', theObjects=False):
         '''Gets the list of people that entered this meeting after (or
-           before, if p_when is "before") discussion on p_item.'''
+           before, if p_when is "before" or during if p_when is "during") discussion on p_item.'''
         res = []
         if not hasattr(self.aq_base, 'entrances'): return res
         if theObjects: cfg = self.portal_plonemeeting.getMeetingConfig(self)
         itemNumber = item.getItemNumber(relativeTo='meeting')
-        if when == 'after': itemNumber += 1
         for userId, number in self.entrances.iteritems():
-            if number == itemNumber:
+            if (when=='before' and number < itemNumber) or \
+               (when=='after' and number > itemNumber) or \
+               (when=='during' and number == itemNumber):
                 if theObjects: res.append(getattr(cfg.meetingusers, userId))
                 else:          res.append(userId)
         return res

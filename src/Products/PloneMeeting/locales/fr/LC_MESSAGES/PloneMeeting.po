@@ -1697,7 +1697,7 @@ msgstr "Annuler l'édition."
 
 #. Default: "Save changes."
 msgid "fastedit_save_changes"
-msgstr "Sauvegarder les changements."
+msgstr "Enregistrer les changements et fermer l'éditeur."
 
 #. Default: "Please fill this field."
 msgid "field_required"
