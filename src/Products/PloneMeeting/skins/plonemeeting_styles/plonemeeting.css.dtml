@@ -546,6 +546,10 @@ span#meetingItems INPUT[type=text], span#lateItems INPUT[type=text] {
     width: 2.5em;
 }
 
+.warningInMeetingConfig {
+color: red;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

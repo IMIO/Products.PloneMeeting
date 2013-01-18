@@ -19,15 +19,6 @@
        tal:define="mode python:'view';
                    member context/getUser">
 
-  <script language="javascript">
-  <!--
-  function toggleGroupDoc() {
-    var elem = document.getElementById('groupDoc');
-    if (elem.style.display == 'none') { elem.style.display = ''; }
-    else { elem.style.display = 'none'; }
-  }
-  -->
-  </script>
   <script language="javascript" tal:content="context/getJavascriptMessages"></script>
   <p i18n:translate="plonemeeting_descr"></p>
 
@@ -106,7 +97,7 @@
    <fieldset>
       <legend><span i18n:translate="meeting_groups"></span>
         <img tal:attributes="src string: $portal_url/questionMark.png;
-                             onClick python:'toggleGroupDoc()'"
+                             onClick python:'toggleDoc(\'groupDoc\')'"
              style="cursor:pointer"/>
         <input type="image" style="cursor:pointer" class="imageInput"
                tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=MeetingGroup\'' % context.absolute_url();
