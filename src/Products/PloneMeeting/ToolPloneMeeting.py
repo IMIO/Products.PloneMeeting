@@ -881,7 +881,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''I show the PloneMeeting tabs (corresponding to meeting configs) if
            the user has one of the PloneMeeting roles and if the meeting config
            is active.'''
-
         activeConfigs = self.getActiveConfigs()
         # Are there at least 2 active meetingConfigs?
         if not len(activeConfigs) > 1:
