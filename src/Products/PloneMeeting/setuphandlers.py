@@ -2,7 +2,7 @@
 #
 # File: setuphandlers.py
 #
-# Copyright (c) 2012 by PloneGov
+# Copyright (c) 2013 by PloneGov
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #

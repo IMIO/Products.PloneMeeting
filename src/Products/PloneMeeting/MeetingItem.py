@@ -2,7 +2,7 @@
 #
 # File: MeetingItem.py
 #
-# Copyright (c) 2012 by PloneGov
+# Copyright (c) 2013 by PloneGov
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -542,11 +542,11 @@ schema = Schema((
             condition="python: here.attributeIsUsed('classifier')",
             allow_search=True,
             allow_browse=False,
-            show_results_without_query=True,
             startup_directory_method="classifierStartupDirectory",
             force_close_on_insert=True,
             restrict_browsing_to_startup_directory=True,
             base_query="classifierBaseQuery",
+            show_results_without_query=True,
             label='Classifier',
             label_msgid='PloneMeeting_label_classifier',
             i18n_domain='PloneMeeting',
@@ -792,7 +792,7 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: (member.has_role('MeetingManager') or member.has_role('Manager')) and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures')",
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures')",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
             label='Itemsignatures',
@@ -805,7 +805,7 @@ schema = Schema((
     LinesField(
         name='itemSignatories',
         widget=MultiSelectionWidget(
-            condition="python: (member.has_role('MeetingManager') or member.has_role('Manager')) and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatories')",
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatories')",
             description="ItemSignatories",
             description_msgid="item_signatories_descr",
             size=10,
