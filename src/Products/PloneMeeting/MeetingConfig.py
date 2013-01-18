@@ -2443,6 +2443,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Keep only relevant topics
         return [t for t in allTopics if t in self.getToDoListTopics()]
 
+    security.declarePublic('isUsingMeetingUsers')
+    def isUsingMeetingUsers(self):
+        ''' Returns True if we are currently using MeetingUsers.'''
+        return bool('attendees' in self.getUsedMeetingAttributes())
+
     security.declarePublic('getMeetingUsers')
     def getMeetingUsers(self, usages=('assemblyMember',), onlyActive=True, theObjects=True):
         '''Returns the MeetingUsers having at least one usage among
