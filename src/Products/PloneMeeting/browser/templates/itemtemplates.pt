@@ -22,7 +22,7 @@
                              value templateItem/id;
                              checked python: isStart and True or default;"/>
       <label tal:attributes="for templateItem/id" tal:content="templateItem/Title"></label><br/>
-    </tal:templateItems>
+    </tal:templateItems><br />
     <div align="center">
       <input type="hidden" name="form.submitted:boolean" value="True" />
       <input type="submit" class="context" value="create_meeting_item" i18n:attributes="value" />
