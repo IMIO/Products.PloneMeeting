@@ -482,10 +482,10 @@
           <table class="listing" align="right" width="100%">
             <thead>
             <tr>
-              <th class="nosort" width="25%" i18n:translate="listingheader_title"></th>
-              <th class="nosort" width="25%" i18n:translate="PloneMeeting_label_description"></th>
-              <th class="nosort" width="15%" i18n:translate="PloneMeeting_label_usages"></th>
-              <th class="nosort" width="25%" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe"></th>
+              <th class="nosort" width="50%" i18n:translate="listingheader_title"></th>
+              <th class="nosort" i18n:translate="PloneMeeting_label_usages"></th>
+              <th class="nosort" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe"></th>
+              <th class="nosort" i18n:translate="PloneMeeting_label_templateUsingGroups"></th>
               <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
             </tr>
             </thead>
@@ -495,10 +495,10 @@
             </tr>
             <tr tal:repeat="item python:rFolder.objectValues('MeetingItem')">
               <td><a tal:attributes="href item/absolute_url" tal:content="item/getName"></a></td>
-              <td tal:content="structure item/Description"></td>
               <td><ul><li tal:repeat="usage item/getUsages" tal:content="usage" i18n:translate=""></li></ul>
               </td>
               <td><span tal:content="python: 'as_recurring_item' in item.getUsages() and item.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
+              <td><span tal:content="python: 'as_template_item' in item.getUsages() and context.displayValue(item.listTemplateUsingGroups(), item.getTemplateUsingGroups()) or '-'" i18n:domain="plone" i18n:translate="">Using groups</span></td>
               <td align="right"
                   tal:define="moveUrl python: rFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=data#recItems'"
                   tal:condition="python: member.has_permission('Modify portal content', item)">
