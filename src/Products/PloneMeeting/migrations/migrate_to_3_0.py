@@ -1,6 +1,7 @@
 # ------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('PloneMeeting')
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.migrations import Migrator
 
 
@@ -130,6 +131,46 @@ class Migrate_To_3_0(Migrator):
                     annex.setTitle(title_to_uid_mapping[annex.UID()])
                     annex.reindexObject()
         logger.info("MeetingFiles have been migrated to Blobs.")
+
+    def _migrateFCKTemplates(self):
+        '''We do not use CPFCKTemplates anymore (as it does not work with collective.ckeditor for now),
+           we use PloneMeeting own template management.'''
+        def _findUsingGroups(fcktemplate):
+            '''Find groups that were using the fcktemplate.  Check local_roles defined on the fcktemplate
+               and on his parent.'''
+            localRoles = fcktemplate.get_local_roles() + fcktemplate.getParentNode().get_local_roles()
+            res = []
+            for localRole in localRoles:
+                for suffix in MEETING_GROUP_SUFFIXES:
+                    if localRole[0].endswith('_%s' % suffix):
+                        # we certainly found a Plone group linked to a PloneMeeting group
+                        # get the corresponding PloneMeeting group
+                        pmGroup = self.portal.portal_plonemeeting.getMeetingGroup(localRole[0])
+                        if pmGroup and pmGroup.getId() not in res:
+                            res.append(pmGroup.getId())
+            return res
+
+        brains = self.portal.portal_catalog(meta_type='FCKTemplate')
+        logger.info('Migrating FCKTemplates to PloneMeeting item templates.  Migrating %s FCKTemplate objects...' % len(brains))
+        # create the template in every active MeetingConfig as FCKTemplates where available for every MeetingConfigs...
+        for cfg in self.portal.portal_plonemeeting.getActiveConfigs():
+            itemTemplatesFolder = cfg.recurringitems
+            itemType = cfg.getItemTypeName()
+            for brain in brains:
+                fcktemplate = brain.getObject()
+                newId = fcktemplate.generateUniqueId()
+                data = {'title': fcktemplate.Title(),
+                        'decision': fcktemplate.getText(),
+                        'usages': ('as_template_item',)}
+                newObjId = itemTemplatesFolder.invokeFactory(itemType, newId, **data)
+                newObj = getattr(itemTemplatesFolder, newObjId)
+                # try to automatically specify templateUsingGroups
+                usingGroups = _findUsingGroups(fcktemplate)
+                newObj.setTemplateUsingGroups(usingGroups)
+                newObj.processForm()
+                newObj._renameAfterCreation()
+                newObj.reindexObject()
+        logger.info("FCKTemplates have been migrated to MeetingItems with usage 'as_template_item'.")
 
     def _updateAdvices(self):
         '''We use a new role to manage advices, 'MeetingPowerObserverLocal' instead of
@@ -269,6 +310,7 @@ class Migrate_To_3_0(Migrator):
         self._migrateMeetingFilesToBlobs()
         self._updateAdvices()
         self._migrateXhtmlTransformFieldsValues()
+        self._migrateFCKTemplates()
         self.finish()
 
 # The migration function -------------------------------------------------------
