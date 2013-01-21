@@ -507,8 +507,7 @@ schema = Schema((
     ),
     TextField(
         name='budgetInfos',
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
+        widget=RichWidget(
             condition="python: here.attributeIsUsed('budgetInfos')",
             description="BudgetInfos",
             description_msgid="item_budgetinfos_descr",
@@ -516,7 +515,8 @@ schema = Schema((
             label_msgid='PloneMeeting_label_budgetInfos',
             i18n_domain='PloneMeeting',
         ),
-        default_content_type='text/plain',
+        default_content_type='text/html',
+        allowable_content_types=('text/html',),
         default_method="getDefaultBudgetInfo",
         default_output_type='text/html',
         optional=True,
