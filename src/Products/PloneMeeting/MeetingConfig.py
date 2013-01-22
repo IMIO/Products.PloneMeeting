@@ -2299,7 +2299,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # This can be the case if we are creating this meeting config.
             return DisplayList(tuple(res))
         for topic in self.topics.objectValues():
-            topicData = ('topic_' + topic.id, translate(topic.Title(), domain="Plone", context=self.REQUEST))
+            topicData = ('topic_' + topic.id, translate(unicode(topic.Title(), 'utf-8'), domain="Plone", context=self.REQUEST))
             if topic.id == 'searchallitemsincopy':
                 if self.getUseCopies():
                     res.append(topicData)
