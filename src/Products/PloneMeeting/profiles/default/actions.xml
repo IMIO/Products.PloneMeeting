@@ -133,9 +133,6 @@
    <object name="dashboard" meta_type="CMF Action">
     <property name="visible">False</property>
    </object>
-   <object name="join" meta_type="CMF Action">
-    <property name="visible">False</property>
-   </object>
    <object name="undo" meta_type="CMF Action">
     <property name="visible">False</property>
    </object>
