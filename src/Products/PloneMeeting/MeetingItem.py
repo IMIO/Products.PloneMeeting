@@ -1102,7 +1102,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
     security.declarePublic('addAnnex')
     def addAnnex(self, idCandidate, annex_type, annex_title, annex_file,
-                 decisionRelated, meetingFileType):
+                 decisionRelated, meetingFileType, **kwargs):
         '''Create an annex (MeetingFile) with given parameters and adds it to
            this item.'''
         if not idCandidate:
@@ -1131,7 +1131,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         newAnnexId = self.invokeFactory('MeetingFile', id=idCandidate)
         newAnnex = getattr(self, newAnnexId)
-        newAnnex.setFile(annex_file)
+        newAnnex.setFile(annex_file, **kwargs)
         newAnnex.setTitle(annex_title)
         newAnnex.setMeetingFileType(meetingFileType)
         if decisionRelated == 'True':
