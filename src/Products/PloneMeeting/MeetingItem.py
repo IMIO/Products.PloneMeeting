@@ -1656,6 +1656,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
+    security.declarePublic('getAnnexesInOrder')
+    def getAnnexesInOrder(self, decisionRelated=False):
+        '''Returns contained annexes respecting order (container is oerdered).
+           XXX first step to remove annexes/annexesDeicision fields as ReferenceFields
+           as taking contained annexes should be sufficient...
+           If p_decisionRelated is False, it returns item-related annexes
+           only; if True, it returns decision-related annexes.'''
+        annexes = self.objectValues('MeetingFile')
+        if not decisionRelated:
+            return [annex for annex in annexes if not annex.isDecisionRelated()]
+        else:
+            return [annex for annex in annexes if annex.isDecisionRelated()]
+
     security.declarePublic('getAnnexesByType')
     def getAnnexesByType(self, decisionRelated=False, makeSubLists=True,
                          typesIds=[], realAnnexes=False):
