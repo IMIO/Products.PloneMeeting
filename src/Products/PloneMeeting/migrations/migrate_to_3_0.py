@@ -288,7 +288,7 @@ class Migrate_To_3_0(Migrator):
         logger.info('\'%d\' meeting(s) was(were) migrated to the \'decisions_published \' state' % len(uids))
 
 
-    def run(self, refreshCatalogs=True, refreshWorkflows=True):
+    def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
         # the Meeting 'published' state has become 'decisions_published' now, so :
         # - find Meetings in 'published' in MeetingConfigs where 'add_published_state' wfAdaptation is activbe
@@ -311,6 +311,8 @@ class Migrate_To_3_0(Migrator):
         self._updateAdvices()
         self._migrateXhtmlTransformFieldsValues()
         self._migrateFCKTemplates()
+        # refresh portal_catalog so getDate metadata is updated
+        self.refreshDatabase(catalogs=True, workflows=False)
         self.finish()
 
 # The migration function -------------------------------------------------------

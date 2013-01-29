@@ -850,8 +850,10 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def validate_date(self, value):
         '''There can't be several meetings with the same date and hour.'''
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        # add GMT+x value
+        localizedValue = value + ' ' + DateTime._localzone
         otherMeetings= self.portal_catalog(portal_type=cfg.getMeetingTypeName(),
-                                           getDate=DateTime(value))
+                                           getDate=DateTime(localizedValue))
         if otherMeetings:
             for m in otherMeetings:
                 if m.getObject() != self:

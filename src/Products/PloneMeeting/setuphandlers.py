@@ -54,7 +54,7 @@ indexInfo = { # MeetingItem-related indexes
               'getCopyGroups'       : 'KeywordIndex',
               'indexAdvisers'       : 'KeywordIndex',
               # Meeting-related indexes
-              'getDate'             : 'FieldIndex',
+              'getDate'             : 'DateIndex',
               # MeetingFile-related indexes
               'indexExtractedText'  : 'ZCTextIndex',
               # MeetingUser-related indexes
@@ -151,6 +151,8 @@ def postInstall(context):
     updateIndexes(site, indexInfo, logger)
     if 'getTitle2' not in site.portal_catalog.schema():
         site.portal_catalog.addColumn('getTitle2')
+    if 'getDate' not in site.portal_catalog.schema():
+        site.portal_catalog.addColumn('getDate')    
     # Remove the silly "getClassifier" index whose content was *real* Category
     # objects (bug since HS/PM 2.0.0), and that produced indexation errors.
     if 'getClassifier' in site.portal_catalog.indexes():

@@ -1760,9 +1760,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # a DateTime instance, a string or a meeting brain.
         if isinstance(aDate, basestring): aDate = DateTime(aDate)
         elif aDate.__class__.__name__ == 'mybrains':
-            # It is a meeting brain. Get its date from the index.
-            dateIndex = self.portal_catalog.Indexes['getDate']
-            aDate = dateIndex.getEntryForObject(aDate.getRID())
+            # It is a meeting brain, take the 'getDate' metadata
+            aDate = aDate.getDate
         elif aDate.__class__.__name__ == 'FakeBrain':
             aDate = aDate.Date
         # Get the format for the rendering of p_aDate
