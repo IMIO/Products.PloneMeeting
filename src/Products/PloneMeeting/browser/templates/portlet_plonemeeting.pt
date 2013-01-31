@@ -19,7 +19,7 @@
                 member tool/getUser">
 
     <dt class="portletHeader"><tal:app_name i18n:translate="app_name">PloneMeeting</tal:app_name>
-     <div style="float:right; display: inline; position: absolute; right: 10px;">
+     <div style="float:right; display: inline; padding-right: 5px;">
          <img style="cursor:pointer"
               tal:condition="python: meetingConfig"
               tal:attributes="onClick python: 'href: window.location=\'%s\'' % meetingFolder.absolute_url();

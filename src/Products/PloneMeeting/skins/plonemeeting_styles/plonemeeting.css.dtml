@@ -426,10 +426,10 @@ background-color: transparent;
 }
 
 /* CSS for portlet todo */
-.portletTodo dt {
+.portletTodo dt, .portletPloneMeeting dt {
 border: 0;
 }
-.portletTodo {
+.portletTodo, .portletPloneMeeting {
 border: 1px solid &dtml-globalBorderColor;;
 }
 .portletTodo .portletSection {
