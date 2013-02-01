@@ -2410,6 +2410,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # vote values and values are numbers of times the vote value has been
         # chosen.
         self.votes = PersistentMapping()
+        # Check if some copyGroups must be automatically added before updateLocalRoles
+        # because specific localRoles are given to copyGroups
+        if self.isCopiesEnabled():
+            self.addAutoCopyGroups()
         # Remove temp local role that allowed to create the item in
         # portal_factory.
         user = self.portal_membership.getAuthenticatedMember()
@@ -2423,9 +2427,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
-        # Check if some copyGroups must be automatically added
-        if self.isCopiesEnabled():
-            self.addAutoCopyGroups()
         # Make sure we have 'text/html' for every Rich fields
         self.forceHTMLContentTypeForEmptyRichFields()
         # Call sub-product-specific behaviour

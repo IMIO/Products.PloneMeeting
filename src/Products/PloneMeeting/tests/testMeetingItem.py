@@ -546,6 +546,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # We only have the '_reviewers' group, not the '_advisers'
         # as not in self.meetingConfig.selectableCopyGroups
         self.failUnless(i5.getCopyGroups()==('developers_reviewers',))
+        # some special localRoles are added for autoAddedCopyGroups
+        self.failUnless('developers_reviewers' in i5.__ac_local_roles__.keys())
+        self.failUnless('MeetingObserverLocalCopy' in i5.__ac_local_roles__['developers_reviewers'])
 
     def testUpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
