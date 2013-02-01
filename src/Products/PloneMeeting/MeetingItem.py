@@ -2420,9 +2420,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([user.getId()])
         self.manage_addLocalRoles(user.getId(), ('Owner',))
         self.updateLocalRoles()
-        # Update advices after updateLocalRoles because updateLocalRoles
-        # reinitialize existing local roles
-        self.updateAdvices()
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
@@ -2444,7 +2441,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
         self.updateLocalRoles()
-        self.updateAdvices(invalidate=self.willInvalidateAdvices())
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
@@ -2546,6 +2542,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 for copyGroup in copyGroups:
                     self.manage_addLocalRoles(
                         copyGroup, ('MeetingObserverLocalCopy',))
+        # Update advices after updateLocalRoles because updateLocalRoles
+        # reinitialize existing local roles
+        self.updateAdvices(invalidate=self.willInvalidateAdvices())
 
     security.declareProtected(ModifyPortalContent, 'processForm')
     def processForm(self, *args, **kwargs):

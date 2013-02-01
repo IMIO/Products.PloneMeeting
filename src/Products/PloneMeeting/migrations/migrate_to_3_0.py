@@ -182,8 +182,6 @@ class Migrate_To_3_0(Migrator):
             obj = brain.getObject()
             # Reinitialize local roles
             obj.updateLocalRoles()
-            # Adapt local roles around _advisers
-            obj.updateAdvices()
             # Update security as local_roles are modified by updateAdvices
             obj.reindexObject(idxs=['allowedRolesAndUsers',])
         logger.info('MeetingItems advices have been updated.')
