@@ -268,7 +268,7 @@
         <td tal:condition="showRelatedMeeting" align="center" style="padding-left: 0.2em; padding-right: 0.2em;">
           <tal:tiedMeeting define="meetingBrain python: obj.getMeeting(brain=True)">
             <a tal:condition="python: meetingBrain and member.has_permission('View', meetingBrain)"
-               tal:content="python: tool.formatDate(meetingBrain.getDate())"
+               tal:content="python: tool.formatDate(meetingBrain.getDate(), withHour=True)"
                tal:attributes="href python: meetingBrain.absolute_url()[:meetingBrain.absolute_url().find('/at_references/')]"></a>
             <span tal:condition="not: meetingBrain">-</span>
           </tal:tiedMeeting>
