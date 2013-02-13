@@ -100,8 +100,6 @@ class PloneMeetingTestCase(unittest2.TestCase):
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
         self.transitionsToCloseAMeeting = ('publish', 'freeze', 'decide', 'close', 'archive')
-        # Add 'powerobserver1' user to the self.meetingConfig corresponding 'powerobservers' group
-        self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' % (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()

@@ -635,6 +635,8 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test the manageement of MeetingConfig linked 'powerobservers' Plone group.'''
         # specify that powerObservers will be able to see the items of self.meetingConfig
         # when the item is in some state.  For example here, a 'presented' item is not viewable
+        # Add 'powerobserver1' user to the self.meetingConfig corresponding 'powerobservers' group
+        self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' % (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
         self.changeUser('pmManager')
         createdItem = self.create('MeetingItem')
         createdItem.setProposingGroup('vendors')
