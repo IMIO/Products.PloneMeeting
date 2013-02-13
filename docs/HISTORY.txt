@@ -14,6 +14,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Advices are now askable when the item is in his initial workflow state
 - Display the elements history in the default Plone4 popup
 - Optimized votes functionnality
+- Added local powerobservers giving the possibility to define powerobservers by meetingConfig
 
 2.1.4dev
 --------
