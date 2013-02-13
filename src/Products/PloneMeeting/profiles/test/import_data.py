@@ -78,6 +78,7 @@ pmReviewer2 = UserDescriptor('pmReviewer2', [])
 pmAdviser1 = UserDescriptor('pmAdviser1', [])
 voter1 = UserDescriptor('voter1', [], fullname = 'M. Voter One')
 voter2 = UserDescriptor('voter2', [], fullname = 'M. Voter Two')
+powerobserver1 = UserDescriptor('powerobserver1', [], fullname = 'M. Power Observer')
 
 developers = GroupDescriptor('developers', 'Developers', 'Devel',
                              givesMandatoryAdviceOn='python:False')
@@ -143,6 +144,8 @@ meetingPga.useAdvices = True
 meetingPga.itemAdviceStates = ['proposed', 'validated']
 meetingPga.itemAdviceEditStates = ['proposed',]
 meetingPga.itemAdviceViewStates = ['presented',]
+meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
+meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'),]
 # Second meeting type: a fictitious PloneMeeting assembly ----------------------
@@ -185,6 +188,9 @@ meetingPma.allItemTags = '\n'.join(
     ('Strategic decision','Genericity mechanism', 'User interface') )
 meetingPma.sortAllItemTags = True
 meetingPma.recurringItems = (recItem, template1, template2, )
+# use same values as meetingPga for powerObserversStates
+meetingPma.itemPowerObserversStates = meetingPga.itemPowerObserversStates
+meetingPma.meetingPowerObserversStates = meetingPga.meetingPowerObserversStates
 meetingPma.useVotes = True
 meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
                            cadranel_signer, muser_voter1, muser_voter2]
@@ -193,5 +199,5 @@ meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendor
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
                                  (developers, vendors, endUsers))
-data.usersOutsideGroups = [cadranel, voter1, voter2]
+data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1]
 # ------------------------------------------------------------------------------

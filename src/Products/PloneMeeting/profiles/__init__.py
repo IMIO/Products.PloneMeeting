@@ -215,10 +215,10 @@ class MeetingConfigDescriptor(Descriptor):
         'itemsListVisibleColumns', 'itemColumns', 'meetingColumns',
         'workflowAdaptations', 'transitionsToConfirm', 'mailItemEvents',
         'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates',
-        'itemAdviceEditStates', 'itemAdviceViewStates', 'meetingConfigsToCloneTo',
-        'itemAdviceInvalidateStates', 'selectableCopyGroups', 'votesEncoder',
-        'itemTopicStates', 'meetingTopicStates', 'decisionTopicStates', 
-        'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues'
+        'itemAdviceEditStates', 'itemAdviceViewStates', 'itemPowerObserversStates',
+        'meetingPowerObserversStates', 'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
+        'selectableCopyGroups', 'votesEncoder', 'itemTopicStates', 'meetingTopicStates',
+        'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues'
     )
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -441,6 +441,10 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemAdviceEditStates = ['proposed', 'validated']
         self.itemAdviceViewStates = ['proposed', 'validated', 'presented',
                                  'itempublished']
+        # List of item and meeting states the users in the MeetingConfig
+        # corresponding powerObservers group will see the item/meeting
+        self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'refused', 'delayed']
+        self.meetingPowerObserversStates = ['frozen', 'decided', 'closed']
         self.usedAdviceTypes = ['positive', 'negative']
         self.defaultAdviceType = 'positive'
         # When advice mandatoriness is enabled, it is not possible to put an

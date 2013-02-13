@@ -849,6 +849,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not user: return
         for role in user.getRoles():
             if role in ploneMeetingRoles: return True
+        # or maybe this is a user in a _powerobservers group
+        for groupId in user.getGroups():
+            if groupId.endswith(POWEROBSERVERS_GROUP_SUFFIX):
+                return True
 
     security.declarePublic('isManager')
     def isManager(self):
@@ -2179,6 +2183,24 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                (event['time'] != eventToDelete):
                 history.append(event)
         obj.workflow_history[obj.getWorkflowName()] = tuple(history)
+
+    def removeMeetingObserverLocalRolesFor(self, obj, suffix):
+        '''Remove the MeetingPowerObserverLocal local roles on p_obj for the given p_suffix
+           suffixed groups.  This method is used to remove MeetingPowerObserverLocal local roles
+           before adding it with a particular way that depends on the functionnality.'''
+        # First, remove MeetingPowerObserverLocal local roles granted to given suffix.
+        toRemove = []
+        for principalId, localRoles in obj.get_local_roles():
+            if principalId.endswith(suffix):
+                # Only remove 'MeetingPowerObserverLocal' as the groups could
+                # have other local roles given by other functionnalities like "copyGroups"
+                if len(localRoles) > 1 and 'MeetingPowerObserverLocal' in localRoles:
+                    existingLocalRoles = list(localRoles)
+                    existingLocalRoles.remove('MeetingPowerObserverLocal')
+                    obj.manage_setLocalRoles(principalId, existingLocalRoles)
+                elif 'MeetingPowerObserverLocal' in localRoles:
+                    toRemove.append(principalId)
+        obj.manage_delLocalRoles(toRemove)
 
 
 

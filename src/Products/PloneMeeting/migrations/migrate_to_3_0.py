@@ -285,6 +285,23 @@ class Migrate_To_3_0(Migrator):
             cfg.setMailMode(oldMailMode)
         logger.info('\'%d\' meeting(s) was(were) migrated to the \'decisions_published \' state' % len(uids))
 
+    def _addPowerObserverGroupsByMeetingConfig(self):
+        '''Now that we can use local powerobservers, we have a group for each MeetingConfig
+           where we will store these powerobserver users.  Update the searchitemsincopy TAL condition
+           so it is not shown for 'powerobservers'.  Use also the unrestricted getMeetingDate in the item ref
+           to avoid unauthorized.'''
+        logger.info('Adding \'powerobservers\' groups for each meetingConfig')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            cfg.createPowerObserversGroup()
+            topicToUpdate = getattr(cfg.topics, 'searchallitemsincopy', None)
+            if topicToUpdate:
+                topicToUpdate.manage_changeProperties(topic_tal_expression="python: here.portal_plonemeeting.getMeetingConfig(here)." \
+                                                    "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')")
+            if '.getMeeting().getDate().' in cfg.getItemReferenceFormat():
+                cfg.setItemReferenceFormat(cfg.getItemReferenceFormat().replace(".getMeeting().getDate().",
+                                                                                ".restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate()."))
+        logger.info('Done.')
+
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
@@ -309,6 +326,7 @@ class Migrate_To_3_0(Migrator):
         self._updateAdvices()
         self._migrateXhtmlTransformFieldsValues()
         self._migrateFCKTemplates()
+        self._addPowerObserverGroupsByMeetingConfig()
         # refresh portal_catalog so getDate metadata is updated
         self.refreshDatabase(catalogs=True, workflows=False)
         self.finish()

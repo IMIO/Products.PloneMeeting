@@ -2327,18 +2327,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 del self.advices[groupId]
         # Update advice-related local roles.
         # First, remove MeetingPowerObserverLocal local roles granted to advisers.
-        toRemove = []
-        for principalId, localRoles in self.get_local_roles():
-            if principalId.endswith('_advisers'):
-                # Only remove 'MeetingPowerObserverLocal' as _advisers groups could
-                # have other local roles given by other functionnalities like "copyGroups"
-                if len(localRoles) > 1 and 'MeetingPowerObserverLocal' in localRoles:
-                    advisersLocalRoles = list(localRoles)
-                    advisersLocalRoles.remove('MeetingPowerObserverLocal')
-                    self.manage_setLocalRoles(principalId, advisersLocalRoles)
-                elif 'MeetingPowerObserverLocal' in localRoles:
-                    toRemove.append(principalId)
-        self.manage_delLocalRoles(toRemove)
+        tool.removeMeetingObserverLocalRolesFor(self, suffix='_advisers')
         # Then, add local roles for advisers.
         itemState = self.queryState()
         for group in (mandatoryAdvisers, optionalAdvisers):
@@ -2420,6 +2409,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([user.getId()])
         self.manage_addLocalRoles(user.getId(), ('Owner',))
         self.updateLocalRoles()
+        # Update MeetingPowerObserverLocal local roles given to the
+        # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
+        # is selected as viewable by 'powerobservers'
+        self.updatePowerObserversLocalRoles()
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
@@ -2545,6 +2538,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Update advices after updateLocalRoles because updateLocalRoles
         # reinitialize existing local roles
         self.updateAdvices(invalidate=self.willInvalidateAdvices())
+
+    security.declarePublic('updatePowerObserversLocalRoles')
+    def updatePowerObserversLocalRoles(self):
+        '''Give the MeetingPowerObserverLocal local role to the corresponding
+           MeetingConfig 'powerobservers' group.'''
+        # First, remove MeetingPowerObserverLocal local roles granted to powerobservers.
+        self.portal_plonemeeting.removeMeetingObserverLocalRolesFor(self, suffix=POWEROBSERVERS_GROUP_SUFFIX)
+        # Then, add local roles for powerobservers.
+        itemState = self.queryState()
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        if not itemState in cfg.getItemPowerObserversStates():
+            return
+        powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
+        self.manage_addLocalRoles(powerObserversGroupId, ('MeetingPowerObserverLocal',))
 
     security.declareProtected(ModifyPortalContent, 'processForm')
     def processForm(self, *args, **kwargs):

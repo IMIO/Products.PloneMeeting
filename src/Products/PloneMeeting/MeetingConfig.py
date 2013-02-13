@@ -1132,6 +1132,36 @@ schema = Schema((
         schemata="advices",
         vocabulary='listAdviceStyles',
     ),
+    LinesField(
+        name='itemPowerObserversStates',
+        widget=MultiSelectionWidget(
+            description="ItemPowerObserversStates",
+            description_msgid="item_powerobservers_states_descr",
+            label='Itempowerobserversstates',
+            label_msgid='PloneMeeting_label_itemPowerObserversStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default= defValues.itemPowerObserversStates,
+        enforceVocabulary=False,
+    ),
+    LinesField(
+        name='meetingPowerObserversStates',
+        widget=MultiSelectionWidget(
+            description="meetingPowerObserversStates",
+            description_msgid="meeting_powerobservers_states_descr",
+            label='Meetingpowerobserversstates',
+            label_msgid='PloneMeeting_label_meetingPowerObserversStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listMeetingStates',
+        default= defValues.meetingPowerObserversStates,
+        enforceVocabulary=False,
+    ),
     BooleanField(
         name='useCopies',
         default= defValues.useCopies,
@@ -1297,7 +1327,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         (  ('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
         ), 'created', 'searchItemsInCopy',
            "python: here.portal_plonemeeting.getMeetingConfig(here)." \
-           "getUseCopies()"
+           "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')"
         ),
         # Items to advice : need a script to do this search.
         ( 'searchallitemstoadvice',
@@ -1891,6 +1921,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                            visible=True)
         self.portal_actions.portal_tabs._setObject(tabId, configTab)
 
+    security.declarePrivate('createPowerObserversGroup')
+    def createPowerObserversGroup(self):
+        '''Creates a Plone group that will be used to apply the MeetingPowerObserverLocal
+           local role on every items of this MeetingConfig regarding self.itemPowerObserverStates.'''
+        groupId = "%s_%s" % (self.getId(), POWEROBSERVERS_GROUP_SUFFIX)
+        if groupId in self.portal_groups.listGroupIds(): return
+        enc = self.portal_properties.site_properties.getProperty(
+            'default_charset')
+        groupTitle = '%s (%s)' % (
+            self.Title().decode(enc),
+            translate(POWEROBSERVERS_GROUP_SUFFIX, domain='PloneMeeting', context=self.REQUEST))
+        # a default Plone group title is NOT unicode.  If a Plone group title is
+        # edited TTW, his title is no more unicode if it was previously...
+        # make sure we behave like Plone...
+        groupTitle = groupTitle.encode(enc)
+        self.portal_groups.addGroup(groupId, title=groupTitle)
+        # now define local_roles on the tool so it is accessible by this group
+        self.portal_plonemeeting.manage_addLocalRoles(groupId, ('MeetingPowerObserverLocal',))
+        # but we do not want this group to access every MeetingConfigs so
+        # remove inheritance on self and define these local_roles for self too
+        self.__ac_local_roles_block__ = True
+        self.manage_addLocalRoles(groupId, ('MeetingPowerObserverLocal',))
+        # the problem here is that 
+
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
         '''Create the sub-folders of a meeting config, that will contain
@@ -1921,6 +1975,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateIsDefaultFields()
         # Update the cloneToOtherMeetingConfig actions visibility
         self.updateCloneToOtherMCActions()
+        # Create the corresponding group that will contain MeetingPowerObservers
+        self.createPowerObserversGroup()
         self.adapted().onEdit(isCreated=True) # Call sub-product code if any
 
     def at_post_edit_script(self):

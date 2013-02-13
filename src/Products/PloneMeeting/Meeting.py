@@ -1530,6 +1530,10 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             self.setLocalMeetingManagers()
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
+        # Update MeetingPowerObserverLocal local roles given to the
+        # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
+        # is selected as viewable by 'powerobservers'
+        self.updatePowerObserversLocalRoles()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1554,6 +1558,20 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Meeting at %s edited by "%s".' % \
                     (self.absolute_url_path(), userId))
+
+    security.declarePublic('updatePowerObserversLocalRoles')
+    def updatePowerObserversLocalRoles(self):
+        '''Give the MeetingPowerObserverLocal local role to the corresponding
+           MeetingConfig 'powerobservers' group on self.'''
+        # First, remove MeetingPowerObserverLocal local roles granted to powerobservers.
+        self.portal_plonemeeting.removeMeetingObserverLocalRolesFor(self, suffix=POWEROBSERVERS_GROUP_SUFFIX)
+        # Then, add local roles for powerobservers.
+        meetingState = self.queryState()
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        if not meetingState in cfg.getMeetingPowerObserversStates():
+            return
+        powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
+        self.manage_addLocalRoles(powerObserversGroupId, ('MeetingPowerObserverLocal',))
 
     security.declareProtected('Modify portal content', 'transformRichTextField')
     def transformRichTextField(self, fieldName, richContent):

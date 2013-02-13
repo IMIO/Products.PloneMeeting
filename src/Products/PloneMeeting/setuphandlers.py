@@ -152,7 +152,7 @@ def postInstall(context):
     if 'getTitle2' not in site.portal_catalog.schema():
         site.portal_catalog.addColumn('getTitle2')
     if 'getDate' not in site.portal_catalog.schema():
-        site.portal_catalog.addColumn('getDate')    
+        site.portal_catalog.addColumn('getDate')
     # Remove the silly "getClassifier" index whose content was *real* Category
     # objects (bug since HS/PM 2.0.0), and that produced indexation errors.
     if 'getClassifier' in site.portal_catalog.indexes():
@@ -295,9 +295,13 @@ def do(action, event):
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
     actionMethod(event)
+    # Update MeetingPowerObserverLocal local roles given to the
+    # corresponding MeetingConfig powerobsevers group
+    event.object.updatePowerObserversLocalRoles()
     if objectType == 'MeetingItem':
         # Update the local roles linked to advices if relevant
         event.object.updateAdvices()
+        # Send mail if relevant
         sendAdviceToGiveMailIfRelevant(event)
     elif objectType == 'Meeting':
         # Add recurring items to the meeting if relevant

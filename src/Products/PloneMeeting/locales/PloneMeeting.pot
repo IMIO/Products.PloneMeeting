@@ -1404,6 +1404,10 @@ msgstr ""
 msgid "advisers"
 msgstr ""
 
+#. Default: "Power observers"
+msgid "powerobservers"
+msgstr ""
+
 # MeetingConfig
 #. Default: "Parameters in this section allow to customize some elements linked to attributes of and associations between the 2 main content types managed by PloneMeeting: items and meetings."
 msgid "meetingconfig_data_descr"
@@ -2237,6 +2241,22 @@ msgstr ""
 
 #. Default: "When an item is in one of the states you choose here, it will be possible to add an advice on this item."
 msgid "item_advice_states_descr"
+msgstr ""
+
+#. Default: "Item states in wich powerObservers can see the items"
+msgid "PloneMeeting_label_itemPowerObserversStates"
+msgstr ""
+
+#. Default: "When an item is in one of the states you choose here, it will be possible for powerObservers of this meetingConfig to see the item."
+msgid "item_powerobservers_states_descr"
+msgstr ""
+
+#. Default: "Meeting states in wich powerObservers can see the meetings"
+msgid "PloneMeeting_label_meetingPowerObserversStates"
+msgstr ""
+
+#. Default: "When a meeting is in one of the states you choose here, it will be possible for powerObservers of this meetingConfig to see the meeting."
+msgid "meeting_powerobservers_states_descr"
 msgstr ""
 
 #. Default: "Item states allowing to modify or delete advices"

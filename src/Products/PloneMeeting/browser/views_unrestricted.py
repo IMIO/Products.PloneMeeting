@@ -1,9 +1,8 @@
 import logging
-
-from zope.component import getMultiAdapter
-
 from AccessControl import Unauthorized
 from AccessControl.SecurityManagement import newSecurityManager, getSecurityManager, setSecurityManager
+
+from zope.component import getMultiAdapter
 
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
@@ -160,13 +159,21 @@ class UnrestrictedMethodsView(BrowserView):
         else:
             raise Unauthorized
 
-    def getLinkedMeetingTitle(self, item):
+    def getLinkedMeetingTitle(self):
         """
           Return the title of the linked meeting in case current user can not access the meeting.
         """
-        meeting = item.getMeeting()
+        meeting = self.context.getMeeting()
         if meeting:
             return meeting.portal_plonemeeting.formatDate(meeting.getDate(), prefixed=True)
+
+    def getLinkedMeetingDate(self):
+        """
+          Return the date of the linked meeting in case current user can not access the meeting.
+        """
+        meeting = self.context.getMeeting()
+        if meeting:
+            return meeting.getDate()
 
 
 class ItemSign(BrowserView):

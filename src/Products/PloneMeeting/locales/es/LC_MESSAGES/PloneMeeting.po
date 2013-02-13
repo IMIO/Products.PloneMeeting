@@ -412,6 +412,10 @@ msgstr "Palabras claves"
 msgid "PloneMeeting_label_itemNumber"
 msgstr "Número"
 
+#. Default: "Item states in wich powerObservers can see the items"
+msgid "PloneMeeting_label_itemPowerObserversStates"
+msgstr ""
+
 #. Default: "Format of the item reference"
 msgid "PloneMeeting_label_itemReferenceFormat"
 msgstr "Formato del tema referencia"
@@ -555,6 +559,10 @@ msgstr "Observaciones"
 #. Default: "Observations"
 msgid "PloneMeeting_label_meetingObservations2"
 msgstr "Observaciones"
+
+#. Default: "Meeting states in wich powerObservers can see the meetings"
+msgid "PloneMeeting_label_meetingPowerObserversStates"
+msgstr ""
 
 #. Default: "Meeting states that condition the display of meetings in the 'meetings' portlet"
 msgid "PloneMeeting_label_meetingTopicStates"
@@ -2057,6 +2065,10 @@ msgstr ""
 msgid "item_number_invalid"
 msgstr "Sin mover: por favor especifique un número valido."
 
+#. Default: "When an item is in one of the states you choose here, it will be possible for powerObservers of this meetingConfig to see the item."
+msgid "item_powerobservers_states_descr"
+msgstr ""
+
 #. Default: "A reference is associated to every item. The reference format can be defined here, as a TAL (Tag Attribute Language) expression whose context includes the name 'here' that represents the impacted item. If you don't know TAL, you may learn it <a href=\"http://zope.org/Documentation/Books/ZopeBook/2_6Edition/ZPT.stx\">here</a>."
 msgid "item_reference_format_descr"
 msgstr "Una referencia asociada a cada tema. El formato de referencia puede ser definido aquí, como una expresión de Lenguaje de atributo de etiquetas - TAL (Tag Attribute Language) todo el contexto incluirá el nombre 'aquí' que representa el tema impactado. Si usted no desconoce sobre TAL, usted tal ves aprenda de eso <a href=\"http://zope.org/Documentation/Books/ZopeBook/2_6Edition/ZPT.stx\">aquí</a>."
@@ -2384,6 +2396,10 @@ msgstr "Con el fin de realizar esta acción, la fecha de la reunión debe estar 
 #. Default: "Meeting of"
 msgid "meeting_of"
 msgstr "Reunión de"
+
+#. Default: "When a meeting is in one of the states you choose here, it will be possible for powerObservers of this meetingConfig to see the meeting."
+msgid "meeting_powerobservers_states_descr"
+msgstr ""
 
 #. Default: "Signatories"
 msgid "meeting_signatories"
@@ -2902,6 +2918,10 @@ msgstr "Positivo"
 #. Default: "Positive with remarks"
 msgid "positive_with_remarks"
 msgstr "Positivo con observaciones"
+
+#. Default: "Power observers"
+msgid "powerobservers"
+msgstr ""
 
 #. Default: "The preparatory meeting must occur before the meeting."
 msgid "pre_date_after_meeting_date"

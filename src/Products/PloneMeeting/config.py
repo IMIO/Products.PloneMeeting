@@ -99,6 +99,10 @@ MEETINGROLES = {'creators': 'MeetingMember',
                 'advisers': None}
 MEETING_GROUP_SUFFIXES = MEETINGROLES.keys()
 
+# This is the group created for each MeetingConfig where we store
+# users that will be able to see the items in state corresponding to MeetingConfig.itemPowerObserverStates
+POWEROBSERVERS_GROUP_SUFFIX = 'powerobservers'
+
 ploneMeetingRoles = (
     # The standard Plone 'Manager'
     'Manager',

@@ -122,7 +122,8 @@
         class=".views_unrestricted.UnrestrictedMethodsView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         allowed_attributes="removeGivenObject
-                            getLinkedMeetingTitle"
+                            getLinkedMeetingTitle
+                            getLinkedMeetingDate"
         permission="zope2.View" />
     <browser:view
         for="*"
