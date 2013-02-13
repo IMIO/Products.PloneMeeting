@@ -675,15 +675,14 @@ class testMeetingItem(PloneMeetingTestCase):
                 if tr in self.transitions(meeting):
                     self.do(meeting, tr)
                     break
+        self.changeUser('powerobserver1')
         frozenItem = meeting.getItems()[0]
         self.assertEquals(frozenItem.queryState(), 'itemfrozen')
-        self.failUnless('MeetingObserverGlobal' in frozenItem.__dict__['_View_Permission'])
-        self.changeUser('powerobserver1')
         # but the 'powerobserver1' can not see it because powerobservers groups
         # do not have the 'MeetingObserverGlobal' role
         self.failIf(self.hasPermission('View', frozenItem))
         # a frozen meeting is accessible by a powerobservers
-        self.failUnless(self.hasPermission('View', presentedItem.getMeeting()))
+        self.failUnless(self.hasPermission('View', frozenItem.getMeeting()))
         # '_powerobservers' groups are local to a MeetingConfig
         # it means that for meetingConfig2, 'powerobserver1' can see nothing...
         self.changeUser('pmManager')
@@ -725,16 +724,15 @@ class testMeetingItem(PloneMeetingTestCase):
                 if tr in self.transitions(meeting):
                     self.do(meeting, tr)
                     break
+        self.changeUser('powerobserver1')
         frozenItem = meeting.getItems()[0]
         self.assertEquals(frozenItem.queryState(), 'itemfrozen')
-        self.failUnless('MeetingObserverGlobal' in frozenItem.__dict__['_View_Permission'])
         # but the 'powerobserver1' can not see it because powerobservers groups
         # do not have the 'MeetingObserverGlobal' role
-        self.changeUser('powerobserver1')
         self.failIf(self.hasPermission('View', frozenItem))
         # a frozen meeting is accessible by a powerobservers... but not by powerobserver1 because
         # he is not in the powerobservers group of this meetingConfig...
-        self.failIf(self.hasPermission('View', presentedItem.getMeeting()))
+        self.failIf(self.hasPermission('View', frozenItem.getMeeting()))
 
     def testItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
