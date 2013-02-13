@@ -36,7 +36,7 @@
          <img tal:condition="not: inTool" style="cursor:pointer" title="search_advanced"
               i18n:attributes="title"
               tal:attributes="onClick python: 'href: window.location=\'%s/search_form\'' % meetingFolder.absolute_url();
-                              src string:$portal_url/search.gif"/>
+                              src string:$portal_url/search_button_icon.png"/>
      </div>
     </dt>
 
