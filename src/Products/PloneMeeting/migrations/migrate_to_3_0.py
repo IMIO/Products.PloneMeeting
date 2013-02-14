@@ -172,16 +172,19 @@ class Migrate_To_3_0(Migrator):
                 newObj.reindexObject()
         logger.info("FCKTemplates have been migrated to MeetingItems with usage 'as_template_item'.")
 
-    def _updateAdvices(self):
+    def _updateLocalRoles(self):
         '''We use a new role to manage advices, 'MeetingPowerObserverLocal' instead of
            'MeetingObserverLocal', we need to update every advices for this to
-           be taken into account.'''
-        brains = self.portal.portal_catalog(meta_type='MeetingItem')
-        logger.info('Updating every advices for %s MeetingItem objects...' % len(brains))
+           be taken into account.  We also update PowerObservers local_roles for meetings and items.'''
+        brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem'))
+        logger.info('Updating local_roles for %s Meeting and MeetingItem objects...' % len(brains))
         for brain in brains:
             obj = brain.getObject()
-            # Reinitialize local roles
-            obj.updateLocalRoles()
+            # Reinitialize local roles for items
+            if obj.meta_type == 'MeetingItem':
+                obj.updateLocalRoles()
+            # Update PowerObservers local_roles for meetings and items
+            obj.updatePowerObserversLocalRoles()
             # Update security as local_roles are modified by updateLocalRoles
             obj.reindexObject(idxs=['allowedRolesAndUsers',])
         logger.info('MeetingItems advices have been updated.')
@@ -289,7 +292,8 @@ class Migrate_To_3_0(Migrator):
         '''Now that we can use local powerobservers, we have a group for each MeetingConfig
            where we will store these powerobserver users.  Update the searchitemsincopy TAL condition
            so it is not shown for 'powerobservers'.  Use also the unrestricted getMeetingDate in the item ref
-           to avoid unauthorized.'''
+           to avoid unauthorized.
+           PowerObservers local_roles are updated in the _updateLocalRoles migration step.'''
         logger.info('Adding \'powerobservers\' groups for each meetingConfig')
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             cfg.createPowerObserversGroup()
@@ -323,7 +327,7 @@ class Migrate_To_3_0(Migrator):
         self._patchFileSecurity()
         self._correctAnnexesMeetingFileTypes()
         self._migrateMeetingFilesToBlobs()
-        self._updateAdvices()
+        self._updateLocalRoles()
         self._migrateXhtmlTransformFieldsValues()
         self._migrateFCKTemplates()
         self._addPowerObserverGroupsByMeetingConfig()
