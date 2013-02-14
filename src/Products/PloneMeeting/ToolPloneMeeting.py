@@ -594,7 +594,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         wfTool = self.portal_workflow
         for meetingConfig in self.objectValues('MeetingConfig'):
-            if wfTool.getInfoFor(meetingConfig, 'review_state') == 'active':
+            if wfTool.getInfoFor(meetingConfig, 'review_state') == 'active' and \
+               self.checkMayView(meetingConfig):
                 res.append(meetingConfig)
         return res
 
@@ -814,6 +815,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if config.isDefault:
                 res = config
                 break
+        if not res and activeConfigs:
+            return activeConfigs[0]
         return res
 
     def forJs(self, s):
@@ -834,7 +837,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            has been overridden in this tool and does an unrestrictedTraverse
            to the object.'''
         klassName = value.__class__.__name__
-        if klassName in ('MeetingItem', 'Meeting'):
+        if klassName in ('MeetingItem', 'Meeting', 'MeetingConfig'):
             obj = value
         else:
             # It is a brain
