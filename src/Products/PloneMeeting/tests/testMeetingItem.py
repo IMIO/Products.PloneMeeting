@@ -637,6 +637,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # when the item is in some state.  For example here, a 'presented' item is not viewable
         # Add 'powerobserver1' user to the self.meetingConfig corresponding 'powerobservers' group
         self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' % (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        # Add 'powerobserver2' user to the self.meetingConfig2 corresponding 'powerobservers' group
+        self.portal.portal_groups.addPrincipalToGroup('powerobserver2', '%s_%s' % (self.meetingConfig2.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        # launch check for self.meetingConfig where 'powerobserver1' can see in some states but never for 'powerobserver2'
+        self._checkPowerObserversGroupFor('powerobserver1', 'powerobserver2')
+        # launch check for self.meetingConfig2 where 'powerobserver2' can see in some states but never for 'powerobserver1'
+        self.meetingConfig = self.meetingConfig2
+        self._checkPowerObserversGroupFor('powerobserver2', 'powerobserver1')
+
+    def _checkPowerObserversGroupFor(self, userThatCanSee, userThatCanNotSee):
+        '''Helper method for testing powerObservers groups.'''
         self.changeUser('pmManager')
         createdItem = self.create('MeetingItem')
         createdItem.setProposingGroup('vendors')
@@ -649,12 +659,15 @@ class testMeetingItem(PloneMeetingTestCase):
         validatedItem = meeting.getItems()[0]
         self.do(validatedItem, 'backToValidated')
         presentedItem = meeting.getItems()[0]
-        self.changeUser('powerobserver1')
+        self.changeUser(userThatCanSee)
         self.assertEquals(createdItem.queryState(), 'itemcreated')
         self.assertEquals(validatedItem.queryState(), 'validated')
         self.assertEquals(presentedItem.queryState(), 'presented')
         self.failUnless(self.hasPermission('View', (createdItem, presentedItem)))
         self.failIf(self.hasPermission('View', validatedItem))
+        # powerobserver2 can not see anything in meetingConfig
+        self.changeUser(userThatCanNotSee)
+        self.failIf(self.hasPermission('View', (createdItem, presentedItem, validatedItem)))
         # MeetingItem.updateLocalRoles does not break the functionnality...
         self.changeUser('pmManager')
         # check that the relevant powerobservers group is or not in the local_roles of the item
@@ -663,11 +676,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(powerObserversGroupId in validatedItem.__ac_local_roles__)
         validatedItem.updateLocalRoles()
         self.failUnless(powerObserversGroupId in presentedItem.__ac_local_roles__)
-        self.changeUser('powerobserver1')
+        self.changeUser(userThatCanSee)
         self.failIf(self.hasPermission('View', validatedItem))
+        self.failUnless(self.hasPermission('View', presentedItem))
         # access to the Meeting is also managed by the same local_role given on the meeting
         self.failIf(self.hasPermission('View', presentedItem.getMeeting()))
-        self.changeUser('pmManager')        
+        # powerobserver2 can not see anything in meetingConfig
+        self.changeUser(userThatCanNotSee)
+        self.failIf(self.hasPermission('View', (presentedItem.getMeeting(), validatedItem, presentedItem)))
+        self.changeUser('pmManager')
         # in PloneMeeting default wf, 'itemfrozen' items are viewable by everybody (having MeetingObserverGlobal role)
         # but it will not be the case here for 'powerobservers'
         while not meeting.queryState() == 'frozen':
@@ -675,7 +692,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 if tr in self.transitions(meeting):
                     self.do(meeting, tr)
                     break
-        self.changeUser('powerobserver1')
+        self.changeUser(userThatCanSee)
         frozenItem = meeting.getItems()[0]
         self.assertEquals(frozenItem.queryState(), 'itemfrozen')
         # but the 'powerobserver1' can not see it because powerobservers groups
@@ -683,56 +700,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(self.hasPermission('View', frozenItem))
         # a frozen meeting is accessible by a powerobservers
         self.failUnless(self.hasPermission('View', frozenItem.getMeeting()))
-        # '_powerobservers' groups are local to a MeetingConfig
-        # it means that for meetingConfig2, 'powerobserver1' can see nothing...
-        self.changeUser('pmManager')
-        self.meetingConfig = self.meetingConfig2
-        self.changeUser('pmManager')
-        createdItem = self.create('MeetingItem')
-        createdItem.setProposingGroup('vendors')
-        createdItem.setAssociatedGroups(('developers',))
-        createdItem.setPrivacy('public')
-        createdItem.setCategory('research')
-        meeting = self._createMeetingWithItems()
-        # put an item back to validated
-        validatedItem = meeting.getItems()[0]
-        self.do(validatedItem, 'backToValidated')
-        presentedItem = meeting.getItems()[0]
-        # nothing is viewable
-        self.changeUser('powerobserver1')
-        self.assertEquals(createdItem.queryState(), 'itemcreated')
-        self.assertEquals(validatedItem.queryState(), 'validated')
-        self.assertEquals(presentedItem.queryState(), 'presented')
-        self.failIf(self.hasPermission('View', (createdItem, validatedItem)))
-        self.failIf(self.hasPermission('View', presentedItem))
-        # MeetingItem.updateLocalRoles does not break the functionnality...
-        self.changeUser('pmManager')
-        # check that the relevant powerobservers group is or not in the local_roles of the item
-        powerObserversGroupId = "%s_%s" % (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-        self.failUnless(powerObserversGroupId in presentedItem.__ac_local_roles__)
-        self.failIf(powerObserversGroupId in validatedItem.__ac_local_roles__)
-        validatedItem.updateLocalRoles()
-        self.failUnless(powerObserversGroupId in presentedItem.__ac_local_roles__)
-        self.changeUser('powerobserver1')
-        self.failIf(self.hasPermission('View', validatedItem))
-        # access to the Meeting is also managed by the same local_role given on the meeting
-        self.failIf(self.hasPermission('View', presentedItem.getMeeting()))
-        self.changeUser('pmManager')
-        # in PloneMeeting default wf, 'itemfrozen' items are viewable by everybody (having MeetingObserverGlobal role)
-        while not meeting.queryState() == 'frozen':
-            for tr in self.transitionsToCloseAMeeting:
-                if tr in self.transitions(meeting):
-                    self.do(meeting, tr)
-                    break
-        self.changeUser('powerobserver1')
-        frozenItem = meeting.getItems()[0]
-        self.assertEquals(frozenItem.queryState(), 'itemfrozen')
-        # but the 'powerobserver1' can not see it because powerobservers groups
-        # do not have the 'MeetingObserverGlobal' role
-        self.failIf(self.hasPermission('View', frozenItem))
-        # a frozen meeting is accessible by a powerobservers... but not by powerobserver1 because
-        # he is not in the powerobservers group of this meetingConfig...
-        self.failIf(self.hasPermission('View', frozenItem.getMeeting()))
+        # powerobserver2 can not see anything in meetingConfig
+        self.changeUser(userThatCanNotSee)
+        self.failIf(self.hasPermission('View', (frozenItem, frozenItem.getMeeting())))
 
     def testItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
