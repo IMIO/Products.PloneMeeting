@@ -170,6 +170,7 @@
    <legend i18n:translate="existing_annexes">Annexes</legend>
    <div tal:condition="not: annexes" i18n:translate="no_annexes" class="discreet">No annexes</div>
    <table class="vertical listing" tal:condition="annexes" width="100%" i18n:domain="plone">
+     <thead>
      <tr>
        <th i18n:translate="">listingheader_title</th>
        <th i18n:translate="pm_creator" i18n:domain="PloneMeeting"></th>
@@ -177,6 +178,7 @@
        <th i18n:translate="">listingheader_size</th>
        <th i18n:translate="" tal:condition="python:member.has_permission('Delete objects', here)">heading_actions</th>
      </tr>
+     <thead>
      <tr tal:repeat="annexInfo annexes">
        <span tal:define="annex python: context.uid_catalog(UID=annexInfo['uid'])[0].getObject()">
        <td class="pmLinks">
