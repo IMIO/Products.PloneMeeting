@@ -78,7 +78,8 @@ pmReviewer2 = UserDescriptor('pmReviewer2', [])
 pmAdviser1 = UserDescriptor('pmAdviser1', [])
 voter1 = UserDescriptor('voter1', [], fullname = 'M. Voter One')
 voter2 = UserDescriptor('voter2', [], fullname = 'M. Voter Two')
-powerobserver1 = UserDescriptor('powerobserver1', [], fullname = 'M. Power Observer')
+powerobserver1 = UserDescriptor('powerobserver1', [], fullname = 'M. Power Observer1')
+powerobserver2 = UserDescriptor('powerobserver2', [], fullname = 'M. Power Observer2')
 
 developers = GroupDescriptor('developers', 'Developers', 'Devel',
                              givesMandatoryAdviceOn='python:False')
@@ -199,5 +200,5 @@ meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendor
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
                                  (developers, vendors, endUsers))
-data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1]
+data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2]
 # ------------------------------------------------------------------------------
