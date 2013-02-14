@@ -1259,6 +1259,10 @@ msgstr ""
 msgid "pm_update_all_advices"
 msgstr ""
 
+#. Default: "Update PowerObservers"
+msgid "pm_update_powerobservers"
+msgstr ""
+
 #. Default: "English"
 msgid "language_eng"
 msgstr ""
@@ -1352,15 +1356,15 @@ msgstr ""
 msgid "gives_mandatory_advice_on_descr"
 msgstr ""
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to add an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to add an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "group_item_advice_states_descr"
 msgstr ""
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to modify or delete an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to modify or delete an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "group_item_advice_edit_states_descr"
 msgstr ""
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "group_item_advice_view_states_descr"
 msgstr ""
 
@@ -2239,7 +2243,7 @@ msgstr ""
 msgid "PloneMeeting_label_itemAdviceStates"
 msgstr ""
 
-#. Default: "When an item is in one of the states you choose here, it will be possible to add an advice on this item."
+#. Default: "When an item is in one of the states you choose here, it will be possible to add an advice on this item.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "item_advice_states_descr"
 msgstr ""
 
@@ -2267,11 +2271,11 @@ msgstr ""
 msgid "PloneMeeting_label_itemAdviceViewStates"
 msgstr ""
 
-#. Default: "When an item is in one of the states you choose here, it will be possible to modify or delete an advice on this item."
+#. Default: "When an item is in one of the states you choose here, it will be possible to modify or delete an advice on this item.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "item_advice_edit_states_descr"
 msgstr ""
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for groups the advice is asked for, to continue to view the item."
+#. Default: "When an item is in one of the states you choose here, it will be possible for groups the advice is asked for, to continue to view the item.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "item_advice_view_states_descr"
 msgstr ""
 
@@ -2341,6 +2345,10 @@ msgstr ""
 
 #. Default: "If you modify this field, all given advices will be invalidated."
 msgid "warning_invalidate_advices_fastedit"
+msgstr ""
+
+#. Default: "Warning: take care that launching these updates may take time, depending on the number of existing elements!  Do not launch during period of hig use!"
+msgid "pm_tool_updates_warning"
 msgstr ""
 
 #. Default: "Cancel edit."

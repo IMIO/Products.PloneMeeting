@@ -2132,6 +2132,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
+    security.declarePublic('updatePowerObservers')
+    def updatePowerObservers(self):
+        '''Update local_roles regargind the PowerObservers for every meetings and items.'''
+        user = self.portal_membership.getAuthenticatedMember()
+        if not user.has_role('Manager'): return
+        for b in self.portal_catalog(meta_type=('Meeting', 'MeetingItem')):
+            obj = b.getObject()
+            obj.updatePowerObserversLocalRoles()
+            # Update security
+            obj.reindexObject(idxs=['allowedRolesAndUsers',])
+        self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
+
     security.declarePublic('deleteArchivedMeetings')
     def deleteArchivedMeetings(self):
         '''Deletes all archived meetings, including items and annexes, whose

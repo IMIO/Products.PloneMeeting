@@ -1807,17 +1807,17 @@ msgstr "Consulter les ${number} éléments précédents"
 msgid "group_is_active"
 msgstr "Actif?"
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to modify or delete an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to modify or delete an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "group_item_advice_edit_states_descr"
-msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible pour un aviseur de ce groupe de modifier ou supprimer un avis donné. Si vous ne spécifiez aucun état ici, une liste d'états globale à tous les groupes, définie au niveau de la configuration de séance, sera utilisée à la place."
+msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible pour un aviseur de ce groupe de modifier ou supprimer un avis donné. Si vous ne spécifiez aucun état ici, une liste d'états globale à tous les groupes, définie au niveau de la configuration de séance, sera utilisée à la place.  <span style='color: red';>Si vous modifiez ce paramètre, n'oubliez pas de mettre à jour les avis!</span>"
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to add an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to add an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "group_item_advice_states_descr"
-msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible pour un aviseur de ce groupe de donner un avis. Si vous ne spécifiez aucun état ici, une liste d'états globale à tous les groupes, définie au niveau de la configuration de séance, sera utilisée à la place."
+msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible pour un aviseur de ce groupe de donner un avis. Si vous ne spécifiez aucun état ici, une liste d'états globale à tous les groupes, définie au niveau de la configuration de séance, sera utilisée à la place.  <span style='color: red';>Si vous modifiez ce paramètre, n'oubliez pas de mettre à jour les avis!</span>"
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "group_item_advice_view_states_descr"
-msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible pour un aviseur sélectionné sur ce point de voir le point. Si vous ne spécifiez aucun état ici, une liste d'états globale à tous les groupes, définie au niveau de la configuration de séance, sera utilisée à la place."
+msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible pour un aviseur sélectionné sur ce point de voir le point. Si vous ne spécifiez aucun état ici, une liste d'états globale à tous les groupes, définie au niveau de la configuration de séance, sera utilisée à la place.  <span style='color: red';>Si vous modifiez ce paramètre, n'oubliez pas de mettre à jour les avis!</span>"
 
 #. Default: "User interface"
 msgid "gui"
@@ -1973,21 +1973,21 @@ msgstr "Un de vos points, ${itemTitle}, a été retiré d'une séance. Cette sé
 msgid "item_actions_interface_descr"
 msgstr "A l'instar du champ précédent, toutes les actions qui sont déclenchées lorsqu'un point passe d'un état à un autre sont configurables via le développement d'un produit Plone tiers dans lequel vous devez:<ul><li>créer une interface Python qui hérite de l'interface Products.PloneMeeting.interfaces.IMeetingItemWorkflowActions (c'est le nom complet de cette interface que vous devez spécifier dans ce champ);</li><li>créer et déclarer en ZCML un adapter qui adapte l'interface Products.PloneMeeting.interfaces.IMeetingItem vers l'interface que vous avez définie au point précédent.</li></ul>Vous pouvez faire hériter votre adapter de l'adapter par défaut Products.PloneMeeting.MeetingItem.MeetingItemWorkflowActions: cela vous permettra de remplacer ou overrider uniquement les méthodes pour lesquelles vous voulez un comportement différent. Toutes les méthodes proposées par l'interface Products.PloneMeeting.interfaces.IMeetingItemWorkflowActions sont documentées."
 
-#. Default: "When an item is in one of the states you choose here, it will be possible to modify or delete an advice on this item."
+#. Default: "When an item is in one of the states you choose here, it will be possible to modify or delete an advice on this item.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "item_advice_edit_states_descr"
-msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible de modifier ou supprimer un avis donné."
+msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible de modifier ou supprimer un avis donné.  <span style='color: red';>Si vous modifiez ce paramètre, n'oubliez pas de mettre à jour les avis!</span>"
 
 #. Default: "When advice invalidation is enabled, it will be the case only for items which are in one of the states selected here."
 msgid "item_advice_invalidate_states"
 msgstr "Quand l'invalidation des avis est activée, cela l'est uniquement pour les points qui sont dans un des états sélectionnés ici."
 
-#. Default: "When an item is in one of the states you choose here, it will be possible to add an advice on this item."
+#. Default: "When an item is in one of the states you choose here, it will be possible to add an advice on this item.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "item_advice_states_descr"
-msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible de donner un avis."
+msgstr "Quand un point est dans un des états que vous définissez ici, il sera possible de donner un avis.  <span style='color: red';>Si vous modifiez ce paramètre, n'oubliez pas de mettre à jour les avis!</span>"
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for groups the advice is asked for, to continue to view the item."
+#. Default: "When an item is in one of the states you choose here, it will be possible for groups the advice is asked for, to continue to view the item.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "item_advice_view_states_descr"
-msgstr "Quand un point est dans un des états que vous définissez ici, il sera toujours visible par les personnes auxquelles un avis est demandé sur le point."
+msgstr "Quand un point est dans un des états que vous définissez ici, il sera toujours visible par les personnes auxquelles un avis est demandé sur le point.  <span style='color: red';>Si vous modifiez ce paramètre, n'oubliez pas de mettre à jour les avis!</span>"
 
 #. Default: "If you don't fill this field, meeting assembly will be used for this item."
 msgid "item_assembly_descr"
@@ -2059,7 +2059,7 @@ msgstr "Aucun déplacement n'a eu lieu: veuillez introduire un numéro valide."
 
 #. Default: "When an item is in one of the states you choose here, it will be possible for powerObservers of this meetingConfig to see the item."
 msgid "item_powerobservers_states_descr"
-msgstr "Quand un point est dans un des états que vous définissez ici, il sera visible par les personnes qui sont dans le groupe de 'Super observateurs' de cette configuration de séance."
+msgstr "Quand un point est dans un des états que vous définissez ici, il sera visible par les personnes qui sont dans le groupe de 'Super observateurs' de cette configuration de séance.  <span style='color: red';>Si vous modifiez ce paramètre, n'oubliez pas de mettre à jour les 'Super observateurs'!</span>"
 
 #. Default: "A reference is associated to every item. The reference format can be defined here, as a TAL (Tag Attribute Language) expression whose context includes the name 'here' that represents the impacted item. If you don't know TAL, you may learn it <a href=\"http://zope.org/Documentation/Books/ZopeBook/2_6Edition/ZPT.stx\">here</a>."
 msgid "item_reference_format_descr"
@@ -2389,7 +2389,7 @@ msgstr "Séance du"
 
 #. Default: "When a meeting is in one of the states you choose here, it will be possible for powerObservers of this meetingConfig to see the meeting."
 msgid "meeting_powerobservers_states_descr"
-msgstr "Quand une séance est dans un des états que vous définissez ici, elle sera visible par les personnes qui sont dans le groupe de 'Super observateurs' de cette configuration de séance."
+msgstr "Quand une séance est dans un des états que vous définissez ici, elle sera visible par les personnes qui sont dans le groupe de 'Super observateurs' de cette configuration de séance.  <span style='color: red';>Si vous modifiez ce paramètre, n'oubliez pas de mettre à jour les 'Super observateurs'!</span>"
 
 #. Default: "Signatories"
 msgid "meeting_signatories"
@@ -2847,6 +2847,10 @@ msgstr "Aller au précédent."
 msgid "pm_select_deselect"
 msgstr "(Dé-)sélectionner tout"
 
+#. Default: "Warning: take care that launching these updates may take time, depending on the number of existing elements!  Do not launch during period of hig use!"
+msgid "pm_tool_updates_warning"
+msgstr "Attention: ces mises à jour peuvent prendre du temps en fonction du nombre d'éléments existants!  Ne pas lancer dans une période de forte utilisation!"
+
 #. Default: "Update all advices"
 msgid "pm_update_all_advices"
 msgstr "Mettre à jour les avis"
@@ -2854,6 +2858,10 @@ msgstr "Mettre à jour les avis"
 #. Default: "Update annex indexes"
 msgid "pm_update_annex_indexes"
 msgstr "Recalculer les index des annexes"
+
+#. Default: "Update PowerObservers"
+msgid "pm_update_powerobservers"
+msgstr "Mettre à jour les 'Super observateurs'"
 
 #. Default: "Please consult the attached document."
 msgid "podByMail_mail_body"

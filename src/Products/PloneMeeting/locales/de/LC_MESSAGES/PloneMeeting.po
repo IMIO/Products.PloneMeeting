@@ -1812,15 +1812,17 @@ msgstr "Gehe zu den vorherigen ${number} Elementen"
 msgid "group_is_active"
 msgstr "Aktiv?"
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to modify or delete an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to modify or delete an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
+#, fuzzy
 msgid "group_item_advice_edit_states_descr"
 msgstr "Wenn ein TOP in einem Status ist, den Sie hier definieren, ist es für einen Kommentator dieser Gruppe möglich einen Kommentar zu ändern oder zu löschen. Wenn Sie hier keinen Status definieren, wird eine Liste von globalen Status aller Gruppen, die auf der Ebene der Sitzungskonfiguration definiert wurden, an deren Stelle benutzt."
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to add an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser of this group to add an advice on this item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
+#, fuzzy
 msgid "group_item_advice_states_descr"
 msgstr "Wenn ein TOP in einem Status ist, den Sie hier definieren, ist es für einen Kommentator dieser Gruppe möglich einen Kommentar ab zu geben. Wenn Sie hier keinen Status definieren, wird eine Liste von globalen Status aller Gruppen, die auf der Ebene der Sitzungskonfiguration definiert wurden, an deren Stelle benutzt."
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead."
+#. Default: "When an item is in one of the states you choose here, it will be possible for an adviser selected on this item to continue to view the item. If you don't specify any state here, a list of states, global to all groups, defined at the config level will be used instead.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "group_item_advice_view_states_descr"
 msgstr ""
 
@@ -1978,7 +1980,8 @@ msgstr "Einer Ihrer TOP, ${itemTitle}, wurde von einer Sitzung gestrichen. Diese
 msgid "item_actions_interface_descr"
 msgstr "Ähnlich wie im vorherigen Feld können alle Aktionen die bei einem Statusübergang eines TOPs ausgelöst werden durch ein eigens entwickeltes Plone-Produkt konfiguriert werden in dem Sie:<ul><li>ein Python Interface definieren das von dem Interface Products.PloneMeeting.interfaces.IMeetingItemWorkflowActions (Sie müssen den vollen Paketnamen des Interfaces in dem Feld unten eintragen);</li><li>einen Adapter in ZCML erstellen und deklarieren der das Interface Products.PloneMeeting.interfaces.IMeetingItem zu dem Interface das Sie definiert haben adaptiert.</li></ul>Ihr Adapter kann vom Standardadapter Products.PloneMeeting.MeetingItem.MeetingItemWorkflowActions erben: das ermöglicht es Ihnen nur die Methoden für die sie ein anderes Verhalten wünschen zu überschreiben. Alle Methoden die im Interface Products.PloneMeeting.interfaces.IMeetingItemWorkflowActions definiert werden sind dokumentiert."
 
-#. Default: "When an item is in one of the states you choose here, it will be possible to modify or delete an advice on this item."
+#. Default: "When an item is in one of the states you choose here, it will be possible to modify or delete an advice on this item.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
+#, fuzzy
 msgid "item_advice_edit_states_descr"
 msgstr "Wenn ein TOP in einem von den Stati ist, die hier ausgewählt wurden, dann können die Kommentare zu diesem TOP verändert oder gelöscht werden."
 
@@ -1986,11 +1989,12 @@ msgstr "Wenn ein TOP in einem von den Stati ist, die hier ausgewählt wurden, da
 msgid "item_advice_invalidate_states"
 msgstr "Wenn die Funktion 'Kommentare ungültig setzen' aktiviert ist, gilt dies nur für TOP die in den hierunten ausgewählten Stati sind."
 
-#. Default: "When an item is in one of the states you choose here, it will be possible to add an advice on this item."
+#. Default: "When an item is in one of the states you choose here, it will be possible to add an advice on this item.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
+#, fuzzy
 msgid "item_advice_states_descr"
 msgstr "Wenn ein TOP in einem von den Stati ist, die hier ausgewählt wurden, dann kann ein Kommentare zu diesem TOP hinzugefügt werden."
 
-#. Default: "When an item is in one of the states you choose here, it will be possible for groups the advice is asked for, to continue to view the item."
+#. Default: "When an item is in one of the states you choose here, it will be possible for groups the advice is asked for, to continue to view the item.  <span style='color: red';>If you change this parameter, do not forget to update advices!</span>"
 msgid "item_advice_view_states_descr"
 msgstr ""
 
@@ -2852,6 +2856,10 @@ msgstr "Gehe zum vorherigen TOP"
 msgid "pm_select_deselect"
 msgstr "Alle aus- oder abwählen"
 
+#. Default: "Warning: take care that launching these updates may take time, depending on the number of existing elements!  Do not launch during period of hig use!"
+msgid "pm_tool_updates_warning"
+msgstr ""
+
 #. Default: "Update all advices"
 msgid "pm_update_all_advices"
 msgstr ""
@@ -2859,6 +2867,10 @@ msgstr ""
 #. Default: "Update annex indexes"
 msgid "pm_update_annex_indexes"
 msgstr "Aktualisiert den Index für die Anlagen."
+
+#. Default: "Update PowerObservers"
+msgid "pm_update_powerobservers"
+msgstr ""
 
 #. Default: "Please consult the attached document."
 msgid "podByMail_mail_body"
