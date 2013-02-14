@@ -756,6 +756,15 @@
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('itemPowerObserversStates')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('meetingPowerObserversStates')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('useCopies')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
@@ -883,18 +892,15 @@
                                 src string: $portal_url/plus.png"
                 title="add_object" i18n:attributes="title"/>
         </legend>
-      <table tal:define="pFolder python:context.podtemplates;
-                         pFolderUrl pFolder/absolute_url" width="100%;
-                         moveUrl python: pFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=doc#podTemplates';
-                         objectIds python: pFolder.objectIds('PodTemplate');
-                         firstId python: objectIds and objectIds[0] or '';
-                         lastId python: objectIds and objectIds[-1] or '';">
+      <table width="100%">
         <tr valign="top">
           <td><p class="discreet" i18n:translate="pod_templates_descr"></p><br /></td>
         </tr>
         <tr>
           <td>
-          <table class="listing" align="right" width="100%">
+          <table class="listing" align="right" width="100%"
+                 tal:define="pFolder python:context.podtemplates;
+                             pFolderUrl pFolder/absolute_url" width="100%;">
             <thead>
             <tr>
               <th class="nosort" width="20px"></th>
@@ -903,18 +909,20 @@
               <th class="nosort" width="130px"  i18n:translate="heading_actions"></th>
             </tr>
             </thead>
-
-            <tbody>
             <tal:comment replace="nothing">No template is defined.</tal:comment>
             <tr tal:condition="python: not pFolder.objectValues('PodTemplate')">
               <td colspan="4" align="center" i18n:translate="">no_pod_folder</td>
             </tr>
-            <tal:loop repeat="podt python:pFolder.objectValues('PodTemplate')">
-            <tr tal:define="isActive python: here.portal_workflow.getInfoFor(podt, 'review_state') == 'active'"
+            <tal:loop repeat="obj python:pFolder.objectValues('PodTemplate')"
+                      define="moveUrl python: pFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=doc#podTemplates';
+                              objectIds python: pFolder.objectIds('PodTemplate');
+                              firstId python: objectIds and objectIds[0] or '';
+                              lastId python: objectIds and objectIds[-1] or '';">
+            <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active'"
                 tal:attributes="class python: not isActive and 'state-inactive' or ''">
-              <td align="center"><img tal:define="fmt podt/getPodFormat"
+              <td align="center"><img tal:define="fmt obj/getPodFormat"
                                       tal:attributes="src string: $portal_url/$fmt.png"/></td>
-              <td><a tal:attributes="href podt/absolute_url" tal:content="podt/getName"></a></td>
+              <td><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></td>
               <td i18n:domain="plone">
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
                 <span tal:condition="not: isActive" i18n:translate="">No</span>
@@ -923,11 +931,11 @@
               <td tal:condition="isManager" align="right">
                 <tal:comment replace="nothing">Edit the pod template</tal:comment>
                 <form name="deletePodTemplateForm" action="delete_givenuid">
-                  <a tal:attributes="href python: podt.absolute_url() + '/edit'">
+                  <a tal:attributes="href python: obj.absolute_url() + '/edit'">
                     <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                   </a>
                   <tal:comment replace="nothing">Delete it</tal:comment>
-                  <input type="hidden" name="selected_uid" tal:attributes="value podt/UID" />
+                  <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
                   <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
@@ -936,7 +944,6 @@
               </td>
             </tr>
             </tal:loop>
-            </tbody>
             </table>
           </td>
         </tr>
