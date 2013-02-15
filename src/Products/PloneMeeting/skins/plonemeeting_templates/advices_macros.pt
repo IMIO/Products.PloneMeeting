@@ -5,7 +5,8 @@
                  defaultAdviceType meetingConfig/getDefaultAdviceType;
                  adviceInfo python: meetingItem.getAdvicesToGive();
                  advicesToAdd python: adviceInfo[0];
-                 advicesToEdit python: adviceInfo[1]">
+                 advicesToEdit python: adviceInfo[1];
+                 portal_url context/@@plone_portal_state/portal_url;">
 
   <table width="#"
          class="contentActionsAX no-style-table" cellpadding="0" cellspacing="0"

@@ -6,7 +6,9 @@
                  mayChangeOrder mayChangeOrder|nothing;
                  isItem python:itemOrMeeting.meta_type == 'MeetingItem';
                  inItemsList inItemsList|nothing;
-                 uid itemOrMeeting/UID;">
+                 uid itemOrMeeting/UID;
+                 portal_url context/@@plone_portal_state/portal_url;
+                 portal context/@@plone_portal_state/portal;">
 
   <table class="no-style-table" tal:attributes="align python:test(showIcons, 'right', 'left')">
     <tr>
