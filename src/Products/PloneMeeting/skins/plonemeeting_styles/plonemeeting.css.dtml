@@ -549,6 +549,14 @@ span#meetingItems INPUT[type=text], span#lateItems INPUT[type=text] {
 color: red;
 }
 
+/* plone.app.search, hide some elements while using the @@search until we use it, see ticket #5515 */
+#search-results-bar dl, #search-results-bar #searchResultsSort {
+display: none;
+}
+.searchPage #rss-subscription, .searchPage h1 {
+display: none !important;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
