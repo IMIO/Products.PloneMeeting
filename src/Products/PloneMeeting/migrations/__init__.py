@@ -29,6 +29,12 @@ class Migrator:
         self.portal = context.portal_url.getPortalObject()
         self.tool = getToolByName(self.portal, 'portal_plonemeeting')
         self.startTime = time.time()
+        # disable email notifications for every MeetingConfigs and save
+        # current state to set it back after migration in self.finish
+        self.cfgsMailMode = {}
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            self.cfgsMailMode[cfg.getId()] = cfg.getMailMode()
+            cfg.setMailMode('deactivated')
 
     def run(self):
         '''Must be overridden. This method does the migration job.'''
@@ -37,6 +43,10 @@ class Migrator:
     def finish(self):
         '''At the end of the migration, you can call this method to log its
            duration in minutes.'''
+        # set mailMode for every MeetingConfigs back to the right value
+        for cfgId in self.cfgsMailMode:
+            cfg = getattr(self.tool, cfgId)
+            cfg.setMailMode(self.cfgsMailMode[cfgId])
         seconds = time.time() - self.startTime
         logger.info('Migration finished in %d minute(s).' % (seconds/60))
 

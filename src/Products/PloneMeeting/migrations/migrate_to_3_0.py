@@ -231,9 +231,6 @@ class Migrate_To_3_0(Migrator):
             else:
                 # bypass guards for Manager
                 wf.manager_bypass=1
-                # deactivate mail notifications
-                oldMailMode = cfg.getMailMode()
-                cfg.setMailMode('deactivated')
                 # set some value in the request that will be used by the triggerTransition method here under
                 self.portal.REQUEST.set('transition', 'backToDecided')
                 self.portal.REQUEST.set('comment', 'Set back to \'decided\' during migration to PM3.0 because actual state \'published\' does not exist anymore.')
@@ -251,7 +248,6 @@ class Migrate_To_3_0(Migrator):
                 self.portal.REQUEST.set('comment', '')
                 self.portal.REQUEST.set('objectUid', '')
                 wf.manager_bypass=1
-                cfg.setMailMode(oldMailMode)
         return uids
 
     def _migrateStatePublishedToDecisionsPublished(self, uids):
