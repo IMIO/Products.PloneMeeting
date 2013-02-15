@@ -228,7 +228,7 @@
                tal:content="structure meetingItem/getDecision"></i>
           </span>
           <tal:comment replace="nothing">Item reference, annexes and decision-related annexes</tal:comment>
-          <table class="no-style-table" cellpadding="0" cellspacing="0" width="98%">
+          <table class="no-style-table" cellpadding="0" cellspacing="0" width="100%">
            <tr valign="bottom">
             <td width="50%">
               <span tal:condition="python: itemsNumbering and meetingItem.adapted().mustShowItemReference()"><br/>
