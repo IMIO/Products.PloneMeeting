@@ -554,8 +554,12 @@ color: red;
 display: none;
 }
 .searchPage #rss-subscription, .searchPage h1 {
-display: none !important;
+display: none;
 }
+dl.searchResults cite {
+display: none;
+}
+
 
 /* </dtml-with> */
 
