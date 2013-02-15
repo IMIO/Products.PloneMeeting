@@ -437,9 +437,10 @@ def sendAdviceToGiveMailIfRelevant(event):
         adviceStates = getattr(tool, groupId).getItemAdviceStates(cfg)
         # Ignore advices that must not be given in the current item state
         if event.new_state.id not in adviceStates: continue
-        # Ignore advices for which already needed to be given in the previous
-        # item state
+        # Ignore advices that already needed to be given in the previous item state
         if event.old_state.id in adviceStates: continue
+        # do not consider groups that already gave their advice
+        if not adviceInfo['type'] == 'not_given': continue
         # Send a mail to every person from group _advisers.
         ploneGroup = event.object.acl_users.getGroup('%s_advisers' % groupId)
         for memberId in ploneGroup.getMemberIds():
