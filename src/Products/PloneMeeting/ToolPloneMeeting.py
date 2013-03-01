@@ -25,7 +25,7 @@ from Products.PloneMeeting.config import *
 
 from Products.CMFCore.utils import UniqueObject
 
-    
+
 ##code-section module-header #fill in your manual code here
 import os, os.path, time, re
 from appy.gen import No
@@ -74,6 +74,7 @@ defValues = PloneMeetingConfiguration.get()
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
 # for importing profiles.
 
+
 # Marshaller -------------------------------------------------------------------
 class ToolMarshaller(HubSessionsMarshaller):
     '''Allows to marshall the tool into a XML file that another PloneMeeting
@@ -112,7 +113,7 @@ schema = Schema((
 
     StringField(
         name='unoEnabledPython',
-        default= defValues.unoEnabledPython,
+        default=defValues.unoEnabledPython,
         widget=StringField._properties['widget'](
             size=60,
             label="Path of a UNO-enabled Python interpreter (ie /usr/bin/python)",
@@ -124,7 +125,7 @@ schema = Schema((
     ),
     IntegerField(
         name='openOfficePort',
-        default= defValues.openOfficePort,
+        default=defValues.openOfficePort,
         widget=IntegerField._properties['widget'](
             description="OpenOfficePort",
             description_msgid="open_office_port",
@@ -135,7 +136,7 @@ schema = Schema((
     ),
     BooleanField(
         name='ploneDiskAware',
-        default= defValues.ploneDiskAware,
+        default=defValues.ploneDiskAware,
         widget=BooleanField._properties['widget'](
             description="PloneDiskAware",
             description_msgid="plone_disk_aware_descr",
@@ -146,7 +147,7 @@ schema = Schema((
     ),
     StringField(
         name='meetingFolderTitle',
-        default= defValues.meetingFolderTitle,
+        default=defValues.meetingFolderTitle,
         widget=StringField._properties['widget'](
             size=60,
             description="MeetingFolderTitle",
@@ -159,7 +160,7 @@ schema = Schema((
     ),
     BooleanField(
         name='navigateLocally',
-        default= defValues.navigateLocally,
+        default=defValues.navigateLocally,
         widget=BooleanField._properties['widget'](
             description_msgid="navigate_locally",
             description="NavigateLocally",
@@ -195,7 +196,7 @@ schema = Schema((
     ),
     StringField(
         name='usedColorSystem',
-        default= defValues.usedColorSystem,
+        default=defValues.usedColorSystem,
         widget=SelectionWidget(
             description="UsedColorSystem",
             description_msgid="used_color_system_descr",
@@ -209,7 +210,7 @@ schema = Schema((
     ),
     TextField(
         name='colorSystemDisabledFor',
-        default= defValues.colorSystemDisabledFor,
+        default=defValues.colorSystemDisabledFor,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="ColorSystemDisabledFor",
@@ -222,7 +223,7 @@ schema = Schema((
     ),
     BooleanField(
         name='restrictUsers',
-        default= defValues.restrictUsers,
+        default=defValues.restrictUsers,
         widget=BooleanField._properties['widget'](
             description="RestrictUsers",
             description_msgid="restrict_users_descr",
@@ -233,7 +234,7 @@ schema = Schema((
     ),
     TextField(
         name='unrestrictedUsers',
-        default= defValues.unrestrictedUsers,
+        default=defValues.unrestrictedUsers,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="UnrestrictedUsers",
@@ -246,7 +247,7 @@ schema = Schema((
     ),
     StringField(
         name='dateFormat',
-        default= defValues.dateFormat,
+        default=defValues.dateFormat,
         widget=StringField._properties['widget'](
             description="DateFormat",
             description_msgid="date_format_descr",
@@ -258,7 +259,7 @@ schema = Schema((
     ),
     BooleanField(
         name='extractTextFromFiles',
-        default= defValues.extractTextFromFiles,
+        default=defValues.extractTextFromFiles,
         widget=BooleanField._properties['widget'](
             description="ExtractTextFromFiles",
             description_msgid="extract_text_from_files_descr",
@@ -269,7 +270,7 @@ schema = Schema((
     ),
     StringField(
         name='availableInterfaceLanguages',
-        default= defValues.availableInterfaceLanguages,
+        default=defValues.availableInterfaceLanguages,
         widget=StringField._properties['widget'](
             description="AvailableInterfaceLanguages",
             description_msgid="available_interface_languages_descr",
@@ -280,7 +281,7 @@ schema = Schema((
     ),
     LinesField(
         name='availableOcrLanguages',
-        default= defValues.availableOcrLanguages,
+        default=defValues.availableOcrLanguages,
         widget=MultiSelectionWidget(
             description="AvailableOcrLanguages",
             description_msgid="available_ocr_languages_descr",
@@ -294,7 +295,7 @@ schema = Schema((
     ),
     StringField(
         name='defaultOcrLanguage',
-        default= defValues.defaultOcrLanguage,
+        default=defValues.defaultOcrLanguage,
         widget=SelectionWidget(
             description="DefaultOcrLanguage",
             description_msgid="default_ocr_language_descr",
@@ -306,7 +307,7 @@ schema = Schema((
     ),
     LinesField(
         name='modelAdaptations',
-        default= defValues.modelAdaptations,
+        default=defValues.modelAdaptations,
         widget=MultiSelectionWidget(
             description="ModelAdaptations",
             description_msgid="model_adaptations_descr",
@@ -320,7 +321,7 @@ schema = Schema((
     ),
     StringField(
         name='publicUrl',
-        default= defValues.publicUrl,
+        default=defValues.publicUrl,
         widget=StringField._properties['widget'](
             size=60,
             description="ToolPublicUrl",
@@ -332,7 +333,7 @@ schema = Schema((
     ),
     BooleanField(
         name='deferredNotificationsHandling',
-        default= defValues.deferredNotificationsHandling,
+        default=defValues.deferredNotificationsHandling,
         widget=BooleanField._properties['widget'](
             description="DeferredNotificationsHandling",
             description_msgid="deferred_notifs_handling_descr",
@@ -343,7 +344,7 @@ schema = Schema((
     ),
     BooleanField(
         name='enableUserPreferences',
-        default= defValues.enableUserPreferences,
+        default=defValues.enableUserPreferences,
         widget=BooleanField._properties['widget'](
             description="EnableUserPreferences",
             description_msgid="enable_user_preferences_descr",
@@ -354,7 +355,7 @@ schema = Schema((
     ),
     DateTimeField(
         name='siteStartDate',
-        default= defValues.siteStartDate,
+        default=defValues.siteStartDate,
         widget=DateTimeField._properties['widget'](
             description="SiteStartDate",
             description_msgid="site_start_date_descr",
@@ -365,7 +366,7 @@ schema = Schema((
     ),
     IntegerField(
         name='maxSearchResults',
-        default= defValues.maxSearchResults,
+        default=defValues.maxSearchResults,
         widget=IntegerField._properties['widget'](
             description="MaxSearchResults",
             description_msgid="max_search_results_descr",
@@ -377,7 +378,7 @@ schema = Schema((
     ),
     IntegerField(
         name='maxShownFoundItems',
-        default= defValues.maxShownFoundItems,
+        default=defValues.maxShownFoundItems,
         widget=IntegerField._properties['widget'](
             description="MaxShownFoundItems",
             description_msgid="max_shown_found_items_descr",
@@ -389,7 +390,7 @@ schema = Schema((
     ),
     IntegerField(
         name='maxShownFoundMeetings',
-        default= defValues.maxShownFoundMeetings,
+        default=defValues.maxShownFoundMeetings,
         widget=IntegerField._properties['widget'](
             description="MaxShownFoundMeetings",
             description_msgid="max_shown_found_meetings_descr",
@@ -401,7 +402,7 @@ schema = Schema((
     ),
     IntegerField(
         name='maxShownFoundAnnexes',
-        default= defValues.maxShownFoundAnnexes,
+        default=defValues.maxShownFoundAnnexes,
         widget=IntegerField._properties['widget'](
             description="MaxShownFoundAnnexes",
             description_msgid="max_shown_found_annexes_descr",
@@ -413,7 +414,7 @@ schema = Schema((
     ),
     BooleanField(
         name='showItemKeywordsTargets',
-        default= defValues.showItemKeywordsTargets,
+        default=defValues.showItemKeywordsTargets,
         widget=BooleanField._properties['widget'](
             description="ShowItemKeywordsTargets",
             description_msgid="show_item_keywords_targets_descr",
@@ -435,7 +436,7 @@ schema = Schema((
         schemata="pm_search",
         multiValued=1,
         vocabulary='listItemStates',
-        default= defValues.searchItemStates,
+        default=defValues.searchItemStates,
         enforceVocabulary=False,
     ),
 
@@ -470,7 +471,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     schema["title"].widget.visible = False
 
     ploneMeetingTypes = ('MeetingItem', 'MeetingFile')
-    __dav_marshall__ = True # Tool is folderish so normally it can't be
+    __dav_marshall__ = True  # Tool is folderish so normally it can't be
     # marshalled through WebDAV.
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
     hsLanguages = ['en', 'fr', 'de', 'nl', 'es']
@@ -514,7 +515,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def validate_unoEnabledPython(self, value):
         '''Checks if the given Python interpreter exists and is uno-enabled.'''
-        if not value: return
+        if not value:
+            return
         if not os.path.exists(value):
             return 'Path "%s" was not found.' % value
         if not os.path.isfile(value):
@@ -550,7 +552,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             sl = self.hsLanguages
             cookieNegotiation = 0
             requestNegotiation = 1
-        pl.manage_setLanguageSettings(defaultLanguage=sl[0],
+        pl.manage_setLanguageSettings(defaultLanguage=pl.getDefaultLanguage(),
             supportedLanguages=sl, setContentN=False,
             setCookieN=cookieNegotiation, setRequestN=requestNegotiation,
             setPathN=False, setForcelanguageUrls=True,
@@ -564,9 +566,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            "availableInterfaceLanguages", so we can get the splitted version
            of the field content.'''
         res = self.getField('availableInterfaceLanguages').get(self, **kwargs)
-        if not splitted or not res: return res
+        if not splitted or not res:
+            return res
         splitted = res.split(',')
-        if not names: return splitted
+        if not names:
+            return splitted
         return [nativeNames[name] for name in splitted]
 
     security.declarePublic('getActiveGroups')
@@ -583,7 +587,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if notEmptySuffix:
                     ploneGroupId = group.getPloneGroupId(suffix=notEmptySuffix)
                     zopeGroup = self.acl_users.getGroup(ploneGroupId)
-                    if len(zopeGroup.getMemberIds()): res.append(group)
+                    if len(zopeGroup.getMemberIds()):
+                        res.append(group)
                 else:
                     res.append(group)
         return res
@@ -620,17 +625,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         user = self.getUser(userId)
         groupIds = user.getGroups()
-        if active: mGroups = self.getActiveGroups()
-        else:      mGroups = self.objectValues('MeetingGroup')
+        if active:
+            mGroups = self.getActiveGroups()
+        else:
+            mGroups = self.objectValues('MeetingGroup')
         for mGroup in mGroups:
             for gSuffix in MEETING_GROUP_SUFFIXES:
-                if suffix and (suffix != gSuffix): continue
+                if suffix and (suffix != gSuffix):
+                    continue
                 groupId = mGroup.getPloneGroupId(gSuffix)
-                if groupId not in groupIds: continue
+                if groupId not in groupIds:
+                    continue
                 # If we are here, the user belongs to this group.
                 if not zope:
                     # Add the MeetingGroup
-                    if mGroup not in res: res.append(mGroup)
+                    if mGroup not in res:
+                        res.append(mGroup)
                 else:
                     # Add the Zope/Plone group
                     res.append(self.portal_groups.getGroupById(groupId))
@@ -642,7 +652,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            group.'''
         user = self.getUser()
         for groupId in user.getGroups():
-            if groupId.endswith('_%s' % suffix): return True
+            if groupId.endswith('_%s' % suffix):
+                return True
 
     security.declarePublic('getPloneMeetingFolder')
     def getPloneMeetingFolder(self, meetingConfigId, userId=None):
@@ -651,7 +662,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            meetings" folder) do not exist, they are created.'''
         portal = getToolByName(self, 'portal_url').getPortalObject()
         home_folder = portal.portal_membership.getHomeFolder(userId)
-        if home_folder is None: # Necessary for the admin zope user
+        if home_folder is None:  # Necessary for the admin zope user
             return portal
         if not hasattr(aq_base(home_folder), ROOT_FOLDER):
             # Create the "My meetings" folder
@@ -701,7 +712,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         errors = cfg.schema.validate(cfg)
         if errors:
             raise PloneMeetingError(MEETING_CONFIG_ERROR % cfg.getId(), errors)
-        cfg._at_creation_flag = False # It seems that this flag,
+        cfg._at_creation_flag = False  # It seems that this flag,
         # internal to Archetypes, is not set when the meeting config is
         # created from code, not through-the-web. So we force it here.
         # This way, once we will update the meeting config through-the-web,
@@ -712,11 +723,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not configData.active:
             self.portal_workflow.doActionFor(cfg, 'deactivate')
         # Adds the sub-objects within the config: categories, classifiers,...
-        for descr in configData.categories: cfg.addCategory(descr, False)
-        for descr in configData.classifiers: cfg.addCategory(descr, True)
-        for descr in configData.recurringItems: cfg.addRecurringItem(descr)
-        for descr in configData.meetingFileTypes: cfg.addFileType(descr, source)
-        for descr in configData.podTemplates: cfg.addPodTemplate(descr, source)
+        for descr in configData.categories:
+            cfg.addCategory(descr, False)
+        for descr in configData.classifiers:
+            cfg.addCategory(descr, True)
+        for descr in configData.recurringItems:
+            cfg.addRecurringItem(descr)
+        for descr in configData.meetingFileTypes:
+            cfg.addFileType(descr, source)
+        for descr in configData.podTemplates:
+            cfg.addPodTemplate(descr, source)
         for mud in configData.meetingUsers:
             mu = cfg.addMeetingUser(mud, source)
             # Plone bug - index "usages" is not correctly initialized.
@@ -822,7 +838,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def forJs(self, s):
         '''Returns p_s that can be inserted into a Javascript variable,
            without (double-)quotes problems.'''
-        if not s: return ''
+        if not s:
+            return ''
         res = s.replace('"', r'\"')
         res = res.replace("'", r"\'")
         res = res.replace('&nbsp;', ' ')
@@ -849,9 +866,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Is the current user a PloneMeeting user (ie, does it have at least
            one of the roles used in PloneMeeting ?'''
         user = self.portal_membership.getAuthenticatedMember()
-        if not user: return
+        if not user:
+            return
         for role in user.getRoles():
-            if role in ploneMeetingRoles: return True
+            if role in ploneMeetingRoles:
+                return True
         # or maybe this is a user in a _powerobservers group
         for groupId in user.getGroups():
             if groupId.endswith(POWEROBSERVERS_GROUP_SUFFIX):
@@ -929,9 +948,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if self.getUsedColorSystem() == "modification_color":
             member = self.portal_membership.getAuthenticatedMember()
             memberId = member.getId()
-            if not self.accessInfo.has_key(memberId):
+            if not memberId in self.accessInfo:
                 self.accessInfo[memberId] = OOBTree()
-            self.accessInfo[memberId][uid] = DateTime() # Now
+            self.accessInfo[memberId][uid] = DateTime()  # Now
             if commitNeeded:
                 transaction.commit()
 
@@ -943,7 +962,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         neverConsulted = False
         member = self.portal_membership.getAuthenticatedMember()
         memberId = member.getId()
-        if self.accessInfo.has_key(memberId):
+        if memberId in self.accessInfo:
             accessInfo = self.accessInfo[memberId]
             if accessInfo.has_key(uid):
                 res = accessInfo[uid] > objModifDate
@@ -970,9 +989,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''This method highlights parts of p_text corresponding to keywords if
            keywords are found in search params in the session.'''
         searchParams = self.REQUEST.SESSION.get('searchParams', None)
-        if not searchParams: return text
+        if not searchParams:
+            return text
         keywords = searchParams.get('keywords', None)
-        if not keywords: return text
+        if not keywords:
+            return text
         for word in keywords.strip().split():
             sWord = word.strip(' *').lower()
             for variant in (sWord, sWord.capitalize(), sWord.upper()):
@@ -1008,8 +1029,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             url = obj.absolute_url()
             content = contentValue or obj.getName()
             title = content
-            if maxLength: content = self.truncate(content, maxLength)
-            if highlight: content = self.highlight(content)
+            if maxLength:
+                content = self.truncate(content, maxLength)
+            if highlight:
+                content = self.highlight(content)
             # Display trailing icons if it is a MeetingItem
             if objClassName == "MeetingItem":
                 icons = obj.adapted().getIcons(inMeeting, meeting)
@@ -1038,12 +1061,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             url = portal_url + '/' + obj['url']
             content = contentValue or obj['Title']
             title = content
-            if showIcon: content = '<img src="%s"/><b>1</b>' % (portal_url + '/' + obj['iconUrl'])
+            if showIcon:
+                content = '<img src="%s"/><b>1</b>' % (portal_url + '/' + obj['iconUrl'])
             else:
-                if maxLength: content = self.truncate(content, maxLength)
-                if highlight: content = self.highlight(content)
+                if maxLength:
+                    content = self.truncate(content, maxLength)
+                if highlight:
+                    content = self.highlight(content)
         tg = target
-        if target: tg = ' target="%s"' % target
+        if target:
+            tg = ' target="%s"' % target
         if not showColors:
             # We do not want to colorize the link, we just return a classical
             # link. We apply the 'pmNoNewContent" id so the link is not colored.
@@ -1203,7 +1230,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             # The doc must be computed by POD. So call POD.
             forBrowser = True
-            if mailingList: forBrowser = False
+            if mailingList:
+                forBrowser = False
             res = podTemplate.generateDocument(obj, itemUids, forBrowser)
             if mailingList:
                 podTemplate.sendDocument(obj, res, mailingList)
@@ -1282,7 +1310,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             p_ploneGroupId.'''
         ploneGroup = self.portal_groups.getGroupById(ploneGroupId)
         props = ploneGroup.getProperties()
-        if props.has_key('meetingGroupId') and props['meetingGroupId']:
+        if 'meetingGroupId' in props and props['meetingGroupId']:
             return getattr(self.aq_base, props['meetingGroupId'], None)
 
     security.declarePublic('getMeetingGroupsForSearch')
@@ -1305,7 +1333,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     duplicatesExist = True
                     resItem[0] += '*' + meetingGroup.id
             if not alreadyThere:
-                res.append( [meetingGroup.id, groupName] )
+                res.append([meetingGroup.id, groupName])
         return res, duplicatesExist
 
     security.declarePublic('getItemsList')
@@ -1323,23 +1351,26 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             batchSize = meetingConfig.getMaxShownAvailableItems()
             res = [b.getObject() for b in meeting.adapted().getAvailableItems()]
             totalNbOfItems = len(res)
-            if batchSize and (totalNbOfItems>batchSize):
-                if startNumber > totalNbOfItems: startNumber = 1
-            endNumber = min(startNumber + batchSize - 1,totalNbOfItems)
-            res = res[startNumber-1:endNumber]
+            if batchSize and (totalNbOfItems > batchSize):
+                if startNumber > totalNbOfItems:
+                    startNumber = 1
+            endNumber = min(startNumber + batchSize - 1, totalNbOfItems)
+            res = res[startNumber - 1:endNumber]
         elif whichItems == 'meetingItems':
             batchSize = meetingConfig.getMaxShownMeetingItems()
             res = meeting.getItemsInOrder(batchSize=batchSize,
                                           startNumber=startNumber)
             totalNbOfItems = len(meeting.getRawItems())
-            if res: firstBatchNumber = res[0].getItemNumber()
+            if res:
+                firstBatchNumber = res[0].getItemNumber()
         elif whichItems == 'lateItems':
             batchSize = meetingConfig.getMaxShownLateItems()
             res = meeting.getItemsInOrder(batchSize=batchSize,
                                           startNumber=startNumber, late=True)
             totalNbOfItems = len(meeting.getRawLateItems())
-            firstNumber = len(meeting.getRawItems())+1
-            if res: firstBatchNumber =res[0].getItemNumber(relativeTo='meeting')
+            firstNumber = len(meeting.getRawItems()) + 1
+            if res:
+                firstBatchNumber = res[0].getItemNumber(relativeTo='meeting')
         return res, totalNbOfItems, batchSize, firstNumber, firstBatchNumber
 
     security.declarePublic('triggerTransition')
@@ -1428,7 +1459,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Decode parameters from the request
         params = {}
         for param, value in self.REQUEST.form.iteritems():
-            if param == 'do': continue
+            if param == 'do':
+                continue
             decodedParam, decodedValue = self._decodeParam(param, value)
             params[decodedParam] = decodedValue
         res = self.portal_catalog(**params)
@@ -1493,10 +1525,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 raise
             except:
                 raise PloneMeetingError, 'Could not copy.'
-            if newItem.__class__.__name__ != "MeetingItem": continue
+            if newItem.__class__.__name__ != "MeetingItem":
+                continue
             # Let the logged user do everything on the newly created item
             newItem.manage_addLocalRoles(loggedUserId, ('Manager',))
-            newItem.setCreators( (newOwnerId,) )
+            newItem.setCreators((newOwnerId,))
             # The creation date is kept, redefine it
             newItem.setCreationDate(DateTime())
 
@@ -1513,7 +1546,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
             # Set fields not in the copyFields list to their default value
             #'id' and  'proposingGroup' will be kept in anyway
-            fieldsToKeep = ['id', 'proposingGroup',] + copyFields
+            fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
             for field in newItem.Schema().filterFields(isMetadata=False):
                 if not field.getName() in fieldsToKeep:
                     # Set the field to his default value
@@ -1594,6 +1627,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getSpecificMailContext')
     def getSpecificMailContext(self, event, translationMapping):
         '''See doc in interfaces.py.'''
+
     security.declarePublic('deleteObjectsByPaths')
     def deleteObjectsByPaths(self, paths):
         '''This method is used by the meetingfolder_view. We receive a list of
@@ -1637,7 +1671,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = None
         indexKey = httpCookie.find(key)
         if indexKey != -1:
-            res = httpCookie[indexKey+len(key)+1:]
+            res = httpCookie[indexKey + len(key) + 1:]
             sepIndex = res.find(';')
             if sepIndex != -1:
                 res = res[:sepIndex]
@@ -1655,7 +1689,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Adds a new Plone user from p_userData which is a UserDescriptor
            instance if it does not already exist.'''
         usersDb = self.acl_users.source_users
-        if usersDb.getUserById(userData.id): return # Already exists.
+        if usersDb.getUserById(userData.id):
+            return  # Already exists.
         self.portal_registration.addMember(userData.id, userData.password,
             ['Member'] + userData.globalRoles,
             properties={'username': userData.id, 'email': userData.email,
@@ -1682,7 +1717,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             userInfo = userIdOrInfo
         # We return None if the user does not exist or has no defined email.
-        if not userInfo or not userInfo.getProperty('email'): return None
+        if not userInfo or not userInfo.getProperty('email'):
+            return None
         # Compute the mail recipient string
         if userInfo.getProperty('fullname'):
             name = userInfo.getProperty('fullname').decode(enc)
@@ -1709,7 +1745,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # See note on _at_creation_flag attr below.
                 group.at_post_create_script()
             # Create users
-            for userDescr in groupDescr.getUsers(): self.addUser(userDescr)
+            for userDescr in groupDescr.getUsers():
+                self.addUser(userDescr)
             # Add users in the correct Plone groups.
             for groupSuffix in MEETING_GROUP_SUFFIXES:
                 groupId = group.getPloneGroupId(groupSuffix)
@@ -1721,7 +1758,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 self.portal_workflow.doActionFor(group, 'deactivate')
         # Create users that are outside any PloneMeeting group (like WebDAV
         # users)
-        for userDescr in usersOutsideGroups: self.addUser(userDescr)
+        for userDescr in usersOutsideGroups:
+            self.addUser(userDescr)
 
     security.declarePublic('attributeIsUsed')
     def attributeIsUsed(self, objectType, attrName):
@@ -1765,15 +1803,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
              prepended to the result.'''
         # Get the date to format. aDate may have different formats: it may be
         # a DateTime instance, a string or a meeting brain.
-        if isinstance(aDate, basestring): aDate = DateTime(aDate)
+        if isinstance(aDate, basestring):
+            aDate = DateTime(aDate)
         elif aDate.__class__.__name__ == 'mybrains':
             # It is a meeting brain, take the 'getDate' metadata
             aDate = aDate.getDate
         elif aDate.__class__.__name__ == 'FakeBrain':
             aDate = aDate.Date
         # Get the format for the rendering of p_aDate
-        if short: fmt = '%d/%m/%Y'
-        else:     fmt = self.getDateFormat()
+        if short:
+            fmt = '%d/%m/%Y'
+        else:
+            fmt = self.getDateFormat()
         if withHour and (aDate._hour or aDate._minute):
             fmt += ' (%H:%M)'
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to
@@ -1823,10 +1864,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if guard.groups:
             # Require at least one of the specified groups.
             u = sm.getUser()
-            b = aq_base( u )
-            if hasattr( b, 'getGroupsInContext' ):
-                u_groups = u.getGroupsInContext( ob )
-            elif hasattr( b, 'getGroups' ):
+            b = aq_base(u)
+            if hasattr(b, 'getGroupsInContext'):
+                u_groups = u.getGroupsInContext(ob)
+            elif hasattr(b, 'getGroups'):
                 u_groups = u.getGroups()
             else:
                 u_groups = ()
@@ -1854,15 +1895,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         # Get the workflow definition for p_obj.
         workflows = self.portal_workflow.getWorkflowsFor(obj)
-        if not workflows: return res
+        if not workflows:
+            return res
         workflow = workflows[0]
         # What is the current state for this object?
         currentState = workflow._getWorkflowStateOf(obj)
-        if not currentState: return res
+        if not currentState:
+            return res
         # Get the transitions to confirm from the config.
         cfg = self.getMeetingConfig(obj)
-        if cfg: toConfirm = cfg.getTransitionsToConfirm()
-        else: toConfirm = []
+        if cfg:
+            toConfirm = cfg.getTransitionsToConfirm()
+        else:
+            toConfirm = []
         # Analyse all the transitions that start from this state.
         for transitionId in currentState.transitions:
             transition = workflow.transitions.get(transitionId, None)
@@ -1886,7 +1931,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         'confirm': preName in toConfirm,
                         'url': transition.actbox_url %
                                {'content_url': obj.absolute_url(),
-                                'portal_url' : '', 'folder_url' : ''}
+                                'portal_url': '',
+                                'folder_url': ''}
                     }
                     if not mayTrigger:
                         tInfo['may_trigger'] = False
@@ -1898,9 +1944,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getMaxShownFound(self, objectType):
         '''Gets the maximum nummber of shown items, annexes or meetings in
            lists.'''
-        if   objectType == 'MeetingItem': return self.getMaxShownFoundItems()
-        elif objectType == 'Meeting':     return self.getMaxShownFoundMeetings()
-        elif objectType == 'MeetingFile': return self.getMaxShownFoundAnnexes()
+        if   objectType == 'MeetingItem':
+            return self.getMaxShownFoundItems()
+        elif objectType == 'Meeting':
+            return self.getMaxShownFoundMeetings()
+        elif objectType == 'MeetingFile':
+            return self.getMaxShownFoundAnnexes()
         else: return 20
 
     security.declarePublic('showToggleDescriptions')
@@ -1937,8 +1986,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # If we are on a meeting return True
         rq = context.REQUEST
         cfg = context.portal_plonemeeting.getMeetingConfig(context)
-        if not cfg: return
-        if 'attendees' not in cfg.getUsedMeetingAttributes(): return
+        if not cfg:
+            return
+        if 'attendees' not in cfg.getUsedMeetingAttributes():
+            return
         if context.getLayout() in ('meeting_view', 'meetingitem_view'):
             res = not rq['ACTUAL_URL'].endswith('_edit') and \
                   not rq['ACTUAL_URL'].endswith('_form')
@@ -1970,13 +2021,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if i != -1:
             # Yes. So in the URL keep only the site name within
             # VirtualHostBase/.../VirtualHostRoot
-            siteUrl = pathInfo[i+16: pathInfo.find('VirtualHostRoot')-1]
+            siteUrl = pathInfo[i + 16:pathInfo.find('VirtualHostRoot') - 1]
             baseName = self.vhRex.search(siteUrl).group(1).strip('/')
             if baseName:
                 pathInfo = '/' + baseName
             else:
                 # We have to find the basename after "VirtualHostBase".
-                pathInfo = pathInfo[pathInfo.find('VirtualHostRoot')+15:]
+                pathInfo = pathInfo[pathInfo.find('VirtualHostRoot') + 15:]
                 if pathInfo.startswith('/_vh_'):
                     pathInfo = pathInfo.replace('/_vh_', '/')
         # Is the path of the portal hidden in the URLs ? (ie the PloneSite is
@@ -1984,7 +2035,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         portalPath = self.portal_url.getPortalPath()
         if pathInfo.startswith(portalPath):
             pathInfo = pathInfo[len(portalPath):]
-        if pathInfo.strip('/') in ('','login_form','logged_out','login_failed'):
+        if pathInfo.strip('/') in ('','login_form', 'logged_out', 'login_failed'):
             return False
         return True
 
@@ -1993,14 +2044,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Gets the language (code) of the current user.'''
         # Try first the "LANGUAGE" key from the request
         res = self.REQUEST.get('LANGUAGE', None)
-        if res: return res
+        if res:
+            return res
         # Try then the HTTP_ACCEPT_LANGUAGE key from the request, which stores
         # language preferences as defined in the user's browser. Several
         # languages can be listed, from most to less wanted.
         res = self.REQUEST.get('HTTP_ACCEPT_LANGUAGE', None)
-        if not res: return 'en'
-        if ',' in res: res = res[:res.find(',')]
-        if '-' in res: res = res[:res.find('-')]
+        if not res:
+            return 'en'
+        if ',' in res:
+            res = res[:res.find(',')]
+        if '-' in res:
+            res = res[:res.find('-')]
         return res
 
     security.declareProtected('Manage portal', 'notify')
@@ -2013,7 +2068,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if self.getDeferredNotificationsHandling():
             # We do not handle the event now: we add a nightwork.
             self.addNightWork(event, 'notification',
-                              {'objectUrl':objUrl, 'event':event})
+                              {'objectUrl': objUrl,
+                               'event': event})
             logger.info('Added night work for it. Will be handled  this night.')
         else:
             # Handle it now.
@@ -2022,21 +2078,24 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('onNotify')
     def onNotify(self, objectUrl, event):
         '''See doc in interfaces.py.'''
+
     security.declarePrivate('addNightWork')
     def addNightWork(self, action, type, params):
         '''Adds a new nightwork. See class NightWork in utils.py for a
            description of what a nightwork is.'''
         # Create the list of nightworks if it does not exist yet.
-        if not hasattr(self, 'nightWorks'): self.nightWorks = PersistentList()
+        if not hasattr(self, 'nightWorks'):
+            self.nightWorks = PersistentList()
         self.nightWorks.append(NightWork(action, type, params))
 
     security.declareProtected('Modify portal content', 'getNightInfo')
     def getNightInfo(self):
         '''Gets information about the nightworks registered for next night.'''
-        res = {'count': 0, 'msg':''}
-        if not hasattr(self, 'nightWorks') or not self.nightWorks: return res
+        res = {'count': 0, 'msg': ''}
+        if not hasattr(self, 'nightWorks') or not self.nightWorks:
+            return res
         res['count'] = len(self.nightWorks)
-        res['msg'] = translate('night_works', mapping={'nb':res['count']},
+        res['msg'] = translate('night_works', mapping={'nb': res['count']},
                                domain='PloneMeeting', context=self.REQUEST)
         return res
 
@@ -2048,14 +2107,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            NightWork.params. Query is performed with a logical AND between
            keywords.
         '''
-        if not hasattr(self, 'nightWorks') or not self.nightWorks: return
+        if not hasattr(self, 'nightWorks') or not self.nightWorks:
+            return
         for nightWork in self.nightWorks:
-            if nightWork.matches(kw): return True
+            if nightWork.matches(kw):
+                return True
 
     security.declareProtected('Modify portal content', 'onDeleteNightWorks')
     def onDeleteNightWorks(self):
         '''Deletes all the nightworks.'''
-        while self.nightWorks: self.nightWorks.remove(self.nightWorks[0])
+        while self.nightWorks:
+            self.nightWorks.remove(self.nightWorks[0])
         return self.gotoReferer()
 
     security.declarePrivate('nightlife')
@@ -2078,8 +2140,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 nightWork.perform(self)
                 performed.insert(0, i)
             except Exception, e:
-                w('Night work failed. %s: %s' %(e.__class__.__name__,str(e)))
-        for i in performed: del self.nightWorks[i]
+                w('Night work failed. %s: %s' % (e.__class__.__name__, str(e)))
+        for i in performed:
+            del self.nightWorks[i]
         if self.nightWorks:
             w('%d nighwork(s) failed. HS will try to execute them again ' \
               'next night.' % len(self.nightWorks))
@@ -2096,8 +2159,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the list of Plone users (with their encrypted passwords).
            Only available to role "MeetingArchiveObserver".'''
         user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('MeetingArchiveObserver'): raise 'Unauthorized'
-        class FakeUser: pass
+        if not user.has_role('MeetingArchiveObserver'):
+            raise 'Unauthorized'
+        class FakeUser:
+            pass
         usersDb = self.acl_users.source_users
         res = []
         for userId in usersDb.getUserIds():
@@ -2112,7 +2177,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def reindexAnnexes(self):
         '''Reindexes all annexes.'''
         user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'): return
+        if not user.has_role('Manager'):
+            return
         for b in self.portal_catalog(meta_type='MeetingItem'):
             b.getObject().updateAnnexIndex()
         self.plone_utils.addPortalMessage('Done.')
@@ -2123,12 +2189,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Update all advices to take change in the advices
            configuration into account if necessary.'''
         user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'): return
+        if not user.has_role('Manager'):
+            return
         for b in self.portal_catalog(meta_type='MeetingItem'):
             obj = b.getObject()
             obj.updateAdvices()
             # Update security as local_roles are set by updateAdvices
-            obj.reindexObject(idxs=['allowedRolesAndUsers',])
+            obj.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
@@ -2136,12 +2203,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def updatePowerObservers(self):
         '''Update local_roles regargind the PowerObservers for every meetings and items.'''
         user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'): return
+        if not user.has_role('Manager'):
+            return
         for b in self.portal_catalog(meta_type=('Meeting', 'MeetingItem')):
             obj = b.getObject()
             obj.updatePowerObserversLocalRoles()
             # Update security
-            obj.reindexObject(idxs=['allowedRolesAndUsers',])
+            obj.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
@@ -2150,10 +2218,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Deletes all archived meetings, including items and annexes, whose
            date is earlier than siteStartDate.'''
         user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'): return
-        if not self.getSiteStartDate(): return
+        if not user.has_role('Manager'):
+            return
+        if not self.getSiteStartDate():
+            return
         # Get all archived meetings
-        dateQuery = {'query': self.getSiteStartDate(), 'range':'max'}
+        dateQuery = {'query': self.getSiteStartDate(), 'range': 'max'}
         brains = self.portal_catalog(meta_type='Meeting', sort_on='getDate',
                                      review_state='archived', getDate=dateQuery)
         if not brains:
@@ -2161,7 +2231,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             # Tell the delete script that we perform complete meeting deletions
             self.REQUEST.set('wholeMeeting', True)
-            for brain in brains: self.delete_givenuid(brain.UID)
+            for brain in brains:
+                self.delete_givenuid(brain.UID)
             logger.info('Done.')
         self.gotoReferer()
 
@@ -2172,7 +2243,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # In some specific cases (ie, when switching language), p_form is empty
         # (or does only contain a single key) and must not be saved: we suppose
         # a form was previously saved in the session.
-        if len(form) <= 1: return
+        if len(form) <= 1:
+            return
         self.REQUEST.SESSION['searchParams'] = form.copy()
 
     security.declarePublic('truncate')
@@ -2225,4 +2297,3 @@ registerType(ToolPloneMeeting, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-
