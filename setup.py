@@ -33,7 +33,8 @@ setup(name='Products.PloneMeeting',
           'Plone',
           'Pillow',
           'testfixtures',
-          'communesplone.iconified_document_actions',],
+          'communesplone.iconified_document_actions',
+          'imio.pm.locales',],
       entry_points={},
       )
 
