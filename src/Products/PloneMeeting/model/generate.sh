@@ -1,5 +1,9 @@
 #!/bin/sh
 /srv/archgenxml/agxtrunk/bin/archgenxml --cfg generate.conf PloneMeeting.zargo -o ..
 
-# remove the uselessly created 'locales' now managed by imio.pm.locales
+echo "Removing useless 'locales' folder managed by imio.pm.locales"
 rm -rf ../locales
+echo "Removing 'locales' registration from configure.zcml"
+sed '/registerTranslations/d' ../configure.zcml >> ../tmp.zcml
+rm ../configure.zcml
+mv ../tmp.zcml ../configure.zcml
