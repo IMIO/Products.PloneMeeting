@@ -43,6 +43,7 @@ MAILINGLIST_CONDITION_ERROR = 'There was an error in the TAL expression ' \
     'defining if the mailinglist with title \'%s\' should be available. ' \
     'Returned error is : \'%s\''
 
+
 # Marshaller -------------------------------------------------------------------
 class PodTemplateMarshaller(HubSessionsMarshaller):
     '''Allows to marshall a POD template into a XML file.'''
@@ -190,10 +191,10 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
     schema = PodTemplate_schema
 
     ##code-section class-header #fill in your manual code here
-    podFormats = ( ("doc", "Microsoft Word"),
-                   ("odt", "Open Document Format (text)"),
-                   ("rtf", "Rich Text Format (RTF)"),
-                   ("pdf", "Adobe PDF") )
+    podFormats = (("doc", "Microsoft Word"),
+                  ("odt", "Open Document Format (text)"),
+                  ("rtf", "Rich Text Format (RTF)"),
+                  ("pdf", "Adobe PDF"))
     BAD_CONDITION = 'POD template "%s" (%s): wrong condition "%s" (%s).'
     BAD_MAILINGLIST = "This document can't be sent."
     ##/code-section class-header
@@ -215,7 +216,7 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
     def listPodPermissions(self):
         res = []
         for permission in self.portal_controlpanel.possible_permissions():
-            res.append( (permission, permission) )
+            res.append((permission, permission))
         return DisplayList(tuple(res))
 
     security.declarePublic('isApplicable')
@@ -230,7 +231,7 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
                 isAllowed = False
                 break
         if isAllowed:
-            res = True # At least for now
+            res = True  # At least for now
             # Check condition
             if self.getPodCondition().strip():
                 portal = getToolByName(self, 'portal_url').getPortalObject()
@@ -256,7 +257,7 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
         res = False
         if obj.meta_type == 'Meeting':
             res = obj.adapted().isDecided()
-        else: # It is a meeting item
+        else:  # It is a meeting item
             if obj.hasMeeting() and obj.getMeeting().adapted().isDecided():
                 res = True
         return res
@@ -297,9 +298,9 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
                       'podTemplate': self
                       }
         podContext.update(obj.adapted().getSpecificDocumentContext())
-        rendererParams = { 'template': StringIO(self.getPodTemplate()),
-                           'context': podContext,
-                           'result': tempFileName }
+        rendererParams = {'template': StringIO(self.getPodTemplate()),
+                          'context': podContext,
+                          'result': tempFileName}
         if tool.getUnoEnabledPython():
             rendererParams['pythonWithUnoPath'] = tool.getUnoEnabledPython()
         if tool.getOpenOfficePort():
@@ -343,12 +344,15 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
         recipients = []
         for line in self.getMailingLists().strip().split('\n'):
             name, condition, userIds = line.split(';')
-            if name != mailingList: continue
+            if name != mailingList:
+                continue
             for userId in userIds.strip().split(','):
                 recipient = tool.getMailRecipient(userId)
-                if not recipient: continue
+                if not recipient:
+                    continue
                 recipients.append(recipient)
-        if not recipients: raise self.BAD_MAILINGLIST
+        if not recipients:
+            raise self.BAD_MAILINGLIST
         # Send the mail with the document as attachment
         docName = '%s.%s' % (self._getFileName(obj), self.getPodFormat())
         sendMail(recipients, obj, 'podByMail', attachments=[(docName, doc)])
@@ -375,7 +379,8 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.__class__.__name__ != 'PodTemplate': return self.context
+        if self.__class__.__name__ != 'PodTemplate':
+            return self.context
         return self
 
     security.declarePublic('adapted')
@@ -390,10 +395,11 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
     security.declarePrivate('validate_mailingLists')
     def validate_mailingLists(self, value):
         '''Validates the content of field "mailingList".'''
-        if not value or not value.strip(): return
+        if not value or not value.strip():
+            return
         for line in value.strip().split('\n'):
             if line.count(';') != 2:
-                return ' ' # Not empty, so the field is highlighted as erroneous
+                return ' '  # Not empty, so the field is highlighted as erroneous
 
     security.declarePublic('getAvailableMailingLists')
     def getAvailableMailingLists(self, obj, member):
@@ -401,7 +407,8 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
            this template.'''
         res = []
         mailingInfo = self.getMailingLists().strip()
-        if not mailingInfo: return res
+        if not mailingInfo:
+            return res
         for line in mailingInfo.split('\n'):
             name, condition, userIds = line.split(';')
             data = {
@@ -425,6 +432,8 @@ registerType(PodTemplate, PROJECTNAME)
 ##code-section module-footer #fill in your manual code here
 CANT_WRITE_DOC = 'User "%s" was not authorized to create file "%s" ' \
                  'in folder "%s" from template "%s".'
+
+
 def freezePodDocumentsIfRelevant(obj, transition):
     '''p_transitions just occurred on p_obj. Is there any document that needs
        to be generated in the database from a POD template?'''
@@ -461,4 +470,3 @@ def freezePodDocumentsIfRelevant(obj, transition):
                     logger.warn(CANT_WRITE_DOC % (
                         user.id, fileId, folder.absolute_url(), podTemplate.id))
 ##/code-section module-footer
-
