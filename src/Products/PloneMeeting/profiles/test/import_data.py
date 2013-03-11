@@ -69,17 +69,17 @@ itemTemplate.podTemplate = 'Item.odt'
 itemTemplate.podCondition = 'python:here.meta_type=="MeetingItem"'
 
 # Test users and groups
-pmManager = UserDescriptor('pmManager', ['MeetingManager'])
-pmCreator1 = UserDescriptor('pmCreator1', [])
-pmCreator1b = UserDescriptor('pmCreator1b', [])
-pmReviewer1 = UserDescriptor('pmReviewer1', [])
-pmCreator2 = UserDescriptor('pmCreator2', [])
-pmReviewer2 = UserDescriptor('pmReviewer2', [])
-pmAdviser1 = UserDescriptor('pmAdviser1', [])
-voter1 = UserDescriptor('voter1', [], fullname='M. Voter One')
-voter2 = UserDescriptor('voter2', [], fullname='M. Voter Two')
-powerobserver1 = UserDescriptor('powerobserver1', [], fullname='M. Power Observer1')
-powerobserver2 = UserDescriptor('powerobserver2', [], fullname='M. Power Observer2')
+pmManager = UserDescriptor('pmManager', ['MeetingManager'], email="pmmanager@plonemeeting.org", fullname='M. PMManager')
+pmCreator1 = UserDescriptor('pmCreator1', [], email="pmcreator1@plonemeeting.org", fullname='M. PMCreator One')
+pmCreator1b = UserDescriptor('pmCreator1b', [], email="pmcreator1b@plonemeeting.org", fullname='M. PMCreator One bee')
+pmReviewer1 = UserDescriptor('pmReviewer1', [], email="pmreviewer1@plonemeeting.org", fullname='M. PMReviewer One')
+pmCreator2 = UserDescriptor('pmCreator2', [], email="pmcreator2@plonemeeting.org", fullname='M. PMCreator Two')
+pmReviewer2 = UserDescriptor('pmReviewer2', [], email="pmreviewer2@plonemeeting.org", fullname='M. PMReviewer Two')
+pmAdviser1 = UserDescriptor('pmAdviser1', [], email="pmadviser1@plonemeeting.org", fullname='M. PMAdviser One')
+voter1 = UserDescriptor('voter1', [], email="voter1@plonemeeting.org", fullname='M. Voter One')
+voter2 = UserDescriptor('voter2', [], email="voter2@plonemeeting.org", fullname='M. Voter Two')
+powerobserver1 = UserDescriptor('powerobserver1', [], email="powerobserver1@plonemeeting.org", fullname='M. Power Observer1')
+powerobserver2 = UserDescriptor('powerobserver2', [], email="powerobserver2@plonemeeting.org", fullname='M. Power Observer2')
 
 developers = GroupDescriptor('developers', 'Developers', 'Devel',
                              givesMandatoryAdviceOn='python:False')

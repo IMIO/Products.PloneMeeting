@@ -122,7 +122,7 @@ class PloneGroupDescriptor(Descriptor):
 class UserDescriptor(Descriptor):
     '''Useful for creating test users, so PloneMeeting may directly be tested
        after a profile has been imported.'''
-    def __init__(self, id, globalRoles, email='user AT hubsessions.org',
+    def __init__(self, id, globalRoles, email='user AT plonemeeting.org',
                  password='meeting', fullname=None):
         self.id = id
         self.globalRoles = globalRoles
@@ -361,7 +361,7 @@ class MeetingConfigDescriptor(Descriptor):
             'Meeting.republish', 'Meeting.backToCreated',
             # Some important MeetingItem transitions
             'MeetingItem.backToProposed', 'MeetingItem.backToItemCreated',
-            'MeetingItem.accept', 'MeetingItem.refuse', 'MeetingItem.delay', 
+            'MeetingItem.accept', 'MeetingItem.refuse', 'MeetingItem.delay',
             ]
         self.useCopies = False
         self.selectableCopyGroups = []
