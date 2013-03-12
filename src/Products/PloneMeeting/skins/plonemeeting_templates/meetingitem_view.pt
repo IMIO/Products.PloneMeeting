@@ -157,7 +157,7 @@
           </tal:hasMeeting>
           <span tal:condition="python: not meeting">-</span>
         </div>
-        
+
         <tal:comment replace="nothing">Other MeetingConfigs Clonable To</tal:comment>
         <div class="discreet"
              tal:condition="context/isClonableToOtherMeetingConfigs"
@@ -261,7 +261,7 @@
       <tal:comment replace="nothing">Advices</tal:comment>
       <td class="itemAdvicesCell" width="50%" tal:condition="hasAdvices">
        <fieldset style="margin: 0;" >
-        <legend i18n:translate="advices">Advices</legend>
+        <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
         <metal:advices use-macro="here/advices_macros/macros/advicesIcons"/>
        </fieldset>
       </td>
