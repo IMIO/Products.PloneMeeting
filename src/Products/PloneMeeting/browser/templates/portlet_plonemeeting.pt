@@ -23,20 +23,20 @@
          <img style="cursor:pointer"
               tal:condition="python: meetingConfig"
               tal:attributes="onClick python: 'href: window.location=\'%s\'' % meetingFolder.absolute_url();
-                              src string:$portal_url/home.gif;
+                              src string:$portal_url/pm_home.gif;
                               title meetingConfig/getName"/>
          <img style="cursor:pointer" title="hs_configuration" i18n:attributes="title"
               tal:condition="python: member.has_role('Manager')"
               tal:attributes="onClick python: 'href: window.location=\'%s\'' % tool.absolute_url();
-                              src string:$portal_url/appyConfig.gif"/>
+                              src string:$portal_url/pm_config.gif"/>
          <img style="cursor:pointer" title="user_preferences" i18n:attributes="title"
               tal:condition="python: not inTool and tool.getEnableUserPreferences()"
               tal:attributes="onClick python: 'href: window.location=\'%s/gotoPreferences\'' % meetingConfig.absolute_url();
-                              src string:$portal_url/preferences.png"/>
+                              src string:$portal_url/pm_preferences.png"/>
          <img tal:condition="not: inTool" style="cursor:pointer" title="search_advanced"
               i18n:attributes="title"
               tal:attributes="onClick python: 'href: window.location=\'%s/search_form\'' % meetingFolder.absolute_url();
-                              src string:$portal_url/search_button_icon.png"/>
+                              src string:$portal_url/pm_search.png"/>
      </div>
     </dt>
 
@@ -139,7 +139,7 @@
   </tal:links>
   </tal:meetings>
 
-  
+
   <tal:decisions condition="not: inTool">
   <tal:comment replace="nothing">Section: decisions</tal:comment>
   <tr><td class="portletSection" i18n:translate="portletdecisions_title">Decisions</td></tr>
