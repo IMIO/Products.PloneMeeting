@@ -54,16 +54,22 @@ class AddEditAdvice(BrowserView):
         if not self.initMeetingGroupId():
             self.request.RESPONSE.redirect(self.context.absolute_url())
         form = self.request.form
-        submitted = form.get('form.submitted', False)
+        cancelled = form.get('form.button.Cancel', False)
+        submitted = form.get('form.button.Save', False)
         if submitted:
             # proceed, call the private method MeetingItem.editAdvice(self, group, adviceType, comment):
-            group = getattr(self.meetingConfig.aq_inner.aq_parent, form.get('meetingGroupId')) 
+            group = getattr(self.meetingConfig.aq_inner.aq_parent, form.get('meetingGroupId'))
             self.context.editAdvice(group, form.get('adviceType'), form.get('comment'))
             # use form.HTTP_REFERER recorded on the form because it can be called
             # from a MeetingItem of from a table listing items
             self.request.response.redirect(form.get('form.HTTP_REFERER'))
             msg = self.context.utranslate('advice_edited', domain='PloneMeeting')
             self.context.plone_utils.addPortalMessage(msg)
+        elif cancelled:
+            # the only way to enter here is the popup overlay not to be shown
+            # because while using the popup overlay, the jQ function take care of hidding it
+            # while the Cancel button is hit
+            self.request.response.redirect(form.get('form.HTTP_REFERER'))
         return self.index()
 
     @memoize

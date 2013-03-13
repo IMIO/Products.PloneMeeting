@@ -26,12 +26,18 @@ class ConfirmTransitionView(BrowserView):
         if not self.initTransition():
             self.request.RESPONSE.redirect(self.context.absolute_url())
         form = self.request.form
-        # either we received form.submitted=False from the request because we are triggering
+        # either we received form.submitted in the request because we are triggering
         # a transition that does not need a confirmation or we clicked on the save button of
         # the confirmation popup
-        submitted = form.get('form.submitted', False)
+        submitted = form.get('form.button.Save', False) or form.get('form.submitted', False)
+        cancelled = form.get('form.button.Cancel', False)
         if submitted:
             self.tool.triggerTransition()
+        elif cancelled:
+            # the only way to enter here is the popup overlay not to be shown
+            # because while using the popup overlay, the jQ function take care of hidding it
+            # while the Cancel button is hit
+            self.request.response.redirect(form.get('form.HTTP_REFERER'))
         return self.index()
 
     @memoize

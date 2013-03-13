@@ -3,10 +3,9 @@
 // prepare overlays for normal (non-ajax) pages
 // like meetingitem_view or overlays that you can raise from the portlet_plonemeeting
 jQuery(function($){
-
-    // Add or edit advice popup
     $('a.link-overlay-pm').prepOverlay({
-       subtype: 'ajax',
+        subtype: 'ajax',
+        closeselector: '[name="form.button.Cancel"]',
    });
 
 });
@@ -23,19 +22,22 @@ function initializePMOverlays(){
 jQuery(function($) {
   // Add byebye user popup
   $('a.link-overlay-pm.byebye-overlay').prepOverlay({
-     subtype: 'ajax',
+        subtype: 'ajax',
+        closeselector: '[name="form.button.Cancel"]',
   });
 });
 jQuery(function($) {
   // Add advice popup
   $('a.link-overlay-pm.advice-overlay').prepOverlay({
-     subtype: 'ajax',
+        subtype: 'ajax',
+        closeselector: '[name="form.button.Cancel"]',
   });
 });
 jQuery(function($) {
   // Add transition confirmation popup
   $('a.link-overlay-pm.transition-overlay').prepOverlay({
-     subtype: 'ajax',
+        subtype: 'ajax',
+        closeselector: '[name="form.button.Cancel"]',
   });
 });
 // as this method is called on the onmousover event of the ajax-frame
