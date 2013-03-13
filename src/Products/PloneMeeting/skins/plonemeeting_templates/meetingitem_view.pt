@@ -109,13 +109,21 @@
              <span tal:content="python: ', '.join(context.getItemTags())"></span>
         </div>
         <tal:comment replace="nothing">Predecessor</tal:comment>
-        <div class="discreet" tal:define="predecessors python: context.adapted().getPredecessors()"
-                              tal:condition="predecessors">
-          <i><span i18n:translate="PloneMeeting_label_predecessor"></span></i>:&nbsp;&nbsp;
-             <tal:predecessors repeat="predecessor predecessors">
-              <tal:predecessor replace="structure predecessor" />
-             </tal:predecessors>
-        </div>
+        <table class="no-style-table"
+               tal:define="predecessors python: context.adapted().getPredecessors()"
+               tal:condition="predecessors">
+          <tr>
+            <td style="vertical-align: top;">
+              <div class="discreet">
+              <i><span i18n:translate="PloneMeeting_label_predecessor"></span></i>:&nbsp;&nbsp;
+              </div>
+            </td>
+            <td><tal:predecessors tal:repeat="predecessor predecessors">
+                 <tal:predecessor replace="structure predecessor" /><br />
+                </tal:predecessors>
+            </td>
+          </tr>
+        </table>
         <div class="discreet"
              tal:condition="python: 'itemIsSigned' in usedAttrs">
           <i><span i18n:translate="PloneMeeting_label_itemIsSigned"></span></i>:&nbsp;&nbsp;
