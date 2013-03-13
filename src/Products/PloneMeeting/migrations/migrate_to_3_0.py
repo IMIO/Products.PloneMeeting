@@ -61,13 +61,15 @@ class Migrate_To_3_0(Migrator):
            admin, because it converts it to a blob. From a PM point of view,
            it only concerns frozen documents.'''
         brains = self.portal.portal_catalog(meta_type='ATFile')
-        if not brains: return
+        if not brains:
+            return
         logger.info('Security fix: scanning %s ATFile objects...' % len(brains))
         user = self.portal.portal_membership.getAuthenticatedMember()
         patched = 0
         for brain in brains:
             fileObject = brain.getObject()
-            if user.has_permission('Delete objects', fileObject): continue
+            if user.has_permission('Delete objects', fileObject):
+                continue
             fileObject._Delete_objects_Permission = \
                 fileObject._Delete_objects_Permission + ('Manager',)
             patched += 1
@@ -223,7 +225,8 @@ class Migrate_To_3_0(Migrator):
                 raise Exception, "The wf '%s' defined on the '%s' meetingConfig does not exist?!" \
                                  % (cfg.getMeetingWorkflow(), cfg.getId())
             if 'decisions_published' in wf.transitions:
-                logger.info("The wf '%s' is already migrated (already contains the 'decisions_published' state) for the '%s' meetingConfig" % (wf.getId(), cfg.getId()))
+                logger.info("The wf '%s' is already migrated (already contains the 'decisions_published' state) "
+                            "for the '%s' meetingConfig" % (wf.getId(), cfg.getId()))
             # if the cfg contains the wfAdaptation and the wf is not already migrated, proceed
             brains = self.portal.portal_catalog(portal_type=cfg.getMeetingTypeName(), review_state='published')
             if not brains:
@@ -233,7 +236,8 @@ class Migrate_To_3_0(Migrator):
                 wf.manager_bypass=1
                 # set some value in the request that will be used by the triggerTransition method here under
                 self.portal.REQUEST.set('transition', 'backToDecided')
-                self.portal.REQUEST.set('comment', 'Set back to \'decided\' during migration to PM3.0 because actual state \'published\' does not exist anymore.')
+                self.portal.REQUEST.set('comment', "Set back to \'decided\' during migration to PM3.0 because actual "
+                                                   "state \'published\' does not exist anymore.")
                 for brain in brains:
                     obj = brain.getObject()
                     uid = obj.UID()
@@ -298,10 +302,10 @@ class Migrate_To_3_0(Migrator):
                 topicToUpdate.manage_changeProperties(topic_tal_expression="python: here.portal_plonemeeting.getMeetingConfig(here)." \
                                                     "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')")
             if '.getMeeting().getDate().' in cfg.getItemReferenceFormat():
-                cfg.setItemReferenceFormat(cfg.getItemReferenceFormat().replace(".getMeeting().getDate().",
-                                                                                ".restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate()."))
+                cfg.setItemReferenceFormat(
+                    cfg.getItemReferenceFormat().replace(".getMeeting().getDate().",
+                                                         ".restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate()."))
         logger.info('Done.')
-
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
@@ -316,7 +320,7 @@ class Migrate_To_3_0(Migrator):
                                  u'profile-plonetheme.imioapps:default',
                                  u'profile-plonetheme.imioapps:plonemeetingskin',])
         self._migrateStatePublishedToDecisionsPublished(uids)
-        
+
         # now continue with other migrations
         self._configureCKeditor()
         self._updateRegistries()
@@ -330,6 +334,7 @@ class Migrate_To_3_0(Migrator):
         # refresh portal_catalog so getDate metadata is updated
         self.refreshDatabase(catalogs=True, workflows=False)
         self.finish()
+
 
 # The migration function -------------------------------------------------------
 def migrate(context):
