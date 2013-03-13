@@ -18,8 +18,8 @@
                 portal_url tool/getSiteUrl;
                 member tool/getUser">
 
-    <dt class="portletHeader"><tal:app_name i18n:translate="app_name">PloneMeeting</tal:app_name>
-     <div style="float:right; display: inline; padding-right: 5px;">
+    <dt class="portletHeader"><tal:portlet_pm_header i18n:translate="portlet_pm_header_label">Manage</tal:portlet_pm_header>
+     <div class="portletPloneMeetingHeaderIcons">
          <img style="cursor:pointer"
               tal:condition="python: meetingConfig"
               tal:attributes="onClick python: 'href: window.location=\'%s\'' % meetingFolder.absolute_url();
