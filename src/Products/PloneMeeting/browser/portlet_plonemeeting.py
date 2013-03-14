@@ -46,7 +46,7 @@ class Renderer(base.Renderer):
     def available(self):
         '''Defines if the portlet is available in the context.'''
         tool = self.getPloneMeetingTool()
-        return tool.isInPloneMeeting(self.context, inTool=True) and tool.isPloneMeetingUser()
+        return tool.isInPloneMeeting(self.context, inTool=False) and tool.isPloneMeetingUser()
 
     def render(self):
         return self._template()
