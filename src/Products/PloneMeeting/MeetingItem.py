@@ -2441,6 +2441,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
+        # Check if some copyGroups must be automatically added before updateLocalRoles
+        # because specific localRoles are given to copyGroups
+        if self.isCopiesEnabled():
+            self.addAutoCopyGroups()
         self.updateLocalRoles()
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)

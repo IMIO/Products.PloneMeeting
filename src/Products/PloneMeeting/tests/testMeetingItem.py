@@ -547,6 +547,18 @@ class testMeetingItem(PloneMeetingTestCase):
         # some special localRoles are added for autoAddedCopyGroups
         self.failUnless('developers_reviewers' in i5.__ac_local_roles__.keys())
         self.failUnless('MeetingObserverLocalCopy' in i5.__ac_local_roles__['developers_reviewers'])
+        # addAutoCopyGroups is triggered upon each edit (at_post_edit_script)
+        self.meetingConfig.vendors.setAsCopyGroupOn(
+            "python: item.getProposingGroup() == 'vendors' and ['reviewers', ] or []")
+        # edit the item, 'vendors_reviewers' should be in the copyGroups of the item
+        i5.at_post_edit_script()
+        self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
+        # even if removed from the config, existing copyGroups are not changed
+        self.meetingConfig.vendors.setAsCopyGroupOn("")
+        i5.at_post_edit_script()
+        self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
+        # check that local_roles are correct
+        self.failUnless('MeetingObserverLocalCopy' in i5.__ac_local_roles__['vendors_reviewers'])
 
     def testUpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
