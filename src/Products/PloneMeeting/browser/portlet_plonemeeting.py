@@ -15,10 +15,12 @@ from Products.PloneMeeting.browser.itemtemplates import ItemTemplateView
 from zope.i18nmessageid import MessageFactory
 _ = MessageFactory('PloneMeeting')
 
+
 class IPloneMeetingPortlet(IPortletDataProvider):
-    """ 
+    """
       A portlet that shows controls of PloneMeeting
     """
+
 
 class Assignment(base.Assignment):
     implements(IPloneMeetingPortlet)
@@ -29,6 +31,7 @@ class Assignment(base.Assignment):
     @property
     def title(self):
         return _(u"PloneMeeting")
+
 
 class Renderer(base.Renderer):
 
@@ -43,10 +46,10 @@ class Renderer(base.Renderer):
     def available(self):
         '''Defines if the portlet is available in the context.'''
         tool = self.getPloneMeetingTool()
-        return tool.isPloneMeetingUser() and \
-               tool.isInPloneMeeting(self.context, inTool=True) \
+        return tool.isInPloneMeeting(self.context, inTool=True) and tool.isPloneMeetingUser()
 
-    def render(self): return self._template()
+    def render(self):
+        return self._template()
 
     def inTool(self):
         '''Are we in the tool?'''
@@ -81,6 +84,7 @@ class Renderer(base.Renderer):
         '''Check if there are item templates defined or not.'''
         return ItemTemplateView(self.context, self.request).getTemplateItems()
 
+
 class AddForm(base.AddForm):
     form_fields = form.Fields(IPloneMeetingPortlet)
     label = _(u"Add PloneMeeting Portlet")
@@ -88,6 +92,7 @@ class AddForm(base.AddForm):
 
     def create(self, data):
         return Assignment(**data)
+
 
 class EditForm(base.EditForm):
     form_fields = form.Fields(IPloneMeetingPortlet)

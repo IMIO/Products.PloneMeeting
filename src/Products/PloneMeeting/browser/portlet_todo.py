@@ -13,18 +13,23 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.i18nmessageid import MessageFactory
 _ = MessageFactory('PloneMeeting')
 
+
 class ITodoPortlet(IPortletDataProvider):
-    """ 
+    """
       A portlet that shows things to do
     """
-    batch_size = schema.Int(title=_(u'Number of items to display'),
-                            description=_(u'How many items to list in each topic.'),
-                            required=True,
-                            default=3)
-    title_length = schema.Int(title=_(u'Number of characters of the title to show'),
-                            description=_(u'Limit the number of shown characters of the title to avoid too long titles displayed in the portlet.'),
-                            required=True,
-                            default=45)
+    batch_size = schema.Int(
+        title=_(u'Number of items to display'),
+        description=_(u'How many items to list in each topic.'),
+        required=True,
+        default=3)
+    title_length = schema.Int(
+        title=_(u'Number of characters of the title to show'),
+        description=_(u'Limit the number of shown characters of the title to avoid too " \
+                      long titles displayed in the portlet.'),
+        required=True,
+        default=45)
+
 
 class Assignment(base.Assignment):
     implements(ITodoPortlet)
@@ -41,6 +46,7 @@ class Assignment(base.Assignment):
     def title(self):
         return _(u"To do")
 
+
 class Renderer(base.Renderer):
 
     _template = ViewPageTemplateFile('templates/portlet_todo.pt')
@@ -56,10 +62,23 @@ class Renderer(base.Renderer):
         """
           Defines if the portlet is available in the context
         """
-        return self.getPloneMeetingTool().showTodoPortlet(self.context)
+        return self.showTodoPortlet(self.context)
 
     def render(self):
         return self._template()
+
+    @memoize
+    def showTodoPortlet(self, context):
+        '''Must we show the portlet_todo ?'''
+        meetingConfig = self.getCurrentMeetingConfig()
+        if not meetingConfig:
+            return False
+        tool = self.getPloneMeetingTool()
+        if tool.isPloneMeetingUser() and tool.isInPloneMeeting(context) and \
+           (meetingConfig.getToDoListTopics()) and \
+           (meetingConfig.getTopicsForPortletToDo()):
+            return True
+        return False
 
     @memoize
     def getPloneMeetingTool(self):
@@ -113,7 +132,6 @@ class Renderer(base.Renderer):
         return self.data.title_length
 
 
-
 class AddForm(base.AddForm):
     form_fields = form.Fields(ITodoPortlet)
     label = _(u"Add Todo Portlet")
@@ -121,6 +139,7 @@ class AddForm(base.AddForm):
 
     def create(self, data):
         return Assignment(**data)
+
 
 class EditForm(base.EditForm):
     form_fields = form.Fields(ITodoPortlet)

@@ -1654,16 +1654,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             failure = e
         return success, failure
 
-    security.declarePublic('showTodoPortlet')
-    def showTodoPortlet(self, context):
-        '''Must we show the portlet_todo ?'''
-        meetingConfig = self.getMeetingConfig(context)
-        if self.isPloneMeetingUser() and self.isInPloneMeeting(context) and \
-           (meetingConfig and meetingConfig.getToDoListTopics()) and \
-           (meetingConfig and meetingConfig.getTopicsForPortletToDo()):
-            return True
-        return False
-
     security.declarePublic('readCookie')
     def readCookie(self, key):
         '''Returns the cookie value at p_key.'''
