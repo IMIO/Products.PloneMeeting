@@ -27,7 +27,10 @@ from Products.CMFCore.utils import UniqueObject
 
 
 ##code-section module-header #fill in your manual code here
-import os, os.path, time, re
+import os
+import os.path
+import time
+import re
 from appy.gen import No
 from appy.shared import mimeTypesExts
 from appy.shared.utils import normalizeString
@@ -59,8 +62,7 @@ from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
     HubSessionsMarshaller, monthsIds, weekdaysIds, getCustomSchemaFields, \
     NightWork
-from Products.PloneMeeting.model.adaptations import performModelAdaptations, \
-                                                    performWorkflowAdaptations
+from Products.PloneMeeting.model.adaptations import performModelAdaptations, performWorkflowAdaptations
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -88,7 +90,7 @@ class ToolMarshaller(HubSessionsMarshaller):
         HubSessionsMarshaller.marshallSpecificElements(self, tool, res)
         # Add the URLs of the meeting configs defined in the tool
         meetingConfigs = tool.objectValues('MeetingConfig')
-        res.write('<meetingConfigs type="list" count="%d">'%len(meetingConfigs))
+        res.write('<meetingConfigs type="list" count="%d">' % len(meetingConfigs))
         for mc in meetingConfigs:
             self.dumpField(res, 'meetingConfig', mc.absolute_url())
         res.write('</meetingConfigs>')
@@ -483,7 +485,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     # tool-constructors have no id argument, the id is fixed
     def __init__(self, id=None):
-        OrderedBaseFolder.__init__(self,'portal_plonemeeting')
+        OrderedBaseFolder.__init__(self, 'portal_plonemeeting')
         self.setTitle('PloneMeeting')
 
         ##code-section constructor-footer #fill in your manual code here
@@ -551,7 +553,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             sl = self.hsLanguages
             cookieNegotiation = 0
             requestNegotiation = 1
-        pl.manage_setLanguageSettings(defaultLanguage=pl.getDefaultLanguage(),
+        pl.manage_setLanguageSettings(
+            defaultLanguage=pl.getDefaultLanguage(),
             supportedLanguages=sl, setContentN=False,
             setCookieN=cookieNegotiation, setRequestN=requestNegotiation,
             setPathN=False, setForcelanguageUrls=True,
@@ -759,9 +762,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
         mc_folder.setLayout('meetingfolder_redirect_view')
         mc_folder.setConstrainTypesMode(1)
-        allowedTypes = [meetingConfig.getItemTypeName(), \
-                        meetingConfig.getMeetingTypeName()] + \
-                       ['File', 'Folder', 'MeetingFile']
+        allowedTypes = [meetingConfig.getItemTypeName(),
+                        meetingConfig.getMeetingTypeName()] + ['File', 'Folder', 'MeetingFile']
         mc_folder.setLocallyAllowedTypes(allowedTypes)
         if self.getPloneDiskAware():
             mc_folder.setImmediatelyAddableTypes(allowedTypes[:-1])
@@ -780,18 +782,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         #   "PloneMeeting: Add annex". It means that people having this
         #   permission may also disassociate annexes from items.
         mc_folder.manage_permission('Add portal content', ('Owner',), acquire=0)
-        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'],
-            ('Owner',), acquire=0)
-        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'],
-            ('MeetingManager',), acquire=0)
+        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'], ('Owner',), acquire=0)
+        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'], ('MeetingManager',), acquire=0)
         # The following permission is needed for storing pod-generated documents
         # representing items or meetings directly into the ZODB (useful for
         # exporting data through WebDAV or for freezing the generated doc)
-        mc_folder.manage_permission('ATContentTypes: Add File',
-            ploneMeetingUpdaters, acquire=0)
+        mc_folder.manage_permission('ATContentTypes: Add File', ploneMeetingUpdaters, acquire=0)
         # Only Manager may change the set of allowable types in folders.
-        mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes,
-            ['Manager'], acquire=0)
+        mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
 
     security.declarePublic('getMeetingConfig')
     def getMeetingConfig(self, context):
@@ -876,10 +874,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 return True
 
     security.declarePublic('isManager')
-    def isManager(self):
-        '''Is the current user a Manager or MeetingManager?'''
+    def isManager(self, realManagers=False):
+        '''Is the current user a 'Manager'?  If p_realManagers is True,
+           only returns True if user has role Manager/Site Administrator, either
+           (by default) MeetingManager is also considered as a 'Manager'?'''
         user = self.portal_membership.getAuthenticatedMember()
-        return user.has_role('Manager') or user.has_role('MeetingManager')
+        return user.has_role('Manager') or \
+            user.has_role('Site Administrator') or \
+            (not realManagers and user.has_role('MeetingManager'))
 
     security.declarePublic('isInPloneMeeting')
     def isInPloneMeeting(self, context, inTool=False):
@@ -963,7 +965,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         memberId = member.getId()
         if memberId in self.accessInfo:
             accessInfo = self.accessInfo[memberId]
-            if accessInfo.has_key(uid):
+            if uid in accessInfo:
                 res = accessInfo[uid] > objModifDate
             else:
                 res = False
@@ -997,7 +999,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             sWord = word.strip(' *').lower()
             for variant in (sWord, sWord.capitalize(), sWord.upper()):
                 text = text.replace(variant,
-                                    '<span class="highlight">%s</span>'%variant)
+                                    '<span class="highlight">%s</span>' % variant)
         return text
 
     security.declarePublic('getColoredLink')
@@ -1152,8 +1154,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = True
             member = self.portal_membership.getAuthenticatedMember()
             memberId = member.getId()
-            usersToExclude = [u.strip() for u in \
-                              self.getColorSystemDisabledFor().split('\n')]
+            usersToExclude = [u.strip() for u in self.getColorSystemDisabledFor().split('\n')]
             if usersToExclude and (memberId in usersToExclude):
                 res = False
         return res
@@ -1214,11 +1215,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 ext = mimeTypesExts[doc.content_type]
                 response.setHeader('Content-Type', doc.content_type)
                 response.setHeader('Content-Disposition',
-                                   'inline;filename="%s.%s"' % \
-                                   (normalizeString(doc.Title()), ext))
+                                   'inline;filename="%s.%s"' % (normalizeString(doc.Title()), ext))
                 # Return the file content
                 data = doc.data
-                if type(data) is type(''):
+                if isinstance(data, str):
                     response.setBase(None)
                     res = data
                 else:
@@ -1242,7 +1242,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Return a list of available color system'''
         res = []
         for cs in colorSystems:
-            res.append( (cs, translate(cs, domain='PloneMeeting', context=self.REQUEST)) )
+            res.append((cs, translate(cs, domain='PloneMeeting', context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listOcrLanguages')
@@ -1250,7 +1250,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Return the list of OCR languages supported by Tesseract.'''
         res = []
         for lang in self.ocrLanguages:
-            res.append( (lang, translate('language_%s' % lang, domain='PloneMeeting', context=self.REQUEST)) )
+            res.append((lang, translate('language_%s' % lang, domain='PloneMeeting', context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listModelAdaptations')
@@ -1294,12 +1294,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         if restrictMode:
             user = self.portal_membership.getAuthenticatedMember()
-            isManager = user.has_role('MeetingManager') or \
-                        user.has_role('Manager')
+            isManager = user.has_role('MeetingManager') or user.has_role('Manager')
             if not isManager:
                 # Check if the user is in specific list
-                if user.id not in [u.strip() for u in \
-                                   self.getUnrestrictedUsers().split('\n')]:
+                if user.id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
                     res = False
         return res
 
@@ -1404,8 +1402,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # pagination.
             if urlBack.find('?') != -1:
                 urlBack = urlBack[:urlBack.index('?')]
-            urlBack += '?iStartNumber=%s&lStartNumber=%s' % \
-                    (rq['iStartNumber'], rq['lStartNumber'])
+            urlBack += '?iStartNumber=%s&lStartNumber=%s' % (rq['iStartNumber'], rq['lStartNumber'])
         return rq.RESPONSE.redirect(urlBack)
 
     security.declarePublic('getBackUrl')
@@ -1484,8 +1481,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if not item.portal_type == itemTypeName:
                 raise ValueError("cannot_paste_item_from_other_mc")
         if applyPaste:
-            self.pasteItems(destFolder, copiedData, copyAnnexes,
-                                      newOwnerId, copyFields)
+            self.pasteItems(destFolder, copiedData, copyAnnexes, newOwnerId, copyFields)
 
     security.declarePrivate('pasteItems')
     def pasteItems(self, destFolder, copiedData, copyAnnexes=False,
@@ -1614,14 +1610,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.__class__.__name__ != 'ToolPloneMeeting': return self.context
+        if self.__class__.__name__ != 'ToolPloneMeeting':
+            return self.context
         return self
 
     security.declarePublic('adapted')
-    def adapted(self): return getCustomAdapter(self)
+    def adapted(self):
+        return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
-    def onEdit(self, isCreated): '''See doc in interfaces.py.'''
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
 
     security.declarePublic('getSpecificMailContext')
     def getSpecificMailContext(self, event, translationMapping):
@@ -1679,7 +1678,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         usersDb = self.acl_users.source_users
         if usersDb.getUserById(userData.id):
             return  # Already exists.
-        self.portal_registration.addMember(userData.id, userData.password,
+        self.portal_registration.addMember(
+            userData.id, userData.password,
             ['Member'] + userData.globalRoles,
             properties={'username': userData.id, 'email': userData.email,
                         'fullname': userData.fullname or ''})
@@ -1906,7 +1906,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     mayTrigger = True
                 else:
                     mayTrigger = self._checkTransitionGuard(transition.guard,
-                        getSecurityManager(), workflow, obj)
+                                                            getSecurityManager(), workflow, obj)
                 if mayTrigger or isinstance(mayTrigger, No):
                     # Information about this transition must be part of result.
                     preName = '%s.%s' % (obj.meta_type, transition.id)
@@ -1918,9 +1918,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         'name': transition.actbox_name, 'may_trigger': True,
                         'confirm': preName in toConfirm,
                         'url': transition.actbox_url %
-                               {'content_url': obj.absolute_url(),
-                                'portal_url': '',
-                                'folder_url': ''}
+                            {'content_url': obj.absolute_url(),
+                             'portal_url': '',
+                             'folder_url': ''}
                     }
                     if not mayTrigger:
                         tInfo['may_trigger'] = False
@@ -1932,13 +1932,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getMaxShownFound(self, objectType):
         '''Gets the maximum nummber of shown items, annexes or meetings in
            lists.'''
-        if   objectType == 'MeetingItem':
+        if objectType == 'MeetingItem':
             return self.getMaxShownFoundItems()
         elif objectType == 'Meeting':
             return self.getMaxShownFoundMeetings()
         elif objectType == 'MeetingFile':
             return self.getMaxShownFoundAnnexes()
-        else: return 20
+        else:
+            return 20
 
     security.declarePublic('showToggleDescriptions')
     def showToggleDescriptions(self, context):
@@ -1953,8 +1954,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if topicId:
             topic = getattr(self.getMeetingConfig(context).topics,
                             topicId, None)
-            if topic and (topic.getProperty('meeting_topic_type') == \
-                          'MeetingItem'):
+            if topic and (topic.getProperty('meeting_topic_type') == 'MeetingItem'):
                 return True
         elif rq['ACTUAL_URL'].endswith('/search_results'):
             if 'search_types' in rq.form:
@@ -1963,9 +1963,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 sTypes = rq.SESSION['searchParams']['search_types']
             else:
                 sTypes = ()
-            if (isinstance(sTypes, basestring) and \
-                (sTypes == 'search_type_items')) or \
-                ('search_type_items' in sTypes):
+            if (isinstance(sTypes, basestring) and (sTypes == 'search_type_items')) or \
+               ('search_type_items' in sTypes):
                 return True
 
     security.declarePublic('showTogglePersons')
@@ -1979,8 +1978,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if 'attendees' not in cfg.getUsedMeetingAttributes():
             return
         if context.getLayout() in ('meeting_view', 'meetingitem_view'):
-            res = not rq['ACTUAL_URL'].endswith('_edit') and \
-                  not rq['ACTUAL_URL'].endswith('_form')
+            res = not rq['ACTUAL_URL'].endswith('_edit') and not rq['ACTUAL_URL'].endswith('_form')
             if context.meta_type == 'MeetingItem':
                 return res and context.hasMeeting()
             return res
@@ -2023,7 +2021,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         portalPath = self.portal_url.getPortalPath()
         if pathInfo.startswith(portalPath):
             pathInfo = pathInfo[len(portalPath):]
-        if pathInfo.strip('/') in ('','login_form', 'logged_out', 'login_failed'):
+        if pathInfo.strip('/') in ('', 'login_form', 'logged_out', 'login_failed'):
             return False
         return True
 
@@ -2132,8 +2130,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for i in performed:
             del self.nightWorks[i]
         if self.nightWorks:
-            w('%d nighwork(s) failed. HS will try to execute them again ' \
-              'next night.' % len(self.nightWorks))
+            w('%d nighwork(s) failed. HS will try to execute them again next night.' % len(self.nightWorks))
 
     security.declarePublic('isArchiveSite')
     def isArchiveSite(self):
