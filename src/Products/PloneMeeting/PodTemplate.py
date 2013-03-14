@@ -145,7 +145,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_mailingLists',
             i18n_domain='PloneMeeting',
         ),
-        default_output_type='text/html',
+        default_output_type='text/plain',
         default_content_type='text/plain',
     ),
 
@@ -355,7 +355,11 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
             raise self.BAD_MAILINGLIST
         # Send the mail with the document as attachment
         docName = '%s.%s' % (self._getFileName(obj), self.getPodFormat())
-        sendMail(recipients, obj, 'podByMail', attachments=[(docName, doc)])
+        sendMail(recipients,
+                 obj,
+                 'podByMail',
+                 attachments=[(docName, doc)],
+                 mapping={'podTemplateTitle': self.Title()})
         # Return to the referer page.
         msg = self.translate('pt_mailing_sent', domain='PloneMeeting')
         obj.plone_utils.addPortalMessage(msg)
@@ -411,10 +415,8 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
             return res
         for line in mailingInfo.split('\n'):
             name, condition, userIds = line.split(';')
-            data = {
-                    'obj': obj,
-                    'member': member,
-                   }
+            data = {'obj': obj,
+                    'member': member, }
             ctx = getEngine().getContext(data)
             try:
                 condition = Expression(condition)(ctx)
