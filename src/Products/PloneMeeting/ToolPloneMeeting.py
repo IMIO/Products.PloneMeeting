@@ -47,8 +47,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.interface import directlyProvides
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName, _checkPermission
-from Products.CMFCore.permissions import AccessContentsInformation
-from Products.CMFCore.permissions import View
+from Products.CMFCore.permissions import AccessContentsInformation, DeleteObjects, View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.PloneBatch import Batch
 from plone.app.layout.navigation.interfaces import INavigationRoot
@@ -1641,8 +1640,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             for path in paths:
                 obj = traverse(path)
                 # Check here that we have 'Delete objects' on the object.
-                if not self.portal_membership.checkPermission(
-                    'Delete objects', obj):
+                if not self.portal_membership.checkPermission(DeleteObjects, obj):
                     raise Exception, "can_not_delete_object"
                 res = portal.delete_givenuid(obj.UID())
                 if not "object_deleted" in res:
