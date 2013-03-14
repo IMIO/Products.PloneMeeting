@@ -29,25 +29,23 @@ from App.class_init import InitializeClass
 from DateTime import DateTime
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
-from Products.CMFCore.permissions import ReviewPortalContent,ModifyPortalContent
+from Products.CMFCore.permissions import ReviewPortalContent, ModifyPortalContent
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.WorkflowCore import WorkflowException
-import Products.PloneMeeting
-from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions, \
-                                             IMeetingWorkflowActions
-from Products.PloneMeeting.utils import \
-     getWorkflowAdapter, getCustomAdapter, kupuFieldIsEmpty, fieldIsEmpty, \
-     KUPU_EMPTY_VALUES, checkPermission, getCurrentMeetingObject, \
-     HubSessionsMarshaller, addRecurringItemsIfRelevant, getLastEvent, \
-     kupuEquals, getMeetingUsers, getFieldVersion, getDateFromDelta, \
-     rememberPreviousData, addDataChange, hasHistory, getHistory, \
-     setFieldFromAjax, transformAllRichTextFields
+from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions, IMeetingWorkflowActions
+from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, kupuFieldIsEmpty, \
+    fieldIsEmpty, KUPU_EMPTY_VALUES, checkPermission, getCurrentMeetingObject, \
+    HubSessionsMarshaller, addRecurringItemsIfRelevant, getLastEvent, \
+    kupuEquals, getMeetingUsers, getFieldVersion, getDateFromDelta, \
+    rememberPreviousData, addDataChange, hasHistory, getHistory, \
+    setFieldFromAjax, transformAllRichTextFields
 import logging
 logger = logging.getLogger('PloneMeeting')
 
 # PloneMeetingError-related constants -----------------------------------------
 BEFOREDELETE_ERROR = 'A BeforeDeleteException was raised by "%s" while ' \
     'trying to delete a meeting with id "%s"'
+
 
 # Marshaller -------------------------------------------------------------------
 class MeetingMarshaller(HubSessionsMarshaller):
@@ -69,6 +67,7 @@ class MeetingMarshaller(HubSessionsMarshaller):
             self.dumpField(res, name, getattr(meeting, name))
 
 InitializeClass(MeetingMarshaller)
+
 
 # Adapters ---------------------------------------------------------------------
 class MeetingWorkflowConditions:
@@ -197,13 +196,17 @@ class MeetingWorkflowConditions:
 
     security.declarePublic('mayChangeItemsOrder')
     def mayChangeItemsOrder(self):
-        if not checkPermission(ModifyPortalContent, self.context): return
+        if not checkPermission(ModifyPortalContent, self.context):
+            return
         if self.context.queryState() not in \
-           ('created', 'published', 'frozen', 'decided'): return
+           ('created', 'published', 'frozen', 'decided'):
+            return
         # Once dictionaries "entrances" and "departures" are filled, changing
         # items order would lead to database incoherences.
-        if hasattr(self, 'entrances') and self.entrances: return
-        if hasattr(self, 'departures') and self.departures: return
+        if hasattr(self, 'entrances') and self.entrances:
+            return
+        if hasattr(self, 'departures') and self.departures:
+            return
         return True
 
     security.declarePublic('mayDelete')
@@ -226,7 +229,8 @@ class MeetingWorkflowActions:
     def initSequenceNumber(self):
         '''When a meeting is published (or frozen, depending on workflow
            adaptations), we attribute him a sequence number.'''
-        if self.context.getMeetingNumber() != -1: return # Already done.
+        if self.context.getMeetingNumber() != -1:
+            return  # Already done.
         cfg = self.context.portal_plonemeeting.getMeetingConfig(self.context)
         if cfg.getYearlyInitMeetingNumber():
             # I must reinit the meeting number to 0 if it is the first
@@ -307,8 +311,8 @@ class MeetingWorkflowActions:
         # Oups when closing a meeting we have updated the item counter (which
         # is global to the meeting config). So here we must reverse our action.
         cfg = self.context.portal_plonemeeting.getMeetingConfig(self.context)
-        cfg.setLastItemNumber(cfg.getLastItemNumber() -\
-                              len(self.context.getItems()) - \
+        cfg.setLastItemNumber(cfg.getLastItemNumber() -
+                              len(self.context.getItems()) -
                               len(self.context.getLateItems()))
         self.context.setFirstItemNumber(-1)
 
@@ -369,7 +373,7 @@ class AllItemsParser:
         try:
             d = 'PloneMeeting'
             self.CORRUPTED_BODY = meeting.translate('corruptedBody', domain=d)
-            self.CORRUPTED_TITLE= meeting.translate('corruptedTitle', domain=d)
+            self.CORRUPTED_TITLE = meeting.translate('corruptedTitle', domain=d)
         except AttributeError:
             self.CORRUPTED_BODY = 'Corrupted body.'
             self.CORRUPTED_TITLE = 'Corrupted title.'
@@ -403,7 +407,7 @@ class AllItemsParser:
                (child.attributes['id'].value != 'itemTitle'):
                 raise AllItemsParserError(self.CORRUPTED_BODY)
             if (not child.firstChild) or \
-               (child.firstChild.nodeType <> child.TEXT_NODE):
+               (child.firstChild.nodeType != child.TEXT_NODE):
                 raise AllItemsParserError(self.CORRUPTED_TITLE)
             # Field must have the form "<number>. <title>"
             numberedTitle = child.firstChild.data
@@ -447,6 +451,8 @@ class AllItemsParser:
                     'corruptedNumbers', domain='PloneMeeting'))
 
 import UserList
+
+
 class BunchOfItems(UserList.UserList):
     '''This class represents a bunch of items collected by method
        Meeting.getGroupedItems.'''
@@ -462,9 +468,10 @@ class BunchOfItems(UserList.UserList):
             index = indexes[0]
             nextIndexes = indexes[1:]
         # Lenghten self if needed
-        while len(self) <= index: self.append(None)
+        while len(self) <= index:
+            self.append(None)
         # Insert the item in the sub-bunch
-        if self[index] == None:
+        if self[index] is None:
             # The sub-bunch does not exist. Create it.
             self[index] = BunchOfItems()
         if nextIndexes:
@@ -473,19 +480,21 @@ class BunchOfItems(UserList.UserList):
             # I must append the p_item in this bunch.
             self[index].append(item)
 
+
 class ItemsIterator:
     '''Method Meeting.getGroupedItems allows to produce lists of items which are
        structured into any level of upper-lists (see class BunchOfItems above).
        Sometimes, one may need to iterate, in order (depth-first search)), over
        all items of such tree. This is the purpose of this class.'''
     def __init__(self, items):
-        self.items = items # The tree of items.
-        self.indexes = [] # Where we are while walking p_items.
+        self.items = items  # The tree of items.
+        self.indexes = []  # Where we are while walking p_items.
 
     def _next(self, elems, depth):
         '''Gets, within p_elems, the next item. We are at p_depth within
            self.items.'''
-        if not elems: return
+        if not elems:
+            return
         if depth >= len(self.indexes):
             # I've never walked at this depth. Create it within self.indexes
             self.indexes.append(0)
@@ -828,6 +837,7 @@ Meeting_schema = BaseSchema.copy() + \
 Meeting_schema.registerLayer('marshall', MeetingMarshaller())
 ##/code-section after-schema
 
+
 class Meeting(BaseContent, BrowserDefaultMixin):
     """ A meeting made of items """
     security = ClassSecurityInfo()
@@ -879,7 +889,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            This validator ensures that the user does not break things like the
            structure of each item, the numbering scheme, etc.
         '''
-        if not self.attributeIsUsed('allItemsAtOnce'): return
+        if not self.attributeIsUsed('allItemsAtOnce'):
+            return
         try:
             AllItemsParser(value, self).parse()
         except AllItemsParserError, aipe:
@@ -888,14 +899,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('listAssemblyMembers')
     def listAssemblyMembers(self):
         '''Returns the active MeetingUsers having usage "assemblyMember".'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
         res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(includeAllActive=True))
         return DisplayList(res)
 
     security.declarePublic('listSignatories')
     def listSignatories(self):
         '''Returns the active MeetingUsers having usage "signer".'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(usages=['signer',], includeAllActive=True))
         return DisplayList(res)
 
@@ -954,7 +963,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            replacements defined in this meeting and we will return a user
            replacement for every attendee that has been replaced.'''
         meetingForRepls = None
-        if includeReplacements: meetingForRepls = self
+        if includeReplacements:
+            meetingForRepls = self
         return getMeetingUsers(self, 'attendees', theObjects, includeDeleted,
                                meetingForRepls=meetingForRepls)
 
@@ -1001,26 +1011,33 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def hasEntrance(self, item, when='after'):
         '''Is there at least one people that entered this meeting after (or
            before, if p_when is "before") discussion on p_item?'''
-        if not hasattr(self.aq_base, 'entrances'): return
+        if not hasattr(self.aq_base, 'entrances'):
+            return
         itemNumber = item.getItemNumber(relativeTo='meeting')
-        if when == 'after': itemNumber += 1
+        if when == 'after':
+            itemNumber += 1
         for number in self.entrances.itervalues():
-            if number == itemNumber: return True
+            if number == itemNumber:
+                return True
 
     security.declarePublic('getEntrances')
     def getEntrances(self, item, when='after', theObjects=False):
         '''Gets the list of people that entered this meeting after (or
            before, if p_when is "before" or during if p_when is "during") discussion on p_item.'''
         res = []
-        if not hasattr(self.aq_base, 'entrances'): return res
-        if theObjects: cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        if not hasattr(self.aq_base, 'entrances'):
+            return res
+        if theObjects:
+            cfg = self.portal_plonemeeting.getMeetingConfig(self)
         itemNumber = item.getItemNumber(relativeTo='meeting')
         for userId, number in self.entrances.iteritems():
-            if (when=='before' and number < itemNumber) or \
-               (when=='after' and number > itemNumber) or \
-               (when=='during' and number == itemNumber):
-                if theObjects: res.append(getattr(cfg.meetingusers, userId))
-                else:          res.append(userId)
+            if (when == 'before' and number < itemNumber) or \
+               (when == 'after' and number > itemNumber) or \
+               (when == 'during' and number == itemNumber):
+                if theObjects:
+                    res.append(getattr(cfg.meetingusers, userId))
+                else:
+                    res.append(userId)
         return res
 
     security.declarePublic('getDepartureItem')
@@ -1035,11 +1052,14 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def hasDeparture(self, item, when='after'):
         '''Is there at least one people that left this meeting after (or
            before, if p_when is "before") discussion on p_item?'''
-        if not hasattr(self.aq_base, 'departures'): return
+        if not hasattr(self.aq_base, 'departures'):
+            return
         itemNumber = item.getItemNumber(relativeTo='meeting')
-        if when == 'after': itemNumber += 1
+        if when == 'after':
+            itemNumber += 1
         for number in self.departures.itervalues():
-            if number == itemNumber: return True
+            if number == itemNumber:
+                return True
 
     security.declarePublic('getDepartures')
     def getDepartures(self, item, when='after', theObjects=False,
@@ -1048,16 +1068,23 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            before, if p_when is "before") discussion on p_item. If p_alsoEarlier
            is True, it also includes people that left the meeting earlier.'''
         res = []
-        if not hasattr(self.aq_base, 'departures'): return res
-        if theObjects: cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        if not hasattr(self.aq_base, 'departures'):
+            return res
+        if theObjects:
+            cfg = self.portal_plonemeeting.getMeetingConfig(self)
         itemNumber = item.getItemNumber(relativeTo='meeting')
-        if when == 'after': itemNumber += 1
+        if when == 'after':
+            itemNumber += 1
         for userId, number in self.departures.iteritems():
-            if alsoEarlier: condition = number <= itemNumber
-            else:           condition = number == itemNumber
+            if alsoEarlier:
+                condition = number <= itemNumber
+            else:
+                condition = number == itemNumber
             if condition:
-                if theObjects: res.append(getattr(cfg.meetingusers, userId))
-                else:          res.append(userId)
+                if theObjects:
+                    res.append(getattr(cfg.meetingusers, userId))
+                else:
+                    res.append(userId)
         return res
 
     security.declarePublic('getSignatories')
@@ -1069,7 +1096,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            replacements defined in this meeting and we will return a user
            replacement for every signatory that has been replaced.'''
         meetingForRepls = None
-        if includeReplacements: meetingForRepls = self
+        if includeReplacements:
+            meetingForRepls = self
         res = getMeetingUsers(self, 'signatories', theObjects, includeDeleted,
                               meetingForRepls=meetingForRepls)
         return res
@@ -1110,8 +1138,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if not ordered:
             res = self.getItems() + self.getLateItems()
         else:
-            res = self.getItemsInOrder(uids=uids) + \
-                  self.getItemsInOrder(late=True, uids=uids)
+            res = self.getItemsInOrder(uids=uids) + self.getItemsInOrder(late=True, uids=uids)
         return res
 
     security.declarePublic('getItemsInOrder')
@@ -1151,22 +1178,23 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                                 user.has_permission('View', item)
                 if deadline:
                     # Determine the deadline to use
-                    if late: usedDeadline = self.getDeadlineFreeze()
-                    else:    usedDeadline = self.getDeadlinePublish()
+                    if late:
+                        usedDeadline = self.getDeadlineFreeze()
+                    else:
+                        usedDeadline = self.getDeadlinePublish()
                     if deadline == 'before':
-                        condition = condition and \
-                                    item.lastValidatedBefore(usedDeadline)
+                        condition = condition and item.lastValidatedBefore(usedDeadline)
                     elif deadline == 'after':
-                        condition = condition and \
-                                    not item.lastValidatedBefore(usedDeadline)
+                        condition = condition and not item.lastValidatedBefore(usedDeadline)
                 if condition:
                     keptItems.append(item)
             res = keptItems
         # Sort items according to item number
-        res.sort(key = lambda x: x.getItemNumber())
+        res.sort(key=lambda x: x.getItemNumber())
         # Keep only a subset of items if a batchsize is specified.
         if batchSize and (len(res) > batchSize):
-            if startNumber > len(res): startNumber = 1
+            if startNumber > len(res):
+                startNumber = 1
             endNumber = startNumber + batchSize - 1
             keptItems = []
             for item in res:
@@ -1246,7 +1274,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Predecessor of state "frozen" in a meeting can be "published" or
            "created", depending on workflow adaptations.'''
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        if 'no_publication' in cfg.getWorkflowAdaptations(): return 'created'
+        if 'no_publication' in cfg.getWorkflowAdaptations():
+            return 'created'
         return 'published'
 
     security.declareProtected("Modify portal content", 'insertItem')
@@ -1281,17 +1310,16 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             # item whose category/group immediately follows p_item's category/
             # group (or at the end if inexistent). Note that the MeetingManager,
             # in subsequent manipulations, may completely change items order.
-            itemOrder = item.adapted().getInsertOrder(insertMethod,self,isLate)
+            itemOrder = item.adapted().getInsertOrder(insertMethod, self, isLate)
             higherItemFound = False
-            insertIndex = 0 # That's where I will insert the item
+            insertIndex = 0  # That's where I will insert the item
             for anItem in items:
                 if higherItemFound:
                     # Ok I already know where to insert the item. I just
                     # continue to visit the items in order to increment their
                     # number.
                     anItem.setItemNumber(anItem.getItemNumber()+1)
-                elif anItem.adapted().getInsertOrder(insertMethod, self, \
-                                                     isLate) > itemOrder:
+                elif anItem.adapted().getInsertOrder(insertMethod, self, isLate) > itemOrder:
                     higherItemFound = True
                     insertIndex = anItem.getItemNumber()-1
                     anItem.setItemNumber(anItem.getItemNumber()+1)
@@ -1330,8 +1358,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def getAvailableItems(self):
         '''Check docstring in IMeeting.'''
         meeting = self.getSelf()
-        if meeting.queryState() not in ('created', 'frozen', 'published', \
-                                        'decided'): return []
+        if meeting.queryState() not in ('created', 'frozen', 'published', 'decided'):
+            return []
         meetingConfig = meeting.portal_plonemeeting.getMeetingConfig(meeting)
         # First, get meetings accepting items for which the date is lower or
         # equal to the date of this meeting (self)
@@ -1395,7 +1423,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Updates the place if it comes from special request field
            "place_other".'''
         rq = self.REQUEST
-        if not rq.has_key('place') or (rq.get('place', '') == 'other'):
+        if (not 'place' in rq) or (rq.get('place', '') == 'other'):
             self.setPlace(rq.get('place_other', ''))
 
     security.declarePrivate('computeDates')
@@ -1406,11 +1434,14 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         usedAttrs = cfg.getUsedMeetingAttributes()
         meetingDate = self.getDate()
         # Initialize the effective start date with the meeting date
-        if 'startDate' in usedAttrs: self.setStartDate(meetingDate)
+        if 'startDate' in usedAttrs:
+            self.setStartDate(meetingDate)
         # Set, by default, mid date to start date + 1 hour.
-        if 'midDate' in usedAttrs: self.setMidDate(meetingDate + 1/24.0)
+        if 'midDate' in usedAttrs:
+            self.setMidDate(meetingDate + 1/24.0)
         # Set, by default, end date to start date + 2 hours.
-        if 'endDate' in usedAttrs: self.setEndDate(meetingDate + 2/24.0)
+        if 'endDate' in usedAttrs:
+            self.setEndDate(meetingDate + 2/24.0)
         # Compute the publish deadline
         if 'deadlinePublish' in usedAttrs and not self.getDeadlinePublish():
             delta = cfg.getPublishDeadlineDefault()
@@ -1435,7 +1466,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getUserReplacements')
     def getUserReplacements(self):
         '''Gets the dict storing user replacements.'''
-        if not hasattr(self.aq_base, 'userReplacements'): return {}
+        if not hasattr(self.aq_base, 'userReplacements'):
+            return {}
         return self.userReplacements
 
     security.declarePrivate('updateMeetingUsers')
@@ -1447,25 +1479,36 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         usedAttrs = cfg.getUsedMeetingAttributes()
         useReplacements = cfg.getUseUserReplacements()
         # Do it only if MeetingUser-based user management is enabled.
-        if 'attendees' not in usedAttrs: return
+        if 'attendees' not in usedAttrs:
+            return
         # Store user-related info coming from the request. This info comes from
         # a custom widget, so we need to update the database fields "by hand"
         # here. All request keys from this widget are prefixed with "muser_".
         attendees = []
-        if 'excused' in usedAttrs: excused = []
-        if 'absents' in usedAttrs: absents = []
-        if 'signatories' in usedAttrs: signers = []
-        if 'lateAttendees' in usedAttrs: lateAttendees = []
+        if 'excused' in usedAttrs:
+            excused = []
+        if 'absents' in usedAttrs:
+            absents = []
+        if 'signatories' in usedAttrs:
+            signers = []
+        if 'lateAttendees' in usedAttrs:
+            lateAttendees = []
         if useReplacements: replacements = {}
         for key in self.REQUEST.keys():
-            if not key.startswith('muser_'): continue
-            userId = key[6:].rsplit('_',1)[0]
+            if not key.startswith('muser_'):
+                continue
+            userId = key[6:].rsplit('_', 1)[0]
             try:
-                if key.endswith('_attendee'): attendees.append(userId)
-                elif key.endswith('_excused'): excused.append(userId)
-                elif key.endswith('_absent'): absents.append(userId)
-                elif key.endswith('_signer'): signers.append(userId)
-                elif key.endswith('_lateAttendee'): lateAttendees.append(userId)
+                if key.endswith('_attendee'):
+                    attendees.append(userId)
+                elif key.endswith('_excused'):
+                    excused.append(userId)
+                elif key.endswith('_absent'):
+                    absents.append(userId)
+                elif key.endswith('_signer'):
+                    signers.append(userId)
+                elif key.endswith('_lateAttendee'):
+                    lateAttendees.append(userId)
                 elif key.endswith('_replacement'):
                     replacement = self.REQUEST.get(key)
                     if replacement:
@@ -1478,11 +1521,14 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # Update the DB fields.
         self.setAttendees(attendees)
         if 'excused' in usedAttrs:
-            excused.sort(key=allIds.index); self.setExcused(excused)
+            excused.sort(key=allIds.index)
+            self.setExcused(excused)
         if 'absents' in usedAttrs:
-            absents.sort(key=allIds.index); self.setAbsents(absents)
+            absents.sort(key=allIds.index)
+            self.setAbsents(absents)
         if 'signatories' in usedAttrs:
-            signers.sort(key=allIds.index); self.setSignatories(signers)
+            signers.sort(key=allIds.index)
+            self.setSignatories(signers)
         if 'lateAttendees' in usedAttrs:
             lateAttendees.sort(key=allIds.index)
             self.setLateAttendees(lateAttendees)
@@ -1556,8 +1602,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=False)
         self.reindexObject()
         userId = self.portal_membership.getAuthenticatedMember().getId()
-        logger.info('Meeting at %s edited by "%s".' % \
-                    (self.absolute_url_path(), userId))
+        logger.info('Meeting at %s edited by "%s".' % (self.absolute_url_path(), userId))
 
     security.declarePublic('updatePowerObserversLocalRoles')
     def updatePowerObserversLocalRoles(self):
@@ -1674,7 +1719,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def showAllItemsAtOnce(self):
         '''Must I show the rich text field that allows to edit all "normal" and
            "late" items at once ?'''
-        if not self.attributeIsUsed('allItemsAtOnce'): return False
+        if not self.attributeIsUsed('allItemsAtOnce'):
+            return False
         # I must have 'write' permissions on every item in order to do this.
         if self.getItems():
             if self.adapted().isDecided():
@@ -1694,15 +1740,15 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def getAllItemsAtOnce(self):
         '''Creates the content of the "allItemsAtOnce" field from "normal" and
            "late" meeting items presented in this meeting.'''
-        if not self.attributeIsUsed('allItemsAtOnce'): return ''
+        if not self.attributeIsUsed('allItemsAtOnce'):
+            return ''
         text = []
         itemNumber = 0
         for itemsList in (self.getItemsInOrder(),
                           self.getItemsInOrder(late=True)):
             for item in itemsList:
                 itemNumber += 1
-                text.append('<h2 id="itemTitle">%d. %s</h2>' % \
-                            (itemNumber, item.Title()))
+                text.append('<h2 id="itemTitle">%d. %s</h2>' % (itemNumber, item.Title()))
                 text.append('<div id="itemBody">')
                 if self.adapted().isDecided():
                     itemBody = item.getDecision()
@@ -1733,7 +1779,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 item.setDescription(itemBody)
                 itemChanged = True
         if itemChanged:
-            item.pm_modification_date = DateTime() # Now
+            item.pm_modification_date = DateTime()  # Now
             item.at_post_edit_script()
         if (not itemChanged) and self.adapted().isDecided():
             # In this case, I must not call at_post_edit_script (which will a.o.
@@ -1749,8 +1795,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         try:
             AllItemsParser(value, self).parse(onItem=self.updateItem)
         except AllItemsParserError:
-            pass # Normally it should never happen because the validator parsed
-                 # p_value some milliseconds earlier.
+            pass  # Normally it should never happen because the validator parsed
+                  # p_value some milliseconds earlier.
         # Re-initialise the "allItemsAtOnce" field to blank (the next time it
         # will be shown to the user, it will be updated at this moment).
         self.getField('allItemsAtOnce').set(self, '')
@@ -1775,7 +1821,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Inserts into this meeting some p_recurringItems. The newly created
            items are copied from recurring items (contained in the meeting
            config) to the folder containing this meeting.'''
-        if not recurringItems: return
+        if not recurringItems:
+            return
         sourceFolder = recurringItems[0].getParentNode()
         copiedData = sourceFolder.manage_copyObjects(
             ids=[ri.id for ri in recurringItems])
@@ -1812,8 +1859,10 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('numberOfItems')
     def numberOfItems(self, late=False):
         '''How much items in this meeting ?'''
-        if late: return len(self.getRawLateItems())
-        else: return len(self.getRawItems())
+        if late:
+            return len(self.getRawLateItems())
+        else:
+            return len(self.getRawItems())
 
     security.declarePublic('getBatchStartNumber')
     def getBatchStartNumber(self, late=False):
@@ -1830,7 +1879,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         else:
             reqKey = 'iStartNumber'
             nbOfItems = len(self.getRawItems())
-        if rq.has_key(reqKey) and (int(rq[reqKey]) <= nbOfItems):
+        if reqKey in rq and (int(rq[reqKey]) <= nbOfItems):
             res = int(rq[reqKey])
         return res
 
@@ -1878,12 +1927,14 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         res = []
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         for podTemplate in meetingConfig.podtemplates.objectValues():
-            if not podTemplate.getFreezeEvent(): continue
+            if not podTemplate.getFreezeEvent():
+                continue
             # This template may have lead to the production of a frozen doc
             docId = podTemplate.getDocumentId(self)
             # Try to find this frozen document
             folder = self.getParentNode()
-            if not hasattr(folder.aq_base, docId): continue
+            if not hasattr(folder.aq_base, docId):
+                continue
             res.append(getattr(folder, docId))
         return res
 
@@ -1896,8 +1947,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
         meetingTypeName = cfg.getMeetingTypeName()
         allMeetings = self.portal_catalog(portal_type=meetingTypeName,
-            getDate={'query': meetingDate-searchMeetingsInterval,
-                     'range': 'min'}, sort_on='getDate', sort_order='reverse')
+                                          getDate={'query': meetingDate-searchMeetingsInterval,
+                                          'range': 'min'}, sort_on='getDate',
+                                          sort_order='reverse')
         indexDate = self.portal_catalog.Indexes['getDate']
         for meeting in allMeetings:
             if indexDate.getEntryForObject(meeting.getRID()) < meetingDate:
@@ -1910,7 +1962,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
         meetingTypeName = cfg.getMeetingTypeName()
         allMeetings = self.portal_catalog(portal_type=meetingTypeName,
-            getDate={'query': meetingDate, 'range': 'min'}, sort_on='getDate')
+                                          getDate={'query': meetingDate, 'range': 'min'},
+                                          sort_on='getDate')
         indexDate = self.portal_catalog.Indexes['getDate']
         for meeting in allMeetings:
             if indexDate.getEntryForObject(meeting.getRID()) != meetingDate:
@@ -1930,6 +1983,8 @@ registerType(Meeting, PROJECTNAME)
 # end of class Meeting
 
 ##code-section module-footer #fill in your manual code here
+
+
 def onAddMeeting(meeting, event):
     '''This method is called every time a Meeting is created, even in
        portal_factory. Local roles defined on a meeting define who may view
@@ -1941,4 +1996,3 @@ def onAddMeeting(meeting, event):
     user = meeting.portal_membership.getAuthenticatedMember()
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 ##/code-section module-footer
-
