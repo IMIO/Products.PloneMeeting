@@ -28,10 +28,11 @@ from zope.annotation.interfaces import IAnnotations
 from plone.app.testing import login
 from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.config import *
+from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
+
 
 class testMeetingItem(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
@@ -48,45 +49,46 @@ class testMeetingItem(PloneMeetingTestCase):
         login(self.portal, 'admin')
         # Use the 'plonegov-assembly' meetingConfig
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.meetingConfig.classifiers.invokeFactory('MeetingCategory', id='class1', title='Classifier 1')
-        self.meetingConfig.classifiers.invokeFactory('MeetingCategory', id='class2', title='Classifier 2')
-        self.meetingConfig.classifiers.invokeFactory('MeetingCategory', id='class3', title='Classifier 3')
+        cfg = self.meetingConfig
+        cfg.classifiers.invokeFactory('MeetingCategory', id='class1', title='Classifier 1')
+        cfg.classifiers.invokeFactory('MeetingCategory', id='class2', title='Classifier 2')
+        cfg.classifiers.invokeFactory('MeetingCategory', id='class3', title='Classifier 3')
         # create an item for test
         login(self.portal, 'pmCreator1')
         item = self.create('MeetingItem')
         expectedCategories = ['deployment', 'maintenance', 'development', 'events', 'research', 'projects', ]
         expectedClassifiers = ['class1', 'class2', 'class3', ]
         # By default, every categories are selectable
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories()] == expectedCategories)
+        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
         # Even for item
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories(item=item)] == expectedCategories)
+        self.failUnless([cat.id for cat in cfg.getCategories(item=item)] == expectedCategories)
         # And the behaviour is the same for classifiers
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True)] == expectedClassifiers)
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True,item=item)] == expectedClassifiers)
+        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
+        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True, item=item)] == expectedClassifiers)
         # Deactivate a category and a classifier
         login(self.portal, 'admin')
-        self.wfTool.doActionFor(self.meetingConfig.categories.deployment, 'deactivate')
-        self.wfTool.doActionFor(self.meetingConfig.classifiers.class2, 'deactivate')
-        expectedCategories.remove('deployment') 
-        expectedClassifiers.remove('class2') 
+        self.wfTool.doActionFor(cfg.categories.deployment, 'deactivate')
+        self.wfTool.doActionFor(cfg.classifiers.class2, 'deactivate')
+        expectedCategories.remove('deployment')
+        expectedClassifiers.remove('class2')
         login(self.portal, 'pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories()] == expectedCategories)
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True)] == expectedClassifiers)
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories(item=item)] == expectedCategories)
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True,item=item)] == expectedClassifiers)
+        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
+        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
+        self.failUnless([cat.id for cat in cfg.getCategories(item=item)] == expectedCategories)
+        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True, item=item)] == expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         login(self.portal, 'admin')
-        self.meetingConfig.categories.maintenance.setUsingGroups(('vendors',))
-        self.meetingConfig.classifiers.class1.setUsingGroups(('vendors',))
+        cfg.categories.maintenance.setUsingGroups(('vendors',))
+        cfg.classifiers.class1.setUsingGroups(('vendors',))
         login(self.portal, 'pmCreator1')
         # A category defined for a given group will not be returned for a given item
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories()] == expectedCategories)
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True)] == expectedClassifiers)
+        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
+        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
         expectedCategories.remove('maintenance')
         expectedClassifiers.remove('class1')
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories(item=item)] == expectedCategories)
-        self.failUnless([cat.id for cat in self.meetingConfig.getCategories(classifiers=True,item=item)] == expectedClassifiers)
+        self.failUnless([cat.id for cat in cfg.getCategories(item=item)] == expectedCategories)
+        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True, item=item)] == expectedClassifiers)
 
     def testUsedColorSystemShowColors(self):
         '''The showColors is initialized by the showColorsForUser method that
@@ -152,8 +154,7 @@ class testMeetingItem(PloneMeetingTestCase):
         url = item.absolute_url()
         content = item.Title()
         self.assertEquals(self.tool.getColoredLink(item, showColors),
-            '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
-            (url, title, content))
+                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % (url, title, content))
         login(self.portal, 'admin')
         #use colors depdending on item workflow state
         self.tool.setUsedColorSystem('state_color')
@@ -161,21 +162,20 @@ class testMeetingItem(PloneMeetingTestCase):
         showColors = self.tool.showColorsForUser()
         wf_class = "state-" + item.queryState()
         self.assertEquals(self.tool.getColoredLink(item, showColors),
-            '<a href="%s" title="%s" class="%s">%s</a>' % \
-            (url, title, wf_class, content))
+                          '<a href="%s" title="%s" class="%s">%s</a>' % (url, title, wf_class, content))
         login(self.portal, 'admin')
         #use colors depdending on item modification
         self.tool.setUsedColorSystem('modification_color')
         login(self.portal, 'pmCreator1')
         # Now that we are in modification_color mode, we have to remember the
         # access.
-        self.tool.rememberAccess(uid = item.UID(), commitNeeded=False)
+        self.tool.rememberAccess(uid=item.UID(), commitNeeded=False)
         showColors = self.tool.showColorsForUser()
         wf_class = self.portal.portal_workflow.getInfoFor(item, 'review_state')
         #the item should not be colored as the creator already saw it
         self.assertEquals(self.tool.getColoredLink(item, showColors),
-            '<a href="%s" title="%s"%s>%s</a>' % \
-            (url, title, " id=\"pmNoNewContent\"", content))
+                          '<a href="%s" title="%s"%s>%s</a>' %
+                          (url, title, " id=\"pmNoNewContent\"", content))
         #change the item and check if the color appear for pmCreator1
         login(self.portal, 'admin')
         #use process_form
@@ -186,10 +186,8 @@ class testMeetingItem(PloneMeetingTestCase):
         login(self.portal, 'pmCreator1')
         showColors = self.tool.showColorsForUser()
         #as 'admin' changed the content, it must be colored to 'pmCreator1'
-        self.failIf('pmNoNewContent' in \
-                    self.tool.getColoredLink(item, showColors),
-            '<a href="%s" title="%s"%s>%s</a>' % (url, title, "", content))
-
+        self.failIf('pmNoNewContent' in self.tool.getColoredLink(item, showColors),
+                    '<a href="%s" title="%s"%s>%s</a>' % (url, title, "", content))
         #1.2 check when the user is in colorSystemDisabledFor
         #in this case, colors are never shown...
         self.tool.setColorSystemDisabledFor("user1\nuser2\npmCreator1")
@@ -205,8 +203,8 @@ class testMeetingItem(PloneMeetingTestCase):
         url = item.absolute_url()
         content = item.Title()
         self.assertEquals(self.tool.getColoredLink(item, showColors),
-            '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
-            (url, title, content))
+                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
+                          (url, title, content))
         login(self.portal, 'admin')
         #use colors depdending on item workflow state
         self.tool.setUsedColorSystem('state_color')
@@ -214,32 +212,32 @@ class testMeetingItem(PloneMeetingTestCase):
         showColors = self.tool.showColorsForUser()
         wf_class = "state-" + item.queryState()
         self.assertEquals(self.tool.getColoredLink(item, showColors),
-            '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
-            (url, title, content))
+                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
+                          (url, title, content))
         login(self.portal, 'admin')
         #use colors depdending on item modification
         self.tool.setUsedColorSystem('modification_color')
         login(self.portal, 'pmCreator1')
         # Now that we are in modification_color mode, we have to remember the
         # access
-        self.tool.rememberAccess(uid = item.UID(), commitNeeded=False)
+        self.tool.rememberAccess(uid=item.UID(), commitNeeded=False)
         showColors = self.tool.showColorsForUser()
         wf_class = self.portal.portal_workflow.getInfoFor(item, 'review_state')
         #the item should not be colored as the creator already saw it
         self.assertEquals(self.tool.getColoredLink(item, showColors),
-            '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
-            (url, title, content))
+                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
+                          (url, title, content))
         #change the item and check if the color appear for pmCreator1
         login(self.portal, 'admin')
         item.at_post_edit_script()
         login(self.portal, 'pmCreator1')
         self.assertEquals(self.tool.getColoredLink(item, showColors),
-            '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
-            (url, title, content))
+                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
+                          (url, title, content))
         #check the maxLength attribute, "item_title" becomes "it..."
-        self.assertEquals(self.tool.getColoredLink(item,showColors,maxLength=2),
-            '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % \
-            (url, title, "it..."))
+        self.assertEquals(self.tool.getColoredLink(item, showColors, maxLength=2),
+                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
+                          (url, title, "it..."))
         #2. check with a Meeting
         #3. check with a MeetingFile
 
@@ -287,7 +285,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         #activate it and test now
         self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
-        self.meetingConfig.at_post_edit_script()        
+        self.meetingConfig.at_post_edit_script()
         # the item is sendable if it is 'accepted', the user is a MeetingManager,
         # the destMeetingConfig is selected in the MeetingItem.otherMeetingConfigsClonableTo
         # and it has not already been sent to this other meetingConfig
@@ -346,7 +344,7 @@ class testMeetingItem(PloneMeetingTestCase):
         #the item has not been created because the destination folder to create the item in does not exist
         annotations = IAnnotations(i1)
         annotationKey = i1._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
-        self.failIf(annotations.has_key(annotationKey))
+        self.failIf(annotationKey in annotations)
         #now create the destination folder so we can send the item
         self.changeUser('pmCreator1')
         self.tool.getPloneMeetingFolder(otherMeetingConfigId)
@@ -379,7 +377,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
         self.changeUser('pmManager')
-        self.failIf(annotations.has_key(annotationKey))
+        self.failIf(annotationKey in annotations)
         self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # An item is automatically sent to the other meetingConfigs when it is 'accepted'
         # if every conditions are correct
@@ -401,8 +399,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(len(newItem.workflow_history[itemWorkflow]), 2)
         # the workflow_history contains the intial transition to 'itemcreated' with None action
         # and the special cloneEvent action specifying that it has been transfered to another meetingConfig
-        self.assertEquals([action['action'] for action in newItem.workflow_history[itemWorkflow]], \
-            [None, 'create_to_%s_from_%s' % (otherMeetingConfigId, meetingConfigId)])
+        self.assertEquals([action['action'] for action in newItem.workflow_history[itemWorkflow]],
+                          [None, 'create_to_%s_from_%s' % (otherMeetingConfigId, meetingConfigId)])
         # now check that the item is sent to another meetingConfig for each
         # MeetingItem.itemPositiveDecidedStates
         # by default, the only positive state is 'accepted'
@@ -466,9 +464,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # Check that annexes are actually correctly sent too
         self.failUnless(len(newItem.getAnnexes()) == 2)
         self.failUnless(len(newItem.getAnnexesDecision()) == 2)
-        # As annexes are references from the item, check that these are not 
-        self.assertEquals(set([newItem]),
-            set(newItem.getParentNode().objectValues()))
+        # As annexes are references from the item, check that these are not
+        self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues()))
         # Especially test that references are ok about the MeetingFileTypes
         existingMeetingFileTypeUids = [ft.UID() for ft in self.meetingConfig.getFileTypes()]
         existingMeetingFileTypeDecisionUids = [ft.UID() for ft in self.meetingConfig.getFileTypes(decisionRelated=True)]
@@ -511,7 +508,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def _getNecessaryMeetingTransitionsToAcceptItem(self):
         '''Returns the necessary transitions to trigger on the Meeting before being
            able to accept an item.'''
-        return ['publish', 'freeze',]
+        return ['publish', 'freeze', ]
 
     def testAddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
@@ -531,7 +528,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # the developers will be set as copyGroups.  That is what the expression says, but in reality,
         # only the 'developers_reviewers' will be set as copyGroups as the 'developers_advisers' are
         # not in the meetingConfig.selectableCopyGroups
-        self.meetingConfig.developers.setAsCopyGroupOn("python: item.getProposingGroup() == 'vendors' and ['reviewers', 'advisers', ] or []")
+        self.meetingConfig.developers.setAsCopyGroupOn(
+            "python: item.getProposingGroup() == 'vendors' and ['reviewers', 'advisers', ] or []")
         login(self.portal, 'pmManager')
         # Creating an item with the default proposingGroup ('developers') does nothing
         i3 = self.create('MeetingItem')
@@ -539,13 +537,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # Creating an item with the default proposingGroup ('developers') and
         # with some copyGroups does nothing neither
         i4 = self.create('MeetingItem', copyGroups=('developers_reviewers',))
-        self.failUnless(i4.getCopyGroups()==('developers_reviewers',))
+        self.failUnless(i4.getCopyGroups() == ('developers_reviewers',))
         # Now, creating an item that will make the condition on the MeetingGroup
         # True will make it add the relevant copyGroups
         i5 = self.create('MeetingItem', proposingGroup='vendors')
         # We only have the '_reviewers' group, not the '_advisers'
         # as not in self.meetingConfig.selectableCopyGroups
-        self.failUnless(i5.getCopyGroups()==('developers_reviewers',))
+        self.failUnless(i5.getCopyGroups() == ('developers_reviewers',))
         # some special localRoles are added for autoAddedCopyGroups
         self.failUnless('developers_reviewers' in i5.__ac_local_roles__.keys())
         self.failUnless('MeetingObserverLocalCopy' in i5.__ac_local_roles__['developers_reviewers'])
@@ -554,7 +552,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test if local roles for adviser groups, are still correct when an item is edited
            Only 'MeetingPowerObserverLocal' local role should be impacted.'''
         # to ease test override, consider that we can give advices when the item is created for this test
-        self.meetingConfig.setItemAdviceStates(['itemcreated', 'proposed', 'validated',])
+        self.meetingConfig.setItemAdviceStates(['itemcreated', 'proposed', 'validated', ])
         login(self.portal, 'pmManager')
         i1 = self.create('MeetingItem')
         # add developers in optionalAdvisers
@@ -571,17 +569,17 @@ class testMeetingItem(PloneMeetingTestCase):
         i1.updateAdvices()
         for principalId, localRoles in i1.get_local_roles():
             if principalId == 'developers_advisers':
-                self.failUnless(('MeetingObserverLocalCopy','MeetingPowerObserverLocal')==localRoles)
+                self.failUnless(('MeetingObserverLocalCopy', 'MeetingPowerObserverLocal') == localRoles)
             if principalId == 'vendors_advisers':
-                self.failUnless(('MeetingObserverLocalCopy',)==localRoles)
+                self.failUnless(('MeetingObserverLocalCopy',) == localRoles)
         # now, remove developers in optionalAdvisers
         i1.setOptionalAdvisers(())
         i1.updateAdvices()
         for principalId, localRoles in i1.get_local_roles():
             if principalId == 'developers_advisers':
-                self.failUnless(('MeetingObserverLocalCopy',)==localRoles)
+                self.failUnless(('MeetingObserverLocalCopy',) == localRoles)
             if principalId == 'vendors_advisers':
-                self.failUnless(('MeetingObserverLocalCopy',)==localRoles)
+                self.failUnless(('MeetingObserverLocalCopy',) == localRoles)
 
     def testCopyGroups(self):
         '''Test that if a group is set as copyGroups, the item is Viewable.
@@ -636,12 +634,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # specify that powerObservers will be able to see the items of self.meetingConfig
         # when the item is in some state.  For example here, a 'presented' item is not viewable
         # Add 'powerobserver1' user to the self.meetingConfig corresponding 'powerobservers' group
-        self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' % (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' %
+                                                      (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
         # Add 'powerobserver2' user to the self.meetingConfig2 corresponding 'powerobservers' group
-        self.portal.portal_groups.addPrincipalToGroup('powerobserver2', '%s_%s' % (self.meetingConfig2.getId(), POWEROBSERVERS_GROUP_SUFFIX))
-        # launch check for self.meetingConfig where 'powerobserver1' can see in some states but never for 'powerobserver2'
+        self.portal.portal_groups.addPrincipalToGroup('powerobserver2', '%s_%s' %
+                                                      (self.meetingConfig2.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        # launch check for self.meetingConfig where 'powerobserver1'
+        # can see in some states but never for 'powerobserver2'
         self._checkPowerObserversGroupFor('powerobserver1', 'powerobserver2')
-        # launch check for self.meetingConfig2 where 'powerobserver2' can see in some states but never for 'powerobserver1'
+        # launch check for self.meetingConfig2 where 'powerobserver2'
+        # can see in some states but never for 'powerobserver1'
         self.meetingConfig = self.meetingConfig2
         self._checkPowerObserversGroupFor('powerobserver2', 'powerobserver1')
 
