@@ -152,6 +152,7 @@ class MeetingItemMarshaller(HubSessionsMarshaller):
             w('</vote>')
         w('</votes>')
         self.dumpField(res, 'pm_modification_date', item.pm_modification_date)
+
 InitializeClass(MeetingItemMarshaller)
 
 # Adapters ---------------------------------------------------------------------
@@ -385,8 +386,8 @@ class MeetingItemWorkflowConditions:
                 if itemValidationDate > meetingPublicationDate:
                     return True
 
-
 InitializeClass(MeetingItemWorkflowConditions)
+
 
 class MeetingItemWorkflowActions:
     '''Adapts a meeting item to interface IMeetingItemWorkflowActions.'''
