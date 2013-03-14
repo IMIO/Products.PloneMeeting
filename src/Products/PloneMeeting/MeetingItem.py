@@ -2033,6 +2033,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         portal = getToolByName(self, 'portal_url').getPortalObject()
         res = []
         for mGroup in tool.getActiveGroups(notEmptySuffix='advisers'):
+            # check if there is something to evaluate...
+            strippedExprToEvaluate = mGroup.getGivesMandatoryAdviceOn().replace(' ', '')
+            if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
+                continue
             # Check that the TAL expression on the group returns True
             ctx = createExprContext(self.getParentNode(), portal, self)
             ctx.setGlobal('item', self)
@@ -2059,6 +2063,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not selectableCopyGroups:
             return
         for mGroup in tool.getActiveGroups():
+            # check if there is something to evaluate...
+            strippedExprToEvaluate = mGroup.getAsCopyGroupOn().replace(' ', '')
+            if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
+                continue
             # Check that the TAL expression on the group returns a list of
             # suffixes or an empty list (or False)
             ctx = createExprContext(self.getParentNode(), portal, self)
@@ -3274,4 +3282,3 @@ def onAddMeetingItem(item, event):
     user = item.portal_membership.getAuthenticatedMember()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
 ##/code-section module-footer
-
