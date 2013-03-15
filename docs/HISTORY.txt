@@ -15,6 +15,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Display the elements history in the default Plone4 popup
 - Optimized votes functionnality
 - Added local powerobservers giving the possibility to define powerobservers by meetingConfig
+- Copy groups to add automatically is now evaluated at each item edition, not only on creation
 
 2.1.4dev
 --------
@@ -116,4 +117,3 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 ------------------
 - Do the meetingfolder_view work again in Plone3
 - Some CSS/Translations/JS fixes
-
