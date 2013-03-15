@@ -1489,11 +1489,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            recurring item), the list of active groups is returned.'''
         tool = self.portal_plonemeeting
         groupId = self.getField('proposingGroup').get(self)
-        res = tool.getSelectableGroups(isDefinedInTool=self.isDefinedInTool(),
+        isDefinedInTool = self.isDefinedInTool()
+        res = tool.getSelectableGroups(isDefinedInTool=isDefinedInTool,
                                        existingGroupId=groupId)
-        res.insert(0, ('', translate('make_a_choice',
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)))
+        # add a 'make_a_choice' value when the item is in the tool
+        if isDefinedInTool:
+            res.insert(0, ('', translate('make_a_choice',
+                           domain='PloneMeeting',
+                           context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listAssociatedGroups')

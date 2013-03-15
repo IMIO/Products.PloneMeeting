@@ -55,16 +55,15 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.classifiers.invokeFactory('MeetingCategory', id='class3', title='Classifier 3')
         # create an item for test
         login(self.portal, 'pmCreator1')
-        item = self.create('MeetingItem')
         expectedCategories = ['deployment', 'maintenance', 'development', 'events', 'research', 'projects', ]
         expectedClassifiers = ['class1', 'class2', 'class3', ]
         # By default, every categories are selectable
         self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
         # Even for item
-        self.failUnless([cat.id for cat in cfg.getCategories(item=item)] == expectedCategories)
+        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
         # And the behaviour is the same for classifiers
         self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True, item=item)] == expectedClassifiers)
+        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
         # Deactivate a category and a classifier
         login(self.portal, 'admin')
         self.wfTool.doActionFor(cfg.categories.deployment, 'deactivate')
@@ -75,20 +74,18 @@ class testMeetingItem(PloneMeetingTestCase):
         # A deactivated category will not be returned by getCategories no matter an item is given or not
         self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
         self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
-        self.failUnless([cat.id for cat in cfg.getCategories(item=item)] == expectedCategories)
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True, item=item)] == expectedClassifiers)
+        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
+        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         login(self.portal, 'admin')
         cfg.categories.maintenance.setUsingGroups(('vendors',))
         cfg.classifiers.class1.setUsingGroups(('vendors',))
-        login(self.portal, 'pmCreator1')
-        # A category defined for a given group will not be returned for a given item
-        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
         expectedCategories.remove('maintenance')
         expectedClassifiers.remove('class1')
-        self.failUnless([cat.id for cat in cfg.getCategories(item=item)] == expectedCategories)
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True, item=item)] == expectedClassifiers)
+        login(self.portal, 'pmCreator1')
+        # if current user is not creator for one of the usingGroups defined for the category, he can not use it
+        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
+        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
 
     def testUsedColorSystemShowColors(self):
         '''The showColors is initialized by the showColorsForUser method that
@@ -243,10 +240,10 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def testListProposingGroup(self):
         '''Check that the user is creator for the proposing groups.'''
-        #that that if a user is cretor for a group but only reviewer for
+        # test that if a user is cretor for a group but only reviewer for
         # another, it only returns the groups the user is creator for...  This
         # test the bug of ticket #643
-        #adapt the pmReviewer1 user : add him to a creator group and create is
+        # adapt the pmReviewer1 user : add him to a creator group and create is
         # personal folder.
         login(self.portal, 'admin')
         #pmReviser1 is member of developer_reviewers and developers_observers

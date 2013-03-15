@@ -176,12 +176,11 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         # If we have an item, do one additional check
         if usingGroups:
             # listProposingGroup takes isDefinedInTool into account
-            import ipdb; ipdb.set_trace()
             proposingGroupIds = tool.getSelectableGroups()
             keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
             # Check intersection between self.usingGroups and groups for wich
             # the current user is creator
-            isUsing = set(usingGroups).intersection(proposingGroupIds) != set()
+            isUsing = set(usingGroups).intersection(keys) != set()
         return isUsing and state == 'active'
 
     def incrementItemsCount(self):
