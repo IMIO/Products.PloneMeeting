@@ -16,8 +16,8 @@ class Migrate_To_3_0(Migrator):
         try:
             self.portal.cputils_configure_ckeditor(custom='plonemeeting')
         except AttributeError:
-            raise Exception, "Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "\
-                                  "installed and that the cputils_configure_ckeditor method is available"
+            raise Exception, "Could not configure CKeditor for every users, make sure Products.CPUtils is correctly " \
+                "installed and that the cputils_configure_ckeditor method is available"
 
     def _updateRegistries(self):
         '''Make sure some elements are enabled and remove not found elements.'''
@@ -153,7 +153,8 @@ class Migrate_To_3_0(Migrator):
             return res
 
         brains = self.portal.portal_catalog(meta_type='FCKTemplate')
-        logger.info('Migrating FCKTemplates to PloneMeeting item templates.  Migrating %s FCKTemplate objects...' % len(brains))
+        logger.info('Migrating FCKTemplates to PloneMeeting item templates.  '
+                    'Migrating %s FCKTemplate objects...' % len(brains))
         # create the template in every active MeetingConfig as FCKTemplates where available for every MeetingConfigs...
         for cfg in self.portal.portal_plonemeeting.getActiveConfigs():
             itemTemplatesFolder = cfg.recurringitems
@@ -188,7 +189,7 @@ class Migrate_To_3_0(Migrator):
             # Update PowerObservers local_roles for meetings and items
             obj.updatePowerObserversLocalRoles()
             # Update security as local_roles are modified by updateLocalRoles
-            obj.reindexObject(idxs=['allowedRolesAndUsers',])
+            obj.reindexObject(idxs=['allowedRolesAndUsers', ])
         logger.info('MeetingItems advices have been updated.')
 
     def _migrateXhtmlTransformFieldsValues(self):
@@ -217,7 +218,8 @@ class Migrate_To_3_0(Migrator):
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             # only consider cfg having the 'add_published_state'
             if not 'add_published_state' in cfg.getWorkflowAdaptations():
-                logger.info("The 'add_published_state' wfAdaptation is not selected for the '%s' meetingConfig" % cfg.getId())
+                logger.info("The 'add_published_state' wfAdaptation is not selected "
+                            "for the '%s' meetingConfig" % cfg.getId())
                 continue
             # check also if the linked wf has not already been migrated
             wf = getattr(wft, cfg.getMeetingWorkflow(), None)
@@ -233,7 +235,7 @@ class Migrate_To_3_0(Migrator):
                 logger.info("No meeting to migrate in meetingConfig '%s'" % cfg.getId())
             else:
                 # bypass guards for Manager
-                wf.manager_bypass=1
+                wf.manager_bypass = 1
                 # set some value in the request that will be used by the triggerTransition method here under
                 self.portal.REQUEST.set('transition', 'backToDecided')
                 self.portal.REQUEST.set('comment', "Set back to \'decided\' during migration to PM3.0 because actual "
@@ -245,13 +247,14 @@ class Migrate_To_3_0(Migrator):
                     # use our tool to trigger transition so we can easily add a comment
                     self.portal.REQUEST.set('objectUid', uid)
                     self.portal.portal_plonemeeting.triggerTransition()
-                    logger.info("Set back meeting at '%s' to 'decided' for migration purpose" % '/'.join(obj.getPhysicalPath()))
+                    logger.info("Set back meeting at '%s' to 'decided' for migration "
+                                "purpose" % '/'.join(obj.getPhysicalPath()))
                 logger.info("Meetings that were set back to 'decided' will be migrated after reinstall.")
                 # back to old application state
                 self.portal.REQUEST.set('transition', '')
                 self.portal.REQUEST.set('comment', '')
                 self.portal.REQUEST.set('objectUid', '')
-                wf.manager_bypass=1
+                wf.manager_bypass = 0
         return uids
 
     def _migrateStatePublishedToDecisionsPublished(self, uids):
@@ -265,7 +268,8 @@ class Migrate_To_3_0(Migrator):
         tool = self.portal.portal_plonemeeting
         # set some value in the request that will be used by the triggerTransition method here under
         self.portal.REQUEST.set('transition', 'publish_decisions')
-        self.portal.REQUEST.set('comment', 'Set to \'decisions_published\' during migration to PM3.0 because old state \'published\' does not exist anymore.')
+        self.portal.REQUEST.set('comment', 'Set to \'decisions_published\' during migration to PM3.0 because '
+                                'old state \'published\' does not exist anymore.')
         for uid in uids:
             brains = self.portal.uid_catalog(UID=uid)
             if not brains:
@@ -274,7 +278,7 @@ class Migrate_To_3_0(Migrator):
             cfg = tool.getMeetingConfig(obj)
             wf = getattr(wft, cfg.getMeetingWorkflow(), None)
             # bypass guards for Manager
-            wf.manager_bypass=1
+            wf.manager_bypass = 1
             # deactivate mail notifications
             oldMailMode = cfg.getMailMode()
             cfg.setMailMode('deactivated')
@@ -284,7 +288,7 @@ class Migrate_To_3_0(Migrator):
             self.portal.REQUEST.set('transition', '')
             self.portal.REQUEST.set('comment', '')
             self.portal.REQUEST.set('objectUid', '')
-            wf.manager_bypass=1
+            wf.manager_bypass = 0
             cfg.setMailMode(oldMailMode)
         logger.info('\'%d\' meeting(s) was(were) migrated to the \'decisions_published \' state' % len(uids))
 
@@ -299,12 +303,14 @@ class Migrate_To_3_0(Migrator):
             cfg.createPowerObserversGroup()
             topicToUpdate = getattr(cfg.topics, 'searchallitemsincopy', None)
             if topicToUpdate:
-                topicToUpdate.manage_changeProperties(topic_tal_expression="python: here.portal_plonemeeting.getMeetingConfig(here)." \
-                                                    "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')")
+                topicToUpdate.manage_changeProperties(
+                    topic_tal_expression="python: here.portal_plonemeeting.getMeetingConfig(here)."
+                    "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')")
             if '.getMeeting().getDate().' in cfg.getItemReferenceFormat():
                 cfg.setItemReferenceFormat(
-                    cfg.getItemReferenceFormat().replace(".getMeeting().getDate().",
-                                                         ".restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate()."))
+                    cfg.getItemReferenceFormat().replace(
+                        ".getMeeting().getDate().restrictedTraverse"
+                        "('@@pm_unrestricted_methods').getLinkedMeetingDate()."))
         logger.info('Done.')
 
     def run(self):
@@ -318,7 +324,7 @@ class Migrate_To_3_0(Migrator):
         uids = self._findPublishedMeetings()
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
                                  u'profile-plonetheme.imioapps:default',
-                                 u'profile-plonetheme.imioapps:plonemeetingskin',])
+                                 u'profile-plonetheme.imioapps:plonemeetingskin', ])
         self._migrateStatePublishedToDecisionsPublished(uids)
 
         # now continue with other migrations
