@@ -187,7 +187,7 @@ class MeetingItemWorkflowConditions:
         if not wfs:
             return
         objWfName = wfs[0].getId()
-        if objWfName in obj.workflow_histor:
+        if objWfName in obj.workflow_history:
             history = obj.workflow_history[objWfName]
         else:
             return
