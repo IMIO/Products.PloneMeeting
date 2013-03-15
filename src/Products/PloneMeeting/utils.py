@@ -20,7 +20,12 @@
 # 02110-1301, USA.
 #
 
-import os, re, urlparse, os.path, socket, email, cgi
+import os
+import os.path
+import re
+import urlparse
+import socket
+import cgi
 from appy.shared.diff import HtmlDiff
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEBase import MIMEBase
@@ -33,10 +38,8 @@ from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from Products.MailHost.MailHost import MailHostError
 from Products.Archetypes.Marshall import Marshaller
-from Products.CMFCore.permissions import View, AccessContentsInformation, \
-     ModifyPortalContent, ReviewPortalContent, DeleteObjects
+from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
 import Products.PloneMeeting
-from Products.PloneMeeting.config import *
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.interfaces import *
 import logging
@@ -55,24 +58,24 @@ monthsIds = {1:  'month_jan', 2:  'month_feb', 3:  'month_mar', 4:  'month_apr',
 
 weekdaysIds = {0: 'weekday_sun', 1: 'weekday_mon', 2: 'weekday_tue',
                3: 'weekday_wed', 4: 'weekday_thu', 5: 'weekday_fri',
-               6:'weekday_sat'}
+               6: 'weekday_sat'}
 
 adaptables = {
-    'MeetingItem' : {'method':'getItem', 'interface':IMeetingItemCustom},
-    'Meeting' : {'method':'getMeeting', 'interface':IMeetingCustom},
+    'MeetingItem': {'method': 'getItem', 'interface': IMeetingItemCustom},
+    'Meeting': {'method': 'getMeeting', 'interface': IMeetingCustom},
     # No (condition or action) workflow-related adapters are defined for the
     # following content types; only a Custom adapter.
-    'MeetingCategory': {'method':None, 'interface':IMeetingCategoryCustom},
-    'ExternalApplication':
-        {'method':None, 'interface':IExternalApplicationCustom},
-    'MeetingConfig': {'method':None, 'interface':IMeetingConfigCustom},
-    'MeetingFile': {'method':None, 'interface':IMeetingFileCustom},
-    'MeetingFileType': {'method':None, 'interface':IMeetingFileTypeCustom},
-    'MeetingGroup': {'method':None, 'interface':IMeetingGroupCustom},
-    'PodTemplate': {'method':None, 'interface':IPodTemplateCustom},
-    'ToolPloneMeeting': {'method':None, 'interface':IToolPloneMeetingCustom},
-    'MeetingUser': {'method':None, 'interface':IMeetingUserCustom},
+    'MeetingCategory': {'method': None, 'interface': IMeetingCategoryCustom},
+    'ExternalApplication': {'method': None, 'interface': IExternalApplicationCustom},
+    'MeetingConfig': {'method': None, 'interface': IMeetingConfigCustom},
+    'MeetingFile': {'method': None, 'interface': IMeetingFileCustom},
+    'MeetingFileType': {'method': None, 'interface': IMeetingFileTypeCustom},
+    'MeetingGroup': {'method': None, 'interface': IMeetingGroupCustom},
+    'PodTemplate': {'method': None, 'interface': IPodTemplateCustom},
+    'ToolPloneMeeting': {'method': None, 'interface': IToolPloneMeetingCustom},
+    'MeetingUser': {'method': None, 'interface': IMeetingUserCustom},
 }
+
 
 def getInterface(interfaceName):
     '''Gets the interface named p_interfaceName.'''
@@ -96,6 +99,7 @@ def getInterface(interfaceName):
     except AttributeError:
         raise PloneMeetingError(WRONG_INTERFACE % (interfaceName, packageName))
 
+
 def getWorkflowAdapter(obj, conditions):
     '''Gets the adapter, for a PloneMeeting object that proposes methods that
        may be used as workflow conditions (if p_conditions is True) or actions
@@ -110,6 +114,7 @@ def getWorkflowAdapter(obj, conditions):
     exec 'interfaceLongName = meetingConfig.%sInterface()' % interfaceMethod
     return getInterface(interfaceLongName)(obj)
 
+
 def getCustomAdapter(obj):
     '''Tries to get the custom adapter for a PloneMeeting object. If no adapter
        is defined, returns the object.'''
@@ -122,6 +127,8 @@ def getCustomAdapter(obj):
     return res
 
 methodTypes = ('FSPythonScript', 'FSControllerPythonScript', 'instancemethod')
+
+
 def getCurrentMeetingObject(context):
     '''What is the object currently published by Plone ?'''
     obj = context.REQUEST.get('PUBLISHED')
@@ -159,13 +166,14 @@ def getCurrentMeetingObject(context):
                 obj = None
     return obj
 
+
 def getOsTempFolder():
     tmp = '/tmp'
     if os.path.exists(tmp) and os.path.isdir(tmp):
         res = tmp
-    elif os.environ.has_key('TMP'):
+    elif 'TMP' in os.environ:
         res = os.environ['TMP']
-    elif os.environ.has_key('TEMP'):
+    elif 'TEMP' in os.environ:
         res = os.environ['TEMP']
     else:
         raise "Sorry, I can't find a temp folder on your machine."
@@ -179,9 +187,11 @@ KUPU_EMPTY_VALUES = ('<p></p>', '<p> </p>', '<p><br/></p>', '<p><br /></p>',
 KEEP_WITH_NEXT_STYLES = {'para': 'pmParaKeepWithNext',
                          'item': 'podItemKeepWithNext'}
 
+
 def kupuFieldIsEmpty(kupuContent):
     if not kupuContent or (kupuContent.strip() in KUPU_EMPTY_VALUES):
         return True
+
 
 def fieldIsEmpty(name, obj, useParamValue=False, value=None):
     '''If field named p_name on p_obj empty ? The method checks emptyness of
@@ -195,9 +205,10 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
     if widgetName == 'RichWidget':
         return kupuFieldIsEmpty(value)
     elif widgetName == 'BooleanWidget':
-        return value == None
+        return value is None
     else:
         return not value
+
 
 def kupuEquals(fieldContent, valueFromDomParsing):
     '''Is the content of Kupu field p_fieldContent equal to
@@ -212,23 +223,29 @@ def kupuEquals(fieldContent, valueFromDomParsing):
         res = (v1 == v2)
     return res
 
+
 def checkPermission(permission, obj):
     '''We must call getSecurityManager() each time we need to check a
        permission.'''
     sm = getSecurityManager()
     return sm.checkPermission(permission, obj)
 
+
 # Mail sending machinery -------------------------------------------------------
-class EmailError(Exception): pass
+class EmailError(Exception):
+    pass
 SENDMAIL_ERROR = 'Error while sending mail: %s.'
 ENCODING_ERROR = 'Encoding error while sending mail: %s.'
 MAILHOST_ERROR = 'Error with the MailServer while sending mail: %s.'
 
+
 def _getEmailAddress(name, email, encoding='utf-8'):
     '''Creates a full email address from a p_name and p_email.'''
     res = email
-    if name: res = name.decode(encoding) + ' <%s>' % email
+    if name:
+        res = name.decode(encoding) + ' <%s>' % email
     return res.encode(encoding)
+
 
 def _sendMail(obj, body, recipients, fromAddress, subject, format,
               attachments=None):
@@ -241,7 +258,7 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
     # Construct the data structures for the attachments if relevant
     if attachments:
         msg = MIMEMultipart()
-        msg.attach( MIMEText(body) )
+        msg.attach(MIMEText(body))
         body = msg
         for fileName, fileContent in attachments:
             part = MIMEBase('application', 'octet-stream')
@@ -260,7 +277,7 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
                             'attachment; filename="%s"' % fileName)
             body.attach(part)
     try:
-        obj.MailHost.secureSend(body, recipients, fromAddress, subject,mbcc=bcc,
+        obj.MailHost.secureSend(body, recipients, fromAddress, subject, mbcc=bcc,
                                 subtype=format, charset='utf-8')
     except socket.error, sg:
         raise EmailError(SENDMAIL_ERROR % str(sg))
@@ -271,6 +288,7 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
     except Exception, e:
         raise EmailError(SENDMAIL_ERROR % str(e))
 
+
 def sendMail(recipients, obj, event, attachments=None, mapping={}):
     '''Sends a mail related to p_event that occurred on p_obj to
        p_recipients. If p_recipients is None, the mail is sent to
@@ -279,7 +297,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     tool = obj.portal_plonemeeting
     cfg = tool.getMeetingConfig(obj) or tool.getActiveConfigs()[0]
     mailMode = cfg.getMailMode()
-    if mailMode == 'deactivated': return
+    if mailMode == 'deactivated':
+        return
     enc = obj.portal_properties.site_properties.getProperty('default_charset')
     # Compute user name
     pms = obj.portal_membership
@@ -293,9 +312,12 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     d = 'PloneMeeting'
     portal = obj.portal_url.getPortalObject()
     portalUrl = tool.getPublicUrl().strip()
-    if not portalUrl: portalUrl = portal.absolute_url()
-    if mapping: translationMapping = mapping
-    else: translationMapping = {}
+    if not portalUrl:
+        portalUrl = portal.absolute_url()
+    if mapping:
+        translationMapping = mapping
+    else:
+        translationMapping = {}
     translationMapping.update({
         'portalUrl': portalUrl, 'portalTitle': portal.Title().decode(enc),
         'objectTitle': obj.Title().decode(enc), 'objectUrl': obj.absolute_url(),
@@ -337,7 +359,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if tool.getFunctionalAdminEmail():
         fromAddress = _getEmailAddress(tool.getFunctionalAdminName(),
                                        tool.getFunctionalAdminEmail(), enc)
-    if not recipients: recipients = [adminFromAddress]
+    if not recipients:
+        recipients = [adminFromAddress]
     if mailMode == 'test':
         # Instead of sending mail, in test mode, we log data about the mailing.
         logger.info('Test mode / we should send mail to %s' % str(recipients))
@@ -346,13 +369,14 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         return
     # Determine mail format (plain text or HTML)
     mailFormat = 'plain'
-    if cfg.getUserParam('mailFormat') == 'html': mailFormat = 'html'
+    if cfg.getUserParam('mailFormat') == 'html':
+        mailFormat = 'html'
     # Send the mail(s)
     try:
         if not attachments:
             # Send a personalized email for every user.
             for recipient in recipients:
-                _sendMail(obj, body, recipient, fromAddress, subject,mailFormat)
+                _sendMail(obj, body, recipient, fromAddress, subject, mailFormat)
         else:
             # Send a single mail with everybody in bcc, for performance reasons
             # (avoid to duplicate the attached file(s)).
@@ -360,6 +384,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                       attachments)
     except EmailError, ee:
         logger.warn(str(ee))
+
 
 def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
                        customEvent=False, mapping={}):
@@ -378,7 +403,6 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
-    res = False
     tool = obj.portal_plonemeeting
     # If p_isRole is True and the current user has this role, I will not send
     # mail: a MeetingManager is already notified!
@@ -389,13 +413,13 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
         return
     cfg = tool.getMeetingConfig(obj)
     # Do not send the mail if mail mode is "deactivated".
-    if cfg.getMailMode() == 'deactivated': return
+    if cfg.getMailMode() == 'deactivated':
+        return
     # Do not send mail if the (not custom) event is unknown.
     if not customEvent and event not in cfg.getMailItemEvents() and \
        event not in cfg.getMailMeetingEvents():
         return
     # Ok, send a mail. Who are the recipients ?
-    enc = obj.portal_properties.site_properties.getProperty('default_charset')
     recipients = []
     adap = obj.adapted()
     if isRole and (permissionOrRole == 'Owner'):
@@ -406,25 +430,33 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
         # users, nor the cached users!
     for userId in userIds:
         user = obj.acl_users.getUser(userId)
-        if not user: continue
+        if not user:
+            continue
         # May happen if someone deletes the user directly in the ZMI.
         userInfo = obj.portal_membership.getMemberById(userId)
-        if not userInfo.getProperty('email'): continue
+        if not userInfo.getProperty('email'):
+            continue
         # Does the user have the corresponding permission on p_obj ?
-        if isRole: checkMethod = user.has_role
-        else:      checkMethod = user.has_permission
-        if not checkMethod(permissionOrRole, obj): continue
+        if isRole:
+            checkMethod = user.has_role
+        else:
+            checkMethod = user.has_permission
+        if not checkMethod(permissionOrRole, obj):
+            continue
         recipient = tool.getMailRecipient(userInfo)
         # Must we avoid sending mail to this recipient for some custom reason?
-        if not adap.includeMailRecipient(event, userId): continue
+        if not adap.includeMailRecipient(event, userId):
+            continue
         # Has the user unsubscribed to this event in his preferences ?
         itemEvents = cfg.getUserParam('mailItemEvents', userId=userId)
         meetingEvents = cfg.getUserParam('mailMeetingEvents', userId=userId)
-        if (event not in itemEvents) and (event not in meetingEvents): continue
+        if (event not in itemEvents) and (event not in meetingEvents):
+            continue
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
     sendMail(recipients, obj, event, mapping=mapping)
     return True
+
 
 def sendAdviceToGiveMailIfRelevant(event):
     '''A transition was fired on an item (in p_event.object). Check here if,
@@ -432,15 +464,19 @@ def sendAdviceToGiveMailIfRelevant(event):
        in the previous item state.'''
     tool = event.object.portal_plonemeeting
     cfg = tool.getMeetingConfig(event.object)
-    if 'adviceToGive' not in cfg.getMailItemEvents(): return
+    if 'adviceToGive' not in cfg.getMailItemEvents():
+        return
     for groupId, adviceInfo in event.object.advices.iteritems():
         adviceStates = getattr(tool, groupId).getItemAdviceStates(cfg)
         # Ignore advices that must not be given in the current item state
-        if event.new_state.id not in adviceStates: continue
+        if event.new_state.id not in adviceStates:
+            continue
         # Ignore advices that already needed to be given in the previous item state
-        if event.old_state.id in adviceStates: continue
+        if event.old_state.id in adviceStates:
+            continue
         # do not consider groups that already gave their advice
-        if not adviceInfo['type'] == 'not_given': continue
+        if not adviceInfo['type'] == 'not_given':
+            continue
         # Send a mail to every person from group _advisers.
         ploneGroup = event.object.acl_users.getGroup('%s_advisers' % groupId)
         for memberId in ploneGroup.getMemberIds():
@@ -450,35 +486,58 @@ def sendAdviceToGiveMailIfRelevant(event):
             # Send a mail to this guy
             recipient = tool.getMailRecipient(memberId)
             if recipient:
-                labelType = adviceInfo['optional'] and \
-                            'advice_optional' or 'advice_mandatory'
-                type = translate(labelType, domain='PloneMeeting', context=event.object.REQUEST).lower()
-                sendMail([recipient], event.object, 'adviceToGive',
-                         mapping = {'type': type})
+                labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
+                translated_type = translate(labelType, domain='PloneMeeting', context=event.object.REQUEST).lower()
+                sendMail([recipient],
+                         event.object,
+                         'adviceToGive',
+                         mapping={'type': translated_type})
+
 
 # ------------------------------------------------------------------------------
 def marshallBrain(res, value):
     '''Custom function for producing the XML version of a brain.'''
     w = res.write
     # Dump a brain.
-    w('<Title>'); w(cgi.escape(value.Title)); w('</Title>')
-    w('<url>'); w(value.getURL()); w('</url>')
-    w('<uid>'); w(value.UID); w('</uid>')
-    w('<path>'); w(value.getPath()); w('</path>')
-    w('<Creator>'); w(value.Creator); w('</Creator>')
-    w('<review_state>'); w(value.review_state); w('</review_state>')
-    w('<created type="DateTime">'); w(value.created); w('</created>')
-    w('<modified type="DateTime">'); w(value.modified); w('</modified>')
+    w('<Title>')
+    w(cgi.escape(value.Title))
+    w('</Title>')
+    w('<url>')
+    w(value.getURL())
+    w('</url>')
+    w('<uid>')
+    w(value.UID)
+    w('</uid>')
+    w('<path>')
+    w(value.getPath())
+    w('</path>')
+    w('<Creator>')
+    w(value.Creator)
+    w('</Creator>')
+    w('<review_state>')
+    w(value.review_state)
+    w('</review_state>')
+    w('<created type="DateTime">')
+    w(value.created)
+    w('</created>')
+    w('<modified type="DateTime">')
+    w(value.modified)
+    w('</modified>')
     if value.meta_type == 'Meeting':
         # We must also include the meeting date
         dateIndex = value.portal_catalog.Indexes['getDate']
         meetingDate = dateIndex.getEntryForObject(value.getRID())
-        w('<Date type="DateTime">'); w(meetingDate); w('</Date>')
+        w('<Date type="DateTime">')
+        w(meetingDate)
+        w('</Date>')
     elif value.meta_type == 'MeetingItem':
-        w('<Title2>'); w(value.getTitle2); w('</Title2>')
+        w('<Title2>')
+        w(value.getTitle2)
+        w('</Title2>')
 
 marshallParams = {'conversionFunctions': {'mybrains': marshallBrain},
                   'objectType': 'archetype'}
+
 
 class HubSessionsMarshaller(Marshaller, XmlMarshaller):
     '''Abstract marshaller used as base class for marshalling PloneMeeting
@@ -540,13 +599,15 @@ class HubSessionsMarshaller(Marshaller, XmlMarshaller):
                 history = instance.workflow_history[workflows[0].id]
                 for event in history:
                     res.write('<event type="object">')
-                    for k, v in event.iteritems(): self.dumpField(res, k, v)
+                    for k, v in event.iteritems():
+                        self.dumpField(res, k, v)
                     res.write('</event>')
             res.write('</workflowHistory>')
         if workflows and (workflows[0].id == 'plonemeeting_activity_workflow'):
             # Add the object state
             objectState = wft.getInfoFor(instance, 'review_state')
             self.dumpField(res, 'active', objectState == 'active')
+
 
 # ------------------------------------------------------------------------------
 def addRecurringItemsIfRelevant(meeting, transition):
@@ -573,13 +634,15 @@ defaultPermissions = (View, AccessContentsInformation, ModifyPortalContent,
 # permissions that are set on objects governed by those workflows, the
 # permission "Review portal content" does not appear in the list at all.
 
+
 def clonePermissions(srcObj, destObj, permissions=defaultPermissions):
     '''This method applies on p_destObj the same values for p_permissions
        than those that apply for p_srcObj, according to workflow on
        p_srcObj. p_srcObj may be an item or a meeting.'''
     wfTool = srcObj.portal_workflow
     srcWorkflows = wfTool.getWorkflowsFor(srcObj)
-    if not srcWorkflows: return
+    if not srcWorkflows:
+        return
     srcWorkflow = srcWorkflows[0]
     for permission in permissions:
         if permission in srcWorkflow.permissions:
@@ -587,13 +650,16 @@ def clonePermissions(srcObj, destObj, permissions=defaultPermissions):
             # current state.
             srcStateDef = getattr(srcWorkflow.states, srcObj.queryState())
             permissionInfo = srcStateDef.getPermissionInfo(permission)
-            destObj.manage_permission(permission, permissionInfo['roles'],
-                acquire=permissionInfo['acquired'])
+            destObj.manage_permission(permission,
+                                      permissionInfo['roles'],
+                                      acquire=permissionInfo['acquired'])
     # Reindex object because permissions are catalogued.
     destObj.reindexObject(idxs=['allowedRolesAndUsers'])
 
 # ------------------------------------------------------------------------------
 coreFieldNames = ('id', 'title', 'description')
+
+
 def getCustomSchemaFields(baseSchema, completedSchema, cols):
     '''The Archetypes schema of any PloneMeeting content type can be extended
        through the "pm_updates.py mechanism". This function returns the list of
@@ -603,7 +669,8 @@ def getCustomSchemaFields(baseSchema, completedSchema, cols):
     res = []
     for field in completedSchema.fields():
         fieldName = field.getName()
-        if fieldName.endswith('2'): continue
+        if fieldName.endswith('2'):
+            continue
         if (fieldName not in coreFieldNames) and \
            (fieldName not in baseFieldNames) and \
            (field.schemata != 'metadata'):
@@ -620,25 +687,29 @@ def getCustomSchemaFields(baseSchema, completedSchema, cols):
             row.append(elem)
         # Complete the last unfinished line if required.
         if row:
-            while len(row) < cols: row.append(None)
+            while len(row) < cols:
+                row.append(None)
             newRes.append(row)
         res = newRes
     return res
+
 
 # ------------------------------------------------------------------------------
 def allowManagerToCreateIn(folder):
     '''Allows me (Manager) to create meeting and items in p_folder.'''
     folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'],
-        ('Manager', 'MeetingMember',), acquire=0)
+                            ('Manager', 'MeetingMember',), acquire=0)
     folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'],
-        ('Manager', 'MeetingManager',), acquire=0)
+                            ('Manager', 'MeetingManager',), acquire=0)
+
 
 def disallowManagerToCreateIn(folder):
     '''Disallows me (Manager) to create meeting and items in p_folder.'''
     folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'],
-        ('MeetingMember',), acquire=0)
+                            ('MeetingMember',), acquire=0)
     folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'],
-        ('MeetingManager',), acquire=0)
+                            ('MeetingManager',), acquire=0)
+
 
 # ------------------------------------------------------------------------------
 def getDateFromRequest(day, month, year, start):
@@ -651,28 +722,40 @@ def getDateFromRequest(day, month, year, start):
        are required to be valid string representations of integers.'''
     # Determine day
     if not day.strip() or (day == '00'):
-        if start: day = 1
-        else: day = 30
-    else: day = int(day)
+        if start:
+            day = 1
+        else:
+            day = 30
+    else:
+        day = int(day)
     # Determine month
     if not month.strip() or (month == '00'):
-        if start: month = 1
-        else: month = 12
-    else: month = int(month)
-    if (month == 2) and (day == 30): day = 28
+        if start:
+            month = 1
+        else:
+            month = 12
+    else:
+        month = int(month)
+    if (month == 2) and (day == 30):
+        day = 28
     # Determine year
     if not year.strip() or (year == '0000'):
-        if start: year=1980
-        else: year=3000
+        if start:
+            year = 1980
+        else:
+            year = 3000
     else:
         year = int(year)
     try:
         res = DateTime('%d/%d/%d' % (month, day, year))
     except DateTime.DateError:
         # The date entered by the user is invalid. Take a default date.
-        if start: res = DateTime('1980/01/01')
-        else:     res = DateTime('3000/12/31')
+        if start:
+            res = DateTime('1980/01/01')
+        else:
+            res = DateTime('3000/12/31')
     return res
+
 
 # ------------------------------------------------------------------------------
 def getDateFromDelta(aDate, delta):
@@ -693,6 +776,7 @@ def getDateFromDelta(aDate, delta):
 from AccessControl import ClassSecurityInfo
 from App.class_init import InitializeClass
 
+
 class FakeMeetingUser:
     '''Used as a replacement for a MeetingUser, ie:
        * when the real MeetingUser has been deleted,
@@ -702,40 +786,50 @@ class FakeMeetingUser:
     security = ClassSecurityInfo()
     def __init__(self, id, user=None, replacement=None):
         self.id = id
-        if not user: return
+        if not user:
+            return
         bilingual = user.getField('duty2')
         # MeetingUser instance p_user is replaced by a p_replacement user.
         self.title = user.Title()
-        if bilingual: self.title2 = user.getTitle2()
+        if bilingual:
+            self.title2 = user.getTitle2()
         self.duty = replacement.getReplacementDuty()
-        if bilingual: self.duty2 = replacement.getReplacementDuty2()
+        if bilingual:
+            self.duty2 = replacement.getReplacementDuty2()
         # If this person replaces another one, self.duty above is the duty of
         # the person as replacement for the other one. We keep its original
         # duty in self.originalDuty below.
         self.originalDuty = user.getDuty()
-        if bilingual: self.originalDuty2 = user.getDuty2()
+        if bilingual:
+            self.originalDuty2 = user.getDuty2()
 
     security.declarePublic('getId')
-    def getId(self): return self.id
+    def getId(self):
+        return self.id
 
     security.declarePublic('Title')
-    def Title(self): return getattr(self, 'title', '')
+    def Title(self):
+        return getattr(self, 'title', '')
 
     security.declarePublic('getDuty')
     def getDuty(self, original=False):
-        if not original: return getattr(self, 'duty', '')
+        if not original:
+            return getattr(self, 'duty', '')
         return getattr(self, 'originalDuty', '')
 
     security.declarePublic('getBilingual')
     def getBilingual(self, name, force=1, sep='-'):
         '''Gets the bilingual content of field named p_name (mimics
            MeetingUser.getBilingual).'''
-        if force == 1: return getattr(self, name, '')
-        elif force == 2: return getattr(self, name+'2', '')
+        if force == 1:
+            return getattr(self, name, '')
+        elif force == 2:
+            return getattr(self, name+'2', '')
         elif force == 'all':
             return '%s%s%s' % (getattr(self, name, ''), sep,
                                getattr(self, name+'2', ''))
 InitializeClass(FakeMeetingUser)
+
 
 def getMeetingUsers(obj, fieldName, theObjects=False, includeDeleted=True,
                     meetingForRepls=None):
@@ -755,19 +849,22 @@ def getMeetingUsers(obj, fieldName, theObjects=False, includeDeleted=True,
                      "duty" will be initialized with the replacement duty of
                      the original user.'''
     res = obj.getField(fieldName).get(obj)
-    if not theObjects: return res
+    if not theObjects:
+        return res
     cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
     newRes = []
     for id in res:
         mUser = getattr(cfg.meetingusers, id, None)
         if not mUser:
-            if includeDeleted: newRes.append(FakeMeetingUser(id))
+            if includeDeleted:
+                newRes.append(FakeMeetingUser(id))
         else:
-            if not meetingForRepls: # Simply add the MeetingUser to the result
+            if not meetingForRepls:  # Simply add the MeetingUser to the result
                 newRes.append(mUser)
             else:
                 newRes.append(mUser.getForUseIn(meetingForRepls))
     return newRes
+
 
 # ------------------------------------------------------------------------------
 class NightWork:
@@ -797,7 +894,7 @@ class NightWork:
         w = logger.warn
         w('Executing nightwork...')
         if self.type == 'notification':
-            w('=> tool.onNotify("%s", "%s")...' % (p['objectUrl'],p['event']))
+            w('=> tool.onNotify("%s", "%s")...' % (p['objectUrl'], p['event']))
             tool.adapted().onNotify(p['objectUrl'], p['event'])
         elif self.type == 'method':
             w('=> %s... Params: %s' % (self.action, self.params))
@@ -812,11 +909,14 @@ class NightWork:
                 res = res and (getattr(self, name) == value)
             elif self.params and (name in self.params):
                 res = res and (self.params.get(name) == value)
-            else: return
+            else:
+                return
         return res
 
 # ------------------------------------------------------------------------------
 mainTypes = ('MeetingItem', 'Meeting', 'MeetingFile')
+
+
 def getFieldContent(obj, name, force=None, sep='-', **kwargs):
     '''Returns the content of p_field on p_obj. If content if available in
        2 languages, return the one that corresponds to user language, excepted
@@ -825,8 +925,10 @@ def getFieldContent(obj, name, force=None, sep='-', **kwargs):
        separated with p_sep.'''
     global mainTypes
     if force:
-        if force == 1: return obj.getField(name).get(obj, **kwargs)
-        elif force == 2: return obj.getField(name+'2').get(obj, **kwargs)
+        if force == 1:
+            return obj.getField(name).get(obj, **kwargs)
+        elif force == 2:
+            return obj.getField(name+'2').get(obj, **kwargs)
         elif force == 'all':
             return '%s%s%s' % (obj.getField(name).get(obj, **kwargs), sep,
                                obj.getField(name+'2').get(obj, **kwargs))
@@ -838,7 +940,8 @@ def getFieldContent(obj, name, force=None, sep='-', **kwargs):
         bilingual = 'secondLanguage' in adaptations
     else:
         bilingual = 'secondLanguageCfg' in adaptations
-    if not bilingual: return field.get(obj)
+    if not bilingual:
+        return field.get(obj)
     else:
         # Get the name of the 2 languages
         languages = tool.getAvailableInterfaceLanguages().split(',')[:2]
@@ -848,17 +951,19 @@ def getFieldContent(obj, name, force=None, sep='-', **kwargs):
         else:
             return obj.getField(field.getName()+'2').get(obj, **kwargs)
 
+
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''
     lastVersion = obj.getField(name).getAccessor(obj)()
-    if not changes: return lastVersion
+    if not changes:
+        return lastVersion
     # Return cumulative diff between successive versions of field
     res = None
     lastEvent = None
     for event in obj.workflow_history[obj.getWorkflowName()]:
         if (event['action'] == '_datachange_') and (name in event['changes']):
-            if res == None:
+            if res is None:
                 # We have found the first version of the field
                 res = event['changes'][name]
             else:
@@ -872,6 +977,7 @@ def getFieldVersion(obj, name, changes):
     iMsg, dMsg = getHistoryTexts(obj, lastEvent)
     comparator = HtmlDiff(res, lastVersion, iMsg, dMsg)
     return comparator.get()
+
 
 # ------------------------------------------------------------------------------
 def getLastEvent(obj, transition, notBefore='transfer'):
@@ -889,13 +995,16 @@ def getLastEvent(obj, transition, notBefore='transfer'):
     i = len(history)-1
     while i >= 0:
         event = history[i]
-        if notBefore and (event['action'] == notBefore): return
+        if notBefore and (event['action'] == notBefore):
+            return
         if isinstance(transition, basestring):
             condition = event['action'] == transition
         else:
             condition = event['action'] in transition
-        if condition: return event
+        if condition:
+            return event
         i -= 1
+
 
 # ------------------------------------------------------------------------------
 # History-related functions
@@ -908,43 +1017,57 @@ def rememberPreviousData(obj, name=None):
     cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
     isItem = obj.meta_type == 'MeetingItem'
     # Do nothing if the object is not in a state when historization is enabled.
-    if isItem: meth = cfg.getRecordItemHistoryStates
-    else:      meth = cfg.getRecordMeetingHistoryStates
-    if obj.queryState() not in meth(): return res
-    # Store in res the values currently stored on p_obj.
-    if isItem: historized = cfg.getHistorizedItemAttributes()
-    else:      historized = cfg.getHistorizedMeetingAttributes()
-    if name:
-        if name in historized: res[name] = obj.getField(name).get(obj)
+    if isItem:
+        meth = cfg.getRecordItemHistoryStates
     else:
-        for name in historized: res[name] = obj.getField(name).get(obj)
+        meth = cfg.getRecordMeetingHistoryStates
+    if obj.queryState() not in meth():
+        return res
+    # Store in res the values currently stored on p_obj.
+    if isItem:
+        historized = cfg.getHistorizedItemAttributes()
+    else:
+        historized = cfg.getHistorizedMeetingAttributes()
+    if name:
+        if name in historized:
+            res[name] = obj.getField(name).get(obj)
+    else:
+        for name in historized:
+            res[name] = obj.getField(name).get(obj)
     return res
+
 
 def addDataChange(obj, previousData=None):
     '''This method adds a "data change" event in the object history. If the
        previous data are not given in p_previousData, we look for it in
        obj._v_previousData.'''
-    if previousData == None:
+    if previousData is None:
         previousData = getattr(obj, '_v_previousData', None)
-    if not previousData: return
+    if not previousData:
+        return
     # Remove from p_previousData values that were not changed or that were empty
     for name in previousData.keys():
         field = obj.getField(name)
         oldValue = previousData[name]
-        if isinstance(oldValue, basestring): oldValue = oldValue.strip()
+        if isinstance(oldValue, basestring):
+            oldValue = oldValue.strip()
         newValue = field.get(obj)
-        if isinstance(newValue, basestring): newValue = newValue.strip()
+        if isinstance(newValue, basestring):
+            newValue = newValue.strip()
         if oldValue == newValue:
             del previousData[name]
-    if not previousData: return
+    if not previousData:
+        return
     # Add an event in the history
     userId = obj.portal_membership.getAuthenticatedMember().getId()
     event = {'action': '_datachange_', 'actor': userId, 'time': DateTime(),
              'comments': '', 'review_state': obj.queryState(),
              'changes': previousData}
-    if hasattr(obj, '_v_previousData'): del obj._v_previousData
+    if hasattr(obj, '_v_previousData'):
+        del obj._v_previousData
     # Add the event to the history
     obj.workflow_history[obj.getWorkflowName()] += (event,)
+
 
 def hasHistory(obj, fieldName=None):
     '''Has p_obj an history? If p_fieldName is specified, the question is: has
@@ -958,7 +1081,9 @@ def hasHistory(obj, fieldName=None):
             else:
                 condition = (event['action'] == '_datachange_') and \
                             (fieldName in event['changes'])
-            if condition: return True
+            if condition:
+                return True
+
 
 def findNewValue(obj, name, history, stopIndex):
     '''This function tries to find a more recent version of value of field
@@ -967,11 +1092,14 @@ def findNewValue(obj, name, history, stopIndex):
     i = stopIndex+1
     while (i-1) >= 0:
         i -= 1
-        if history[i]['action'] != '_datachange_': continue
-        if name not in history[i]['changes']: continue
+        if history[i]['action'] != '_datachange_':
+            continue
+        if name not in history[i]['changes']:
+            continue
         # We have found it!
         return history[i]['changes'][name]
     return obj.getField(name).get(obj)
+
 
 def getHistoryTexts(obj, event):
     '''Returns a tuple (insertText, deleteText) containing texts to show on,
@@ -988,6 +1116,7 @@ def getHistoryTexts(obj, event):
         res.append(msg.encode('utf-8'))
     return res
 
+
 def getHistory(obj, startNumber=0, batchSize=5):
     '''Returns the history for this object, sorted in reverse order (most
        recent change first) if p_reverse is True.'''
@@ -999,8 +1128,10 @@ def getHistory(obj, startNumber=0, batchSize=5):
     while (i+1) < len(history):
         i += 1
         # Keep only events in range startNumber:startNumber+batchSize
-        if i < startNumber: continue
-        if i > stopIndex: break
+        if i < startNumber:
+            continue
+        if i > stopIndex:
+            break
         event = history[i]
         if event['action'] == '_datachange_':
             # We take a copy, because we will modify it.
@@ -1031,13 +1162,16 @@ def getHistory(obj, startNumber=0, batchSize=5):
                 elif widgetName == 'MultiSelectionWidget':
                     allValues = getattr(obj, obj.getField(name).vocabulary)()
                     val = [allValues.getValue(v) for v in oldValue]
-                    if not val: val = '-'
-                    else: val = '<br/>'.join(val)
+                    if not val:
+                        val = '-'
+                    else:
+                        val = '<br/>'.join(val)
                     event['changes'][name] = val
                 else:
                     event['changes'][name] = oldValue
         res.append(event)
     return {'events': res, 'totalNumber': len(history)}
+
 
 # ------------------------------------------------------------------------------
 def setFieldFromAjax(obj, fieldName, newValue):
@@ -1048,12 +1182,14 @@ def setFieldFromAjax(obj, fieldName, newValue):
     previousData = rememberPreviousData(obj, fieldName)
     field.getMutator(obj)(newValue, content_type='text/html')
     # Potentially store it in object history
-    if previousData: addDataChange(obj, previousData)
+    if previousData:
+        addDataChange(obj, previousData)
     # Update the last modification date
     obj.modification_date = DateTime()
     # Apply XHTML transforms when relevant
     transformAllRichTextFields(obj, onlyField=fieldName)
     obj.reindexObject()
+
 
 # ------------------------------------------------------------------------------
 def transformAllRichTextFields(obj, onlyField=None):
@@ -1067,18 +1203,21 @@ def transformAllRichTextFields(obj, onlyField=None):
     fieldsToTransform = meetingConfig.getXhtmlTransformFields()
     transformTypes = meetingConfig.getXhtmlTransformTypes()
     for field in obj.schema.fields():
-        if field.widget.getName() != 'RichWidget': continue
-        if onlyField and (field.getName() != onlyField): continue
+        if field.widget.getName() != 'RichWidget':
+            continue
+        if onlyField and (field.getName() != onlyField):
+            continue
         # What is the "write" permission for this field ?
         writePermission = 'Modify portal content'
         if hasattr(field, 'write_permission'):
             writePermission = field.write_permission
-        if not member.has_permission(writePermission, obj): continue
+        if not member.has_permission(writePermission, obj):
+            continue
         # Apply mandatory transforms
         fieldContent = formatXhtmlFieldForAppy(field.get(obj))
         # Apply standard transformations as defined in the config
         if (field.getName() in fieldsToTransform) and \
-            not kupuFieldIsEmpty(fieldContent):
+           not kupuFieldIsEmpty(fieldContent):
             for transform in transformTypes:
                 exec 'fieldContent = %s(obj, fieldContent)' % transform
         # Apply custom transformations if defined
@@ -1086,12 +1225,14 @@ def transformAllRichTextFields(obj, onlyField=None):
                   field.getName(), fieldContent))
         field.setContentType(obj, field.default_content_type)
 
+
 # ------------------------------------------------------------------------------
 def removeBlanks(obj, xhtmlContent):
     '''This method will remove any blank line in p_xhtmlContent.'''
     for emptyPara in KUPU_EMPTY_VALUES:
         xhtmlContent = xhtmlContent.replace(emptyPara, '')
     return xhtmlContent
+
 
 # ------------------------------------------------------------------------------
 def signatureNotAlone(obj, xhtmlContent):
@@ -1116,9 +1257,11 @@ def signatureNotAlone(obj, xhtmlContent):
         # Does this element already have a "class" attribute?
         if res.find('class="%s"' % kwnStyle, maxIndex) == -1:
             # No: I add the style
-            res = res[:maxIndex+elemLenght] + (' class="%s" ' % kwnStyle) +\
-                  res[maxIndex+elemLenght:]
+            res = (res[:maxIndex+elemLenght] +
+                   ' class="%s" ' % kwnStyle +
+                   res[maxIndex+elemLenght:])
     return res
+
 
 # ------------------------------------------------------------------------------
 def spanifyLink(htmltag):
@@ -1128,11 +1271,13 @@ def spanifyLink(htmltag):
     htmltag = re.sub('</a>', '</span>', htmltag)
     return htmltag
 
+
 # ------------------------------------------------------------------------------
 class ZCTextIndexInfo:
     '''Silly class used for storing information about a ZCTextIndex.'''
     lexicon_id = "plone_lexicon"
     index_type = 'Okapi BM25 Rank'
+
 
 def updateIndexes(ploneSite, indexInfo, logger):
     '''This method creates or updates, in a p_ploneSite, definitions of indexes
@@ -1148,23 +1293,25 @@ def updateIndexes(ploneSite, indexInfo, logger):
             oldType = zopeCatalog.indexes[indexName].__class__.__name__
             if oldType != indexType:
                 catalog.delIndex(indexName)
-                logger.info('Existing index "%s" of type "%s" was removed:'\
-                            ' we need to recreate it with type "%s".' % \
+                logger.info('Existing index "%s" of type "%s" was removed:'
+                            ' we need to recreate it with type "%s".' %
                             (indexName, oldType, indexType))
         if indexName not in zopeCatalog.indexes:
             # We need to create this index
             if indexType != 'ZCTextIndex':
                 catalog.addIndex(indexName, indexType)
             else:
-                catalog.addIndex(indexName,indexType,extra=ZCTextIndexInfo)
+                catalog.addIndex(indexName, indexType, extra=ZCTextIndexInfo)
             # Indexing database content based on this index.
             catalog.reindexIndex(indexName, ploneSite.REQUEST)
-            logger.info('Created index "%s" of type "%s"...' % \
-                        (indexName, indexType))
+            logger.info('Created index "%s" of type "%s"...' % (indexName, indexType))
+
 
 # ------------------------------------------------------------------------------
-tokens = ( ('<li', -1), ('</li>', 5))
+tokens = (('<li', -1), ('</li>', 5))
 crlf = ('\r', '\n')
+
+
 def formatXhtmlFieldForAppy(value):
     '''p_value is a string containing XHTML code. This code must follow some
        rules to be Appy-compliant (ie, for appy.shared.XhtmlDiff to work
@@ -1173,7 +1320,7 @@ def formatXhtmlFieldForAppy(value):
     global crlf
     for token, delta in tokens:
         res = []
-        i = 0 # Where I am in p_value
+        i = 0  # Where I am in p_value
         while i < len(value):
             j = value.find(token, i)
             if j == -1:
