@@ -648,6 +648,28 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     res.append(self.portal_groups.getGroupById(groupId))
         return res
 
+    security.declarePublic('getSelectableGroups')
+    def getSelectableGroups(self, isDefinedInTool=False, existingGroupId=None):
+        """
+        """
+        res = []
+        if not isDefinedInTool:
+            userMeetingGroups = self.getGroups(suffix="creators")
+            for group in userMeetingGroups:
+                res.append((group.id, group.getName()))
+            if existingGroupId:
+                # Try to get the corresponding meeting group
+                group = getattr(self, existingGroupId, None)
+                if group:
+                    if group not in userMeetingGroups:
+                        res.append((existingGroupId, group.getName()))
+                else:
+                    res.append((existingGroupId, existingGroupId))
+        else:
+            for group in self.portal_plonemeeting.getActiveGroups():
+                res.append((group.id, group.getName()))
+        return res
+
     security.declarePublic('userIsAmong')
     def userIsAmong(self, suffix):
         '''Check if the currently logged user is in a p_suffix-related Plone

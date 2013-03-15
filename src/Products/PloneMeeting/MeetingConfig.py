@@ -1943,7 +1943,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # remove inheritance on self and define these local_roles for self too
         self.__ac_local_roles_block__ = True
         self.manage_addLocalRoles(groupId, ('MeetingPowerObserverLocal',))
-        # the problem here is that 
+        # the problem here is that
 
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
@@ -2291,10 +2291,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getCategories')
-    def getCategories(self, classifiers=False, item=None, onlySelectables=True):
+    def getCategories(self, classifiers=False, onlySelectables=True):
         '''Returns the categories defined for this meeting config or the
-           classifiers if p_classifiers is True. If p_item is given, it will be used
-           by MeetingCategory.isSelectable only if p_onlySelectables is True, either we return
+           classifiers if p_classifiers is True. If p_onlySelectables is True,
+           there will be a check to see if the category is available to the
+           current user, otherwise, we return
            every existing MeetingCategories.'''
         if classifiers:
             catFolder = self.classifiers
@@ -2305,7 +2306,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         if onlySelectables:
             for cat in catFolder.objectValues('MeetingCategory'):
-                if cat.adapted().isSelectable(item):
+                if cat.adapted().isSelectable():
                     res.append(cat)
         else:
             res = catFolder.objectValues('MeetingCategory')
@@ -2711,4 +2712,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-

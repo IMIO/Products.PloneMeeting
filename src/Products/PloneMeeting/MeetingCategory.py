@@ -24,6 +24,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 from App.class_init import InitializeClass
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import getCustomAdapter, \
      HubSessionsMarshaller, getFieldContent
 
@@ -161,9 +162,10 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     def onTransferred(self, extApp): '''See doc in interfaces.py.'''
 
     security.declarePublic('isSelectable')
-    def isSelectable(self, item=None):
+    def isSelectable(self):
         '''See documentation in interfaces.py.'''
         cat = self.getSelf()
+        tool = getToolByName(cat, 'portal_plonemeeting')
         try:
             wfTool = self.portal_workflow
         except AttributeError:
@@ -172,9 +174,11 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         isUsing = True
         usingGroups = self.getUsingGroups()
         # If we have an item, do one additional check
-        if item and usingGroups:
+        if usingGroups:
             # listProposingGroup takes isDefinedInTool into account
-            proposingGroupIds = item.listProposingGroup().keys()
+            import ipdb; ipdb.set_trace()
+            proposingGroupIds = tool.getSelectableGroups()
+            keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
             # Check intersection between self.usingGroups and groups for wich
             # the current user is creator
             isUsing = set(usingGroups).intersection(proposingGroupIds) != set()
@@ -207,4 +211,3 @@ registerType(MeetingCategory, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-
