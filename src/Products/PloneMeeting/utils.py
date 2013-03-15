@@ -41,6 +41,7 @@ from Products.Archetypes.Marshall import Marshaller
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
 import Products.PloneMeeting
 from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting.config import *
 from Products.PloneMeeting.interfaces import *
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -315,17 +316,23 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if not portalUrl:
         portalUrl = portal.absolute_url()
     if mapping:
+        # we need every mappings to be unicode
+        for elt in mapping:
+            if not isinstance(mapping[elt], unicode):
+                mapping[elt] = unicode(mapping[elt], enc)
         translationMapping = mapping
     else:
         translationMapping = {}
     translationMapping.update({
         'portalUrl': portalUrl, 'portalTitle': portal.Title().decode(enc),
         'objectTitle': obj.Title().decode(enc), 'objectUrl': obj.absolute_url(),
-        'meetingTitle': '', 'itemTitle': '', 'user': userName,
+        'meetingTitle': '', 'meetingLongTitle': '', 'itemTitle': '', 'user': userName,
         'objectDavUrl': obj.absolute_url_path(), 'groups': userGroups,
+        'meetingConfigTitle': cfg.Title().decode(enc),
     })
     if obj.meta_type == 'Meeting':
         translationMapping['meetingTitle'] = obj.Title().decode(enc)
+        translationMapping['meetingLongTitle'] = tool.formatDate(obj.getDate(), prefixed=True)
     elif obj.meta_type == 'MeetingItem':
         translationMapping['itemTitle'] = obj.Title().decode(enc)
         translationMapping['lastAnnexTitle'] = ''
@@ -338,6 +345,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         meeting = obj.getMeeting(brain=True)
         if meeting:
             translationMapping['meetingTitle'] = meeting.Title().decode(enc)
+            translationMapping['meetingLongTitle'] = tool.formatDate(meeting.getDate(), prefixed=True)
             translationMapping['itemNumber'] = obj.getItemNumber(
                 relativeTo='meeting')
     # Update the translationMapping with a sub-product-specific
@@ -358,7 +366,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     fromAddress = adminFromAddress
     if tool.getFunctionalAdminEmail():
         fromAddress = _getEmailAddress(tool.getFunctionalAdminName(),
-                                       tool.getFunctionalAdminEmail(), enc)
+                                       tool.getFunctionalAdminEmail(),
+                                       enc)
     if not recipients:
         recipients = [adminFromAddress]
     if mailMode == 'test':

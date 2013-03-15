@@ -355,9 +355,11 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
             raise self.BAD_MAILINGLIST
         # Send the mail with the document as attachment
         docName = '%s.%s' % (self._getFileName(obj), self.getPodFormat())
+        # generate event name depending on obj type
+        eventName = obj.meta_type == 'Meeting' and 'podMeetingByMail' or 'podItemByMail'
         sendMail(recipients,
                  obj,
-                 'podByMail',
+                 eventName,
                  attachments=[(docName, doc)],
                  mapping={'podTemplateTitle': self.Title()})
         # Return to the referer page.
