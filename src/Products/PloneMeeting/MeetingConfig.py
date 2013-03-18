@@ -2336,7 +2336,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         if onlySelectables:
             for cat in catFolder.objectValues('MeetingCategory'):
-                if cat.adapted().isSelectable(userId):
+                if cat.adapted().isSelectable(userId=userId):
                     res.append(cat)
         else:
             res = catFolder.objectValues('MeetingCategory')

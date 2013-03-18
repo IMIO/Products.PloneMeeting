@@ -92,6 +92,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # here above we restrict the use of 'maintenance' to vendors too...
         expectedCategories.insert(0, 'maintenance')
         self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
+        # change usingGroup for 'subproducts'
+        cfg.categories.subproducts.setUsingGroups(('developers',))
+        expectedCategories.remove('subproducts')
+        self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
 
     def testUsedColorSystemShowColors(self):
         '''The showColors is initialized by the showColorsForUser method that

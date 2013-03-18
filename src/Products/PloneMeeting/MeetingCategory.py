@@ -185,7 +185,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         # If we have an item, do one additional check
         if usingGroups:
             # listProposingGroup takes isDefinedInTool into account
-            proposingGroupIds = tool.getSelectableGroups(userId)
+            proposingGroupIds = tool.getSelectableGroups(userId=userId)
             keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
             # Check intersection between self.usingGroups and groups for wich
             # the current user is creator
