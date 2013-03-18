@@ -26,7 +26,8 @@ from Products.PloneMeeting.config import *
 from App.class_init import InitializeClass
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import getCustomAdapter, \
-     HubSessionsMarshaller, getFieldContent
+    HubSessionsMarshaller, getFieldContent
+
 
 # Marshaller -------------------------------------------------------------------
 class CategoryMarshaller(HubSessionsMarshaller):
@@ -102,6 +103,8 @@ MeetingCategory_schema = BaseSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 # Register the marshaller for DAV/XML export.
 MeetingCategory_schema.registerLayer('marshall', CategoryMarshaller())
+
+
 ##/code-section after-schema
 
 class MeetingCategory(BaseContent, BrowserDefaultMixin):
@@ -142,24 +145,30 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         return i
 
     security.declarePrivate('at_post_create_script')
-    def at_post_create_script(self): self.adapted().onEdit(isCreated=True)
+    def at_post_create_script(self):
+        self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
-    def at_post_edit_script(self): self.adapted().onEdit(isCreated=False)
+    def at_post_edit_script(self):
+        self.adapted().onEdit(isCreated=False)
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingCategory': return self.context
+        if self.__class__.__name__ != 'MeetingCategory':
+            return self.context
         return self
 
     security.declarePublic('adapted')
-    def adapted(self): return getCustomAdapter(self)
+    def adapted(self):
+        return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
-    def onEdit(self, isCreated): '''See doc in interfaces.py.'''
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
 
     security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp): '''See doc in interfaces.py.'''
+    def onTransferred(self, extApp):
+        '''See doc in interfaces.py.'''
 
     security.declarePublic('isSelectable')
     def isSelectable(self):
@@ -187,7 +196,8 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         '''A new item has chosen me as a classifier or category. I must
            increment my item counter. This method returns the new items
            count.'''
-        if self.getItemsCount() == None: self.setItemsCount(0)
+        if self.getItemsCount() is None:
+            self.setItemsCount(0)
         newCount = self.getItemsCount() + 1
         self.setItemsCount(newCount)
         return newCount
