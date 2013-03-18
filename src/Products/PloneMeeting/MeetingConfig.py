@@ -2320,12 +2320,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getCategories')
-    def getCategories(self, classifiers=False, onlySelectables=True):
+    def getCategories(self, classifiers=False, onlySelectables=True, userId=None):
         '''Returns the categories defined for this meeting config or the
            classifiers if p_classifiers is True. If p_onlySelectables is True,
            there will be a check to see if the category is available to the
            current user, otherwise, we return
-           every existing MeetingCategories.'''
+           every existing MeetingCategories.
+           If a p_userId is given, it will be used to be passed to isSelectable'''
         if classifiers:
             catFolder = self.classifiers
         elif self.getUseGroupsAsCategories():
@@ -2335,7 +2336,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         if onlySelectables:
             for cat in catFolder.objectValues('MeetingCategory'):
-                if cat.adapted().isSelectable():
+                if cat.adapted().isSelectable(userId):
                     res.append(cat)
         else:
             res = catFolder.objectValues('MeetingCategory')

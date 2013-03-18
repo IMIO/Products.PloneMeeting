@@ -171,7 +171,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
 
     security.declarePublic('isSelectable')
-    def isSelectable(self):
+    def isSelectable(self, userId):
         '''See documentation in interfaces.py.'''
         cat = self.getSelf()
         tool = getToolByName(cat, 'portal_plonemeeting')
@@ -185,7 +185,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         # If we have an item, do one additional check
         if usingGroups:
             # listProposingGroup takes isDefinedInTool into account
-            proposingGroupIds = tool.getSelectableGroups()
+            proposingGroupIds = tool.getSelectableGroups(userId)
             keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
             # Check intersection between self.usingGroups and groups for wich
             # the current user is creator

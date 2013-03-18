@@ -86,6 +86,12 @@ class testMeetingItem(PloneMeetingTestCase):
         # if current user is not creator for one of the usingGroups defined for the category, he can not use it
         self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
         self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
+        # cfg.getCategories can receive a userId
+        # pmCreator2 has an extra category called subproducts
+        expectedCategories.append('subproducts')
+        # here above we restrict the use of 'maintenance' to vendors too...
+        expectedCategories.insert(0, 'maintenance')
+        self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
 
     def testUsedColorSystemShowColors(self):
         '''The showColors is initialized by the showColorsForUser method that
@@ -429,7 +435,7 @@ class testMeetingItem(PloneMeetingTestCase):
         login(self.portal, 'pmCreator1')
         self.tool.getPloneMeetingFolder(otherMeetingConfigId)
         i1 = self.create('MeetingItem')
-        i1.setCategory(self.meetingConfig.categories.objectValues()[2].getId())
+        i1.setCategory(self.meetingConfig.categories.objectValues()[1].getId())
         i1.setDecision('<p>My decision</p>', mimetype='text/html')
         i1.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
         # Add annexes

@@ -5,6 +5,7 @@ from zope.interface import Interface
 ##code-section HEAD
 from zope.publisher.interfaces.browser import IBrowserRequest
 
+
 class IPloneMeetingLayer(IBrowserRequest):
     """
       Define a layer so some elements are only added for it
@@ -58,6 +59,8 @@ class IMeetingUser(Interface):
 
 ##code-section FOOT
 # Interfaces used for customizing the behaviour of meeting items ---------------
+
+
 class IMeetingItemDocumentation:
     '''Normally, the methods described here should be part of IMeetingItem.
        Because it is impossible to do so with an overengineered yet overrigid
@@ -243,6 +246,7 @@ class IMeetingItemDocumentation:
            with this method that will returns a list of extra field ids to copy to
            the cloned item.'''
 
+
 class IMeetingItemWorkflowConditions(Interface):
     '''Conditions that may be defined in the workflow associated with a meeting
        item are defined as methods in this interface.'''
@@ -302,6 +306,7 @@ class IMeetingItemWorkflowConditions(Interface):
            when it was first published, and that there are additional "late"
            items that were added in a hurry.'''
 
+
 class IMeetingItemWorkflowActions(Interface):
     '''Actions that may be triggered while the workflow linked to an item
        executes.'''
@@ -334,10 +339,12 @@ class IMeetingItemWorkflowActions(Interface):
     def doItemArchive(stateChange):
         '''Executes when the meeting containing this item is archived.'''
 
+
 class IMeetingItemCustom(IMeetingItem):
     '''If you want to propose your own implementations of IMeetingItem methods,
        you must define an adapter that adapts IMeetingItem to
        IMeetingItemCustom.'''
+
 
 # Interfaces used for customizing the behaviour of meetings --------------------
 class IMeetingDocumentation:
@@ -382,6 +389,7 @@ class IMeetingDocumentation:
            external application p_extApp. No need to reindex the object: the
            framework will do it subsequently.'''
 
+
 class IMeetingWorkflowConditions(Interface):
     '''Conditions that may be defined in the workflow associated with a meeting
        are defined as methods in this interface.'''
@@ -415,6 +423,7 @@ class IMeetingWorkflowConditions(Interface):
     def mayDelete():
         '''May one delete me? by default, a meeting may only be deleted if it
            contains no item.'''
+
 
 class IMeetingWorkflowActions(Interface):
     '''Actions that may be triggered while the workflow linked to a meeting
@@ -450,9 +459,11 @@ class IMeetingWorkflowActions(Interface):
     def doBackToClosed(stateChange):
         '''Executes when I undo a "archive" transition.'''
 
+
 class IMeetingCustom(IMeeting):
     '''If you want to propose your own implementations of IMeeting methods,
        you must define an adapter that adapts IMeeting to IMeetingCustom.'''
+
 
 # Interfaces used for customizing the behaviour of meeting categories ----------
 class IMeetingCategoryDocumentation:
@@ -476,42 +487,61 @@ class IMeetingCategoryDocumentation:
            categories for which method isSelectable returns True. The
            default implementation of isSelectable returns True if the workflow
            state is "active" for the category and if the current user is creator
-           for at least one of the 'usingGroups' selected on the category.'''
+           for at least one of the 'usingGroups' selected on the category.
+           If a p_userId is given, it will check if the category is selectable
+           for given userId.'''
 
-class IMeetingCategoryCustom(IMeetingCategory): pass
+
+class IMeetingCategoryCustom(IMeetingCategory):
+    pass
+
 
 # Interfaces used for customizing the behaviour of external applications -------
 # See docstring of previous classes for understanding this section.
 class IExternalApplicationDocumentation:
-    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
-class IExternalApplicationCustom(IExternalApplication): pass
+    def onEdit(isCreated):
+        '''Called when an object p_isCreated or edited.'''
+
+
+class IExternalApplicationCustom(IExternalApplication):
+    pass
+
 
 # Interfaces used for customizing the behaviour of meeting configs -------------
 # See docstring of previous classes for understanding this section.
 class IMeetingConfigDocumentation:
-    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onEdit(isCreated):
+        '''Called when an object p_isCreated or edited.'''
     def onTransferred(extApp):
         '''Called just after this object was created from a distant one via
            external application p_extApp. No need to reindex the object: the
            framework will do it subsequently.'''
 
-class IMeetingConfigCustom(IMeetingConfig): pass
+
+class IMeetingConfigCustom(IMeetingConfig):
+    pass
+
 
 # Interfaces used for customizing the behaviour of meeting files ---------------
 # See docstring of previous classes for understanding this section.
 class IMeetingFileDocumentation:
-    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onEdit(isCreated):
+        '''Called when an object p_isCreated or edited.'''
     def onTransferred(extApp):
         '''Called just after this object was created from a distant one via
            external application p_extApp. No need to reindex the object: the
            framework will do it subsequently.'''
 
-class IMeetingFileCustom(IMeetingFile): pass
+
+class IMeetingFileCustom(IMeetingFile):
+    pass
+
 
 # Interfaces used for customizing the behaviour of meeting file types ----------
 # See docstring of previous classes for understanding this section.
 class IMeetingFileTypeDocumentation:
-    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onEdit(isCreated):
+        '''Called when an object p_isCreated or edited.'''
     def onTransferred(extApp):
         '''Called just after this object was created from a distant one via
            external application p_extApp. No need to reindex the object: the
@@ -523,32 +553,42 @@ class IMeetingFileTypeDocumentation:
            default implementation of isSelectable returns True if the workflow
            state is "active" for the meeting file type.'''
 
-class IMeetingFileTypeCustom(IMeetingFileType): pass
+
+class IMeetingFileTypeCustom(IMeetingFileType):
+    pass
+
 
 # Interfaces used for customizing the behaviour of meeting groups --------------
 # See docstring of previous classes for understanding this section.
 class IMeetingGroupDocumentation:
-    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onEdit(isCreated):
+        '''Called when an object p_isCreated or edited.'''
     def onTransferred(extApp):
         '''Called just after this object was created from a distant one via
            external application p_extApp. No need to reindex the object: the
            framework will do it subsequently.'''
+
 
 class IMeetingGroupCustom(IMeetingGroup):
     '''If you want to propose your own implementations of IMeetingGroup methods,
        you must define an adapter that adapts IMeetingGroup to
        IMeetingGroupCustom.'''
 
+
 # Interfaces used for customizing the behaviour of pod templates ---------------
 # See docstring of previous classes for understanding this section.
 class IPodTemplateDocumentation:
-    def onEdit(isCreated): '''Called when an object p_isCreated or edited.'''
+    def onEdit(isCreated):
+        '''Called when an object p_isCreated or edited.'''
     def onTransferred(extApp):
         '''Called just after this object was created from a distant one via
            external application p_extApp. No need to reindex the object: the
            framework will do it subsequently.'''
 
-class IPodTemplateCustom(IPodTemplate): pass
+
+class IPodTemplateCustom(IPodTemplate):
+    pass
+
 
 # Interfaces used for customizing the behaviour of the PloneMeeting tool -------
 # See docstring of previous classes for understanding this section.
@@ -562,7 +602,10 @@ class IToolPloneMeetingDocumentation:
     def getSpecificMailContext(event, translationMapping):
         '''See doc in methods with similar names above.'''
 
-class IToolPloneMeetingCustom(IToolPloneMeeting): pass
+
+class IToolPloneMeetingCustom(IToolPloneMeeting):
+    pass
+
 
 # Interfaces used for customizing the behaviour of meeting users ---------------
 # See docstring of previous classes for understanding this section.
@@ -589,5 +632,7 @@ class IMeetingUserDocumentation:
            external application p_extApp. No need to reindex the object: the
            framework will do it subsequently.'''
 
-class IMeetingUserCustom(IMeetingUser): pass
+
+class IMeetingUserCustom(IMeetingUser):
+    pass
 ##/code-section FOOT

@@ -649,12 +649,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getSelectableGroups')
-    def getSelectableGroups(self, isDefinedInTool=False, existingGroupId=None):
+    def getSelectableGroups(self, isDefinedInTool=False, existingGroupId=None, userId=None):
         """
+          Returns the selectable groups for given p_userId or currently connected user.
         """
         res = []
         if not isDefinedInTool:
-            userMeetingGroups = self.getGroups(suffix="creators")
+            userMeetingGroups = self.getGroups(userId=userId, suffix="creators")
             for group in userMeetingGroups:
                 res.append((group.id, group.getName()))
             if existingGroupId:

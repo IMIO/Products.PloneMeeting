@@ -23,14 +23,16 @@ from Products.PloneMeeting.profiles import *
 # First meeting type: a fictitious PloneGov assembly ---------------------------
 
 # Categories
-deployment  = CategoryDescriptor('deployment',  'Deployment topics')
+deployment = CategoryDescriptor('deployment', 'Deployment topics')
 maintenance = CategoryDescriptor('maintenance', 'Maintenance topics')
 development = CategoryDescriptor('development', 'Development topics')
-events      = CategoryDescriptor('events',      'Events')
-research    = CategoryDescriptor('research',    'Research topics')
-projects    = CategoryDescriptor('projects',    'Projects')
+events = CategoryDescriptor('events', 'Events')
+research = CategoryDescriptor('research', 'Research topics')
+projects = CategoryDescriptor('projects', 'Projects')
 # A vintage category
-marketing   = CategoryDescriptor('marketing',   'Marketing', active=False)
+marketing = CategoryDescriptor('marketing', 'Marketing', active=False)
+# usingGroups category
+subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes', usingGroups=('vendors',))
 
 # File types
 financialAnalysis = MeetingFileTypeDescriptor(
@@ -43,7 +45,7 @@ budgetAnalysis = MeetingFileTypeDescriptor(
 itemAnnex = MeetingFileTypeDescriptor(
     'item-annex', 'Other annex(es)', 'itemAnnex.png', '')
 decision = MeetingFileTypeDescriptor(
-    'decision', 'Decision', 'decision.png', '', True) # Could be used once we
+    'decision', 'Decision', 'decision.png', '', True)  # Could be used once we
     # will digitally sign decisions ? Indeed, once signed, we will need to
     # store them (together with the signature) as separate files.
 decisionAnnex = MeetingFileTypeDescriptor(
@@ -78,8 +80,14 @@ pmReviewer2 = UserDescriptor('pmReviewer2', [], email="pmreviewer2@plonemeeting.
 pmAdviser1 = UserDescriptor('pmAdviser1', [], email="pmadviser1@plonemeeting.org", fullname='M. PMAdviser One')
 voter1 = UserDescriptor('voter1', [], email="voter1@plonemeeting.org", fullname='M. Voter One')
 voter2 = UserDescriptor('voter2', [], email="voter2@plonemeeting.org", fullname='M. Voter Two')
-powerobserver1 = UserDescriptor('powerobserver1', [], email="powerobserver1@plonemeeting.org", fullname='M. Power Observer1')
-powerobserver2 = UserDescriptor('powerobserver2', [], email="powerobserver2@plonemeeting.org", fullname='M. Power Observer2')
+powerobserver1 = UserDescriptor('powerobserver1',
+                                [],
+                                email="powerobserver1@plonemeeting.org",
+                                fullname='M. Power Observer1')
+powerobserver2 = UserDescriptor('powerobserver2',
+                                [],
+                                email="powerobserver2@plonemeeting.org",
+                                fullname='M. Power Observer2')
 
 developers = GroupDescriptor('developers', 'Developers', 'Devel',
                              givesMandatoryAdviceOn='python:False')
@@ -110,7 +118,7 @@ vendors.observers.append(voter2)
 endUsers = GroupDescriptor('endUsers', 'End users', 'EndUsers', active=False)
 
 # Add an external user
-cadranel = UserDescriptor('cadranel', [], fullname = 'M. Benjamin Cadranel')
+cadranel = UserDescriptor('cadranel', [], fullname='M. Benjamin Cadranel')
 
 # Add meeting users (voting purposes)
 pmReviewer1_voter = MeetingUserDescriptor('pmReviewer1')
@@ -118,13 +126,13 @@ pmManager_observer = MeetingUserDescriptor('pmManager',
                                            duty='Secrétaire de la Chancellerie',
                                            usages=['assemblyMember'])
 cadranel_signer = MeetingUserDescriptor('cadranel', duty='Secrétaire',
-                                       usages=['assemblyMember', 'signer'],
-                                       signatureImage='SignatureCadranel.jpg',
-                                       signatureIsDefault=True)
-muser_voter1  = MeetingUserDescriptor('voter1', duty='Voter1',
-                                       usages=['assemblyMember', 'voter',])
-muser_voter2  = MeetingUserDescriptor('voter2', duty='Voter2',
-                                       usages=['assemblyMember', 'voter'])
+                                        usages=['assemblyMember', 'signer'],
+                                        signatureImage='SignatureCadranel.jpg',
+                                        signatureIsDefault=True)
+muser_voter1 = MeetingUserDescriptor('voter1', duty='Voter1',
+                                     usages=['assemblyMember', 'voter', ])
+muser_voter2 = MeetingUserDescriptor('voter2', duty='Voter2',
+                                     usages=['assemblyMember', 'voter', ])
 
 # Meeting configuration
 meetingPga = MeetingConfigDescriptor(
@@ -134,7 +142,7 @@ meetingPga.shortName = 'Pga'
 meetingPga.assembly = 'Bill Gates, Steve Jobs'
 meetingPga.signatures = meetingPga.assembly
 meetingPga.categories = [deployment, maintenance, development, events,
-                         research, projects, marketing]
+                         research, projects, marketing, subproducts]
 meetingPga.meetingFileTypes = [
     financialAnalysis, legalAnalysis, budgetAnalysis, itemAnnex,
     decisionAnnex]
@@ -143,28 +151,29 @@ meetingPga.sortingMethodOnAddItem = 'on_categories'
 meetingPga.useGroupsAsCategories = False
 meetingPga.useAdvices = True
 meetingPga.itemAdviceStates = ['proposed', 'validated']
-meetingPga.itemAdviceEditStates = ['proposed',]
-meetingPga.itemAdviceViewStates = ['presented',]
+meetingPga.itemAdviceEditStates = ['proposed', ]
+meetingPga.itemAdviceViewStates = ['presented', ]
 meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
 meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
 meetingPga.useCopies = True
-meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'),]
+meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 # Second meeting type: a fictitious PloneMeeting assembly ----------------------
 
 # Recurring items
-recItem = RecurringItemDescriptor('recItem1', 'Recurring item #1',
+recItem = RecurringItemDescriptor(
+    'recItem1', 'Recurring item #1',
     '', category='developers', description='<p>This is the first recurring item.</p>',
     decision='Recurring Item approved')
 # item templates
-template1 = RecurringItemDescriptor('template1', 'Template1',
+template1 = RecurringItemDescriptor(
+    'template1', 'Template1',
     '', category='developers', description='<p>This is template1.</p>',
-    decision='<p>Template1 decision</p>', usages=['as_template_item',])
-template2 = RecurringItemDescriptor('template2', 'Template2',
+    decision='<p>Template1 decision</p>', usages=['as_template_item', ])
+template2 = RecurringItemDescriptor(
+    'template2', 'Template2',
     'vendors', category='developers', description='<p>This is template2.</p>',
-    decision='<p>Template1 decision</p>', usages=['as_template_item',], templateUsingGroups=['vendors',])
-
-# Categories
-subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes', usingGroups=('vendors',))
+    decision='<p>Template1 decision</p>', usages=['as_template_item', ],
+    templateUsingGroups=['vendors', ])
 
 # File types
 overheadAnalysis = MeetingFileTypeDescriptor(
@@ -178,15 +187,14 @@ meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Arnaud Hubaux, Jean-Michel Abe, Stephan Geulette, ' \
                       'Godefroid Chapelle, Gaetan Deberdt, Gaetan Delannay'
 meetingPma.signatures = meetingPga.assembly
-meetingPma.categories = [development, subproducts, research]
+meetingPma.categories = [development, research]
 meetingPma.meetingFileTypes = [
     financialAnalysis, overheadAnalysis, itemAnnex, decisionAnnex, marketingAnalysis]
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.sortingMethodOnAddItem = 'on_proposing_groups'
 meetingPma.useGroupsAsCategories = True
-meetingPma.allItemTags = '\n'.join(
-    ('Strategic decision','Genericity mechanism', 'User interface') )
+meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism', 'User interface'))
 meetingPma.sortAllItemTags = True
 meetingPma.recurringItems = (recItem, template1, template2, )
 # use same values as meetingPga for powerObserversStates
@@ -196,7 +204,7 @@ meetingPma.useVotes = True
 meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
                            cadranel_signer, muser_voter1, muser_voter2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate]
-meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'),]
+meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
                                  (developers, vendors, endUsers))
