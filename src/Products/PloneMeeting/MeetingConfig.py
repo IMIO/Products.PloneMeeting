@@ -34,7 +34,7 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.ActionInformation import Action
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
-     getCustomSchemaFields, HubSessionsMarshaller, getFieldContent
+    getCustomSchemaFields, HubSessionsMarshaller, getFieldContent
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -48,6 +48,7 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting ' \
                        'configuration. Please choose another one.'
+
 
 # Marshaller -------------------------------------------------------------------
 class ConfigMarshaller(HubSessionsMarshaller):
@@ -79,8 +80,7 @@ class ConfigMarshaller(HubSessionsMarshaller):
         # Adds links to sub-objects
         for folderName, folderInfo in mc.subFoldersInfo.iteritems():
             folder = getattr(mc, folderName)
-            res.write('<%s type="list" count="%d">' % \
-                (folderName, len(folder.objectIds())))
+            res.write('<%s type="list" count="%d">' % (folderName, len(folder.objectIds())))
             for subObject in folder.objectValues():
                 self.dumpField(res, 'url', subObject.absolute_url())
             res.write('</%s>' % folderName)
@@ -90,6 +90,7 @@ InitializeClass(ConfigMarshaller)
 # Helper class for validating workflow interfaces ------------------------------
 WRONG_INTERFACE = 'You must specify here interface "%s" or a subclass of it.'
 NO_ADAPTER_FOUND = 'No adapter was found that provides "%s" for "%s".'
+
 
 class WorkflowInterfacesValidator:
     '''Checks that declared interfaces exist and that adapters were defined for
@@ -106,14 +107,14 @@ class WorkflowInterfacesValidator:
         # Get the interface corresponding to the name specified in p_value.
         theInterface = None
         try:
-           theInterface = getInterface(value)
+            theInterface = getInterface(value)
         except Exception, e:
             return str(e)
         # Check that this interface is self.baseWorkflowInterface or
         # a subclass of it.
         if not issubclass(theInterface, self.baseWorkflowInterface):
             return WRONG_INTERFACE % (self._getPackageName(
-                                        self.baseWorkflowInterface))
+                                      self.baseWorkflowInterface))
         # Check that there exits an adapter that provides theInterface for
         # self.baseInterface.
         sm = getGlobalSiteManager()
@@ -127,7 +128,7 @@ schema = Schema((
 
     TextField(
         name='assembly',
-        default= defValues.assembly,
+        default=defValues.assembly,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Assembly",
@@ -140,7 +141,7 @@ schema = Schema((
     ),
     TextField(
         name='signatures',
-        default= defValues.signatures,
+        default=defValues.signatures,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Signatures",
@@ -153,7 +154,7 @@ schema = Schema((
     ),
     TextField(
         name='certifiedSignatures',
-        default= defValues.certifiedSignatures,
+        default=defValues.certifiedSignatures,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="CertifiedSignatures",
@@ -1273,6 +1274,8 @@ MeetingConfig_schema = OrderedBaseFolderSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 # Register the marshaller for DAV/XML export.
 MeetingConfig_schema.registerLayer('marshall', ConfigMarshaller())
+
+
 ##/code-section after-schema
 
 class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
@@ -1291,18 +1294,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # config.
     subFoldersInfo = {
         TOOL_FOLDER_CATEGORIES: ('Categories', 'MeetingCategory', 'categories',
-            'CategoryDescriptor'),
+                                 'CategoryDescriptor'),
         TOOL_FOLDER_CLASSIFIERS: ('Classifiers', 'MeetingCategory',
-            'classifiers', 'CategoryDescriptor'),
+                                  'classifiers', 'CategoryDescriptor'),
         TOOL_FOLDER_RECURRING_ITEMS: ('Recurring items', 'itemType', None, ''),
         'topics': ('Topics', 'Topic', None, ''),
         TOOL_FOLDER_FILE_TYPES: ('Meeting file types', 'MeetingFileType',
-            'meetingFileTypes', 'MeetingFileTypeDescriptor'),
+                                 'meetingFileTypes', 'MeetingFileTypeDescriptor'),
         TOOL_FOLDER_POD_TEMPLATES: ('Document templates', 'PodTemplate',
-            'podTemplates', 'PodTemplateDescriptor'),
+                                    'podTemplates', 'PodTemplateDescriptor'),
         TOOL_FOLDER_MEETING_USERS: ('Meeting users', 'MeetingUser',
-            'meetingUsers', 'MeetingUserDescriptor')
-        }
+                                    'meetingUsers', 'MeetingUserDescriptor')
+    }
+
     metaTypes = ('MeetingItem', 'Meeting')
     metaNames = ('Item', 'Meeting')
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
@@ -1311,53 +1315,46 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # and a topicScriptId used to manage complex searches.
     topicsInfo = (
         # My items
-        ( 'searchmyitems',
-        (  ('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
-           ('Creator', 'ATCurrentAuthorCriterion', None),
-        ), 'created', '',
-           "python: here.portal_plonemeeting.userIsAmong('creators')"
-        ),
+        ('searchmyitems',
+        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
+         ('Creator', 'ATCurrentAuthorCriterion', None),),
+         'created', '',
+         "python: here.portal_plonemeeting.userIsAmong('creators')"),
         # All (visible) items
-        ( 'searchallitems',
-        (  ('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
-        ), 'created', '', ''
-        ),
+        ('searchallitems',
+        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
+         'created', '', ''),
         # Items in copy : need a script to do this search.
-        ( 'searchallitemsincopy',
-        (  ('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
-        ), 'created', 'searchItemsInCopy',
-           "python: here.portal_plonemeeting.getMeetingConfig(here)." \
-           "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')"
-        ),
+        ('searchallitemsincopy',
+        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
+         'created', 'searchItemsInCopy',
+         "python: here.portal_plonemeeting.getMeetingConfig(here)."
+         "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')"),
         # Items to advice : need a script to do this search.
-        ( 'searchallitemstoadvice',
-        (  ('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
-        ), 'created', 'searchItemsToAdvice',
-           "python: here.portal_plonemeeting.getMeetingConfig(here)." \
-           "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
-        ),
+        ('searchallitemstoadvice',
+        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
+         'created', 'searchItemsToAdvice',
+         "python: here.portal_plonemeeting.getMeetingConfig(here)."
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"),
         # Advised items : need a script to do this search.
-        ( 'searchalladviseditems',
-        (  ('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
-        ), 'created', 'searchAdvisedItems',
-           "python: here.portal_plonemeeting.getMeetingConfig(here)." \
-           "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
-        ),
+        ('searchalladviseditems',
+        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
+         'created', 'searchAdvisedItems',
+         "python: here.portal_plonemeeting.getMeetingConfig(here)."
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"),
         # All not-yet-decided meetings
-        ( 'searchallmeetings',
-        (  ('Type', 'ATPortalTypeCriterion', 'Meeting'),
-        ), 'getDate', '', ''
-        ),
+        ('searchallmeetings',
+        (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
+         'getDate', '', ''),
         # All decided meetings
-        ( 'searchalldecisions',
-        ( ('Type', 'ATPortalTypeCriterion', 'Meeting'),
-        ), 'getDate', '', ''
-        ),
+        ('searchalldecisions',
+        (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
+         'getDate', '', ''),
     )
 
     # List of topics that take care of the states defined in a meetingConfig
     topicsUsingMeetingConfigStates = {
-        'MeetingItem' : ('searchmyitems', 'searchallitems', ),
+        'MeetingItem': ('searchmyitems', 'searchallitems', ),
         'Meeting': ('searchallmeetings', 'searchalldecisions', ),
     }
     # MeetingConfig is folderish so normally it can't be marshalled through
@@ -1396,13 +1393,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if optionalOnly:
                 condition = hasattr(field, 'optional')
             else:
-                condition = (field.getName()!= 'id') and \
+                condition = (field.getName() != 'id') and \
                             (field.schemata != 'metadata') and \
                             (field.type != 'reference') and \
                             (field.read_permission != 'Manage portal')
             if condition:
                 res.append((field.getName(), translate(field.widget.label_msgid,
-                                domain=field.widget.i18n_domain, context=self.REQUEST)))
+                            domain=field.widget.i18n_domain, context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listUsedItemAttributes')
@@ -1482,8 +1479,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             #try to get the icon in portal_skins
             if not getattr(self.portal_skins, iconname, None):
                 return translate('iconname_does_not_exist',
-                                  mapping={'iconname':iconname,},
-                                  domain='PloneMeeting', context=self.REQUEST)
+                                 mapping={'iconname': iconname, },
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
 
     security.declarePrivate('listWorkflowAdaptations')
     def listWorkflowAdaptations(self):
@@ -1508,7 +1506,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def validate_workflowAdaptations(self, v):
         '''This method ensures that the combination of used workflow
            adaptations is valid.'''
-        if '' in v: v.remove('')
+        if '' in v:
+            v.remove('')
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
         if 'items_come_validated' in v:
             if ('creator_initiated_decisions' in v) or ('pre_validation' in v):
@@ -1530,7 +1529,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("state", translate('item_state', domain=d, context=self.REQUEST)),
             ("categoryOrProposingGroup",
                 translate("category_or_proposing_group", domain=d, context=self.REQUEST)),
-            ("proposingGroup", translate("PloneMeeting_label_proposingGroup",domain=d, context=self.REQUEST)),
+            ("proposingGroup", translate("PloneMeeting_label_proposingGroup",
+                                         domain=d,
+                                         context=self.REQUEST)),
             ("proposingGroupAcronym", translate("proposing_group_acronym", domain=d, context=self.REQUEST)),
             ("associatedGroups",
                 translate("PloneMeeting_label_associatedGroups", domain=d, context=self.REQUEST)),
@@ -1544,9 +1545,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
         ]
         if 'toDiscuss' in self.getUsedItemAttributes():
-            res.insert(0, ("toDiscuss",translate('PloneMeeting_label_toDiscuss',domain=d, context=self.REQUEST)))
+            res.insert(0, ("toDiscuss", translate('PloneMeeting_label_toDiscuss',
+                                                  domain=d,
+                                                  context=self.REQUEST)))
         if 'itemIsSigned' in self.getUsedItemAttributes():
-            res.insert(0, ("itemIsSigned",translate('PloneMeeting_label_itemIsSigned',domain=d, context=self.REQUEST)))
+            res.insert(0, ("itemIsSigned", translate('PloneMeeting_label_itemIsSigned',
+                                                     domain=d,
+                                                     context=self.REQUEST)))
         return res
 
     security.declarePrivate('listItemsListVisibleColumns')
@@ -1557,9 +1562,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemColumns')
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.append( ('meeting', translate('Meeting', domain='PloneMeeting', context=self.REQUEST)))
-        res.append( ('preferredMeeting', translate('PloneMeeting_label_preferredMeeting',
-                                                   domain='PloneMeeting', context=self.REQUEST)))
+        res.append(('meeting', translate('Meeting',
+                                         domain='PloneMeeting',
+                                         context=self.REQUEST)))
+        res.append(('preferredMeeting', translate('PloneMeeting_label_preferredMeeting',
+                                                  domain='PloneMeeting',
+                                                  context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingColumns')
@@ -1579,7 +1587,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList((
             ("aMeetingManager", translate('a_meeting_manager', domain=d, context=self.REQUEST)),
             ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
-            ))
+        ))
         return res
 
     security.declarePrivate('listAdviceTypes')
@@ -1590,7 +1598,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),
             ("negative", translate('negative', domain=d, context=self.REQUEST)),
             ("nil", translate('nil', domain=d, context=self.REQUEST)),
-            ))
+        ))
         return res
 
     security.declarePrivate('listAdviceStyles')
@@ -1599,7 +1607,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList((
             ("standard", translate('advices_standard', domain=d, context=self.REQUEST)),
             ("hands", translate('advices_hands', domain=d, context=self.REQUEST)),
-            ))
+        ))
         return res
 
     security.declarePrivate('listAllVoteValues')
@@ -1610,16 +1618,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("yes", translate('vote_value_yes', domain=d, context=self.REQUEST)),
             ("no", translate('vote_value_no', domain=d, context=self.REQUEST)),
             ("abstain", translate('vote_value_abstain', domain=d, context=self.REQUEST)),
-            ("does_not_vote", translate('vote_value_does_not_vote',domain=d, context=self.REQUEST)),
+            ("does_not_vote", translate('vote_value_does_not_vote',
+                                        domain=d,
+                                        context=self.REQUEST)),
             # 'not_found' represents, when the vote is done manually in an urn,
             # a ballot that was not found in the urn.
-            ("not_found",translate('vote_value_not_found',domain=d, context=self.REQUEST)),
+            ("not_found", translate('vote_value_not_found',
+                                    domain=d,
+                                    context=self.REQUEST)),
             # 'invalid' represents, when the vote is done manually, an invalid
             # ballot.
-            ("invalid",translate('vote_value_invalid',domain=d, context=self.REQUEST)),
+            ("invalid", translate('vote_value_invalid',
+                                  domain=d,
+                                  context=self.REQUEST)),
             # 'blank' represents a blank vote.
-            ("blank",translate('vote_value_blank',domain=d, context=self.REQUEST)),
-            ))
+            ("blank", translate('vote_value_blank', domain=d, context=self.REQUEST)),
+        ))
         return res
 
     security.declarePrivate('isVotable')
@@ -1631,16 +1645,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listDefaultSignatories(self):
         '''Lists the available signatories.'''
         # Get every meeting user and check if signer is in their usages
-        if self.isTemporary(): return None
-        res = ((u.id, u.Title()) \
-               for u in self.getMeetingUsers(usages=('signer',)))
+        if self.isTemporary():
+            return None
+        res = ((u.id, u.Title()) for u in self.getMeetingUsers(usages=('signer',)))
         return DisplayList(res)
 
     security.declarePublic('deadlinesAreEnabled')
     def deadlinesAreEnabled(self):
         '''Are deadlines enabled ?'''
         for field in self.getUsedMeetingAttributes():
-            if field.startswith('deadline'): return True
+            if field.startswith('deadline'):
+                return True
         return False
 
     security.declarePrivate('updatePortalTypes')
@@ -1729,8 +1744,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('createTopics')
     def createTopics(self):
         '''Adds a bunch of topics within the 'topics' sub-folder.'''
-        for topicId, topicCriteria, sortCriterion, searchScriptId, \
-            topic_tal_expr in self.topicsInfo:
+        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in self.topicsInfo:
             self.topics.invokeFactory('Topic', topicId)
             topic = getattr(self.topics, topicId)
             topic.setExcludeFromNav(True)
@@ -1739,7 +1753,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for criterionName, criterionType, criterionValue in topicCriteria:
                 criterion = topic.addCriterion(field=criterionName,
                                                criterion_type=criterionType)
-                if criterionValue != None:
+                if criterionValue is not None:
                     if criterionType == 'ATPortalTypeCriterion':
                         if criterionValue in ('MeetingItem', 'Meeting'):
                             mustAddStateCriterium = True
@@ -1759,7 +1773,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # We must add a state-related criterium. But for an item or
                 # meeting-related topic ?
                 if topicId in ('searchallmeetings', 'searchalldecisions',) + \
-                              self.topicsUsingMeetingConfigStates['MeetingItem']:
+                   self.topicsUsingMeetingConfigStates['MeetingItem']:
                     if topicId == 'searchallmeetings':
                         getStatesMethod = self.getMeetingTopicStates
                     elif topicId == 'searchalldecisions':
@@ -1782,7 +1796,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the name of the action used for the cloneToOtherMC
            functionnality'''
         return '%s%s_from_%s' % (CLONE_TO_OTHER_MC_ACTION_SUFFIX,
-                             destMeetingConfigId, meetingConfigId)
+                                 destMeetingConfigId,
+                                 meetingConfigId)
 
     security.declarePrivate('updateCloneToOtherMCActions')
     def updateCloneToOtherMCActions(self):
@@ -1860,17 +1875,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for topic in self.topics.objectValues('ATTopic'):
             # Get the 2 properties : TOPIC_TYPE and TOPIC_SEARCH_SCRIPT
             topicTypeProp = topic.getProperty(TOPIC_TYPE)
-            if topicTypeProp != topicType: continue
+            if topicTypeProp != topicType:
+                continue
             # We append the topic and the scriptId if it is not deactivated.
             # We filter on the review_state; else, the Manager will see
             # every topic in the portlets, which would be confusing.
             wfTool = self.portal_workflow
-            if wfTool.getInfoFor(topic, 'review_state') != 'active': continue
+            if wfTool.getInfoFor(topic, 'review_state') != 'active':
+                continue
             tal_expr = topic.getProperty(TOPIC_TAL_EXPRESSION)
             tal_res = True
             if tal_expr:
                 ctx = createExprContext(topic.getParentNode(),
-                    self.portal_url.getPortalObject(), topic)
+                                        self.portal_url.getPortalObject(),
+                                        topic)
                 try:
                     tal_res = Expression(tal_expr)(ctx)
                 except Exception:
@@ -1899,7 +1917,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not defConfig:
                 self.setIsDefault(True)
                 msg = translate('config_is_still_default',
-                                 domain='PloneMeeting', context=self.REQUEST)
+                                domain='PloneMeeting',
+                                context=self.REQUEST)
                 self.plone_utils.addPortalMessage(msg)
 
     security.declarePrivate('createTab')
@@ -1908,7 +1927,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         actionIds = self.portal_actions.portal_tabs.objectIds()
         configId = self.getId()
         tabId = '%s_action' % configId
-        if tabId in actionIds: return
+        if tabId in actionIds:
+            return
         # The action corresponding to the tab does not exist. Create it.
         urlExpr = 'python:portal.portal_plonemeeting.getPloneMeetingFolder(' \
                   '"%s").absolute_url()' % configId
@@ -1926,7 +1946,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Creates a Plone group that will be used to apply the MeetingPowerObserverLocal
            local role on every items of this MeetingConfig regarding self.itemPowerObserverStates.'''
         groupId = "%s_%s" % (self.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-        if groupId in self.portal_groups.listGroupIds(): return
+        if groupId in self.portal_groups.listGroupIds():
+            return
         enc = self.portal_properties.site_properties.getProperty(
             'default_charset')
         groupTitle = '%s (%s)' % (
@@ -1977,7 +1998,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateCloneToOtherMCActions()
         # Create the corresponding group that will contain MeetingPowerObservers
         self.createPowerObserversGroup()
-        self.adapted().onEdit(isCreated=True) # Call sub-product code if any
+        self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
 
     def at_post_edit_script(self):
         '''Updates the workflows for items and meetings, and the
@@ -1996,7 +2017,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateIsDefaultFields()
         # Update the cloneToOtherMeetingConfig actions visibility
         self.updateCloneToOtherMCActions()
-        self.adapted().onEdit(isCreated=False) # Call sub-product code if any
+        self.adapted().onEdit(isCreated=False)  # Call sub-product code if any
 
     security.declarePublic('getItemTypeName')
     def getItemTypeName(self):
@@ -2019,16 +2040,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Compute the list of states relevant for giving an advice.
         itemStates = set()
         for group in groups:
-            for state in group.getItemAdviceStates(self): itemStates.add(state)
+            for state in group.getItemAdviceStates(self):
+                itemStates.add(state)
         # Create query parameters
-        params = {'portal_type'  : self.getItemTypeName(),
+        params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
-                  'sort_on'      : sortKey, 'sort_order': sortOrder,
-                  'review_state' : list(itemStates),
-                 }
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder,
+                  'review_state': list(itemStates), }
         # Manage filter
-        if filterKey: params[filterKey] = Keywords(filterValue).get()
+        if filterKey:
+            params[filterKey] = Keywords(filterValue).get()
         # update params with kwargs
         params.update(kwargs)
         # Perform the query in portal_catalog
@@ -2041,14 +2064,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Add a '1' at the end of every group id: we want "given" advices.
         groupIds = [g.id + '1' for g in groups]
         # Create query parameters
-        params = {'portal_type'   : self.getItemTypeName(),
+        params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers' : groupIds,
-                  'sort_on'       : sortKey, 'sort_order': sortOrder,
-                  'review_state'  : self.getItemTopicStates(),
-                 }
+                  'indexAdvisers': groupIds,
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder,
+                  'review_state': self.getItemTopicStates(), }
         # Manage filter
-        if filterKey: params[filterKey] = Keywords(filterValue).get()
+        if filterKey:
+            params[filterKey] = Keywords(filterValue).get()
         # update params with kwargs
         params.update(kwargs)
         # Perform the query in portal_catalog
@@ -2059,14 +2083,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries all items for which the current user is in copyGroups.'''
         member = self.portal_membership.getAuthenticatedMember()
         userGroups = self.portal_groups.getGroupsForPrincipal(member)
-        params = {'portal_type'   : self.getItemTypeName(),
+        params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'getCopyGroups' use 'OR' by default
-                  'getCopyGroups' : userGroups,
-                  'sort_on'       : sortKey, 'sort_order': sortOrder,
-                  'review_state'  : self.getItemTopicStates(),
-                 }
+                  'getCopyGroups': userGroups,
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder,
+                  'review_state': self.getItemTopicStates(), }
         # Manage filter
-        if filterKey: params[filterKey] = Keywords(filterValue).get()
+        if filterKey:
+            params[filterKey] = Keywords(filterValue).get()
         # update params with kwargs
         params.update(kwargs)
         # Perform the query in portal_catalog
@@ -2091,16 +2116,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # Execute the query corresponding to the topic.
             if not sortKey:
                 sortCriterion = topic.getSortCriterion()
-                if sortCriterion: sortKey = sortCriterion.Field()
-                else: sortKey = 'created'
+                if sortCriterion:
+                    sortKey = sortCriterion.Field()
+                else:
+                    sortKey = 'created'
             methodId = topic.getProperty(TOPIC_SEARCH_SCRIPT, None)
             objectType = topic.getProperty(TOPIC_TYPE, 'Unknown')
             batchSize = self.REQUEST.get('MaxShownFound') or \
-                        self.getParentNode().getMaxShownFound(objectType)
+                self.getParentNode().getMaxShownFound(objectType)
             if methodId:
                 # Topic params are not sufficient, use a specific method.
                 # keep topics defined paramaters
-                kwargs={}
+                kwargs = {}
                 for criterion in topic.listSearchCriteria():
                     # Only take criterion with a defined value into account
                     criterionValue = criterion.value
@@ -2121,7 +2148,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 brains, topic, rq, batch_size=batchSize)
         else:
             # This is an advanced search. Use the Searcher.
-            searchedType = topic.getProperty('meeting_topic_type','MeetingFile')
+            searchedType = topic.getProperty('meeting_topic_type', 'MeetingFile')
             return Searcher(self, searchedType, sortKey, sortOrder,
                             filterKey, filterValue).run()
         return res
@@ -2144,7 +2171,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Lists the workflows registered in portal_workflow.'''
         res = []
         for workflowName in self.portal_workflow.listWorkflows():
-            res.append( (workflowName, workflowName) )
+            res.append((workflowName, workflowName))
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePublic('listStates')
@@ -2156,8 +2183,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         exec 'workflowName = self.get%sWorkflow()' % objectType
         workflow = getattr(self.portal_workflow, workflowName)
         for state in workflow.states.objectValues():
-            if excepted and (state.id == excepted): continue
-            res.append( (state.id, translate(state.id, domain="plone", context=self.REQUEST)) )
+            if excepted and (state.id == excepted):
+                continue
+            res.append((state.id, translate(state.id, domain="plone", context=self.REQUEST)))
         return res
 
     security.declarePublic('listTransitions')
@@ -2171,7 +2199,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             name = translate(t.id, domain="plone", context=self.REQUEST) + ' (' + t.id + ')'
             # Indeed several transitions can have the same translation
             # (ie "correct")
-            res.append( (t.id, name) )
+            res.append((t.id, name))
         return res
 
     def listAllTransitions(self):
@@ -2179,7 +2207,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for metaType in ('Meeting', 'MeetingItem'):
             objectType = metaType
-            if objectType == 'MeetingItem': objectType = 'Item'
+            if objectType == 'MeetingItem':
+                objectType = 'Item'
             for id, text in self.listTransitions(objectType):
                 res.append(('%s.%s' % (metaType, id),
                             '%s -> %s' % (metaType, text)))
@@ -2203,14 +2232,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             fieldName = field.getName()
             if field.widget.getName() == 'RichWidget':
                 msg = '%s.%s -> %s' % ('MeetingItem', fieldName,
-                                      translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
-                res.append( ('%s.%s' % ('MeetingItem', fieldName), msg) )
+                                       translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
+                res.append(('%s.%s' % ('MeetingItem', fieldName), msg))
         for field in Meeting.schema.fields():
             fieldName = field.getName()
             if field.widget.getName() == 'RichWidget':
                 msg = '%s.%s -> %s' % ('Meeting', fieldName,
-                                      translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
-                res.append( ('%s.%s' % ('Meeting', fieldName), msg) )
+                                       translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
+                res.append(('%s.%s' % ('Meeting', fieldName), msg))
         return DisplayList(tuple(res))
 
     security.declarePublic('listTransformTypes')
@@ -2220,7 +2249,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList((
             ("removeBlanks", translate('rich_text_remove_blanks', domain=d, context=self.REQUEST)),
             ("signatureNotAlone", translate('rich_text_signature_not_alone', domain=d, context=self.REQUEST)),
-            ))
+        ))
         return res
 
     security.declarePublic('listMailModes')
@@ -2231,7 +2260,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("activated", translate('mail_mode_activated', domain=d, context=self.REQUEST)),
             ("deactivated", translate('mail_mode_deactivated', domain=d, context=self.REQUEST)),
             ("test", translate('mail_mode_test', domain=d, context=self.REQUEST)),
-            ))
+        ))
         return res
 
     security.declarePublic('listMailFormats')
@@ -2241,7 +2270,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList((
             ("text", translate('mail_format_text', domain=d, context=self.REQUEST)),
             ("html", translate('mail_format_html', domain=d, context=self.REQUEST)),
-            ))
+        ))
         return res
 
     security.declarePublic('listItemEvents')
@@ -2259,11 +2288,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if self.getUseAdvices():
             res += [("adviceToGive", translate('event_advice_to_give', domain=d, context=self.REQUEST)),
                     ("adviceEdited", translate('event_add_advice', domain=d, context=self.REQUEST)),
-                    ("adviceInvalidated", translate('event_invalidate_advice',domain=d, context=self.REQUEST))
-            ]
+                    ("adviceInvalidated", translate('event_invalidate_advice', domain=d, context=self.REQUEST))
+                    ]
         if 'toDiscuss' in self.getUsedItemAttributes():
-            res.append(("askDiscussItem",translate('event_ask_discuss_item', domain=d, context=self.REQUEST)))
-        res.append(("itemClonedToThisMC",translate('event_item_clone_to_this_mc', domain=d, context=self.REQUEST)))
+            res.append(("askDiscussItem", translate('event_ask_discuss_item', domain=d, context=self.REQUEST)))
+        res.append(("itemClonedToThisMC", translate('event_item_clone_to_this_mc', domain=d, context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingEvents')
@@ -2284,7 +2313,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for ft in self.meetingfiletypes.objectValues('MeetingFileType'):
             isActive = True
             if onlyActive:
-                isActive = bool(wfTool.getInfoFor(ft, 'review_state')=='active')
+                isActive = bool(wfTool.getInfoFor(ft, 'review_state') == 'active')
             if (ft.getDecisionRelated() == decisionRelated) and isActive:
                 if not typesIds or (typesIds and (ft.id in typesIds)):
                     res.append(ft)
@@ -2356,11 +2385,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # This can be the case if we are creating this meeting config.
             return DisplayList(tuple(res))
         for topic in self.topics.objectValues():
-            topicData = ('topic_' + topic.id, translate(unicode(topic.Title(), 'utf-8'), domain="Plone", context=self.REQUEST))
+            topicData = ('topic_' + topic.id, translate(unicode(topic.Title(), 'utf-8'),
+                                                        domain="Plone",
+                                                        context=self.REQUEST))
             if topic.id == 'searchallitemsincopy':
                 if self.getUseCopies():
                     res.append(topicData)
-            elif topic.id in ('searchalladviseditems','searchallitemstoadvice'):
+            elif topic.id in ('searchalladviseditems', 'searchallitemstoadvice'):
                 if self.getUseAdvices():
                     res.append(topicData)
             else:
@@ -2371,7 +2402,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listRoles(self):
         res = []
         for role in self.acl_users.portal_role_manager.listRoleIds():
-            res.append( (role, role) )
+            res.append((role, role))
         return DisplayList(tuple(res))
 
     security.declarePublic('getMeetingGroups')
@@ -2382,12 +2413,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         meetingGroups = self.portal_plonemeeting.getActiveGroups()
         res = []
         # If no p_suffix is given, we use all possible suffixes.
-        if not suffixes: suffixes = MEETING_GROUP_SUFFIXES
+        if not suffixes:
+            suffixes = MEETING_GROUP_SUFFIXES
         for mg in meetingGroups:
             for groupSuffix in suffixes:
                 groupId = mg.getPloneGroupId(groupSuffix)
                 ploneGroup = self.portal_groups.getGroupById(groupId)
-                if ploneGroup: res.append(ploneGroup)
+                if ploneGroup:
+                    res.append(ploneGroup)
         return res
 
     security.declarePublic('getAvailablePodTemplates')
@@ -2409,7 +2442,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            to a meeting'''
         res = []
         for sm in itemSortMethods:
-            res.append( (sm, translate(sm, domain='PloneMeeting', context=self.REQUEST)) )
+            res.append((sm, translate(sm,
+                                      domain='PloneMeeting',
+                                      context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listSelectableCopyGroups')
@@ -2425,17 +2460,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingConfig': return self.context
+        if self.__class__.__name__ != 'MeetingConfig':
+            return self.context
         return self
 
     security.declarePublic('adapted')
-    def adapted(self): return getCustomAdapter(self)
+    def adapted(self):
+        return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
-    def onEdit(self, isCreated): '''See doc in interfaces.py.'''
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
 
     security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp): '''See doc in interfaces.py.'''
+    def onTransferred(self, extApp):
+        '''See doc in interfaces.py.'''
 
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
@@ -2449,12 +2488,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if brains:
                 # We found at least one Meeting.
                 raise BeforeDeleteException, \
-                        "can_not_delete_meetingconfig_meeting"
+                    "can_not_delete_meetingconfig_meeting"
             brains = self.portal_catalog(portal_type=self.getItemTypeName())
             if brains:
                 # We found at least one MeetingItem.
                 raise BeforeDeleteException, \
-                        "can_not_delete_meetingconfig_meetingitem"
+                    "can_not_delete_meetingconfig_meetingitem"
             # Check that every meetingConfig folder of Members is empty.
             members = self.portal_membership.getMembersFolder()
             meetingFolderId = self.getId()
@@ -2467,7 +2506,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         configFolder = getattr(root_folder, meetingFolderId)
                         if configFolder.objectValues():
                             raise BeforeDeleteException, \
-                                    "can_not_delete_meetingconfig_meetingfolder"
+                                "can_not_delete_meetingconfig_meetingfolder"
             # If everything is OK, we can remove every meetingFolder
             for member in members.objectValues():
                 # Get the right meetingConfigFolder
@@ -2513,9 +2552,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if onlyActive:
             review_state = 'active'
         brains = self.portal_catalog(portal_type='MeetingUser',
-            # KeywordIndex 'indexUsages' use 'OR' by default
-            getConfigId=self.id, indexUsages=usages,
-            review_state=review_state, sort_on='getObjPositionInParent')
+                                     # KeywordIndex 'indexUsages' use 'OR' by default
+                                     getConfigId=self.id, indexUsages=usages,
+                                     review_state=review_state,
+                                     sort_on='getObjPositionInParent')
         if not theObjects:
             return brains
         return [b.getObject() for b in brains]
@@ -2524,11 +2564,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def addCategory(self, descr, classifier=False):
         '''Creates a category or a classifier (depending on p_classifier) from
            p_descr, a CategoryDescriptor instance.'''
-        if classifier: folder = getattr(self, TOOL_FOLDER_CLASSIFIERS)
-        else:          folder = getattr(self, TOOL_FOLDER_CATEGORIES)
+        if classifier:
+            folder = getattr(self, TOOL_FOLDER_CLASSIFIERS)
+        else:
+            folder = getattr(self, TOOL_FOLDER_CATEGORIES)
         folder.invokeFactory('MeetingCategory', **descr.getData())
         cat = getattr(folder, descr.id)
-        if not descr.active: self.portal_workflow.doActionFor(cat, 'deactivate')
+        if not descr.active:
+            self.portal_workflow.doActionFor(cat, 'deactivate')
         return cat
 
     security.declarePrivate('addRecurringItem')
@@ -2552,11 +2595,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             # The image is already here, as a file wrapper unmarshalled from an
             # external application.
-            iconContent = File('dummyId', ft.theIcon.name,
-                ft.theIcon.content, content_type=ft.theIcon.mimeType)
+            iconContent = File('dummyId',
+                               ft.theIcon.name,
+                               ft.theIcon.content,
+                               content_type=ft.theIcon.mimeType)
         folder.invokeFactory('MeetingFileType',
                              **ft.getData(theIcon=iconContent))
-        if isinstance(source, basestring): f.close()
+        if isinstance(source, basestring):
+            f.close()
         fileType = getattr(folder, ft.id)
         if not ft.active:
             self.portal_workflow.doActionFor(fileType, 'deactivate')
@@ -2579,11 +2625,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             # The image is already here, as a file wrapper unmarshalled from an
             # external application.
-            fileObject = File('dummyId', pt.podTemplate.name,
-                pt.podTemplate.content, content_type=pt.podTemplate.mimeType)
+            fileObject = File('dummyId',
+                              pt.podTemplate.name,
+                              pt.podTemplate.content,
+                              content_type=pt.podTemplate.mimeType)
             fileObject.filename = pt.podTemplate.name
             fileObject.content_type = pt.podTemplate.mimeType
-        folder.invokeFactory('PodTemplate',**pt.getData(podTemplate=fileObject))
+        folder.invokeFactory('PodTemplate', **pt.getData(podTemplate=fileObject))
         podTemplate = getattr(folder, pt.id)
         if not pt.active:
             self.portal_workflow.doActionFor(podTemplate, 'deactivate')
@@ -2597,19 +2645,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         userTitle = mud.id
         if userInfo:
             userTitle = userInfo.getProperty('fullname')
-        if not userTitle: userTitle = mud.id
+        if not userTitle:
+            userTitle = mud.id
         folder.invokeFactory('MeetingUser', **mud.getData(title=userTitle))
         meetingUser = getattr(folder, mud.id)
         if mud.signatureImage:
             if isinstance(source, basestring):
                 # The image must be retrieved on disk from a profile
                 imageName = mud.signatureImage
-                signaturePath = '%s/images/%s'% (source, imageName)
+                signaturePath = '%s/images/%s' % (source, imageName)
                 signatureImageFile = file(signaturePath, 'rb')
             else:
                 si = mud.signatureImage
-                signatureImageFile = File('dummyId', si.name, si.content,
-                    content_type=si.mimeType)
+                signatureImageFile = File('dummyId',
+                                          si.name,
+                                          si.content,
+                                          content_type=si.mimeType)
             meetingUser.setSignatureImage(signatureImageFile)
             if isinstance(signatureImageFile, file):
                 signatureImageFile.close()
@@ -2666,7 +2717,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             msg = translate('meeting_user_no_plone_user', domain=d, context=self.REQUEST)
         elif hasattr(self.meetingusers.aq_base, userId):
             msg = translate('meeting_user_plone_user_already_used',
-                                   domain=d, context=self.REQUEST)
+                            domain=d,
+                            context=self.REQUEST)
         if msg:
             self.plone_utils.addPortalMessage(msg)
             rq.RESPONSE.redirect(self.absolute_url()+'?pageName=users')
