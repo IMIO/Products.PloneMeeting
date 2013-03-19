@@ -2020,34 +2020,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # escape_for_js from portal_skins/plone_scripts/translate.py does the .replace() here above
         return res.replace("'", "\\'")
 
-    security.declarePublic('refererIsInnerPage')
-    def refererIsInnerPage(self):
-        '''Is the referer page an inner page? (ie the user wants to directly get
-           a given page before logging in).'''
-        pathInfo = self.REQUEST['PATH_INFO']
-        # Is HS behind a reverse proxy? (virtual_host is used)
-        i = pathInfo.find('VirtualHostBase')
-        if i != -1:
-            # Yes. So in the URL keep only the site name within
-            # VirtualHostBase/.../VirtualHostRoot
-            siteUrl = pathInfo[i + 16:pathInfo.find('VirtualHostRoot') - 1]
-            baseName = self.vhRex.search(siteUrl).group(1).strip('/')
-            if baseName:
-                pathInfo = '/' + baseName
-            else:
-                # We have to find the basename after "VirtualHostBase".
-                pathInfo = pathInfo[pathInfo.find('VirtualHostRoot') + 15:]
-                if pathInfo.startswith('/_vh_'):
-                    pathInfo = pathInfo.replace('/_vh_', '/')
-        # Is the path of the portal hidden in the URLs ? (ie the PloneSite is
-        # named 'HS' but there is no .../HS/... in the URLs
-        portalPath = self.portal_url.getPortalPath()
-        if pathInfo.startswith(portalPath):
-            pathInfo = pathInfo[len(portalPath):]
-        if pathInfo.strip('/') in ('', 'login_form', 'logged_out', 'login_failed'):
-            return False
-        return True
-
     security.declarePublic('getUserLanguage')
     def getUserLanguage(self):
         '''Gets the language (code) of the current user.'''

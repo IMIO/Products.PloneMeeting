@@ -314,14 +314,10 @@ document.location.reload(true);
                  isHsUser tool/isPloneMeetingUser">
 
   <span tal:condition="isHsUser">
-    <span tal:define="refererIsInnerPage tool/refererIsInnerPage">
-      <span tal:condition="not: refererIsInnerPage">
-          <tal:redirect
-            define="meetingConfig python: tool.getDefaultMeetingConfig();
-                    meetingFolder python: tool.getPloneMeetingFolder(meetingConfig.getId());
-                    dummy         python: request.RESPONSE.redirect(meetingFolder.absolute_url())"/>
-      </span>
-    </span>
+    <tal:redirect
+      define="meetingConfig python: tool.getDefaultMeetingConfig();
+              meetingFolder python: tool.getPloneMeetingFolder(meetingConfig.getId());
+              dummy         python: request.RESPONSE.redirect(meetingFolder.absolute_url())"/>
   </span>
   <span tal:condition="not: isHsUser" i18n:translate="notPloneMeetingUser"></span>
 </div>
