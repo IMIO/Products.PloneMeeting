@@ -313,6 +313,30 @@ class Migrate_To_3_0(Migrator):
                         "('@@pm_unrestricted_methods').getLinkedMeetingDate()."))
         logger.info('Done.')
 
+    def _initNewFieldItemDecidedStates(self):
+        '''The field MeetingConfig.initDecidedStates is new and was before an attribute on the MeetingConfig.
+           Initialize the field to the value that was defined before for every MeetingItems'''
+        logger.info('Initializing field MeetingConfig.itemDecidedStates')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            if cfg.getItemDecidedStates():
+                # already migrated
+                break
+            # these states take some sub-plugins into account :
+            # PloneMeeting, MeetingCommunes, MeetingLalouviere, MeetingMons
+            defaultItemDecidedStates = ['accepted_but_modified',
+                                        'accepted',
+                                        'refused',
+                                        'delayed',
+                                        'confirmed',
+                                        'itemarchived',
+                                        'removed', ]
+            # remove states that does not exist for current item workflow
+            itemStates = [state[0] for state in cfg.listStates('Item')]
+            itemDecidedStatesToApply = [state for state in defaultItemDecidedStates if state in itemStates]
+            # now set the value
+            cfg.setItemDecidedStates(itemDecidedStatesToApply)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
         # the Meeting 'published' state has become 'decisions_published' now, so :
@@ -337,6 +361,7 @@ class Migrate_To_3_0(Migrator):
         self._migrateXhtmlTransformFieldsValues()
         self._migrateFCKTemplates()
         self._addPowerObserverGroupsByMeetingConfig()
+        self._initNewFieldItemDecidedStates()
         # refresh portal_catalog so getDate metadata is updated
         self.refreshDatabase(catalogs=True, workflows=False)
         self.finish()
