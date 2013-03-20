@@ -1097,7 +1097,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Condition for showing the 'itemIsSigned' field on views.
            The attribute must be used and the item must be decided.'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        return self.attributeIsUsed('itemIsSigned') and self.queryState() in meetingConfig.itemDecidedStates
+        return self.attributeIsUsed('itemIsSigned') and \
+            self.queryState() in meetingConfig.getItemDecidedStates()
 
     security.declarePublic('maySignItem')
     def maySignItem(self, member):
@@ -2004,6 +2005,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+
     security.declarePublic('getInsertOrder')
     def getInsertOrder(self, sortOrder, meeting, late):
         '''When inserting an item into a meeting, depending on the sort method
@@ -2914,12 +2916,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onDuplicated')
     def onDuplicated(self, original):
         '''See doc in interfaces.py.'''
+
     security.declareProtected('Modify portal content', 'onDuplicatedFromConfig')
     def onDuplicatedFromConfig(self, usage):
         '''See doc in interfaces.py.'''
+
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
+
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
         '''This is a workaround to avoid a Plone design problem where it is
@@ -3356,4 +3361,3 @@ def onAddMeetingItem(item, event):
     user = item.portal_membership.getAuthenticatedMember()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
 ##/code-section module-footer
-

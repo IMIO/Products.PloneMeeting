@@ -128,7 +128,7 @@ schema = Schema((
 
     TextField(
         name='assembly',
-        default= defValues.assembly,
+        default=defValues.assembly,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Assembly",
@@ -141,7 +141,7 @@ schema = Schema((
     ),
     TextField(
         name='signatures',
-        default= defValues.signatures,
+        default=defValues.signatures,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Signatures",
@@ -154,7 +154,7 @@ schema = Schema((
     ),
     TextField(
         name='certifiedSignatures',
-        default= defValues.certifiedSignatures,
+        default=defValues.certifiedSignatures,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="CertifiedSignatures",
@@ -167,7 +167,7 @@ schema = Schema((
     ),
     TextField(
         name='places',
-        default= defValues.places,
+        default=defValues.places,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Places",
@@ -180,7 +180,7 @@ schema = Schema((
     ),
     TextField(
         name='budgetDefault',
-        default= defValues.budgetDefault,
+        default=defValues.budgetDefault,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="BudgetDefault",
@@ -217,7 +217,7 @@ schema = Schema((
     ),
     BooleanField(
         name='isDefault',
-        default= defValues.isDefault,
+        default=defValues.isDefault,
         widget=BooleanField._properties['widget'](
             description="IsDefault",
             description_msgid="config_is_default_descr",
@@ -250,7 +250,7 @@ schema = Schema((
     ),
     BooleanField(
         name='yearlyInitMeetingNumber',
-        default= defValues.yearlyInitMeetingNumber,
+        default=defValues.yearlyInitMeetingNumber,
         widget=BooleanField._properties['widget'](
             description="YearlyInitMeetingNumber",
             description_msgid="yearly_init_meeting_nb_descr",
@@ -283,7 +283,7 @@ schema = Schema((
         schemata="data",
         multiValued=1,
         vocabulary='listUsedItemAttributes',
-        default= defValues.usedItemAttributes,
+        default=defValues.usedItemAttributes,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -299,7 +299,7 @@ schema = Schema((
         schemata="data",
         multiValued=1,
         vocabulary='listItemAttributes',
-        default= defValues.historizedItemAttributes,
+        default=defValues.historizedItemAttributes,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -314,7 +314,7 @@ schema = Schema((
         schemata="data",
         multiValued=1,
         vocabulary='listItemStates',
-        default= defValues.recordItemHistoryStates,
+        default=defValues.recordItemHistoryStates,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -330,7 +330,7 @@ schema = Schema((
         schemata="data",
         multiValued=1,
         vocabulary='listUsedMeetingAttributes',
-        default= defValues.usedMeetingAttributes,
+        default=defValues.usedMeetingAttributes,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -346,7 +346,7 @@ schema = Schema((
         schemata="data",
         multiValued=1,
         vocabulary='listMeetingAttributes',
-        default= defValues.historizedMeetingAttributes,
+        default=defValues.historizedMeetingAttributes,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -361,12 +361,12 @@ schema = Schema((
         schemata="data",
         multiValued=1,
         vocabulary='listMeetingStates',
-        default= defValues.recordMeetingHistoryStates,
+        default=defValues.recordMeetingHistoryStates,
         enforceVocabulary=False,
     ),
     BooleanField(
         name='useGroupsAsCategories',
-        default= defValues.useGroupsAsCategories,
+        default=defValues.useGroupsAsCategories,
         widget=BooleanField._properties['widget'](
             description="UseGroupsAsCategories",
             description_msgid="use_groups_as_categories_descr",
@@ -378,7 +378,7 @@ schema = Schema((
     ),
     BooleanField(
         name='toDiscussSetOnItemInsert',
-        default= defValues.toDiscussSetOnItemInsert,
+        default=defValues.toDiscussSetOnItemInsert,
         widget=BooleanField._properties['widget'](
             description="ToDiscussSetOnItemInsert",
             description_msgid="to_discuss_set_on_item_insert_descr",
@@ -390,7 +390,7 @@ schema = Schema((
     ),
     BooleanField(
         name='toDiscussDefault',
-        default= defValues.toDiscussDefault,
+        default=defValues.toDiscussDefault,
         widget=BooleanField._properties['widget'](
             description="ToDiscussDefault",
             description_msgid="to_discuss_default_descr",
@@ -402,7 +402,7 @@ schema = Schema((
     ),
     BooleanField(
         name='toDiscussLateDefault',
-        default= defValues.toDiscussLateDefault,
+        default=defValues.toDiscussLateDefault,
         widget=BooleanField._properties['widget'](
             description="ToDiscussLateDefault",
             description_msgid="to_discuss_late_default_descr",
@@ -414,7 +414,7 @@ schema = Schema((
     ),
     BooleanField(
         name='toDiscussShownForLateItems',
-        default= defValues.toDiscussShownForLateItems,
+        default=defValues.toDiscussShownForLateItems,
         widget=BooleanField._properties['widget'](
             description="ToDiscussShownForLateItems",
             description_msgid="to_discuss_shown_for_late_items_descr",
@@ -426,7 +426,7 @@ schema = Schema((
     ),
     TextField(
         name='itemReferenceFormat',
-        default= defValues.itemReferenceFormat,
+        default=defValues.itemReferenceFormat,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="ItemReferenceFormat",
@@ -440,7 +440,7 @@ schema = Schema((
     ),
     StringField(
         name='sortingMethodOnAddItem',
-        default= defValues.sortingMethodOnAddItem,
+        default=defValues.sortingMethodOnAddItem,
         widget=SelectionWidget(
             description="sortingMethodOnAddItem",
             description_msgid="sorting_method_on_add_item_descr",
@@ -455,7 +455,7 @@ schema = Schema((
     ),
     TextField(
         name='allItemTags',
-        default= defValues.allItemTags,
+        default=defValues.allItemTags,
         schemata="data",
         widget=TextAreaWidget(
             description="AllItemTags",
@@ -469,7 +469,7 @@ schema = Schema((
     ),
     BooleanField(
         name='sortAllItemTags',
-        default= defValues.sortAllItemTags,
+        default=defValues.sortAllItemTags,
         widget=BooleanField._properties['widget'](
             description="SortAllItemTags",
             description_msgid="sort_all_item_tags_descr",
@@ -491,7 +491,7 @@ schema = Schema((
         schemata="data",
         multiValued=1,
         vocabulary='listRichTextFields',
-        default= defValues.xhtmlTransformFields,
+        default=defValues.xhtmlTransformFields,
         enforceVocabulary=True,
     ),
     LinesField(
@@ -506,12 +506,12 @@ schema = Schema((
         schemata="data",
         multiValued=1,
         vocabulary='listTransformTypes',
-        default= defValues.xhtmlTransformTypes,
+        default=defValues.xhtmlTransformTypes,
         enforceVocabulary=True,
     ),
     StringField(
         name='publishDeadlineDefault',
-        default= defValues.publishDeadlineDefault,
+        default=defValues.publishDeadlineDefault,
         widget=StringField._properties['widget'](
             description="PublishDeadlineDefault",
             description_msgid="publish_deadline_default_descr",
@@ -523,7 +523,7 @@ schema = Schema((
     ),
     StringField(
         name='freezeDeadlineDefault',
-        default= defValues.freezeDeadlineDefault,
+        default=defValues.freezeDeadlineDefault,
         widget=StringField._properties['widget'](
             description="FreezeDeadlineDefault",
             description_msgid="freeze_deadline_default_descr",
@@ -535,7 +535,7 @@ schema = Schema((
     ),
     StringField(
         name='preMeetingDateDefault',
-        default= defValues.preMeetingDateDefault,
+        default=defValues.preMeetingDateDefault,
         widget=StringField._properties['widget'](
             description="PreMeetingDateDefault",
             description_msgid="pre_meeting_date_default_descr",
@@ -547,7 +547,7 @@ schema = Schema((
     ),
     BooleanField(
         name='useUserReplacements',
-        default= defValues.useUserReplacements,
+        default=defValues.useUserReplacements,
         widget=BooleanField._properties['widget'](
             description="UseUserReplacements",
             description_msgid="use_user_replacements_descr",
@@ -585,12 +585,12 @@ schema = Schema((
         required=True,
         schemata="workflow",
         vocabulary='listWorkflows',
-        default= defValues.itemWorkflow,
+        default=defValues.itemWorkflow,
         enforceVocabulary=True,
     ),
     StringField(
         name='itemConditionsInterface',
-        default= defValues.itemConditionsInterface,
+        default=defValues.itemConditionsInterface,
         widget=StringField._properties['widget'](
             size=70,
             description="ItemConditionsInterface",
@@ -603,7 +603,7 @@ schema = Schema((
     ),
     StringField(
         name='itemActionsInterface',
-        default= defValues.itemActionsInterface,
+        default=defValues.itemActionsInterface,
         widget=StringField._properties['widget'](
             size=70,
             description="ItemActionsInterface",
@@ -627,12 +627,12 @@ schema = Schema((
         required=True,
         schemata="workflow",
         vocabulary='listWorkflows',
-        default= defValues.meetingWorkflow,
+        default=defValues.meetingWorkflow,
         enforceVocabulary=True,
     ),
     StringField(
         name='meetingConditionsInterface',
-        default= defValues.meetingConditionsInterface,
+        default=defValues.meetingConditionsInterface,
         widget=StringField._properties['widget'](
             size=70,
             description="MeetingConditionsInterface",
@@ -645,7 +645,7 @@ schema = Schema((
     ),
     StringField(
         name='meetingActionsInterface',
-        default= defValues.meetingActionsInterface,
+        default=defValues.meetingActionsInterface,
         widget=StringField._properties['widget'](
             size=70,
             description="MeetingActionsInterface",
@@ -668,7 +668,7 @@ schema = Schema((
         schemata="workflow",
         multiValued=1,
         vocabulary='listItemStates',
-        default= defValues.itemDecidedStates,
+        default=defValues.itemDecidedStates,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -683,7 +683,7 @@ schema = Schema((
         schemata="workflow",
         multiValued=1,
         vocabulary='listWorkflowAdaptations',
-        default= defValues.workflowAdaptations,
+        default=defValues.workflowAdaptations,
         enforceVocabulary= True,
     ),
     LinesField(
@@ -698,7 +698,7 @@ schema = Schema((
         schemata="workflow",
         multiValued=1,
         vocabulary='listAllTransitions',
-        default= defValues.transitionsToConfirm,
+        default=defValues.transitionsToConfirm,
         enforceVocabulary= False,
     ),
     LinesField(
@@ -713,7 +713,7 @@ schema = Schema((
         schemata="gui",
         multiValued=1,
         vocabulary='listItemStates',
-        default= defValues.itemTopicStates,
+        default=defValues.itemTopicStates,
         enforceVocabulary= False,
     ),
     LinesField(
@@ -728,7 +728,7 @@ schema = Schema((
         schemata="gui",
         multiValued=1,
         vocabulary='listMeetingStates',
-        default= defValues.meetingTopicStates,
+        default=defValues.meetingTopicStates,
         enforceVocabulary= False,
     ),
     LinesField(
@@ -743,7 +743,7 @@ schema = Schema((
         schemata="gui",
         multiValued=1,
         vocabulary='listMeetingStates',
-        default= defValues.decisionTopicStates,
+        default=defValues.decisionTopicStates,
         enforceVocabulary= False,
     ),
     IntegerField(
@@ -761,7 +761,7 @@ schema = Schema((
     ),
     IntegerField(
         name='maxDaysDecisions',
-        default= defValues.maxDaysDecisions,
+        default=defValues.maxDaysDecisions,
         widget=IntegerField._properties['widget'](
             description="MaxDaysDecision",
             description_msgid="max_days_decisions_descr",
@@ -774,7 +774,7 @@ schema = Schema((
     ),
     StringField(
         name='meetingAppDefaultView',
-        default= defValues.meetingAppDefaultView,
+        default=defValues.meetingAppDefaultView,
         widget=SelectionWidget(
             description="MeetingAppDefaultView",
             description_msgid="meeting_app_default_view_descr",
@@ -798,7 +798,7 @@ schema = Schema((
         schemata="gui",
         multiValued=1,
         vocabulary='listItemsListVisibleColumns',
-        default= defValues.itemsListVisibleColumns,
+        default=defValues.itemsListVisibleColumns,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -813,7 +813,7 @@ schema = Schema((
         schemata="gui",
         multiValued=1,
         vocabulary='listItemColumns',
-        default= defValues.itemColumns,
+        default=defValues.itemColumns,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -828,12 +828,12 @@ schema = Schema((
         schemata="gui",
         multiValued=1,
         vocabulary='listMeetingColumns',
-        default= defValues.meetingColumns,
+        default=defValues.meetingColumns,
         enforceVocabulary=False,
     ),
     IntegerField(
         name='maxShownAvailableItems',
-        default= defValues.maxShownAvailableItems,
+        default=defValues.maxShownAvailableItems,
         widget=IntegerField._properties['widget'](
             description="MaxShownAvailableItems",
             description_msgid="max_shown_available_items_descr",
@@ -845,7 +845,7 @@ schema = Schema((
     ),
     IntegerField(
         name='maxShownMeetingItems',
-        default= defValues.maxShownMeetingItems,
+        default=defValues.maxShownMeetingItems,
         widget=IntegerField._properties['widget'](
             description="MaxShownMeetingitems",
             description_msgid="max_shown_meeting_items_descr",
@@ -857,7 +857,7 @@ schema = Schema((
     ),
     IntegerField(
         name='maxShownLateItems',
-        default= defValues.maxShownLateItems,
+        default=defValues.maxShownLateItems,
         widget=IntegerField._properties['widget'](
             description="MaxShownLateItems",
             description_msgid="max_shown_late_items_descr",
@@ -869,7 +869,7 @@ schema = Schema((
     ),
     BooleanField(
         name='enableGotoPage',
-        default= defValues.enableGotoPage,
+        default=defValues.enableGotoPage,
         widget=BooleanField._properties['widget'](
             description="EnableGotoPage",
             description_msgid="enable_goto_page_descr",
@@ -881,7 +881,7 @@ schema = Schema((
     ),
     BooleanField(
         name='enableGotoItem',
-        default= defValues.enableGotoItem,
+        default=defValues.enableGotoItem,
         widget=BooleanField._properties['widget'](
             description="EnableGotoItem",
             description_msgid="enable_goto_item_descr",
@@ -893,7 +893,7 @@ schema = Schema((
     ),
     BooleanField(
         name='openAnnexesInSeparateWindows',
-        default= defValues.openAnnexesInSeparateWindows,
+        default=defValues.openAnnexesInSeparateWindows,
         widget=BooleanField._properties['widget'](
             description="OpenAnnexesInSeparateWindows",
             description_msgid="open_annexes_in_separate_windows_descr",
@@ -924,7 +924,7 @@ schema = Schema((
     ),
     StringField(
         name='mailMode',
-        default= defValues.mailMode,
+        default=defValues.mailMode,
         widget=SelectionWidget(
             description="MailMode",
             description_msgid="mail_mode_descr",
@@ -938,7 +938,7 @@ schema = Schema((
     ),
     StringField(
         name='mailFormat',
-        default= defValues.mailFormat,
+        default=defValues.mailFormat,
         widget=SelectionWidget(
             description="MailFormat",
             description_msgid="mail_format_descr",
@@ -962,7 +962,7 @@ schema = Schema((
         schemata="mail",
         multiValued=1,
         vocabulary='listItemEvents',
-        default= defValues.mailItemEvents,
+        default=defValues.mailItemEvents,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -977,12 +977,12 @@ schema = Schema((
         schemata="mail",
         multiValued=1,
         vocabulary='listMeetingEvents',
-        default= defValues.mailMeetingEvents,
+        default=defValues.mailMeetingEvents,
         enforceVocabulary=False,
     ),
     StringField(
         name='tasksMacro',
-        default= defValues.tasksMacro,
+        default=defValues.tasksMacro,
         widget=StringField._properties['widget'](
             size=70,
             description="TasksMacro",
@@ -995,7 +995,7 @@ schema = Schema((
     ),
     StringField(
         name='taskCreatorRole',
-        default= defValues.taskCreatorRole,
+        default=defValues.taskCreatorRole,
         widget=SelectionWidget(
             description="TaskCreatorRole",
             description_msgid="task_creator_role_descr",
@@ -1009,7 +1009,7 @@ schema = Schema((
     ),
     BooleanField(
         name='useAdvices',
-        default= defValues.useAdvices,
+        default=defValues.useAdvices,
         widget=BooleanField._properties['widget'](
             description="UseAdvices",
             description_msgid="use_advices_descr",
@@ -1031,7 +1031,7 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listItemStates',
-        default= defValues.itemAdviceStates,
+        default=defValues.itemAdviceStates,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -1046,7 +1046,7 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listItemStates',
-        default= defValues.itemAdviceEditStates,
+        default=defValues.itemAdviceEditStates,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -1061,7 +1061,7 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listItemStates',
-        default= defValues.itemAdviceViewStates,
+        default=defValues.itemAdviceViewStates,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -1077,12 +1077,12 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listAdviceTypes',
-        default= defValues.usedAdviceTypes,
+        default=defValues.usedAdviceTypes,
         enforceVocabulary=True,
     ),
     StringField(
         name='defaultAdviceType',
-        default= defValues.defaultAdviceType,
+        default=defValues.defaultAdviceType,
         widget=SelectionWidget(
             description="DefaultAdviceType",
             description_msgid="default_advice_type_descr",
@@ -1097,7 +1097,7 @@ schema = Schema((
     ),
     BooleanField(
         name='enforceAdviceMandatoriness',
-        default= defValues.enforceAdviceMandatoriness,
+        default=defValues.enforceAdviceMandatoriness,
         widget=BooleanField._properties['widget'](
             description="EnforceAdviceMandatoriness",
             description_msgid="enforce_advice_mandatoriness_descr",
@@ -1109,7 +1109,7 @@ schema = Schema((
     ),
     BooleanField(
         name='enableAdviceInvalidation',
-        default= defValues.enableAdviceInvalidation,
+        default=defValues.enableAdviceInvalidation,
         widget=BooleanField._properties['widget'](
             description="EnableAdviceInvalidation",
             description_msgid="enable_advice_invalidation_descr",
@@ -1131,12 +1131,12 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listItemStates',
-        default= defValues.itemAdviceInvalidateStates,
+        default=defValues.itemAdviceInvalidateStates,
         enforceVocabulary=False,
     ),
     StringField(
         name='adviceStyle',
-        default= defValues.adviceStyle,
+        default=defValues.adviceStyle,
         widget=SelectionWidget(
             description="AdviceStyle",
             description_msgid="advice_style_descr",
@@ -1160,7 +1160,7 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listItemStates',
-        default= defValues.itemPowerObserversStates,
+        default=defValues.itemPowerObserversStates,
         enforceVocabulary=False,
     ),
     LinesField(
@@ -1175,12 +1175,12 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listMeetingStates',
-        default= defValues.meetingPowerObserversStates,
+        default=defValues.meetingPowerObserversStates,
         enforceVocabulary=False,
     ),
     BooleanField(
         name='useCopies',
-        default= defValues.useCopies,
+        default=defValues.useCopies,
         widget=BooleanField._properties['widget'](
             description="UseCopies",
             description_msgid="use_copies_descr",
@@ -1207,7 +1207,7 @@ schema = Schema((
     ),
     BooleanField(
         name='useVotes',
-        default= defValues.useVotes,
+        default=defValues.useVotes,
         widget=BooleanField._properties['widget'](
             description="UseVotes",
             description_msgid="use_votes_descr",
