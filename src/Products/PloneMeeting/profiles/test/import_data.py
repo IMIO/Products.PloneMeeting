@@ -155,6 +155,7 @@ meetingPga.itemAdviceEditStates = ['proposed', ]
 meetingPga.itemAdviceViewStates = ['presented', ]
 meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
 meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
+meetingPga.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 # Second meeting type: a fictitious PloneMeeting assembly ----------------------
@@ -192,6 +193,7 @@ meetingPma.meetingFileTypes = [
     financialAnalysis, overheadAnalysis, itemAnnex, decisionAnnex, marketingAnalysis]
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
+meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
 meetingPma.sortingMethodOnAddItem = 'on_proposing_groups'
 meetingPma.useGroupsAsCategories = True
 meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism', 'User interface'))

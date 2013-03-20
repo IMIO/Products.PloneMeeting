@@ -128,7 +128,7 @@ schema = Schema((
 
     TextField(
         name='assembly',
-        default=defValues.assembly,
+        default= defValues.assembly,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Assembly",
@@ -141,7 +141,7 @@ schema = Schema((
     ),
     TextField(
         name='signatures',
-        default=defValues.signatures,
+        default= defValues.signatures,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="Signatures",
@@ -154,7 +154,7 @@ schema = Schema((
     ),
     TextField(
         name='certifiedSignatures',
-        default=defValues.certifiedSignatures,
+        default= defValues.certifiedSignatures,
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             description="CertifiedSignatures",
@@ -655,6 +655,21 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="workflow",
+    ),
+    LinesField(
+        name='itemDecidedStates',
+        widget=MultiSelectionWidget(
+            description="ItemDecidedStates",
+            description_msgid="item_decided_states_descr",
+            label='Itemdecidedstates',
+            label_msgid='PloneMeeting_label_itemDecidedStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default= defValues.itemDecidedStates,
+        enforceVocabulary=False,
     ),
     LinesField(
         name='workflowAdaptations',
@@ -1965,7 +1980,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.__ac_local_roles_block__ = True
         self.manage_addLocalRoles(groupId, ('MeetingPowerObserverLocal',))
         # the problem here is that
-
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
         '''Create the sub-folders of a meeting config, that will contain
@@ -2472,11 +2486,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
-
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
-
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
         '''Checks if the current meetingConfig can be deleted :
@@ -2765,3 +2777,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+

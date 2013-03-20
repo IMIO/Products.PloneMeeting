@@ -214,7 +214,7 @@ class MeetingConfigDescriptor(Descriptor):
         'historizedMeetingAttributes', 'recordMeetingHistoryStates',
         'itemsListVisibleColumns', 'itemColumns', 'meetingColumns',
         'workflowAdaptations', 'transitionsToConfirm', 'mailItemEvents',
-        'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates',
+        'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates','itemDecidedStates',
         'itemAdviceEditStates', 'itemAdviceViewStates', 'itemPowerObserversStates',
         'meetingPowerObserversStates', 'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
         'selectableCopyGroups', 'votesEncoder', 'itemTopicStates', 'meetingTopicStates',
@@ -345,6 +345,7 @@ class MeetingConfigDescriptor(Descriptor):
                                           'IMeetingWorkflowConditions'
         self.meetingActionsInterface = 'Products.PloneMeeting.interfaces.' \
                                        'IMeetingWorkflowActions'
+        self.itemDecidedStates = []
         # Workflow adaptations are sets of changes that can be applied to
         # default HubSessions workflows.
         self.workflowAdaptations = []
