@@ -1,5 +1,5 @@
 #!/bin/sh
-/srv/archgenxml/agx27/bin/archgenxml --cfg generate.conf PloneMeeting.zargo -o ..
+/srv/archgenxml/agxtrunk/bin/archgenxml --cfg generate.conf PloneMeeting.zargo -o ..
 
 echo "Removing useless 'locales' folder managed by imio.pm.locales"
 rm -rf ../locales
