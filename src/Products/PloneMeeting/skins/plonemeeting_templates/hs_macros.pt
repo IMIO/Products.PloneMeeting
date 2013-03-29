@@ -722,3 +722,27 @@ Needs moveUrl, firstId, lastId, obj</tal:comment>
         <img src="arrowTop.png" tal:attributes="src string:${portal_url}/arrowTop.png;" title="title_move_item_top" i18n:attributes="title" />
     </a>
 </metal:moveUpDown>
+
+<tal:comment replace="nothing">
+  This macro displays buttons for decided items transitions.
+</tal:comment>
+<metal:decideSeveralItems define-macro="showItemsDecidedTransitions" i18n:domain="PloneMeeting">
+    <tal:comment replace="nothing">We show at the end the buttons
+         for deciding several items at once</tal:comment>
+    <form name="decideItemsForm" 
+          tal:attributes="action python: context.absolute_url_path() + '/decideSeveralItems'">
+      <input type="hidden" name="uids" value=""/>
+      <input type="hidden" name="iStartNumber"/>
+      <input type="hidden" name="lStartNumber"/>
+      <input type="hidden" name="transition" value=""/>
+      <span tal:repeat="transition python: context.portal_plonemeeting.getDecidedTransitions(context)"
+          class="noPadding">
+        <input type="submit"
+               tal:attributes="name python:transition;                               
+                               value python:context.utranslate(msgid=transition, domain='plone'); 
+                               class string:hsButton hsButtonWF hsButtonWF_$transition;
+                               size python: int(len(transition));
+                               onClick string:decideSelectedItems('$transition')"/>
+      </span>
+    </form>
+</metal:decideSeveralItems>

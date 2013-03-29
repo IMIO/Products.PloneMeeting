@@ -457,6 +457,12 @@
     <span id="lateItems"><div align="center"><img tal:attributes="src string: $portal_url/waiting.gif"/></div></span>
   </fieldset>
 
+  <tal:comment replace="nothing">Action on selected items</tal:comment>
+    <div tal:condition="python: context.adapted().isDecided() and context.portal_plonemeeting.isManager() " id="showItemsDecidedTransitions" >
+        <div metal:use-macro="here/hs_macros/macros/showItemsDecidedTransitions"></div>
+    </div>
+    <div style="clear: both;"> </div>
+
   <tal:comment replace="nothing">Observations</tal:comment>
   <tal:field define="fieldName python: 'observations'; ajaxEdit python:True"
              condition="python: context.showObs('observations')">

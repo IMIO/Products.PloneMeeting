@@ -1977,7 +1977,27 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             self._v_previousData = rememberPreviousData(self)
         return BaseContent.processForm(self, *args, **kwargs)
 
+    def decideSeveralItems(self):
+        '''On meeting, we can decided severals items.
+        '''
+        transition = self.REQUEST.get('transition',None)
+        if transition is None:
+            return self.portal_plonemeeting.gotoReferer()
+            
+        uids = self.REQUEST.get('uids',[])   
+        if not uids:
+            msg = self.translate('no_selected_items', domain='PloneMeeting')
+            self.plone_utils.addPortalMessage(msg)
+            return self.portal_plonemeeting.gotoReferer()
 
+        for uid in uids.split(',')[:-1]:
+            obj = self.uid_catalog.searchResults(UID=uid)[0].getObject()
+            try:
+                self.portal_workflow.doActionFor(obj, transition)
+            except WorkflowException:
+                continue
+        
+        return self.portal_plonemeeting.gotoReferer()
 
 registerType(Meeting, PROJECTNAME)
 # end of class Meeting

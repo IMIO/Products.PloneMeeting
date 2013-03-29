@@ -630,3 +630,26 @@ function getRichTextContent(rq, params) {
                '&fieldContent=' + encodeURIComponent(theWidget.value);
   return params
 }
+
+function decideSelectedItems(transition){
+    // Called when the user wants to decided several items at once in a meeting.
+    var itemsCheckboxes = document.getElementsByName('itemCbToDump');
+    var itemsUids = '';
+    var atLeastOneSelected = false;
+    for (var i=0; i < itemsCheckboxes.length; i++) {
+        if (itemsCheckboxes[i].checked) {
+            atLeastOneSelected = true;
+            itemsUids += itemsCheckboxes[i].value + ',';
+        }
+    }
+    if (! atLeastOneSelected) alert(no_selected_items);
+    else {
+        // Update the form and submit it.
+        var selectForm = document.forms['decideItemsForm'];
+        selectForm.uids.value = itemsUids;
+        selectForm.iStartNumber.value = iStartNumber;
+        selectForm.lStartNumber.value = lStartNumber;
+        selectForm.transition.value = transition;
+        selectForm.submit();
+    }
+}
