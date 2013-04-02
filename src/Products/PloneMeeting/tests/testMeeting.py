@@ -183,6 +183,38 @@ class testMeeting(PloneMeetingTestCase):
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', 'i2', 'i3', ])
 
+    def testDecideSeveralItems(self):
+        '''test that items selected correctly decided
+        '''
+        #create meeting
+        login(self.portal, 'pmManager')
+        meeting = self._createMeetingWithItems()
+        if 'publish' in self.transitions(meeting):
+            self.do(meeting, 'publish')
+        self.do(meeting, 'freeze')
+        uids = []
+        uid_str = ''
+        allItems = meeting.getItems()
+        #set decision and place all items, except the last in uids
+        for item in allItems:
+            item.setDecision(self.decisionText)
+            if item != allItems[-1]:
+                uids.append(item.UID())
+        self.do(meeting, 'decide')
+        #back item to itemFrozen state
+        for item in allItems:
+            if item.queryState() == 'accepted':
+                self.do(item, 'backToItemFrozen')
+        #initialize request variables used in decideSeveralItems method
+        meeting.REQUEST.set('transition','accept')
+        meeting.REQUEST.set('uids',",".join(uids)+",")
+        meeting.decideSeveralItems()
+        #after execute method, all items, except the last, are accepted
+        for item in allItems[:-1]:
+            self.assertEquals(item.queryState(),'accepted')
+        self.assertEquals(allItems[-1].queryState(),'itemfrozen')
+        
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
