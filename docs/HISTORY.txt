@@ -16,6 +16,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Optimized votes functionnality
 - Added local powerobservers giving the possibility to define powerobservers by meetingConfig
 - Copy groups to add automatically is now evaluated at each item edition, not only on creation
+- Added possibility to decide several items at once when on a decided meeting
 
 2.1.4dev
 --------
