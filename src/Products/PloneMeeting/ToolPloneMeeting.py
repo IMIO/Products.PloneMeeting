@@ -648,6 +648,29 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     res.append(self.portal_groups.getGroupById(groupId))
         return res
 
+    security.declarePublic('getSelectableGroups')
+    def getSelectableGroups(self, isDefinedInTool=False, existingGroupId=None, userId=None):
+        """
+          Returns the selectable groups for given p_userId or currently connected user.
+        """
+        res = []
+        if not isDefinedInTool:
+            userMeetingGroups = self.getGroups(userId=userId, suffix="creators")
+            for group in userMeetingGroups:
+                res.append((group.id, group.getName()))
+            if existingGroupId:
+                # Try to get the corresponding meeting group
+                group = getattr(self, existingGroupId, None)
+                if group:
+                    if group not in userMeetingGroups:
+                        res.append((existingGroupId, group.getName()))
+                else:
+                    res.append((existingGroupId, existingGroupId))
+        else:
+            for group in self.portal_plonemeeting.getActiveGroups():
+                res.append((group.id, group.getName()))
+        return res
+
     security.declarePublic('userIsAmong')
     def userIsAmong(self, suffix):
         '''Check if the currently logged user is in a p_suffix-related Plone
@@ -1997,34 +2020,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # escape_for_js from portal_skins/plone_scripts/translate.py does the .replace() here above
         return res.replace("'", "\\'")
 
-    security.declarePublic('refererIsInnerPage')
-    def refererIsInnerPage(self):
-        '''Is the referer page an inner page? (ie the user wants to directly get
-           a given page before logging in).'''
-        pathInfo = self.REQUEST['PATH_INFO']
-        # Is HS behind a reverse proxy? (virtual_host is used)
-        i = pathInfo.find('VirtualHostBase')
-        if i != -1:
-            # Yes. So in the URL keep only the site name within
-            # VirtualHostBase/.../VirtualHostRoot
-            siteUrl = pathInfo[i + 16:pathInfo.find('VirtualHostRoot') - 1]
-            baseName = self.vhRex.search(siteUrl).group(1).strip('/')
-            if baseName:
-                pathInfo = '/' + baseName
-            else:
-                # We have to find the basename after "VirtualHostBase".
-                pathInfo = pathInfo[pathInfo.find('VirtualHostRoot') + 15:]
-                if pathInfo.startswith('/_vh_'):
-                    pathInfo = pathInfo.replace('/_vh_', '/')
-        # Is the path of the portal hidden in the URLs ? (ie the PloneSite is
-        # named 'HS' but there is no .../HS/... in the URLs
-        portalPath = self.portal_url.getPortalPath()
-        if pathInfo.startswith(portalPath):
-            pathInfo = pathInfo[len(portalPath):]
-        if pathInfo.strip('/') in ('', 'login_form', 'logged_out', 'login_failed'):
-            return False
-        return True
-
     security.declarePublic('getUserLanguage')
     def getUserLanguage(self):
         '''Gets the language (code) of the current user.'''
@@ -2275,6 +2270,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     toRemove.append(principalId)
         obj.manage_delLocalRoles(toRemove)
 
+    security.declarePublic('getDecidedTransitions')
+    def getDecidedTransitions(self, context):
+        '''Get decided transitions based on itemDecidedStates field
+           in the corresponding MeetingConfig.'''
+        cfg = self.getMeetingConfig(context)
+        itemWorkflow = getattr(self.portal_workflow, cfg.getItemWorkflow(), None)
+        res = []
+        for transition in itemWorkflow.transitions.values():
+            if transition.id.startswith('backTo'):
+                continue
+            if transition.new_state_id in cfg.getItemDecidedStates():
+                res.append(transition.id)
+        return res
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

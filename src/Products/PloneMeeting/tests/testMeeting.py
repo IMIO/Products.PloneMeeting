@@ -25,9 +25,9 @@
 
 from DateTime import DateTime
 from plone.app.testing import login
-from Products.PloneMeeting.config import *
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
+
 
 class testMeeting(PloneMeetingTestCase):
     '''Tests various aspects of Meetings management.'''
@@ -62,7 +62,7 @@ class testMeeting(PloneMeetingTestCase):
         self.setMeetingConfig('plonegov-assembly')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                            ['o3', 'o4', 'o5', 'o6', 'o2'])
+                          ['o3', 'o4', 'o5', 'o6', 'o2'])
 
     def testInsertItemAllGroups(self):
         '''Sort method tested here is "on_all_groups".'''
@@ -70,7 +70,7 @@ class testMeeting(PloneMeetingTestCase):
         self.meetingConfig.setSortingMethodOnAddItem('on_all_groups')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                            ['recItem1', 'o3', 'o5', 'o2', 'o4', 'o6'])
+                          ['recItem1', 'o3', 'o5', 'o2', 'o4', 'o6'])
 
     def testInsertItemPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy_then_proposing_groups".'''
@@ -78,7 +78,7 @@ class testMeeting(PloneMeetingTestCase):
         self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_proposing_groups')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                            ['recItem1', 'o3', 'o2', 'o6', 'o5', 'o4'])
+                          ['recItem1', 'o3', 'o2', 'o6', 'o5', 'o4'])
 
     def testInsertItemPrivacyThenCategories(self):
         '''Sort method tested here is "on_privacy_then_categories".'''
@@ -87,24 +87,24 @@ class testMeeting(PloneMeetingTestCase):
         self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_categories')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                            ['o3', 'o6', 'o2', 'o4', 'o5'])
+                          ['o3', 'o6', 'o2', 'o4', 'o5'])
 
     def testRemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
         login(self.portal, 'pmManager')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                            ['recItem1', 'o3', 'o5', 'o2', 'o4', 'o6'])
+                          ['recItem1', 'o3', 'o5', 'o2', 'o4', 'o6'])
         #remove an item
         item5 = getattr(meeting, 'o5')
         meeting.removeItem(item5)
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                            ['recItem1', 'o3', 'o2', 'o4', 'o6'])
+                          ['recItem1', 'o3', 'o2', 'o4', 'o6'])
         #delete a linked item
         item4 = getattr(meeting, 'o4')
         meeting.restrictedTraverse('@@delete_givenuid')(item4.UID())
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                            ['recItem1', 'o3', 'o2', 'o6'])
+                          ['recItem1', 'o3', 'o2', 'o6'])
 
     def testMeetingNumbers(self):
         '''Tests that meetings receive correctly their numbers from the config
@@ -182,6 +182,38 @@ class testMeeting(PloneMeetingTestCase):
         for brain in m3.getAvailableItems():
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', 'i2', 'i3', ])
+
+    def testDecideSeveralItems(self):
+        """
+          Test the functionnality to decide several items at once
+        """
+        #create a meeting
+        login(self.portal, 'pmManager')
+        meeting = self._createMeetingWithItems()
+        if 'publish' in self.transitions(meeting):
+            self.do(meeting, 'publish')
+        self.do(meeting, 'freeze')
+        uids = []
+        allItems = meeting.getItems()
+        #set decision and place all items, except the last in uids
+        for item in allItems:
+            item.setDecision(self.decisionText)
+            if item != allItems[-1]:
+                uids.append(item.UID())
+        self.do(meeting, 'decide')
+        #back item to itemFrozen state
+        for item in allItems:
+            if item.queryState() == 'accepted':
+                self.do(item, 'backToItemFrozen')
+        #initialize request variables used in decideSeveralItems method
+        meeting.REQUEST.set('transition', 'accept')
+        meeting.REQUEST.set('uids', ",".join(uids)+",")
+        meeting.decideSeveralItems()
+        #after execute method, all items, except the last, are accepted
+        for item in allItems[:-1]:
+            self.assertEquals(item.queryState(), 'accepted')
+        self.assertEquals(allItems[-1].queryState(), 'itemfrozen')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

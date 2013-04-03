@@ -24,8 +24,10 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 from App.class_init import InitializeClass
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import getCustomAdapter, \
-     HubSessionsMarshaller, getFieldContent
+    HubSessionsMarshaller, getFieldContent
+
 
 # Marshaller -------------------------------------------------------------------
 class CategoryMarshaller(HubSessionsMarshaller):
@@ -101,6 +103,8 @@ MeetingCategory_schema = BaseSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 # Register the marshaller for DAV/XML export.
 MeetingCategory_schema.registerLayer('marshall', CategoryMarshaller())
+
+
 ##/code-section after-schema
 
 class MeetingCategory(BaseContent, BrowserDefaultMixin):
@@ -141,29 +145,36 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         return i
 
     security.declarePrivate('at_post_create_script')
-    def at_post_create_script(self): self.adapted().onEdit(isCreated=True)
+    def at_post_create_script(self):
+        self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
-    def at_post_edit_script(self): self.adapted().onEdit(isCreated=False)
+    def at_post_edit_script(self):
+        self.adapted().onEdit(isCreated=False)
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingCategory': return self.context
+        if self.__class__.__name__ != 'MeetingCategory':
+            return self.context
         return self
 
     security.declarePublic('adapted')
-    def adapted(self): return getCustomAdapter(self)
+    def adapted(self):
+        return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
-    def onEdit(self, isCreated): '''See doc in interfaces.py.'''
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
 
     security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp): '''See doc in interfaces.py.'''
+    def onTransferred(self, extApp):
+        '''See doc in interfaces.py.'''
 
     security.declarePublic('isSelectable')
-    def isSelectable(self, item=None):
+    def isSelectable(self, userId):
         '''See documentation in interfaces.py.'''
         cat = self.getSelf()
+        tool = getToolByName(cat, 'portal_plonemeeting')
         try:
             wfTool = self.portal_workflow
         except AttributeError:
@@ -172,19 +183,21 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         isUsing = True
         usingGroups = self.getUsingGroups()
         # If we have an item, do one additional check
-        if item and usingGroups:
+        if usingGroups:
             # listProposingGroup takes isDefinedInTool into account
-            proposingGroupIds = item.listProposingGroup().keys()
+            proposingGroupIds = tool.getSelectableGroups(userId=userId)
+            keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
             # Check intersection between self.usingGroups and groups for wich
             # the current user is creator
-            isUsing = set(usingGroups).intersection(proposingGroupIds) != set()
+            isUsing = set(usingGroups).intersection(keys) != set()
         return isUsing and state == 'active'
 
     def incrementItemsCount(self):
         '''A new item has chosen me as a classifier or category. I must
            increment my item counter. This method returns the new items
            count.'''
-        if self.getItemsCount() == None: self.setItemsCount(0)
+        if self.getItemsCount() is None:
+            self.setItemsCount(0)
         newCount = self.getItemsCount() + 1
         self.setItemsCount(newCount)
         return newCount
@@ -207,4 +220,3 @@ registerType(MeetingCategory, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

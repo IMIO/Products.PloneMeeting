@@ -991,7 +991,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     ##code-section class-header #fill in your manual code here
     itemPositiveDecidedStates = ('accepted', )
-    itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
     meetingTransitionsAcceptingRecurringItems = ('_init_', 'publish', 'freeze',
                                                  'decide')
     beforePublicationStates = ('itemcreated', 'proposed', 'prevalidated',
@@ -1097,7 +1096,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showItemIsSigned(self):
         '''Condition for showing the 'itemIsSigned' field on views.
            The attribute must be used and the item must be decided.'''
-        return self.attributeIsUsed('itemIsSigned') and self.queryState() in self.itemDecidedStates
+        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        return self.attributeIsUsed('itemIsSigned') and \
+            self.queryState() in meetingConfig.getItemDecidedStates()
 
     security.declarePublic('maySignItem')
     def maySignItem(self, member):
@@ -1487,28 +1488,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            to. If a group is already set, it is returned.
            If this item is being created or edited in portal_plonemeeting (as a
            recurring item), the list of active groups is returned.'''
-        if not self.isDefinedInTool():
-            groupId = self.getField('proposingGroup').get(self)
-            tool = self.portal_plonemeeting
-            userMeetingGroups = tool.getGroups(suffix="creators")
-            res = []
-            for group in userMeetingGroups:
-                res.append((group.id, group.getName()))
-            if groupId:
-                # Try to get the corresponding meeting group
-                group = getattr(tool, groupId, None)
-                if group:
-                    if group not in userMeetingGroups:
-                        res.append((groupId, group.getName()))
-                else:
-                    res.append((groupId, groupId))
-        else:
-            res = []
-            for group in self.portal_plonemeeting.getActiveGroups():
-                res.append((group.id, group.getName()))
+        tool = self.portal_plonemeeting
+        groupId = self.getField('proposingGroup').get(self)
+        isDefinedInTool = self.isDefinedInTool()
+        res = tool.getSelectableGroups(isDefinedInTool=isDefinedInTool,
+                                       existingGroupId=groupId)
+        # add a 'make_a_choice' value when the item is in the tool
+        if isDefinedInTool:
             res.insert(0, ('', translate('make_a_choice',
-                                         domain='PloneMeeting',
-                                         context=self.REQUEST)))
+                           domain='PloneMeeting',
+                           context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listAssociatedGroups')
@@ -1602,7 +1591,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            the meeting config that corresponds me.'''
         res = []
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        for cat in meetingConfig.getCategories(item=self):
+        for cat in meetingConfig.getCategories():
             res.append((cat.id, cat.getName()))
         if len(res) > 4:
             res.insert(0, ('_none_', translate('make_a_choice',

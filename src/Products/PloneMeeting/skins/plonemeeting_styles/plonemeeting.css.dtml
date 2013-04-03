@@ -565,6 +565,9 @@ dl.searchResults cite {
 display: none;
 }
 
+#showItemsDecidedTransitions{
+float:right;
+}
 
 /* </dtml-with> */
 
