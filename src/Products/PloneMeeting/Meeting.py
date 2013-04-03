@@ -59,11 +59,11 @@ class MeetingMarshaller(HubSessionsMarshaller):
     rootElementName = 'meeting'
 
     def marshallSpecificElements(self, meeting, res):
-        w = res.write
         HubSessionsMarshaller.marshallSpecificElements(self, meeting, res)
         # Dump non-archetypes dictionaries "entrances" and "departures".
         for name in ('entrances', 'departures'):
-            if not hasattr(meeting, name): continue
+            if not hasattr(meeting, name):
+                continue
             self.dumpField(res, name, getattr(meeting, name))
 
 InitializeClass(MeetingMarshaller)
@@ -111,12 +111,14 @@ class MeetingWorkflowConditions:
     def _decisionsWereConfirmed(self):
         '''Returns True if at least one decision was taken on an item'''
         for item in self.context.getAllItems(ordered=True):
-            if item.queryState() == 'confirmed': return True
+            if item.queryState() == 'confirmed':
+                return True
 
     def _allItemsAreDelayed(self):
         '''Are all items contained in this meeting delayed ?'''
         for item in self.context.getAllItems(ordered=True):
-            if not item.adapted().isDelayed(): return False
+            if not item.adapted().isDelayed():
+                return False
         return True
 
     security.declarePublic('mayAcceptItems')
@@ -127,7 +129,8 @@ class MeetingWorkflowConditions:
 
     security.declarePublic('mayPublish')
     def mayPublish(self):
-        if not checkPermission(ReviewPortalContent, self.context): return False
+        if not checkPermission(ReviewPortalContent, self.context):
+            return False
         if not self.context.getRawItems():
             return No(translate('item_required_to_publish', domain="PloneMeeting", context=self.context.REQUEST))
         return True
@@ -160,7 +163,8 @@ class MeetingWorkflowConditions:
 
     security.declarePublic('mayCorrect')
     def mayCorrect(self):
-        if not checkPermission(ReviewPortalContent, self.context): return
+        if not checkPermission(ReviewPortalContent, self.context):
+            return
         currentState = self.context.queryState()
         if currentState in ('published', 'frozen'):
             publishedObject = getCurrentMeetingObject(self.context)
@@ -169,13 +173,15 @@ class MeetingWorkflowConditions:
             # possible if the published object is not the Meeting.
             if isinstance(publishedObject, Meeting) and \
                not self.context.getRawLateItems() and \
-               not self._atLeastOneDecisionIsTaken(): return True
+               not self._atLeastOneDecisionIsTaken():
+                return True
         elif currentState == 'decided':
             # Going back from "decided" to previous state is not a true "undo".
             # Indeed, when a meeting is "decided", all items for which no
             # decision was taken are set in "accepted". Going back to
             # "published" does not set them back in their previous state.
-            if not self._decisionsWereConfirmed(): return True
+            if not self._decisionsWereConfirmed():
+                return True
         else:
             return True
 
@@ -192,7 +198,8 @@ class MeetingWorkflowConditions:
             return True
 
     security.declarePublic('mayRepublish')
-    def mayRepublish(self): return False
+    def mayRepublish(self):
+        return False
 
     security.declarePublic('mayChangeItemsOrder')
     def mayChangeItemsOrder(self):
@@ -216,6 +223,7 @@ class MeetingWorkflowConditions:
             return True
 
 InitializeClass(MeetingWorkflowConditions)
+
 
 class MeetingWorkflowActions:
     '''Adapts a meeting to interface IMeetingWorkflowActions.'''
@@ -255,7 +263,6 @@ class MeetingWorkflowActions:
             if item.queryState() == 'presented':
                 self.context.portal_workflow.doActionFor(item, 'itempublish')
 
-
     security.declarePrivate('doFreeze')
     def doFreeze(self, stateChange):
         '''When freezing the meeting, I must set automatically all items
@@ -292,8 +299,8 @@ class MeetingWorkflowActions:
             self.context)
         self.context.setFirstItemNumber(meetingConfig.getLastItemNumber()+1)
         # Update the item counter which is global to the meeting config
-        meetingConfig.setLastItemNumber(meetingConfig.getLastItemNumber() +\
-                                        len(self.context.getItems()) + \
+        meetingConfig.setLastItemNumber(meetingConfig.getLastItemNumber() +
+                                        len(self.context.getItems()) +
                                         len(self.context.getLateItems()))
 
     security.declarePrivate('doArchive')
@@ -357,9 +364,11 @@ class MeetingWorkflowActions:
 
 InitializeClass(MeetingWorkflowActions)
 
+
 # Validators -------------------------------------------------------------------
 class AllItemsParserError(Exception):
     '''Raised when the AllItemsParser encounters a problem.'''
+
 
 class AllItemsParser:
     '''Parses the 'allItemsAtOnce' field.'''
@@ -444,7 +453,7 @@ class AllItemsParser:
             if onItem:
                 onItem(number, title, body)
         nbOfItems = len(self.meeting.getRawItems()) + \
-                    len(self.meeting.getRawLateItems())
+            len(self.meeting.getRawLateItems())
         if set(itemNumbers) != set(range(1, nbOfItems+1)):
             raise AllItemsParserError(
                 self.meeting.translate(
@@ -568,7 +577,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_midDate',
             i18n_domain='PloneMeeting',
         ),
-        optional= True,
+        optional=True,
     ),
     DateTimeField(
         name='endDate',
@@ -758,7 +767,7 @@ schema = Schema((
         name='allItemsAtOnce',
         widget=RichWidget(
             condition="python: here.showAllItemsAtOnce()",
-            parastyles=["Title|h2|itemTitle","Body|div|itemBody"],
+            parastyles=["Title|h2|itemTitle", "Body|div|itemBody"],
             description_msgid="all_items_explanation",
             description="AllItemsAtOnce",
             label='Allitemsatonce',
@@ -862,8 +871,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
         # add GMT+x value
         localizedValue = value + ' ' + DateTime._localzone
-        otherMeetings= self.portal_catalog(portal_type=cfg.getMeetingTypeName(),
-                                           getDate=DateTime(localizedValue))
+        otherMeetings = self.portal_catalog(portal_type=cfg.getMeetingTypeName(),
+                                            getDate=DateTime(localizedValue))
         if otherMeetings:
             for m in otherMeetings:
                 if m.getObject() != self:
@@ -905,11 +914,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('listSignatories')
     def listSignatories(self):
         '''Returns the active MeetingUsers having usage "signer".'''
-        res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(usages=['signer',], includeAllActive=True))
+        res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(usages=['signer', ],
+                                                                      includeAllActive=True))
         return DisplayList(res)
 
     security.declarePublic('getAllUsedMeetingUsers')
-    def getAllUsedMeetingUsers(self, usages=['assemblyMember',], includeAllActive=False):
+    def getAllUsedMeetingUsers(self, usages=['assemblyMember', ], includeAllActive=False):
         '''This will return every used MeetingUsers no matter they are
            active or not.  This make it possible to deactivate a MeetingUser
            but still see it on old meetings.  If p_includeAllActive is True,
@@ -926,7 +936,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         allActiveMeetingUsersIds = [mUser.getId for mUser in allActiveMeetingUsers]
         if includeAllActive:
             # include selected users + all existing active users
-            return [mUser for mUser in allMeetingUsers if (mUser.getId() in mUserIds or mUser.getId() in allActiveMeetingUsersIds)]
+            return [mUser for mUser in allMeetingUsers if
+                    (mUser.getId() in mUserIds or mUser.getId() in allActiveMeetingUsersIds)]
         else:
             # only include selected users
             return [mUser for mUser in allMeetingUsers if mUser.getId() in mUserIds]
@@ -1174,8 +1185,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     # Keep only items whose uid is in p_uids, and ensure the
                     # current user has the right to view them (uids filtering
                     # is used within POD templates).
-                    condition = condition and (item.UID() in uids) and \
-                                user.has_permission('View', item)
+                    condition = condition and (item.UID() in uids) and user.has_permission('View', item)
                 if deadline:
                     # Determine the deadline to use
                     if late:
@@ -1233,7 +1243,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         previousIndexes = None
         for item in self.getItemsInOrder(late, uids, deadline=deadline):
             exec 'indexes = %s' % expression
-            if indexes == -1: continue
+            if indexes == -1:
+                continue
             previousItem = item
             previousIndexes = indexes
             res.insertItem(indexes, item)
@@ -1365,8 +1376,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # equal to the date of this meeting (self)
         meetings = meeting.portal_catalog(
             portal_type=meetingConfig.getMeetingTypeName(),
-            getDate={'query': meeting.getDate(), 'range': 'max'},
-            )
+            getDate={'query': meeting.getDate(), 'range': 'max'}, )
         meetingUids = [b.getObject().UID() for b in meetings]
         meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
         # Then, get the items whose preferred meeting is None or is among
@@ -1493,7 +1503,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             signers = []
         if 'lateAttendees' in usedAttrs:
             lateAttendees = []
-        if useReplacements: replacements = {}
+        if useReplacements:
+            replacements = {}
         for key in self.REQUEST.keys():
             if not key.startswith('muser_'):
                 continue
@@ -1584,8 +1595,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
         userId = self.portal_membership.getAuthenticatedMember().getId()
-        logger.info('Meeting at %s created by "%s".' % \
-                    (self.absolute_url_path(), userId))
+        logger.info('Meeting at %s created by "%s".' % (self.absolute_url_path(), userId))
 
     security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
@@ -1624,10 +1634,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return richContent
 
     security.declareProtected('Modify portal content', 'onEdit')
-    def onEdit(self, isCreated): '''See doc in interfaces.py.'''
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
 
     security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp): '''See doc in interfaces.py.'''
+    def onTransferred(self, extApp):
+        '''See doc in interfaces.py.'''
 
     security.declarePublic('wfConditions')
     def wfConditions(self):
@@ -1977,14 +1989,14 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             self._v_previousData = rememberPreviousData(self)
         return BaseContent.processForm(self, *args, **kwargs)
 
+    security.declarePublic('decideSeveralItems')
     def decideSeveralItems(self):
-        '''On meeting, we can decided severals items.
-        '''
-        transition = self.REQUEST.get('transition',None)
+        '''On meeting, we can decided severals items at once.'''
+        transition = self.REQUEST.get('transition', None)
         if transition is None:
             return self.portal_plonemeeting.gotoReferer()
-            
-        uids = self.REQUEST.get('uids',[])   
+
+        uids = self.REQUEST.get('uids', [])
         if not uids:
             msg = self.translate('no_selected_items', domain='PloneMeeting')
             self.plone_utils.addPortalMessage(msg)
@@ -1996,8 +2008,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 self.portal_workflow.doActionFor(obj, transition)
             except WorkflowException:
                 continue
-        
         return self.portal_plonemeeting.gotoReferer()
+
 
 registerType(Meeting, PROJECTNAME)
 # end of class Meeting

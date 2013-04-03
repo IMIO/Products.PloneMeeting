@@ -65,7 +65,7 @@
   var numberOfLateItems = 0; // Idem, but late items.
   /* The following field will be computed when this page is loaded. It is the
      maximum number of normal items shown at once. */
-  var maxShownItems = 0; 
+  var maxShownItems = 0;
   var checkBoxesChecked = true;
 
   function presentSelectedItems() {
@@ -244,7 +244,7 @@
       url: meetingUrl + "/toggle_to_discuss_on_item",
       dataType: 'html',
       data: {UID:UID},
-      success: function(data) { 
+      success: function(data) {
         toggleToDiscuss(UID, data);
         },
       error: function(jqXHR, textStatus, errorThrown) {
@@ -270,7 +270,7 @@
   -->
   </script>
   <script language="javascript" tal:content="context/getJsItemUids"></script>
- 
+
   <tal:comment replace="nothing">Form used for moving an item up or down in an items list.</tal:comment>
   <form name="formMoveMeetingItem" method="POST"
         tal:attributes="action python: context.absolute_url_path() + '/meeting_changeitemsorder'">
@@ -426,7 +426,7 @@
                            name string:expandedItems;
                            onClick python:'toggleItemsList(\'availableItems\', this)'"
            style="cursor:pointer"/>
-    </legend>    
+    </legend>
     <span id="availableItems"><div align="center"><img tal:attributes="src string: $portal_url/waiting.gif"/></div></span>
   </fieldset>
 
@@ -458,10 +458,10 @@
   </fieldset>
 
   <tal:comment replace="nothing">Action on selected items</tal:comment>
-    <div tal:condition="python: context.adapted().isDecided() and context.portal_plonemeeting.isManager() " id="showItemsDecidedTransitions" >
-        <div metal:use-macro="here/hs_macros/macros/showItemsDecidedTransitions"></div>
-    </div>
-    <div style="clear: both;"> </div>
+  <div tal:condition="python: context.adapted().isDecided() and tool.isManager()" id="showItemsDecidedTransitions" >
+    <div metal:use-macro="here/hs_macros/macros/showItemsDecidedTransitions"></div>
+  </div>
+  <div class="visualClear"></div>
 
   <tal:comment replace="nothing">Observations</tal:comment>
   <tal:field define="fieldName python: 'observations'; ajaxEdit python:True"
