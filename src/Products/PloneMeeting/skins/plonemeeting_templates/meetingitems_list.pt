@@ -125,7 +125,7 @@
       <tal:comment replace="nothing">Checkbox column for selecting items.</tal:comment>
       <th class="pm_meeting_listing_th_checkBoxes" tal:condition="showCheckboxes">
         <img tal:condition="itemsNumbering" tal:attributes="src string: $portal_url/select_items.png"
-             i18n:attributes="title" title="helpSelectForPrintingIcon"
+             i18n:attributes="title" title="helpSelectItemsIcon"
              onClick="javascript:toggleCheckboxes()" style="cursor:pointer"/>
         <tal:comment replace="nothing">We show inside the column header the button
              for presenting several items at once</tal:comment>
