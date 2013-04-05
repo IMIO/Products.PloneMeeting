@@ -173,8 +173,8 @@
     maxShownItems = maxItems*1;
     // First, set the cookie for showing/hiding item descriptions and decisions
     if (readCookie('pmShowDescriptions') == null){
-      // No cookie? By default create one that shows the descriptions.
-      createCookie('pmShowDescriptions', 'true')
+      // No cookie? By default create one that hides the descriptions.
+      createCookie('pmShowDescriptions', 'false')
     }
     // Load the lists of available, meeting and late items
     if (showAvailableItems == "True")
