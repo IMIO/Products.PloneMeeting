@@ -702,7 +702,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=True,
     ),
     DateTimeField(
@@ -736,7 +736,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=True,
     ),
     ReferenceField(
@@ -776,7 +776,7 @@ schema = Schema((
         ),
         default_content_type="text/html",
         allowable_content_types=('text/html',),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=False,
         edit_accessor="getAllItemsAtOnce",
     ),

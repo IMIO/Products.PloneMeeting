@@ -512,7 +512,7 @@ schema = Schema((
         default_content_type="text/html",
         searchable=True,
         allowable_content_types=('text/html',),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         accessor="Description",
     ),
     TextField(
@@ -526,7 +526,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=True,
     ),
     BooleanField(
@@ -553,7 +553,7 @@ schema = Schema((
         default_content_type='text/html',
         allowable_content_types=('text/html',),
         default_method="getDefaultBudgetInfo",
-        default_output_type='text/html',
+        default_output_type="text/x-html-safe",
         optional=True,
     ),
     StringField(
@@ -683,7 +683,7 @@ schema = Schema((
         read_permission="PloneMeeting: Read decision",
         searchable=True,
         allowable_content_types=('text/html',),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         write_permission="PloneMeeting: Write decision",
     ),
     BooleanField(
@@ -726,7 +726,7 @@ schema = Schema((
         default_content_type="text/html",
         read_permission="PloneMeeting: Read item observations",
         allowable_content_types=('text/html',),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=True,
         write_permission="PloneMeeting: Write item observations",
     ),
@@ -820,7 +820,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemAssembly',
             i18n_domain='PloneMeeting',
         ),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         default_content_type="text/plain",
     ),
     TextField(
