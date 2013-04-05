@@ -14,11 +14,11 @@
           tal:attributes="src string:$portal_url/jscalendar/calendar-en.js">
   </script>
 </metal:js>
-<metal:css fill-slot="css_slot">
+<metal:style fill-slot="style_slot">
   <style type="text/css" media="all"
          tal:content="structure string:<!-- @import url($portal_url/jscalendar/calendar-system.css); -->">
   </style>
-</metal:css>
+</metal:style>
 
 <body>
   <tal:comment replace="nothing">Disable the Standard Plone green tab</tal:comment>
