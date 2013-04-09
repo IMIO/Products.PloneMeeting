@@ -5,13 +5,14 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 
+
 class PloneMeetingContentHistoryView(ContentHistoryView):
     '''
       Overrides the ContentHistoryView template to use our own.
       We want to display the content_history as a table.
     '''
-
     index = ViewPageTemplateFile("templates/content_history.pt")
+
 
 class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
     '''
@@ -51,15 +52,16 @@ class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
             #XXX change by PM
             if mc:
                 if "/mymeetings/%s" % mc.getId() in action_path:
-                    return {'portal': action['id'],}
+                    return {'portal': action['id'], }
             #XXX end of change by PM
 
         # Sort by path length, the longest matching path wins
         valid_actions.sort()
         if valid_actions:
-            return {'portal' : valid_actions[-1][1]}
+            return {'portal': valid_actions[-1][1]}
 
-        return {'portal' : default_tab}
+        return {'portal': default_tab}
+
 
 class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
     '''
@@ -74,6 +76,6 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
             # add our own conditions
             # the documentByLine should be hidden on some layouts
             currentLayout = self.context.getLayout()
-            if currentLayout in ['meetingfolder_redirect_view',]:
+            if currentLayout in ['meetingfolder_redirect_view', ]:
                 return False
         return True
