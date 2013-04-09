@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from profilehooks import timecall
 
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
@@ -34,24 +35,49 @@ class testPerformances(PloneMeetingTestCase):
         # call parent setUp
         PloneMeetingTestCase.setUp(self)
 
-    def testDelayManyItemsWithManyAnnexes(self):
-        '''While delaying an item, it it cloned with annexes.'''
-        # create NUMBER_OF_ITEMS items with NUMBER_OF_ANNEXES annexes for each
-        NUMBER_OF_ITEMS = 10
-        NUMBER_OF_ANNEXES = 5
+    def testDelay5ItemsWith0Annexes(self):
+        '''While delaying an item, it is cloned with annexes.'''
+        meeting, uids = self._setupForDelayingItems(5, 0)
+        self._delaySeveralItems(meeting, uids)
 
+    def testDelay10ItemsWith0Annexes(self):
+        '''While delaying an item, it is cloned with annexes.'''
+        meeting, uids = self._setupForDelayingItems(10, 0)
+        self._delaySeveralItems(meeting, uids)
+
+    def testDelay5ItemsWith5Annexes(self):
+        '''While delaying an item, it is cloned with annexes.'''
+        meeting, uids = self._setupForDelayingItems(5, 5)
+        self._delaySeveralItems(meeting, uids)
+
+    def testDelay10ItemsWith5Annexes(self):
+        '''While delaying an item, it is cloned with annexes.'''
+        meeting, uids = self._setupForDelayingItems(10, 5)
+        self._delaySeveralItems(meeting, uids)
+
+    def testDelay5ItemsWith10Annexes(self):
+        '''While delaying an item, it is cloned with annexes.'''
+        meeting, uids = self._setupForDelayingItems(5, 10)
+        self._delaySeveralItems(meeting, uids)
+
+    def testDelay10ItemsWith10Annexes(self):
+        '''While delaying an item, it is cloned with annexes.'''
+        meeting, uids = self._setupForDelayingItems(10, 10)
+        self._delaySeveralItems(meeting, uids)
+
+    def _setupForDelayingItems(self, number_of_items, number_of_annexes):
         self.changeUser('pmManager')
         # create a meeting
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
         data = {}
         uids = []
-        for i in range(NUMBER_OF_ITEMS):
+        for i in range(number_of_items):
             data['title'] = 'Item number %d' % i
             item = self.create('MeetingItem', **data)
             uids.append(item.UID())
             item.setDecision('<p>A decision</p>')
             # add annexes
-            for j in range(NUMBER_OF_ANNEXES):
+            for j in range(number_of_annexes):
                 self.addAnnex(item, annexTitle="Annex number %d" % j)
             # present to item
             transitions = item.wfConditions().transitionsForPresentingAnItem
@@ -69,8 +95,9 @@ class testPerformances(PloneMeetingTestCase):
                     break
                 self.do(itemInMeeting, 'backToItemFrozen')
         # call a submethod that has the relevant profiling decorator
-        self._delaySeveralItems(meeting, ','.join(uids))
+        return meeting, ','.join(uids)
 
+    @timecall
     def _delaySeveralItems(self, meeting, uids):
         '''Helper method that actually delays the items.'''
         meeting.decideSeveralItems(uids=uids, transition='delay')
