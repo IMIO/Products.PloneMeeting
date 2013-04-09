@@ -563,6 +563,7 @@ schema = Schema((
         name='startDate',
         widget=DateTimeField._properties['widget'](
             condition="python: here.attributeIsUsed('startDate') and not here.isTemporary()",
+            minute_step=1,
             label='Startdate',
             label_msgid='PloneMeeting_label_startDate',
             i18n_domain='PloneMeeting',
@@ -573,6 +574,7 @@ schema = Schema((
         name='midDate',
         widget=DateTimeField._properties['widget'](
             condition="python: here.attributeIsUsed('midDate') and not here.isTemporary()",
+            minute_step=1,
             label='Middate',
             label_msgid='PloneMeeting_label_midDate',
             i18n_domain='PloneMeeting',
@@ -583,6 +585,7 @@ schema = Schema((
         name='endDate',
         widget=DateTimeField._properties['widget'](
             condition="python: here.attributeIsUsed('endDate') and not here.isTemporary()",
+            minute_step=1,
             label='Enddate',
             label_msgid='PloneMeeting_label_endDate',
             i18n_domain='PloneMeeting',
@@ -845,7 +848,6 @@ Meeting_schema = BaseSchema.copy() + \
 # Register the marshaller for DAV/XML export.
 Meeting_schema.registerLayer('marshall', MeetingMarshaller())
 ##/code-section after-schema
-
 
 class Meeting(BaseContent, BrowserDefaultMixin):
     """ A meeting made of items """
@@ -1636,10 +1638,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('wfConditions')
     def wfConditions(self):
@@ -2011,6 +2015,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return self.portal_plonemeeting.gotoReferer()
 
 
+
 registerType(Meeting, PROJECTNAME)
 # end of class Meeting
 
@@ -2028,3 +2033,4 @@ def onAddMeeting(meeting, event):
     user = meeting.portal_membership.getAuthenticatedMember()
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 ##/code-section module-footer
+

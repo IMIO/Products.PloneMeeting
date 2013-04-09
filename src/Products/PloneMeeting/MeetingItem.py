@@ -550,7 +550,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_budgetInfos',
             i18n_domain='PloneMeeting',
         ),
-        default_content_type='text/html',
+        default_content_type="text/html",
         allowable_content_types=('text/html',),
         default_method="getDefaultBudgetInfo",
         default_output_type="text/x-html-safe",
@@ -2005,6 +2005,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('getInsertOrder')
     def getInsertOrder(self, sortOrder, meeting, late):
@@ -2916,14 +2917,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onDuplicated')
     def onDuplicated(self, original):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declareProtected('Modify portal content', 'onDuplicatedFromConfig')
     def onDuplicatedFromConfig(self, usage):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):

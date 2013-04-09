@@ -25,7 +25,7 @@ from Products.PloneMeeting.config import *
 
 from Products.CMFCore.utils import UniqueObject
 
-
+    
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
@@ -485,7 +485,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     # tool-constructors have no id argument, the id is fixed
     def __init__(self, id=None):
-        OrderedBaseFolder.__init__(self, 'portal_plonemeeting')
+        OrderedBaseFolder.__init__(self,'portal_plonemeeting')
         self.setTitle('PloneMeeting')
 
         ##code-section constructor-footer #fill in your manual code here
@@ -1644,10 +1644,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('getSpecificMailContext')
     def getSpecificMailContext(self, event, translationMapping):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('deleteObjectsByPaths')
     def deleteObjectsByPaths(self, paths):
@@ -2059,6 +2061,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('onNotify')
     def onNotify(self, objectUrl, event):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePrivate('addNightWork')
     def addNightWork(self, action, type, params):
@@ -2285,8 +2288,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
 
+
 registerType(ToolPloneMeeting, PROJECTNAME)
 # end of class ToolPloneMeeting
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+
