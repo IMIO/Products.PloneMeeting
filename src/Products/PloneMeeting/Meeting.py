@@ -1994,13 +1994,15 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return BaseContent.processForm(self, *args, **kwargs)
 
     security.declarePublic('decideSeveralItems')
-    def decideSeveralItems(self):
-        '''On meeting, we can decided severals items at once.'''
-        transition = self.REQUEST.get('transition', None)
+    def decideSeveralItems(self, uids=None, transition=None):
+        '''On meeting, we can decided severals items at once.
+           p_uids is A STRING representing items separated by commas.
+           p_transition is the transition to trigger for given items.'''
+        transition = transition or self.REQUEST.get('transition', None)
         if transition is None:
             return self.portal_plonemeeting.gotoReferer()
 
-        uids = self.REQUEST.get('uids', [])
+        uids = uids or self.REQUEST.get('uids', [])
         if not uids:
             msg = self.translate('no_selected_items', domain='PloneMeeting')
             self.plone_utils.addPortalMessage(msg)
@@ -2033,4 +2035,3 @@ def onAddMeeting(meeting, event):
     user = meeting.portal_membership.getAuthenticatedMember()
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 ##/code-section module-footer
-
