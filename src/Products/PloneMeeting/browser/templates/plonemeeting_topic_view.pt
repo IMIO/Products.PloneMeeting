@@ -60,7 +60,7 @@
                    topic view/getTopic;">
 
     <div class="formHelp" i18n:translate="topic_description" >Topic description.</div>
-    <div id="queryResult"></div>
+    <div id="queryResult"><div align="center"><img src="waiting.gif" tal:attributes="src string:${portal_url}/waiting.gif"/></div></div>
     <div>
       <script language="javascript"
               tal:content="python: 'askSearchResult(\'queryResult\', \'%s\', \'%s\', 1)' % (meetingConfig.absolute_url(), topic.id)">
