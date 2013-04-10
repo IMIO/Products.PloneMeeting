@@ -25,15 +25,13 @@ from Products.PloneMeeting.config import *
 
 from Products.CMFCore.utils import UniqueObject
 
-    
+
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
 import time
 import re
 from appy.gen import No
-from appy.shared import mimeTypesExts
-from appy.shared.utils import normalizeString
 from appy.shared.data import nativeNames
 from OFS.CopySupport import _cb_decode
 from BTrees.OOBTree import OOBTree
@@ -1235,10 +1233,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 response = self.REQUEST.RESPONSE
                 # Set a correct name for the returned file.
-                ext = mimeTypesExts[doc.content_type]
-                response.setHeader('Content-Type', doc.content_type)
+                mr = getToolByName(self, 'mimetypes_registry')
+                mimetype = mr.lookup(doc.content_type)[0]
+                response.setHeader('Content-Type', mimetype.normalized())
                 response.setHeader('Content-Disposition',
-                                   'inline;filename="%s.%s"' % (normalizeString(doc.Title()), ext))
+                                   'inline;filename="%s.%s"' % (podTemplate._getFileName(obj),
+                                                                podTemplate.getPodFormat()))
                 # Return the file content
                 data = doc.data
                 if isinstance(data, str):
@@ -2294,4 +2294,3 @@ registerType(ToolPloneMeeting, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-
