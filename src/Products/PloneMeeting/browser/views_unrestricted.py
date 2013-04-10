@@ -54,7 +54,8 @@ class DeleteGivenUidView(BrowserView):
         # Delete the object if allowed
         removeParent = False
         if mayDelete:
-            msg = {'message':'object_deleted', 'type':'info'}
+            msg = {'message': 'object_deleted',
+                   'type': 'info'}
             logMsg = '%s at %s deleted by "%s"' % \
                      (obj.meta_type, obj.absolute_url_path(), user.id)
             # In the case of a meeting item, delete annexes, too.
@@ -75,11 +76,13 @@ class DeleteGivenUidView(BrowserView):
                     allItems = obj.getItems()
                     if allItems:
                         logger.info('Removing %d item(s)...' % len(allItems))
-                        for item in obj.getItems(): obj.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
+                        for item in obj.getItems():
+                            obj.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
                     allLateItems = obj.getLateItems()
                     if allLateItems:
                         logger.info('Removing %d late item(s)...' % len(allLateItems))
-                        for item in obj.getLateItems(): obj.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
+                        for item in obj.getLateItems():
+                            obj.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
                     if obj.getParentNode().id == obj.id:
                         # We are on an archive site, and the meeting is in a folder
                         # that we must remove, too.
@@ -92,12 +95,15 @@ class DeleteGivenUidView(BrowserView):
                 self.context.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(obj)
                 logger.info(logMsg)
                 # remove the parent object if necessary
-                if removeParent: self.context.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(parent)
+                if removeParent:
+                    self.context.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(parent)
             except BeforeDeleteException, exc:
-                msg={'message': exc.message, 'type': 'error'}
+                msg = {'message': exc.message,
+                       'type': 'error'}
             # fall back to original user
         else:
-            msg = {'message':'cant_delete_object', 'type':'error'}
+            msg = {'message': 'cant_delete_object',
+                   'type': 'error'}
 
         # Redirect the user to the correct page and display the correct message.
         refererUrl = rq['HTTP_REFERER']
@@ -145,11 +151,11 @@ class UnrestrictedMethodsView(BrowserView):
             # save current SecurityManager to fall back to it after deletion
             oldsm = getSecurityManager()
             # login as an omnipotent user
-            newSecurityManager(None, OmnipotentUser().__of__(self.portal.aq_inner.aq_parent.acl_users))
+            newSecurityManager(None, PMOmnipotentUser().__of__(self.portal.aq_inner.aq_parent.acl_users))
             # removes the object
             parent = object_to_delete.aq_inner.aq_parent
             try:
-                parent.manage_delObjects([object_to_delete.getId(),])
+                parent.manage_delObjects([object_to_delete.getId(), ])
             except Exception, exc:
                 # in case something wrong happen, make sure we fall back to original user
                 setSecurityManager(oldsm)
@@ -197,7 +203,7 @@ class ItemSign(BrowserView):
         # save current SecurityManager to fall back to it after deletion
         oldsm = getSecurityManager()
         # login as an omnipotent user
-        newSecurityManager(None, OmnipotentUser().__of__(self.portal.aq_inner.aq_parent.acl_users))
+        newSecurityManager(None, PMOmnipotentUser().__of__(self.portal.aq_inner.aq_parent.acl_users))
         uid_catalog = getToolByName(self.context, 'uid_catalog')
         item = uid_catalog(UID=UID)[0].getObject()
         itemIsSigned = not item.getItemIsSigned()
@@ -207,7 +213,7 @@ class ItemSign(BrowserView):
 
         # check again if member can signItem now that it has been signed
         # by default, when an item is signed, it can not be unsigned
-        maySignItem = item.maySignItem(member) 
+        maySignItem = item.maySignItem(member)
         if itemIsSigned:
             filename = 'itemIsSignedYes.png'
             name = 'itemIsSignedNo'
@@ -224,16 +230,23 @@ class ItemSign(BrowserView):
                 title_msgid = 'item_is_signed_no'
 
         title = item.utranslate(title_msgid,
-                domain="PloneMeeting")
-        
-        portal_state = getMultiAdapter((self.context, self.request),
-            name=u"plone_portal_state")
+                                domain="PloneMeeting")
+        portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
         portal_url = portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
         #manage the onclick if the user still may change the value
-        onclick = maySignItem and u'class="itemIsSignedEditable" onclick="asyncItemIsSigned(\'%s\', baseUrl=\'%s\')"' % (UID, item.absolute_url()) or ''
+        onclick = maySignItem and u'class="itemIsSignedEditable" onclick="asyncItemIsSigned(\'%s\', baseUrl=\'%s\')"' \
+                                  % (UID, item.absolute_url()) or ''
         html = self.IMG_TEMPLATE % (src, title, name, onclick)
         #html = IMG_TEMPLATE % (src, title, name)
         # fall back to original user
         return html
 
+
+class PMOmnipotentUser(OmnipotentUser):
+    """
+      Omnipotent for PloneMeeting.  Heritates from Products.CMFCore's OmnipotentUser
+      but add a missing 'has_role' method...
+    """
+    def has_role(self, obj, role):
+        return True
