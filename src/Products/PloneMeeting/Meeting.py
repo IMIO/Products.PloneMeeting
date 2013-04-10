@@ -1404,6 +1404,65 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return self.portal_plonemeeting.getMeetingConfig(self).getAssembly()
         return ''
 
+    security.declarePublic('getStrikedAssembly')
+    def getStrikedAssembly(self, groupByDuty=True):
+        '''
+          Generates a HTML version of the assembly :
+          - strikes absents (represented using [[Member assembly name]])
+          - add a 'mltAssembly' class to generated <p> so it can be used in the Pod Template
+          If p_groupByDuty is True, the result will be generated with members having the same
+          duty grouped, and the duty only displayed once at the end of the list of members
+          having this duty...  This is only relevant if MeetingUsers are enabled.
+        '''
+        meeting = self.getSelf()
+        # either we use free textarea to define assembly...
+        if meeting.getAssembly():
+            return meeting.getAssembly().replace('[[', '<strike>').replace(']]', '</strike>'). \
+                replace('<p>', '<p class="mltAssembly">')
+        # or we use MeetingUsers
+        elif meeting.getAttendees():
+            res = []
+            attendeeIds = meeting.getAttendees()
+            groupedByDuty = OrderedDict()
+            for mUser in meeting.getAllUsedMeetingUsers():
+                userId = mUser.getId()
+                userTitle = mUser.Title()
+                userDuty = mUser.getDuty()
+                # if we group by duty, create an OrderedDict where the key is the duty
+                # and the value is a list of meetingUsers having this duty
+                if groupByDuty:
+                    if not userDuty in groupedByDuty:
+                        groupedByDuty[userDuty] = []
+                    if userId in attendeeIds:
+                        groupedByDuty[userDuty].append(mUser.Title())
+                    else:
+                        groupedByDuty[userDuty].append("<strike>%s</strike>" % userTitle)
+                else:
+                    if userId in attendeeIds:
+                        res.append("%s - %s" % (mUser.Title(), userDuty))
+                    else:
+                        res.append("<strike>%s - %s</strike>" % (mUser.Title(), userDuty))
+            if groupByDuty:
+                for duty in groupedByDuty:
+                    # check if every member of given duty are striked, we strike the duty also
+                    everyStriked = True
+                    for elt in groupedByDuty[duty]:
+                        if not elt.startswith('<strike>'):
+                            everyStriked = False
+                            break
+                    res.append(', '.join(groupedByDuty[duty]) + ' - ' + duty)
+                    if len(groupedByDuty[duty]) > 1:
+                        # add a trailing 's' to the duty if several members have the same duty...
+                        res[-1] = res[-1] + 's'
+                    if everyStriked:
+                        lastAdded = res[-1]
+                        # strike the entire line and remove existing <strike> tags
+                        lastAdded = "<strike>" + lastAdded.replace('<strike>', '').replace('</strike>', '') + \
+                                    "</strike>"
+                        res[-1] = lastAdded
+            return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
+
+
     security.declarePrivate('getDefaultSignatures')
     def getDefaultSignatures(self):
         if self.attributeIsUsed('signatures'):
