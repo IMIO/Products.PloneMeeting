@@ -2702,10 +2702,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            Returns True if the user can duplicate the item.'''
         # Conditions for being able to see the "duplicate an item" action:
         # - the user is not Plone-disk-aware;
-        # - the user is creator in some group.
+        # - the user is creator in some group;
+        # - the user must be able to see the item if it is private.
         # The user will duplicate the item in his own folder.
         tool = self.portal_plonemeeting
-        if tool.getPloneDiskAware() or not tool.userIsAmong('creators'):
+        if tool.getPloneDiskAware() or not tool.userIsAmong('creators') or not self.isPrivacyViewable():
             return False
         return True
 
@@ -2766,6 +2767,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            duplicating an item).  p_copyFields will contains a list of fields
            we want to keep value of, if not in this list, the new field value
            will be the default value for this field.'''
+        # first check that we are not trying to clone an item the we
+        # can not access because of privacy status
+        if not self.isPrivacyViewable():
+            raise Unauthorized
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = self.portal_plonemeeting
         userId = self.portal_membership.getAuthenticatedMember().getId()
