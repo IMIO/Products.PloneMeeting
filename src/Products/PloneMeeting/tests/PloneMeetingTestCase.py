@@ -305,7 +305,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
             annexTitle = fileType.getPredefinedTitle()
         # Create the annex
         idCandidate = None
-        item.addAnnex(idCandidate, annexType, annexTitle, annexFile,
+        item.addAnnex(idCandidate, annexTitle, annexFile,
                       str(decisionRelated), meetingFileType=fileType)
         # Find the last created annex
         annexUid = item.getAnnexesByType(decisionRelated, makeSubLists=False,

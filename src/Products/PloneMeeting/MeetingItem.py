@@ -1136,8 +1136,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('onDiscussChanged')
     def onDiscussChanged(self, toDiscuss):
         '''See doc in interfaces.py.'''
+        pass
+
     security.declarePublic('addAnnex')
-    def addAnnex(self, idCandidate, annex_type, annex_title, annex_file,
+    def addAnnex(self, idCandidate, annex_title, annex_file,
                  decisionRelated, meetingFileType, **kwargs):
         '''Create an annex (MeetingFile) with given parameters and adds it to
            this item.'''
