@@ -38,9 +38,9 @@
         tal:content="fieldset" i18n:translate=""></span></b>
       </tal:currentFieldset>
       <tal:edit condition="python: fieldset in fieldsets">
-      <input type="image" title="Edit" i18n:attributes="title" 
-             style="cursor:pointer" class="imageInput" 
-             tal:attributes="src string: $portal_url/edit.gif; 
+      <input type="image" title="Edit" i18n:attributes="title"
+             style="cursor:pointer" class="imageInput"
+             tal:attributes="src string: $portal_url/edit.gif;
                              onClick python: 'href: window.location=\'%s/base_edit?fieldset=%s\'' % (context.absolute_url(), fieldset)"/>
     </tal:edit>]
     </span><br/><br/>
@@ -252,6 +252,7 @@
                           tal:attributes="class python: not isActive and 'state-inactive' or ''">
               <td><img tal:attributes="src python: obj.absolute_url() + '/at_download/theIcon'"/>&nbsp;
                   <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
+                  <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
               </td>
               <td i18n:domain="plone">
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
@@ -316,7 +317,9 @@
                               lastId python: objectIds and objectIds[-1] or '';">
             <tr class="#" tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active'"
                           tal:attributes="class python: not isActive and 'state-inactive' or ''">
-              <td><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
+              <td>
+                <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
+                <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
               </td>
               <td i18n:domain="plone">
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
@@ -637,7 +640,10 @@
                 valign="top">
 
               <!-- Title -->
-              <td><a i18n:translate="" tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></td>
+              <td>
+                <a i18n:translate="" tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a>
+                <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
+              </td>
 
               <!-- Linked to type -->
               <td><p i18n:translate="" i18n:domain="plone" tal:content="python: obj.getProperty('meeting_topic_type')">Meeting or Item</p></td>
