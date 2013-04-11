@@ -1462,7 +1462,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                         res[-1] = lastAdded
             return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
 
-
     security.declarePrivate('getDefaultSignatures')
     def getDefaultSignatures(self):
         if self.attributeIsUsed('signatures'):

@@ -234,12 +234,10 @@ class ItemSign(BrowserView):
         portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
         portal_url = portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
-        #manage the onclick if the user still may change the value
-        onclick = maySignItem and u'class="itemIsSignedEditable" onclick="asyncItemIsSigned(\'%s\', baseUrl=\'%s\')"' \
-                                  % (UID, item.absolute_url()) or ''
+        # manage the onclick if the user still may change the value
+        onclick = maySignItem and u'class="itemIsSignedEditable" onclick="asyncToggleIcon(\'%s\', baseUrl=\'%s\', viewName=\'%s\', baseSelector=\'#marker_toggle_itemissigned_\')"' \
+                                  % (UID, item.absolute_url(), self.request.steps[-1], ) or 'onclick=""'
         html = self.IMG_TEMPLATE % (src, title, name, onclick)
-        #html = IMG_TEMPLATE % (src, title, name)
-        # fall back to original user
         return html
 
 

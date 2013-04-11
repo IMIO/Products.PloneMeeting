@@ -36,7 +36,7 @@
 
   <fieldset tal:define="fileTypes python:[ft for ft in meetingConfig.getFileTypes(decisionRelated) if ft.adapted().isSelectable()]">
     <legend i18n:translate="add_annex">Add an annex</legend>
-    
+
     <tal:showWarningWillInvalidateAdvices condition="context/willInvalidateAdvices">
     <dl class="portalMessage warning">
         <dt i18n:translate="" i18n:domain="plone">Warning</dt><dd i18n:translate="warning_invalidate_advices_with_annex" i18n:domain="PloneMeeting"></dd>
@@ -176,6 +176,7 @@
        <th i18n:translate="">listingheader_title</th>
        <th i18n:translate="pm_creator" i18n:domain="PloneMeeting"></th>
        <th i18n:translate="pm_creation_date" i18n:domain="PloneMeeting"></th>
+       <th i18n:translate="PloneMeeting_label_toPrint" i18n:domain="PloneMeeting">To print?</th>
        <th i18n:translate="">listingheader_size</th>
        <th i18n:translate="" tal:condition="python:member.has_permission('Delete objects', here)">heading_actions</th>
      </tr>
@@ -188,6 +189,9 @@
        </td>
        <td tal:content="python: tool.getUserName(annex.Creator())"></td>
        <td tal:content="python: context.restrictedTraverse('@@plone').toLocalizedTime(annex.CreationDate(),long_format=True)"></td>
+       <td>
+           <metal:itemIsSigned use-macro="here/hs_macros/macros/annexToPrint" />
+       </td>
        <td tal:content="annex/getObjSize"></td>
        <td tal:condition="python:member.has_permission('Delete objects', here)" align="center">
          <form name="deleteUidForm" action="delete_givenuid">
@@ -212,7 +216,7 @@
                  decisionRelated python:test(decisionRelated, True, False);
                  annexesByType python:meetingItem.getAnnexesByType(decisionRelated);
                  now python:DateTime();
-                 target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', ''); 
+                 target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', '');
                  tool python:context.portal_plonemeeting;
                  cssClasses python: 'contentActionsAX no-style-table';
                  global count python:0;

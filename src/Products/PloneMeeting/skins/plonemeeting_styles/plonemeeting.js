@@ -543,34 +543,37 @@ function askObjectHistory(hookId, objectUrl, maxPerPage, startNumber) {
   askAjaxChunk(hookId, 'GET', objectUrl, 'hs_macros', 'history', params);
 }
 
-//Function to toggle MeetingItem.itemIsSigned
-function toggleItemIsSigned(UID, img_tag, baseUrl) {
-  var selector = "#marker_toggle_itemissigned_" + UID;
+// subfunction called by asyncToggleIcon
+function toggleIcon(UID, img_tag, baseUrl, viewName, baseSelector) {
+  var selector = baseSelector + UID;
   var $span = jq(selector);
   if ($span.length == 1) {
     var $old = jq('img', $span);
     $span.empty();
     var $img = jq(img_tag).appendTo($span);
-    //Does not seem to work with IE?
-    //$img.click(function() {
-    //asyncItemIsSigned(UID, baseUrl);
-    //});
+    // only redefine a onclick of not already defined in the HTML
+    if ($img.attr('onclick') == null) {
+        $img.click(function() {
+            asyncToggleIcon(UID, baseUrl, viewName, baseSelector);
+        });
+    };
   };
 }
 
-function asyncItemIsSigned(UID, baseUrl) {
+// function that toggle an icon by calling the p_viewName view
+function asyncToggleIcon(UID, baseUrl, viewName, baseSelector) {
   jq.ajax({
-    url: baseUrl + "/@@toggle_item_is_signed",
+    url: baseUrl + "/" + viewName,
     dataType: 'html',
     data: {UID:UID},
     success: function(data) {
-        toggleItemIsSigned(UID, data, baseUrl);
+        toggleIcon(UID, data, baseUrl, viewName, baseSelector);
       },
     error: function(jqXHR, textStatus, errorThrown) {
       /*console.log(textStatus);*/
       }
     });
- }
+}
 
 /* functions used to manage quick edit functionnality */
 function initRichTextField(rq, hook) {

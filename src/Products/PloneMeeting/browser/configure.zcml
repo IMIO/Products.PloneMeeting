@@ -83,12 +83,33 @@
 
     <!-- Asynchronous calls (ajax) -->
     <browser:page
-        name="toggle_to_discuss_on_item"
-        class=".discuss.Discuss"
-        for="Products.PloneMeeting.interfaces.IMeeting"
+        name="toggle_to_discuss"
+        class=".async.Discuss"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
         attribute="toggle"
         permission="zope2.View"
         allowed_attributes="available"/>
+    <browser:page
+        name="toggle_annex_to_print"
+        attribute="toggle"
+        allowed_attributes="toggle"
+        class=".async.AnnexToPrint"
+        for="Products.PloneMeeting.interfaces.IMeetingFile"
+        permission="zope2.View" />
+    <browser:page
+        name="toggle_item_is_signed"
+        attribute="toggle"
+        allowed_attributes="toggle"
+        class=".views_unrestricted.ItemSign"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        permission="zope2.View" />
+    <browser:page
+        name="toggle_item_is_signed"
+        attribute="toggle"
+        allowed_attributes="toggle"
+        class=".views_unrestricted.ItemSign"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        permission="zope2.View" />
 
     <!-- the plonemeeting_topic_view used to display list of items (my items, all items, ...) -->
     <browser:page
@@ -130,20 +151,6 @@
         name="delete_givenuid"
         class=".views_unrestricted.DeleteGivenUidView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-    <browser:page
-        name="toggle_item_is_signed"
-        attribute="toggle"
-        allowed_attributes="toggle"
-        class=".views_unrestricted.ItemSign"
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        permission="zope2.View" />
-    <browser:page
-        name="toggle_item_is_signed"
-        attribute="toggle"
-        allowed_attributes="toggle"
-        class=".views_unrestricted.ItemSign"
-        for="Products.PloneMeeting.interfaces.IMeeting"
         permission="zope2.View" />
 
     <!-- PloneMeeting-specific portlets -->

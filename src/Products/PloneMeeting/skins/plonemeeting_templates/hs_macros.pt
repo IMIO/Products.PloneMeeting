@@ -254,17 +254,16 @@ document.location.reload(true);
   <span id="marker_toggle_itemissigned_UID#"
         tal:attributes="id string:marker_toggle_itemissigned_$UID;"
         tal:define="UID meetingItem/UID;
-                    contextType context/meta_type;
                     baseUrl meetingItem/absolute_url;"
         tal:condition="python: showItemIsSigned and mayEdit and isManager">
     <img class="itemIsSignedEditable" tal:condition="itemIsSigned" name="itemIsSignedNo" style="cursor:pointer"
          title="item_is_signed_yes_edit" i18n:attributes="title"
          tal:attributes="src string:$portal_url/itemIsSignedYes.png;
-                         onClick python: 'asyncItemIsSigned(\''+UID+'\', baseUrl=\'' + baseUrl + '\')'"/>
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
     <img class="itemIsSignedEditable" tal:condition="not: itemIsSigned" name="itemIsSignedYes" style="cursor:pointer"
          title="item_is_signed_no_edit" i18n:attributes="title"
          tal:attributes="src string: $portal_url/itemIsSignedNo.png;
-                         onClick python: 'asyncItemIsSigned(\''+UID+'\', baseUrl=\'' + baseUrl + '\')'"/>
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
   </span>
   <tal:notMayEdit condition="python: not showItemIsSigned">-</tal:notMayEdit>
   <tal:forTheOthers condition="python: showItemIsSigned and not mayEdit">
@@ -274,6 +273,35 @@ document.location.reload(true);
          tal:attributes="src string: $portal_url/itemIsSignedNo.png"/>
   </tal:forTheOthers>
 </metal:itemIsSigned>
+
+<tal:comment replace="nothing">
+  This macro manage the toPrint attribute of annexes.
+  annex : the relevant MeetingFile
+</tal:comment>
+<metal:annexToPrint define-macro="annexToPrint" i18n:domain="PloneMeeting"
+                    tal:define="mayEdit python: member.has_permission('Modify portal content', annex);
+                                isAnnexToPrint annex/getToPrint">
+  <span id="marker_toggle_annextoprint_UID#"
+        tal:attributes="id string:marker_toggle_annextoprint_$UID;"
+        tal:define="UID annex/UID;
+                    baseUrl annex/absolute_url;"
+        tal:condition="mayEdit">
+    <img class="annexToPrintEditable" tal:condition="isAnnexToPrint" name="annexToPrintNo" style="cursor:pointer"
+         title="annex_to_print_yes_edit" i18n:attributes="title"
+         tal:attributes="src string:$portal_url/annexToPrintYes.png;
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_annex_to_print\', baseSelector=\'#marker_toggle_annextoprint_\')'"/>
+    <img class="annexToPrintEditable" tal:condition="not: isAnnexToPrint" name="annexToPrintYes" style="cursor:pointer"
+         title="annex_to_print_no_edit" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/annexToPrintNo.png;
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_annex_to_print\', baseSelector=\'#marker_toggle_annextoprint_\')'"/>
+  </span>
+  <tal:notMayEdit condition="python: not mayEdit">
+    <img tal:condition="isAnnexToPrint" title="annex_to_print_yes" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/annexToPrintYes.png"/>
+    <img tal:condition="not: isAnnexToPrint" title="annex_to_print_no" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/annexToPrintNo.png"/>
+  </tal:notMayEdit>
+</metal:annexToPrint>
 
 <tal:comment replace="nothing">
   This macro displays buttons for triggering available transitions for any other
