@@ -103,22 +103,23 @@ class testWorkflows(PloneMeetingTestCase):
         pmManagerFolder = self.getMeetingFolder()
         login(self.portal, 'admin')
         # Create a folder in the pmManager meetingFolder
-        folderId = pmManagerFolder.invokeFactory('Folder', id='testfolder',
-            title='Test folder')
+        folderId = pmManagerFolder.invokeFactory('Folder', id='testfolder', title='Test folder')
         testfolder = getattr(pmManagerFolder, folderId)
         login(self.portal, 'pmManager')
         type_name = 'MeetingItem%s' % self.tool.getMeetingConfig(
             pmManagerFolder).getShortName()
-        itemId = testfolder.invokeFactory(type_name, id='testitem',
-            title='Test item', proposingGroup='developers')
+        itemId = testfolder.invokeFactory(type_name, id='testitem', title='Test item', proposingGroup='developers')
         testitem = getattr(testfolder, itemId)
         # BeforeDeleteException is the only exception catched by @@delete_givenuid because we manage it ourself
-        # so @@delete_givenuid add a relevant portal message but accessing removeGivenObject directly raises the BeforeDeleteException
-        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject, testfolder)
+        # so @@delete_givenuid add a relevant portal message but accessing removeGivenObject directly
+        # raises the BeforeDeleteException
+        self.assertRaises(BeforeDeleteException,
+                          self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject,
+                          testfolder)
         # check that @@delete_givenuid add relevant portalMessage
         # first remove eventual statusmessages
         annotations = IAnnotations(self.portal.REQUEST)
-        if annotations.has_key('statusmessages'):
+        if 'statusmessages' in annotations:
             del annotations['statusmessages']
         statusMessages = IStatusMessage(self.portal.REQUEST)
         # no statusMessage for now
@@ -134,23 +135,29 @@ class testWorkflows(PloneMeetingTestCase):
         meetingDate = DateTime('2008/06/12 08:00:00')
         type_name = 'Meeting%s' % self.tool.getMeetingConfig(
             pmManagerFolder).getShortName()
-        meetingId = testfolder.invokeFactory(type_name, id='testmeeting',
-            title='Test meeting', date=meetingDate)
+        meetingId = testfolder.invokeFactory(type_name,
+                                             id='testmeeting',
+                                             title='Test meeting',
+                                             date=meetingDate)
         testmeeting = getattr(testfolder, meetingId)
-        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject, testfolder)
+        self.assertRaises(BeforeDeleteException,
+                          self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject,
+                          testfolder)
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         self.failUnless(hasattr(testfolder, 'testitem'))
         self.failUnless(hasattr(testfolder, 'testmeeting'))
-        self.assertEquals(len(testfolder.objectValues()),2)
+        self.assertEquals(len(testfolder.objectValues()), 2)
         # Now, remove things in the good order. Remove the item and check
         self.portal.restrictedTraverse('@@delete_givenuid')(testitem.UID())
-        self.assertEquals(len(testfolder.objectValues()),1)
+        self.assertEquals(len(testfolder.objectValues()), 1)
         # Try to remove the folder again but with a contained meeting only
-        self.assertRaises(BeforeDeleteException, self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject, testfolder)
+        self.assertRaises(BeforeDeleteException,
+                          self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject,
+                          testfolder)
         self.failUnless(hasattr(pmManagerFolder, 'testfolder'))
         # Remove the meeting
         self.portal.restrictedTraverse('@@delete_givenuid')(testmeeting.UID())
-        self.assertEquals(len(testfolder.objectValues()),0)
+        self.assertEquals(len(testfolder.objectValues()), 0)
         # Check that now that the testfolder is empty, we can remove it.
         self.portal.restrictedTraverse('@@delete_givenuid')(testfolder.UID())
         self.failIf(hasattr(pmManagerFolder, 'testfolder'))
@@ -163,13 +170,11 @@ class testWorkflows(PloneMeetingTestCase):
         item1 = self.create('MeetingItem', title='The first item')
         self.addAnnex(item1)
         # The creator cannot add a decision annex on created item
-        self.assertRaises(Unauthorized, self.addAnnex, item1,
-            decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
         self.do(item1, 'propose')
         # The creator cannot add a decision annex on proposed item
-        self.assertRaises(Unauthorized, self.addAnnex, item1,
-            decisionRelated=True)
-        self.failIf(self.transitions(item1)) # He may trigger no more action
+        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
+        self.failIf(self.transitions(item1))  # He may trigger no more action
         # pmManager creates a meeting
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
@@ -184,12 +189,10 @@ class testWorkflows(PloneMeetingTestCase):
         # pmReviewer1 validates item1 and adds an annex to it
         self.changeUser('pmReviewer1')
         # The reviewer cannot add a decision annex on proposed item
-        self.assertRaises(Unauthorized, self.addAnnex, item1,
-            decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
         self.do(item1, 'validate')
         # The reviewer cannot add a decision annex on validated item
-        self.assertRaises(Unauthorized, self.addAnnex, item1,
-            decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
         self.addAnnex(item1)
         # pmManager inserts item1 into the meeting and publishes it
         self.changeUser('pmManager')
@@ -201,8 +204,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         someAnnex = self.addAnnex(item1)
         # The creator cannot add a decision annex on presented item
-        self.assertRaises(Unauthorized, self.addAnnex, item1,
-            decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
         # pmCreator2 cannot view the annex created by pmCreator1
         self.changeUser('pmCreator2')
         self.failIf(self.hasPermission('View', someAnnex))
@@ -235,12 +237,10 @@ class testWorkflows(PloneMeetingTestCase):
         # Now reviewers can't add annexes anymore
         self.changeUser('pmReviewer2')
         self.failIf(self.hasPermission('PloneMeeting: Add annex', item2))
-        self.assertRaises(Unauthorized, self.addAnnex, item2,
-            decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item2, decisionRelated=True)
         self.changeUser('pmReviewer1')
         self.assertRaises(Unauthorized, self.addAnnex, item2)
-        self.assertRaises(Unauthorized, self.addAnnex, item2,
-            decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item2, decisionRelated=True)
         # pmManager adds a decision for item2, decides and closes the meeting
         self.changeUser('pmManager')
         item2.setDecision(self.decisionText)
@@ -289,8 +289,7 @@ class testWorkflows(PloneMeetingTestCase):
         # pmCreator1 proposes the item
         self.changeUser('pmCreator1')
         self.do(item1, 'propose')
-        self.failIf(self.hasPermission('Modify portal content',
-            (item1, annex1)))
+        self.failIf(self.hasPermission('Modify portal content', (item1, annex1)))
         self.changeUser('pmReviewer1')
         self.failUnless(self.hasPermission('Modify portal content', item1))
         self.changeUser('pmReviewer2')
@@ -435,13 +434,13 @@ class testWorkflows(PloneMeetingTestCase):
         developers = self.tool.developers
         # By default, many users are in the different sub Plone groups
         groupsTool = self.portal.portal_groups
-        self.failUnless(groupsTool.getGroupMembers('developers_creators'), \
+        self.failUnless(groupsTool.getGroupMembers('developers_creators'),
                         ('pmCreator1', 'pmCreator1b', 'pmManager', ))
-        self.failUnless(groupsTool.getGroupMembers('developers_reviewers'), \
+        self.failUnless(groupsTool.getGroupMembers('developers_reviewers'),
                         ('pmReviewer1', 'pmManager', ))
-        self.failUnless(groupsTool.getGroupMembers('developers_advisers'), \
+        self.failUnless(groupsTool.getGroupMembers('developers_advisers'),
                         ('pmAdviser1', 'pmManager', ))
-        self.failUnless(groupsTool.getGroupMembers('developers_observers'), \
+        self.failUnless(groupsTool.getGroupMembers('developers_observers'),
                         ('pmReviewer1', 'pmManager', ))
         for mc in self.tool.objectValues('MeetingConfig'):
             self.failUnless(('developers_reviewers') in mc.getSelectableCopyGroups())
@@ -451,10 +450,11 @@ class testWorkflows(PloneMeetingTestCase):
         self.failIf(groupsTool.getGroupMembers('developers_creators'))
         self.failIf(groupsTool.getGroupMembers('developers_reviewers'))
         self.failIf(groupsTool.getGroupMembers('developers_advisers'))
-        self.failUnless(groupsTool.getGroupMembers('developers_observers'), \
+        self.failUnless(groupsTool.getGroupMembers('developers_observers'),
                         ('pmCreator1', 'pmCreator1b', 'pmReviewer1', 'pmAdviser1', 'pmManager', ))
         for mc in self.tool.objectValues('MeetingConfig'):
             self.failIf(('developers_reviewers') in mc.getSelectableCopyGroups())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

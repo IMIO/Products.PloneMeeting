@@ -40,13 +40,11 @@ from Products.PloneTestCase.setup import _createHomeFolder
 import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
 #from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.testing import PM_TESTS_PROFILE_FUNCTIONAL
 
 
-# ------------------------------------------------------------------------------
 class TestFile:
     '''Stub class that simulates a file upload from a HTTP POST.'''
     def __init__(self, testFile, filename):
@@ -54,14 +52,15 @@ class TestFile:
         self.filename = filename
         self.headers = None
 
-# ------------------------------------------------------------------------------
+
 class PloneMeetingTestCase(unittest2.TestCase):
     '''Base class for defining PloneMeeting test cases.'''
 
     # Some default content
     descriptionText = '<p>Some description</p>'
     decisionText = '<p>Some decision.</p>'
-    schemas = {'MeetingItem':MeetingItem_schema, 'Meeting':Meeting_schema}
+    schemas = {'MeetingItem': MeetingItem_schema,
+               'Meeting': Meeting_schema}
 
     layer = PM_TESTS_PROFILE_FUNCTIONAL
 
@@ -76,7 +75,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
         self.wfTool = self.portal.portal_workflow
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Create admin user
-        self.createUser('admin', ('Member','Manager'))
+        self.createUser('admin', ('Member', 'Manager'))
         # Import the test profile
         login(self.portal, 'admin')
         #setup_tool = getToolByName(self.portal, 'portal_setup')
@@ -160,7 +159,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
         # remove 'plone.memoize' annotations about @@plone_portal_state
         # or getting @@plone_portal_state.member() returns always the same user (the first logged in)
         req_annotations = IAnnotations(self.request)
-        if req_annotations.has_key('plone.memoize'):
+        if 'plone.memoize' in req_annotations:
             del IAnnotations(self.request)['plone.memoize']
         login(self.portal, loginName)
 
@@ -191,7 +190,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
         # item
         isRecurringItem = objectType.startswith('Recurring')
         if isRecurringItem:
-            contentType =  '%s%s' % (objectType[9:], shortName)
+            contentType = '%s%s' % (objectType[9:], shortName)
             folder = self.meetingConfig.recurringitems
         elif objectType in ('MeetingGroup', 'MeetingConfig'):
             contentType = objectType
@@ -200,7 +199,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
             contentType = '%s%s' % (objectType, shortName)
             folder = self.getMeetingFolder()
         # Add some computed attributes
-        attrs.update( {'id': self._generateId(folder)} )
+        attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
             if not 'proposingGroup' in attrs.keys():
                 proposingGroup = self.tool.getGroups(suffix="creators")
@@ -213,7 +212,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
             # optionalAdvisers are not set (???) by invokeFactory...
             if 'optionalAdvisers' in attrs:
                 obj.setOptionalAdvisers(attrs['optionalAdvisers'])
-        # Some attributes in attrs are not taken into account. 
+        # Some attributes in attrs are not taken into account.
         # The setAttributes method can set attrs after the object is created.
         if hasattr(obj.aq_inner, 'processForm'):
             # at_post_create_script is called by processForm
@@ -225,24 +224,24 @@ class PloneMeetingTestCase(unittest2.TestCase):
         '''Create a meeting with a bunch of items.'''
         meetingDate = DateTime()
         meeting = self.create('Meeting', date=meetingDate)
-        item1 = self.create('MeetingItem') # id=o2
+        item1 = self.create('MeetingItem')  # id=o2
         item1.setProposingGroup('vendors')
         item1.setAssociatedGroups(('developers',))
         item1.setPrivacy('public')
         item1.setCategory('research')
-        item2 = self.create('MeetingItem') # id=o3
+        item2 = self.create('MeetingItem')  # id=o3
         item2.setProposingGroup('developers')
         item2.setPrivacy('public')
         item2.setCategory('development')
-        item3 = self.create('MeetingItem') # id=o4
+        item3 = self.create('MeetingItem')  # id=o4
         item3.setProposingGroup('vendors')
         item3.setPrivacy('secret')
         item3.setCategory('development')
-        item4 = self.create('MeetingItem') # id=o5
+        item4 = self.create('MeetingItem')  # id=o5
         item4.setProposingGroup('developers')
         item4.setPrivacy('secret')
         item4.setCategory('events')
-        item5 = self.create('MeetingItem') # id=o6
+        item5 = self.create('MeetingItem')  # id=o6
         item5.setProposingGroup('vendors')
         item5.setPrivacy('public')
         item5.setCategory('events')
@@ -256,13 +255,13 @@ class PloneMeetingTestCase(unittest2.TestCase):
            attributes cannot be set in invokeFactory because related permissions
            are given in at_post_create or for unknown reasons.'''
         metatype = obj.meta_type
-        if not self.schemas.has_key(metatype):
+        if not metatype in self.schemas:
             print "Metatype %s not present in schemas %s" % \
                   (metatype, self.schemas)
             return
         schema = self.schemas[metatype]
         for key in attrs.keys():
-            if not schema.has_key(key):
+            if not key in schema:
                 print "Field %s not present in schema %s" % (key, metatype)
                 continue
             field = schema[key]
@@ -296,17 +295,17 @@ class PloneMeetingTestCase(unittest2.TestCase):
         annexPath = newAnnexPath
         annexFile = FileUpload(TestFile(
             file(os.path.join(self.pmFolder, annexPath)), annexPath))
-        if annexType == None:
+        if annexType is None:
             if decisionRelated:
                 annexType = self.annexFileTypeDecision
             else:
                 annexType = self.annexFileType
         fileType = getattr(self.meetingConfig.meetingfiletypes, annexType)
-        if annexTitle == None:
+        if annexTitle is None:
             annexTitle = fileType.getPredefinedTitle()
         # Create the annex
         idCandidate = None
-        item.addAnnex(idCandidate, annexType, annexTitle, annexFile,
+        item.addAnnex(idCandidate, annexTitle, annexFile,
                       str(decisionRelated), meetingFileType=fileType)
         # Find the last created annex
         annexUid = item.getAnnexesByType(decisionRelated, makeSubLists=False,

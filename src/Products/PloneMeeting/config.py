@@ -31,10 +31,10 @@ try:
     if not hasattr(appy, 'versionIsGreaterThanOrEquals') or \
        not appy.versionIsGreaterThanOrEquals(appyRequired):
         raise Exception, 'Appy framework >= %s is required. Download it at ' \
-              'http://launchpad.net/appy' % appyRequired
+            'http://launchpad.net/appy' % appyRequired
 except ImportError:
     raise Exception, 'Appy framework not found. You can download it at ' \
-          'http://launchpad.net/appy.'
+        'http://launchpad.net/appy.'
 ##/code-section config-head
 
 
@@ -75,7 +75,7 @@ PRODUCT_DEPENDENCIES = []
 ##code-section config-bottom #fill in your manual code here
 # Define PloneMeeting-specific permissions
 AddAnnex = 'PloneMeeting: Add annex'
-setDefaultRoles(AddAnnex, ('Manager','Owner'))
+setDefaultRoles(AddAnnex, ('Manager', 'Owner'))
 # We need 'AddAnnex', which is a more specific permission than
 # 'PloneMeeting: Add MeetingFile', because decision-related annexes, which are
 # also MeetingFile instances, must be secured differently.
@@ -150,45 +150,39 @@ TOPIC_TAL_EXPRESSION = 'topic_tal_expression'
 # does not define an "itemCount", we use this default value.
 DEFAULT_TOPIC_ITEM_COUNT = 20
 
-# Possible document types and formats for document generation
-docActions = ('item_doc', 'meeting_doc')
-mimeTypes = {'odt': 'application/vnd.oasis.opendocument.text',
-             'doc': 'application/msword',
-             'rtf': 'text/rtf',
-             'pdf': 'application/pdf'}
-
 ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 
-DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', \
-                         'decision', 'classifier', 'category', 'budgetInfos', \
+DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription',
+                         'decision', 'classifier', 'category', 'budgetInfos',
                          'budgetRelated']
 
 # There are various ways to insert items into meetings
-itemSortMethods = ( # Items are inserted:
-    'at_the_end', # at the end of meetings;
-    'on_categories', # according to category order;
-    'on_proposing_groups', # according to proposing group order;
-    'on_all_groups', # according to all groups (among proposing group AND
+itemSortMethods = (  # Items are inserted:
+    'at_the_end',  # at the end of meetings;
+    'on_categories',  # according to category order;
+    'on_proposing_groups',  # according to proposing group order;
+    'on_all_groups',  # according to all groups (among proposing group AND
     # associated groups). Similar to the previous sort method, with this
     # difference: the group taken into consideration is the group among all
     # groups that comes first in the order.
-    'on_privacy_then_proposing_groups', # according to proposing group order;
-    'on_privacy_then_categories', # according to proposing group order;
+    'on_privacy_then_proposing_groups',  # according to proposing group order;
+    'on_privacy_then_categories',  # according to proposing group order;
 )
 # List of color system options : the way the item titles and annexes are colored
 colorSystems = (
-    'no_color', # nothing is colored
-    'state_color', # the color follows the item state
-    'modification_color' # the color depends on the fact that the current user
-                         # has already viewed or not last modifications done on
-                         # a given element (item/annex/advice...)
+    'no_color',  # nothing is colored
+    'state_color',  # the color follows the item state
+    'modification_color'  # the color depends on the fact that the current user
+                          # has already viewed or not last modifications done on
+                          # a given element (item/annex/advice...)
 )
 NOT_ENCODED_VOTE_VALUE = 'not_yet'
 NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
 
 # Keys used in annotations
-SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY='PloneMeeting-sent_to_other_meetingconfig_'
-CLONE_TO_OTHER_MC_ACTION_SUFFIX='clone_to_other_mc_'
+SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY = 'PloneMeeting-sent_to_other_meetingconfig_'
+CLONE_TO_OTHER_MC_ACTION_SUFFIX = 'clone_to_other_mc_'
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

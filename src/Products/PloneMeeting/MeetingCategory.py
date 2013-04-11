@@ -165,10 +165,12 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('isSelectable')
     def isSelectable(self, userId):
@@ -220,3 +222,4 @@ registerType(MeetingCategory, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+

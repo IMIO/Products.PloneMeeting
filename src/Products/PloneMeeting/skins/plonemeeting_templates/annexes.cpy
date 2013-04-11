@@ -49,8 +49,7 @@ while not idMayBeUsed:
         # Ok idCandidate is good!
         idMayBeUsed = True
 
-context.addAnnex(idCandidate, annex_type, annex_title, annex_file,
-                 decisionRelated, meetingFileType)
+context.addAnnex(idCandidate, annex_title, annex_file, decisionRelated, meetingFileType)
 
 state.set(status='success', portal_status_message="Changes made.")
 rq.set('annex_type', None)

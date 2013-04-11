@@ -23,6 +23,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
+import re
 from appy.gen import No
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -464,7 +465,7 @@ class MeetingItemWorkflowActions:
            the initial state and will be linked to this one.'''
         creator = self.context.Creator()
         # We create a copy in the initial item state, in the folder of creator.
-        clonedItem = self.context.clone(copyAnnexes=False, newOwnerId=creator,
+        clonedItem = self.context.clone(copyAnnexes=True, newOwnerId=creator,
                                         cloneEventAction='create_from_predecessor')
         clonedItem.setPredecessor(self.context)
         # Send, if configured, a mail to the person who created the item
@@ -512,7 +513,7 @@ schema = Schema((
         default_content_type="text/html",
         searchable=True,
         allowable_content_types=('text/html',),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         accessor="Description",
     ),
     TextField(
@@ -526,7 +527,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=True,
     ),
     BooleanField(
@@ -550,10 +551,10 @@ schema = Schema((
             label_msgid='PloneMeeting_label_budgetInfos',
             i18n_domain='PloneMeeting',
         ),
-        default_content_type='text/html',
+        default_content_type="text/html",
         allowable_content_types=('text/html',),
         default_method="getDefaultBudgetInfo",
-        default_output_type='text/html',
+        default_output_type="text/x-html-safe",
         optional=True,
     ),
     StringField(
@@ -683,7 +684,7 @@ schema = Schema((
         read_permission="PloneMeeting: Read decision",
         searchable=True,
         allowable_content_types=('text/html',),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         write_permission="PloneMeeting: Write decision",
     ),
     BooleanField(
@@ -726,7 +727,7 @@ schema = Schema((
         default_content_type="text/html",
         read_permission="PloneMeeting: Read item observations",
         allowable_content_types=('text/html',),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=True,
         write_permission="PloneMeeting: Write item observations",
     ),
@@ -820,7 +821,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemAssembly',
             i18n_domain='PloneMeeting',
         ),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         default_content_type="text/plain",
     ),
     TextField(
@@ -1135,8 +1136,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('onDiscussChanged')
     def onDiscussChanged(self, toDiscuss):
         '''See doc in interfaces.py.'''
+        pass
+
     security.declarePublic('addAnnex')
-    def addAnnex(self, idCandidate, annex_type, annex_title, annex_file,
+    def addAnnex(self, idCandidate, annex_title, annex_file,
                  decisionRelated, meetingFileType, **kwargs):
         '''Create an annex (MeetingFile) with given parameters and adds it to
            this item.'''
@@ -1849,6 +1852,67 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.getMeeting().getAssembly()
         return res
 
+    security.declarePublic('getStrikedItemAssembly')
+    def getStrikedItemAssembly(self, groupByDuty=True):
+        '''
+          Generates an HTML version of the itemAssembly :
+          - strikes absents (represented using [[Member assembly name]])
+          - add a 'mltAssembly' class to generated <p> so it can be used in the Pod Template
+          If p_groupByDuty is True, the result will be generated with members having the same
+          duty grouped, and the duty only displayed once at the end of the list of members
+          having this duty...  This is only relevant if MeetingUsers are enabled.
+        '''
+        item = self.getSelf()
+        # either we use free textarea to define assembly...
+        if item.getItemAssembly():
+            return item.getItemAssembly().replace('[[', '<strike>'). \
+                replace(']]', '</strike>').replace('<p>', '<p class="mltAssembly">')
+        # or we use MeetingUsers
+        elif item.getAttendees():
+            res = []
+            attendeeIds = [attendee.getId() for attendee in item.getAttendees()]
+            meeting = item.getMeeting()
+            groupedByDuty = OrderedDict()
+            for mUser in meeting.getAllUsedMeetingUsers():
+                userId = mUser.getId()
+                userTitle = mUser.Title()
+                userDuty = mUser.getDuty()
+                # if we group by duty, create an OrderedDict where the key is the duty
+                # and the value is a list of meetingUsers having this duty
+                if groupByDuty:
+                    if not userDuty in groupedByDuty:
+                        groupedByDuty[userDuty] = []
+                    if userId in attendeeIds:
+                        groupedByDuty[userDuty].append(mUser.Title())
+                    else:
+                        groupedByDuty[userDuty].append("<strike>%s</strike>" % userTitle)
+                else:
+                    if userId in attendeeIds:
+                        res.append("%s - %s" % (mUser.Title(), userDuty))
+                    else:
+                        res.append("<strike>%s - %s</strike>" % (mUser.Title(), userDuty))
+            if groupByDuty:
+                for duty in groupedByDuty:
+                    # check if every member of given duty are striked, we strike the duty also
+                    everyStriked = True
+                    for elt in groupedByDuty[duty]:
+                        if not elt.startswith('<strike>'):
+                            everyStriked = False
+                            break
+                    res.append(', '.join(groupedByDuty[duty]) + ' - ' + duty)
+                    if len(groupedByDuty[duty]) > 1:
+                        # add a trailing 's' to the duty if several members have the same duty...
+                        res[-1] = res[-1] + 's'
+                    if everyStriked:
+                        lastAdded = res[-1]
+                        # strike the entire line and remove existing <strike> tags
+                        lastAdded = "<strike>" + \
+                                    lastAdded.replace('<strike>', '').replace('</strike>', '') + \
+                                    "</strike>"
+                        res[-1] = lastAdded
+
+            return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
+
     security.declarePublic('getItemAbsents')
     def getItemAbsents(self, theObjects=False, includeDeleted=True,
                        includeMeetingDepartures=False):
@@ -2005,6 +2069,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('getInsertOrder')
     def getInsertOrder(self, sortOrder, meeting, late):
@@ -2701,10 +2766,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            Returns True if the user can duplicate the item.'''
         # Conditions for being able to see the "duplicate an item" action:
         # - the user is not Plone-disk-aware;
-        # - the user is creator in some group.
+        # - the user is creator in some group;
+        # - the user must be able to see the item if it is private.
         # The user will duplicate the item in his own folder.
         tool = self.portal_plonemeeting
-        if tool.getPloneDiskAware() or not tool.userIsAmong('creators'):
+        if tool.getPloneDiskAware() or not tool.userIsAmong('creators') or not self.isPrivacyViewable():
             return False
         return True
 
@@ -2765,6 +2831,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            duplicating an item).  p_copyFields will contains a list of fields
            we want to keep value of, if not in this list, the new field value
            will be the default value for this field.'''
+        # first check that we are not trying to clone an item the we
+        # can not access because of privacy status
+        if not self.isPrivacyViewable():
+            raise Unauthorized
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = self.portal_plonemeeting
         userId = self.portal_membership.getAuthenticatedMember().getId()
@@ -2916,14 +2986,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onDuplicated')
     def onDuplicated(self, original):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declareProtected('Modify portal content', 'onDuplicatedFromConfig')
     def onDuplicatedFromConfig(self, usage):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
@@ -2996,14 +3069,42 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getPredecessors(self):
         '''Returns the list of dict that contains infos about a predecessor.
            This method can be adapted.'''
+        pmtool = getToolByName(self.context, "portal_plonemeeting")
+        predecessor = self.context.getPredecessor()
+        predecessors = []
+        #retrieve every predecessors
+        while predecessor:
+            predecessors.append(predecessor)
+            predecessor = predecessor.getPredecessor()
+        #keep order
+        predecessors.reverse()
+        #retrieve backrefs too
+        brefs = self.context.getBRefs('ItemPredecessor')
+        while brefs:
+            predecessors = predecessors + brefs
+            brefs = brefs[0].getBRefs('ItemPredecessor')
         res = []
-        item = self.getSelf()
-        predecessor = item.getPredecessor()
-        if predecessor:
-            tool = item.portal_plonemeeting
-            showColors = tool.showColorsForUser()
-            coloredLink = tool.getColoredLink(predecessor, showColors=showColors)
-            #replace the link <a> by a <span> if the current user can not see the predecessor
+        for predecessor in predecessors:
+            showColors = pmtool.showColorsForUser()
+            coloredLink = pmtool.getColoredLink(predecessor, showColors=showColors)
+            #extract title from coloredLink that is HTML and complete it
+            originalTitle = re.sub('<[^>]*>', '', coloredLink).strip()
+            #remove '&nbsp;' left at the beginning of the string
+            originalTitle = originalTitle.lstrip('&nbsp;')
+            title = originalTitle
+            meeting = predecessor.getMeeting()
+            #display the meeting date if the item is linked to a meeting
+            if meeting:
+                title = "%s (%s)" % (title, pmtool.formatDate(meeting.getDate()).encode('utf-8'))
+            #show that the linked item is not of the same portal_type
+            if not predecessor.portal_type == self.context.portal_type:
+                title = title + '*'
+            #only replace last occurence because title appear in the "title" tag,
+            #could be the same as the last part of url (id), ...
+            splittedColoredLink = coloredLink.split(originalTitle)
+            splittedColoredLink[-2] = splittedColoredLink[-2] + title + splittedColoredLink[-1]
+            splittedColoredLink.pop(-1)
+            coloredLink = originalTitle.join(splittedColoredLink)
             if not checkPermission(View, predecessor):
                 coloredLink = spanifyLink(coloredLink)
             res.append(coloredLink)

@@ -563,6 +563,7 @@ schema = Schema((
         name='startDate',
         widget=DateTimeField._properties['widget'](
             condition="python: here.attributeIsUsed('startDate') and not here.isTemporary()",
+            minute_step=1,
             label='Startdate',
             label_msgid='PloneMeeting_label_startDate',
             i18n_domain='PloneMeeting',
@@ -573,6 +574,7 @@ schema = Schema((
         name='midDate',
         widget=DateTimeField._properties['widget'](
             condition="python: here.attributeIsUsed('midDate') and not here.isTemporary()",
+            minute_step=1,
             label='Middate',
             label_msgid='PloneMeeting_label_midDate',
             i18n_domain='PloneMeeting',
@@ -583,6 +585,7 @@ schema = Schema((
         name='endDate',
         widget=DateTimeField._properties['widget'](
             condition="python: here.attributeIsUsed('endDate') and not here.isTemporary()",
+            minute_step=1,
             label='Enddate',
             label_msgid='PloneMeeting_label_endDate',
             i18n_domain='PloneMeeting',
@@ -702,7 +705,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=True,
     ),
     DateTimeField(
@@ -736,7 +739,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=True,
     ),
     ReferenceField(
@@ -776,7 +779,7 @@ schema = Schema((
         ),
         default_content_type="text/html",
         allowable_content_types=('text/html',),
-        default_output_type="text/html",
+        default_output_type="text/x-html-safe",
         optional=False,
         edit_accessor="getAllItemsAtOnce",
     ),
@@ -845,7 +848,6 @@ Meeting_schema = BaseSchema.copy() + \
 # Register the marshaller for DAV/XML export.
 Meeting_schema.registerLayer('marshall', MeetingMarshaller())
 ##/code-section after-schema
-
 
 class Meeting(BaseContent, BrowserDefaultMixin):
     """ A meeting made of items """
@@ -1402,6 +1404,65 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return self.portal_plonemeeting.getMeetingConfig(self).getAssembly()
         return ''
 
+    security.declarePublic('getStrikedAssembly')
+    def getStrikedAssembly(self, groupByDuty=True):
+        '''
+          Generates a HTML version of the assembly :
+          - strikes absents (represented using [[Member assembly name]])
+          - add a 'mltAssembly' class to generated <p> so it can be used in the Pod Template
+          If p_groupByDuty is True, the result will be generated with members having the same
+          duty grouped, and the duty only displayed once at the end of the list of members
+          having this duty...  This is only relevant if MeetingUsers are enabled.
+        '''
+        meeting = self.getSelf()
+        # either we use free textarea to define assembly...
+        if meeting.getAssembly():
+            return meeting.getAssembly().replace('[[', '<strike>').replace(']]', '</strike>'). \
+                replace('<p>', '<p class="mltAssembly">')
+        # or we use MeetingUsers
+        elif meeting.getAttendees():
+            res = []
+            attendeeIds = meeting.getAttendees()
+            groupedByDuty = OrderedDict()
+            for mUser in meeting.getAllUsedMeetingUsers():
+                userId = mUser.getId()
+                userTitle = mUser.Title()
+                userDuty = mUser.getDuty()
+                # if we group by duty, create an OrderedDict where the key is the duty
+                # and the value is a list of meetingUsers having this duty
+                if groupByDuty:
+                    if not userDuty in groupedByDuty:
+                        groupedByDuty[userDuty] = []
+                    if userId in attendeeIds:
+                        groupedByDuty[userDuty].append(mUser.Title())
+                    else:
+                        groupedByDuty[userDuty].append("<strike>%s</strike>" % userTitle)
+                else:
+                    if userId in attendeeIds:
+                        res.append("%s - %s" % (mUser.Title(), userDuty))
+                    else:
+                        res.append("<strike>%s - %s</strike>" % (mUser.Title(), userDuty))
+            if groupByDuty:
+                for duty in groupedByDuty:
+                    # check if every member of given duty are striked, we strike the duty also
+                    everyStriked = True
+                    for elt in groupedByDuty[duty]:
+                        if not elt.startswith('<strike>'):
+                            everyStriked = False
+                            break
+                    res.append(', '.join(groupedByDuty[duty]) + ' - ' + duty)
+                    if len(groupedByDuty[duty]) > 1:
+                        # add a trailing 's' to the duty if several members have the same duty...
+                        res[-1] = res[-1] + 's'
+                    if everyStriked:
+                        lastAdded = res[-1]
+                        # strike the entire line and remove existing <strike> tags
+                        lastAdded = "<strike>" + lastAdded.replace('<strike>', '').replace('</strike>', '') + \
+                                    "</strike>"
+                        res[-1] = lastAdded
+            return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
+
+
     security.declarePrivate('getDefaultSignatures')
     def getDefaultSignatures(self):
         if self.attributeIsUsed('signatures'):
@@ -1636,10 +1697,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('wfConditions')
     def wfConditions(self):
@@ -1990,13 +2053,15 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return BaseContent.processForm(self, *args, **kwargs)
 
     security.declarePublic('decideSeveralItems')
-    def decideSeveralItems(self):
-        '''On meeting, we can decided severals items at once.'''
-        transition = self.REQUEST.get('transition', None)
+    def decideSeveralItems(self, uids=None, transition=None):
+        '''On meeting, we can decided severals items at once.
+           p_uids is A STRING representing items separated by commas.
+           p_transition is the transition to trigger for given items.'''
+        transition = transition or self.REQUEST.get('transition', None)
         if transition is None:
             return self.portal_plonemeeting.gotoReferer()
 
-        uids = self.REQUEST.get('uids', [])
+        uids = uids or self.REQUEST.get('uids', [])
         if not uids:
             msg = self.translate('no_selected_items', domain='PloneMeeting')
             self.plone_utils.addPortalMessage(msg)
@@ -2009,6 +2074,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             except WorkflowException:
                 continue
         return self.portal_plonemeeting.gotoReferer()
+
 
 
 registerType(Meeting, PROJECTNAME)

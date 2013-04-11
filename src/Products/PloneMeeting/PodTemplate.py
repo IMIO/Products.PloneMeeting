@@ -23,7 +23,8 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-import os, time
+import os
+import time
 import appy.pod
 from appy.pod.renderer import Renderer
 from appy.shared.utils import normalizeString
@@ -31,7 +32,7 @@ from App.class_init import InitializeClass
 from StringIO import StringIO
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.utils import clonePermissions, getCustomAdapter, \
-     getOsTempFolder, HubSessionsMarshaller, sendMail, getFieldContent
+    getOsTempFolder, HubSessionsMarshaller, sendMail, getFieldContent
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.PageTemplates.Expressions import getEngine
 from Products.CMFCore.utils import getToolByName
@@ -42,6 +43,9 @@ logger = logging.getLogger('PloneMeeting')
 MAILINGLIST_CONDITION_ERROR = 'There was an error in the TAL expression ' \
     'defining if the mailinglist with title \'%s\' should be available. ' \
     'Returned error is : \'%s\''
+UNABLE_TO_DETECT_MIMETYPE_ERROR = 'There was an error while trying to detect ' \
+                                  'the mimetype of the document to generate. ' \
+                                  'Please contact system administrator.'
 
 
 # Marshaller -------------------------------------------------------------------
@@ -132,7 +136,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_freezeEvent',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary= True,
+        enforceVocabulary=True,
         vocabulary='listFreezeEvents',
     ),
     TextField(
@@ -320,9 +324,16 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
         if forBrowser:
             fileName = self._getFileName(obj)
             response = obj.REQUEST.RESPONSE
-            response.setHeader('Content-Type', mimeTypes[self.getPodFormat()])
-            response.setHeader('Content-Disposition', 'inline;filename="%s.%s"'\
-                % (fileName, self.getPodFormat()))
+            mr = getToolByName(self, 'mimetypes_registry')
+            mimetype = mr.lookupExtension(self.getPodFormat())
+            if not mimetype:
+                self.plone_utils.addPortalMessage(translate(UNABLE_TO_DETECT_MIMETYPE_ERROR,
+                                                            domain='PloneMeeting',
+                                                            context=self.REQUEST), 'error')
+                self.REQUEST.RESPONSE.redirect(obj.absolute_url())
+            response.setHeader('Content-Type', mimetype.normalized())
+            response.setHeader('Content-Disposition', 'inline;filename="%s.%s"'
+                               % (fileName, self.getPodFormat()))
         f.close()
         # Returns the doc and removes the temp file
         try:
@@ -378,10 +389,12 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('at_post_create_script')
-    def at_post_create_script(self): self.adapted().onEdit(isCreated=True)
+    def at_post_create_script(self):
+        self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
-    def at_post_edit_script(self): self.adapted().onEdit(isCreated=False)
+    def at_post_edit_script(self):
+        self.adapted().onEdit(isCreated=False)
 
     security.declarePublic('getSelf')
     def getSelf(self):
@@ -390,13 +403,16 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
         return self
 
     security.declarePublic('adapted')
-    def adapted(self): return getCustomAdapter(self)
+    def adapted(self):
+        return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
-    def onEdit(self, isCreated): '''See doc in interfaces.py.'''
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
 
     security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp): '''See doc in interfaces.py.'''
+    def onTransferred(self, extApp):
+        '''See doc in interfaces.py.'''
 
     security.declarePrivate('validate_mailingLists')
     def validate_mailingLists(self, value):
@@ -461,7 +477,9 @@ def freezePodDocumentsIfRelevant(obj, transition):
                                                               forBrowser=False)
                     folder.invokeFactory('File', id=fileId, file=docContent)
                     doc = getattr(folder, fileId)
-                    doc.setFormat(mimeTypes[podTemplate.getPodFormat()])
+                    mr = getToolByName(obj, 'mimetypes_registry')
+                    mimetype = mr.lookupExtension(podTemplate.getPodFormat())
+                    doc.setFormat(mimetype.normalized())
                     doc.setTitle('%s (%s)' % (obj.Title(), podTemplate.Title()))
                     clonePermissions(obj, doc)
                 except PloneMeetingError, pme:

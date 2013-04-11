@@ -31,6 +31,11 @@
         tal:condition="topicName">
   <script language="javascript">
   <!--
+  // First, set the cookie for showing/hiding item descriptions and decisions
+  if (readCookie('pmShowDescriptions') == null){
+    // No cookie? By default create one that hide the descriptions.
+    createCookie('pmShowDescriptions', 'false')
+  }
   function enableAnnexesMenus(rq, hook) {
     initializeMenusAXStartingAt(hook);
   }
@@ -49,14 +54,13 @@
     askAjaxChunk(hookId, 'GET', configUrl, 'plonemeeting_topic_result',
                  'topicResult', params, null, enableAnnexesMenus);
   }
-
   -->
   </script>
   <tal:res define="meetingConfig view/getCurrentMeetingConfig;
                    topic view/getTopic;">
 
     <div class="formHelp" i18n:translate="topic_description" >Topic description.</div>
-    <div id="queryResult"></div>
+    <div id="queryResult"><div align="center"><img src="waiting.gif" tal:attributes="src string:${portal_url}/waiting.gif"/></div></div>
     <div>
       <script language="javascript"
               tal:content="python: 'askSearchResult(\'queryResult\', \'%s\', \'%s\', 1)' % (meetingConfig.absolute_url(), topic.id)">

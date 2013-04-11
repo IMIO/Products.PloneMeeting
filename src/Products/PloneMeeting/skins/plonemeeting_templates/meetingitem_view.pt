@@ -93,7 +93,7 @@
              tal:condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
           <tal:defines define="redefinedItemAssembly python: context.getItemAssembly(real=True).strip().replace('\n', '<br/>')">
           <i tal:attributes="class python: redefinedItemAssembly and 'highlightRedefinedValue' or ''"><span i18n:translate="item_attendees"></span></i>:&nbsp;&nbsp;
-             <span tal:replace="structure context/getItemAssembly"/>
+             <span tal:replace="structure context/getStrikedItemAssembly"/>
           </tal:defines>
         </div>
 
