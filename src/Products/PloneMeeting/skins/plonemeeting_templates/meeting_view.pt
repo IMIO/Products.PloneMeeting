@@ -45,7 +45,7 @@
       tal:attributes="onLoad python: 'javascript: askInitialItemsLists(\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\')' % (showColors, showLateItems, showAvailableItems, iStartNumber, lStartNumber, context.numberOfItems(), context.numberOfItems(True), meetingConfig.getMaxShownMeetingItems())">
 
   <script language="javascript"
-    tal:content="python: 'ploneEditor = \'%s\';' % member.getProperty('wysiwyg_editor', '')">
+    tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
   </script>
 
   <tal:mustShowPage condition="showPage">
