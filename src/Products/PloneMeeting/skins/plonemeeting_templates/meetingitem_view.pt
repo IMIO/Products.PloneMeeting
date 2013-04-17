@@ -30,7 +30,7 @@
                                   langs python: tool.getAvailableInterfaceLanguages(True, True);">
 
   <script language="javascript"
-    tal:content="python: 'ploneEditor = \'%s\';' % member.getProperty('wysiwyg_editor', '')">
+    tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
   </script>
 
     <tal:comment replace="nothing">Form used for going to meetingitem_view for an item
