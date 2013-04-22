@@ -1066,8 +1066,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     # we can receive a msgid as a string or as a list.
                     # if it is a list, the second element is a mapping
                     if not isinstance(msgid, basestring):
-                        msgid, mapping = msgid[0], msgid[1]
-                    content = "<img src='%s/%s' title='%s' />&nbsp;" % \
+                        mappings = msgid[1]
+                        for mapping in mappings:
+                            # avoid problems with translate here under
+                            if not isinstance(mappings[mapping], unicode):
+                                mappings[mapping] = unicode(mappings[mapping], 'utf-8')
+                        msgid, mapping = msgid[0], mappings
+                    content = '<img src="%s/%s" title="%s" />&nbsp;' % \
                         (portal_url, iconname,
                          translate(msgid, domain="PloneMeeting", mapping=mapping,
                                    context=self.REQUEST).encode('utf-8')) + content
