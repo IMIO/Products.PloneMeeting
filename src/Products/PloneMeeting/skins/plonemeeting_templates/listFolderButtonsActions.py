@@ -9,7 +9,7 @@
 #list the acceptable folder_buttons actions
 #this is used in the meetingfolder_view
 #we have our own paste and delete
-ignorableActions = ['cut', 'paste', 'copy', 'rename', 'delete' ]
+ignorableActions = ['cut', 'paste', 'copy', 'rename', 'delete', ]
 
 mConfig = context.portal_plonemeeting.getMeetingConfig(context)
 if not mConfig:

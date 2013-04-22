@@ -6,11 +6,9 @@
 
 <dl class="portlet portletPloneMeeting"
     tal:define="tool view/getPloneMeetingTool;
-                inTool view/inTool;
                 currentDateTime view/getCurrentDateTime;
                 userIsAmongCreators python: tool.userIsAmong('creators');
                 meetingConfig view/getCurrentMeetingConfig;
-                isArchiveSite tool/isArchiveSite;
                 meetingFolder view/getPloneMeetingFolder;
                 itemStates meetingConfig/getItemTopicStates|nothing;
                 templateItems view/templateItems;
@@ -30,10 +28,10 @@
               tal:attributes="onClick python: 'href: window.location=\'%s\'' % tool.absolute_url();
                               src string:$portal_url/pm_config.png"/>
          <img style="cursor:pointer" title="user_preferences" i18n:attributes="title"
-              tal:condition="python: not inTool and tool.getEnableUserPreferences()"
+              tal:condition="tool/getEnableUserPreferences"
               tal:attributes="onClick python: 'href: window.location=\'%s/gotoPreferences\'' % meetingConfig.absolute_url();
                               src string:$portal_url/pm_preferences.png"/>
-         <img tal:condition="not: inTool" style="cursor:pointer" title="search_advanced"
+         <img style="cursor:pointer" title="search_advanced"
               i18n:attributes="title"
               tal:attributes="onClick python: 'href: window.location=\'%s/search_form\'' % meetingFolder.absolute_url();
                               src string:$portal_url/pm_search.png"/>
@@ -42,7 +40,7 @@
 
 <table cellpadding="0" cellspacing="0" width="100%">
  <tal:comment replace="nothing">Section: items</tal:comment>
- <tal:items condition="python: not inTool and not isArchiveSite and (itemStates or userIsAmongCreators)">
+ <tal:items condition="python: itemStates or userIsAmongCreators">
  <tr>
   <td>
     <table width="100%" cellspacing="0" cellpadding="0">
@@ -71,7 +69,7 @@
   </td>
  </tr>
  <tal:comment replace="nothing">Item-related topics</tal:comment>
- <tr tal:condition="python: hasattr(meetingConfig, 'topics') and not isArchiveSite"
+ <tr tal:condition="python: hasattr(meetingConfig, 'topics')"
      tal:repeat="topic python: meetingConfig.getTopics('MeetingItem')">
    <td tal:condition="python: member.has_permission('View', topic)"
        tal:attributes="class python: topic.getId() == context.REQUEST.form.get('search', '') and 'portletCell portletSelected' or 'portletCell'">
@@ -81,7 +79,7 @@
  </tr>
  </tal:items>
 
- <tal:meetings condition="python: not inTool and not isArchiveSite">
+ <tal:meetings>
  <tal:comment replace="nothing">Section: meetings</tal:comment>
  <tr>
   <td>
@@ -139,8 +137,7 @@
   </tal:links>
   </tal:meetings>
 
-
-  <tal:decisions condition="not: inTool">
+  <tal:decisions>
   <tal:comment replace="nothing">Section: decisions</tal:comment>
   <tr><td class="portletSection" i18n:translate="portletdecisions_title">Decisions</td></tr>
 
