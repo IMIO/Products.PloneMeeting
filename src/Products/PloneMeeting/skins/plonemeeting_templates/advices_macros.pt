@@ -2,7 +2,6 @@
 <metal:icons metal:define-macro="advicesIcons" i18n:domain="PloneMeeting"
      tal:define="advicesByType meetingItem/getAdvicesByType;
                  adviceStyle python: meetingConfig.getUserParam('adviceStyle');
-                 defaultAdviceType meetingConfig/getDefaultAdviceType;
                  adviceInfo python: meetingItem.getAdvicesToGive();
                  advicesToAdd python: adviceInfo[0];
                  advicesToEdit python: adviceInfo[1];
@@ -58,7 +57,7 @@
                     </a>
                     </td>
                   </tr>
-                  
+
                 </table>
                 <tal:details condition="python: (adviceType != 'not_given') and advice['comment']">
                   <i style="font-size: 95%" tal:content="structure advice/comment"></i><br/>

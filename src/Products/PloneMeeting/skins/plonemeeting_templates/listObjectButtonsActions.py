@@ -8,12 +8,12 @@
 
 ignorableActions = ()
 
-if object.meta_type  in ['Meeting', 'MeetingItem']:
+if object.meta_type in ['Meeting', 'MeetingItem']:
     ignorableActions = ('copy', 'cut', 'paste', 'delete')
 allActions = context.portal_actions.listFilteredActionsFor(object)
 
 objectButtonActions = []
-if allActions.has_key('object_buttons'):
+if 'object_buttons' in allActions:
     objectButtonActions = allActions['object_buttons']
 
 res = []
@@ -23,7 +23,9 @@ for action in objectButtonActions:
         # We try to append the url of the icon of the action
         # look on the action itself
         if action['icon']:
-            act.append(action['icon'])
+            # make sure we only have the action icon name not a complete
+            # path including portal_url or so...
+            act.append(action['icon'].split('/')[-1])
         else:
             # look for an icon in portal_actionicons, this is deprecated...
             try:

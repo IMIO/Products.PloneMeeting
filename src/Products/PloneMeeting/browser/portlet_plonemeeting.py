@@ -51,10 +51,6 @@ class Renderer(base.Renderer):
     def render(self):
         return self._template()
 
-    def inTool(self):
-        '''Are we in the tool?'''
-        return '/portal_plonemeeting' in self.context.absolute_url()
-
     @memoize
     def getPloneMeetingTool(self):
         '''Returns the tool.'''

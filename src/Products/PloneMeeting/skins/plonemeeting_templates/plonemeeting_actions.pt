@@ -4,9 +4,7 @@
      tal:define="showIcons showIcons|nothing;
                  showArrows showArrows|nothing;
                  mayChangeOrder mayChangeOrder|nothing;
-                 isItem python:itemOrMeeting.meta_type == 'MeetingItem';
-                 inItemsList inItemsList|nothing;
-                 uid itemOrMeeting/UID;
+                 itemOrMeetingUID itemOrMeeting/UID;
                  portal_url context/@@plone_portal_state/portal_url;
                  portal context/@@plone_portal_state/portal;">
 
@@ -24,7 +22,7 @@
              class="#"
              tal:attributes="href python: itemOrMeeting.absolute_url()
                                           + '/triggertransition?objectUid='
-                                          + itemOrMeeting.UID()
+                                          + itemOrMeetingUID
                                           + '&transition='
                                           + transition['name']
                                           + (confirm=='false' and '&form.submitted=boolean:True' or '');
@@ -58,12 +56,12 @@
             <td tal:condition="python: itemOrMeeting.getItemNumber() &gt; 1" class="noPadding">
               <img name="moveUp" title="move_item_up" i18n:domain="PloneMeeting" i18n:attributes="title" style="cursor:pointer"
                    tal:attributes="src string: $portal_url/arrowUp.png;
-                                   onClick python:'moveMeetingItem(\'up\', \'%s\', null)' % itemOrMeeting.UID()"/>
+                                   onClick python:'moveMeetingItem(\'up\', \'%s\', null)' % itemOrMeetingUID"/>
             </td>
             <td tal:condition="python: itemOrMeeting.getItemNumber() &lt; totalNbOfItems" class="noPadding">
               <img name="moveDown" title="move_item_down" i18n:domain="PloneMeeting" i18n:attributes="title" style="cursor:pointer"
                    tal:attributes="src string: $portal_url/arrowDown.png;
-                                   onClick python:'moveMeetingItem(\'down\', \'%s\', null)' % itemOrMeeting.UID()"/>
+                                   onClick python:'moveMeetingItem(\'down\', \'%s\', null)' % itemOrMeetingUID"/>
             </td>
           </tr>
         </table>
@@ -72,7 +70,7 @@
       <tal:comment replace="nothing">Delete icon/button</tal:comment>
       <td tal:condition="python: member.has_permission('Delete objects', itemOrMeeting) and itemOrMeeting.wfConditions().mayDelete()" class="noPadding">
         <form name="deleteUidForm" action="delete_givenuid">
-            <input type="hidden" name="selected_uid" tal:attributes="value itemOrMeeting/UID" />
+            <input type="hidden" name="selected_uid" tal:attributes="value itemOrMeetingUID" />
             <tal:comment replace="nothing">Icon</tal:comment>
             <img tal:condition="showIcons" i18n:attributes="title" title="Delete"
                  tal:attributes="src string: $portal_url/delete.png"
@@ -87,7 +85,7 @@
       <tal:comment replace="nothing">Delete a meeting with its items</tal:comment>
       <td tal:condition="python: (itemOrMeeting.meta_type == 'Meeting') and member.has_permission('Delete objects', itemOrMeeting) and member.has_role('Manager')" class="noPadding">
         <form name="deleteWholeMeetingForm" action="delete_givenuid">
-            <input type="hidden" name="selected_uid" tal:attributes="value itemOrMeeting/UID" />
+            <input type="hidden" name="selected_uid" tal:attributes="value itemOrMeetingUID" />
             <input type="hidden" name="wholeMeeting" value="True"/>
             <tal:comment replace="nothing">Icon</tal:comment>
             <img tal:condition="showIcons" style="cursor:pointer"
