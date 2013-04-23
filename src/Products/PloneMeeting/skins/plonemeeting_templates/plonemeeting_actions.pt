@@ -31,12 +31,19 @@
             <img tal:condition="python: showIcons and hasattr(portal, imageName)"
                  tal:attributes="src string: $portal_url/$imageName;
                                  title python: transition['title'];"/>
-            <tal:comment replace="nothing">Button</tal:comment>
-            <input class="#" type="button"
-                   tal:condition="python: not(showIcons and hasattr(portal, imageName))"
+            <tal:comment replace="nothing">Display a input button if showIcons is False.  Moreover, a <form> is necessary
+                                           around an <input /> for IE...</tal:comment>
+            <form action="#"
+                  tal:condition="python: not(showIcons and hasattr(portal, imageName))"
+                  tal:attributes="action python: itemOrMeeting.absolute_url() + '/@@triggertransition'">
+            <input type="hidden" name="objectUid" tal:attributes="value itemOrMeetingUID;"/>
+            <input type="hidden" name="transition" tal:attributes="value python: transition['name'];"/>
+            <input type="hidden" name="form.submitted" tal:attributes="value python: (confirm=='false' and '&form.submitted=boolean:True' or '');"/>
+            <input type="submit"
                    tal:attributes="class string:hsButton hsButtonWF hsButtonWF_$transitionId;
                                    value python: transition['title'];
                                    size python: int(len(transition['title'])/1.2);" />
+            </form>
           </a>
 
         </tal:transition>
