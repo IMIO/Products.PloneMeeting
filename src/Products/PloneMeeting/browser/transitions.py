@@ -50,7 +50,7 @@ class ConfirmTransitionView(BrowserView):
         availableTransitions = tool.getTransitionsFor(self.context)
         for availableTransition in availableTransitions:
             if self.request.get('transition') == availableTransition['name'] and \
-               availableTransition['confirm'] == True:
+               availableTransition['confirm'] is True:
                 res = self.request.get('transition')
         return res
 

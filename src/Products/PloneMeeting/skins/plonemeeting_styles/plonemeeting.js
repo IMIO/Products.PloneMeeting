@@ -174,6 +174,7 @@ function actionMenuMouseOverAX(event) {
     }
     return true;
 }
+
 function initializeMenusAXStartingAt(node) {
   // Initializes menus starting at a given node in the page.
   // First, terminate if we hit a non-compliant DOM implementation
@@ -566,6 +567,7 @@ function asyncToggleIcon(UID, baseUrl, viewName, baseSelector) {
     url: baseUrl + "/" + viewName,
     dataType: 'html',
     data: {UID:UID},
+    cache: false,
     success: function(data) {
         toggleIcon(UID, data, baseUrl, viewName, baseSelector);
       },
@@ -590,12 +592,9 @@ function initRichTextField(rq, hook) {
       // window but this event will never be triggered. So do it by
       // hand.
       currentFieldName = hook.id.split('_')[1];
-      setTimeout("initKupuField()", 1000);
     }
     else { eval(scriptContent); }
   }
-  // Initialize FCK editor if it is the used editor
-  if (ploneEditor == 'FCKeditor') { FCKeditor_Plone_Init(); }
   // Initialize CKeditor if it is the used editor
   if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
 }
@@ -606,19 +605,6 @@ function getRichTextContent(rq, params) {
   var formId = 'ajax_edit_' + fieldName;
   var theForm = document.getElementById(formId);
   var theWidget = theForm[fieldName];
-  if (ploneEditor == 'Kupu') {
-    // Save the Kupu content to the field in the form.
-    window.kupu.saveDataToField(theForm, theWidget);
-    var drawer = window.document.getElementById('kupu-librarydrawer');
-    if (drawer) { drawer.parentNode.removeChild(drawer); }
-  }
-  if (ploneEditor == 'FCKeditor'){
-    if ( typeof( window.parent.FCKeditor_OnComplete ) == 'function' ) {
-      var fckObject = FCKeditorAPI.Instances[fieldName];
-      fckObject.SetStatus(FCK_STATUS_COMPLETE);
-      finalizePublication(fckObject);
-      }
-  }
   if (ploneEditor == 'CKeditor'){
      /* with CKeditor the value is not stored in the widget so get the data from the real CKeditor instance */
      theWidget.value = window.parent.CKEDITOR.instances[fieldName].getData();
