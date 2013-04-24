@@ -409,10 +409,12 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePrivate('validate_mailingLists')
     def validate_mailingLists(self, value):

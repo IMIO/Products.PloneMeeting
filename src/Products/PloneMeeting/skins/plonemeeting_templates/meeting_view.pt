@@ -226,33 +226,6 @@
     theForm.submit();
     }
 
-  function toggleToDiscuss(UID, img_tag) {
-    var selector = "tr.UID_" + UID + " .ToDiscuss";
-    var $td = jq(selector);
-    if ($td.length == 1) {
-      var $old = jq('img', $td);
-      $td.empty();
-      var $img = jq(img_tag).appendTo($td);
-      $img.click(function() {
-        asyncToDiscuss(UID);
-      });
-    };
-  }
-
-  function asyncToDiscuss(UID) {
-    jq.ajax({
-      url: meetingUrl + "/toggle_to_discuss_on_item",
-      dataType: 'html',
-      data: {UID:UID},
-      success: function(data) {
-        toggleToDiscuss(UID, data);
-        },
-      error: function(jqXHR, textStatus, errorThrown) {
-        /*console.log(textStatus);*/
-        }
-      });
-   }
-
   function toggleItemsList(whichItems, imageWidget) {
     listToToggle = document.getElementById(whichItems);
     if (imageWidget.name == 'expandedItems') {

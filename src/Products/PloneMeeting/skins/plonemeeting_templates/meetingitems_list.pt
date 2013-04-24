@@ -152,20 +152,23 @@
           tal:attributes="class string:$uidclass meeting_item_privacy_$privacy"
           valign="top">
         <tal:comment replace="nothing">"toDiscuss" field</tal:comment>
-        <td class="ToDiscuss" tal:condition="showToDiscuss" i18n:domain="PloneMeeting"
-                              tal:define="mayEditToDiscuss python: member.has_permission(meetingItem.getField('toDiscuss').write_permission, meetingItem) and meetingItem.showToDiscuss()" >
-            <tal:forMeetingManagers condition="python: tool.isManager() and mayEditToDiscuss">
+        <td tal:condition="showToDiscuss" i18n:domain="PloneMeeting"
+            tal:define="mayEditToDiscuss python: member.has_permission(meetingItem.getField('toDiscuss').write_permission, meetingItem) and meetingItem.showToDiscuss()" >
+        <tal:forMeetingManagers condition="python: tool.isManager() and mayEditToDiscuss">
+        <span id="marker_toggle_todiscuss_UID#"
+              tal:attributes="id string:marker_toggle_todiscuss_$UID;">
               <img class="toDiscussEditable"
                    tal:condition="meetingItem/getToDiscuss" name="discussNo" style="cursor:pointer"
                    title="to_discuss_yes_edit" i18n:attributes="title"
                    tal:attributes="src string: $portal_url/toDiscussYes.png;
-                                   onClick python: useToggleDiscuss and 'asyncToDiscuss(\''+UID+'\')' or 'setToDiscuss(\'no\', \'%s\')' % UID"/>
+                                   onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + meetingItem.absolute_url() + '\', viewName=\'@@toggle_to_discuss\', baseSelector=\'#marker_toggle_todiscuss_\')'"/>
               <img class="toDiscussEditable"
                    tal:condition="not: meetingItem/getToDiscuss" name="discussYes" style="cursor:pointer"
                    title="to_discuss_no_edit" i18n:attributes="title"
                    tal:attributes="src string: $portal_url/toDiscussNo.png;
-                                   onClick python: useToggleDiscuss and 'asyncToDiscuss(\''+UID+'\')' or 'setToDiscuss(\'yes\', \'%s\')' % UID"/>
-            </tal:forMeetingManagers>
+                                   onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + meetingItem.absolute_url() + '\', viewName=\'@@toggle_to_discuss\', baseSelector=\'#marker_toggle_todiscuss_\')'"/>
+        </span>
+        </tal:forMeetingManagers>
 
             <tal:comment replace="nothing">For reviewers: they may ask to discuss the item if "toDiscuss" is
                 False. A mail will be sent to MeetingManagers that will themselves update the "toDiscuss"

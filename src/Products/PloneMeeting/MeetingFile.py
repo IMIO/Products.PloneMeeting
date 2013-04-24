@@ -90,6 +90,15 @@ schema = Schema((
         required=True,
         relationship="MeetingFileType",
     ),
+    BooleanField(
+        name='toPrint',
+        default=True,
+        widget=BooleanField._properties['widget'](
+            label='Toprint',
+            label_msgid='PloneMeeting_label_toPrint',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
 
 ),
 )

@@ -40,6 +40,7 @@ class PloneMeetingTopicView(BrowserView):
         '''Return the concerned topic.'''
         return getattr(self.getCurrentMeetingConfig().topics, self.getTopicName())
 
+
 class PloneMeetingRedirectToAppView(BrowserView):
     """
       This manage the view set on the Plone Site that redirects the connected user
@@ -71,5 +72,3 @@ class PloneMeetingRedirectToAppView(BrowserView):
     def getPloneMeetingTool(self):
         '''Returns the tool.'''
         return getToolByName(self.portal, 'portal_plonemeeting')
-
-
