@@ -309,8 +309,8 @@ class Migrate_To_3_0(Migrator):
             if '.getMeeting().getDate().' in cfg.getItemReferenceFormat():
                 cfg.setItemReferenceFormat(
                     cfg.getItemReferenceFormat().replace(
-                        ".getMeeting().getDate().restrictedTraverse"
-                        "('@@pm_unrestricted_methods').getLinkedMeetingDate()."))
+                        ".getMeeting().getDate().",
+                        ".restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate()."))
         logger.info('Done.')
 
     def _initNewFieldItemDecidedStates(self):
