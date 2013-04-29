@@ -430,6 +430,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         self.getField('toPrint').set(self, value)
 
     security.declarePublic('isPrintable')
+    @memoize
     def isPrintable(self):
         """
           Check if the annex is printable (hopefully).  If the annex mimetype is one taken into
