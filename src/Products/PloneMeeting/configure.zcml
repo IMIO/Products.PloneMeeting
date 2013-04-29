@@ -48,6 +48,17 @@
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".setuphandlers.onMeetingGroupTransition"/>
 
+  <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
+  <subscriber
+    for=".interfaces.IMeetingFile
+         Products.Archetypes.interfaces.IObjectInitializedEvent"
+    handler=".MeetingFile.convertForPrinting" />
+
+  <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
+  <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
+    <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />
+  </class>
+
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
   <five:deprecatedManageAddDelete class=".MeetingFile.MeetingFile" />

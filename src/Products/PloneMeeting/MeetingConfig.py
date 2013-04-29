@@ -270,6 +270,28 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
+    BooleanField(
+        name='annexToPrintDefault',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            description="AnnexToPrintDefault",
+            description_msgid="annex_to_print_default_descr",
+            label='Annextoprintdefault',
+            label_msgid='PloneMeeting_label_annexToPrintDefault',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
+    BooleanField(
+        name='annexDecisionToPrintDefault',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            description="AnnexDecisionToPrintDefault",
+            description_msgid="annex_decision_to_print_default_descr",
+            label='Annexdecisiontoprintdefault',
+            label_msgid='PloneMeeting_label_annexDecisionToPrintDefault',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
     LinesField(
         name='usedItemAttributes',
         widget=MultiSelectionWidget(
@@ -2777,3 +2799,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+

@@ -352,6 +352,17 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
+    BooleanField(
+        name='enableAnnexPreview',
+        default=defValues.enableAnnexPreview,
+        widget=BooleanField._properties['widget'](
+            description="EnableAnnexPreview",
+            description_msgid="enable_annex_preview_descr",
+            label='Enableannexpreview',
+            label_msgid='PloneMeeting_label_enableAnnexPreview',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
     DateTimeField(
         name='siteStartDate',
         default=defValues.siteStartDate,
@@ -1026,7 +1037,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getColoredLink')
     def getColoredLink(self, obj, showColors, showIcon=False, contentValue=None,
                        target='', maxLength=0, highlight=False, inMeeting=True,
-                       meeting=None):
+                       meeting=None, appendToUrl='', additionalCSSClasses=''):
         '''Produces the link to an item or annex with the right color (if the
            colors must be shown depending on p_showColors). p_target optionally
            specifies the 'target' attribute of the 'a' tag. p_maxLength
@@ -1102,8 +1113,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # We do not want to colorize the link, we just return a classical
             # link. We apply the 'pmNoNewContent" id so the link is not colored.
             if isPrivacyViewable:
-                return '<a href="%s" title="%s" id="pmNoNewContent"%s>%s</a>' %\
-                       (url, title, tg, content)
+                return '<a href="%s" title="%s" id="pmNoNewContent"%s class="%s">%s</a>' %\
+                       (url + appendToUrl, title, tg, additionalCSSClasses, content)
             else:
                 msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                 return '<div title="%s"><i>%s</i></div>' % \
@@ -1121,8 +1132,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         obj, 'review_state')
                 wf_class = "state-%s" % obj_state
                 if isPrivacyViewable:
-                    res = '<a href="%s" title="%s" class="%s"%s>%s</a>' % \
-                          (url, title, wf_class, tg, content)
+                    res = '<a href="%s" title="%s" class="%s"%s %s>%s</a>' % \
+                          (url + appendToUrl, title, wf_class, tg, additionalCSSClasses, content)
                 else:
                     msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                     res = '<div title="%s"><i>%s</i></div>' % \
@@ -1133,8 +1144,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # this is the case for annexes that does not have an
                 # associated workflow.
                 if isPrivacyViewable:
-                    res = '<a href="%s" title="%s" id="pmNoNewContent"%s>%s' \
-                          '</a>' % (url, title, tg, content)
+                    res = '<a href="%s" title="%s" id="pmNoNewContent"%s class="%s">%s' \
+                          '</a>' % (url + appendToUrl, title, tg, additionalCSSClasses, content)
                 else:
                     msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                     res = '<div title="%s"><i>%s</i></div>' % \
@@ -1162,8 +1173,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if linkId:
                 idPart = ' id="%s"' % linkId
             if isPrivacyViewable:
-                res = '<a href="%s" title="%s"%s%s>%s</a>' % \
-                      (href, title, idPart, tg, content)
+                res = '<a href="%s" title="%s"%s%s %s>%s</a>' % \
+                      (href, title, idPart, tg, additionalCSSClasses, content)
             else:
                 msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                 res = '<div title="%s"><i>%s</i></div>' % \

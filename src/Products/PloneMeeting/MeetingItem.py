@@ -1195,9 +1195,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Invalidate advices if needed
         if self.willInvalidateAdvices():
             self.updateAdvices(invalidate=True)
-        # After at_post_create_script, current user may loose permission to edit
+        # After processForm that itself calls at_post_create_script,
+        # current user may loose permission to edit
         # the object because we copy item permissions.
-        newAnnex.at_post_create_script()
+        newAnnex.processForm()
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Annex at %s uploaded by "%s".' % (newAnnex.absolute_url_path(), userId))
 
@@ -1569,7 +1570,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Is there a meeting tied to me?'''
         return self.getMeeting(brain=True) is not None
 
-    security.declarePublic('isLate')
+    security.declarePublic('isLateFor')
     def isLate(self):
         '''Am I included in a meeting as a late item?'''
         if self.reference_catalog.getBackReferences(self, 'MeetingLateItems'):
@@ -3462,3 +3463,4 @@ def onAddMeetingItem(item, event):
     user = item.portal_membership.getAuthenticatedMember()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
 ##/code-section module-footer
+

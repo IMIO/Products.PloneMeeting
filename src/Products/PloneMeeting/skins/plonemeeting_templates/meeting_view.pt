@@ -468,7 +468,7 @@
 
   <tal:comment replace="nothing">Actions</tal:comment>
   <br/>
-  <span tal:define="itemOrMeeting python:here;">
+  <span tal:define="object python:here;">
     <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions" />
   </span>
   <br/>

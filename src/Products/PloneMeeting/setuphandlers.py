@@ -96,7 +96,7 @@ def setupCatalogMultiplex(context):
     explicit add classes (meta_types) be indexed in catalogs (white)
     or removed from indexing in a catalog (black)
     """
-    if isNotPloneMeetingProfile(context): return 
+    if isNotPloneMeetingProfile(context): return
     site = context.getSite()
     #dd#
     muliplexed = ['ToolPloneMeeting', 'MeetingCategory', 'MeetingConfig', 'MeetingFileType', 'MeetingGroup', 'ExternalApplication', 'PodTemplate', 'MeetingUser']
@@ -278,6 +278,21 @@ def postInstall(context):
         authRoles.append('Member')
         site.portal_groups.editGroup('AuthenticatedUsers', roles=authRoles,
                                      groups=())
+
+    # configure collective.documentviewer
+    from collective.documentviewer.settings import GlobalSettings
+    viewer_settings = GlobalSettings(site)._metadata
+    viewer_settings['storage_type'] = 'File'
+    viewer_settings['storage_location'] = 'var/converted_annexes'
+    viewer_settings['auto_layout_file_types'] = ['pdf', 'photoshop', 'image',
+                                                 'palm', 'ppt', 'txt', 'ps',
+                                                 'word', 'rft', 'excel', 'html',
+                                                 'visio']
+    viewer_settings['auto_convert'] = False
+    viewer_settings['pdf_image_format'] = 'png'
+    viewer_settings['show_search'] = False
+    viewer_settings['show_sidebar'] = False
+    viewer_settings['show_search_on_group_view'] = False
 
 
 

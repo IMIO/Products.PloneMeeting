@@ -63,23 +63,31 @@ class AnnexToPrint(BrowserView):
         if not member.has_permission('Modify portal content', self.context):
             raise Unauthorized
 
-        annexToPrint = self.context.getToPrint()
-        # toggle value
-        self.context.setToPrint(not annexToPrint)
+        try:
+            annexToPrint = self.context.getToPrint()
+            # toggle value
+            self.context.setToPrint(not annexToPrint)
+            if annexToPrint:
+                filename = 'annexToPrintNo.png'
+                name = 'annexToPrintYes'
+                title_msgid = 'annex_to_print_no_edit'
+            else:
+                filename = 'annexToPrintYes.png'
+                name = 'annexToPrintNo'
+                title_msgid = 'annex_to_print_yes_edit'
 
-        if annexToPrint:
-            filename = 'annexToPrintNo.png'
-            name = 'annexToPrintYes'
-            title_msgid = 'annex_to_print_no_edit'
-        else:
-            filename = 'annexToPrintYes.png'
-            name = 'annexToPrintNo'
-            title_msgid = 'annex_to_print_yes_edit'
-
-        title = self.context.utranslate(title_msgid,
-                                        domain="PloneMeeting")
-        portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
-        portal_url = portal_state.portal_url()
-        src = "%s/%s" % (portal_url, filename)
-        html = self.IMG_TEMPLATE % (src, title, name)
-        return html
+            title = self.context.utranslate(title_msgid,
+                                            domain="PloneMeeting")
+            portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
+            portal_url = portal_state.portal_url()
+            src = "%s/%s" % (portal_url, filename)
+            html = self.IMG_TEMPLATE % (src, title, name)
+            return html
+        except Exception, exc:
+            # set an error status in request.RESPONSE so the ajax call knows
+            # that something wrong happened and redirect the page so portalMessages are displayed
+            self.portal.plone_utils.addPortalMessage("There was an error while preparing the annexe to be printable."
+                                                     "The error message is '%s'.  Please contact system administrator!"
+                                                     % str(exc), type='error')
+            self.request.RESPONSE.status = 500
+            return

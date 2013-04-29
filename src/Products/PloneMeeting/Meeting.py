@@ -2093,3 +2093,4 @@ def onAddMeeting(meeting, event):
     user = meeting.portal_membership.getAuthenticatedMember()
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 ##/code-section module-footer
+

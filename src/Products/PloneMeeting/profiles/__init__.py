@@ -507,6 +507,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.publicUrl = ''
         self.deferredNotificationsHandling = False
         self.enableUserPreferences = True
+        self.enableAnnexPreview = True
         self.siteStartDate = None
         self.maxSearchResults = 50
         self.maxShownFoundItems = 10

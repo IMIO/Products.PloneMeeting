@@ -301,7 +301,7 @@
 
         <tal:comment replace="nothing">Actions</tal:comment>
         <td align="center" tal:condition="showActions">
-          <tal:actions define="itemOrMeeting python: obj; showIcons python:True;">
+          <tal:actions define="object python: obj; showIcons python:True;">
             <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions"></div>
           </tal:actions>
         </td>
