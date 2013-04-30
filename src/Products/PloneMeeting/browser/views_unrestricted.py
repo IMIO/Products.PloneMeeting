@@ -236,7 +236,7 @@ class ItemSign(BrowserView):
         src = "%s/%s" % (portal_url, filename)
         # manage the onclick if the user still may change the value
         onclick = maySignItem and u'class="itemIsSignedEditable" onclick="asyncToggleIcon(\'%s\', baseUrl=\'%s\', viewName=\'%s\', baseSelector=\'#marker_toggle_itemissigned_\')"' \
-                                  % (UID, item.absolute_url(), self.request.steps[-1], ) or 'onclick=""'
+                                  % (UID, item.absolute_url(), self.__name__, ) or 'onclick=""'
         html = self.IMG_TEMPLATE % (src, title, name, onclick)
         return html
 
