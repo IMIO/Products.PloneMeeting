@@ -1366,22 +1366,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # deadline.
                 if meeting.attributeIsUsed('deadlineFreeze') and \
                    not item.lastValidatedBefore(meeting.getDeadlineFreeze()):
-                    res.append(('deadlineKo.png', 'publish_freeze_ko'))
+                    res.append(('deadlineKo.png', 'icon_help_publish_freeze_ko'))
                 else:
-                    res.append(('late.png', 'late'))
+                    res.append(('late.png', 'icon_help_late'))
             elif (meeting.queryState() == 'created') and \
                     meeting.attributeIsUsed('deadlinePublish') and \
                     not item.lastValidatedBefore(meeting.getDeadlinePublish()):
-                res.append(('deadlineKo.png', 'publish_deadline_ko'))
+                res.append(('deadlineKo.png', 'icon_help_publish_deadline_ko'))
         else:
             # The item is in the list of normal or late items for p_meeting.
             # Check if we must show a decision-related status for the item
             # (delayed, refused...).
             adap = item.adapted()
             if adap.isDelayed():
-                res.append(('delayed.png', 'delayed'))
+                res.append(('delayed.png', 'icon_help_delayed'))
             elif adap.isRefused():
-                res.append(('refused.png', 'refused'))
+                res.append(('refused.png', 'icon_help_refused'))
             # Display icons about sent/cloned to other meetingConfigs
             clonedToOtherMCIds = item._getOtherMeetingConfigsImAmClonedIn()
             for clonedToOtherMCId in clonedToOtherMCIds:
