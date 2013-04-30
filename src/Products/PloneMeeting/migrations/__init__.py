@@ -16,12 +16,13 @@
    portal_setup.'''
 
 # ------------------------------------------------------------------------------
-import time
-from Products.CMFCore.utils import getToolByName
 import logging
 logger = logging.getLogger('PloneMeeting')
+import time
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import base_hasattr
 
-# ------------------------------------------------------------------------------
+
 class Migrator:
     '''Abstract class for creating a migrator.'''
     def __init__(self, context):
@@ -35,6 +36,12 @@ class Migrator:
         for cfg in self.tool.objectValues('MeetingConfig'):
             self.cfgsMailMode[cfg.getId()] = cfg.getMailMode()
             cfg.setMailMode('deactivated')
+        # disable advices invalidation for every MeetingConfigs and save
+        # current state to set it back after migration in self.finish
+        self.cfgsAdvicesInvalidation = {}
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            self.cfgsAdvicesInvalidation[cfg.getId()] = cfg.getEnableAdviceInvalidation()
+            cfg.setEnableAdviceInvalidation(False)
 
     def run(self):
         '''Must be overridden. This method does the migration job.'''
@@ -47,11 +54,17 @@ class Migrator:
         for cfgId in self.cfgsMailMode:
             cfg = getattr(self.tool, cfgId)
             cfg.setMailMode(self.cfgsMailMode[cfgId])
+        # set adviceInvalidation for every MeetingConfigs back to the right value
+        for cfgId in self.cfgsAdvicesInvalidation:
+            cfg = getattr(self.tool, cfgId)
+            cfg.setEnableAdviceInvalidation(self.cfgsAdvicesInvalidation[cfgId])
         seconds = time.time() - self.startTime
         logger.info('Migration finished in %d minute(s).' % (seconds/60))
 
-    def refreshDatabase(self, catalogs=True,
-        catalogsToRebuild=['portal_catalog'], workflows=False):
+    def refreshDatabase(self,
+                        catalogs=True,
+                        catalogsToRebuild=['portal_catalog'],
+                        workflows=False):
         '''After the migration script has been executed, it can be necessary to
            update the Plone catalogs and/or the workflow settings on every
            database object if workflow definitions have changed. We can pass
@@ -64,18 +77,21 @@ class Migrator:
             #does not seem to work as expected...
             for catalog in catalogsToRebuild:
                 catalogObj = getattr(self.portal, catalog)
-                catalogObj.clearFindAndRebuild()
+                if base_hasattr(catalogObj, 'clearFindAndRebuild'):
+                    catalogObj.clearFindAndRebuild()
+                else:
+                    # special case for the uid_catalog
+                    catalogObj.manage_rebuildCatalog()
             catalogIds = ('portal_catalog', 'reference_catalog', 'uid_catalog')
             for catalogId in catalogIds:
                 if not catalogId in catalogsToRebuild:
                     catalogObj = getattr(self.portal, catalogId)
                     catalogObj.refreshCatalog(clear=0)
         if workflows:
-            logger.info('Refresh workflow-related information on every ' \
-                        'object of the database...')
+            logger.info('Refresh workflow-related information on every object of the database...')
             self.portal.portal_workflow.updateRoleMappings()
 
-    def reinstall(self, profiles=[u'profile-Products.PloneMeeting:default',]):
+    def reinstall(self, profiles=[u'profile-Products.PloneMeeting:default', ]):
         '''Allows to reinstall a series of p_profiles.'''
         logger.info('Reinstalling product(s) %s...' % ', '.join([profile[8:] for profile in profiles]))
         for profile in profiles:
