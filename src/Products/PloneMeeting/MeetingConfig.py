@@ -2486,16 +2486,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+        pass
+
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
+        pass
+
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
         '''Checks if the current meetingConfig can be deleted :
           - no Meeting and MeetingItem linked to this config can exist
           - the meetingConfig folder of the Members must be empty.'''
         # If we are trying to remove the Plone Site, bypass this hook.
-        if not item.meta_type == "Plone Site":
+        # bypass also if we are in the creation process
+        if not item.meta_type == "Plone Site" and not item._at_creation_flag:
             # Checks that no Meeting and no MeetingItem remains.
             brains = self.portal_catalog(portal_type=self.getMeetingTypeName())
             if brains:
