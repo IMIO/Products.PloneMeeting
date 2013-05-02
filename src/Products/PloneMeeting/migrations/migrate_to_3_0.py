@@ -337,6 +337,12 @@ class Migrate_To_3_0(Migrator):
             cfg.setItemDecidedStates(itemDecidedStatesToApply)
         logger.info('Done.')
 
+    def _reindexAnnexes(self):
+        '''A new value 'isPrintable' needs to be indexed...'''
+        logger.info('Updating every items annexIndex')
+        self.portal.portal_plonemeeting.reindexAnnexes()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
         # the Meeting 'published' state has become 'decisions_published' now, so :
@@ -361,6 +367,8 @@ class Migrate_To_3_0(Migrator):
         self._migrateXhtmlTransformFieldsValues()
         self._migrateFCKTemplates()
         self._addPowerObserverGroupsByMeetingConfig()
+        self._initNewFieldItemDecidedStates()
+        self._reindexAnnexes()
         self._initNewFieldItemDecidedStates()
         # refresh portal_catalog so getDate metadata is updated
         self.refreshDatabase(catalogs=True, workflows=False)
