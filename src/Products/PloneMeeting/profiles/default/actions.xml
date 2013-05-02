@@ -109,6 +109,7 @@
      <element value="Manage portal"/>
     </property>
    </object>
+  </object>
 
   <!-- Manage object actions. -->
   <object name="object" meta_type="CMF Action Category">
