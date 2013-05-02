@@ -109,18 +109,6 @@
      <element value="Manage portal"/>
     </property>
    </object>
-   <object name="download_file" meta_type="CMF Action" i18n:domain="PloneMeeting">
-    <property name="title" i18n:translate="">Download annex</property>
-    <property name="description" i18n:translate=""></property>
-    <property name="url_expr">string:${object_url}/download</property>
-    <property name="icon_expr">string:$portal_url/download_icon.png</property>
-    <property name="available_expr">python: context.meta_type=='MeetingFile' and portal.portal_plonemeeting.getEnableAnnexPreview()</property>
-    <property name="permissions">
-     <element value="View"/>
-    </property>
-    <property name="visible">True</property>
-   </object>
-  </object>
 
   <!-- Manage object actions. -->
   <object name="object" meta_type="CMF Action Category">

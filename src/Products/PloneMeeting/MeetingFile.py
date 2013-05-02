@@ -243,12 +243,13 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         fileType = self.getMeetingFileType()
         portal_url = getToolByName(self, 'portal_url')
         res = {'Title': self.Title(),
-               'url': portal_url.getRelativeContentURL(self),
+               'absolute_url': portal_url.getRelativeContentURL(self),
                'uid': self.UID(),
                'fileTypeId': fileType.id,
                'iconUrl': portal_url.getRelativeContentURL(fileType) + '/theIcon',
                'modification_date': self.pm_modification_date,
-               'decisionRelated': self.isDecisionRelated()
+               'decisionRelated': self.isDecisionRelated(),
+               'isPrintable': self.isPrintable(),
                }
         return res
 

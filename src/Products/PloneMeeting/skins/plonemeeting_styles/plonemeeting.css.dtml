@@ -38,6 +38,7 @@ p {line-height: 1em;}
   overflow: auto;
   text-align: left;
   width: auto;
+  min-width: 274px;
 }
 
 .ploneMeetingSelectItem {
@@ -62,6 +63,7 @@ p {line-height: 1em;}
   background-image: url(<dtml-var portal_url>/drop_down.png);
   background-repeat: no-repeat;
   background-position: right;
+  min-width: 250px;
 }
 .no-style-table {
   border: 0 !important;
@@ -190,7 +192,6 @@ margin-top: -1.9em;
 
 .actionMenuAX .actionMenuContentAX li {
   float: none;
-  display: inline;
   padding: 0;
   margin: 0;
   border: 0;
@@ -236,6 +237,24 @@ margin-top: -1.9em;
 }
 
 .actionMenuContentAdvice { width: 350px; }
+
+/* annexes displayed in the annexes_form (table of annexes) */
+td.pmLinks div.annexTitle {
+    display: inline;
+}
+/* annexes displayed as dropdown list */
+li.pmLinks div.annexTitle {
+    padding-right: 30px;
+    display: block;
+}
+.annexTitleNotPrintable{
+    cursor: help;
+    white-space: nowrap;
+}
+/* annexes displayed as dropdown list */
+li.pmLinks div.annexTitleNotPrintable {
+    padding-left: 0.5em;
+}
 
 .contentBatchAction {
   float: left !important;

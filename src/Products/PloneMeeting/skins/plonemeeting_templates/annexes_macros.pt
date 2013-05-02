@@ -4,7 +4,6 @@
                  tool python:context.portal_plonemeeting;
                  member tool/getUser;
                  meetingConfig python: tool.getMeetingConfig(here);
-                 target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', '');
                  showColors tool/showColorsForUser;
                  extractTextFromFiles tool/extractTextFromFiles;
                  itemNumber python: context.getItemNumber(relativeTo='meeting');
@@ -172,7 +171,6 @@
    <div tal:condition="not: annexes" i18n:translate="no_annexes" class="discreet">No annexes</div>
    <table class="vertical listing"
           tal:condition="annexes"
-          tal:define="previewEnabled tool/getEnableAnnexPreview;"
           width="100%" i18n:domain="plone">
      <thead>
      <tr>
@@ -189,15 +187,7 @@
        <span tal:define="annex python: context.uid_catalog(UID=annexInfo['uid'])[0].getObject()">
        <td class="pmLinks">
          <img tal:attributes="src python:annex.getIcon()"/>&nbsp;
-         <tal:withPreview define="annexIsPrintable annex/isPrintable" condition="previewEnabled">
-            <span tal:condition="annexIsPrintable"
-                  tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target, appendToUrl='/documentviewer#document/p1', additionalCSSClasses='classicpopup')"/>
-            <span tal:condition="not: annexIsPrintable"
-                  tal:content="annex/Title" style="cursor: help;" title="help_no_preview_available" i18n:domain="PloneMeeting" i18n:attributes="title" />
-         </tal:withPreview>
-         <tal:withoutPreview condition="not: previewEnabled">
-            <span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target)"/>
-         </tal:withoutPreview>
+         <metal:withOrWithoutPreview use-macro="here/annexes_macros/macros/withOrWithoutPreview" />
        </td>
        <td tal:content="python: tool.getUserName(annex.Creator())"></td>
        <td tal:content="python: context.restrictedTraverse('@@plone').toLocalizedTime(annex.CreationDate(),long_format=True)"></td>
@@ -217,6 +207,35 @@
   </fieldset>
  </div>
 
+
+<tal:comment replace="nothing">Requires "tool" and "meetingConfig".
+     This will display the link to the annex depending on the fact that we use preview or not.</tal:comment>
+<metal:withOrWithoutPreview define-macro="withOrWithoutPreview"
+                            tal:define="previewEnabled tool/getEnableAnnexPreview;
+                                        target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', '');">
+    <tal:withPreview define="annexIsPrintable annex/isPrintable" condition="previewEnabled">
+       <a style="float: right;"
+          href="#"
+          tal:attributes="href string:${portal_url}/${annex/absolute_url}/download"
+          title="Download annex"
+          i18n:domain="PloneMeeting"
+          i18n:attributes="title">
+          <img src="download_icon.png" tal:attributes="src string:${portal_url}/download_icon.png" />
+       </a>
+       <div class="annexTitle" tal:condition="annexIsPrintable">
+         <span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target, appendToUrl='/documentviewer#document/p1', additionalCSSClasses='classicpopup')"/>
+       </div>
+       <div tal:condition="not: annexIsPrintable"
+             tal:content="annex/Title"
+             class="annexTitle annexTitleNotPrintable"
+             title="help_no_preview_available" i18n:domain="PloneMeeting" i18n:attributes="title" />
+    </tal:withPreview>
+    <tal:withoutPreview condition="not: previewEnabled">
+       <span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target)"/>
+    </tal:withoutPreview>
+</metal:withOrWithoutPreview>
+
+
 <tal:comment replace="nothing">Requires "meetingItem".
      Optional: "decisionRelated". If True, decision-related annexes are shown
                instead of item-related annexes.</tal:comment>
@@ -230,7 +249,8 @@
                  tool python:context.portal_plonemeeting;
                  cssClasses python: 'contentActionsAX no-style-table';
                  global count python:0;
-                 portal_url context/@@plone_portal_state/portal_url;">
+                 portal_url context/@@plone_portal_state/portal_url;
+                 previewEnabled tool/getEnableAnnexPreview;">
 
   <table tal:condition="annexesByType" cellpadding="0" cellspacing="0"
          class="contentActionsAX no-style-table">
@@ -241,9 +261,10 @@
         <span class="discreet">:</span>
       </td>
       <td tal:repeat="annexesGroup annexesByType" class="noPadding">
-        <tal:comment replace="nothing">Only one annex of this type is present</tal:comment>
+        <tal:comment replace="nothing">Only one annex of this type is present.  If preview is enabled, we show
+        the dropdown list in every case because the user may either preview or download the annex.</tal:comment>
         <span tal:define="annex python:annexesGroup[0]" class="pmLinks"
-              tal:condition="python: len(annexesGroup) == 1"
+              tal:condition="python: len(annexesGroup) == 1 and not previewEnabled"
               tal:content="structure python: tool.getColoredLink(annex, showColors, showIcon=True, target=target)">
         </span>
         <tal:comment replace="nothing">Several annexes of this type are present</tal:comment>
@@ -251,7 +272,7 @@
             tal:define="imgUrl python:portal_url + '/' + annexesGroup[0]['iconUrl'];
                         global count python:count+1"
             tal:attributes="id python:'annexesMenu_' + str(count) + '_' + meetingItem.UID() + '_' + str(decisionRelated)"
-            tal:condition="python: len(annexesGroup) > 1">
+            tal:condition="python: len(annexesGroup) > 1 or previewEnabled">
           <dt class="actionMenuHeaderAX pmLinks">
               <a href="#"><img
                  tal:attributes="src imgUrl"/><b tal:condition="showColors"
@@ -261,7 +282,8 @@
           </dt>
           <dd class="actionMenuContentAX">
             <ul>
-              <li class="pmLinks" tal:repeat="annex annexesGroup"><span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target)"/>
+              <li class="pmLinks" tal:repeat="annex annexesGroup">
+                <metal:withOrWithoutPreview use-macro="here/annexes_macros/macros/withOrWithoutPreview" />
               </li>
             </ul>
           </dd>
@@ -271,6 +293,7 @@
     </tr>
   </table>
 </metal:icons>
+
 
 <tal:comment replace="nothing">
   This macro manage the toPrint attribute of annexes.

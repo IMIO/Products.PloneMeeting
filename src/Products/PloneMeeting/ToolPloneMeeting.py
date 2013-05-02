@@ -1096,7 +1096,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             uid = obj['uid']
             modifDate = obj['modification_date']
             portal_url = self.portal_url.getPortalObject().absolute_url()
-            url = portal_url + '/' + obj['url']
+            url = portal_url + '/' + obj['absolute_url']
             content = contentValue or obj['Title']
             title = content
             if showIcon:
