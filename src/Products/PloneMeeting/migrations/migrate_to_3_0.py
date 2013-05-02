@@ -369,7 +369,6 @@ class Migrate_To_3_0(Migrator):
         self._addPowerObserverGroupsByMeetingConfig()
         self._initNewFieldItemDecidedStates()
         self._reindexAnnexes()
-        self._initNewFieldItemDecidedStates()
         # refresh portal_catalog so getDate metadata is updated
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['portal_catalog', 'uid_catalog', ],
