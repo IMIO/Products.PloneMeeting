@@ -1963,8 +1963,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''This is a workaround to avoid a Plone design problem where it is
            possible to remove a folder containing objects you can not remove.'''
         # If we are here, everything has already been checked before.
-        # Just check that the item is myself or a Plone Site.
-        # We can remove an item directly but not "through" his container.
+        # Just check that the meeting is myself or a Plone Site.
+        # We can remove an meeting directly but not "through" his container.
         if not item.meta_type in ('Plone Site', 'Meeting'):
             user = self.portal_membership.getAuthenticatedMember()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))

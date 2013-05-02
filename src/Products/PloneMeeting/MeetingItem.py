@@ -1372,22 +1372,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # deadline.
                 if meeting.attributeIsUsed('deadlineFreeze') and \
                    not item.lastValidatedBefore(meeting.getDeadlineFreeze()):
-                    res.append(('deadlineKo.png', 'publish_freeze_ko'))
+                    res.append(('deadlineKo.png', 'icon_help_publish_freeze_ko'))
                 else:
-                    res.append(('late.png', 'late'))
+                    res.append(('late.png', 'icon_help_late'))
             elif (meeting.queryState() == 'created') and \
                     meeting.attributeIsUsed('deadlinePublish') and \
                     not item.lastValidatedBefore(meeting.getDeadlinePublish()):
-                res.append(('deadlineKo.png', 'publish_deadline_ko'))
+                res.append(('deadlineKo.png', 'icon_help_publish_deadline_ko'))
         else:
             # The item is in the list of normal or late items for p_meeting.
             # Check if we must show a decision-related status for the item
             # (delayed, refused...).
             adap = item.adapted()
             if adap.isDelayed():
-                res.append(('delayed.png', 'delayed'))
+                res.append(('delayed.png', 'icon_help_delayed'))
             elif adap.isRefused():
-                res.append(('refused.png', 'refused'))
+                res.append(('refused.png', 'icon_help_refused'))
             # Display icons about sent/cloned to other meetingConfigs
             clonedToOtherMCIds = item._getOtherMeetingConfigsImAmClonedIn()
             for clonedToOtherMCId in clonedToOtherMCIds:
@@ -2467,6 +2467,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Invalidate all advices. Send notification mail(s) if configured.
             for advice in self.advices.itervalues():
                 advice['type'] = 'not_given'
+                advice['date'] = ''
+                advice['comment'] = ''
+                advice['actor'] = ''
                 if 'actor' in advice and (advice['actor'] != userId):
                     # Send a mail to the guy that gave the advice.
                     if 'adviceInvalidated' in cfg.getUserParam(
@@ -2699,7 +2702,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.isTemporary():
             # Remember previous data if historization is enabled.
             self._v_previousData = rememberPreviousData(self)
-            return BaseFolder.processForm(self, *args, **kwargs)
+        return BaseFolder.processForm(self, *args, **kwargs)
 
     security.declarePublic('isCopiesEnabled')
     def isCopiesEnabled(self):
@@ -3016,17 +3019,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             user = self.portal_membership.getAuthenticatedMember()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException, "can_not_delete_meetingitem_container"
-        # If the item has a predecessor in another meetingConfig we must remove
-        # the annotation on the predecessor specifying it.
-        predecessor = self.getPredecessor()
-        if predecessor:
-            pmtool = getToolByName(self, 'portal_plonemeeting')
-            meetingConfigId = pmtool.getMeetingConfig(self).getId()
-            if predecessor._checkAlreadyClonedToOtherMC(meetingConfigId):
-                ann = IAnnotations(predecessor)
-                annotation_key = self._getSentToOtherMCAnnotationKey(
-                    meetingConfigId)
-                del ann[annotation_key]
+        # if we are not in the creation process, process
+        if not item._at_creation_flag:
+            # If the item has a predecessor in another meetingConfig we must remove
+            # the annotation on the predecessor specifying it.
+            predecessor = self.getPredecessor()
+            if predecessor:
+                pmtool = getToolByName(self, 'portal_plonemeeting')
+                meetingConfigId = pmtool.getMeetingConfig(self).getId()
+                if predecessor._checkAlreadyClonedToOtherMC(meetingConfigId):
+                    ann = IAnnotations(predecessor)
+                    annotation_key = self._getSentToOtherMCAnnotationKey(
+                        meetingConfigId)
+                    del ann[annotation_key]
         BaseFolder.manage_beforeDelete(self, item, container)
 
     security.declarePublic('getAttendees')

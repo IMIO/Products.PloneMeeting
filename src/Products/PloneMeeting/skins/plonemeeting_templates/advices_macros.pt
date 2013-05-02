@@ -43,8 +43,7 @@
                         <img style="cursor:pointer"
                              tal:attributes="src string:$portal_url/delete.png;"
                              i18n:attributes="title"
-                             title="Delete"
-                             i18n:domain="plone"
+                             title="Delete advice"
                              onclick="javascript:confirmDeleteObject(this)" />
                       </form>
                     </td>

@@ -3,6 +3,7 @@ from Products.contentmigration.migrator import BaseInlineMigrator as InlineMigra
 from Products.Archetypes.interfaces import ISchema
 from plone.app.blob.interfaces import IBlobField
 
+
 # MonkeyPatch method to use .Schema() instead of .schema.  See below...
 def makeMigrator(context, portal_type, meta_type=None):
     """ generate a migrator for the given at-based portal type """
@@ -54,4 +55,37 @@ def makeMigrator(context, portal_type, meta_type=None):
 
     return BlobMigrator
 
-migrations.makeMigrator=makeMigrator
+migrations.makeMigrator = makeMigrator
+
+
+from Products.Archetypes import BaseObject
+from zope import event
+from Products.Archetypes.event import ObjectInitializedEvent
+from Products.Archetypes.event import ObjectEditedEvent
+
+
+# MonkeyPatch BaseObject.processForm to call unmarkCreationFlag after renaming object
+def processForm(self, data=1, metadata=0, REQUEST=None, values=None):
+    """Processes the schema looking for data in the form.
+    """
+    is_new_object = self.checkCreationFlag()
+    self._processForm(data=data, metadata=metadata,
+                      REQUEST=REQUEST, values=values)
+
+    if self._at_rename_after_creation and is_new_object:
+        self._renameAfterCreation(check_auto_id=True)
+
+    # XXX changed for PloneMeeting
+    # self.unmarkCreationFlag() is called after "if self._at_rename..." here above
+    # See https://github.com/plone/Products.Archetypes/pull/19
+    self.unmarkCreationFlag()
+
+    # Post create/edit hooks
+    if is_new_object:
+        event.notify(ObjectInitializedEvent(self))
+        self.at_post_create_script()
+    else:
+        event.notify(ObjectEditedEvent(self))
+        self.at_post_edit_script()
+
+BaseObject.processForm = processForm
