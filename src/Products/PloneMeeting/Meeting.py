@@ -276,7 +276,8 @@ class MeetingWorkflowActions:
                 except WorkflowException:
                     # This action may not exist due to a workflow adaptation.
                     pass
-            if item.queryState() in ('presented', 'itempublished'):
+            itemAvailableTransitions = [t['id'] for t in wfTool.getTransitionsFor(item)]
+            if 'itemfreeze' in itemAvailableTransitions:
                 wfTool.doActionFor(item, 'itemfreeze')
 
     security.declarePrivate('doDecide')
