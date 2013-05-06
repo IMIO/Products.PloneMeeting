@@ -75,6 +75,20 @@ class Migrate_To_3_0(Migrator):
             patched += 1
         logger.info('Done (%d file(s) patched).' % patched)
 
+    def _removeClonedPermissionsOnAnnexes(self):
+        '''We do no more clone item permissions to contained annexes,
+           we let the permissions acquisition do the job...
+           So deactivate every set permissions on contained annexes (MeetingFiles).'''
+        brains = self.portal.portal_catalog(meta_type='MeetingFile')
+        if not brains:
+            return
+        logger.info('Removing cloned permissions: scanning %s MeetingFile objects...' % len(brains))
+        for brain in brains:
+            annex = brain.getObject()
+            for permission in annex.ac_inherited_permissions(all=True):
+                annex.manage_permission(permission[0], roles=[], acquire=True)
+        logger.info('Done.')
+
     def _correctAnnexesMeetingFileTypes(self):
         '''While an item was cloned to another MeetingConfig, the annexes where copied too
            but the reference to the MeetingFileType was kept and so refering the other MeetingConfig
@@ -355,6 +369,7 @@ class Migrate_To_3_0(Migrator):
         self._configureCKeditor()
         self._updateRegistries()
         self._patchFileSecurity()
+        self._removeClonedPermissionsOnAnnexes()
         self._correctAnnexesMeetingFileTypes()
         self._migrateMeetingFilesToBlobs()
         self._updateLocalRoles()
