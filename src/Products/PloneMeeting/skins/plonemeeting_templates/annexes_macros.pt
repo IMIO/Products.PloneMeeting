@@ -195,7 +195,7 @@
            <metal:annexToPrint use-macro="here/annexes_macros/macros/annexToPrint" />
        </td>
        <td tal:content="annex/getObjSize"></td>
-       <td>
+       <td tal:condition="python:member.has_permission('Delete objects', here)">
          <tal:actions define="object python: annex;
                               showIcons python: True">
            <metal:annexToPrint use-macro="here/plonemeeting_actions/macros/ploneMeetingActions" />
