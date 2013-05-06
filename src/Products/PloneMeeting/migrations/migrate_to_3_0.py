@@ -141,7 +141,7 @@ class Migrate_To_3_0(Migrator):
                 continue
             title_to_uid_mapping = {}
             for annexInfo in item.annexIndex:
-                title_to_uid_mapping[annexInfo['uid']] = annexInfo['Title']
+                title_to_uid_mapping[annexInfo['UID']] = annexInfo['Title']
             for annex in annexes:
                 if not annex.Title():
                     annex.setTitle(title_to_uid_mapping[annex.UID()])
@@ -371,7 +371,8 @@ class Migrate_To_3_0(Migrator):
                                  u'profile-plonetheme.imioapps:plonemeetingskin', ])
         self._migrateStatePublishedToDecisionsPublished(uids)
 
-        # now continue with other migrations
+        # reindexAnnexIndex first!
+        self._reindexAnnexes()
         self._configureCKeditor()
         self._updateRegistries()
         self._patchFileSecurity()
@@ -383,7 +384,6 @@ class Migrate_To_3_0(Migrator):
         self._migrateFCKTemplates()
         self._addPowerObserverGroupsByMeetingConfig()
         self._initNewFieldItemDecidedStates()
-        self._reindexAnnexes()
         # refresh portal_catalog so getDate metadata is updated
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['portal_catalog', 'uid_catalog', ],

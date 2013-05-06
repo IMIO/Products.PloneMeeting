@@ -1220,7 +1220,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # Remove p_annex-related info
                 removeUid = annex.UID()
                 for annexInfo in self.annexIndex:
-                    if removeUid == annexInfo['uid']:
+                    if removeUid == annexInfo['UID']:
                         self.annexIndex.remove(annexInfo)
                         break
             else:
@@ -1736,7 +1736,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         annexes.append(annexInfo)
                     else:
                         # Retrieve the real annex
-                        annex = self.portal_catalog(UID=annexInfo['uid'])[0].getObject()
+                        annex = self.portal_catalog(UID=annexInfo['UID'])[0].getObject()
                         annexes.append(annex)
             if annexes:
                 if makeSubLists:
@@ -1751,7 +1751,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            or not.'''
         res = None
         if self.annexIndex:
-            annexUid = self.annexIndex[-1]['uid']
+            annexUid = self.annexIndex[-1]['UID']
             res = self.uid_catalog(UID=annexUid)[0].getObject()
         return res
 
@@ -3457,7 +3457,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return value + collapsibleMeetingSignatures
 
     security.declarePublic('getAnnexesToPrint')
-    def getAnnexesToPrint(self, decisionRelated=False):
+    def getAnnexesToPrint(self, decisionRelated=False, uidsOfSucessfullyConverted=False):
         """
           Creates a list of annexes to print for document generation
           The result is a list containing dicts where first key is the annex title
@@ -3476,6 +3476,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         'image_path': '/path/to/image21.png',},
                       ]},
           ]
+
+          If p_uidsOfSucessfullyConverted is True, we only return MeetingFile uids
+          that have been actually successfully converted by collective.documentviewer
         """
         portal = getToolByName(self, 'portal_url').getPortalObject()
         annexes = self.getAnnexesInOrder(decisionRelated)
@@ -3486,7 +3489,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         i = 1
         for annex in annexes:
             # first check if annex needs to be printed
-            if not annex.getToPrint():
+            # do this check only if we did not ask for the uids of successfully converted annexes
+            if not annex.getToPrint() and not uidsOfSucessfullyConverted:
                 continue
             # if the annex needs to be printed, check if everything is ok to print it
             annex_annotations = IAnnotations(annex)
@@ -3494,6 +3498,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not 'collective.documentviewer' in annex_annotations.keys() or not \
                'successfully_converted' in annex_annotations['collective.documentviewer'] or not \
                annex_annotations['collective.documentviewer']['successfully_converted'] is True:
+                continue
+            # special case if we received p_uidsOfSucessfullyConverted to True
+            # we build a list of annexes uids that we will return
+            if uidsOfSucessfullyConverted:
+                res.append(annex.UID())
                 continue
             # everything seems right, manage this annex
             # build path to images

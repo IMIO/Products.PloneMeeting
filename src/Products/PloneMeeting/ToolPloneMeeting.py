@@ -1014,7 +1014,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         for annex in annexes:
             res = res and self.lastModifsConsultedOn(
-                annex['uid'], annex['modification_date'])[0]
+                annex['UID'], annex['modification_date'])[0]
         return res
 
     security.declarePublic('highlight')
@@ -1093,7 +1093,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             # It is an annex entry in an annexIndex
             isAnnex = True
-            uid = obj['uid']
+            uid = obj['UID']
             modifDate = obj['modification_date']
             portal_url = self.portal_url.getPortalObject().absolute_url()
             url = portal_url + '/' + obj['absolute_url'] + appendToUrl
