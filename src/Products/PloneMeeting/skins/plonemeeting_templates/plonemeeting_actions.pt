@@ -76,7 +76,7 @@
 
       <tal:comment replace="nothing">Delete icon/button</tal:comment>
       <td tal:condition="python: member.has_permission('Delete objects', object) and object.wfConditions().mayDelete()" class="noPadding">
-        <form name="deleteUidForm" action="delete_givenuid">
+        <form name="deleteUidForm" action="delete_givenuid" tal:attributes="action string:${object/absolute_url}/delete_givenuid">
             <input type="hidden" name="selected_uid" tal:attributes="value objectUID" />
             <tal:comment replace="nothing">Icon</tal:comment>
             <img tal:condition="showIcons" i18n:attributes="title" title="Delete"
