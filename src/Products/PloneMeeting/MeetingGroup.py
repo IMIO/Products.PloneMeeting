@@ -251,10 +251,11 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                                         "'%s' already exists." % groupId)
         for groupSuffix in MEETING_GROUP_SUFFIXES:
             self._createPloneGroup(groupSuffix)
-        self.adapted().onEdit(isCreated=True) # Call product-specific code
+        self.adapted().onEdit(isCreated=True)  # Call product-specific code
 
     security.declarePrivate('at_post_edit_script')
-    def at_post_edit_script(self): self.adapted().onEdit(isCreated=False)
+    def at_post_edit_script(self):
+        self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
@@ -265,7 +266,8 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         # Do lighter checks first...  Check that the meetingGroup is not used
         # in a meetingConfig
         # If we are trying to remove the whole Plone Site, bypass this hook.
-        if not item.meta_type == "Plone Site":
+        # bypass also if we are in the creation process
+        if not item.meta_type == "Plone Site" and not item._at_creation_flag:
             for mc in self.portal_plonemeeting.objectValues('MeetingConfig'):
                 # The meetingGroup can be referenced in selectableCopyGroups.
                 if self.getPloneGroupId(suffix="advisers") in \
@@ -282,9 +284,9 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                         "can_not_delete_meetinggroup_plonegroup"
             # And finally, check that meetingGroup is not linked to an existing
             # item.
+            mgId = self.getId()
             for brain in self.portal_catalog(meta_type="MeetingItem"):
                 obj = brain.getObject()
-                mgId = self.getId()
                 if (obj.getProposingGroup() == mgId) or \
                    (mgId in obj.getAssociatedGroups()) or \
                    (mgId in obj.getOptionalAdvisers()) or \
@@ -349,4 +351,3 @@ registerType(MeetingGroup, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

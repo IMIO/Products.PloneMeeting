@@ -468,7 +468,7 @@ def freezePodDocumentsIfRelevant(obj, transition):
             # I must dump a document in the DB based on this template and
             # object.
             fileId = podTemplate.getDocumentId(obj)
-            folder = obj.getParentNode()
+            folder = obj.aq_inner.aq_parent
             existingDoc = getattr(folder, fileId, None)
             # If the doc was already generated, we do not rewrite it.
             # This way, if some doc generations crash, when retrying them

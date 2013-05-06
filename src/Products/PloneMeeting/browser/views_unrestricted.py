@@ -187,7 +187,7 @@ class ItemSign(BrowserView):
       Item is signed after it as been closed and so, user has no more "Modify portal content" permission.
       We use maySignItem to check if the current user can actually sign/unsignItem.
     """
-    IMG_TEMPLATE = u'<img src="%s" title="%s" name="%s" %s />'
+    IMG_TEMPLATE = u'<img class="%s" src="%s" title="%s" name="%s" %s />'
 
     def __init__(self, context, request):
         self.context = context
@@ -235,9 +235,13 @@ class ItemSign(BrowserView):
         portal_url = portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
         # manage the onclick if the user still may change the value
-        onclick = maySignItem and u'class="itemIsSignedEditable" onclick="asyncToggleIcon(\'%s\', baseUrl=\'%s\', viewName=\'%s\', baseSelector=\'#marker_toggle_itemissigned_\')"' \
-                                  % (UID, item.absolute_url(), self.request.steps[-1], ) or 'onclick=""'
-        html = self.IMG_TEMPLATE % (src, title, name, onclick)
+        # let onclick be managed by the jQuery method if we do not need to change it
+        # just redefines it to "" if we really want to specify that we do not want an onclick
+        onclick = not maySignItem and 'onclick=""' or ''
+        # manage the applied css_class : if the user still may edit the value, use 'itemIsSignedEditable'
+        # if he can no more change the value, do not use a css_class
+        css_class = maySignItem and 'itemIsSignedEditable' or ''
+        html = self.IMG_TEMPLATE % (css_class, src, title, name, onclick)
         return html
 
 
