@@ -1059,7 +1059,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             isAnnex = False
             uid = obj.UID()
             modifDate = obj.pm_modification_date
-            url = obj.absolute_url()
+            url = obj.absolute_url() + appendToUrl
             content = contentValue or obj.getName()
             title = content
             if maxLength:
@@ -1096,7 +1096,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             uid = obj['uid']
             modifDate = obj['modification_date']
             portal_url = self.portal_url.getPortalObject().absolute_url()
-            url = portal_url + '/' + obj['absolute_url']
+            url = portal_url + '/' + obj['absolute_url'] + appendToUrl
             content = contentValue or obj['Title']
             title = content
             if showIcon:
@@ -1113,8 +1113,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # We do not want to colorize the link, we just return a classical
             # link. We apply the 'pmNoNewContent" id so the link is not colored.
             if isPrivacyViewable:
-                return '<a href="%s" title="%s" id="pmNoNewContent"%s class="%s">%s</a>' %\
-                       (url + appendToUrl, title, tg, additionalCSSClasses, content)
+                css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
+                return '<a href="%s" title="%s" id="pmNoNewContent"%s%s>%s</a>' %\
+                       (url, title, tg, css_classes, content)
             else:
                 msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                 return '<div title="%s"><i>%s</i></div>' % \
@@ -1132,8 +1133,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         obj, 'review_state')
                 wf_class = "state-%s" % obj_state
                 if isPrivacyViewable:
-                    res = '<a href="%s" title="%s" class="%s"%s %s>%s</a>' % \
-                          (url + appendToUrl, title, wf_class, tg, additionalCSSClasses, content)
+                    css_classes = wf_class + (additionalCSSClasses and (' ' + additionalCSSClasses) or '')
+                    res = '<a href="%s" title="%s" class="%s"%s>%s</a>' % \
+                          (url, title, css_classes, tg, content)
                 else:
                     msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                     res = '<div title="%s"><i>%s</i></div>' % \
@@ -1144,8 +1146,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # this is the case for annexes that does not have an
                 # associated workflow.
                 if isPrivacyViewable:
-                    res = '<a href="%s" title="%s" id="pmNoNewContent"%s class="%s">%s' \
-                          '</a>' % (url + appendToUrl, title, tg, additionalCSSClasses, content)
+                    css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
+                    res = '<a href="%s" title="%s" id="pmNoNewContent"%s%s>%s' \
+                          '</a>' % (url + appendToUrl, title, tg, css_classes, content)
                 else:
                     msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                     res = '<div title="%s"><i>%s</i></div>' % \

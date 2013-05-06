@@ -161,7 +161,7 @@ class testMeetingItem(PloneMeetingTestCase):
         url = item.absolute_url()
         content = item.Title()
         self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % (url, title, content))
+                          '<a href="%s" title="%s" id="pmNoNewContent" class="">%s</a>' % (url, title, content))
         login(self.portal, 'admin')
         #use colors depdending on item workflow state
         self.tool.setUsedColorSystem('state_color')
