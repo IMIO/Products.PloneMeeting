@@ -431,7 +431,7 @@
   </fieldset>
 
   <tal:comment replace="nothing">Action on selected items</tal:comment>
-  <div tal:condition="python: context.adapted().isDecided() and tool.isManager()" id="showItemsDecidedTransitions" >
+  <div tal:condition="python: tool.isManager() and context.adapted().isDecided() and not context.queryState() in context.meetingClosedStates" id="showItemsDecidedTransitions" >
     <div metal:use-macro="here/hs_macros/macros/showItemsDecidedTransitions"></div>
   </div>
   <div class="visualClear"></div>

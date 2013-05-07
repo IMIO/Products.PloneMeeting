@@ -3456,8 +3456,42 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.getMeeting().getSignatures().replace('\n', '<br />'))
         return value + collapsibleMeetingSignatures
 
+    security.declarePublic('getConvertedAnnexes')
+    def getConvertedAnnexes(self, decisionRelated=False):
+        """
+          Returns a dict of converted annexes with 'successfully converted'
+          and 'not successfully converted' annexes
+          Either an annex is:
+          - not convertable
+          - under conversion
+          - converted
+          - error during conversion
+        """
+        data = {'not_convertable': [],
+                'successfully_converted': [],
+                'conversion_error': [],
+                'under_conversion': [], }
+        for annex in self.getAnnexesInOrder(decisionRelated):
+            annexUID = annex.UID()
+            annex_annotations = IAnnotations(annex)
+            # not_convertable?
+            if not 'collective.documentviewer' in annex_annotations.keys():
+                data['not_convertable'].append(annexUID)
+                continue
+            # under conversion?
+            if not 'successfully_converted' in annex_annotations['collective.documentviewer']:
+                data['under_conversion'].append(annexUID)
+                continue
+
+            if not annex_annotations['collective.documentviewer']['successfully_converted'] is True:
+                data['conversion_error'].append(annexUID)
+                continue
+
+            data['successfully_converted'].append(annexUID)
+        return data
+
     security.declarePublic('getAnnexesToPrint')
-    def getAnnexesToPrint(self, decisionRelated=False, uidsOfSucessfullyConverted=False):
+    def getAnnexesToPrint(self, decisionRelated=False):
         """
           Creates a list of annexes to print for document generation
           The result is a list containing dicts where first key is the annex title
@@ -3477,8 +3511,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                       ]},
           ]
 
-          If p_uidsOfSucessfullyConverted is True, we only return MeetingFile uids
-          that have been actually successfully converted by collective.documentviewer
         """
         portal = getToolByName(self, 'portal_url').getPortalObject()
         annexes = self.getAnnexesInOrder(decisionRelated)
@@ -3489,8 +3521,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         i = 1
         for annex in annexes:
             # first check if annex needs to be printed
-            # do this check only if we did not ask for the uids of successfully converted annexes
-            if not annex.getToPrint() and not uidsOfSucessfullyConverted:
+            if not annex.getToPrint():
                 continue
             # if the annex needs to be printed, check if everything is ok to print it
             annex_annotations = IAnnotations(annex)
@@ -3499,11 +3530,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                'successfully_converted' in annex_annotations['collective.documentviewer'] or not \
                annex_annotations['collective.documentviewer']['successfully_converted'] is True:
                 continue
-            # special case if we received p_uidsOfSucessfullyConverted to True
-            # we build a list of annexes uids that we will return
-            if uidsOfSucessfullyConverted:
-                res.append(annex.UID())
-                continue
+
             # everything seems right, manage this annex
             # build path to images
             data = {}

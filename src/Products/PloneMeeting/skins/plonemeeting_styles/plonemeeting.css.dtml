@@ -256,6 +256,11 @@ li.pmLinks div.annexTitleNotPrintable {
     padding-left: 0.5em;
 }
 
+/* place the icon a bit more closer to the following text */
+.erroredConversion img {
+    margin-right: -5px;
+}
+
 .contentBatchAction {
   float: left !important;
   padding: 0 0.5em;
