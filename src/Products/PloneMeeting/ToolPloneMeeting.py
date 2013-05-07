@@ -1148,7 +1148,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if isPrivacyViewable:
                     css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
                     res = '<a href="%s" title="%s" id="pmNoNewContent"%s%s>%s' \
-                          '</a>' % (url + appendToUrl, title, tg, css_classes, content)
+                          '</a>' % (url, title, tg, css_classes, content)
                 else:
                     msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                     res = '<div title="%s"><i>%s</i></div>' % \
