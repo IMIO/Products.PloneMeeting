@@ -2329,6 +2329,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'toDiscuss' in self.getUsedItemAttributes():
             res.append(("askDiscussItem", translate('event_ask_discuss_item', domain=d, context=self.REQUEST)))
         res.append(("itemClonedToThisMC", translate('event_item_clone_to_this_mc', domain=d, context=self.REQUEST)))
+        res.append(("annexConversionError", translate('event_item_annex_conversion_error', domain=d, context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingEvents')
@@ -2804,4 +2805,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-

@@ -1037,7 +1037,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getColoredLink')
     def getColoredLink(self, obj, showColors, showIcon=False, contentValue=None,
                        target='', maxLength=0, highlight=False, inMeeting=True,
-                       meeting=None, appendToUrl='', additionalCSSClasses=''):
+                       meeting=None, appendToUrl='', additionalCSSClasses='', tag_title=None):
         '''Produces the link to an item or annex with the right color (if the
            colors must be shown depending on p_showColors). p_target optionally
            specifies the 'target' attribute of the 'a' tag. p_maxLength
@@ -1051,17 +1051,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
            If obj is an item which is not privacyViewable, the method does not
            return a link (<a>) but a simple <div>.
+
+            If p_appendToUrl is given, the string will be appended at the end of the
+            returned link url.
+            If p_additionalCSSClasses is given, the given additional CSS classes will
+            be used for the 'class' attribute of the returned link.
+            If p_tag_title is given, it will be translated and used as return link
+            title tag.
         '''
         isPrivacyViewable = True
         objClassName = obj.__class__.__name__
         portal_url = self.portal_url.getPortalObject().absolute_url()
+        # if we received a tag_title, try to translate it!
+        if tag_title:
+            tag_title = translate(tag_title, domain='PloneMeeting', context=self.REQUEST, )
         if objClassName in self.ploneMeetingTypes:
             isAnnex = False
             uid = obj.UID()
             modifDate = obj.pm_modification_date
             url = obj.absolute_url() + appendToUrl
             content = contentValue or obj.getName()
-            title = content
+            title = tag_title or content
             if maxLength:
                 content = self.truncate(content, maxLength)
             if highlight:
@@ -1098,7 +1108,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             portal_url = self.portal_url.getPortalObject().absolute_url()
             url = portal_url + '/' + obj['absolute_url'] + appendToUrl
             content = contentValue or obj['Title']
-            title = content
+            title = tag_title or content
             if showIcon:
                 content = '<img src="%s"/><b>1</b>' % (portal_url + '/' + obj['iconUrl'])
             else:

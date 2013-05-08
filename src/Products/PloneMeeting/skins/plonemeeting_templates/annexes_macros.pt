@@ -214,11 +214,11 @@
                             tal:define="previewEnabled tool/getEnableAnnexPreview;
                                         target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', '');">
     <tal:withPreview define="annexUID annex/UID;
-                             isPrintable annex/isPrintable;
-                             isPreviewAvailable python: isPrintable and annexUID in convertedAnnexesData['successfully_converted'];
-                             isUnderConversion python: isPrintable and annexUID in convertedAnnexesData['under_conversion'];
-                             isErroredDuringConversion python: isPrintable and annexUID in convertedAnnexesData['conversion_error'];
-                             isNotConvertable python: isPrintable and annexUID in convertedAnnexesData['not_convertable'];
+                             isConvertable annex/isConvertable;
+                             isPreviewAvailable python: isConvertable and annexUID in convertedAnnexesData['successfully_converted'];
+                             isUnderConversion python: isConvertable and annexUID in convertedAnnexesData['under_conversion'];
+                             isErroredDuringConversion python: isConvertable and annexUID in convertedAnnexesData['conversion_error'];
+                             isNotConvertable python: isConvertable and annexUID in convertedAnnexesData['not_convertable'];
                              isRealManager python: tool.isManager(realManagers=True);"
                      condition="previewEnabled">
        <a style="float: right;"
@@ -245,14 +245,15 @@
             i18n:attributes="title">
          <span class="erroredConversion" tal:content="annex/Title" />
        </div>
-       <div class="annexTitle annexTitleNotPrintable erroredConversion" tal:condition="python: isErroredDuringConversion and isRealManager"
-            title="help_no_preview_available_conversion_error_manager"
-            i18n:domain="PloneMeeting"
-            i18n:attributes="title">
-         <img src="errored_conversion.png" tal:attributes="src string:${portal_url}/errored_conversion.png" width="16" height="16" />
-         <span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target, appendToUrl='/documentviewer')"/>
+       <div class="annexTitle" tal:condition="python: isErroredDuringConversion and isRealManager">
+         <span tal:replace="structure python: tool.getColoredLink(annex,
+                                                                  showColors,
+                                                                  target=target,
+                                                                  appendToUrl='/documentviewer',
+                                                                  additionalCSSClasses='annexTitleNotPrintable erroredConversion',
+                                                                  tag_title='help_no_preview_available_conversion_error_manager')"/>
        </div>
-       <div tal:condition="not: isPrintable"
+       <div tal:condition="not: isConvertable"
              tal:content="annex/Title"
              class="annexTitle annexTitleNotPrintable"
              title="help_no_preview_available" i18n:domain="PloneMeeting" i18n:attributes="title"/>
@@ -329,7 +330,7 @@
 </tal:comment>
 <metal:annexToPrint define-macro="annexToPrint" i18n:domain="PloneMeeting"
                     tal:define="mayEdit python: member.has_permission('Modify portal content', annex);
-                                isPrintable annex/isPrintable;
+                                isPrintable python: annex.isConvertable() and not annex.conversionFailed();
                                 isAnnexToPrint annex/getToPrint;">
   <tal:isPrintable tal:condition="isPrintable">
   <span id="marker_toggle_annextoprint_UID#"

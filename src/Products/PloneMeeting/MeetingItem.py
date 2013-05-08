@@ -39,6 +39,7 @@ from zope.i18n import translate
 from collective.documentviewer import storage
 from collective.documentviewer.settings import Settings
 from collective.documentviewer.settings import GlobalSettings
+from collective.documentviewer.async import asyncInstalled
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View

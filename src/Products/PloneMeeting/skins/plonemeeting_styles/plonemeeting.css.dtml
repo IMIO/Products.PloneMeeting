@@ -236,6 +236,10 @@ margin-top: -1.9em;
   cursor: default;
 }
 
+.close-fullscreen {
+  display: none;
+}
+
 .actionMenuContentAdvice { width: 350px; }
 
 /* annexes displayed in the annexes_form (table of annexes) */
@@ -256,9 +260,17 @@ li.pmLinks div.annexTitleNotPrintable {
     padding-left: 0.5em;
 }
 
-/* place the icon a bit more closer to the following text */
-.erroredConversion img {
-    margin-right: -5px;
+/* place an icon before the annex title if there was an error during conversion */
+.erroredConversion, dd li span.erroredConversion {
+  background-image: url(<dtml-var portal_url>/errored_conversion.png);
+  background-repeat: no-repeat;
+  background-position: 0px 0px;
+  padding-left: 16px !important;
+}
+
+/* small fixes with position of icon displayed before annex title depending on following tag */
+dd li a.erroredConversion, tr span.erroredConversion {
+  background-position: 0px 1px;
 }
 
 .contentBatchAction {

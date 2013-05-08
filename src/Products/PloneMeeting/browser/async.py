@@ -67,6 +67,14 @@ class AnnexToPrint(BrowserView):
             annexToPrint = self.context.getToPrint()
             # toggle value
             self.context.setToPrint(not annexToPrint)
+
+            # check that this annex is printable
+            # in case last conversion failed, we should not let the user
+            # specify that the annex is toPrint
+            if self.context.conversionFailed():
+                raise Exception, \
+                    'This annex can not be printed because the conversion to a printable format failed!'
+
             if annexToPrint:
                 filename = 'annexToPrintNo.png'
                 name = 'annexToPrintYes'
@@ -86,8 +94,11 @@ class AnnexToPrint(BrowserView):
         except Exception, exc:
             # set an error status in request.RESPONSE so the ajax call knows
             # that something wrong happened and redirect the page so portalMessages are displayed
-            self.portal.plone_utils.addPortalMessage("There was an error while preparing the annexe to be printable."
-                                                     "The error message is '%s'.  Please contact system administrator!"
-                                                     % str(exc), type='error')
+            self.portal.plone_utils.addPortalMessage(
+                self.context.translate("There was an error while trying to set this annex to printable. "
+                                       "The error message was : ${error}. Please contact system administrator.",
+                                       mapping={'error': str(exc)},
+                                       domain="PloneMeeting"),
+                type='error')
             self.request.RESPONSE.status = 500
             return

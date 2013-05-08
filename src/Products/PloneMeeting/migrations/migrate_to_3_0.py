@@ -352,7 +352,7 @@ class Migrate_To_3_0(Migrator):
         logger.info('Done.')
 
     def _reindexAnnexes(self):
-        '''A new value 'isPrintable' needs to be indexed...'''
+        '''A new value 'isConvertable' needs to be indexed...'''
         logger.info('Updating every items annexIndex')
         self.portal.portal_plonemeeting.reindexAnnexes()
         logger.info('Done.')

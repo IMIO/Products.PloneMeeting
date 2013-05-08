@@ -56,6 +56,12 @@
          Products.Archetypes.interfaces.IObjectInitializedEvent"
     handler=".MeetingFile.convertForPrinting" />
 
+  <!-- when collective.documentviewer conversion finished, check that everything is right -->
+  <subscriber
+    for=".interfaces.IMeetingFile
+         collective.documentviewer.interfaces.IConversionFinishedEvent"
+    handler=".MeetingFile.checkAfterConversion" />
+
   <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
   <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
     <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />

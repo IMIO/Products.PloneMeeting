@@ -30,11 +30,15 @@ import os.path
 import time
 import unicodedata
 from App.class_init import InitializeClass
+from zope.annotation import IAnnotations
+from zope.i18n import translate
 from plone.memoize.instance import memoize
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
-from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, HubSessionsMarshaller
+from collective.documentviewer.async import asyncInstalled
+from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, HubSessionsMarshaller, sendMailIfRelevant
+
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -249,7 +253,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'iconUrl': portal_url.getRelativeContentURL(fileType) + '/theIcon',
                'modification_date': self.pm_modification_date,
                'decisionRelated': self.isDecisionRelated(),
-               'isPrintable': self.isPrintable(),
+               'isConvertable': self.isConvertable(),
                }
         return res
 
@@ -430,11 +434,22 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         # finally set the given value
         self.getField('toPrint').set(self, value)
 
-    security.declarePublic('isPrintable')
-    @memoize
-    def isPrintable(self):
+    security.declarePublic('conversionFailed')
+    def conversionFailed(self):
         """
-          Check if the annex is printable (hopefully).  If the annex mimetype is one taken into
+          Check if conversion failed
+        """
+        annotations = IAnnotations(self)
+        if 'collective.documentviewer' in annotations and \
+           'successfully_converted' in annotations['collective.documentviewer'] and \
+           annotations['collective.documentviewer']['successfully_converted'] is False:
+            return True
+        return False
+
+    security.declarePublic('isConvertable')
+    def isConvertable(self):
+        """
+          Check if the annex is convertable (hopefully).  If the annex mimetype is one taken into
           account by collective.documentviewer CONVERTABLE_TYPES, then it should be printable...
         """
         mr = self.mimetypes_registry
@@ -469,6 +484,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         # if the mimetype seems to be managed by collective.documentviewer
         if set(extensions).intersection(set(printableExtensions)):
             return True
+
         return False
 
     @memoize
@@ -478,7 +494,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         for convertable_type in CONVERTABLE_TYPES.iteritems():
             printableExtensions.extend(convertable_type[1].extensions)
         return printableExtensions
-
 
 
 registerType(MeetingFile, PROJECTNAME)
@@ -491,7 +506,54 @@ def convertForPrinting(object, event, force=False):
     """
     if not object.portal_plonemeeting.getEnableAnnexPreview() and not force:
         return
+    # if the annex will be converted to images by plone.app.async
+    # save some elements from the REQUEST that will be used after...
+    if asyncInstalled():
+        saved_req = dict(object.REQUEST)
+        # remove useless keys
+        keys_to_remove = []
+        for key in saved_req:
+            if not isinstance(saved_req[key], str):
+                keys_to_remove.append(key)
+        for key in keys_to_remove:
+            del saved_req[key]
+        # save it as string to avoid pickling error
+        object.saved_request = str(saved_req)
+    # queueJob use plone.app.async if installed or current instance if not
     from collective.documentviewer.async import queueJob
     queueJob(object)
 
+def checkAfterConversion(object, event):
+    """
+      After conversion, check that there was not error, if an error occured, make sure the annex
+      is set to not toPrint and send an email if relevant.
+    """
+    if event.status == 'failure':
+        # make sure the annex is not printed in documents
+        object.setToPrint(False)
+        # send an email to relevant users to warn them if relevant
+        item = object.getItem()
+        # plone.app.async does not have a REQUEST... so make one...
+        if asyncInstalled():
+            from Testing.makerequest import makerequest
+            item = makerequest(object.getItem())
+            import ast
+            # initialize the REQUEST with saved values on the annex...
+            saved_request = ast.literal_eval(object.saved_request)
+            for key in saved_request:
+                item.REQUEST[key] = saved_request[key]
+            #saved_request is not persistent, it will disappear at next request
+        else:
+            # if we are not using plone.app.async, add a portal_message
+            object.plone_utils.addPortalMessage(
+                translate(msgid='There was an error during annex conversion, please contact system administrator.',
+                          domain='PloneMeeting',
+                          context=object.REQUEST), 'error')
+
+        sendMailIfRelevant(item, 'annexConversionError', 'PloneMeeting: Add annex', isRole=False)
+    # remove saved_request on annex
+    try:
+        del object.saved_request
+    except:
+        pass
 ##/code-section module-footer
