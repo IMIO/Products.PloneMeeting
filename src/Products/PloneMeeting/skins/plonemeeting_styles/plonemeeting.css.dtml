@@ -236,7 +236,9 @@ margin-top: -1.9em;
   cursor: default;
 }
 
-.close-fullscreen {
+/* collective.documentviewer : hide some elements... */
+
+.close-fullscreen, .DV-navigation {
   display: none;
 }
 
