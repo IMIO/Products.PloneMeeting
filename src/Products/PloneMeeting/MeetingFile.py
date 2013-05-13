@@ -86,6 +86,7 @@ WVTEXT_ERROR = 'An error occurred while converting a Word document with wvText.'
 CONTENT_TYPE_NOT_FOUND = 'The content_type for MeetingFile at %s was not found in mimetypes_registry!'
 FILE_EXTENSION_NOT_FOUND = 'The extension used by MeetingFile at %s does not correspond to ' \
     'an extension available in the mimetype %s found in mimetypes_registry!'
+CONVERSION_ERROR = u'There was an error during annex conversion, please contact system administrator.'
 ##/code-section module-header
 
 schema = Schema((
@@ -450,7 +451,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     def isConvertable(self):
         """
           Check if the annex is convertable (hopefully).  If the annex mimetype is one taken into
-          account by collective.documentviewer CONVERTABLE_TYPES, then it should be printable...
+          account by collective.documentviewer CONVERTABLE_TYPES, then it should be convertable...
         """
         mr = self.mimetypes_registry
         content_type = mr.lookup(self.content_type)
@@ -504,7 +505,8 @@ def convertForPrinting(object, event, force=False):
     """
       Convert the MeetingFile to images so it can be printed or previewed.
     """
-    if not object.portal_plonemeeting.getEnableAnnexPreview() and not force:
+    if (not object.portal_plonemeeting.getEnableAnnexPreview() and not force) or  \
+       not object.isConvertable():
         return
     # if the annex will be converted to images by plone.app.async
     # save some elements from the REQUEST that will be used after...
@@ -546,7 +548,7 @@ def checkAfterConversion(object, event):
         else:
             # if we are not using plone.app.async, add a portal_message
             object.plone_utils.addPortalMessage(
-                translate(msgid='There was an error during annex conversion, please contact system administrator.',
+                translate(msgid=CONVERSION_ERROR,
                           domain='PloneMeeting',
                           context=object.REQUEST), 'error')
 

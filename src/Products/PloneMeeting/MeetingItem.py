@@ -3464,7 +3464,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           and 'not successfully converted' annexes
           Either an annex is:
           - not convertable
-          - under conversion
+          - under or waiting conversion
           - converted
           - error during conversion
         """
