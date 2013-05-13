@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<!--
+Copyright 2012 Mozilla Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<html dir="ltr" mozdisallowselectionprint=""><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>SEANCE DU 2011 - imio-projet-de-deliberation-affiliation-imio-communes.pdf</title>
+
+<!-- This snippet is used in firefox extension, see Makefile -->
+<!-- base href="resource://pdf.js/web/" -->
+<script type="text/javascript" src="imio-projet-de-deliberation-affiliation-imio-communes_fichiers/l10n.js"></script>
+<script type="text/javascript" src="imio-projet-de-deliberation-affiliation-imio-communes_fichiers/pdf.js"></script>
+
+
+    <link rel="stylesheet" href="imio-projet-de-deliberation-affiliation-imio-communes_fichiers/viewer.css">
+
+
+
+
+
+
+    <script type="text/javascript" src="imio-projet-de-deliberation-affiliation-imio-communes_fichiers/debugger.js"></script>
+    <script type="text/javascript" src="imio-projet-de-deliberation-affiliation-imio-communes_fichiers/viewer.js"></script>
+  <style id="PDFJS_FONT_STYLE_TAG"></style><style type="text/css" charset="utf-8">/* See license.txt for terms of usage */
+/** reset styling **/
+.firebugResetStyles {
+    z-index: 2147483646 !important;
+    top: 0 !important;
+    left: 0 !important;
+    display: block !important;
+    border: 0 none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    outline: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    position: fixed !important;
+    transform: rotate(0deg) !important;
+    transform-origin: 50% 50% !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent none !important;
+    pointer-events: none !important;
+    white-space: normal !important;
+}
+
+.firebugBlockBackgroundColor {
+    background-color: transparent !important;
+}
+
+.firebugResetStyles:before, .firebugResetStyles:after {
+    content: "" !important;
+}
+/**actual styling to be modified by firebug theme**/
+.firebugCanvas {
+    display: none !important;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+.firebugLayoutBox {
+    width: auto !important;
+    position: static !important;
+}
+
+.firebugLayoutBoxOffset {
+    opacity: 0.8 !important;
+    position: fixed !important;
+}
+
+.firebugLayoutLine {
+    opacity: 0.4 !important;
+    background-color: #000000 !important;
+}
+
+.firebugLayoutLineLeft, .firebugLayoutLineRight {
+    width: 1px !important;
+    height: 100% !important;
+}
+
+.firebugLayoutLineTop, .firebugLayoutLineBottom {
+    width: 100% !important;
+    height: 1px !important;
+}
+
+.firebugLayoutLineTop {
+    margin-top: -1px !important;
+    border-top: 1px solid #999999 !important;
+}
+
+.firebugLayoutLineRight {
+    border-right: 1px solid #999999 !important;
+}
+
+.firebugLayoutLineBottom {
+    border-bottom: 1px solid #999999 !important;
+}
+
+.firebugLayoutLineLeft {
+    margin-left: -1px !important;
+    border-left: 1px solid #999999 !important;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+.firebugLayoutBoxParent {
+    border-top: 0 none !important;
+    border-right: 1px dashed #E00 !important;
+    border-bottom: 1px dashed #E00 !important;
+    border-left: 0 none !important;
+    position: fixed !important;
+    width: auto !important;
+}
+
+.firebugRuler{
+    position: absolute !important;
+}
+
+.firebugRulerH {
+    top: -15px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 14px !important;
+    background: url("data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%13%88%00%00%00%0E%08%02%00%00%00L%25a%0A%00%00%00%04gAMA%00%00%D6%D8%D4OX2%00%00%00%19tEXtSoftware%00Adobe%20ImageReadyq%C9e%3C%00%00%04%F8IDATx%DA%EC%DD%D1n%E2%3A%00E%D1%80%F8%FF%EF%E2%AF2%95%D0D4%0E%C1%14%B0%8Fa-%E9%3E%CC%9C%87n%B9%81%A6W0%1C%A6i%9A%E7y%0As8%1CT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AATE9%FE%FCw%3E%9F%AF%2B%2F%BA%97%FDT%1D~K(%5C%9D%D5%EA%1B%5C%86%B5%A9%BDU%B5y%80%ED%AB*%03%FAV9%AB%E1%CEj%E7%82%EF%FB%18%BC%AEJ8%AB%FA'%D2%BEU9%D7U%ECc0%E1%A2r%5DynwVi%CFW%7F%BB%17%7Dy%EACU%CD%0E%F0%FA%3BX%FEbV%FEM%9B%2B%AD%BE%AA%E5%95v%AB%AA%E3E5%DCu%15rV9%07%B5%7F%B5w%FCm%BA%BE%AA%FBY%3D%14%F0%EE%C7%60%0EU%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5JU%88%D3%F5%1F%AE%DF%3B%1B%F2%3E%DAUCNa%F92%D02%AC%7Dm%F9%3A%D4%F2%8B6%AE*%BF%5C%C2Ym~9g5%D0Y%95%17%7C%C8c%B0%7C%18%26%9CU%CD%13i%F7%AA%90%B3Z%7D%95%B4%C7%60%E6E%B5%BC%05%B4%FBY%95U%9E%DB%FD%1C%FC%E0%9F%83%7F%BE%17%7DkjMU%E3%03%AC%7CWj%DF%83%9An%BCG%AE%F1%95%96yQ%0Dq%5Dy%00%3Et%B5'%FC6%5DS%95pV%95%01%81%FF'%07%00%00%00%00%00%00%00%00%00%F8x%C7%F0%BE%9COp%5D%C9%7C%AD%E7%E6%EBV%FB%1E%E0(%07%E5%AC%C6%3A%ABi%9C%8F%C6%0E9%AB%C0'%D2%8E%9F%F99%D0E%B5%99%14%F5%0D%CD%7F%24%C6%DEH%B8%E9rV%DFs%DB%D0%F7%00k%FE%1D%84%84%83J%B8%E3%BA%FB%EF%20%84%1C%D7%AD%B0%8E%D7U%C8Y%05%1E%D4t%EF%AD%95Q%BF8w%BF%E9%0A%BF%EB%03%00%00%00%00%00%00%00%00%00%B8vJ%8E%BB%F5%B1u%8Cx%80%E1o%5E%CA9%AB%CB%CB%8E%03%DF%1D%B7T%25%9C%D5(%EFJM8%AB%CC'%D2%B2*%A4s%E7c6%FB%3E%FA%A2%1E%80~%0E%3E%DA%10x%5D%95Uig%15u%15%ED%7C%14%B6%87%A1%3B%FCo8%A8%D8o%D3%ADO%01%EDx%83%1A~%1B%9FpP%A3%DC%C6'%9C%95gK%00%00%00%00%00%00%00%00%00%20%D9%C9%11%D0%C0%40%AF%3F%EE%EE%92%94%D6%16X%B5%BCMH%15%2F%BF%D4%A7%C87%F1%8E%F2%81%AE%AAvzr%DA2%ABV%17%7C%E63%83%E7I%DC%C6%0Bs%1B%EF6%1E%00%00%00%00%00%00%00%00%00%80cr%9CW%FF%7F%C6%01%0E%F1%CE%A5%84%B3%CA%BC%E0%CB%AA%84%CE%F9%BF)%EC%13%08WU%AE%AB%B1%AE%2BO%EC%8E%CBYe%FE%8CN%ABr%5Dy%60~%CFA%0D%F4%AE%D4%BE%C75%CA%EDVB%EA(%B7%F1%09g%E5%D9%12%00%00%00%00%00%00%00%00%00H%F6%EB%13S%E7y%5E%5E%FB%98%F0%22%D1%B2'%A7%F0%92%B1%BC%24z3%AC%7Dm%60%D5%92%B4%7CEUO%5E%F0%AA*%3BU%B9%AE%3E%A0j%94%07%A0%C7%A0%AB%FD%B5%3F%A0%F7%03T%3Dy%D7%F7%D6%D4%C0%AAU%D2%E6%DFt%3F%A8%CC%AA%F2%86%B9%D7%F5%1F%18%E6%01%F8%CC%D5%9E%F0%F3z%88%AA%90%EF%20%00%00%00%00%00%00%00%00%00%C0%A6%D3%EA%CFi%AFb%2C%7BB%0A%2B%C3%1A%D7%06V%D5%07%A8r%5D%3D%D9%A6%CAu%F5%25%CF%A2%99%97zNX%60%95%AB%5DUZ%D5%FBR%03%AB%1C%D4k%9F%3F%BB%5C%FF%81a%AE%AB'%7F%F3%EA%FE%F3z%94%AA%D8%DF%5B%01%00%00%00%00%00%00%00%00%00%8E%FB%F3%F2%B1%1B%8DWU%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*UiU%C7%BBe%E7%F3%B9%CB%AAJ%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5J%95*U%AAT%A9R%A5*%AAj%FD%C6%D4%5Eo%90%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5%86%AF%1B%9F%98%DA%EBm%BBV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%ADV%AB%D5j%B5Z%AD%D6%E4%F58%01%00%00%00%00%00%00%00%00%00%00%00%00%00%40%85%7F%02%0C%008%C2%D0H%16j%8FX%00%00%00%00IEND%AEB%60%82") repeat-x !important;
+    border-top: 1px solid #BBBBBB !important;
+    border-right: 1px dashed #BBBBBB !important;
+    border-bottom: 1px solid #000000 !important;
+}
+
+.firebugRulerV {
+    top: 0 !important;
+    left: -15px !important;
+    width: 14px !important;
+    height: 100% !important;
+    background: url("data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%0E%00%00%13%88%08%02%00%00%00%0E%F5%CB%10%00%00%00%04gAMA%00%00%D6%D8%D4OX2%00%00%00%19tEXtSoftware%00Adobe%20ImageReadyq%C9e%3C%00%00%06~IDATx%DA%EC%DD%D1v%A20%14%40Qt%F1%FF%FF%E4%97%D9%07%3BT%19%92%DC%40(%90%EEy%9A5%CB%B6%E8%F6%9Ac%A4%CC0%84%FF%DC%9E%CF%E7%E3%F1%88%DE4%F8%5D%C7%9F%2F%BA%DD%5E%7FI%7D%F18%DDn%BA%C5%FB%DF%97%BFk%F2%10%FF%FD%B4%F2M%A7%FB%FD%FD%B3%22%07p%8F%3F%AE%E3%F4S%8A%8F%40%EEq%9D%BE8D%F0%0EY%A1Uq%B7%EA%1F%81%88V%E8X%3F%B4%CEy%B7h%D1%A2E%EBohU%FC%D9%AF2fO%8BBeD%BE%F7X%0C%97%A4%D6b7%2Ck%A5%12%E3%9B%60v%B7r%C7%1AI%8C%BD%2B%23r%00c0%B2v%9B%AD%CA%26%0C%1Ek%05A%FD%93%D0%2B%A1u%8B%16-%95q%5Ce%DCSO%8E%E4M%23%8B%F7%C2%FE%40%BB%BD%8C%FC%8A%B5V%EBu%40%F9%3B%A72%FA%AE%8C%D4%01%CC%B5%DA%13%9CB%AB%E2I%18%24%B0n%A9%0CZ*Ce%9C%A22%8E%D8NJ%1E%EB%FF%8F%AE%CAP%19*%C3%BAEKe%AC%D1%AAX%8C*%DEH%8F%C5W%A1e%AD%D4%B7%5C%5B%19%C5%DB%0D%EF%9F%19%1D%7B%5E%86%BD%0C%95%A12%AC%5B*%83%96%CAP%19%F62T%86%CAP%19*%83%96%CA%B8Xe%BC%FE)T%19%A1%17xg%7F%DA%CBP%19*%C3%BA%A52T%86%CAP%19%F62T%86%CA%B0n%A9%0CZ%1DV%C6%3D%F3%FCH%DE%B4%B8~%7F%5CZc%F1%D6%1F%AF%84%F9%0F6%E6%EBVt9%0E~%BEr%AF%23%B0%97%A12T%86%CAP%19%B4T%86%CA%B8Re%D8%CBP%19*%C3%BA%A52huX%19%AE%CA%E5%BC%0C%7B%19*CeX%B7h%A9%0C%95%E1%BC%0C%7B%19*CeX%B7T%06%AD%CB%5E%95%2B%BF.%8F%C5%97%D5%E4%7B%EE%82%D6%FB%CF-%9C%FD%B9%CF%3By%7B%19%F62T%86%CA%B0n%D1R%19*%A3%D3%CA%B0%97%A12T%86uKe%D0%EA%B02*%3F1%99%5DB%2B%A4%B5%F8%3A%7C%BA%2B%8Co%7D%5C%EDe%A8%0C%95a%DDR%19%B4T%C66%82fA%B2%ED%DA%9FC%FC%17GZ%06%C9%E1%B3%E5%2C%1A%9FoiB%EB%96%CA%A0%D5qe4%7B%7D%FD%85%F7%5B%ED_%E0s%07%F0k%951%ECr%0D%B5C%D7-g%D1%A8%0C%EB%96%CA%A0%A52T%C6)*%C3%5E%86%CAP%19%D6-%95A%EB*%95q%F8%BB%E3%F9%AB%F6%E21%ACZ%B7%22%B7%9B%3F%02%85%CB%A2%5B%B7%BA%5E%B7%9C%97%E1%BC%0C%EB%16-%95%A12z%AC%0C%BFc%A22T%86uKe%D0%EA%B02V%DD%AD%8A%2B%8CWhe%5E%AF%CF%F5%3B%26%CE%CBh%5C%19%CE%CB%B0%F3%A4%095%A1%CAP%19*Ce%A8%0C%3BO*Ce%A8%0C%95%A12%3A%AD%8C%0A%82%7B%F0v%1F%2FD%A9%5B%9F%EE%EA%26%AF%03%CA%DF9%7B%19*Ce%A8%0C%95%A12T%86%CA%B8Ze%D8%CBP%19*Ce%A8%0C%95%D1ae%EC%F7%89I%E1%B4%D7M%D7P%8BjU%5C%BB%3E%F2%20%D8%CBP%19*Ce%A8%0C%95%A12T%C6%D5*%C3%5E%86%CAP%19*Ce%B4O%07%7B%F0W%7Bw%1C%7C%1A%8C%B3%3B%D1%EE%AA%5C%D6-%EBV%83%80%5E%D0%CA%10%5CU%2BD%E07YU%86%CAP%19*%E3%9A%95%91%D9%A0%C8%AD%5B%EDv%9E%82%FFKOee%E4%8FUe%A8%0C%95%A12T%C6%1F%A9%8C%C8%3D%5B%A5%15%FD%14%22r%E7B%9F%17l%F8%BF%ED%EAf%2B%7F%CF%ECe%D8%CBP%19*Ce%A8%0C%95%E1%93~%7B%19%F62T%86%CAP%19*Ce%A8%0C%E7%13%DA%CBP%19*Ce%A8%0CZf%8B%16-Z%B4h%D1R%19f%8B%16-Z%B4h%D1R%19%B4%CC%16-Z%B4h%D1R%19%B4%CC%16-Z%B4h%D1%A2%A52%CC%16-Z%B4h%D1%A2%A52h%99-Z%B4h%D1%A2%A52h%99-Z%B4h%D1%A2EKe%98-Z%B4h%D1%A2EKe%D02%5B%B4h%D1%A2EKe%D02%5B%B4h%D1%A2E%8B%96%CA0%5B%B4h%D1%A2E%8B%96%CA%A0e%B6h%D1%A2E%8B%96%CA%A0e%B6h%D1%A2E%8B%16-%95a%B6h%D1%A2E%8B%16-%95A%CBl%D1%A2E%8B%16-%95A%CBl%D1%A2E%8B%16-Z*%C3l%D1%A2E%8B%16-Z*%83%96%D9%A2E%8B%16-Z*%83%96%D9%A2E%8B%16-Z%B4T%86%D9%A2E%8B%16-Z%B4T%06-%B3E%8B%16-Z%B4T%06-%B3E%8B%16-Z%B4h%A9%0C%B3E%8B%16-Z%B4h%A9%0CZf%8B%16-Z%B4h%A9%0CZf%8B%16-Z%B4h%D1R%19f%8B%16-Z%B4h%D1R%19%B4%CC%16-Z%B4h%D1R%19%B4%CC%16-Z%B4h%D1%A2%A52%CC%16-Z%B4h%D1%A2%A52h%99-Z%B4h%D1%A2%A52h%99-Z%B4h%D1%A2EKe%98-Z%B4h%D1%A2EKe%D02%5B%B4h%D1%A2EKe%D02%5B%B4h%D1%A2E%8B%96%CA0%5B%B4h%D1%A2E%8B%96%CA%A0e%B6h%D1%A2E%8B%96%CA%A0e%B6h%D1%A2E%8B%16-%95a%B6h%D1%A2E%8B%16-%95A%CBl%D1%A2E%8B%16-%95A%CBl%D1%A2E%8B%16-Z*%C3l%D1%A2E%8B%16-Z*%83%96%D9%A2E%8B%16-Z*%83%96%D9%A2E%8B%16-Z%B4T%86%D9%A2E%8B%16-Z%B4T%06-%B3E%8B%16-Z%B4T%06-%B3E%8B%16-Z%B4h%A9%0C%B3E%8B%16-Z%B4h%A9%0CZf%8B%16-Z%B4h%A9%0CZf%8B%16-Z%B4h%D1R%19f%8B%16-Z%B4h%D1R%19%B4%CC%16-Z%B4h%D1R%19%B4%CC%16-Z%B4h%D1%A2%A52%CC%16-Z%B4h%D1%A2%A52h%99-Z%B4h%D1%A2%A52h%99-Z%B4h%D1%A2EKe%98-Z%B4h%D1%A2EKe%D02%5B%B4h%D1%A2EKe%D02%5B%B4h%D1%A2E%8B%96%CA0%5B%B4h%D1%A2E%8B%96%CA%A0e%B6h%D1%A2E%8B%96%CA%A0e%B6h%D1%A2E%8B%16-%95a%B6h%D1%A2E%8B%16-%95A%CBl%D1%A2E%8B%16-%95A%CBl%D1%A2E%8B%16-Z*%C3l%D1%A2E%8B%16-Z*%83%96%D9%A2E%8B%16-Z*%83%96%D9%A2E%8B%16-Z%B4T%86%D9%A2E%8B%16-Z%B4T%06-%B3E%8B%16-Z%B4%AE%A4%F5%25%C0%00%DE%BF%5C'%0F%DA%B8q%00%00%00%00IEND%AEB%60%82") repeat-y !important;
+    border-left: 1px solid #BBBBBB !important;
+    border-right: 1px solid #000000 !important;
+    border-bottom: 1px dashed #BBBBBB !important;
+}
+
+.overflowRulerX > .firebugRulerV {
+    left: 0 !important;
+}
+
+.overflowRulerY > .firebugRulerH {
+    top: 0 !important;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+.fbProxyElement {
+    position: fixed !important;
+    pointer-events: auto !important;
+}
+</style></head>
+
+  <body>
+    <div id="outerContainer">
+
+      <div id="sidebarContainer">
+        <div id="toolbarSidebar">
+          <div class="splitToolbarButton toggled">
+            <button id="viewThumbnail" class="toolbarButton group toggled" title="Afficher les vignettes" tabindex="1" data-l10n-id="thumbs">
+               <span data-l10n-id="thumbs_label">Vignettes</span>
+            </button>
+            <button id="viewOutline" class="toolbarButton group" title="Afficher les signets" tabindex="2" data-l10n-id="outline">
+               <span data-l10n-id="outline_label">Signets du document</span>
+            </button>
+          </div>
+        </div>
+        <div id="sidebarContent">
+          <div id="thumbnailView"><a title="Page 1" href="http://www.imio.be/presentation/adherer/imio-projet-de-deliberation-affiliation-imio-communes.pdf#page=1"><div data-loaded="true" class="thumbnail selected" id="thumbnailContainer1"><div style="width: 98px; height: 138.682px;" class="thumbnailSelectionRing"><canvas aria-label="Vignette de la page 1" class="thumbnailImage" height="138" width="98" moz-opaque="" id="thumbnail1"></canvas></div></div></a><a title="Page 2" href="http://www.imio.be/presentation/adherer/imio-projet-de-deliberation-affiliation-imio-communes.pdf#page=2"><div data-loaded="true" class="thumbnail" id="thumbnailContainer2"><div style="width: 98px; height: 138.682px;" class="thumbnailSelectionRing"><canvas aria-label="Vignette de la page 2" class="thumbnailImage" height="138" width="98" moz-opaque="" id="thumbnail2"></canvas></div></div></a></div>
+          <div id="outlineView" class="hidden"><div class="noOutline">Aucun signet disponible</div></div>
+        </div>
+      </div>  <!-- sidebarContainer -->
+
+      <div id="mainContainer">
+        <div class="findbar hidden doorHanger" id="findbar">
+          <label for="findInput" class="toolbarLabel" data-l10n-id="find_label">Rechercher&nbsp;:</label>
+          <input id="findInput" class="toolbarField" tabindex="20">
+          <div class="splitToolbarButton">
+            <button class="toolbarButton findPrevious" title="Trouver l'occurrence précédente de la phrase" id="findPrevious" tabindex="21" data-l10n-id="find_previous">
+              <span data-l10n-id="find_previous_label">Précédent</span>
+            </button>
+            <div class="splitToolbarButtonSeparator"></div>
+            <button class="toolbarButton findNext" title="Trouver la prochaine occurrence de la phrase" id="findNext" tabindex="22" data-l10n-id="find_next">
+              <span data-l10n-id="find_next_label">Suivant</span>
+            </button>
+          </div>
+          <input id="findHighlightAll" class="toolbarField" type="checkbox">
+          <label for="findHighlightAll" class="toolbarLabel" tabindex="23" data-l10n-id="find_highlight">Tout surligner</label>
+          <input id="findMatchCase" class="toolbarField" type="checkbox">
+          <label for="findMatchCase" class="toolbarLabel" tabindex="24" data-l10n-id="find_match_case_label">Respecter la casse</label>
+          <span id="findMsg" class="toolbarLabel"></span>
+        </div>
+        <div class="toolbar">
+          <div id="toolbarContainer">
+            <div id="toolbarViewer">
+              <div id="toolbarViewerLeft">
+                <button id="sidebarToggle" class="toolbarButton" title="Afficher/masquer le panneau latéral" tabindex="3" data-l10n-id="toggle_slider">
+                  <span data-l10n-id="toggle_slider_label">Afficher/masquer le panneau latéral</span>
+                </button>
+                <div class="toolbarButtonSpacer"></div>
+                <button id="viewFind" class="toolbarButton group hidden" title="Rechercher dans le document" tabindex="4" data-l10n-id="findbar">
+                   <span data-l10n-id="findbar_label">Rechercher</span>
+                </button>
+                <div class="splitToolbarButton">
+                  <button disabled="disabled" class="toolbarButton pageUp" title="Page précédente" id="previous" tabindex="5" data-l10n-id="previous">
+                    <span data-l10n-id="previous_label">Précédent</span>
+                  </button>
+                  <div class="splitToolbarButtonSeparator"></div>
+                  <button class="toolbarButton pageDown" title="Page suivante" id="next" tabindex="6" data-l10n-id="next">
+                    <span data-l10n-id="next_label">Suivant</span>
+                  </button>
+                </div>
+                <label id="pageNumberLabel" class="toolbarLabel" for="pageNumber" data-l10n-id="page_label">Page&nbsp;:</label>
+                <input max="2" id="pageNumber" class="toolbarField pageNumber" value="1" size="4" min="1" tabindex="7" type="number">
+                
+                <span id="numPages" class="toolbarLabel">sur 2</span>
+              </div>
+              <div id="toolbarViewerRight">
+                <input id="fileInput" class="fileInput" oncontextmenu="return false;" style="visibility: hidden; position: fixed; right: 0; top: 0" type="file">
+
+
+                <button id="fullscreen" class="toolbarButton fullscreen" title="Basculer en mode présentation" tabindex="11" data-l10n-id="presentation_mode">
+                  <span data-l10n-id="presentation_mode_label">Mode présentation</span>
+                </button>
+
+                <button id="openFile" class="toolbarButton openFile" title="Ouvrir le fichier" tabindex="12" data-l10n-id="open_file" hidden="true">
+                   <span data-l10n-id="open_file_label">Ouvrir</span>
+                </button>
+
+                <button id="print" class="toolbarButton print" title="Imprimer" tabindex="13" data-l10n-id="print">
+                  <span data-l10n-id="print_label">Imprimer</span>
+                </button>
+
+                <button id="download" class="toolbarButton download" title="Télécharger" tabindex="14" data-l10n-id="download">
+                  <span data-l10n-id="download_label">Télécharger</span>
+                </button>
+                <!-- <div class="toolbarButtonSpacer"></div> -->
+                <a href="http://www.imio.be/presentation/adherer/imio-projet-de-deliberation-affiliation-imio-communes.pdf#page=1&amp;zoom=auto,0,842" id="viewBookmark" class="toolbarButton bookmark" title="Affichage courant (copier ou ouvrir dans une nouvelle fenêtre)" tabindex="15" data-l10n-id="bookmark"><span data-l10n-id="bookmark_label">Affichage actuel</span></a>
+              </div>
+              <div class="outerCenter">
+                <div class="innerCenter" id="toolbarViewerMiddle">
+                  <div class="splitToolbarButton">
+                    <button class="toolbarButton zoomOut" title="Zoom arrière" tabindex="8" data-l10n-id="zoom_out">
+                      <span data-l10n-id="zoom_out_label">Zoom arrière</span>
+                    </button>
+                    <div class="splitToolbarButtonSeparator"></div>
+                    <button class="toolbarButton zoomIn" title="Zoom avant" tabindex="9" data-l10n-id="zoom_in">
+                      <span data-l10n-id="zoom_in_label">Zoom avant</span>
+                     </button>
+                  </div>
+                  <span id="scaleSelectContainer" class="dropdownToolbarButton">
+                     <select id="scaleSelect" title="Zoom" oncontextmenu="return false;" tabindex="10" data-l10n-id="zoom">
+                      <option id="pageAutoOption" value="auto" selected="selected" data-l10n-id="page_scale_auto">Zoom automatique</option>
+                      <option id="pageActualOption" value="page-actual" data-l10n-id="page_scale_actual">Taille réelle</option>
+                      <option id="pageFitOption" value="page-fit" data-l10n-id="page_scale_fit">Page entière</option>
+                      <option id="pageWidthOption" value="page-width" data-l10n-id="page_scale_width">Pleine largeur</option>
+                      <option id="customScaleOption" value="custom">79.45%</option>
+                      <option value="0.5">50%</option>
+                      <option value="0.75">75%</option>
+                      <option value="1">100%</option>
+                      <option value="1.25">125%</option>
+                      <option value="1.5">150%</option>
+                      <option value="2">200%</option>
+                    </select>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <menu type="context" id="viewerContextMenu">
+          <menuitem label="Aller à la première page" id="first_page" data-l10n-id="first_page"></menuitem>
+          <menuitem label="Aller à la dernière page" id="last_page" data-l10n-id="last_page"></menuitem>
+          <menuitem label="Rotation anti-horaire" id="page_rotate_ccw" data-l10n-id="page_rotate_ccw"></menuitem>
+          <menuitem label="Rotation horaire" id="page_rotate_cw" data-l10n-id="page_rotate_cw"></menuitem>
+        </menu>
+
+        <div class="" id="viewerContainer">
+          <div id="viewer" contextmenu="viewerContextMenu"><a name="1"></a><div data-loaded="true" style="width: 793px; height: 1122px;" class="page" id="pageContainer1"><canvas height="1122" width="793" moz-opaque="" id="page1"></canvas><div class="textLayer"><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 108.533px; top: 147.2px; transform: scale(0.948726, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="576.8253505240674">Modèle de délibération du conseil communal concernant la prise de participation à</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 685.6px; top: 147.2px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 276.267px; top: 164.133px; transform: scale(0.946374, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="241.32534052538884">l'Intercommunale de mutualisation</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 215.733px; top: 180.933px; transform: scale(0.931428, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="362.32534413147005"> en matière informatique et organisationnelle (IMIO) </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 214.667px; transform: scale(0.982186, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="179.7400053566694">LE CONSEIL COMMUNAL,</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 248.4px; transform: scale(0.871164, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="280.51467502665537">Vu l'article 162, alinéa 4, de la Constitution,</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 282.133px; transform: scale(0.883847, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="107.82933654689789">Vu l'article 6, § 1</div><div dir="ltr" style="font-size: 8.53333px; font-family: sans-serif; left: 202.667px; top: 282.667px; transform: scale(0.83437, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="7.509333557128907">er</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 210.133px; top: 282.133px; transform: scale(0.873639, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="461.2813470805885">, VIII, 8°, de la loi spéciale du 8 août 1980 de réformes institutionnelles,</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 315.867px; transform: scale(0.887064, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="604.0906846699712">Vu le Code de la Démocratie Locale et de la Décentralisation, notamment les articles L1512-</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 332.8px; transform: scale(0.871949, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="160.43867144811153">3 et L1523-1 et suivants,</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 366.533px; transform: scale(0.797793, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="603.92935133183">Considérant   la   création   de   l'intercommunale   de   mutualisation   en   matière   informatique   et</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 366.533px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 383.333px; transform: scale(0.891629, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="150.68533782410617">organisationnelle IMIO,</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 417.067px; transform: scale(0.878997, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="603.8706846634149">Vu   les   statuts   de   l'Intercommunale   de   mutualisation   en   matière   informatique   et</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 417.067px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 434px; transform: scale(0.886301, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="251.70934083485616">organisationnelle, en abrégé IMIO scrl,</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 484.533px; transform: scale(1.00429, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="59.25333509922027">DÉCIDE:</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 518.267px; transform: scale(0.877934, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="62.33333519101143">Article   1</div><div dir="ltr" style="font-size: 8.53333px; font-family: sans-serif; left: 157.067px; top: 518.667px; transform: scale(0.887467, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="7.9872002380371105">er</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 165.067px; top: 518.267px; transform: scale(0.939753, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="25.373334089517595">  –  </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 190.533px; top: 518.267px; transform: scale(0.857577, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="89.18800265800952">La   commune</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 279.867px; top: 518.267px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 288.4px; top: 518.267px; transform: scale(0.810377, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="410.0506788871289">prend   part   à   l'Intercommunale   de   mutualisation   en   matière</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.2px; top: 518.267px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 535.2px; transform: scale(0.87327, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="498.6373481938839">informatique et organisationnelle, en abrégé IMIO scrl et en devient membre.</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 568.933px; transform: scale(0.830674, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="603.9000179976221">Celle-ci,   conformément   aux   statuts   joints   à   la   présente   délibération,   a   pour   but   de</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 568.933px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 585.733px; transform: scale(0.820596, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="603.9586846660372">promouvoir  et  coordonner   la  mutualisation  de   solutions   organisationnelles,  de   produits   et</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 585.733px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 602.667px; transform: scale(0.876076, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="523.8933489465715">services informatiques pour les pouvoirs locaux de Wallonie et plus précisément:</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 118.667px; top: 636.4px; transform: scale(0.871619, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="12.202667030334474">1.</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 636.4px; transform: scale(0.89495, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="555.7640165630578">De proposer une offre cohérente d’outils informatiques mutualisés et interopérables</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 636.4px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 653.2px; transform: scale(0.885867, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="110.73333663344384">avec la Wallonie:</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 118.667px; top: 670.133px; transform: scale(0.871619, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="12.202667030334474">a.</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 670.133px; transform: scale(0.885769, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="556.2626832445858">soit par le  biais  de la  centrale  de marchés  ou d’achats  qui acquerra via  marchés</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 670.133px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 686.933px; transform: scale(0.889723, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="316.7413427729608">publics des applications informatiques "métiers"</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 459.867px; top: 686.933px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 463.867px; top: 686.933px; transform: scale(0.907578, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="235.06267367208014">de qualité et à un prix globalement</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 686.933px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 703.867px; transform: scale(0.793214, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="556.0426832380294">plus   avantageux   pour   les   pouvoirs   locaux   que   s’ils   avaient   acheté   isolément   les</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 703.867px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 720.667px; transform: scale(0.877395, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="133.36400397455694">mêmes applications;</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 118.667px; top: 737.6px; transform: scale(0.871619, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="12.202667030334474">b.</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 737.6px; transform: scale(0.803636, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="556.1160165735481">soit   par   le   développement,   en   interne,   d’applications   informatiques   génériques   et</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 737.6px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 754.4px; transform: scale(0.875066, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="377.1533445733787">paramétrables, créées en mutualisation sous licence libre.</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 141.867px; top: 771.333px; transform: scale(0.784646, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="557.0986832695008">Dans   ce   cadre,   la   structure   gérera   un   patrimoine   de   logiciels   libres   cohérents   et</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 771.333px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 141.867px; top: 788.133px; transform: scale(0.889161, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="556.6146832550764">robustes, appartenant aux pouvoirs publics, dont elle garantira la maitrise technique</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 788.133px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 141.867px; top: 805.067px; transform: scale(0.865923, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="538.6040160516503">en interne, l’évolution, la pérennité et la diffusion dans le respect de la licence libre.</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 118.667px; top: 821.867px; transform: scale(0.871619, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="12.202667030334474">2.</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 821.867px; transform: scale(0.856994, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="556.189349909067">De   proposer   des   solutions   organisationnelles   optimisées   aux   pouvoirs   locaux</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 821.867px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 142.667px; top: 838.8px; transform: scale(0.881053, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="171.80533845353128">(processus simplifiés, ...). </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 872.533px; transform: scale(0.843689, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="86.9000025898218">Article   2.  –  </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 181.733px; top: 872.533px; transform: scale(0.836564, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="152.25467120420936">La  commune   souscrit  </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 334.133px; top: 872.533px; transform: scale(0.9768, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="9.768000291109086">X</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 343.867px; top: 872.533px; transform: scale(0.797702, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="354.9773439124826">  parts   B   au   capital  de  l'intercommunale   IMIO   par  la</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 872.533px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 889.333px; transform: scale(0.870141, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="262.7826744982006">réalisation d'un apport en numéraire de  </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 357.6px; top: 889.333px; transform: scale(0.9768, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="9.768000291109086">X</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 367.333px; top: 889.333px; transform: scale(0.861056, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="206.65333949208264"> euros (une part = 3,71 euros).  </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 923.067px; transform: scale(0.896683, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="593.6040176907778">Cet apport sera libéré dès réception de l'autorisation de la tutelle par un versement   de  </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 689.6px; top: 923.067px; transform: scale(0.9768, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="9.768000291109086">X</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 699.467px; top: 923.067px; transform: scale(0.812533, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="4.062666787743568"> </div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 940px; transform: scale(0.89392, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="491.6560146524904">euros sur le compte de l'intercommunale IMIO IBAN BE42 0910 1903 3954.</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 94.6667px; top: 973.733px; transform: scale(0.949761, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_1" data-canvas-width="74.08133554112909">Article 3. –</div><div dir="ltr" style="font-size: 14.6667px; font-family: sans-serif; left: 168.8px; top: 973.733px; transform: scale(0.867599, 1); transform-origin: 0% 0% 0px;" data-font-name="g_font_p0_5" data-canvas-width="522.2946822322608"> La présente délibération est soumise, pour approbation, aux autorités de tutelle.</div></div></div><a name="2"></a><div style="width: 793px; height: 1122px;" class="page" id="pageContainer2"><div class="loadingIcon"></div></div></div>
+        </div>
+
+        <div id="loadingBox" hidden="true">
+          <div id="loading"></div>
+          <div id="loadingBar"><div style="height: 100%;" class="progress"></div></div>
+        </div>
+
+        <div id="errorWrapper" hidden="true">
+          <div id="errorMessageLeft">
+            <span id="errorMessage"></span>
+            <button id="errorShowMore" onclick="" oncontextmenu="return false;" data-l10n-id="error_more_info">Plus d'informations</button>
+            <button id="errorShowLess" onclick="" oncontextmenu="return false;" data-l10n-id="error_less_info" hidden="true">Moins d'informations</button>
+          </div>
+          <div id="errorMessageRight">
+            <button id="errorClose" oncontextmenu="return false;" data-l10n-id="error_close">Fermer</button>
+          </div>
+          <div class="clearBoth"></div>
+          <textarea id="errorMoreInfo" readonly="readonly" hidden="true"></textarea>
+        </div>
+      </div> <!-- mainContainer -->
+
+    </div> <!-- outerContainer -->
+    <div id="printContainer"></div>
+  
+
+
+<canvas style="display: none;" height="929" width="1855"></canvas></body></html>

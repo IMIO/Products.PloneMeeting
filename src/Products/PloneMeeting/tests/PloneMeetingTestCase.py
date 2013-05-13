@@ -274,7 +274,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
            a temporary file is created.  In case we check assertRaise(Unauthorized, addAnnex, ...)
            the temporary file is not removed, so make sure it is...'''
         originalAnnexPath = os.path.join(self.pmFolder, self.annexFile)
-        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.txt'
+        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.%s' % originalAnnexPath[-3:]
         if os.path.exists(newAnnexPath):
             os.remove(newAnnexPath)
 
@@ -290,7 +290,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
         #after having used it...
         from shutil import copyfile
         originalAnnexPath = os.path.join(self.pmFolder, self.annexFile)
-        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.txt'
+        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.%s' % originalAnnexPath[-3:]
         copyfile(originalAnnexPath, newAnnexPath)
         annexPath = newAnnexPath
         annexFile = FileUpload(TestFile(
