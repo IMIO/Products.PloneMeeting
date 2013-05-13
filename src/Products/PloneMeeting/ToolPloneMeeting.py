@@ -1064,7 +1064,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         portal_url = self.portal_url.getPortalObject().absolute_url()
         # if we received a tag_title, try to translate it!
         if tag_title:
-            tag_title = translate(tag_title, domain='PloneMeeting', context=self.REQUEST, )
+            tag_title = translate(tag_title, domain='PloneMeeting', context=self.REQUEST, ).encode('utf-8')
         if objClassName in self.ploneMeetingTypes:
             isAnnex = False
             uid = obj.UID()
@@ -2193,6 +2193,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return
         for b in self.portal_catalog(meta_type='MeetingItem'):
             b.getObject().updateAnnexIndex()
+        self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
+
+    security.declarePublic('convertAnnexes')
+    def convertAnnexes(self):
+        '''Convert annexes using collective.documentviewer.'''
+        user = self.portal_membership.getAuthenticatedMember()
+        if not user.has_role('Manager'):
+            return
+        from Products.PloneMeeting.MeetingFile import convertForPrinting
+        for b in self.portal_catalog(meta_type='MeetingItem'):
+            annexes = b.getObject().getAnnexes()
+            for annex in annexes:
+                convertForPrinting(annex, None, force=True)
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 

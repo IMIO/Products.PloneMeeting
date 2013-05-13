@@ -35,6 +35,7 @@ from zope.i18n import translate
 from plone.memoize.instance import memoize
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
+from Products.CMFCore.WorkflowCore import WorkflowException
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collective.documentviewer.async import asyncInstalled
 from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, HubSessionsMarshaller, sendMailIfRelevant
@@ -87,6 +88,8 @@ CONTENT_TYPE_NOT_FOUND = 'The content_type for MeetingFile at %s was not found i
 FILE_EXTENSION_NOT_FOUND = 'The extension used by MeetingFile at %s does not correspond to ' \
     'an extension available in the mimetype %s found in mimetypes_registry!'
 CONVERSION_ERROR = u'There was an error during annex conversion, please contact system administrator.'
+CONVERSION_ERROR_MANAGER = u'There was an error during annex conversion at %s.'
+
 ##/code-section module-header
 
 schema = Schema((
@@ -538,6 +541,8 @@ def checkAfterConversion(object, event):
     if event.status == 'failure':
         # make sure the annex is not printed in documents
         object.setToPrint(False)
+        # special behavior for real Managers
+        isRealManager = object.portal_plonemeeting.isManager(realManagers=True)
         # send an email to relevant users to warn them if relevant
         item = object.getItem()
         # plone.app.async does not have a REQUEST... so make one...
@@ -549,15 +554,20 @@ def checkAfterConversion(object, event):
             saved_request = ast.literal_eval(object.saved_request)
             for key in saved_request:
                 item.REQUEST[key] = saved_request[key]
-            #saved_request is not persistent, it will disappear at next request
         else:
             # if we are not using plone.app.async, add a portal_message
+            msg = isRealManager and (CONVERSION_ERROR_MANAGER % object.absolute_url_path()) or \
+                CONVERSION_ERROR
             object.plone_utils.addPortalMessage(
-                translate(msgid=CONVERSION_ERROR,
+                translate(msgid=msg,
                           domain='PloneMeeting',
                           context=object.REQUEST), 'error')
 
-        sendMailIfRelevant(item, 'annexConversionError', 'PloneMeeting: Add annex', isRole=False)
+        # email notification, check if the Manager is not 'playing' with conversion
+        if isRealManager:
+            sendMailIfRelevant(item, 'annexConversionError', 'Manager', isRole=True)
+        else:
+            sendMailIfRelevant(item, 'annexConversionError', 'PloneMeeting: Add annex', isRole=False)
     # remove saved_request on annex
     try:
         del object.saved_request

@@ -3475,7 +3475,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for annex in self.getAnnexesInOrder(decisionRelated):
             annexUID = annex.UID()
             annex_annotations = IAnnotations(annex)
-            # not_convertable?
+            # not_convertable or awaiting conversion?
             if not 'collective.documentviewer' in annex_annotations.keys():
                 data['not_convertable'].append(annexUID)
                 continue

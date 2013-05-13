@@ -38,7 +38,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         from collective.documentviewer.settings import GlobalSettings
         viewer_settings = GlobalSettings(self.portal)._metadata
         viewer_settings['storage_type'] = 'Blob'
-        # annex preview is disabled in PloneMeetingTestCase
+        # annex preview is disabled by default in 'test' profile
         self.tool.setEnableAnnexPreview(True)
 
     def testIsConvertable(self):
