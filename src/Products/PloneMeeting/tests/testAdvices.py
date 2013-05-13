@@ -44,11 +44,11 @@ class testAdvices(PloneMeetingTestCase):
            In the configuration, an item an advice is asked on is viewable
            in state 'proposed' and 'validated'.'''
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(), \
+        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
                          ('proposed', 'validated',))
-        self.assertEquals(self.meetingConfig.getItemAdviceEditStates(), \
+        self.assertEquals(self.meetingConfig.getItemAdviceEditStates(),
                          ('proposed',))
-        self.assertEquals(self.meetingConfig.getItemAdviceViewStates(), \
+        self.assertEquals(self.meetingConfig.getItemAdviceViewStates(),
                          ('presented',))
         # creator for group 'developers'
         login(self.portal, 'pmCreator1')
@@ -118,18 +118,32 @@ class testAdvices(PloneMeetingTestCase):
         login(self.portal, 'pmCreator1')
         self.do(item1, 'propose')
         # a user able to View the item can not add an advice, even if he tries...
-        self.assertRaises(Unauthorized, item1.editAdvice, group=self.portal.portal_plonemeeting.developers, adviceType='positive', comment='My comment')
+        self.assertRaises(Unauthorized,
+                          item1.editAdvice,
+                          group=self.portal.portal_plonemeeting.developers,
+                          adviceType='positive',
+                          comment='My comment')
         self.assertEquals(item1.getAdvicesToGive(), (None, None))
         login(self.portal, 'pmReviewer2')
         # the given 'adviceType' must exists (selected in the MeetingConfig.usedAdviceTypes)
-        self.assertRaises(KeyError, item1.editAdvice, group=self.portal.portal_plonemeeting.vendors, adviceType='wrong_advice_type', comment='My comment')
+        self.assertRaises(KeyError,
+                          item1.editAdvice,
+                          group=self.portal.portal_plonemeeting.vendors,
+                          adviceType='wrong_advice_type',
+                          comment='My comment')
         # even if the user can give an advice, he can not for another group
-        self.assertRaises(Unauthorized, item1.editAdvice, group=self.portal.portal_plonemeeting.developers, adviceType='positive', comment='My comment')
+        self.assertRaises(Unauthorized,
+                          item1.editAdvice,
+                          group=self.portal.portal_plonemeeting.developers,
+                          adviceType='positive',
+                          comment='My comment')
         # 'pmReviewer2' has one advice to give for 'vendors' and no advice to edit
         self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
         self.assertEquals(item1.hasAdvices(), False)
         #give the advice
-        item1.editAdvice(group=self.portal.portal_plonemeeting.vendors, adviceType='positive', comment='My comment')
+        item1.editAdvice(group=self.portal.portal_plonemeeting.vendors,
+                         adviceType='positive',
+                         comment='My comment')
         self.assertEquals(item1.hasAdvices(), True)
         # 'pmReviewer2' has no more addable advice (as already given) but it is now an editable advice
         self.assertEquals(item1.getAdvicesToGive(), ([], ['vendors']))
@@ -251,7 +265,6 @@ class testAdvices(PloneMeetingTestCase):
         item1.setFieldFromAjax('description', '<p>My new description</p>')
         self.failIf(item1.hasAdvices())
         self.failIf(item1.willInvalidateAdvices())
-
 
 
 def test_suite():

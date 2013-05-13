@@ -99,6 +99,8 @@ class PloneMeetingTestCase(unittest2.TestCase):
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
         self.transitionsToCloseAMeeting = ('publish', 'freeze', 'decide', 'close', 'archive')
+        # disable annex preview by default to speed up things
+        self.tool.setEnableAnnexPreview(False)
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()

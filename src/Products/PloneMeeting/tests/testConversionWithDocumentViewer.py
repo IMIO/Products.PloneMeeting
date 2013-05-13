@@ -32,12 +32,14 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
     '''Tests the MeetingFile and MeetingItem methods related to conversion using collective.documentviewer.'''
 
     def setUp(self):
+        PloneMeetingTestCase.setUp(self)
         # set storage to Blob for collective.documentviewer so everything is correctly
         # removed while the test finished
-        PloneMeetingTestCase.setUp(self)
         from collective.documentviewer.settings import GlobalSettings
         viewer_settings = GlobalSettings(self.portal)._metadata
         viewer_settings['storage_type'] = 'Blob'
+        # annex preview is disabled in PloneMeetingTestCase
+        self.tool.setEnableAnnexPreview(True)
 
     def testIsConvertable(self):
         '''Test that the MeetingFile is convertable to images so it can be printed.'''
