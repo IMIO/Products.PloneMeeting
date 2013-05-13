@@ -27,13 +27,14 @@ from Products.PloneMeeting.config import *
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 
+
 class testPodTemplates(PloneMeetingTestCase):
     '''Tests various aspects of document generation through POD templates.'''
 
-    def afterSetUp(self):
+    def setUp(self):
         '''All tests related to POD teplate generation use the following
            meeting configuration.'''
-        PloneMeetingTestCase.afterSetUp(self)
+        PloneMeetingTestCase.setUp(self)
         self.setMeetingConfig('plonemeeting-assembly')
 
     def testConditions(self):
@@ -60,6 +61,7 @@ class testPodTemplates(PloneMeetingTestCase):
         podTemplates = self.meetingConfig.getAvailablePodTemplates(meeting)
         self.assertEquals(len(podTemplates), 2)
         self.assertEquals(podTemplates[1].Title(), 'Meeting decisions')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

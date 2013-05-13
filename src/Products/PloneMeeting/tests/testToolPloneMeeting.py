@@ -27,10 +27,12 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 
+
 class testToolPloneMeeting(PloneMeetingTestCase):
     '''Tests the ToolPloneMeeting class methods.'''
-    def afterSetUp(self):
-        PloneMeetingTestCase.afterSetUp(self)
+
+    def setUp(self):
+        PloneMeetingTestCase.setUp(self)
 
     def testGetMeetingGroup(self):
         '''Return the meeting group containing the plone group
@@ -108,7 +110,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         login(self.portal, 'pmCreator1')
         clonedItem = item1.clone(copyAnnexes=False)
         self.assertEquals(set([clonedItem]),
-            set(clonedItem.getParentNode().objectValues()))
+                          set(clonedItem.getParentNode().objectValues()))
         self.assertEquals(len(clonedItem.getAnnexes()), 0)
 
     def testCloneItemWithContentNotRemovableByPermission(self):
