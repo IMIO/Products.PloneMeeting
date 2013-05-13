@@ -6,7 +6,7 @@
 
  <property name="title" i18n:translate="">Meeting</property>
  <property name="description" i18n:translate=""></property>
- <property name="icon_expr">string:${portal_url}/Meeting.png</property>
+ <property name="icon_expr"></property>
  <property name="content_meta_type">Meeting</property>
  <property name="product">PloneMeeting</property>
  <property name="factory">addMeeting</property>

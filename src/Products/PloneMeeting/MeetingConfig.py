@@ -1682,7 +1682,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType = getattr(pt, portalTypeName)
             basePortalType = getattr(pt, metaTypeName)
             portalType.i18n_domain = basePortalType.i18n_domain
-            portalType.content_icon = basePortalType.content_icon
+            portalType.icon_expr = basePortalType.icon_expr
             portalType.content_meta_type = basePortalType.content_meta_type
             portalType.factory = basePortalType.factory
             portalType.immediate_view = basePortalType.immediate_view
@@ -1731,7 +1731,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 basePortalType = getattr(self.portal_types, metaTypeName)
                 #set a correct factory and product based on the parent
                 portalType.i18n_domain = basePortalType.i18n_domain
-                portalType.content_icon = basePortalType.content_icon
+                portalType.icon_expr = basePortalType.icon_expr
                 portalType.content_meta_type = basePortalType.content_meta_type
                 portalType.factory = basePortalType.factory
                 portalType.immediate_view = basePortalType.immediate_view
