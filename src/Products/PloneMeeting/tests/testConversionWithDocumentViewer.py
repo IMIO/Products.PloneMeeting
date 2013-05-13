@@ -79,10 +79,12 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)
         # the annex is converted
+        self.assertFalse(annex1.conversionFailed())
         self.assertTrue(annex1.UID() in item.getConvertedAnnexes()['successfully_converted'])
         # while adding a not convertable format, nothing is converted
         self.annexFile = 'tests/file_unconvertableFormat.eml'
         annex2 = self.addAnnex(item)
+        self.assertFalse(annex2.conversionFailed())
         self.assertTrue(annex2.UID() in item.getConvertedAnnexes()['not_convertable'])
         # a convertable format but an error during conversion, it adds a portal_message
         messages = IStatusMessage(self.request)
