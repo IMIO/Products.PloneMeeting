@@ -268,6 +268,11 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     def adapted(self):
         return getCustomAdapter(self)
 
+    security.declarePublic('queryState')
+    def queryState(self):
+        '''In what state am I ?'''
+        return self.portal_workflow.getInfoFor(self, 'review_state')
+
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
