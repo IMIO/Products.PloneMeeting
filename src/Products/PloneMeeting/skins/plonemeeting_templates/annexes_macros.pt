@@ -214,11 +214,10 @@
                             tal:define="previewEnabled tool/getEnableAnnexPreview;
                                         target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', '');">
     <tal:withPreview define="annexUID annex/UID;
-                             isConvertable annex/isConvertable;
-                             isPreviewAvailable python: isConvertable and annexUID in convertedAnnexesData['successfully_converted'];
-                             isUnderConversion python: isConvertable and annexUID in convertedAnnexesData['under_conversion'];
-                             isErroredDuringConversion python: isConvertable and annexUID in convertedAnnexesData['conversion_error'];
-                             isNotConvertable python: isConvertable and annexUID in convertedAnnexesData['not_convertable'];
+                             isPreviewAvailable python: annexUID in convertedAnnexesData['successfully_converted'];
+                             isUnderConversion python: annexUID in convertedAnnexesData['under_conversion'];
+                             isErroredDuringConversion python: annexUID in convertedAnnexesData['conversion_error'];
+                             isNotConvertable python: annexUID in convertedAnnexesData['not_convertable'];
                              isRealManager python: tool.isManager(realManagers=True);"
                      condition="previewEnabled">
        <a style="float: right;"

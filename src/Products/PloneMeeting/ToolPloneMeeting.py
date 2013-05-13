@@ -2190,7 +2190,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Reindexes all annexes.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
-            return
+            raise Unauthorized
         for b in self.portal_catalog(meta_type='MeetingItem'):
             b.getObject().updateAnnexIndex()
         self.plone_utils.addPortalMessage('Done.')
@@ -2201,13 +2201,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Convert annexes using collective.documentviewer.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
-            return
-        from Products.PloneMeeting.MeetingFile import convertForPrinting
-        for b in self.portal_catalog(meta_type='MeetingItem'):
-            annexes = b.getObject().getAnnexes()
-            for annex in annexes:
-                convertForPrinting(annex, None, force=True)
-        self.plone_utils.addPortalMessage('Done.')
+            raise Unauthorized
+        if not self.getEnableAnnexPreview():
+            msg = translate('Annexes preview must be enabled to launch complete annexes conversion process.',
+                            domain='PloneMeeting',
+                            context=self.REQUEST, )
+            self.plone_utils.addPortalMessage(msg, 'warning')
+        else:
+            from Products.PloneMeeting.MeetingFile import convertForPrinting
+            for b in self.portal_catalog(meta_type='MeetingItem'):
+                annexes = b.getObject().getAnnexes()
+                for annex in annexes:
+                    convertForPrinting(annex, None, force=True)
+            self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
     security.declarePublic('updateAllAdvices')
@@ -2216,7 +2222,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            configuration into account if necessary.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
-            return
+            raise Unauthorized
         for b in self.portal_catalog(meta_type='MeetingItem'):
             obj = b.getObject()
             obj.updateAdvices()
@@ -2230,7 +2236,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Update local_roles regargind the PowerObservers for every meetings and items.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
-            return
+            raise Unauthorized
         for b in self.portal_catalog(meta_type=('Meeting', 'MeetingItem')):
             obj = b.getObject()
             obj.updatePowerObserversLocalRoles()
@@ -2245,7 +2251,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            date is earlier than siteStartDate.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
-            return
+            raise Unauthorized
         if not self.getSiteStartDate():
             return
         # Get all archived meetings
