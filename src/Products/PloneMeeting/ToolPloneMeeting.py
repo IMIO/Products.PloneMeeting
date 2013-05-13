@@ -33,6 +33,7 @@ import time
 import re
 from appy.gen import No
 from appy.shared.data import nativeNames
+from AccessControl import Unauthorized
 from OFS.CopySupport import _cb_decode
 from BTrees.OOBTree import OOBTree
 from zExceptions import NotFound
