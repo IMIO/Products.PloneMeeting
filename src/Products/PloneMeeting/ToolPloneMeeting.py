@@ -1139,8 +1139,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if isAnnex:
                     obj_state = obj['review_state']
                 else:
-                    obj_state = self.portal_workflow.getInfoFor(
-                        obj, 'review_state')
+                    obj_state = obj.queryState()
                 wf_class = "state-%s" % obj_state
                 if isPrivacyViewable:
                     css_classes = wf_class + (additionalCSSClasses and (' ' + additionalCSSClasses) or '')
@@ -1186,8 +1185,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if linkId:
                 idPart = ' id="%s"' % linkId
             if isPrivacyViewable:
-                res = '<a href="%s" title="%s"%s%s %s>%s</a>' % \
-                      (href, title, idPart, tg, additionalCSSClasses, content)
+                css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
+                res = '<a href="%s" title="%s"%s%s%s>%s</a>' % \
+                      (href, title, idPart, tg, css_classes, content)
             else:
                 msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                 res = '<div title="%s"><i>%s</i></div>' % \
