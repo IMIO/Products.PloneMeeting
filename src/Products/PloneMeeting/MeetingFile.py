@@ -35,7 +35,6 @@ from zope.i18n import translate
 from plone.memoize.instance import memoize
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
-from Products.CMFCore.WorkflowCore import WorkflowException
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collective.documentviewer.async import asyncInstalled
 from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, HubSessionsMarshaller, sendMailIfRelevant
@@ -257,7 +256,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'iconUrl': portal_url.getRelativeContentURL(fileType) + '/theIcon',
                'modification_date': self.pm_modification_date,
                'decisionRelated': self.isDecisionRelated(),
-               'isConvertable': self.isConvertable(),
+               'conversionStatus': self.conversionStatus(),
                }
         return res
 
@@ -443,6 +442,29 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         # finally set the given value
         self.getField('toPrint').set(self, value)
 
+    security.declarePublic('conversionStatus')
+    def conversionStatus(self):
+        """
+          Returns the conversion status of current MeetingFile.
+          Status can be :
+          - not_convertable : the MeetingFile is not convertable by collective.documentviewer
+          - under_conversion : or awaiting conversion, the MeetingFile is convertable but is not yet converted
+          - conersion_error : there was an error during MeetingFile conversion.  Manager have access in the UI to more infos
+          - successfully_converted : the MeetingFile is converted correctly
+        """
+        annotations = IAnnotations(self)
+        # not_convertable or awaiting conversion?
+        if not 'collective.documentviewer' in annotations.keys() or not self.isConvertable():
+            return 'not_convertable'
+        # under conversion?
+        if not 'successfully_converted' in annotations['collective.documentviewer']:
+            return 'under_conversion'
+
+        if not annotations['collective.documentviewer']['successfully_converted'] is True:
+            return 'conversion_error'
+
+        return 'successfully_converted'
+
     security.declarePublic('conversionFailed')
     def conversionFailed(self):
         """
@@ -538,13 +560,13 @@ def checkAfterConversion(object, event):
       After conversion, check that there was not error, if an error occured, make sure the annex
       is set to not toPrint and send an email if relevant.
     """
+    item = object.getItem()
     if event.status == 'failure':
         # make sure the annex is not printed in documents
         object.setToPrint(False)
         # special behavior for real Managers
         isRealManager = object.portal_plonemeeting.isManager(realManagers=True)
         # send an email to relevant users to warn them if relevant
-        item = object.getItem()
         # plone.app.async does not have a REQUEST... so make one...
         if asyncInstalled():
             from Testing.makerequest import makerequest
@@ -563,11 +585,15 @@ def checkAfterConversion(object, event):
                           domain='PloneMeeting',
                           context=object.REQUEST), 'error')
 
-        # email notification, check if the Manager is not 'playing' with conversion
+        # email notification, check if the Manager is not 'playiassertTrueng' with conversion
         if isRealManager:
             sendMailIfRelevant(item, 'annexConversionError', 'Manager', isRole=True)
         else:
             sendMailIfRelevant(item, 'annexConversionError', 'PloneMeeting: Add annex', isRole=False)
+
+    # update the conversionStatus value in the annexIndex
+    item.updateAnnexIndex()
+
     # remove saved_request on annex
     try:
         del object.saved_request

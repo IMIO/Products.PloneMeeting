@@ -62,11 +62,13 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)
         # the annex is converted
-        self.assertTrue(annex1.UID() in item.getConvertedAnnexes()['successfully_converted'])
+        self.assertTrue(annex1.conversionStatus() == 'successfully_converted')
+        self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
         # disable annex preview, the annex will not be converted upon creation
         self.tool.setEnableAnnexPreview(False)
         annex2 = self.addAnnex(item)
-        self.assertFalse(annex2.UID() in item.getConvertedAnnexes()['successfully_converted'])
+        self.assertFalse(annex2.conversionStatus() == 'successfully_converted')
+        self.assertFalse(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
 
     def testConvert(self):
         '''If an annex is converted it can be :
@@ -80,12 +82,14 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         annex1 = self.addAnnex(item)
         # the annex is converted
         self.assertFalse(annex1.conversionFailed())
-        self.assertTrue(annex1.UID() in item.getConvertedAnnexes()['successfully_converted'])
+        self.assertTrue(annex1.conversionStatus() == 'successfully_converted')
+        self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
         # while adding a not convertable format, nothing is converted
         self.annexFile = 'tests/file_unconvertableFormat.eml'
         annex2 = self.addAnnex(item)
         self.assertFalse(annex2.conversionFailed())
-        self.assertTrue(annex2.UID() in item.getConvertedAnnexes()['not_convertable'])
+        self.assertTrue(annex2.conversionStatus() == 'not_convertable')
+        self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'not_convertable')
         # a convertable format but an error during conversion, it adds a portal_message
         messages = IStatusMessage(self.request)
         self.assertEquals(len(messages.show()), 0)
@@ -94,8 +98,9 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         # the element is convertable
         self.failUnless(annex3.isConvertable())
         # but there was an error during conversion
-        self.assertTrue(annex3.UID() in item.getConvertedAnnexes()['conversion_error'])
-        self.assertTrue(messages.show()[0].message == CONVERSION_ERROR)
+        self.assertTrue(annex3.conversionStatus() == 'conversion_error')
+        self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'conversion_error')
+        self.assertTrue(messages.show()[-1].message == CONVERSION_ERROR)
         self.assertTrue(annex3.conversionFailed())
 
     def testForceConversion(self):
@@ -114,17 +119,20 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)
         # this is not converted
-        self.assertFalse(annex1.UID() in item.getConvertedAnnexes()['successfully_converted'])
+        self.assertFalse(annex1.conversionStatus() == 'successfully_converted')
+        self.assertFalse(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
         # if we specify that this annex needs to be printed, it will be converted
         annex1.setToPrint(True)
-        self.assertTrue(annex1.UID() in item.getConvertedAnnexes()['successfully_converted'])
+        self.assertTrue(annex1.conversionStatus() == 'successfully_converted')
+        self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
         self.changeUser('admin')
         # specify that annexes are toPrint by default
         self.assertFalse(self.meetingConfig.setAnnexToPrintDefault(True))
         self.changeUser('pmManager')
         annex2 = self.addAnnex(item)
         # this is actually converted
-        self.assertTrue(annex2.UID() in item.getConvertedAnnexes()['successfully_converted'])
+        self.assertTrue(annex2.conversionStatus() == 'successfully_converted')
+        self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
 
 
 def test_suite():

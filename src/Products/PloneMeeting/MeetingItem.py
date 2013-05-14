@@ -3456,40 +3456,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.getMeeting().getSignatures().replace('\n', '<br />'))
         return value + collapsibleMeetingSignatures
 
-    security.declarePublic('getConvertedAnnexes')
-    def getConvertedAnnexes(self, decisionRelated=False):
-        """
-          Returns a dict of converted annexes with 'successfully converted'
-          and 'not successfully converted' annexes
-          Either an annex is:
-          - not convertable
-          - under or waiting conversion
-          - converted
-          - error during conversion
-        """
-        data = {'not_convertable': [],
-                'successfully_converted': [],
-                'conversion_error': [],
-                'under_conversion': [], }
-        for annex in self.getAnnexesInOrder(decisionRelated):
-            annexUID = annex.UID()
-            annex_annotations = IAnnotations(annex)
-            # not_convertable or awaiting conversion?
-            if not 'collective.documentviewer' in annex_annotations.keys() or not annex.isConvertable():
-                data['not_convertable'].append(annexUID)
-                continue
-            # under conversion?
-            if not 'successfully_converted' in annex_annotations['collective.documentviewer']:
-                data['under_conversion'].append(annexUID)
-                continue
-
-            if not annex_annotations['collective.documentviewer']['successfully_converted'] is True:
-                data['conversion_error'].append(annexUID)
-                continue
-
-            data['successfully_converted'].append(annexUID)
-        return data
-
     security.declarePublic('getAnnexesToPrint')
     def getAnnexesToPrint(self, decisionRelated=False):
         """
