@@ -211,6 +211,29 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Even an activated meetingConfig will not show his tab if it is alone...
         self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), False)
 
+    def testSetupProcessForCreationFlag(self):
+        '''Test that every elements created by the setup process
+           are correctly initialized regarding the _at_creation_flag.
+           The flag is managed using processForm so check that processForm
+           did the work correctly too...'''
+        # test elements of the tool
+        for elt in self.tool.objectValues():
+            if elt.meta_type == 'Workflow Policy Configuration':
+                continue
+            self.failIf(elt._at_creation_flag)
+            self.failIf(elt.Title() == 'Site')
+        # test elements contained in the MeetingConfigs
+        for mc in self.tool.objectValues():
+            # there are 2 levels of elements in the MeetingConfig
+            firstLevelElements = mc.objectValues()
+            for firstLevelElement in firstLevelElements:
+                self.failIf(firstLevelElement._at_creation_flag)
+                self.failIf(firstLevelElement.Title() == 'Site')
+                secondLevelElements = firstLevelElement.objectValues()
+                for secondLevelElement in secondLevelElements:
+                    self.failIf(secondLevelElement._at_creation_flag)
+                    self.failIf(secondLevelElement.Title() == 'Site')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

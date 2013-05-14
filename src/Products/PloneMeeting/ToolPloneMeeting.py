@@ -735,13 +735,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         errors = cfg.schema.validate(cfg)
         if errors:
             raise PloneMeetingError(MEETING_CONFIG_ERROR % cfg.getId(), errors)
-        cfg._at_creation_flag = False  # It seems that this flag,
-        # internal to Archetypes, is not set when the meeting config is
-        # created from code, not through-the-web. So we force it here.
-        # This way, once we will update the meeting config through-the-web,
-        # at_post_create_script will not be called again, but
-        # at_post_edit_script instead.
-        cfg.at_post_create_script()
+        # call processForm passing dummy values so existing values are not touched
+        cfg.processForm(values={'dummy': None})
         # when the object is created through-the-web.
         if not configData.active:
             self.portal_workflow.doActionFor(cfg, 'deactivate')

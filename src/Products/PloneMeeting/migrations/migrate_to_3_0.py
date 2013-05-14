@@ -351,6 +351,40 @@ class Migrate_To_3_0(Migrator):
             cfg.setItemDecidedStates(itemDecidedStatesToApply)
         logger.info('Done.')
 
+    def _completeConfigurationCreationProcess(self):
+        '''Elements contained in the tool (portal_plonemeeting) still had the
+           _at_creation_flag set to True.  Now processForm is called at install time
+           so make sure old elements created programmatically in the config are
+           completely initialized too...'''
+        logger.info('Finishing config objects initialization')
+        # first for elements contained in the tool
+        updated = 0
+        for obj in self.portal.portal_plonemeeting.objectValues():
+            if obj.meta_type == 'Workflow Policy Configuration':
+                continue
+            if obj._at_creation_flag:
+                updated = updated + 1
+                # call processForm with dummy values so existing values are kept
+                obj.processForm(values={'dummy': ''})
+                logger.info(obj.absolute_url())
+        # manage MeetingConfigs and contained elements
+        for mc in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # there are 2 levels of elements in the MeetingConfig
+            firstLevelElements = mc.objectValues()
+            for firstLevelElement in firstLevelElements:
+                if firstLevelElement._at_creation_flag:
+                    firstLevelElement.processForm(values={'dummy': ''})
+                    updated = updated + 1
+                    logger.info(firstLevelElement.absolute_url())
+                secondLevelElements = firstLevelElement.objectValues()
+                for secondLevelElement in secondLevelElements:
+                    if secondLevelElement._at_creation_flag:
+                        secondLevelElement.processForm(values={'dummy': ''})
+                        updated = updated + 1
+                        logger.info(secondLevelElement.absolute_url())
+        logger.info('Done (%d elements updated).' % updated)
+
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
         # the Meeting 'published' state has become 'decisions_published' now, so :
@@ -367,6 +401,7 @@ class Migrate_To_3_0(Migrator):
 
         # now continue with other migrations
         self._configureCKeditor()
+        self._completeConfigurationCreationProcess()
         self._updateRegistries()
         self._patchFileSecurity()
         self._removeClonedPermissionsOnAnnexes()

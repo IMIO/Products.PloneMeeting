@@ -1805,7 +1805,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             topic.setCustomView(True)
             topic.setCustomViewFields(['Title', 'CreationDate', 'Creator',
                                        'review_state'])
-            topic.reindexObject()
+            # call processForm passing dummy values so existing values are not touched
+            topic.processForm(values={'dummy': None})
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId):
         '''Returns the name of the action used for the cloneToOtherMC
@@ -1979,7 +1980,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # remove inheritance on self and define these local_roles for self too
         self.__ac_local_roles_block__ = True
         self.manage_addLocalRoles(groupId, ('MeetingPowerObserverLocal',))
-        # the problem here is that
+
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
         '''Create the sub-folders of a meeting config, that will contain
@@ -1998,7 +1999,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 allowedType = self.getItemTypeName()
             folder.setLocallyAllowedTypes([allowedType])
             folder.setImmediatelyAddableTypes([allowedType])
-            folder.reindexObject()
+            # call processForm passing dummy values so existing values are not touched
+            folder.processForm(values={'dummy': None})
         # Set a property allowing to know in which MeetingConfig we are
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
         # Create the topics related to this meeting config
@@ -2586,19 +2588,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             folder = getattr(self, TOOL_FOLDER_CLASSIFIERS)
         else:
             folder = getattr(self, TOOL_FOLDER_CATEGORIES)
-        folder.invokeFactory('MeetingCategory', **descr.getData())
+        data = descr.getData()
+        folder.invokeFactory('MeetingCategory', **data)
         cat = getattr(folder, descr.id)
         if not descr.active:
             self.portal_workflow.doActionFor(cat, 'deactivate')
+        # call processForm passing dummy values so existing values are not touched
+        cat.processForm(values={'dummy': None})
         return cat
 
     security.declarePrivate('addRecurringItem')
     def addRecurringItem(self, descr):
         '''Adds a recurring item from a RecurringItemDescriptor.'''
         folder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
-        folder.invokeFactory(self.getItemTypeName(), **descr.__dict__)
+        data = descr.__dict__
+        folder.invokeFactory(self.getItemTypeName(), **data)
         item = getattr(folder, descr.id)
-        item.at_post_create_script()
+        # call processForm passing dummy values so existing values are not touched
+        item.processForm(values={'dummy': None})
         return item
 
     security.declarePrivate('addFileType')
@@ -2617,13 +2624,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                ft.theIcon.name,
                                ft.theIcon.content,
                                content_type=ft.theIcon.mimeType)
+        data = ft.getData(theIcon=iconContent)
         folder.invokeFactory('MeetingFileType',
-                             **ft.getData(theIcon=iconContent))
+                             **data)
         if isinstance(source, basestring):
             f.close()
         fileType = getattr(folder, ft.id)
         if not ft.active:
             self.portal_workflow.doActionFor(fileType, 'deactivate')
+        # call processForm passing dummy values so existing values are not touched
+        fileType.processForm(values={'dummy': None})
         return fileType
 
     security.declarePrivate('addPodTemplate')
@@ -2649,10 +2659,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                               content_type=pt.podTemplate.mimeType)
             fileObject.filename = pt.podTemplate.name
             fileObject.content_type = pt.podTemplate.mimeType
-        folder.invokeFactory('PodTemplate', **pt.getData(podTemplate=fileObject))
+        data = pt.getData(podTemplate=fileObject)
+        folder.invokeFactory('PodTemplate', **data)
         podTemplate = getattr(folder, pt.id)
         if not pt.active:
             self.portal_workflow.doActionFor(podTemplate, 'deactivate')
+        # call processForm passing dummy values so existing values are not touched
+        podTemplate.processForm(values={'dummy': None})
         return podTemplate
 
     security.declarePrivate('addMeetingUser')
@@ -2665,7 +2678,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             userTitle = userInfo.getProperty('fullname')
         if not userTitle:
             userTitle = mud.id
-        folder.invokeFactory('MeetingUser', **mud.getData(title=userTitle))
+        data = mud.getData(title=userTitle)
+        folder.invokeFactory('MeetingUser', **data)
         meetingUser = getattr(folder, mud.id)
         if mud.signatureImage:
             if isinstance(source, basestring):
@@ -2685,6 +2699,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         meetingUser.at_post_create_script()
         if not mud.active:
             self.portal_workflow.doActionFor(meetingUser, 'deactivate')
+        # call processForm passing dummy values so existing values are not touched
+        meetingUser.processForm(values={'dummy': None})
         return meetingUser
 
     security.declarePublic('getMeetingUserFromPloneUser')
