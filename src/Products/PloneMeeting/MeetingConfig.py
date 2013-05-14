@@ -1333,38 +1333,52 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ('searchmyitems',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
          ('Creator', 'ATCurrentAuthorCriterion', None),),
-         'created', '',
-         "python: here.portal_plonemeeting.userIsAmong('creators')"),
+         'created',
+         '',
+         "python: here.portal_plonemeeting.userIsAmong('creators')",
+         ()),
         # All (visible) items
         ('searchallitems',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
-         'created', '', ''),
+         'created',
+         '',
+         '',
+         ()),
         # Items in copy : need a script to do this search.
         ('searchallitemsincopy',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
          'created', 'searchItemsInCopy',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')"),
+         "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
+         ()),
         # Items to advice : need a script to do this search.
         ('searchallitemstoadvice',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
          'created', 'searchItemsToAdvice',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"),
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+         ()),
         # Advised items : need a script to do this search.
         ('searchalladviseditems',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
          'created', 'searchAdvisedItems',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"),
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+         ()),
         # All not-yet-decided meetings
         ('searchallmeetings',
         (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
-         'getDate', '', ''),
+         'getDate',
+         '',
+         '',
+         ()),
         # All decided meetings
         ('searchalldecisions',
         (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
-         'getDate', '', ''),
+         'getDate',
+         '',
+         '',
+         ()),
     )
 
     # List of topics that take care of the states defined in a meetingConfig
@@ -1759,7 +1773,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('createTopics')
     def createTopics(self):
         '''Adds a bunch of topics within the 'topics' sub-folder.'''
-        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in self.topicsInfo:
+        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr, stateValues in self.topicsInfo:
             self.topics.invokeFactory('Topic', topicId)
             topic = getattr(self.topics, topicId)
             topic.setExcludeFromNav(True)
@@ -1784,6 +1798,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         criterionValue = '%s%s' % \
                             (criterionValue, self.getShortName())
                     criterion.setValue([criterionValue])
+                if stateValues:
+                    stateCriterion = topic.addCriterion(field='review_state', criterion_type='ATListCriterion')
+                    stateCriterion.setValue(stateValues)
             if mustAddStateCriterium:
                 # We must add a state-related criterium. But for an item or
                 # meeting-related topic ?
