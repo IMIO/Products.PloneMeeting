@@ -24,6 +24,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 from App.class_init import InitializeClass
+from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import getCustomAdapter, \
     HubSessionsMarshaller, getFieldContent
@@ -152,6 +153,33 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     def at_post_edit_script(self):
         self.adapted().onEdit(isCreated=False)
 
+    security.declarePrivate('manage_beforeDelete')
+    def manage_beforeDelete(self, item, container):
+        '''Checks if the current meetingCategory can be deleted:
+          - it can not be linked to an existing meetingItem.'''
+        # If we are trying to remove the whole Plone Site, bypass this hook.
+        # bypass also if we are in the creation process
+        if not item.meta_type == "Plone Site" and not item._at_creation_flag:
+            isLinked = False
+            for brain in self.portal_catalog(meta_type="MeetingItem"):
+                obj = brain.getObject()
+                if obj.getCategory() == self.getId():
+                    isLinked = True
+                    break
+            # check also items added in the MeetingConfig but that are not indexed...
+            if not isLinked:
+                for mc in self.portal_plonemeeting.objectValues('MeetingConfig'):
+                    for obj in mc.recurringitems.objectValues('MeetingItem'):
+                        if obj.getCategory() == self.getId():
+                            isLinked = True
+                            break
+            if isLinked:
+                # The meetingCategory is linked to an existing item, we can not
+                # delete it.
+                raise BeforeDeleteException, \
+                    "can_not_delete_meetingcategory_meetingitem"
+        BaseContent.manage_beforeDelete(self, item, container)
+
     security.declarePublic('getSelf')
     def getSelf(self):
         if self.__class__.__name__ != 'MeetingCategory':
@@ -222,4 +250,3 @@ registerType(MeetingCategory, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-
