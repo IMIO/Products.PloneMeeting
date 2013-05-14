@@ -2576,6 +2576,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         logger.info('Item at %s edited by "%s".' %
                     (self.absolute_url_path(), userId))
 
+    security.declarePublic('forceHTMLContentTypeForEmptyRichFields')
     def forceHTMLContentTypeForEmptyRichFields(self):
         '''
           Will saving a empty Rich field ('text/html'), the contentType is set back to 'text/plain'...
