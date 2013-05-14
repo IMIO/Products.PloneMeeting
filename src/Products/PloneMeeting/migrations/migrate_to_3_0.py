@@ -10,6 +10,18 @@ class Migrate_To_3_0(Migrator):
     def __init__(self, context):
         Migrator.__init__(self, context)
 
+    def _removeIconExprObjectsOnTypes(self):
+        '''Remove icon_expr_object on portal_types relative to PloneMeeting.'''
+        logger.info('Removing icon_expr_objects on portal_types...')
+        for ptype in self.portal.portal_types.objectValues():
+            typeId = ptype.getId()
+            if typeId.startswith('Meeting') and \
+               hasattr(ptype, 'icon_expr_object') and \
+               ptype.icon_expr_object and \
+               ptype.icon_expr_object.text:
+                    ptype.icon_expr_object = None
+        logger.info('Done.')
+
     def _updateRegistries(self):
         '''Make sure some elements are enabled and remove not found elements.'''
         # popuforms.js must be enabled in portal_javascript
@@ -406,6 +418,7 @@ class Migrate_To_3_0(Migrator):
         self._migrateStatePublishedToDecisionsPublished(uids)
 
         # now continue with other migrations
+        self._removeIconExprObjectsOnTypes()
         self._completeConfigurationCreationProcess()
         self._forceHTMLContentTypeForEmptyRichFields()
         self._updateRegistries()
