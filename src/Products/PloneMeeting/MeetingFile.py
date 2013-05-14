@@ -585,7 +585,7 @@ def checkAfterConversion(object, event):
                           domain='PloneMeeting',
                           context=object.REQUEST), 'error')
 
-        # email notification, check if the Manager is not 'playiassertTrueng' with conversion
+        # email notification, check if the Manager is not 'playing' with conversion
         if isRealManager:
             sendMailIfRelevant(item, 'annexConversionError', 'Manager', isRole=True)
         else:
