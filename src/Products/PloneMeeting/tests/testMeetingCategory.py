@@ -44,20 +44,24 @@ class testMeetingCategory(PloneMeetingTestCase):
         item.reindexObject()
         # now remove a used and an unused one
         self.changeUser('admin')
-        self.assertRaises(BeforeDeleteException, self.meetingConfig.categories.manage_delObjects, ['development'])
+        # by default 'development'
+        category1 = self.meetingConfig.categories.objectValues('MeetingCategory')[0]
+        # by default 'research'
+        category2 = self.meetingConfig.categories.objectValues('MeetingCategory')[1]
+        self.assertRaises(BeforeDeleteException, self.meetingConfig.categories.manage_delObjects, [category1])
         # if a recurring item is using a category, it is taken into account too...
         aRecurringItem = self.meetingConfig.recurringitems.objectValues('MeetingItem')[0]
         # make sure it is unindexed
         aRecurringItem.unindexObject()
-        aRecurringItem.setCategory('research')
-        self.failUnless(aRecurringItem.getCategory() == 'research')
-        self.assertRaises(BeforeDeleteException, self.meetingConfig.categories.manage_delObjects, ['research'])
+        aRecurringItem.setCategory(category2)
+        self.failUnless(aRecurringItem.getCategory() == category2)
+        self.assertRaises(BeforeDeleteException, self.meetingConfig.categories.manage_delObjects, [category2])
         # now delete the recurring item and the category should be removable
         aRecurringItem.aq_inner.aq_parent.manage_delObjects([aRecurringItem.getId(), ])
-        self.meetingConfig.categories.manage_delObjects(['research'])
+        self.meetingConfig.categories.manage_delObjects([category2])
         # remove the created item so the category is removable too
         item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
-        self.meetingConfig.categories.manage_delObjects(['development'])
+        self.meetingConfig.categories.manage_delObjects([category1])
 
 
 def test_suite():
