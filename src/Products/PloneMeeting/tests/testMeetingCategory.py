@@ -36,18 +36,18 @@ class testMeetingCategory(PloneMeetingTestCase):
     def testCanNotRemoveLinkedMeetingCategory(self):
         '''While removing a MeetingCategory, it should raise if it is linked...'''
         self.meetingConfig.setUseGroupsAsCategories(False)
+        # by default 'development'
+        category1 = self.meetingConfig.categories.objectValues('MeetingCategory')[0].getId()
+        # by default 'research'
+        category2 = self.meetingConfig.categories.objectValues('MeetingCategory')[1].getId()
         self.changeUser('pmManager')
         # create an item
         item = self.create('MeetingItem')
         # set a category
-        item.setCategory('development')
+        item.setCategory(category1)
         item.reindexObject()
         # now remove a used and an unused one
         self.changeUser('admin')
-        # by default 'development'
-        category1 = self.meetingConfig.categories.objectValues('MeetingCategory')[0]
-        # by default 'research'
-        category2 = self.meetingConfig.categories.objectValues('MeetingCategory')[1]
         self.assertRaises(BeforeDeleteException, self.meetingConfig.categories.manage_delObjects, [category1])
         # if a recurring item is using a category, it is taken into account too...
         aRecurringItem = self.meetingConfig.recurringitems.objectValues('MeetingItem')[0]
