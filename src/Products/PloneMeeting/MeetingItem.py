@@ -3014,8 +3014,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             user = self.portal_membership.getAuthenticatedMember()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException, "can_not_delete_meetingitem_container"
-        # if we are not in the creation process, process
-        if not item._at_creation_flag:
+        # if we are not removing the site and we are not in the creation process of
+        # an item, manage predecessor
+        if not item.meta_type == 'Plone Site' and not item._at_creation_flag:
             # If the item has a predecessor in another meetingConfig we must remove
             # the annotation on the predecessor specifying it.
             predecessor = self.getPredecessor()
