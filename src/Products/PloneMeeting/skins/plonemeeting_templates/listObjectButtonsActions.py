@@ -8,7 +8,7 @@
 
 ignorableActions = ()
 
-if object.meta_type in ['Meeting', 'MeetingItem']:
+if object.meta_type in ['Meeting', 'MeetingItem', 'MeetingFile', ]:
     ignorableActions = ('copy', 'cut', 'paste', 'delete')
 allActions = context.portal_actions.listFilteredActionsFor(object)
 

@@ -30,11 +30,9 @@ from Products.PloneMeeting.config import *
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 
+
 class testPortlets(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
-
-    def afterSetUp(self):
-        PloneMeetingTestCase.afterSetUp(self)
 
     def testPortletPMAvailableTemplates(self):
         '''Test the portlet_plonemeeting.getTemplateItems method

@@ -37,9 +37,6 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testMeetingItem(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
 
-    def afterSetUp(self):
-        PloneMeetingTestCase.afterSetUp(self)
-
     def testSelectableCategories(self):
         '''Categories are available if isSelectable returns True.  By default,
            isSelectable will return active categories for wich intersection

@@ -63,23 +63,42 @@ class AnnexToPrint(BrowserView):
         if not member.has_permission('Modify portal content', self.context):
             raise Unauthorized
 
-        annexToPrint = self.context.getToPrint()
-        # toggle value
-        self.context.setToPrint(not annexToPrint)
+        try:
+            annexToPrint = self.context.getToPrint()
+            # toggle value
+            self.context.setToPrint(not annexToPrint)
 
-        if annexToPrint:
-            filename = 'annexToPrintNo.png'
-            name = 'annexToPrintYes'
-            title_msgid = 'annex_to_print_no_edit'
-        else:
-            filename = 'annexToPrintYes.png'
-            name = 'annexToPrintNo'
-            title_msgid = 'annex_to_print_yes_edit'
+            # check that this annex is printable
+            # in case last conversion failed, we should not let the user
+            # specify that the annex is toPrint
+            if self.context.conversionFailed():
+                raise Exception, \
+                    'This annex can not be printed because the conversion to a printable format failed!'
 
-        title = self.context.utranslate(title_msgid,
-                                        domain="PloneMeeting")
-        portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
-        portal_url = portal_state.portal_url()
-        src = "%s/%s" % (portal_url, filename)
-        html = self.IMG_TEMPLATE % (src, title, name)
-        return html
+            if annexToPrint:
+                filename = 'annexToPrintNo.png'
+                name = 'annexToPrintYes'
+                title_msgid = 'annex_to_print_no_edit'
+            else:
+                filename = 'annexToPrintYes.png'
+                name = 'annexToPrintNo'
+                title_msgid = 'annex_to_print_yes_edit'
+
+            title = self.context.utranslate(title_msgid,
+                                            domain="PloneMeeting")
+            portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
+            portal_url = portal_state.portal_url()
+            src = "%s/%s" % (portal_url, filename)
+            html = self.IMG_TEMPLATE % (src, title, name)
+            return html
+        except Exception, exc:
+            # set an error status in request.RESPONSE so the ajax call knows
+            # that something wrong happened and redirect the page so portalMessages are displayed
+            self.portal.plone_utils.addPortalMessage(
+                self.context.translate("There was an error while trying to set this annex to printable. "
+                                       "The error message was : ${error}. Please contact system administrator.",
+                                       mapping={'error': str(exc)},
+                                       domain="PloneMeeting"),
+                type='error')
+            self.request.RESPONSE.status = 500
+            return

@@ -33,6 +33,7 @@ import time
 import re
 from appy.gen import No
 from appy.shared.data import nativeNames
+from AccessControl import Unauthorized
 from OFS.CopySupport import _cb_decode
 from BTrees.OOBTree import OOBTree
 from zExceptions import NotFound
@@ -349,6 +350,17 @@ schema = Schema((
             description_msgid="enable_user_preferences_descr",
             label='Enableuserpreferences',
             label_msgid='PloneMeeting_label_enableUserPreferences',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
+    BooleanField(
+        name='enableAnnexPreview',
+        default=defValues.enableAnnexPreview,
+        widget=BooleanField._properties['widget'](
+            description="EnableAnnexPreview",
+            description_msgid="enable_annex_preview_descr",
+            label='Enableannexpreview',
+            label_msgid='PloneMeeting_label_enableAnnexPreview',
             i18n_domain='PloneMeeting',
         ),
     ),
@@ -998,7 +1010,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         for annex in annexes:
             res = res and self.lastModifsConsultedOn(
-                annex['uid'], annex['modification_date'])[0]
+                annex['UID'], annex['modification_date'])[0]
         return res
 
     security.declarePublic('highlight')
@@ -1021,7 +1033,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getColoredLink')
     def getColoredLink(self, obj, showColors, showIcon=False, contentValue=None,
                        target='', maxLength=0, highlight=False, inMeeting=True,
-                       meeting=None):
+                       meeting=None, appendToUrl='', additionalCSSClasses='', tag_title=None):
         '''Produces the link to an item or annex with the right color (if the
            colors must be shown depending on p_showColors). p_target optionally
            specifies the 'target' attribute of the 'a' tag. p_maxLength
@@ -1035,17 +1047,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
            If obj is an item which is not privacyViewable, the method does not
            return a link (<a>) but a simple <div>.
+
+            If p_appendToUrl is given, the string will be appended at the end of the
+            returned link url.
+            If p_additionalCSSClasses is given, the given additional CSS classes will
+            be used for the 'class' attribute of the returned link.
+            If p_tag_title is given, it will be translated and used as return link
+            title tag.
         '''
         isPrivacyViewable = True
         objClassName = obj.__class__.__name__
         portal_url = self.portal_url.getPortalObject().absolute_url()
+        # if we received a tag_title, try to translate it!
+        if tag_title:
+            tag_title = translate(tag_title, domain='PloneMeeting', context=self.REQUEST, ).encode('utf-8')
         if objClassName in self.ploneMeetingTypes:
             isAnnex = False
             uid = obj.UID()
             modifDate = obj.pm_modification_date
-            url = obj.absolute_url()
+            url = obj.absolute_url() + appendToUrl
             content = contentValue or obj.getName()
-            title = content
+            title = tag_title or content
             if maxLength:
                 content = self.truncate(content, maxLength)
             if highlight:
@@ -1077,12 +1099,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             # It is an annex entry in an annexIndex
             isAnnex = True
-            uid = obj['uid']
+            uid = obj['UID']
             modifDate = obj['modification_date']
             portal_url = self.portal_url.getPortalObject().absolute_url()
-            url = portal_url + '/' + obj['url']
+            url = portal_url + '/' + obj['absolute_url'] + appendToUrl
             content = contentValue or obj['Title']
-            title = content
+            title = tag_title or content
             if showIcon:
                 content = '<img src="%s"/><b>1</b>' % (portal_url + '/' + obj['iconUrl'])
             else:
@@ -1097,8 +1119,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # We do not want to colorize the link, we just return a classical
             # link. We apply the 'pmNoNewContent" id so the link is not colored.
             if isPrivacyViewable:
-                return '<a href="%s" title="%s" id="pmNoNewContent"%s>%s</a>' %\
-                       (url, title, tg, content)
+                css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
+                return '<a href="%s" title="%s" id="pmNoNewContent"%s%s>%s</a>' %\
+                       (url, title, tg, css_classes, content)
             else:
                 msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                 return '<div title="%s"><i>%s</i></div>' % \
@@ -1112,12 +1135,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if isAnnex:
                     obj_state = obj['review_state']
                 else:
-                    obj_state = self.portal_workflow.getInfoFor(
-                        obj, 'review_state')
+                    obj_state = obj.queryState()
                 wf_class = "state-%s" % obj_state
                 if isPrivacyViewable:
+                    css_classes = wf_class + (additionalCSSClasses and (' ' + additionalCSSClasses) or '')
                     res = '<a href="%s" title="%s" class="%s"%s>%s</a>' % \
-                          (url, title, wf_class, tg, content)
+                          (url, title, css_classes, tg, content)
                 else:
                     msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                     res = '<div title="%s"><i>%s</i></div>' % \
@@ -1128,8 +1151,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # this is the case for annexes that does not have an
                 # associated workflow.
                 if isPrivacyViewable:
-                    res = '<a href="%s" title="%s" id="pmNoNewContent"%s>%s' \
-                          '</a>' % (url, title, tg, content)
+                    css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
+                    res = '<a href="%s" title="%s" id="pmNoNewContent"%s%s>%s' \
+                          '</a>' % (url, title, tg, css_classes, content)
                 else:
                     msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                     res = '<div title="%s"><i>%s</i></div>' % \
@@ -1157,8 +1181,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if linkId:
                 idPart = ' id="%s"' % linkId
             if isPrivacyViewable:
-                res = '<a href="%s" title="%s"%s%s>%s</a>' % \
-                      (href, title, idPart, tg, content)
+                css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
+                res = '<a href="%s" title="%s"%s%s%s>%s</a>' % \
+                      (href, title, idPart, tg, css_classes, content)
             else:
                 msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
                 res = '<div title="%s"><i>%s</i></div>' % \
@@ -2161,10 +2186,30 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Reindexes all annexes.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
-            return
+            raise Unauthorized
         for b in self.portal_catalog(meta_type='MeetingItem'):
             b.getObject().updateAnnexIndex()
         self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
+
+    security.declarePublic('convertAnnexes')
+    def convertAnnexes(self):
+        '''Convert annexes using collective.documentviewer.'''
+        user = self.portal_membership.getAuthenticatedMember()
+        if not user.has_role('Manager'):
+            raise Unauthorized
+        if not self.getEnableAnnexPreview():
+            msg = translate('Annexes preview must be enabled to launch complete annexes conversion process.',
+                            domain='PloneMeeting',
+                            context=self.REQUEST, )
+            self.plone_utils.addPortalMessage(msg, 'warning')
+        else:
+            from Products.PloneMeeting.MeetingFile import convertForPrinting
+            for b in self.portal_catalog(meta_type='MeetingItem'):
+                annexes = b.getObject().getAnnexes()
+                for annex in annexes:
+                    convertForPrinting(annex, None, force=True)
+            self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
     security.declarePublic('updateAllAdvices')
@@ -2173,7 +2218,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            configuration into account if necessary.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
-            return
+            raise Unauthorized
         for b in self.portal_catalog(meta_type='MeetingItem'):
             obj = b.getObject()
             obj.updateAdvices()
@@ -2187,7 +2232,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Update local_roles regargind the PowerObservers for every meetings and items.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
-            return
+            raise Unauthorized
         for b in self.portal_catalog(meta_type=('Meeting', 'MeetingItem')):
             obj = b.getObject()
             obj.updatePowerObserversLocalRoles()
@@ -2202,7 +2247,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            date is earlier than siteStartDate.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
-            return
+            raise Unauthorized
         if not self.getSiteStartDate():
             return
         # Get all archived meetings

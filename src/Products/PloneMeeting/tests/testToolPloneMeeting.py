@@ -27,10 +27,9 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 
+
 class testToolPloneMeeting(PloneMeetingTestCase):
     '''Tests the ToolPloneMeeting class methods.'''
-    def afterSetUp(self):
-        PloneMeetingTestCase.afterSetUp(self)
 
     def testGetMeetingGroup(self):
         '''Return the meeting group containing the plone group
@@ -108,7 +107,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         login(self.portal, 'pmCreator1')
         clonedItem = item1.clone(copyAnnexes=False)
         self.assertEquals(set([clonedItem]),
-            set(clonedItem.getParentNode().objectValues()))
+                          set(clonedItem.getParentNode().objectValues()))
         self.assertEquals(len(clonedItem.getAnnexes()), 0)
 
     def testCloneItemWithContentNotRemovableByPermission(self):
@@ -173,7 +172,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.failUnless(res1.getAnnexes()[0].absolute_url().startswith(res1.absolute_url()))
         res1AnnexesUids = [annex.UID() for annex in res1.getAnnexes()]
         item1AnnexesUids = [annex.UID() for annex in item1.getAnnexes()]
-        self.failUnless(res1.annexIndex[0]['uid'] in res1AnnexesUids)
+        self.failUnless(res1.annexIndex[0]['UID'] in res1AnnexesUids)
         self.failIf(len(set(item1AnnexesUids).intersection(set(res1AnnexesUids))) != 0)
         #Now check item2 : no annexes nor advices
         self.assertEquals(len(res2.getAnnexes()), 0)

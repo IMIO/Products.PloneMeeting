@@ -58,3 +58,13 @@ $('a.link-overlay-pm.transition-overlay').each(function(){
 })
 initializePMOverlays()
 }
+
+
+// Open every links having the classicpopup class in a... classic popup...
+jQuery(document).ready(function($) {
+    jQuery('a.classicpopup').live('click', function(){
+        newwindow=window.open($(this).attr('href'),'','height=auto,width=auto');
+        if (window.focus) {newwindow.focus()}
+        return false;
+    });
+});

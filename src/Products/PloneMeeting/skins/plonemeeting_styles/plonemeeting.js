@@ -574,6 +574,7 @@ function asyncToggleIcon(UID, baseUrl, viewName, baseSelector) {
       },
     error: function(jqXHR, textStatus, errorThrown) {
       /*console.log(textStatus);*/
+      window.location.href = window.location.href;
       }
     });
 }

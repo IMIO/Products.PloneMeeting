@@ -144,7 +144,7 @@ class Migrate_To_3_0(Migrator):
                 continue
             title_to_uid_mapping = {}
             for annexInfo in item.annexIndex:
-                title_to_uid_mapping[annexInfo['uid']] = annexInfo['Title']
+                title_to_uid_mapping[annexInfo['UID']] = annexInfo['Title']
             for annex in annexes:
                 if not annex.Title():
                     annex.setTitle(title_to_uid_mapping[annex.UID()])
@@ -403,6 +403,12 @@ class Migrate_To_3_0(Migrator):
                         logger.info(secondLevelElement.absolute_url())
         logger.info('Done (%d elements updated).' % updated)
 
+    def _reindexAnnexes(self):
+        '''A new value 'conversionStatus' needs to be indexed...'''
+        logger.info('Updating every items annexIndex')
+        self.portal.portal_plonemeeting.reindexAnnexes()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
         # the Meeting 'published' state has become 'decisions_published' now, so :
@@ -417,7 +423,8 @@ class Migrate_To_3_0(Migrator):
                                  u'profile-plonetheme.imioapps:plonemeetingskin', ])
         self._migrateStatePublishedToDecisionsPublished(uids)
 
-        # now continue with other migrations
+        # reindexAnnexIndex first!
+        self._reindexAnnexes()
         self._removeIconExprObjectsOnTypes()
         self._completeConfigurationCreationProcess()
         self._forceHTMLContentTypeForEmptyRichFields()

@@ -103,6 +103,12 @@
      <element value="Manage portal"/>
     </property>
    </object>
+   <object name="documentviewer_convert" meta_type="CMF Action">
+    <property name="icon_expr">string:$portal_url/documentviewer_convert.png</property>
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+   </object>
   </object>
 
   <!-- Manage object actions. -->

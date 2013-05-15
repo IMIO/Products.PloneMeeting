@@ -9,6 +9,8 @@
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="communesplone.iconified_document_actions"/>
   <include package="imio.pm.locales"/>
+  <include package="collective.documentviewer"/>
+  <include package="imio.pm.locales"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
@@ -48,6 +50,23 @@
   <subscriber for=".interfaces.IMeetingGroup
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".setuphandlers.onMeetingGroupTransition"/>
+
+  <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
+  <subscriber
+    for=".interfaces.IMeetingFile
+         Products.Archetypes.interfaces.IObjectInitializedEvent"
+    handler=".MeetingFile.convertForPrinting" />
+
+  <!-- when collective.documentviewer conversion finished, check that everything is right -->
+  <subscriber
+    for=".interfaces.IMeetingFile
+         collective.documentviewer.interfaces.IConversionFinishedEvent"
+    handler=".MeetingFile.checkAfterConversion" />
+
+  <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
+  <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
+    <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />
+  </class>
 
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />

@@ -43,9 +43,6 @@ class testWorkflows(PloneMeetingTestCase):
        (self.assertRaise). Instead, we check that the user has the permission
        to do so (getSecurityManager().checkPermission).'''
 
-    def afterSetUp(self):
-        PloneMeetingTestCase.afterSetUp(self)
-
     def testCreateItem(self):
         '''Creates an item (in "created" state) and checks that only
            allowed persons may see this item.'''

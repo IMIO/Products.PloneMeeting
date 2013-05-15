@@ -23,7 +23,9 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
+import os
 import re
+from collections import OrderedDict
 from appy.gen import No
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -34,6 +36,9 @@ from OFS.ObjectManager import BeforeDeleteException
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
+from collective.documentviewer import storage
+from collective.documentviewer.settings import Settings
+from collective.documentviewer.settings import GlobalSettings
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
@@ -1195,9 +1200,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Invalidate advices if needed
         if self.willInvalidateAdvices():
             self.updateAdvices(invalidate=True)
-        # After at_post_create_script, current user may loose permission to edit
+        # After processForm that itself calls at_post_create_script,
+        # current user may loose permission to edit
         # the object because we copy item permissions.
-        newAnnex.at_post_create_script()
+        newAnnex.processForm()
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Annex at %s uploaded by "%s".' % (newAnnex.absolute_url_path(), userId))
 
@@ -1214,7 +1220,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # Remove p_annex-related info
                 removeUid = annex.UID()
                 for annexInfo in self.annexIndex:
-                    if removeUid == annexInfo['uid']:
+                    if removeUid == annexInfo['UID']:
                         self.annexIndex.remove(annexInfo)
                         break
             else:
@@ -1569,7 +1575,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Is there a meeting tied to me?'''
         return self.getMeeting(brain=True) is not None
 
-    security.declarePublic('isLate')
+    security.declarePublic('isLateFor')
     def isLate(self):
         '''Am I included in a meeting as a late item?'''
         if self.reference_catalog.getBackReferences(self, 'MeetingLateItems'):
@@ -1730,7 +1736,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         annexes.append(annexInfo)
                     else:
                         # Retrieve the real annex
-                        annex = self.portal_catalog(UID=annexInfo['uid'])[0].getObject()
+                        annex = self.portal_catalog(UID=annexInfo['UID'])[0].getObject()
                         annexes.append(annex)
             if annexes:
                 if makeSubLists:
@@ -1745,7 +1751,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            or not.'''
         res = None
         if self.annexIndex:
-            annexUid = self.annexIndex[-1]['uid']
+            annexUid = self.annexIndex[-1]['UID']
             res = self.uid_catalog(UID=annexUid)[0].getObject()
         return res
 
@@ -3452,6 +3458,70 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.getMeeting().getSignatures().replace('\n', '<br />'))
         return value + collapsibleMeetingSignatures
 
+    security.declarePublic('getAnnexesToPrint')
+    def getAnnexesToPrint(self, decisionRelated=False):
+        """
+          Creates a list of annexes to print for document generation
+          The result is a list containing dicts where first key is the annex title
+          and second key is a tuple of path where to find relevant images to print :
+          [
+           {'title': 'My annex title',
+            'number_of_images': 2,
+            'images': [{'image_number': 1,
+                        'image_path': '/path/to/image1.png',},
+                       {'image_number': 2,
+                        'image_path': '/path/to/image2.png',},
+                      ]},
+           {'title': 'My annex2 title',
+            'number_of_images': 1,
+            'images': [{'image_number': 1,
+                        'image_path': '/path/to/image21.png',},
+                      ]},
+          ]
+
+        """
+        portal = getToolByName(self, 'portal_url').getPortalObject()
+        annexes = self.getAnnexesInOrder(decisionRelated)
+        basePathForImages = os.environ['PWD']
+        dv_global_settings = GlobalSettings(portal)
+        dvStorageLocation = dv_global_settings.storage_location
+        res = []
+        i = 1
+        for annex in annexes:
+            # first check if annex needs to be printed
+            if not annex.getToPrint():
+                continue
+            # if the annex needs to be printed, check if everything is ok to print it
+            annex_annotations = IAnnotations(annex)
+            # must be converted successfully
+            if not 'collective.documentviewer' in annex_annotations.keys() or not \
+               'successfully_converted' in annex_annotations['collective.documentviewer'] or not \
+               annex_annotations['collective.documentviewer']['successfully_converted'] is True:
+                continue
+
+            # everything seems right, manage this annex
+            # build path to images
+            data = {}
+            data['title'] = annex.Title()
+            data['number'] = i
+            data['images'] = []
+            dv_settings = Settings(annex)
+            resource_url = storage.getResourceRelURL(gsettings=dv_global_settings, settings=dv_settings)
+            # remove leading '@@dvpdffiles' view name
+            resource_url = resource_url.replace('@@dvpdffiles/', '', 1)
+            pathToImages = os.path.join(basePathForImages, dvStorageLocation, resource_url, 'large')
+            if not os.path.exists(pathToImages):
+                continue
+            j = 1
+            imagesPaths = os.listdir(pathToImages)
+            data['number_of_images'] = len(imagesPaths)
+            for imagePath in imagesPaths:
+                data['images'].append({'number': j,
+                                       'path': os.path.join(pathToImages, imagePath)})
+                j = j + 1
+            res.append(data)
+            i = i + 1
+        return res
 
 
 registerType(MeetingItem, PROJECTNAME)

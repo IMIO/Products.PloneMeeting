@@ -274,7 +274,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
            a temporary file is created.  In case we check assertRaise(Unauthorized, addAnnex, ...)
            the temporary file is not removed, so make sure it is...'''
         originalAnnexPath = os.path.join(self.pmFolder, self.annexFile)
-        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.txt'
+        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.%s' % originalAnnexPath[-3:]
         if os.path.exists(newAnnexPath):
             os.remove(newAnnexPath)
 
@@ -290,7 +290,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
         #after having used it...
         from shutil import copyfile
         originalAnnexPath = os.path.join(self.pmFolder, self.annexFile)
-        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.txt'
+        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.%s' % originalAnnexPath[-3:]
         copyfile(originalAnnexPath, newAnnexPath)
         annexPath = newAnnexPath
         annexFile = FileUpload(TestFile(
@@ -309,7 +309,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
                       str(decisionRelated), meetingFileType=fileType)
         # Find the last created annex
         annexUid = item.getAnnexesByType(decisionRelated, makeSubLists=False,
-                                         typesIds=[annexType])[-1]['uid']
+                                         typesIds=[annexType])[-1]['UID']
         theAnnex = item.uid_catalog(UID=annexUid)[0].getObject()
         self.assertNotEquals(theAnnex.size(), 0)
         return theAnnex

@@ -356,10 +356,16 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         body = customRes[1].encode(enc)
     else:
         subjectLabel = '%s_mail_subject' % event
-        subject = translate(subjectLabel, domain=d, mapping=translationMapping, context=obj.REQUEST)
+        subject = translate(subjectLabel,
+                            domain=d,
+                            mapping=translationMapping,
+                            context=obj.REQUEST)
         subject = subject.encode(enc)
         bodyLabel = '%s_mail_body' % event
-        body = translate(bodyLabel, domain=d, mapping=translationMapping, context=obj.REQUEST).encode(enc)
+        body = translate(bodyLabel,
+                         domain=d,
+                         mapping=translationMapping,
+                         context=obj.REQUEST).encode(enc)
     adminFromAddress = _getEmailAddress(
         portal.getProperty('email_from_name'),
         portal.getProperty('email_from_address'), enc)
