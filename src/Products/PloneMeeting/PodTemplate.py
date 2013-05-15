@@ -494,4 +494,3 @@ def freezePodDocumentsIfRelevant(obj, transition):
                     logger.warn(CANT_WRITE_DOC % (
                         user.id, fileId, folder.absolute_url(), podTemplate.id))
 ##/code-section module-footer
-

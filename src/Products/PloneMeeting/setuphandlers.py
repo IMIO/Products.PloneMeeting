@@ -279,7 +279,12 @@ def postInstall(context):
         site.portal_groups.editGroup('AuthenticatedUsers', roles=authRoles,
                                      groups=())
 
+    # configure CKEditor : adapt available buttons in toolbar and
+    # defines it as default Plone editor
     _configureCKeditor(site)
+
+    # manage safe_html
+    _congfigureSafeHtml(site)
 
     # configure collective.documentviewer
     from collective.documentviewer.settings import GlobalSettings
@@ -305,6 +310,13 @@ def _configureCKeditor(site):
     except AttributeError:
         logger.warning("Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "
                        "installed and that the cputils_configure_ckeditor method is available")
+
+
+def _congfigureSafeHtml(site):
+    '''Add some values to safe_html.'''
+    logger.info('Adding \'colgroup\' to the list of nasty_tags in safe_html...')
+    if not u'colgroup' in site.portal_transforms.safe_html._config['nasty_tags']:
+        site.portal_transforms.safe_html._config['nasty_tags'][u'colgroup'] = '1'
 
 
 ##code-section FOOT
