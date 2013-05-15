@@ -8,6 +8,7 @@
   <include package=".browser" />
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="communesplone.iconified_document_actions"/>
+  <include package="imio.pm.locales"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"

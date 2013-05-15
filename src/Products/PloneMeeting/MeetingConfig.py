@@ -1333,38 +1333,52 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ('searchmyitems',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
          ('Creator', 'ATCurrentAuthorCriterion', None),),
-         'created', '',
-         "python: here.portal_plonemeeting.userIsAmong('creators')"),
+         'created',
+         '',
+         "python: here.portal_plonemeeting.userIsAmong('creators')",
+         ()),
         # All (visible) items
         ('searchallitems',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
-         'created', '', ''),
+         'created',
+         '',
+         '',
+         ()),
         # Items in copy : need a script to do this search.
         ('searchallitemsincopy',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
          'created', 'searchItemsInCopy',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')"),
+         "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
+         ()),
         # Items to advice : need a script to do this search.
         ('searchallitemstoadvice',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
          'created', 'searchItemsToAdvice',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"),
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+         ()),
         # Advised items : need a script to do this search.
         ('searchalladviseditems',
         (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
          'created', 'searchAdvisedItems',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"),
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+         ()),
         # All not-yet-decided meetings
         ('searchallmeetings',
         (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
-         'getDate', '', ''),
+         'getDate',
+         '',
+         '',
+         ()),
         # All decided meetings
         ('searchalldecisions',
         (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
-         'getDate', '', ''),
+         'getDate',
+         '',
+         '',
+         ()),
     )
 
     # List of topics that take care of the states defined in a meetingConfig
@@ -1759,7 +1773,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('createTopics')
     def createTopics(self):
         '''Adds a bunch of topics within the 'topics' sub-folder.'''
-        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in self.topicsInfo:
+        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr, stateValues in self.topicsInfo:
             self.topics.invokeFactory('Topic', topicId)
             topic = getattr(self.topics, topicId)
             topic.setExcludeFromNav(True)
@@ -1784,6 +1798,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         criterionValue = '%s%s' % \
                             (criterionValue, self.getShortName())
                     criterion.setValue([criterionValue])
+                if stateValues:
+                    stateCriterion = topic.addCriterion(field='review_state', criterion_type='ATListCriterion')
+                    stateCriterion.setValue(stateValues)
             if mustAddStateCriterium:
                 # We must add a state-related criterium. But for an item or
                 # meeting-related topic ?
@@ -1805,7 +1822,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             topic.setCustomView(True)
             topic.setCustomViewFields(['Title', 'CreationDate', 'Creator',
                                        'review_state'])
-            topic.reindexObject()
+            # call processForm passing dummy values so existing values are not touched
+            topic.processForm(values={'dummy': None})
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId):
         '''Returns the name of the action used for the cloneToOtherMC
@@ -1979,7 +1997,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # remove inheritance on self and define these local_roles for self too
         self.__ac_local_roles_block__ = True
         self.manage_addLocalRoles(groupId, ('MeetingPowerObserverLocal',))
-        # the problem here is that
+
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
         '''Create the sub-folders of a meeting config, that will contain
@@ -1998,7 +2016,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 allowedType = self.getItemTypeName()
             folder.setLocallyAllowedTypes([allowedType])
             folder.setImmediatelyAddableTypes([allowedType])
-            folder.reindexObject()
+            # call processForm passing dummy values so existing values are not touched
+            folder.processForm(values={'dummy': None})
         # Set a property allowing to know in which MeetingConfig we are
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
         # Create the topics related to this meeting config
@@ -2586,19 +2605,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             folder = getattr(self, TOOL_FOLDER_CLASSIFIERS)
         else:
             folder = getattr(self, TOOL_FOLDER_CATEGORIES)
-        folder.invokeFactory('MeetingCategory', **descr.getData())
+        data = descr.getData()
+        folder.invokeFactory('MeetingCategory', **data)
         cat = getattr(folder, descr.id)
         if not descr.active:
             self.portal_workflow.doActionFor(cat, 'deactivate')
+        # call processForm passing dummy values so existing values are not touched
+        cat.processForm(values={'dummy': None})
         return cat
 
     security.declarePrivate('addRecurringItem')
     def addRecurringItem(self, descr):
         '''Adds a recurring item from a RecurringItemDescriptor.'''
         folder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
-        folder.invokeFactory(self.getItemTypeName(), **descr.__dict__)
+        data = descr.__dict__
+        folder.invokeFactory(self.getItemTypeName(), **data)
         item = getattr(folder, descr.id)
-        item.at_post_create_script()
+        # call processForm passing dummy values so existing values are not touched
+        item.processForm(values={'dummy': None})
         return item
 
     security.declarePrivate('addFileType')
@@ -2617,13 +2641,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                ft.theIcon.name,
                                ft.theIcon.content,
                                content_type=ft.theIcon.mimeType)
+        data = ft.getData(theIcon=iconContent)
         folder.invokeFactory('MeetingFileType',
-                             **ft.getData(theIcon=iconContent))
+                             **data)
         if isinstance(source, basestring):
             f.close()
         fileType = getattr(folder, ft.id)
         if not ft.active:
             self.portal_workflow.doActionFor(fileType, 'deactivate')
+        # call processForm passing dummy values so existing values are not touched
+        fileType.processForm(values={'dummy': None})
         return fileType
 
     security.declarePrivate('addPodTemplate')
@@ -2649,10 +2676,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                               content_type=pt.podTemplate.mimeType)
             fileObject.filename = pt.podTemplate.name
             fileObject.content_type = pt.podTemplate.mimeType
-        folder.invokeFactory('PodTemplate', **pt.getData(podTemplate=fileObject))
+        data = pt.getData(podTemplate=fileObject)
+        folder.invokeFactory('PodTemplate', **data)
         podTemplate = getattr(folder, pt.id)
         if not pt.active:
             self.portal_workflow.doActionFor(podTemplate, 'deactivate')
+        # call processForm passing dummy values so existing values are not touched
+        podTemplate.processForm(values={'dummy': None})
         return podTemplate
 
     security.declarePrivate('addMeetingUser')
@@ -2665,7 +2695,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             userTitle = userInfo.getProperty('fullname')
         if not userTitle:
             userTitle = mud.id
-        folder.invokeFactory('MeetingUser', **mud.getData(title=userTitle))
+        data = mud.getData(title=userTitle)
+        folder.invokeFactory('MeetingUser', **data)
         meetingUser = getattr(folder, mud.id)
         if mud.signatureImage:
             if isinstance(source, basestring):
@@ -2685,6 +2716,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         meetingUser.at_post_create_script()
         if not mud.active:
             self.portal_workflow.doActionFor(meetingUser, 'deactivate')
+        # call processForm passing dummy values so existing values are not touched
+        meetingUser.processForm(values={'dummy': None})
         return meetingUser
 
     security.declarePublic('getMeetingUserFromPloneUser')

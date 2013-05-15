@@ -96,7 +96,7 @@ def setupCatalogMultiplex(context):
     explicit add classes (meta_types) be indexed in catalogs (white)
     or removed from indexing in a catalog (black)
     """
-    if isNotPloneMeetingProfile(context): return 
+    if isNotPloneMeetingProfile(context): return
     site = context.getSite()
     #dd#
     muliplexed = ['ToolPloneMeeting', 'MeetingCategory', 'MeetingConfig', 'MeetingFileType', 'MeetingGroup', 'ExternalApplication', 'PodTemplate', 'MeetingUser']
@@ -279,6 +279,17 @@ def postInstall(context):
         site.portal_groups.editGroup('AuthenticatedUsers', roles=authRoles,
                                      groups=())
 
+    _configureCKeditor(site)
+
+
+def _configureCKeditor(site):
+    '''Make sure CKeditor is the new default editor used by everyone...'''
+    logger.info('Defining CKeditor as the new default editor for every users and configuring it...')
+    try:
+        site.cputils_configure_ckeditor(custom='plonemeeting')
+    except AttributeError:
+        raise Exception, "Could not configure CKeditor for every users, make sure Products.CPUtils is correctly " \
+            "installed and that the cputils_configure_ckeditor method is available"
 
 
 ##code-section FOOT

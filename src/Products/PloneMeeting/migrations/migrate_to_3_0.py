@@ -10,14 +10,17 @@ class Migrate_To_3_0(Migrator):
     def __init__(self, context):
         Migrator.__init__(self, context)
 
-    def _configureCKeditor(self):
-        '''Make sure CKeditor is the new default editor used by everyone...'''
-        logger.info('Defining CKeditor as the new default editor for every users...')
-        try:
-            self.portal.cputils_configure_ckeditor(custom='plonemeeting')
-        except AttributeError:
-            raise Exception, "Could not configure CKeditor for every users, make sure Products.CPUtils is correctly " \
-                "installed and that the cputils_configure_ckeditor method is available"
+    def _removeIconExprObjectsOnTypes(self):
+        '''Remove icon_expr_object on portal_types relative to PloneMeeting.'''
+        logger.info('Removing icon_expr_objects on portal_types...')
+        for ptype in self.portal.portal_types.objectValues():
+            typeId = ptype.getId()
+            if typeId.startswith('Meeting') and \
+               hasattr(ptype, 'icon_expr_object') and \
+               ptype.icon_expr_object and \
+               ptype.icon_expr_object.text:
+                    ptype.icon_expr_object = None
+        logger.info('Done.')
 
     def _updateRegistries(self):
         '''Make sure some elements are enabled and remove not found elements.'''
@@ -351,6 +354,55 @@ class Migrate_To_3_0(Migrator):
             cfg.setItemDecidedStates(itemDecidedStatesToApply)
         logger.info('Done.')
 
+    def _forceHTMLContentTypeForEmptyRichFields(self):
+        '''
+          In some case, empty rich fields had a bad contentType,
+          make sure it is correctly set to text/html.
+        '''
+        logger.info('Forcing rich field contentType to text/html...')
+        brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem', ))
+        for brain in brains:
+            obj = brain.getObject()
+            obj.forceHTMLContentTypeForEmptyRichFields()
+        # take items stored in the MeetingConfigs too...
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            items = cfg.recurringitems.objectValues('MeetingItem')
+            for item in items:
+                item.forceHTMLContentTypeForEmptyRichFields()
+        logger.info('Done.')
+
+    def _completeConfigurationCreationProcess(self):
+        '''Elements contained in the tool (portal_plonemeeting) still had the
+           _at_creation_flag set to True.  Now processForm is called at install time
+           so make sure old elements created programmatically in the config are
+           completely initialized too...'''
+        logger.info('Finishing config objects initialization')
+        # first for elements contained in the tool
+        updated = 0
+        for obj in self.portal.portal_plonemeeting.objectValues():
+            if obj.meta_type == 'Workflow Policy Configuration':
+                continue
+            if obj._at_creation_flag:
+                updated = updated + 1
+                # call processForm with dummy values so existing values are kept
+                obj.processForm(values={'dummy': ''})
+        # manage MeetingConfigs and contained elements
+        for mc in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # there are 2 levels of elements in the MeetingConfig
+            firstLevelElements = mc.objectValues()
+            for firstLevelElement in firstLevelElements:
+                if firstLevelElement._at_creation_flag:
+                    firstLevelElement.processForm(values={'dummy': ''})
+                    updated = updated + 1
+                    logger.info(firstLevelElement.absolute_url())
+                secondLevelElements = firstLevelElement.objectValues()
+                for secondLevelElement in secondLevelElements:
+                    if secondLevelElement._at_creation_flag:
+                        secondLevelElement.processForm(values={'dummy': ''})
+                        updated = updated + 1
+                        logger.info(secondLevelElement.absolute_url())
+        logger.info('Done (%d elements updated).' % updated)
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
         # the Meeting 'published' state has become 'decisions_published' now, so :
@@ -366,7 +418,9 @@ class Migrate_To_3_0(Migrator):
         self._migrateStatePublishedToDecisionsPublished(uids)
 
         # now continue with other migrations
-        self._configureCKeditor()
+        self._removeIconExprObjectsOnTypes()
+        self._completeConfigurationCreationProcess()
+        self._forceHTMLContentTypeForEmptyRichFields()
         self._updateRegistries()
         self._patchFileSecurity()
         self._removeClonedPermissionsOnAnnexes()

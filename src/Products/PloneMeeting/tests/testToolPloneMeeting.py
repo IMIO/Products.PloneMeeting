@@ -188,28 +188,53 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # By default, 2 meetingConfigs are created active
         # If the user is not logged in, he can not access the meetingConfigs and
         # so the tabs are not shown
-        self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), False)
-        self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), False)
+        meetingConfig1Id = self.meetingConfig.getId()
+        meetingConfig2Id = self.meetingConfig2.getId()
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
         # every roles of the application can see the tabs
         login(self.portal, 'pmManager')
-        self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), True)
-        self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
         login(self.portal, 'pmCreator1')
-        self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), True)
-        self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
         login(self.portal, 'pmReviewer1')
-        self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), True)
-        self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
         # If a wrong meetingConfigId is passed, it returns False
         self.assertEquals(self.tool.showPloneMeetingTab('wrong-meeting-config-id'), False)
         # If we disable one meetingConfig, no more tab is shown, there must be
         # at least 2 active meetingConfigs for the tabs to be displayed
         login(self.portal, 'admin')
-        self.do(getattr(self.tool, 'plonegov-assembly'), 'deactivate')
+        self.do(getattr(self.tool, meetingConfig2Id), 'deactivate')
         login(self.portal, 'pmManager')
-        self.assertEquals(self.tool.showPloneMeetingTab('plonegov-assembly'), False)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
         # Even an activated meetingConfig will not show his tab if it is alone...
-        self.assertEquals(self.tool.showPloneMeetingTab('plonemeeting-assembly'), False)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
+
+    def testSetupProcessForCreationFlag(self):
+        '''Test that every elements created by the setup process
+           are correctly initialized regarding the _at_creation_flag.
+           The flag is managed using processForm so check that processForm
+           did the work correctly too...'''
+        # test elements of the tool
+        for elt in self.tool.objectValues():
+            if elt.meta_type == 'Workflow Policy Configuration':
+                continue
+            self.failIf(elt._at_creation_flag)
+            self.failIf(elt.Title() == 'Site')
+        # test elements contained in the MeetingConfigs
+        for mc in self.tool.objectValues():
+            # there are 2 levels of elements in the MeetingConfig
+            firstLevelElements = mc.objectValues()
+            for firstLevelElement in firstLevelElements:
+                self.failIf(firstLevelElement._at_creation_flag)
+                self.failIf(firstLevelElement.Title() == 'Site')
+                secondLevelElements = firstLevelElement.objectValues()
+                for secondLevelElement in secondLevelElements:
+                    self.failIf(secondLevelElement._at_creation_flag)
+                    self.failIf(secondLevelElement.Title() == 'Site')
 
 
 def test_suite():
