@@ -109,6 +109,9 @@ class Migrate_To_3_0(Migrator):
                 changed = False
                 item = brain.getObject()
                 for annex in (item.getAnnexes() + item.getAnnexesDecision()):
+                    if not annex:
+                        logger.warning('A \'None\' has been found in list of annexes for item at %s' % item.absolute_url())
+                        continue
                     annexUpdated = annex._updateMeetingFileType(cfg)
                     if annexUpdated:
                         changed = True
