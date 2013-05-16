@@ -70,7 +70,7 @@ p {line-height: 1em;}
    there are no border...  So force border of table displayed in item rich fields.
    .cke_show_borders is an override for CKeditor while displaying tables inside the editor. */
 #pmDescription table td, #pmDescription table tr,
-[id*="hook_"] table tr, [id*="hook_"] table td,
+[id*="hook_"] fieldset table tr, [id*="hook_"] fieldset table td,
 .cke_show_borders table.cke_show_border,
 .cke_show_borders table.cke_show_border > tr > td,
 .cke_show_borders table.cke_show_border > tr > th,
