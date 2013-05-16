@@ -27,7 +27,11 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 import os, os.path, time, unicodedata
 from App.class_init import InitializeClass
-from Products.CMFCore.permissions import View
+from Acquisition import aq_base
+from zope.annotation import IAnnotations
+from zope.i18n import translate
+from plone.memoize.instance import memoize
+from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, \
@@ -92,7 +96,7 @@ schema = Schema((
     ),
     BooleanField(
         name='toPrint',
-        default=True,
+        default=False,
         widget=BooleanField._properties['widget'](
             label='Toprint',
             label_msgid='PloneMeeting_label_toPrint',
@@ -194,7 +198,11 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         item = self.getItem()
         if item:
-            item.updateAnnexIndex(self)
+            # update item.annexIndex if it was not already set
+            # by the conversion process for example
+            annexIndexUids = [annex['UID'] for annex in item.annexIndex]
+            if not self.UID() in annexIndexUids:
+                item.updateAnnexIndex()
             item.alreadyUsedAnnexNames.append(self.id)
         self.adapted().onEdit(isCreated=True) # Call sub-product code if any
         # Add text-extraction-related attributes
@@ -226,12 +234,14 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
            MeetingItem.py).'''
         fileType = self.getMeetingFileType()
         portal_url = getToolByName(self, 'portal_url')
-        res = {'Title': self.Title(),
+        res = {'Title': self.Title() or self.__dict__['title'],  # backward compatibility for still non-Blob files
                'url': portal_url.getRelativeContentURL(self),
                'uid': self.UID(),
                'fileTypeId': fileType.id,
                'iconUrl': portal_url.getRelativeContentURL(fileType) + '/theIcon',
-               'modification_date': self.pm_modification_date,
+               # the item (parent) also has a pm_modification_date,
+               # make sure we use the real MeetingFile's one
+               'modification_date': aq_base(self).pm_modification_date,
                'decisionRelated': self.isDecisionRelated()
                }
         return res
@@ -391,4 +401,3 @@ registerType(MeetingFile, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

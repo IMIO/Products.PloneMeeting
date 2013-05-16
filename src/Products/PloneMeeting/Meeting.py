@@ -25,6 +25,7 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 from xml.dom import minidom
 from appy.gen import No
+from collections import OrderedDict
 from App.class_init import InitializeClass
 from DateTime import DateTime
 from OFS.ObjectManager import BeforeDeleteException

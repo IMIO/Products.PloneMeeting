@@ -279,7 +279,27 @@ def postInstall(context):
         site.portal_groups.editGroup('AuthenticatedUsers', roles=authRoles,
                                      groups=())
 
+    # configure CKEditor : adapt available buttons in toolbar and
+    # defines it as default Plone editor
     _configureCKeditor(site)
+
+    # manage safe_html
+    _congfigureSafeHtml(site)
+
+    # configure collective.documentviewer
+    from collective.documentviewer.settings import GlobalSettings
+    viewer_settings = GlobalSettings(site)._metadata
+    viewer_settings['storage_type'] = 'File'
+    viewer_settings['storage_location'] = 'var/converted_annexes'
+    viewer_settings['auto_layout_file_types'] = ['pdf', 'photoshop', 'image',
+                                                 'palm', 'ppt', 'txt', 'ps',
+                                                 'word', 'rft', 'excel', 'html',
+                                                 'visio']
+    viewer_settings['auto_convert'] = False
+    viewer_settings['pdf_image_format'] = 'png'
+    viewer_settings['show_search'] = False
+    viewer_settings['show_sidebar'] = False
+    viewer_settings['show_search_on_group_view'] = False
 
 
 def _configureCKeditor(site):
@@ -288,8 +308,15 @@ def _configureCKeditor(site):
     try:
         site.cputils_configure_ckeditor(custom='plonemeeting')
     except AttributeError:
-        raise Exception, "Could not configure CKeditor for every users, make sure Products.CPUtils is correctly " \
-            "installed and that the cputils_configure_ckeditor method is available"
+        logger.warning("Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "
+                       "installed and that the cputils_configure_ckeditor method is available")
+
+
+def _congfigureSafeHtml(site):
+    '''Add some values to safe_html.'''
+    logger.info('Adding \'colgroup\' to the list of nasty_tags in safe_html...')
+    if not u'colgroup' in site.portal_transforms.safe_html._config['nasty_tags']:
+        site.portal_transforms.safe_html._config['nasty_tags'][u'colgroup'] = '1'
 
 
 ##code-section FOOT

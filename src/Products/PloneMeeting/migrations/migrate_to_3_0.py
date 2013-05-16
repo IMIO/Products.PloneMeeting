@@ -135,20 +135,6 @@ class Migrate_To_3_0(Migrator):
         logger.info('Migrating %s MeetingFile objects...' % len(brains))
         from plone.app.blob.migrations import migrate
         migrate(self.portal, 'MeetingFile')
-        # Title of the MeetingFiles are lost (???) retrieve it from annexIndex
-        brains = self.portal.portal_catalog(meta_type='MeetingItem')
-        for brain in brains:
-            item = brain.getObject()
-            annexes = item.getAnnexes() + item.getAnnexesDecision()
-            if not annexes:
-                continue
-            title_to_uid_mapping = {}
-            for annexInfo in item.annexIndex:
-                title_to_uid_mapping[annexInfo['uid']] = annexInfo['Title']
-            for annex in annexes:
-                if not annex.Title():
-                    annex.setTitle(title_to_uid_mapping[annex.UID()])
-                    annex.reindexObject()
         logger.info("MeetingFiles have been migrated to Blobs.")
 
     def _migrateFCKTemplates(self):
