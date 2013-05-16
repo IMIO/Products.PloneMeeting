@@ -1229,6 +1229,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             del self.annexIndex[:]
             sortableList = []
+            annexes = self.getAnnexes()
+            decisionAnnexes = self.getAnnexesDecision()
+            # in some weird case, there is a None is the list of annexes...
+            # probably a old Plone3 AT bug because now it when setting annexes
+            # it automatically removes None elements...
+            if None in annexes:
+                logger.warning('A \'None\' has been found in list of annexes for item at %s'
+                               % self.absolute_url())
+                self.setAnnexes(self.getAnnexes())
+            if None in decisionAnnexes:
+                logger.warning('A \'None\' has been found in list of annexesDecision for item at %s'
+                               % self.absolute_url())
+                self.setAnnexesDecision(self.getAnnexesDecision())
             for annex in self.getAnnexes():
                 sortableList.append(annex.getAnnexInfo())
             for annex in self.getAnnexesDecision():
