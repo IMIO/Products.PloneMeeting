@@ -30,6 +30,7 @@ import os.path
 import time
 import unicodedata
 from App.class_init import InitializeClass
+from Acquisition import aq_base
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 from plone.memoize.instance import memoize
@@ -208,7 +209,11 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         item = self.getItem()
         if item:
-            item.updateAnnexIndex(self)
+            # update item.annexIndex if it was not already set
+            # by the conversion process for example
+            annexIndexUids = [annex['UID'] for annex in item.annexIndex]
+            if not self.UID() in annexIndexUids:
+                item.updateAnnexIndex()
             item.alreadyUsedAnnexNames.append(self.id)
         # at the end of creation, we know now if self.isDecisionRelated
         # and we can manage the self.toPrint default value
@@ -254,7 +259,9 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'UID': self.UID(),
                'fileTypeId': fileType.id,
                'iconUrl': portal_url.getRelativeContentURL(fileType) + '/theIcon',
-               'modification_date': self.pm_modification_date,
+               # the item (parent) also has a pm_modification_date,
+               # make sure we use the real MeetingFile's one
+               'modification_date': aq_base(self).pm_modification_date,
                'decisionRelated': self.isDecisionRelated(),
                'conversionStatus': self.conversionStatus(),
                }
@@ -592,6 +599,11 @@ def checkAfterConversion(object, event):
             sendMailIfRelevant(item, 'annexConversionError', 'PloneMeeting: Add annex', isRole=False)
 
     # update the conversionStatus value in the annexIndex
+    # if this is triggered before at_post_create_script,
+    # a pm_modification_date is not available
+    # this is tested in testConversionWithDocumentViewer.testConvert
+    if not hasattr(aq_base(object), 'pm_modification_date'):
+        object.pm_modification_date = object.modification_date
     item.updateAnnexIndex()
 
     # remove saved_request on annex
