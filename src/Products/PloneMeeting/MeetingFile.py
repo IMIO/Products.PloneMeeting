@@ -200,7 +200,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         if item:
             # update item.annexIndex if it was not already set
             # by the conversion process for example
-            annexIndexUids = [annex['UID'] for annex in item.annexIndex]
+            annexIndexUids = [annex['uid'] for annex in item.annexIndex]
             if not self.UID() in annexIndexUids:
                 item.updateAnnexIndex()
             item.alreadyUsedAnnexNames.append(self.id)
@@ -234,7 +234,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
            MeetingItem.py).'''
         fileType = self.getMeetingFileType()
         portal_url = getToolByName(self, 'portal_url')
-        res = {'Title': self.Title() or self.__dict__['title'],  # backward compatibility for still non-Blob files
+        res = {'Title': self.Title() or self.__dict__['title'] or '',  # backward compatibility for still non-Blob files
                'url': portal_url.getRelativeContentURL(self),
                'uid': self.UID(),
                'fileTypeId': fileType.id,
