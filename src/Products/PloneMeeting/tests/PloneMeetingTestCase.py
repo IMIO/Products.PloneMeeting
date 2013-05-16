@@ -302,7 +302,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
                 annexType = self.annexFileType
         fileType = getattr(self.meetingConfig.meetingfiletypes, annexType)
         if annexTitle is None:
-            annexTitle = fileType.getPredefinedTitle()
+            annexTitle = fileType.getPredefinedTitle() or 'Annex title'
         # Create the annex
         idCandidate = None
         item.addAnnex(idCandidate, annexTitle, annexFile,
