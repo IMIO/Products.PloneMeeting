@@ -285,6 +285,17 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             # And finally, check that meetingGroup is not linked to an existing
             # item.
             mgId = self.getId()
+            # In the configuration
+            for cfg in self.portal_plonemeeting.objectValues('MeetingConfig'):
+                for item in cfg.recurringitems.objectValues('MeetingItem'):
+                    if item.getProposingGroup() == mgId or \
+                       mgId in item.getAssociatedGroups():
+                        raise BeforeDeleteException, \
+                            translate("can_not_delete_meetinggroup_config_meetingitem",
+                                      domain="plone",
+                                      mapping={'url': item.absolute_url()},
+                                      context=self.REQUEST)
+            # In the application
             for brain in self.portal_catalog(meta_type="MeetingItem"):
                 obj = brain.getObject()
                 if (obj.getProposingGroup() == mgId) or \
@@ -295,6 +306,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                     # delete it.
                     raise BeforeDeleteException, \
                         "can_not_delete_meetinggroup_meetingitem"
+
             # If everything passed correctly, we delete every linked (and empty)
             # Plone groups.
             for role in MEETING_GROUP_SUFFIXES:
