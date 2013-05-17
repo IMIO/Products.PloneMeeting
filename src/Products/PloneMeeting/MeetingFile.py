@@ -538,6 +538,8 @@ registerType(MeetingFile, PROJECTNAME)
 # end of class MeetingFile
 
 ##code-section module-footer #fill in your manual code here
+
+
 def convertForPrinting(object, event, force=False):
     """
       Convert the MeetingFile to images so it can be printed or previewed.
@@ -561,6 +563,7 @@ def convertForPrinting(object, event, force=False):
     # queueJob use plone.app.async if installed or current instance if not
     from collective.documentviewer.async import queueJob
     queueJob(object)
+
 
 def checkAfterConversion(object, event):
     """
