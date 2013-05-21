@@ -6,7 +6,7 @@
 
  <property name="title" i18n:translate="">MeetingConfig</property>
  <property name="description" i18n:translate=""></property>
- <property name="icon_expr">string:${portal_url}/MeetingConfig.png</property>
+ <property name="icon_expr"></property>
  <property name="content_meta_type">MeetingConfig</property>
  <property name="product">PloneMeeting</property>
  <property name="factory">addMeetingConfig</property>
