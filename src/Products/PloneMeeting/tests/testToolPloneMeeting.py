@@ -99,6 +99,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             set([item1, clonedItem]), set(workingFolder.objectValues()))
         # Check that the annexes have been cloned, too.
         self.assertEquals(len(clonedItem.getAnnexes()), 1)
+        # check that annexes returned by the MeetingItem.getAnnexes method
+        # and stored in annexIndex correspond to new cloned annexes
+        newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues('MeetingFile')]
+        self.assertEquals([annex.UID() for annex in clonedItem.getAnnexes()], newAnnexesUids)
+        self.assertEquals([annex['UID'] for annex in clonedItem.annexIndex], newAnnexesUids)
         # The annexIndex must be filled
         self.assertEquals(len(clonedItem.annexIndex), 1)
         # Test that an item viewable by a different user (another member of the
