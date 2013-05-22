@@ -392,7 +392,14 @@ class Migrate_To_3_0(Migrator):
     def _reindexAnnexes(self):
         '''A new value 'conversionStatus' needs to be indexed...'''
         logger.info('Updating every items annexIndex')
-        self.portal.portal_plonemeeting.reindexAnnexes()
+        for brain in self.portal.portal_catalog(meta_type='MeetingItem'):
+            item = brain.getObject()
+            for annex in item.objectValues('MeetingFile'):
+                if not annex.Title():
+                    # if an MeetingFile has lost his title, retrieve it
+                    annex.setTitle(annex.__dict__['title'])
+                    annex.reindexObject(idxs=['Title', ])
+            item.updateAnnexIndex()
         logger.info('Done.')
 
     def run(self):

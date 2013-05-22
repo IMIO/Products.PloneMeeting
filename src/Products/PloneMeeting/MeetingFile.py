@@ -254,7 +254,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
            MeetingItem.py).'''
         fileType = self.getMeetingFileType()
         portal_url = getToolByName(self, 'portal_url')
-        res = {'Title': self.Title() or self.__dict__['title'],  # backward compatibility for still non-Blob files
+        res = {'Title': self.Title(),
                'absolute_url': portal_url.getRelativeContentURL(self),
                'UID': self.UID(),
                'fileTypeId': fileType.id,
