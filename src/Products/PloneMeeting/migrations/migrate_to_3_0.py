@@ -389,6 +389,19 @@ class Migrate_To_3_0(Migrator):
                         logger.info(secondLevelElement.absolute_url())
         logger.info('Done (%d elements updated).' % updated)
 
+    def _reindexAnnexes(self):
+        '''A new value 'conversionStatus' needs to be indexed...'''
+        logger.info('Updating every items annexIndex')
+        for brain in self.portal.portal_catalog(meta_type='MeetingItem'):
+            item = brain.getObject()
+            for annex in item.objectValues('MeetingFile'):
+                if not annex.Title():
+                    # if an MeetingFile has lost his title, retrieve it
+                    annex.setTitle(annex.__dict__['title'])
+                    annex.reindexObject(idxs=['Title', ])
+            item.updateAnnexIndex()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
         # the Meeting 'published' state has become 'decisions_published' now, so :
@@ -404,6 +417,7 @@ class Migrate_To_3_0(Migrator):
         self._migrateStatePublishedToDecisionsPublished(uids)
 
         # now continue with other migrations
+        self._reindexAnnexes()
         self._removeIconExprObjectsOnTypes()
         self._completeConfigurationCreationProcess()
         self._forceHTMLContentTypeForEmptyRichFields()

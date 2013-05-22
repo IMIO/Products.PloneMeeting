@@ -250,5 +250,5 @@ class PMOmnipotentUser(OmnipotentUser):
       Omnipotent for PloneMeeting.  Heritates from Products.CMFCore's OmnipotentUser
       but add a missing 'has_role' method...
     """
-    def has_role(self, obj, role):
+    def has_role(self, roles, obj=None):
         return True
