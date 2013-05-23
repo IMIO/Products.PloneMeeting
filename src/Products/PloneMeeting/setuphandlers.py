@@ -317,6 +317,9 @@ def _congfigureSafeHtml(site):
     logger.info('Adding \'colgroup\' to the list of nasty_tags in safe_html...')
     if not u'colgroup' in site.portal_transforms.safe_html._config['nasty_tags']:
         site.portal_transforms.safe_html._config['nasty_tags'][u'colgroup'] = '1'
+    logger.info('Adding \'strike\' to the list of valid_tags in safe_html...')
+    if not u'strike' in site.portal_transforms.safe_html._config['valid_tags']:
+        site.portal_transforms.safe_html._config['valid_tags'][u'strike'] = '1'
 
 
 ##code-section FOOT
