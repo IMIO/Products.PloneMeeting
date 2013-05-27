@@ -28,6 +28,7 @@ from appy.gen.utils import Keywords
 from App.class_init import InitializeClass
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
+from zope.annotation import IAnnotations
 from zope.component import getGlobalSiteManager
 from zope.i18n import translate
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
@@ -1924,33 +1925,41 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getTopics')
     def getTopics(self, topicType):
-        '''Gets topics related to type p_topicType ("MeetingItem",
-           "Meeting").'''
-        res = []
-        for topic in self.topics.objectValues('ATTopic'):
-            # Get the 2 properties : TOPIC_TYPE and TOPIC_SEARCH_SCRIPT
-            topicTypeProp = topic.getProperty(TOPIC_TYPE)
-            if topicTypeProp != topicType:
-                continue
-            # We append the topic and the scriptId if it is not deactivated.
-            # We filter on the review_state; else, the Manager will see
-            # every topic in the portlets, which would be confusing.
-            wfTool = self.portal_workflow
-            if wfTool.getInfoFor(topic, 'review_state') != 'active':
-                continue
-            tal_expr = topic.getProperty(TOPIC_TAL_EXPRESSION)
-            tal_res = True
-            if tal_expr:
-                ctx = createExprContext(topic.getParentNode(),
-                                        self.portal_url.getPortalObject(),
-                                        topic)
-                try:
-                    tal_res = Expression(tal_expr)(ctx)
-                except Exception:
-                    tal_res = False
-            if tal_res:
-                res.append(topic)
-        return res
+        '''
+          Gets topics related to type p_topicType ("MeetingItem",
+           "Meeting").
+          This is called to much times on the same page, we add some cache here...
+        '''
+        key = "meeting-config-gettopics-%s" % topicType.lower() + self.UID()
+        cache = IAnnotations(self.REQUEST)
+        data = cache.get(key, None)
+        if data is None:
+            data = []
+            for topic in self.topics.objectValues('ATTopic'):
+                # Get the 2 properties : TOPIC_TYPE and TOPIC_SEARCH_SCRIPT
+                topicTypeProp = topic.getProperty(TOPIC_TYPE)
+                if topicTypeProp != topicType:
+                    continue
+                # We append the topic and the scriptId if it is not deactivated.
+                # We filter on the review_state; else, the Manager will see
+                # every topic in the portlets, which would be confusing.
+                wfTool = self.portal_workflow
+                if wfTool.getInfoFor(topic, 'review_state') != 'active':
+                    continue
+                tal_expr = topic.getProperty(TOPIC_TAL_EXPRESSION)
+                tal_res = True
+                if tal_expr:
+                    ctx = createExprContext(topic.getParentNode(),
+                                            self.portal_url.getPortalObject(),
+                                            topic)
+                    try:
+                        tal_res = Expression(tal_expr)(ctx)
+                    except Exception:
+                        tal_res = False
+                if tal_res:
+                    data.append(topic)
+            cache[key] = data
+        return data
 
     security.declarePrivate('updateIsDefaultFields')
     def updateIsDefaultFields(self):
