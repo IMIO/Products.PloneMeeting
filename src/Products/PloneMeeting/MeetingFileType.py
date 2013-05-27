@@ -24,8 +24,9 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 from App.class_init import InitializeClass
-from Products.PloneMeeting.utils import getCustomAdapter, \
-     HubSessionsMarshaller, getFieldContent
+from OFS.ObjectManager import BeforeDeleteException
+from Products.PloneMeeting.utils import getCustomAdapter, HubSessionsMarshaller, getFieldContent
+
 
 # Marshaller -------------------------------------------------------------------
 class FileTypeMarshaller(HubSessionsMarshaller):
@@ -48,7 +49,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         required=True,
-        storage= AttributeStorage(),
+        storage=AttributeStorage(),
     ),
     StringField(
         name='predefinedTitle',
@@ -61,7 +62,7 @@ schema = Schema((
     ),
     BooleanField(
         name='decisionRelated',
-        default= False,
+        default=False,
         widget=BooleanField._properties['widget'](
             label='Decisionrelated',
             label_msgid='PloneMeeting_label_decisionRelated',
@@ -121,24 +122,30 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         self.getIcon()
 
     security.declarePrivate('at_post_create_script')
-    def at_post_create_script(self): self.adapted().onEdit(isCreated=True)
+    def at_post_create_script(self):
+        self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
-    def at_post_edit_script(self): self.adapted().onEdit(isCreated=False)
+    def at_post_edit_script(self):
+        self.adapted().onEdit(isCreated=False)
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingFileType': return self.context
+        if self.__class__.__name__ != 'MeetingFileType':
+            return self.context
         return self
 
     security.declarePublic('adapted')
-    def adapted(self): return getCustomAdapter(self)
+    def adapted(self):
+        return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
-    def onEdit(self, isCreated): '''See doc in interfaces.py.'''
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
 
     security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp): '''See doc in interfaces.py.'''
+    def onTransferred(self, extApp):
+        '''See doc in interfaces.py.'''
 
     security.declarePublic('isSelectable')
     def isSelectable(self):
@@ -151,6 +158,24 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         state = wfTool.getInfoFor(mft, 'review_state')
         return state == 'active'
 
+    security.declarePrivate('manage_beforeDelete')
+    def manage_beforeDelete(self, item, container):
+        '''Checks if the current meetingFile can be deleted:
+          - it can not be linked to an existing MeetingFile.'''
+        # If we are trying to remove the whole Plone Site, bypass this hook.
+        # bypass also if we are in the creation process
+        if not item.meta_type == "Plone Site" and not item._at_creation_flag:
+            brefs = self.getBRefs()
+            if brefs:
+                # if we have back references, it means that at least an annex
+                # is linked to this MeetingFileType
+                # in some case, the getBRefs returns 'None' in the list of back references
+                # so check that we have at least one back references that is not 'None'
+                for bref in brefs:
+                    if bref:
+                        raise BeforeDeleteException, \
+                            "can_not_delete_meetingfiletype_meetingfile"
+        BaseContent.manage_beforeDelete(self, item, container)
 
 
 registerType(MeetingFileType, PROJECTNAME)
@@ -158,4 +183,3 @@ registerType(MeetingFileType, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-
