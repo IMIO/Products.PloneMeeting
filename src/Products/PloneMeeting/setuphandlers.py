@@ -42,24 +42,25 @@ podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 # Indexes used by HubSessions
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''
-indexInfo = { # MeetingItem-related indexes
-              'getTitle2'           : 'ZCTextIndex',
-              'getCategory'         : 'FieldIndex',
-              'getItemIsSigned'     : 'FieldIndex',
-              'getRawClassifier'    : 'FieldIndex',
-              'getProposingGroup'   : 'FieldIndex',
-              'getAssociatedGroups' : 'KeywordIndex',
-              'getPreferredMeeting' : 'FieldIndex',
-              'getDecision'         : 'ZCTextIndex',
-              'getCopyGroups'       : 'KeywordIndex',
-              'indexAdvisers'       : 'KeywordIndex',
-              # Meeting-related indexes
-              'getDate'             : 'DateIndex',
-              # MeetingFile-related indexes
-              'indexExtractedText'  : 'ZCTextIndex',
-              # MeetingUser-related indexes
-              'getConfigId'         : 'FieldIndex',
-              'indexUsages'         : 'KeywordIndex',
+indexInfo = {
+             # MeetingItem-related indexes
+             'getTitle2': 'ZCTextIndex',
+             'getCategory': 'FieldIndex',
+             'getItemIsSigned': 'FieldIndex',
+             'getRawClassifier': 'FieldIndex',
+             'getProposingGroup': 'FieldIndex',
+             'getAssociatedGroups': 'KeywordIndex',
+             'getPreferredMeeting': 'FieldIndex',
+             'getDecision': 'ZCTextIndex',
+             'getCopyGroups': 'KeywordIndex',
+             'indexAdvisers': 'KeywordIndex',
+             # Meeting-related indexes
+             'getDate': 'DateIndex',
+             # MeetingFile-related indexes
+             'indexExtractedText': 'ZCTextIndex',
+             # MeetingUser-related indexes
+             'getConfigId': 'FieldIndex',
+             'indexUsages': 'KeywordIndex',
             }
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # Index "indexUsages" does not use Archetype-generated getter "getUsages"
@@ -173,15 +174,16 @@ def postInstall(context):
 
     # Enable WevDAV access for meeting archive observers and any global observer
     site.manage_permission('WebDAV access',
-        ('MeetingArchiveObserver', 'MeetingObserverGlobal', 'Manager'),
-        acquire=0)
+                           ('MeetingArchiveObserver', 'MeetingObserverGlobal', 'Manager'),
+                           acquire=0)
 
     # Set a specific workflow policy for all objects created in the tool
     ppw = site.portal_placeful_workflow
     if not hasattr(ppw, 'portal_plonemeeting_policy'):
-        ppw.manage_addWorkflowPolicy('portal_plonemeeting_policy',
-            workflow_policy_type = 'default_workflow_policy (Simple Policy)',
-            duplicate_id = 'empty')
+        ppw.manage_addWorkflowPolicy(
+            'portal_plonemeeting_policy',
+            workflow_policy_type='default_workflow_policy (Simple Policy)',
+            duplicate_id='empty')
         site.portal_plonemeeting.manage_addProduct[\
             'CMFPlacefulWorkflow'].manage_addWorkflowPolicyConfig()
 
@@ -205,7 +207,7 @@ def postInstall(context):
     # Register PloneMeeting-specific properties on groups
     for groupProp in pmGroupProperties:
         if not site.portal_groupdata.hasProperty(groupProp):
-             site.portal_groupdata.manage_addProperty(groupProp, '', 'string')
+            site.portal_groupdata.manage_addProperty(groupProp, '', 'string')
 
     site.portal_plonemeeting.at_post_create_script()
 
@@ -227,7 +229,6 @@ def postInstall(context):
     site.portal_properties.site_properties.manage_changeProperties(
         many_groups=True)
 
-
     # portal_quickinstaller removes some installed elements when reinstalling...
     # re-add them manually here...
     for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
@@ -243,10 +244,13 @@ def postInstall(context):
     # Remove some types from the standard Plone search (live and advanced).
     props = site.portal_properties.site_properties
     nsTypes = props.getProperty('types_not_searched')
-    if not nsTypes: nsTypes = []
-    else: nsTypes = list(nsTypes)
+    if not nsTypes:
+        nsTypes = []
+    else:
+        nsTypes = list(nsTypes)
     for t in noSearchTypes:
-        if t not in nsTypes: nsTypes.append(t)
+        if t not in nsTypes:
+            nsTypes.append(t)
     props.manage_changeProperties(types_not_searched=tuple(nsTypes))
 
     # Make sure that no workflow is set for the MeetingFile type
@@ -302,6 +306,7 @@ def postInstall(context):
     viewer_settings['show_search_on_group_view'] = False
 
 
+##code-section FOOT
 def _configureCKeditor(site):
     '''Make sure CKeditor is the new default editor used by everyone...'''
     logger.info('Defining CKeditor as the new default editor for every users and configuring it...')
@@ -322,11 +327,11 @@ def _congfigureSafeHtml(site):
         site.portal_transforms.safe_html._config['valid_tags'][u'strike'] = '1'
 
 
-##code-section FOOT
 def reInstall(context):
     '''Reinstalls the product.'''
     profileId = u'profile-Products.PloneMeeting:default'
     context.runAllImportStepsFromProfile(profileId)
+
 
 # Code executed after a workflow transition has been triggered -----------------
 def do(action, event):
@@ -357,11 +362,14 @@ def do(action, event):
     eventName = '%s.%s' % (objectType, event.transition.id)
     sendNotificationsIfRelevant(event.object, eventName)
 
+
 def onItemTransition(obj, event):
     '''Called whenever a transition has been fired on an item.'''
-    if not event.transition or (obj != event.object): return
+    if not event.transition or (obj != event.object):
+        return
     transitionId = event.transition.id
-    if transitionId.startswith('backTo'): action = 'doCorrect'
+    if transitionId.startswith('backTo'):
+        action = 'doCorrect'
     elif transitionId.startswith('item'):
         action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
     else:
@@ -376,16 +384,20 @@ def onItemTransition(obj, event):
                 obj.cloneToOtherMeetingConfig(otherMC)
     do(action, event)
 
+
 def onMeetingTransition(obj, event):
     '''Called whenever a transition has been fired on a meeting.'''
-    if not event.transition or (obj != event.object): return
+    if not event.transition or (obj != event.object):
+        return
     transitionId = event.transition.id
     action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
 
+
 def onMeetingGroupTransition(obj, event):
     '''Called whenever a transition has been fired on a meetingGroup.'''
-    if not event.transition or (obj != event.object): return
+    if not event.transition or (obj != event.object):
+        return
     transitionId = event.transition.id
     # If we deactivate a MeetingGroup, every users of sub Plone groups are
     # transfered to the '_observers' suffixed Plone group
@@ -398,7 +410,7 @@ def onMeetingGroupTransition(obj, event):
             memberIds = groupsTool.getGroupMembers(ploneGroupId)
             userIds = userIds + list(memberIds)
             for memberId in memberIds:
-                groupsTool.removePrincipalFromGroup(memberId,ploneGroupId)
+                groupsTool.removePrincipalFromGroup(memberId, ploneGroupId)
         observersGroupId = obj.getPloneGroupId('observers')
         # Add every users that where belonging to different Plone groups
         # to the '_observers' group
