@@ -259,6 +259,7 @@ class MeetingConfigDescriptor(Descriptor):
         # the identifier of the current form may be specified here
         # (ie 'P5', 'CC00_06'...)
         self.configVersion = ''
+        self.enableAnnexToPrint = False
 
         # Data-related parameters ----------------------------------------------
         # Some attributes on an item are optional. In the field

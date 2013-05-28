@@ -272,6 +272,17 @@ schema = Schema((
         ),
     ),
     BooleanField(
+        name='enableAnnexToPrint',
+        default=defValues.enableAnnexToPrint,
+        widget=BooleanField._properties['widget'](
+            description="EnableAnnexToPrint",
+            description_msgid="enable_annex_to_print_descr",
+            label='Enableannextoprint',
+            label_msgid='PloneMeeting_label_enableAnnexToPrint',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
+    BooleanField(
         name='annexToPrintDefault',
         default=False,
         widget=BooleanField._properties['widget'](
@@ -2060,6 +2071,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateIsDefaultFields()
         # Update the cloneToOtherMeetingConfig actions visibility
         self.updateCloneToOtherMCActions()
+        # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
+        # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
+        self._manageEnableAnnexToPrint()
         # Create the corresponding group that will contain MeetingPowerObservers
         self.createPowerObserversGroup()
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
@@ -2079,9 +2093,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Update item tags order if I must sort them
         self.setAllItemTagsField()
         self.updateIsDefaultFields()
+        # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
+        # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
+        self._manageEnableAnnexToPrint()
         # Update the cloneToOtherMeetingConfig actions visibility
         self.updateCloneToOtherMCActions()
         self.adapted().onEdit(isCreated=False)  # Call sub-product code if any
+
+    def _manageEnableAnnexToPrint(self):
+        '''
+          If the parameter enableAnnexToPrint is set to False,
+          set 2 other linked parameters annexToPrintDefault and annexDecisionToPrintDefault
+          to False too...
+        '''
+        if not self.getEnableAnnexToPrint():
+            self.setAnnexToPrintDefault(False)
+            self.setAnnexDecisionToPrintDefault(False)
 
     security.declarePublic('getItemTypeName')
     def getItemTypeName(self):
