@@ -114,7 +114,7 @@ class DeleteGivenUidView(BrowserView):
             # redirect to the exact home page url or the portal_message is lost
             mc = self.context.portal_plonemeeting.getMeetingConfig(self.context)
             app = self.context.portal_plonemeeting.getPloneMeetingFolder(mc.id)
-            urlBack = self.context.meeting_folder_view(app)
+            urlBack = app.restrictedTraverse('@@meetingfolder_redirect_view').getFolderRedirectUrl()
 
         # Add the message. If I try to get plone_utils directly from context
         # (context.plone_utils), in some cases (ie, the user does not own context),
