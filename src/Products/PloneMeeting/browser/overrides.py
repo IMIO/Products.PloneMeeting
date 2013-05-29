@@ -79,3 +79,11 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
             if currentLayout in ['meetingfolder_redirect_view', ]:
                 return False
         return True
+
+    def show_history(self):
+        """
+          Originally, the history is shown to people having the
+          'CMFEditions: Access previous versions' permission, here
+          we want everybody than can acces the item to see the history...
+        """
+        return True
