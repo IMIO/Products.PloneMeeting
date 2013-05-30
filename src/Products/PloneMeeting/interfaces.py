@@ -604,7 +604,9 @@ class IToolPloneMeetingDocumentation:
 
 
 class IToolPloneMeetingCustom(IToolPloneMeeting):
-    pass
+    '''If you want to propose your own implementations of tool methods,
+       you must define an adapter that adapts IToolPloneMeeting to
+       IToolPloneMeetingCustom.'''
 
 
 # Interfaces used for customizing the behaviour of meeting users ---------------
