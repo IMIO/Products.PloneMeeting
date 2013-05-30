@@ -301,6 +301,7 @@ def postInstall(context):
                                                  'visio']
     viewer_settings['auto_convert'] = False
     viewer_settings['pdf_image_format'] = 'png'
+    viewer_settings['enable_indexation'] = False
     viewer_settings['show_search'] = False
     viewer_settings['show_sidebar'] = False
     viewer_settings['show_search_on_group_view'] = False
