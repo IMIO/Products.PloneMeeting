@@ -911,6 +911,23 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             user.has_role('Site Administrator') or \
             (not realManagers and user.has_role('MeetingManager'))
 
+    security.declarePublic('isPowerObserverFor')
+    def isPowerObserverFor(self, itemOrMeeting):
+        """
+          Returns True if the current user is a power observer
+          for the given p_itemOrMeeting.
+          Is is a power observer if in the corresponding _powerobservers
+          suffixed group.
+        """
+        if self.isManager():
+            return True
+        member = self.portal_membership.getAuthenticatedMember()
+        cfg = self.getMeetingConfig(itemOrMeeting)
+        groupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
+        if groupId in self.portal_groups.getGroupsForPrincipal(member):
+            return True
+        return False
+
     security.declarePublic('isInPloneMeeting')
     def isInPloneMeeting(self, context, inTool=False):
         '''Is the user 'in' PloneMeeting (ie somewhere in PloneMeeting-related

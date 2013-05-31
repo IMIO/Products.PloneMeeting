@@ -1438,7 +1438,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if privacy == 'public':
             return True
         # Bypass privacy check for super users
-        if self.portal_plonemeeting.isManager():
+        if self.portal_plonemeeting.isPowerObserverFor(self):
             return True
         # Checks that the user belongs to the proposing group.
         proposingGroup = self.getProposingGroup()
