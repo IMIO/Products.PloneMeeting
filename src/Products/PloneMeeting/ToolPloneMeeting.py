@@ -1611,7 +1611,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # Recreate the references to annexes: the references can NOT be kept
                 # on copy because it would be references to original annexes
                 # and we need references to freshly created annexes
+                # moreover set a correct value for annex.toPrint
                 for annexType in ('Annexes', 'AnnexesDecision'):
+                    if annexType == 'Annexes':
+                        toPrintDefault = meetingConfig.getAnnexToPrintDefault()
+                    else:
+                        toPrintDefault = meetingConfig.getAnnexDecisionToPrintDefault()
                     exec 'oldAnnexes = copiedItem.get%s()' % annexType
                     newAnnexes = []
                     for annex in oldAnnexes:
@@ -1621,6 +1626,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         # the meetingFileType in the old MeetingConfig the item is copied from
                         if newPortalType:
                             newAnnex._updateMeetingFileType(meetingConfig)
+                        # initialize toPrint correctly regarding configuration
+                        newAnnex.setToPrint(toPrintDefault)
                         newAnnexes.append(newAnnex)
                     exec 'newItem.set%s(newAnnexes)' % annexType
             # The copy/paste has transferred history. We must clean the history
@@ -2194,7 +2201,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('convertAnnexes')
     def convertAnnexes(self):
-        '''Convert annexes using collective.documentviewer.'''
+        '''Convert all annexes using collective.documentviewer.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
             raise Unauthorized
@@ -2204,11 +2211,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             context=self.REQUEST, )
             self.plone_utils.addPortalMessage(msg, 'warning')
         else:
-            from Products.PloneMeeting.MeetingFile import convertForPrinting
+            from Products.PloneMeeting.MeetingFile import convertToImages
             for b in self.portal_catalog(meta_type='MeetingItem'):
                 annexes = b.getObject().getAnnexes()
                 for annex in annexes:
-                    convertForPrinting(annex, None, force=True)
+                    convertToImages(annex, None, force=True)
             self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 

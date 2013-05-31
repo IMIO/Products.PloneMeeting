@@ -55,7 +55,13 @@
   <subscriber
     for=".interfaces.IMeetingFile
          Products.Archetypes.interfaces.IObjectInitializedEvent"
-    handler=".MeetingFile.convertForPrinting" />
+    handler=".MeetingFile.convertToImages" />
+
+  <!-- when an item is duplicated, convert annexes if necessary -->
+  <subscriber
+    for=".interfaces.IMeetingFile
+         OFS.interfaces.IObjectClonedEvent"
+    handler=".MeetingFile.prepareClonedAnnexForConversion" />
 
   <!-- when collective.documentviewer conversion finished, check that everything is right -->
   <subscriber

@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from zope.annotation import IAnnotations
 from Products.statusmessages.interfaces import IStatusMessage
 from Products.PloneMeeting.MeetingFile import CONVERSION_ERROR
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
@@ -133,6 +134,26 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         # this is actually converted
         self.assertTrue(annex2.conversionStatus() == 'successfully_converted')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
+
+    def testAnnexesOfClonedItemAreConverted(self):
+        """
+          While cloning an item (duplicate), check that annexes are
+          converted if necessary...
+        """
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        # annex1 has been converted successfully
+        self.failUnless(annex.conversionStatus() is 'successfully_converted')
+        # now duplicate the item and check annexes
+        clonedItem = item.clone()
+        clonedAnnex = clonedItem.objectValues('MeetingFile')[0]
+        self.failUnless(clonedAnnex.conversionStatus() is 'successfully_converted')
+        # make sure also it has really been converted, aka the last_updated
+        # value in c.documentviewer annotations is differents from original annex one
+        annexAnnotations = IAnnotations(annex)['collective.documentviewer']
+        clonedAnnexAnnotations = IAnnotations(clonedAnnex)['collective.documentviewer']
+        self.failUnless(annexAnnotations['last_updated'] != clonedAnnexAnnotations['last_updated'])
 
 
 def test_suite():

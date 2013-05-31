@@ -92,13 +92,20 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         login(self.portal, 'pmManager')
         item1 = self.create('MeetingItem')
         # Add one annex
-        self.addAnnex(item1)
+        annex1 = self.addAnnex(item1)
+        # set the annex as 'toPrint', it is not to print by default
+        # this way we check that cloned annexes toPrint value is correctly handled
+        self.assertEquals(annex1.getToPrint(), False)
+        annex1.setToPrint(True)
         workingFolder = item1.getParentNode()
         clonedItem = item1.clone()
         self.assertEquals(
             set([item1, clonedItem]), set(workingFolder.objectValues()))
         # Check that the annexes have been cloned, too.
         self.assertEquals(len(clonedItem.getAnnexes()), 1)
+        newAnnex = clonedItem.objectValues('MeetingFile')[0]
+        # toPrint is the value defined in the configuration
+        self.assertEquals(newAnnex.getToPrint(), False)
         # check that annexes returned by the MeetingItem.getAnnexes method
         # and stored in annexIndex correspond to new cloned annexes
         newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues('MeetingFile')]

@@ -445,7 +445,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             if not qi.isProductInstalled('collective.documentviewer'):
                raise Exception, 'The collective.documentviewer product is not installed!  Please contact system administrator!'
             # if we want the annex to be printable, force the conversion to images (not 'redone' if already done...)
-            convertForPrinting(self, None, force=True)
+            convertToImages(self, None, force=True)
         # finally set the given value
         self.getField('toPrint').set(self, value)
 
@@ -540,7 +540,7 @@ registerType(MeetingFile, PROJECTNAME)
 ##code-section module-footer #fill in your manual code here
 
 
-def convertForPrinting(object, event, force=False):
+def convertToImages(object, event, force=False):
     """
       Convert the MeetingFile to images so it can be printed or previewed.
     """
@@ -563,6 +563,22 @@ def convertForPrinting(object, event, force=False):
     # queueJob use plone.app.async if installed or current instance if not
     from collective.documentviewer.async import queueJob
     queueJob(object)
+
+
+def prepareClonedAnnexForConversion(object, event):
+    """
+      While cloning a MeetingFile (it is the case when the item is duplicated),
+      we eventually want to convert it but we need to prepare it to
+      be convertable...
+    """
+    # remove every annotations regarding 'collective.documentviewer'
+    # this way, 'collective.documentviewer' will be able to convert
+    # the annex because it checks if the object has already been converted
+    # and if we keep existing annotations, I think it is, but is is not...
+    annotations = IAnnotations(object)
+    if 'collective.documentviewer' in annotations:
+        del annotations['collective.documentviewer']
+    convertToImages(object, event)
 
 
 def checkAfterConversion(object, event):
