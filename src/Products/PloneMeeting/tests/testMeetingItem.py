@@ -646,7 +646,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(self.hasPermission('View', i1))
 
     def testPowerObserversGroups(self):
-        '''Test the manageement of MeetingConfig linked 'powerobservers' Plone group.'''
+        '''Test the management of MeetingConfig linked 'powerobservers' Plone group.'''
         # specify that powerObservers will be able to see the items of self.meetingConfig
         # when the item is in some state.  For example here, a 'presented' item is not viewable
         # Add 'powerobserver1' user to the self.meetingConfig corresponding 'powerobservers' group
@@ -783,6 +783,59 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item.maySignItem(authMember()), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, False)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
+
+    def testIsPrivacyViewable(self):
+        '''
+          Test who can access an item when it's privacy is 'private'.
+          By default, only members of the proposing group and super users
+          (MeetingManager, Manager, PowerObservers) can access the item.
+          Test in an environment where every items are published in a certain moment.
+          User of same proposingGroup and super observers can access a secret item.
+        '''
+        # make powerobserver1 a PowerObserver
+        self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' %
+                                                      (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        # create a 'public' and a 'secret' item
+        self.changeUser('pmManager')
+        publicItem = self.create('MeetingItem')
+        secretItem = self.create('MeetingItem')
+        secretItem.setPrivacy('secret')
+        meeting = self.create('Meeting', date=DateTime('2013/06/01 08:00:00'))
+        self.do(publicItem, 'propose')
+        self.do(secretItem, 'propose')
+        self.do(publicItem, 'validate')
+        self.do(secretItem, 'validate')
+        self.do(publicItem, 'present')
+        self.do(secretItem, 'present')
+        for transition in self._getNecessaryMeetingTransitionsToAcceptItem():
+            self.do(meeting, transition)
+        # now that the meeting has been published, the items are viewable
+        # by everyone but not privacyVieawble...
+        self.changeUser('pmCreator2')
+        member = self.portal.portal_membership.getAuthenticatedMember()
+        # the user can see the item because it is published
+        # not because he is in the same proposing group
+        secretItemPloneGroupsOfProposingGroup = getattr(self.tool,
+                                                        secretItem.getProposingGroup()).getPloneGroups(idsOnly=True)
+        self.failIf(set(secretItemPloneGroupsOfProposingGroup).intersection
+                    (set(self.portal.portal_groups.getGroupsForPrincipal(member))))
+        # pmCreator2 can access the item but the item is not privacyViewable
+        self.failUnless(self.hasPermission('View', secretItem))
+        self.failUnless(self.hasPermission('View', publicItem))
+        self.failIf(secretItem.isPrivacyViewable())
+        self.failUnless(publicItem.isPrivacyViewable())
+        # a user in the same proposingGroup can fully access the secret item
+        self.changeUser('pmCreator1')
+        self.failUnless(secretItem.isPrivacyViewable())
+        self.failUnless(publicItem.isPrivacyViewable())
+        # MeetingManager
+        self.changeUser('pmManager')
+        self.failUnless(secretItem.isPrivacyViewable())
+        self.failUnless(publicItem.isPrivacyViewable())
+        # PowerObserver
+        self.changeUser('powerobserver1')
+        self.failUnless(secretItem.isPrivacyViewable())
+        self.failUnless(publicItem.isPrivacyViewable())
 
 
 def test_suite():
