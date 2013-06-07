@@ -3,7 +3,7 @@ Products.PloneMeeting Changelog
 Older versions than 3.0 can be found at http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/
 Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 
-3.0.1 (unreleased)
+3.0.1 (2013-06-07)
 ------------------
 - Added possibility to preview and print annexes (by converting them to images using collective.documentviewer)
 - Show item and meeting history to users being able to see the object
