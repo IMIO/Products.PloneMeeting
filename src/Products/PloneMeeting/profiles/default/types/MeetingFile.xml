@@ -37,7 +37,7 @@
          action_id="view"
          category="object"
          condition_expr="python:not here.portal_factory.isTemporary(here)"
-         url_expr="string:${object_url}/file_view"
+         url_expr="string:${object_url}/view"
          visible="True">
   <permission value="View"/>
  </action>

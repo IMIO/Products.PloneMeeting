@@ -172,9 +172,9 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         if not field:
             # field is empty
             return BaseContent.getIcon(self, relative_to_portal)
-        mtf = self.getMeetingFileType()
-        if mtf:
-            return mtf.absolute_url(relative=1) + "/theIcon"
+        mft = self.getMeetingFileType()
+        if mft:
+            return self.portal_url.getRelativeContentURL(mft) + '/theIcon'
         else:
             return None
 
@@ -258,7 +258,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'absolute_url': portal_url.getRelativeContentURL(self),
                'UID': self.UID(),
                'fileTypeId': fileType.id,
-               'iconUrl': portal_url.getRelativeContentURL(fileType) + '/theIcon',
+               'iconUrl': self.getIcon(),
                # the item (parent) also has a pm_modification_date,
                # make sure we use the real MeetingFile's one
                'modification_date': aq_base(self).pm_modification_date,

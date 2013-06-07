@@ -21,7 +21,7 @@
         var uidList = '';
         var atLeastOneSelected = false;
         for (var uid in itemUids) {
-          
+
           if ((typeof itemUids[uid] == 'boolean') && itemUids[uid]) {
               atLeastOneSelected = true;
               uidList += uid + ',';
@@ -68,7 +68,9 @@
     <tal:comment replace="nothing">Send the document by email.</tal:comment>
     <tal:mail define="mailingLists python: podTemplate.getAvailableMailingLists(currentObj, member)"
               condition="mailingLists">
-    <img src="sendMail.gif" tal:attributes="onClick python:'toggleMailMenu(\'%s\')' % podTemplate.getId()"
+    <img src="sendMail.gif"
+         tal:attributes="onClick python:'toggleMailMenu(\'%s\')' % podTemplate.getId();
+                         src string:${portal_url}/sendMail.gif;"
          style="cursor:pointer; position: relative;"/>
     <div tal:define="menuId python: 'podsendmail_%s' % podTemplate.getId()"
          tal:attributes="id menuId; name menuId" class="hsPopup">
