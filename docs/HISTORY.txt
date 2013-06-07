@@ -3,8 +3,17 @@ Products.PloneMeeting Changelog
 Older versions than 3.0 can be found at http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/
 Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 
-3.0 (unreleased-plone4)
------------------------
+3.0.1 (unreleased)
+------------------
+- Added possibility to preview and print annexes (by converting them to images using collective.documentviewer)
+- Show item and meeting history to users being able to see the object
+- Show secret items to PowerObservers
+- If connected user can not see the default home page defined in the MeetingConfig, redirect him to the first he can actually access
+- Prevent to delete a used MeetingFileType or MeetingCategory
+- Added tag 'strike' to the list of valid tags
+
+3.0 (2013-04-03)
+----------------
 - Migrated to Plone 4
 - Migrated MeetingFiles and PodTemplates to blobs
 - Quick edition works with CKeditor
