@@ -323,9 +323,17 @@ def _congfigureSafeHtml(site):
     logger.info('Adding \'colgroup\' to the list of nasty_tags in safe_html...')
     if not u'colgroup' in site.portal_transforms.safe_html._config['nasty_tags']:
         site.portal_transforms.safe_html._config['nasty_tags'][u'colgroup'] = '1'
+    # make sure 'colgroup' and 'col' are not in 'valid_tags'...
+    if 'colgroup' in site.portal_transforms.safe_html._config['valid_tags']:
+        del site.portal_transforms.safe_html._config['valid_tags']['colgroup']
+    if 'col' in site.portal_transforms.safe_html._config['valid_tags']:
+        del site.portal_transforms.safe_html._config['valid_tags']['col']
     logger.info('Adding \'strike\' to the list of valid_tags in safe_html...')
     if not u'strike' in site.portal_transforms.safe_html._config['valid_tags']:
         site.portal_transforms.safe_html._config['valid_tags'][u'strike'] = '1'
+    # make sure it was not in 'nasty_tags'...
+    if 'strike' in site.portal_transforms.safe_html._config['nasty_tags']:
+        del site.portal_transforms.safe_html._config['nasty_tags']['strike']
     # reload transforms so changes are taken into account
     site.portal_transforms.reloadTransforms()
 
