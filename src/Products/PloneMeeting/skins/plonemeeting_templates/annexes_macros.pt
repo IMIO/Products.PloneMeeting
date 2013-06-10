@@ -186,7 +186,7 @@
      <tr tal:repeat="annexInfo annexes">
        <span tal:define="annex python: context.uid_catalog(UID=annexInfo['UID'])[0].getObject()">
        <td class="pmLinks">
-         <img tal:attributes="src annex/getIcon"/>&nbsp;
+         <img tal:attributes="src string:${portal_url}/${annex/getIcon}"/>&nbsp;
          <metal:withOrWithoutPreview use-macro="here/annexes_macros/macros/withOrWithoutPreview" />
        </td>
        <td tal:content="python: tool.getUserName(annex.Creator())"></td>
