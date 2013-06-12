@@ -112,7 +112,7 @@ table.no-style-table td {
 
 .pm_workflowstate {
 float: right;
-margin-top: -1.9em;
+margin-top: -1.1em;
 }
 
 /* Colors on states */
@@ -377,7 +377,6 @@ input[type=radio] {margin: 0;}
 
 #meeting_users td { padding: 0 0.4em 0 0.4em; }
 .image-right { border:0px solid Black; clear:both; float:right; margin:0.5em; }
-.documentByLine { margin-bottom:0.8em; }
 
 /* Styles for showing content (item, annexes) differently depending on the fact
    that the user already consulted the last modifications on content or not. */
