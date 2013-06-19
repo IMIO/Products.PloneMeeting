@@ -86,9 +86,14 @@
         name="toggle_to_discuss"
         class=".async.Discuss"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
-        attribute="toggle"
-        permission="zope2.View"
-        allowed_attributes="available"/>
+        attribute="asynchToggle"
+        permission="zope2.View"/>
+    <browser:page
+        name="synchronous_toggle_to_discuss"
+        class=".async.Discuss"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        attribute="synchToggle"
+        permission="zope2.View"/>
     <browser:page
         name="toggle_annex_to_print"
         attribute="toggle"
@@ -174,7 +179,12 @@
         class=".views.ObjectGoToView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
-
+    <browser:page
+        name="toggle_to_discuss_on_item"
+        class=".async.Discuss"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        permission="zope2.View"
+        allowed_attributes="isAsynchToggleEnabled"/>
     <!-- macros -->
     <browser:page
        name="annexes-macros"

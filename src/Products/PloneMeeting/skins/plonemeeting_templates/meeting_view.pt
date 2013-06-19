@@ -216,15 +216,6 @@
     theForm.lStartNumber.value = lStartNumber;
     theForm.submit();
   }
-  function setToDiscuss(discussAction, itemUid) {
-  // Changes the "toDiscuss" status of a meeting item.
-    var theForm = document.forms["formSetToDiscuss"];
-    theForm.itemUid.value = itemUid;
-    theForm.discussAction.value = discussAction;
-    theForm.iStartNumber.value = iStartNumber;
-    theForm.lStartNumber.value = lStartNumber;
-    theForm.submit();
-    }
 
   function toggleItemsList(whichItems, imageWidget) {
     listToToggle = document.getElementById(whichItems);
@@ -256,7 +247,7 @@
 
   <tal:comment replace="nothing">Form used for changing the "toDiscuss" status of a meeting item.</tal:comment>
   <form name="formSetToDiscuss" method="POST"
-        tal:attributes="action python: context.absolute_url_path() + '/meetingitem_discuss'">
+        tal:attributes="action python: context.absolute_url_path() + '/@@synchronous_toggle_to_discuss'">
       <input type="hidden" name="itemUid"/>
       <input type="hidden" name="discussAction"/>
       <input type="hidden" name="iStartNumber"/>
