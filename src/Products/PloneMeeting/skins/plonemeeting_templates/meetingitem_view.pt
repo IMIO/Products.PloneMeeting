@@ -248,10 +248,10 @@
         <legend i18n:translate="existing_annexes">Annexes</legend>
         <table class="no-style-table" cellpadding="0" cellspacing="0">
          <tr>
-           <td><metal:annexes use-macro="here/annexes_macros/macros/annexesIcons"/></td>
+           <td><metal:annexes use-macro="here/@@annexes-macros/annexesIcons"/></td>
            <td tal:define="decisionRelated python:True"
                tal:condition="python: member.has_permission('PloneMeeting: Read decision annex', context) and hasAnnexesDecision">
-             <metal:annexes use-macro="here/annexes_macros/macros/annexesIcons"/>
+             <metal:annexes use-macro="here/@@annexes-macros/annexesIcons"/>
            </td>
          </tr>
         </table>

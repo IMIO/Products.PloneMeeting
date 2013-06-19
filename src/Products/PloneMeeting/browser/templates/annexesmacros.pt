@@ -24,8 +24,8 @@
 
   <tal:comment replace="nothing">Form for appending a new annex.</tal:comment>
   <form name="annexForm"
-        tal:define="appendPerm python: test(decisionRelated, 'PloneMeeting: Write decision annex', 'PloneMeeting: Add annex');
-                    formAction python: test(decisionRelated, 'annexes_decision_form', 'annexes_form')"
+        tal:define="appendPerm python: decisionRelated and 'PloneMeeting: Write decision annex' or 'PloneMeeting: Add annex';
+                    formAction python: decisionRelated and 'annexes_decision_form' or 'annexes_form';"
         tal:condition="python: member.has_permission(appendPerm, context)"
         tal:attributes="action python: context.absolute_url() + '/' + formAction"
         method="post" enctype="multipart/form-data">
@@ -51,8 +51,8 @@
     <tal:comment replace="nothing">Listbox for selecting a file type</tal:comment>
     <div class="field"
          tal:define="error errors/annexType|nothing;"
-         tal:attributes="class python:test(error, 'field error', 'field');
-                         style python:test(error, 'height:4.2em', 'height:3.0em')">
+         tal:attributes="class python: error and 'field error' or 'field';
+                         style python: error and 'height:4.2em' or 'height:3.0em';">
       <label for="annex_type" i18n:translate="">annex_type</label>
       <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
       <div tal:content="error"></div>
@@ -111,7 +111,7 @@
     <div class="field"
            tal:define="error errors/annexTitle|nothing;
                        rq_annex_title request/annex_title|nothing"
-           tal:attributes="class python:test(error, 'field error', 'field')">
+           tal:attributes="class python: error and 'field error' or 'field';">
         <label for="annex_title" i18n:domain="plone" i18n:translate="label_title">Title</label>
         <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
         <div tal:content="error">Validation error output</div>
@@ -119,13 +119,13 @@
                tal:condition="python: len(fileTypes) &gt; 1" tal:attributes="value rq_annex_title" />
         <input type="text" size="50" name="annex_title" id="annex_title"
                tal:condition="python: len(fileTypes) == 1"
-               tal:attributes="value python: test(rq_annex_title, rq_annex_title, fileTypes[0].getPredefinedTitle())" />
+               tal:attributes="value python: rq_annex_title and rq_annex_title or fileTypes[0].getPredefinedTitle();" />
       </div>
 
       <tal:comment replace="nothing">Annex file to upload</tal:comment>
       <div class="field"
            tal:define="error errors/annexFile|nothing;"
-           tal:attributes="class python:test(error, 'field error', 'field')">
+           tal:attributes="class python: error and 'field error' or 'field';">
         <label for="annex_file" i18n:domain="plone" i18n:translate="File">File</label>
         <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
         <div tal:content="error">Validation error output</div>
@@ -138,7 +138,7 @@
         <tal:comment replace="nothing">Checkbox for asking OCR</tal:comment>
         <td width="48%">
           <input class="noborder" type="checkbox" name="needs_ocr"
-                 tal:attributes="checked python:test(request.get('needs_ocr', None) != None, True, False)"/>
+                 tal:attributes="checked python: request.get('needs_ocr', None) != None and True or False;"/>
           <label for="needs_ocr" i18n:domain="PloneMeeting" i18n:translate="needs_ocr"></label>
           <div class="formHelp" i18n:translate="needs_ocr_descr"></div>
         </td>
@@ -146,7 +146,7 @@
         <tal:comment replace="nothing">Select the OCR language</tal:comment>
         <td width="48%"
             tal:define="requestValue request/ocr_language|nothing;
-                        selectedValue python:test(requestValue, requestValue, tool.getDefaultOcrLanguage())">
+                        selectedValue python: requestValue and requestValue or tool.getDefaultOcrLanguage();">
           <label for="ocr_language" i18n:domain="PloneMeeting" i18n:translate="ocr_language"></label>
           <div class="formHelp" i18n:translate="ocr_language_descr"></div>
           <select name="ocr_language">
@@ -187,12 +187,12 @@
        <span tal:define="annex python: context.uid_catalog(UID=annexInfo['UID'])[0].getObject()">
        <td class="pmLinks">
          <img tal:attributes="src string:${portal_url}/${annex/getIcon}"/>&nbsp;
-         <metal:withOrWithoutPreview use-macro="here/annexes_macros/macros/withOrWithoutPreview" />
+         <metal:withOrWithoutPreview use-macro="here/@@annexes-macros/withOrWithoutPreview" />
        </td>
        <td tal:content="python: tool.getUserName(annex.Creator())"></td>
        <td tal:content="python: context.restrictedTraverse('@@plone').toLocalizedTime(annex.CreationDate(),long_format=True)"></td>
        <td tal:condition="meetingConfig/getEnableAnnexToPrint">
-           <metal:annexToPrint use-macro="here/annexes_macros/macros/annexToPrint" />
+           <metal:annexToPrint use-macro="here/@@annexes-macros/annexToPrint" />
        </td>
        <td tal:content="annex/getObjSize"></td>
        <td tal:condition="python:member.has_permission('Delete objects', here)">
@@ -213,7 +213,7 @@
 <metal:withOrWithoutPreview define-macro="withOrWithoutPreview"
                             tal:define="conversionStatus annex/conversionStatus;
                                         previewEnabled tool/getEnableAnnexPreview;
-                                        target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', '');">
+                                        target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows') and '_blank' or '';">
     <tal:withPreview define="isRealManager python: tool.isManager(realManagers=True);"
                      condition="previewEnabled">
        <a style="float: right;"
@@ -266,10 +266,11 @@
 <metal:icons define-macro="annexesIcons"
      i18n:domain="PloneMeeting"
      tal:define="decisionRelated decisionRelated|nothing;
-                 decisionRelated python:test(decisionRelated, True, False);
+                 decisionRelated python: decisionRelated and True or False;
                  annexesByType python:meetingItem.getAnnexesByType(decisionRelated);
-                 now python:DateTime();
-                 target python:test(meetingConfig.getUserParam('openAnnexesInSeparateWindows'), '_blank', '');
+                 DateTime python:modules['DateTime'];
+                 now python: DateTime.DateTime();
+                 target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows') and '_blank' or '';
                  tool python:context.portal_plonemeeting;
                  cssClasses python: 'contentActionsAX no-style-table';
                  global count python:0;
@@ -301,13 +302,13 @@
               <a href="#"><img
                  tal:attributes="src imgUrl"/><b tal:condition="showColors"
                  tal:content="python: len(annexesGroup)"
-                 tal:attributes="id python: test(tool.lastModifsConsultedOnAnnexes(annexesGroup), 'pmNoNewContent', 'pmNewContent')"></b><b tal:condition="not: showColors"
+                 tal:attributes="id python: tool.lastModifsConsultedOnAnnexes(annexesGroup) and 'pmNoNewContent' or 'pmNewContent';"></b><b tal:condition="not: showColors"
                  tal:content="python: len(annexesGroup)" id="pmNoNewContent"></b></a>
           </dt>
           <dd class="actionMenuContentAX">
             <ul>
               <li class="pmLinks" tal:repeat="annex annexesGroup">
-                <metal:withOrWithoutPreview use-macro="here/annexes_macros/macros/withOrWithoutPreview" />
+                <metal:withOrWithoutPreview use-macro="meetingItem/@@annexes-macros/withOrWithoutPreview" />
               </li>
             </ul>
           </dd>

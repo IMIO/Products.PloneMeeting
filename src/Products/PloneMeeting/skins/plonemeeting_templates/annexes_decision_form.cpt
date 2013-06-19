@@ -7,7 +7,7 @@
       i18n:domain="PloneMeeting">
 
 <body metal:fill-slot="main" tal:define="decisionRelated python:True">
-  <div metal:use-macro="here/annexes_macros/macros/annexesMacro">
+  <div metal:use-macro="here/@@annexes-macros/annexesMacro">
   </div>
 </body>
 </html>

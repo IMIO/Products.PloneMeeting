@@ -175,6 +175,14 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- macros -->
+    <browser:page
+       name="annexes-macros"
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       class=".annexes.AnnexesMacros"
+       template="templates/annexesmacros.pt"
+       permission="zope2.View"
+    />
     <!-- PloneMeeting-specific portlets -->
     <include package="plone.app.portlets" />
 
