@@ -115,6 +115,13 @@
         class=".views_unrestricted.ItemSign"
         for="Products.PloneMeeting.interfaces.IMeeting"
         permission="zope2.View" />
+    <browser:page
+        name="change_item_order"
+        attribute="changeItemsOrder"
+        allowed_attributes="changeItemsOrder"
+        class=".views_unrestricted.UnrestrictedMethodsView"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        permission="zope2.View" />
 
     <!-- the plonemeeting_topic_view used to display list of items (my items, all items, ...) -->
     <browser:page

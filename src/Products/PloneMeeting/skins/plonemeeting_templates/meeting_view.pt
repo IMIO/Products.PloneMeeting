@@ -216,6 +216,13 @@
     theForm.lStartNumber.value = lStartNumber;
     theForm.submit();
   }
+  function synchronousToggle(url) {
+  // intermediate method that call the @@synchronous_toggle_to_discuss and add iStartNumber
+  //  and lStartNumber that are javascript variables only available in javascripts...
+    url = url + '&iStartNumber=' + iStartNumber;
+    url = url + '&lStartNumber=' + lStartNumber;
+    window.location = url
+    }
 
   function toggleItemsList(whichItems, imageWidget) {
     listToToggle = document.getElementById(whichItems);
