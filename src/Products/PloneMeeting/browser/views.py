@@ -113,3 +113,23 @@ class PloneMeetingFolderView(BrowserView):
         tool = self.context.portal_plonemeeting
         cfg = tool.getMeetingConfig(self.context)
         return cfg.getTopics('MeetingItem')
+
+
+class ObjectGoToView(BrowserView):
+    """
+      Manage the fact of going to a given item uid.  This method is used
+      in the item navigation widget (go to previous item, go to newt item, ...)
+    """
+    def __call__(self, objectId, idType):
+        """
+          objectId is either an uid or an item numbe.  idType discriminate this.
+        """
+        if idType == 'uid':
+            # Search the object in the uid catalog
+            obj = self.context.uid_catalog(UID=objectId)[0].getObject()
+        elif idType == 'number':
+            # The object is an item whose number is given in objectId
+            meeting = self.context.uid_catalog(UID=self.context.REQUEST.get('meetingUid'))[0].getObject()
+            obj = meeting.getItemByNumber(int(objectId))
+        objectUrl = obj.absolute_url()
+        return self.context.REQUEST.RESPONSE.redirect(objectUrl)
