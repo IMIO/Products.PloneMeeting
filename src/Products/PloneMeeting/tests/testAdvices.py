@@ -35,7 +35,7 @@ class testAdvices(PloneMeetingTestCase):
     '''Tests various aspects of advices management.
        Advices are enabled for PloneGov Assembly, not for PloneMeeting Assembly.'''
 
-    def testViewItemToAdvice(self):
+    def test_pm_ViewItemToAdvice(self):
         '''Test when an adviser can see the item his advice is asked on.
            The item can still be viewable no matter the advice has been given or not,
            is addable/editable/deletable...
@@ -94,7 +94,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('View', item1))
         self.failIf(self.hasPermission('View', (item2, item3)))
 
-    def testAddEditDeleteAdvices(self):
+    def test_pm_AddEditDeleteAdvices(self):
         '''This test the MeetingItem.getAdvicesToGive method.
            MeetingItem.getAdvicesToGive returns 2 lists : first with addable advices and
            the second with editable/deletable advices.'''
@@ -172,7 +172,7 @@ class testAdvices(PloneMeetingTestCase):
         login(self.portal, 'pmReviewer2')
         self.assertEquals(item1.getAdvicesToGive(), ([], []))
 
-    def testGiveAdviceOnCreatedItem(self):
+    def test_pm_GiveAdviceOnCreatedItem(self):
         '''This test the MeetingItem.getAdvicesToGive method.
            MeetingItem.getAdvicesToGive returns 2 lists : first with addable advices and
            the second with editable/deletable advices.'''
@@ -194,7 +194,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('View', item1))
         self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
 
-    def testAdvicesInvalidation(self):
+    def test_pm_AdvicesInvalidation(self):
         '''Test the advice invalidation process.'''
         # advisers can give an advice when item is 'proposed' or 'validated'
         # activate advice invalidation in state 'validated'
@@ -270,5 +270,5 @@ class testAdvices(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testAdvices))
+    suite.addTest(makeSuite(testAdvices, prefix='test_pm_'))
     return suite

@@ -33,7 +33,7 @@ class testMeetingCategory(PloneMeetingTestCase):
     def setUp(self):
         PloneMeetingTestCase.setUp(self)
 
-    def testCanNotRemoveLinkedMeetingCategory(self):
+    def test_pm_CanNotRemoveLinkedMeetingCategory(self):
         '''While removing a MeetingCategory, it should raise if it is linked...'''
         self.meetingConfig.setUseGroupsAsCategories(False)
         # by default 'development'
@@ -67,5 +67,5 @@ class testMeetingCategory(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testMeetingCategory))
+    suite.addTest(makeSuite(testMeetingCategory, prefix='test_pm_'))
     return suite

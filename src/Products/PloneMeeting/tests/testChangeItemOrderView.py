@@ -32,7 +32,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testChangeItemOrderView(PloneMeetingTestCase):
     '''Tests the functionnality that change items order on the meeting.'''
 
-    def testChangeItemOrderMoveUpDown(self):
+    def test_pm_ChangeItemOrderMoveUpDown(self):
         '''Test the ChangeItemOrderView :
            - we can change an item one level up/down.'''
         # create a meetingWithItems and play
@@ -66,7 +66,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item3.getItemNumber(), 3)
         self.assertEquals(item4.getItemNumber(), 4)
 
-    def testChangeItemOrderMoveAtGivenNumber(self):
+    def test_pm_ChangeItemOrderMoveAtGivenNumber(self):
         '''Test the ChangeItemOrderView :
            - we can change an item to a given p_moveNumber.'''
         # create a meetingWithItems and play
@@ -124,7 +124,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view('number', item4.getItemNumber())
         self.assertEquals(messages.show()[-1].message, translate('item_did_not_move', 'PloneMeeting'))
 
-    def testMoveLateItemDoNotChangeNormalItems(self):
+    def test_pm_MoveLateItemDoNotChangeNormalItems(self):
         """
           Normal items are moved between them and late items also.
         """
@@ -184,7 +184,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(late3.getItemNumber(), 3)
         self.assertEquals(late4.getItemNumber(), 4)
 
-    def testMayChangeItemOrder(self):
+    def test_pm_MayChangeItemOrder(self):
         """
           The item order can be changed until Meeting.mayChangeItemsOrder is False
         """
@@ -219,3 +219,10 @@ class testChangeItemOrderView(PloneMeetingTestCase):
                     # if mayChangeItemsOrder is False, trying to change
                     # order will raise an Unauthorized
                     self.assertRaises(Unauthorized, view, 'up')
+
+
+def test_suite():
+    from unittest import TestSuite, makeSuite
+    suite = TestSuite()
+    suite.addTest(makeSuite(testChangeItemOrderView, prefix='test_pm_'))
+    return suite

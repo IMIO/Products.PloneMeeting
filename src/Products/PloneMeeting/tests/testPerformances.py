@@ -35,32 +35,32 @@ class testPerformances(PloneMeetingTestCase):
         # call parent setUp
         PloneMeetingTestCase.setUp(self)
 
-    def testDelay5ItemsWith0Annexes(self):
+    def test_pm_Delay5ItemsWith0Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(5, 0)
         self._delaySeveralItems(meeting, uids)
 
-    def testDelay10ItemsWith0Annexes(self):
+    def test_pm_Delay10ItemsWith0Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(10, 0)
         self._delaySeveralItems(meeting, uids)
 
-    def testDelay5ItemsWith5Annexes(self):
+    def test_pm_Delay5ItemsWith5Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(5, 5)
         self._delaySeveralItems(meeting, uids)
 
-    def testDelay10ItemsWith5Annexes(self):
+    def test_pm_Delay10ItemsWith5Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(10, 5)
         self._delaySeveralItems(meeting, uids)
 
-    def testDelay5ItemsWith10Annexes(self):
+    def test_pm_Delay5ItemsWith10Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(5, 10)
         self._delaySeveralItems(meeting, uids)
 
-    def testDelay10ItemsWith10Annexes(self):
+    def test_pm_Delay10ItemsWith10Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(10, 10)
         self._delaySeveralItems(meeting, uids)
@@ -106,5 +106,5 @@ class testPerformances(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testPerformances))
+    suite.addTest(makeSuite(testPerformances, prefix='test_pm_'))
     return suite

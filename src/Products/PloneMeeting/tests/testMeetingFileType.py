@@ -30,7 +30,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testMeetingFileType(PloneMeetingTestCase):
     '''Tests the MeetingFileType class methods.'''
 
-    def testCanNotRemoveLinkedMeetingFileType(self):
+    def test_pm_CanNotRemoveLinkedMeetingFileType(self):
         '''While removing a MeetingFileType, it should raise if it is used by a MeetingFile...'''
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -52,5 +52,5 @@ class testMeetingFileType(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testMeetingFileType))
+    suite.addTest(makeSuite(testMeetingFileType, prefix='test_pm_'))
     return suite

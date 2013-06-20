@@ -43,7 +43,7 @@ class testWorkflows(PloneMeetingTestCase):
        (self.assertRaise). Instead, we check that the user has the permission
        to do so (getSecurityManager().checkPermission).'''
 
-    def testCreateItem(self):
+    def test_pm_CreateItem(self):
         '''Creates an item (in "created" state) and checks that only
            allowed persons may see this item.'''
         # Create an item as creator
@@ -63,7 +63,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.failIf(len(allItems) != 0)
         logout()
 
-    def testRemoveObjects(self):
+    def test_pm_RemoveObjects(self):
         '''Tests objects removal (items, meetings, annexes...).'''
         # Create an item with annexes
         self.changeUser('pmCreator1')
@@ -92,7 +92,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.failIf(len(parentFolder.objectValues()) != 0)
 
-    def testRemoveContainer(self):
+    def test_pm_RemoveContainer(self):
         '''We avoid a strange behaviour of Plone.  Removal of a container
            does not check inner objects security...
            Check that removing an item or a meeting by is container fails.'''
@@ -159,7 +159,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(testfolder.UID())
         self.failIf(hasattr(pmManagerFolder, 'testfolder'))
 
-    def testWholeDecisionProcess(self):
+    def test_pm_WholeDecisionProcess(self):
         '''This test covers the whole decision workflow. It begins with the
            creation of some items, and ends by closing a meeting.'''
         # pmCreator1 creates an item with 1 annex and proposes it
@@ -265,7 +265,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(meeting, 'close')
         self.do(meeting, 'archive')
 
-    def testWorkflowPermissions(self):
+    def test_pm_WorkflowPermissions(self):
         '''This test checks whether workflow permissions are correct while
            creating and changing state of items and meetings. During the test,
            some users go from one group to the other. The test checks that in
@@ -348,7 +348,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.failUnless(self.hasPermission('View', (item3, annexItem3)))
 
-    def testRecurringItems(self):
+    def test_pm_RecurringItems(self):
         '''Tests the recurring items system.'''
         # First, define recurring items in the meeting config
         login(self.portal, 'admin')
@@ -423,7 +423,7 @@ class testWorkflows(PloneMeetingTestCase):
         MeetingItemWorkflowConditions.useHardcodedTransitionsForPresentingAnItem = oldValue1
         MeetingItemWorkflowConditions.transitionsForPresentingAnItem = oldValue2
 
-    def testDeactivateMeetingGroup(self):
+    def test_pm_DeactivateMeetingGroup(self):
         '''Deactivating a MeetingGroup will transfer every users of every
            sub Plone groups to the '_observers' Plone group'''
         # Work with the 'developers' MeetingGroup
@@ -456,5 +456,5 @@ class testWorkflows(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testWorkflows))
+    suite.addTest(makeSuite(testWorkflows, prefix='test_pm_'))
     return suite

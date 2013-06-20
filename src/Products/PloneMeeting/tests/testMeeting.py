@@ -32,7 +32,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testMeeting(PloneMeetingTestCase):
     '''Tests various aspects of Meetings management.'''
 
-    def testInsertItem(self):
+    def test_pm_InsertItem(self):
         '''Tests that items are inserted at the right place into the meeting.
            In the test profile, groups order is like this:
            1) developers
@@ -56,7 +56,7 @@ class testMeeting(PloneMeetingTestCase):
             self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                               expected)
 
-    def testInsertItemCategories(self):
+    def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
         login(self.portal, 'pmManager')
         self.setMeetingConfig('plonegov-assembly')
@@ -64,7 +64,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['o3', 'o4', 'o5', 'o6', 'o2'])
 
-    def testInsertItemAllGroups(self):
+    def test_pm_InsertItemAllGroups(self):
         '''Sort method tested here is "on_all_groups".'''
         login(self.portal, 'pmManager')
         self.meetingConfig.setSortingMethodOnAddItem('on_all_groups')
@@ -72,7 +72,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['recItem1', 'o3', 'o5', 'o2', 'o4', 'o6'])
 
-    def testInsertItemPrivacyThenProposingGroups(self):
+    def test_pm_InsertItemPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy_then_proposing_groups".'''
         login(self.portal, 'pmManager')
         self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_proposing_groups')
@@ -80,7 +80,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['recItem1', 'o3', 'o2', 'o6', 'o5', 'o4'])
 
-    def testInsertItemPrivacyThenCategories(self):
+    def test_pm_InsertItemPrivacyThenCategories(self):
         '''Sort method tested here is "on_privacy_then_categories".'''
         login(self.portal, 'pmManager')
         self.setMeetingConfig('plonegov-assembly')
@@ -89,7 +89,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['o3', 'o6', 'o2', 'o4', 'o5'])
 
-    def testRemoveOrDeleteLinkedItem(self):
+    def test_pm_RemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
         login(self.portal, 'pmManager')
         meeting = self._createMeetingWithItems()
@@ -106,7 +106,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['recItem1', 'o3', 'o2', 'o6'])
 
-    def testMeetingNumbers(self):
+    def test_pm_MeetingNumbers(self):
         '''Tests that meetings receive correctly their numbers from the config
            when they are published.'''
         login(self.portal, 'pmManager')
@@ -121,7 +121,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals(m2.getMeetingNumber(), 2)
         self.assertEquals(self.meetingConfig.getLastMeetingNumber(), 2)
 
-    def testAvailableItems(self):
+    def test_pm_AvailableItems(self):
         """
           By default, available items should be :
           - validated items
@@ -183,7 +183,7 @@ class testMeeting(PloneMeetingTestCase):
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', 'i2', 'i3', ])
 
-    def testDecideSeveralItems(self):
+    def test_pm_DecideSeveralItems(self):
         """
           Test the functionnality to decide several items at once
         """
@@ -218,5 +218,5 @@ class testMeeting(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testMeeting))
+    suite.addTest(makeSuite(testMeeting, prefix='test_pm_'))
     return suite

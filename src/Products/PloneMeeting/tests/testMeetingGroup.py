@@ -30,7 +30,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testMeetingGroup(PloneMeetingTestCase):
     '''Tests the MeetingCategory class methods.'''
 
-    def testCanNotRemoveUsedMeetingGroup(self):
+    def test_pm_CanNotRemoveUsedMeetingGroup(self):
         '''While removing a MeetingGroup, it should raise if it is used...'''
         self.changeUser('pmManager')
         # create an item
@@ -84,5 +84,5 @@ class testMeetingGroup(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testMeetingGroup))
+    suite.addTest(makeSuite(testMeetingGroup, prefix='test_pm_'))
     return suite

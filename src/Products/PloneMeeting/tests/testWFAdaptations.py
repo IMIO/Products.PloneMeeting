@@ -34,27 +34,28 @@ from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED
 
+
 class testWFAdaptations(PloneMeetingTestCase):
     '''Tests the different existing wfAdaptations.  Also made to be back tested by extension profiles...
        Each test call submethods that check the behaviour while each wfAdaptation is active or inactive.
        This way, an external profile will just override the called submethods if necessary.
        This way too, we will be able to check multiple activated wfAdaptations.'''
 
-    def testWFA_availableWFAdaptations(self):
+    def test_pm_WFA_availableWFAdaptations(self):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
         self.assertEquals(set(self.meetingConfig.listWorkflowAdaptations()),
                           set(('no_global_observation', 'creator_initiated_decisions',
-                           'only_creator_may_delete', 'pre_validation',
-                           'items_come_validated', 'archiving', 'no_publication',
-                           'no_proposal', 'everyone_reads_all',
-                           'creator_edits_unless_closed', 'local_meeting_managers',)))
+                               'only_creator_may_delete', 'pre_validation',
+                               'items_come_validated', 'archiving', 'no_publication',
+                               'no_proposal', 'everyone_reads_all',
+                               'creator_edits_unless_closed', 'local_meeting_managers',)))
 
-    def testWFA_no_publication(self):
+    def test_pm_WFA_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.
            This test check the removal of the 'published' state in the meeting/item WF.'''
         login(self.portal, 'pmManager')
-        # check while the wfAdaptation is not activated        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        # check while the wfAdaptation is not activated
         self._no_publication_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_publication')
@@ -89,7 +90,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # check that we are able to reach the end of the wf process
         self.assertEquals(lastTriggeredTransition, self.transitionsToCloseAMeeting[-1])
 
-    def testWFA_no_proposal(self):
+    def test_pm_WFA_no_proposal(self):
         '''Test the workflowAdaptation 'no_proposal'.
            Check the removal of state 'proposed' in the item WF.'''
         login(self.portal, 'pmManager')
@@ -116,7 +117,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf('propose' in self.transitions(i1))
         self.do(i1, 'validate')
 
-    def testWFA_pre_validation(self):
+    def test_pm_WFA_pre_validation(self):
         '''Test the workflowAdaptation 'pre_validation'.
            Check the addition of a 'prevalidated' state in the item WF.'''
         login(self.portal, 'pmManager')
@@ -155,7 +156,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(i1, 'prevalidate')
         self.do(i1, 'validate')
 
-    def testWFA_creator_initiated_decisions(self):
+    def test_pm_WFA_creator_initiated_decisions(self):
         '''Test the workflowAdaptation 'creator_initiated_decisions'.
            Check that the creator can edit the decision field while activated.'''
         login(self.portal, 'pmManager')
@@ -179,7 +180,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         i1 = self.create('MeetingItem')
         self.failUnless(self.hasPermission(WriteDecision, i1))
 
-    def testWFA_items_come_validated(self):
+    def test_pm_WFA_items_come_validated(self):
         '''Test the workflowAdaptation 'items_come_validated'.'''
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
@@ -204,7 +205,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(i1.queryState(), 'validated')
         self.assertEquals(self.transitions(i1), [])
 
-    def testWFA_archiving(self):
+    def test_pm_WFA_archiving(self):
         '''Test the workflowAdaptation 'archiving'.'''
         # check while the wfAdaptation is not activated
         self._archiving_inactive()
@@ -232,7 +233,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         login(self.portal, 'admin')
         self.failIf(self.transitions(i1))
 
-    def testWFA_only_creator_may_delete(self):
+    def test_pm_WFA_only_creator_may_delete(self):
         '''Test the workflowAdaptation 'archiving'.'''
         # check while the wfAdaptation is not activated
         self._only_creator_may_delete_inactive()
@@ -286,7 +287,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         login(self.portal, 'admin')
         self.failUnless(self.hasPermission('Delete objects', i1))
 
-    def testWFA_no_global_observation(self):
+    def test_pm_WFA_no_global_observation(self):
         '''Test the workflowAdaptation 'no_global_observation'.'''
         # check while the wfAdaptation is not activated
         self._no_global_observation_inactive()
@@ -367,7 +368,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         #check that the meeting have been published
         self.failUnless(isPublished)
 
-    def testWFA_everyone_reads_all(self):
+    def test_pm_WFA_everyone_reads_all(self):
         '''Test the workflowAdaptation 'everyone_reads_all'.'''
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
@@ -454,7 +455,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         #check that the meeting have been published
         self.failUnless(isPublished)
 
-    def testWFA_creator_edits_unless_closed(self):
+    def test_pm_WFA_creator_edits_unless_closed(self):
         '''Test the workflowAdaptation 'creator_edits_unless_closed'.'''
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
@@ -521,7 +522,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 self.failIf(self.hasPermission('Modify portal content', i1))
 
-    def testWFA_local_meeting_managers(self):
+    def test_pm_WFA_local_meeting_managers(self):
         '''Test the workflowAdaptation 'local_meeting_managers'.'''
         # create a MeetingManager and put it in another _creators group than
         # the default MeetingManager
@@ -555,7 +556,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _local_meeting_managers_active(self):
         '''Tests while 'local_meeting_managers' wfAdaptation is active.'''
-        # the meeting creator can manage the 
+        # the meeting creator can manage the
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         self.failUnless(self.hasPermission('Modify portal content', m1))
@@ -567,9 +568,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('Modify portal content', m1))
 
 
-
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testWFAdaptations))
+    suite.addTest(makeSuite(testWFAdaptations, prefix='test_pm_'))
     return suite

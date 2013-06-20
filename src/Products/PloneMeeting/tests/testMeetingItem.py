@@ -37,7 +37,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testMeetingItem(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
 
-    def testSelectableCategories(self):
+    def test_pm_SelectableCategories(self):
         '''Categories are available if isSelectable returns True.  By default,
            isSelectable will return active categories for wich intersection
            between MeetingCategory.usingGroups and current member
@@ -94,7 +94,7 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedCategories.remove('subproducts')
         self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
 
-    def testUsedColorSystemShowColors(self):
+    def test_pm_UsedColorSystemShowColors(self):
         '''The showColors is initialized by the showColorsForUser method that
            depends on the value selected in portal_plonemeeting.usedColorSystem
            and portal_plonemeeting.colorSystemDisabledFor.'''
@@ -139,7 +139,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.tool.setUsedColorSystem('modification_color')
         self.assertEquals(self.tool.showColorsForUser(), False)
 
-    def testUsedColorSystemGetColoredLink(self):
+    def test_pm_UsedColorSystemGetColoredLink(self):
         '''The colorization of the item depends on the usedColorSystem value of
            the tool.'''
         #colorization modes are applied on MeetingItem, MeetingFile and Meeting
@@ -245,7 +245,7 @@ class testMeetingItem(PloneMeetingTestCase):
         #2. check with a Meeting
         #3. check with a MeetingFile
 
-    def testListProposingGroup(self):
+    def test_pm_ListProposingGroup(self):
         '''Check that the user is creator for the proposing groups.'''
         # test that if a user is cretor for a group but only reviewer for
         # another, it only returns the groups the user is creator for...  This
@@ -263,7 +263,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEquals(tuple(item.listProposingGroup()), ('vendors', ))
 
-    def testSendItemToOtherMC(self):
+    def test_pm_SendItemToOtherMC(self):
         '''Test the send an item to another meetingConfig functionnality'''
         #check MeetingConfig behaviour
         #while activating a meetingConfig to send items to, an action and an
@@ -419,7 +419,7 @@ class testMeetingItem(PloneMeetingTestCase):
             self.failUnless(otherMeetingConfigId in i1._getOtherMeetingConfigsImAmClonedIn())
             newUID = annotations[annotationKey]
 
-    def testSendItemToOtherMCWithAnnexes(self):
+    def test_pm_SendItemToOtherMCWithAnnexes(self):
         '''Test that sending an item to another MeetingConfig behaves normaly with annexes.
            This is a complementary test to testToolPloneMeeting.testCloneItemWithContent.
            Here we test the fact that the item is sent to another MeetingConfig.'''
@@ -514,7 +514,7 @@ class testMeetingItem(PloneMeetingTestCase):
            able to accept an item.'''
         return ['publish', 'freeze', ]
 
-    def testAddAutoCopyGroups(self):
+    def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
            the TAL expression defined on every MeetingGroup.asCopyGroupOn.'''
         # Use the 'plonegov-assembly' meetingConfig
@@ -564,7 +564,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # check that local_roles are correct
         self.failUnless('MeetingObserverLocalCopy' in i5.__ac_local_roles__['vendors_reviewers'])
 
-    def testUpdateAdvices(self):
+    def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
            Only 'MeetingPowerObserverLocal' local role should be impacted.'''
         # to ease test override, consider that we can give advices when the item is created for this test
@@ -597,7 +597,7 @@ class testMeetingItem(PloneMeetingTestCase):
             if principalId == 'vendors_advisers':
                 self.failUnless(('MeetingObserverLocalCopy',) == localRoles)
 
-    def testCopyGroups(self):
+    def test_pm_CopyGroups(self):
         '''Test that if a group is set as copyGroups, the item is Viewable.
            This test problem discribed here : https://dev.plone.org/ticket/13310.'''
         self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
@@ -645,7 +645,7 @@ class testMeetingItem(PloneMeetingTestCase):
         login(self.portal, 'pmReviewer2')
         self.failIf(self.hasPermission('View', i1))
 
-    def testPowerObserversGroups(self):
+    def test_pm_PowerObserversGroups(self):
         '''Test the management of MeetingConfig linked 'powerobservers' Plone group.'''
         # specify that powerObservers will be able to see the items of self.meetingConfig
         # when the item is in some state.  For example here, a 'presented' item is not viewable
@@ -722,7 +722,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser(userThatCanNotSee)
         self.failIf(self.hasPermission('View', (frozenItem, frozenItem.getMeeting())))
 
-    def testItemIsSigned(self):
+    def test_pm_ItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
            Check also the @@toggle_item_is_signed view that do some unrestricted things...'''
         # Use the 'plonegov-assembly' meetingConfig
@@ -784,7 +784,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, item.setItemIsSigned, False)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
 
-    def testIsPrivacyViewable(self):
+    def test_pm_IsPrivacyViewable(self):
         '''
           Test who can access an item when it's privacy is 'private'.
           By default, only members of the proposing group and super users
@@ -841,5 +841,5 @@ class testMeetingItem(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testMeetingItem))
+    suite.addTest(makeSuite(testMeetingItem, prefix='test_pm_'))
     return suite

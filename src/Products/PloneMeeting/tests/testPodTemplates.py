@@ -30,7 +30,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testPodTemplates(PloneMeetingTestCase):
     '''Tests various aspects of document generation through POD templates.'''
 
-    def testConditions(self):
+    def test_pm_Conditions(self):
         '''Tests the conditions and permissions defined for each POD
            template.'''
         # Create an item as creator
@@ -48,7 +48,8 @@ class testPodTemplates(PloneMeetingTestCase):
         self.assertEquals(podTemplates[0].Title(), 'Meeting agenda')
         self.do(item, 'present')
         item.setDecision('Decision')
-        self.do(meeting, 'publish')
+        if 'publish' in self.transitions(meeting):
+            self.do(meeting, 'publish')
         self.do(meeting, 'freeze')
         self.do(meeting, 'decide')
         podTemplates = self.meetingConfig.getAvailablePodTemplates(meeting)
@@ -59,5 +60,5 @@ class testPodTemplates(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testPodTemplates))
+    suite.addTest(makeSuite(testPodTemplates, prefix='test_pm_'))
     return suite

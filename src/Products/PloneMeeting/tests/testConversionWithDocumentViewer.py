@@ -42,7 +42,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         # annex preview is disabled by default in 'test' profile
         self.tool.setEnableAnnexPreview(True)
 
-    def testIsConvertable(self):
+    def test_pm_IsConvertable(self):
         '''Test that the MeetingFile is convertable to images so it can be printed.'''
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -55,7 +55,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         annex2 = self.addAnnex(item)
         self.failIf(annex2.isConvertable())
 
-    def testIsConvertedAtCreation(self):
+    def test_pm_IsConvertedAtCreation(self):
         '''An annex is converted at creation if it is specified in the configuration...'''
         # by default, annex preview is enabled so annexes are converted
         self.assertTrue(self.tool.getEnableAnnexPreview())
@@ -71,7 +71,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         self.assertFalse(annex2.conversionStatus() == 'successfully_converted')
         self.assertFalse(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
 
-    def testConvert(self):
+    def test_pm_Convert(self):
         '''If an annex is converted it can be :
            - successfully_converted
            - under_conversion or waiting conversion if conversion is disabled
@@ -104,7 +104,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         self.assertTrue(messages.show()[-1].message == CONVERSION_ERROR)
         self.assertTrue(annex3.conversionFailed())
 
-    def testForceConversion(self):
+    def test_pm_ForceConversion(self):
         '''
           Even if annex preview is disabled, we need the annex to be converted
           if we want to print it.  So check that, even if preview is disabled :
@@ -135,7 +135,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         self.assertTrue(annex2.conversionStatus() == 'successfully_converted')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
 
-    def testAnnexesOfClonedItemAreConverted(self):
+    def test_pm_AnnexesOfClonedItemAreConverted(self):
         """
           While cloning an item (duplicate), check that annexes are
           converted if necessary...
@@ -159,5 +159,5 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testConversionWithDocumentViewer))
+    suite.addTest(makeSuite(testConversionWithDocumentViewer, prefix='test_pm_'))
     return suite

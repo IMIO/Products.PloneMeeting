@@ -26,7 +26,6 @@ from zope.component import getUtility, getMultiAdapter
 from plone.portlets.interfaces import IPortletManager, IPortletRenderer
 from plone.app.testing import login
 from Products.PloneMeeting.browser import portlet_plonemeeting as pm
-from Products.PloneMeeting.config import *
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 
@@ -34,7 +33,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testPortlets(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
 
-    def testPortletPMAvailableTemplates(self):
+    def test_pm_PortletPMAvailableTemplates(self):
         '''Test the portlet_plonemeeting.getTemplateItems method
            returning available item templates for current user.
            template1 is available to everyone but template2 is restricted to group 'vendors'.'''
@@ -47,7 +46,7 @@ class testPortlets(PloneMeetingTestCase):
         manager = getUtility(IPortletManager, name='plone.leftcolumn', context=self.portal)
         assignment = pm.Assignment()
         renderer = getMultiAdapter((context, request, view, manager, assignment), IPortletRenderer)
-        self.assertEquals(['template1',], [template.getId() for template in renderer.templateItems()])
+        self.assertEquals(['template1', ], [template.getId() for template in renderer.templateItems()])
         # pmCreator2 is member of 'vendors' and can so access template2 that is restricted to 'vendors'
         login(self.portal, 'pmCreator2')
         self.getMeetingFolder()
@@ -60,9 +59,8 @@ class testPortlets(PloneMeetingTestCase):
         self.assertEquals(['template1', 'template2', ], [template.getId() for template in renderer.templateItems()])
 
 
-
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testPortlets))
+    suite.addTest(makeSuite(testPortlets, prefix='test_pm_'))
     return suite

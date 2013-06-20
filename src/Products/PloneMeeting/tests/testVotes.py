@@ -42,9 +42,9 @@ class testVotes(PloneMeetingTestCase):
         PloneMeetingTestCase.setUp(self)
         # avoid recurring items
         login(self.portal, 'admin')
-        self.meetingConfig.recurringitems.manage_delObjects([self.meetingConfig.recurringitems.objectValues()[0].getId(),])
+        self.meetingConfig.recurringitems.manage_delObjects([self.meetingConfig.recurringitems.objectValues()[0].getId(), ])
 
-    def testMayConsultVotes(self):
+    def test_pm_MayConsultVotes(self):
         '''Test when a user may consult votes...'''
         # creator an item
         self.changeUser('pmCreator1')
@@ -55,18 +55,18 @@ class testVotes(PloneMeetingTestCase):
         item1 = self.create('MeetingItem', **data)
         item1.setDecision('<p>A decision</p>')
         # nobody can consult votes until the item is presented
-        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1',])
+        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', ])
         self.do(item1, 'propose')
-        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2',])
+        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
         self.changeUser('pmReviewer1')
         self.do(item1, 'validate')
-        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2',])
+        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
         self.changeUser('pmManager')
         m1 = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
         self.do(item1, 'present')
         # even while presented, creators and reviewers
         # can not consult votes
-        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2',])
+        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
         # decide the meeting
         self.changeUser('pmManager')
         lastState = m1.queryState()
@@ -85,7 +85,7 @@ class testVotes(PloneMeetingTestCase):
         self.do(m1, 'close')
         self._checkVotesConsultableFor(item1)
 
-    def _checkVotesConsultableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager',]):
+    def _checkVotesConsultableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
         '''Helper method for checking that a user can consult votes.'''
         originalUserId = self.portal.portal_membership.getAuthenticatedMember().getId()
         for userId in userIds:
@@ -93,7 +93,11 @@ class testVotes(PloneMeetingTestCase):
             self.failUnless(item.mayConsultVotes())
         self.changeUser(originalUserId)
 
-    def _checkVotesNotConsultableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager',]):
+    def _checkVotesNotConsultableFor(self, item, userIds=['voter1',
+                                                          'voter2',
+                                                          'pmCreator1',
+                                                          'pmReviewer1',
+                                                          'pmManager', ]):
         '''Helper method for checking that a user can NOT consult votes.'''
         originalUserId = self.portal.portal_membership.getAuthenticatedMember().getId()
         for userId in userIds:
@@ -101,7 +105,7 @@ class testVotes(PloneMeetingTestCase):
             self.failIf(item.mayConsultVotes())
         self.changeUser(originalUserId)
 
-    def testMayEditVotes(self):
+    def test_pm_MayEditVotes(self):
         '''Test the MeetingItem.mayEditVotes method.
            Only MeetingManagers (depending on MeetingConfig.votesEncoder)
            can edit every votes when the item is linked to a meeting.'''
@@ -128,10 +132,10 @@ class testVotes(PloneMeetingTestCase):
         self._checkVotesNotEditableFor(item1)
         # check if adding MeetingManagers to MeetingConfig.votesEncoder works
         self.changeUser('admin')
-        self.meetingConfig.setVotesEncoder(['aMeetingManager', 'theVoterHimself',])
+        self.meetingConfig.setVotesEncoder(['aMeetingManager', 'theVoterHimself', ])
         # now MeetingManagers can edit votes
         self.changeUser('pmManager')
-        self._checkVotesEditableFor(item1, userIds=['pmManager',])
+        self._checkVotesEditableFor(item1, userIds=['pmManager', ])
         # check while meeting evolve
         lastState = m1.queryState()
         while not lastState == 'decided':
@@ -139,8 +143,8 @@ class testVotes(PloneMeetingTestCase):
                 if tr in self.transitions(m1):
                     self.do(m1, tr)
                     break
-            self._checkVotesEditableFor(item1, userIds=['pmManager',])
-            self._checkVotesNotEditableFor(item1, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1',])
+            self._checkVotesEditableFor(item1, userIds=['pmManager', ])
+            self._checkVotesNotEditableFor(item1, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', ])
             if m1.queryState() == lastState:
                 raise Exception, "Infinite loop...  Not able to find a 'decided' state for the Meeting 'm1'."
             else:
@@ -149,7 +153,7 @@ class testVotes(PloneMeetingTestCase):
         self.do(m1, 'close')
         self._checkVotesNotEditableFor(item1)
 
-    def _checkVotesNotEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager',]):
+    def _checkVotesNotEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
         '''Helper method for checking that a user can NOT edit votes.'''
         originalUserId = self.portal.portal_membership.getAuthenticatedMember().getId()
         for userId in userIds:
@@ -157,7 +161,7 @@ class testVotes(PloneMeetingTestCase):
             self.failIf(item.mayEditVotes())
         self.changeUser(originalUserId)
 
-    def _checkVotesEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager',]):
+    def _checkVotesEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
         '''Helper method for checking that a user can edit votes.'''
         originalUserId = self.portal.portal_membership.getAuthenticatedMember().getId()
         for userId in userIds:
@@ -165,7 +169,7 @@ class testVotes(PloneMeetingTestCase):
             self.failUnless(item.mayEditVotes())
         self.changeUser(originalUserId)
 
-    def testOnSaveItemPeopleInfos(self):
+    def test_pm_OnSaveItemPeopleInfos(self):
         '''Test the MeetingItem.onSaveItemPeopleInfos method.
            Only voters and MeetingManagers (depending on MeetingConfig.votesEncoder)
            can edit votes when the item is linked to a meeting.  MeetingManagers can edit every
@@ -201,7 +205,7 @@ class testVotes(PloneMeetingTestCase):
         self.changeUser('pmManager')
         m1 = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
         self.do(item1, 'present')
-        self.assertEquals([voter.getId() for voter in item1.getAttendees('voter')], ['voter1', 'voter2',])
+        self.assertEquals([voter.getId() for voter in item1.getAttendees('voter')], ['voter1', 'voter2', ])
         # now voters and MeetingManagers can edit votes
         # a voter can not vote for somebody else
         # we still have the 'vote_value_voter1', 'yes' in the REQUEST
@@ -221,7 +225,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, item1.onSaveItemPeopleInfos)
         # add MeetingManagers to voters
         self.changeUser('admin')
-        self.meetingConfig.setVotesEncoder(['aMeetingManager', 'theVoterHimself',])
+        self.meetingConfig.setVotesEncoder(['aMeetingManager', 'theVoterHimself', ])
         # now a MeetingManager can change a vote value or even vote for an existing voter
         self.changeUser('pmManager')
         item1.onSaveItemPeopleInfos()
@@ -229,7 +233,7 @@ class testVotes(PloneMeetingTestCase):
         # vote for voter2
         self.request.set('vote_value_voter2', 'yes')
         item1.onSaveItemPeopleInfos()
-        self.assertEquals(item1.votes.keys(), ['voter1', 'voter2',])
+        self.assertEquals(item1.votes.keys(), ['voter1', 'voter2', ])
         # if a voter try to encode an non existing vote value, it raises ValueError
         self.request.set('vote_value_voter2', 'wrong_value')
         with self.assertRaises(ValueError) as cm:
@@ -249,7 +253,7 @@ class testVotes(PloneMeetingTestCase):
         # a MeetingManager can not change vote values
         self.assertRaises(Unauthorized, item1.onSaveItemPeopleInfos)
 
-    def testSecretVotes(self):
+    def test_pm_SecretVotes(self):
         '''Test the votes functionnality when votes are secret.
            When votes are secret, only the MeetingManagers can encode votes.'''
         # creator an item
@@ -305,31 +309,31 @@ class testVotes(PloneMeetingTestCase):
         # MeetingManagers can not encode votes if not in MeetingConfig.votesEncoder
         self.assertRaises(Unauthorized, item1.onSaveItemPeopleInfos)
         self.changeUser('admin')
-        self.meetingConfig.setVotesEncoder(['aMeetingManager', 'theVoterHimself',])
+        self.meetingConfig.setVotesEncoder(['aMeetingManager', 'theVoterHimself', ])
         self.changeUser('pmManager')
         # encode votes count
         item1.onSaveItemPeopleInfos()
         self.assertEquals(item1.votes['yes'], 2)
         # if a wrong value is encoded, it is ignored and a message is diaplayed to the user
         # explaining the wrong manipulation he made, the message is added to the request
-        self.failUnless(self.request['peopleMsg']==u'Changes saved.')
+        self.failUnless(self.request['peopleMsg'] == u'Changes saved.')
         self.request.set('vote_count_yes', 3)
         item1.onSaveItemPeopleInfos()
         # the value did not changed and a message is added to the request
         self.assertEquals(item1.votes['yes'], 2)
-        self.failUnless(self.request['peopleMsg']==item1.i18n('vote_count_wrong'))
+        self.failUnless(self.request['peopleMsg'] == item1.i18n('vote_count_wrong'))
         # the same while doing wrong counts with other vote values
         self.request.set('vote_count_yes', 1)
         self.request.set('vote_count_no', 1)
         self.request.set('vote_count_not_yet', 1)
         self.assertEquals(item1.votes['yes'], 2)
-        self.failUnless(self.request['peopleMsg']==item1.i18n('vote_count_wrong'))
+        self.failUnless(self.request['peopleMsg'] == item1.i18n('vote_count_wrong'))
         # if setting anything else but an integer for a vote_count_
         # does not change anything, but add a message to the request
         self.request.set('vote_count_yes', 'not_an_integer')
         item1.onSaveItemPeopleInfos()
         self.assertEquals(item1.votes['yes'], 2)
-        self.failUnless(self.request['peopleMsg']==item1.i18n('vote_count_not_int'))
+        self.failUnless(self.request['peopleMsg'] == item1.i18n('vote_count_not_int'))
         # values are encoded so mayNotSwitch
         self.failIf(item1.maySwitchVotes())
         # remove encoded votes so MeetingManager can switch
@@ -350,9 +354,8 @@ class testVotes(PloneMeetingTestCase):
         self.failIf(item1.getVotesAreSecret())
 
 
-
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testVotes))
+    suite.addTest(makeSuite(testVotes, prefix='test_pm_'))
     return suite

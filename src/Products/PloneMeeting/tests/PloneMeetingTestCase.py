@@ -61,6 +61,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
     decisionText = '<p>Some decision.</p>'
     schemas = {'MeetingItem': MeetingItem_schema,
                'Meeting': Meeting_schema}
+    subproductIgnoredTestFiles = ['testPerformances.py', 'testConversionWithDocumentViewer.py']
 
     layer = PM_TESTS_PROFILE_FUNCTIONAL
 
@@ -323,4 +324,68 @@ class PloneMeetingTestCase(unittest2.TestCase):
         '''Returns the list of transitions that the current user may trigger
            on p_obj.'''
         return [t['id'] for t in self.wfTool.getTransitionsFor(obj)]
-# ------------------------------------------------------------------------------
+
+    # sub-products-related tests methods ---------------------------------------
+    # tests here under are only executed by sub-products
+    def test_subproduct_VerifyTestMethods(self):
+        """
+          This test will be automatically called by every test files of the sub product.
+          We check that there are the same test methods in PloneMeeting and the sub-product.
+        """
+        # our test class always inheritate from a PloneMeeting test class
+        # except the testCustomXXX that are proper to MeetingCommunes
+        pmInheritatedClass = self.__class__.__bases__[-1]
+        localTestClass = self
+        # if we do not inheritate from a PloneMeeting test class, just return...
+        if pmInheritatedClass.__class__.__name__ == localTestClass.__class__.__name__:
+            return
+        tpm = self.getTestMethods(self.__class__.__bases__[-1], 'test_pm_')
+        tsp = self.getTestMethods(self, 'test_subproduct_call_')
+        missing = []
+        for key in tpm:
+            key2 = key.replace('test_pm_', 'test_subproduct_call_')
+            if not key2 in tsp:
+                missing.append(key)
+        if len(missing):
+            self.fail("missing test methods %s from PloneMeeting test class '%s'" %
+                      (missing, self.__class__.__name__))
+
+    def test_tescasesubproduct_VerifyTestFiles(self):
+        """
+          This test is called by the base TestCase file of the subproduct.
+          We check that every test files in Products.PloneMeeting are also in this sub-product.
+        """
+        if hasattr(self.__class__.__bases__[0], 'verifyTestFilesAlreadyDone'):
+            return
+        else:
+            setattr(self.__class__.__bases__[0], 'verifyTestFilesAlreadyDone', True)
+        from zope.testing.testrunner.find import find_test_files
+        # list test files from Products.PloneMeeting
+        options = self._resultForDoCleanups.options
+        # get test files for subproduct
+        subproduct_files_generator = find_test_files(options)
+        # self.__module__ is like 'Products.MySubProducts.tests.MySubProductTestCase'
+        subproduct_name = self.__module__.split('tests')[0][0:-1]
+        subproduct_files = [f[0] for f in subproduct_files_generator if subproduct_name in f[0]]
+        # get test files for PloneMeeting
+        # find PloneMeeting package path
+        import os
+        pm_path = None
+        for path in os.sys.path:
+            if 'Products.PloneMeeting' in path:
+                pm_path = path
+                break
+        if not pm_path:
+            raise Exception, 'Products.PloneMeeting path not found!'
+        # change test_path to set it to Products.PloneMeeting
+        saved_test_path = options.test_path
+        options.test_path = [(pm_path, '')]
+        pm_files_generator = find_test_files(options)
+        pm_files = [f[0] for f in pm_files_generator if 'Products.PloneMeeting' in f[0]]
+        options.test_path = saved_test_path
+        # now check that every PloneMeeting files are managed by subproduct
+        subproduct_testfiles = [f.split('/')[-1] for f in subproduct_files if not f.split('/')[-1].startswith('testCustom')]
+        pm_testfiles = [f.split('/')[-1] for f in pm_files]
+        # there should not be a file in PloneMeeting that is not in this subproduct...
+        # a subproduct can ignore some PloneMeeting test files in self.subproductIgnoredTestFiles
+        self.failIf(set(pm_testfiles).difference(set(subproduct_testfiles + self.subproductIgnoredTestFiles)))

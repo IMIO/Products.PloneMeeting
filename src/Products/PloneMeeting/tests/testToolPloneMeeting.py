@@ -31,13 +31,13 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testToolPloneMeeting(PloneMeetingTestCase):
     '''Tests the ToolPloneMeeting class methods.'''
 
-    def testGetMeetingGroup(self):
+    def test_pm_GetMeetingGroup(self):
         '''Return the meeting group containing the plone group
            p_ploneGroupId.'''
         meetingGroup = self.tool.getMeetingGroup('developers_advisers')
         self.assertEquals(meetingGroup.id, 'developers')
 
-    def testMoveMeetingGroups(self):
+    def test_pm_MoveMeetingGroups(self):
         '''Tests changing MeetingGroup and MeetingConfig order within the tool.
            This is more coplex than it seems at first glance because groups and
            configs are mixed together within the tool.'''
@@ -57,7 +57,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(self.tool.objectIds('MeetingGroup'),
                           ['developers', 'vendors', newGroupId, 'endUsers'])
 
-    def testCloneItem(self):
+    def test_pm_CloneItem(self):
         '''Clones a given item in parent item folder.'''
         login(self.portal, 'pmManager')
         item1 = self.create('MeetingItem')
@@ -87,7 +87,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(
             set([clonedItem]), set(clonedItem.getParentNode().objectValues()))
 
-    def testCloneItemWithContent(self):
+    def test_pm_CloneItemWithContent(self):
         '''Clones a given item containing annexes in parent item folder.'''
         login(self.portal, 'pmManager')
         item1 = self.create('MeetingItem')
@@ -122,7 +122,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                           set(clonedItem.getParentNode().objectValues()))
         self.assertEquals(len(clonedItem.getAnnexes()), 0)
 
-    def testCloneItemWithContentNotRemovableByPermission(self):
+    def test_pm_CloneItemWithContentNotRemovableByPermission(self):
         '''Clones a given item in parent item folder. Here we test that even
            if the contained objects are not removable, they are removed.
            Now we use removeGivenObject to remove contained objects of
@@ -142,7 +142,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(hasattr(clonedItem.getParentNode(), 'o1'))
         self.assertTrue(hasattr(clonedItem.getParentNode(), 'copy_of_o1'))
 
-    def testPasteItems(self):
+    def test_pm_PasteItems(self):
         '''Paste objects (previously copied) in destFolder.'''
         login(self.portal, 'pmCreator1')
         item1 = self.create('MeetingItem')
@@ -194,7 +194,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.failUnless(res1.getAnnexes()[0].getMeetingFileType())
         self.failUnless(res1.getAnnexes()[1].getMeetingFileType())
 
-    def testShowPloneMeetingTab(self):
+    def test_pm_ShowPloneMeetingTab(self):
         '''Test when PM tabs are shown'''
         # By default, 2 meetingConfigs are created active
         # If the user is not logged in, he can not access the meetingConfigs and
@@ -224,7 +224,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Even an activated meetingConfig will not show his tab if it is alone...
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
 
-    def testSetupProcessForCreationFlag(self):
+    def test_pm_SetupProcessForCreationFlag(self):
         '''Test that every elements created by the setup process
            are correctly initialized regarding the _at_creation_flag.
            The flag is managed using processForm so check that processForm
@@ -251,5 +251,5 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testToolPloneMeeting))
+    suite.addTest(makeSuite(testToolPloneMeeting, prefix='test_pm_'))
     return suite
