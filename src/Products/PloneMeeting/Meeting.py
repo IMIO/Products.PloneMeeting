@@ -206,8 +206,8 @@ class MeetingWorkflowConditions:
     def mayChangeItemsOrder(self):
         if not checkPermission(ModifyPortalContent, self.context):
             return
-        if self.context.queryState() not in \
-           ('created', 'published', 'frozen', 'decided'):
+        # the meeting can not be in a closed state
+        if self.context.queryState() in Meeting.meetingClosedStates:
             return
         # Once dictionaries "entrances" and "departures" are filled, changing
         # items order would lead to database incoherences.

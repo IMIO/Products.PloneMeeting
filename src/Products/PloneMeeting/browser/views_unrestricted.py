@@ -3,6 +3,7 @@ from AccessControl import Unauthorized
 from AccessControl.SecurityManagement import newSecurityManager, getSecurityManager, setSecurityManager
 
 from zope.component import getMultiAdapter
+from zope.i18n import translate
 
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
@@ -181,115 +182,6 @@ class UnrestrictedMethodsView(BrowserView):
         if meeting:
             return meeting.getDate()
 
-    def changeItemsOrder(self, itemUid, moveType, moveNumber):
-        """
-          Change the items order on a meeting.
-          This is an unrestricted method so a MeetingManager can change items
-          order even if some items are no more movable because decided
-          (and so no more 'Modify portal content' on it).
-          We double check that current user can actually mayChangeItemsOrder.
-          Anyway, this method move an item, one level up/down or at a given position.
-        """
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-
-        # Find the item to move (in "normal" or "late" items lists)
-        itemToMove = None
-        catalogRes = self.context.uid_catalog(UID=itemUid)
-        if catalogRes:
-            itemToMove = catalogRes[0].getObject()
-        else:
-            self.context.plone_utils.addPortalMessage('UID not found!')
-            return tool.gotoReferer()
-
-        #as this script has a Manager Proxy Role, we need to protect it...
-        #so call mayChangeItemsOrder again
-        if not itemToMove.getMeeting().wfConditions().mayChangeItemsOrder():
-            raise Unauthorized
-
-        # Move the item up (-1), down (+1) or at a given position ?
-        if moveType == 'number':
-            isDelta = False
-            try:
-                move = int(moveNumber)
-                # In this case, moveNumber specifies the new position where
-                # the item must be moved.
-            except ValueError:
-                self.context.plone_utils.addPortalMessage(
-                    self.context.utranslate('item_number_invalid', domain='PloneMeeting'))
-                return tool.gotoReferer()
-        else:
-            isDelta = True
-            if moveType == 'up':
-                move = -1
-            elif moveType == 'down':
-                move = 1
-
-        if catalogRes:
-            itemToMove = catalogRes[0].getObject()
-            isLate = itemUid in self.context.getRawLateItems()
-            if isLate:
-                nbOfItems = len(self.context.getRawLateItems())
-            else:
-                nbOfItems = len(self.context.getRawItems())
-
-        # Calibrate and validate moveValue
-        if itemToMove and (not isDelta):
-            # Recompute p_move according to "normal" or "late" items list
-            if isLate:
-                move -= len(self.context.getRawItems())
-            # Is this move allowed ?
-            if move in (itemToMove.getItemNumber(), itemToMove.getItemNumber()+1):
-                self.context.plone_utils.addPortalMessage(
-                    self.context.utranslate('item_did_not_move', domain='PloneMeeting'))
-                return tool.gotoReferer()
-            if (move < 1) or (move > (nbOfItems+1)):
-                self.context.plone_utils.addPortalMessage(
-                    self.context.utranslate('item_illegal_move', domain='PloneMeeting'))
-                return tool.gotoReferer()
-
-        # Move the item
-        if itemToMove and (nbOfItems >= 2):
-            if isDelta:
-                # Move the item with a delta of +1 or -1
-                oldIndex = itemToMove.getItemNumber()
-                newIndex = oldIndex + move
-                if (newIndex >= 1) and (newIndex <= nbOfItems):
-                    # Find the item having newIndex and intervert indexes
-                    if isLate:
-                        itemsList = self.context.getLateItems()
-                    else:
-                        itemsList = self.context.getItems()
-                    for item in itemsList:
-                        if item.getItemNumber() == newIndex:
-                            item.setItemNumber(oldIndex)
-                            break
-                    itemToMove.setItemNumber(newIndex)
-            else:
-                # Move the item to an absolute position
-                oldIndex = itemToMove.getItemNumber()
-                if isLate:
-                    itemsList = self.context.getLateItems()
-                else:
-                    itemsList = self.context.getItems()
-                if move < oldIndex:
-                    # We must move the item closer to the first items (up)
-                    for item in itemsList:
-                        itemNumber = item.getItemNumber()
-                        if (itemNumber < oldIndex) and (itemNumber >= move):
-                            item.setItemNumber(itemNumber+1)
-                        elif itemNumber == oldIndex:
-                            item.setItemNumber(move)
-                else:
-                    # We must move the item closer to the last items (down)
-                    for item in itemsList:
-                        itemNumber = item.getItemNumber()
-                        if itemNumber == oldIndex:
-                            item.setItemNumber(move-1)
-                        elif (itemNumber > oldIndex) and (itemNumber < move):
-                            item.setItemNumber(itemNumber-1)
-
-        return tool.gotoReferer()
-
 
 class ItemSign(BrowserView):
     """
@@ -338,8 +230,9 @@ class ItemSign(BrowserView):
             else:
                 title_msgid = 'item_is_signed_no'
 
-        title = item.utranslate(title_msgid,
-                                domain="PloneMeeting")
+        title = translate(msgid=title_msgid,
+                          domain="PloneMeeting",
+                          context=self.request)
         portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
         portal_url = portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)

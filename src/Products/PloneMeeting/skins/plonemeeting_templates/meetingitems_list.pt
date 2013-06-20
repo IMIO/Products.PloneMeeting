@@ -17,7 +17,7 @@
               startNumber python: listInfo[4];
               meetingConfig python: tool.getMeetingConfig(meeting);
               userIsReviewer python: tool.userIsAmong('reviewers');
-              useToggleDiscuss python: meeting.restrictedTraverse('@@toggle_to_discuss_on_item').isAsynchToggleEnabled() and False or False;
+              useToggleDiscuss python: meeting.restrictedTraverse('@@toggle_to_discuss_on_item').isAsynchToggleEnabled();
               dummy python:request.set('PUBLISHED', meeting)">
   <tal:comment replace="nothing">No meeting items around</tal:comment>
   <span tal:condition="not: meetingItems" i18n:translate="no_meetingitems" class="discreet"></span>
@@ -159,7 +159,7 @@
               tal:attributes="id string:marker_toggle_todiscuss_$UID;"
               tal:define="onclick_action python: useToggleDiscuss
                                                  and ('asyncToggleIcon(\''+UID+'\', baseUrl=\'' + meetingItem.absolute_url() + '\', viewName=\'@@toggle_to_discuss\', baseSelector=\'#marker_toggle_todiscuss_\')')
-                                                 or ('synchronousToggle(\'' + meetingItem.absolute_url() + '/@@synchronous_toggle_to_discuss?itemUid=%s&discussAction=toggle\')' % UID);">
+                                                 or ('synchronousToggleToDiscuss(\'' + meetingItem.absolute_url() + '/@@synchronous_toggle_to_discuss?itemUid=%s&discussAction=toggle\')' % UID);">
               <img class="toDiscussEditable"
                    tal:condition="meetingItem/getToDiscuss" name="discussNo" style="cursor:pointer"
                    title="to_discuss_yes_edit" i18n:attributes="title"
@@ -182,7 +182,7 @@
           <img tal:condition="not: meetingItem/getToDiscuss" name="discussAsk" style="cursor:pointer"
                title="to_discuss_no_ask_edit" i18n:attributes="title"
                tal:attributes="src string: $portal_url/toDiscussNo.png;
-                               onClick python: ('synchronousToggle(\'' + meetingItem.absolute_url() + '/@@synchronous_toggle_to_discuss?itemUid=%s&discussAction=ask\')' % UID)"/>
+                               onClick python: ('synchronousToggleToDiscuss(\'' + meetingItem.absolute_url() + '/@@synchronous_toggle_to_discuss?itemUid=%s&discussAction=ask\')' % UID)"/>
         </tal:forReviewers>
         <tal:forTheOthers condition="python: not mayEditToDiscuss and not (userIsReviewer and not member.has_role('MeetingManager'))">
           <img tal:condition="meetingItem/getToDiscuss" title="to_discuss_yes" i18n:attributes="title"
@@ -211,7 +211,7 @@
                      title="move_several" i18n:attributes="title" name="moveImageButton"
                      tal:attributes="id itemNumber;
                                      src string: $portal_url/arrowSeveral.png;
-                                     onClick python:'moveMeetingItem(\'number\', \'%s\', this.parentNode.previousSibling.firstChild)' % meetingItem.UID()"/></td>
+                                     onClick python:'moveMeetingItem(\''+ meetingItem.absolute_url() +'/@@change_item_order?moveType=number\', this.parentNode.previousSibling.firstChild)'"/></td>
               </tr>
             </table>
             <tal:comment replace="nothing">For the others</tal:comment>

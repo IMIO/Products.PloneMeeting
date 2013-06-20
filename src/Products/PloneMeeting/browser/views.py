@@ -1,5 +1,8 @@
+from AccessControl import Unauthorized
+
 from zope.component import getMultiAdapter
 from zope.i18n import translate
+
 from plone.memoize.instance import memoize
 
 from Products.Five import BrowserView
@@ -133,3 +136,114 @@ class ObjectGoToView(BrowserView):
             obj = meeting.getItemByNumber(int(objectId))
         objectUrl = obj.absolute_url()
         return self.context.REQUEST.RESPONSE.redirect(objectUrl)
+
+
+class ChangeItemOrderView(BrowserView):
+    """
+      Manage the functionnality that change item order on a meeting.
+      Change one level up/down or to a given p_moveNumber.
+    """
+    def __call__(self, moveType, moveNumber=None):
+        """
+          Change the items order on a meeting.
+          This is an unrestricted method so a MeetingManager can change items
+          order even if some items are no more movable because decided
+          (and so no more 'Modify portal content' on it).
+          We double check that current user can actually mayChangeItemsOrder.
+          Anyway, this method move an item, one level up/down or at a given position.
+        """
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+
+        # we do this unrestrictively but anyway respect the Meeting.mayChangeItemsOrder
+        meeting = self.context.getMeeting()
+
+        if not meeting.wfConditions().mayChangeItemsOrder():
+            raise Unauthorized
+
+        # Move the item up (-1), down (+1) or at a given position ?
+        if moveType == 'number':
+            isDelta = False
+            try:
+                move = int(moveNumber)
+                # In this case, moveNumber specifies the new position where
+                # the item must be moved.
+            except (ValueError, TypeError):
+                self.context.plone_utils.addPortalMessage(
+                    translate(msgid='item_number_invalid',
+                              domain='PloneMeeting',
+                              context=self.request))
+                return tool.gotoReferer()
+        else:
+            isDelta = True
+            if moveType == 'up':
+                move = -1
+            elif moveType == 'down':
+                move = 1
+
+        isLate = self.context.UID() in meeting.getRawLateItems()
+        if isLate:
+            nbOfItems = len(meeting.getRawLateItems())
+        else:
+            nbOfItems = len(meeting.getRawItems())
+
+        # Calibrate and validate moveValue
+        if not isDelta:
+            # Recompute p_move according to "normal" or "late" items list
+            if isLate:
+                move -= len(meeting.getRawItems())
+            # Is this move allowed ?
+            if move in (self.context.getItemNumber(), self.context.getItemNumber()+1):
+                self.context.plone_utils.addPortalMessage(
+                    translate(msgid='item_did_not_move',
+                              domain='PloneMeeting',
+                              context=self.request))
+                return tool.gotoReferer()
+            if (move < 1) or (move > (nbOfItems+1)):
+                self.context.plone_utils.addPortalMessage(
+                    translate(msgid='item_illegal_move',
+                              domain='PloneMeeting',
+                              context=self.request))
+                return tool.gotoReferer()
+
+        # Move the item
+        if nbOfItems >= 2:
+            if isDelta:
+                # Move the item with a delta of +1 or -1
+                oldIndex = self.context.getItemNumber()
+                newIndex = oldIndex + move
+                if (newIndex >= 1) and (newIndex <= nbOfItems):
+                    # Find the item having newIndex and intervert indexes
+                    if isLate:
+                        itemsList = meeting.getLateItems()
+                    else:
+                        itemsList = meeting.getItems()
+                    for item in itemsList:
+                        if item.getItemNumber() == newIndex:
+                            item.setItemNumber(oldIndex)
+                            break
+                    self.context.setItemNumber(newIndex)
+            else:
+                # Move the item to an absolute position
+                oldIndex = self.context.getItemNumber()
+                if isLate:
+                    itemsList = meeting.getLateItems()
+                else:
+                    itemsList = meeting.getItems()
+                if move < oldIndex:
+                    # We must move the item closer to the first items (up)
+                    for item in itemsList:
+                        itemNumber = item.getItemNumber()
+                        if (itemNumber < oldIndex) and (itemNumber >= move):
+                            item.setItemNumber(itemNumber+1)
+                        elif itemNumber == oldIndex:
+                            item.setItemNumber(move)
+                else:
+                    # We must move the item closer to the last items (down)
+                    for item in itemsList:
+                        itemNumber = item.getItemNumber()
+                        if itemNumber == oldIndex:
+                            item.setItemNumber(move-1)
+                        elif (itemNumber > oldIndex) and (itemNumber < move):
+                            item.setItemNumber(itemNumber-1)
+
+        return tool.gotoReferer()

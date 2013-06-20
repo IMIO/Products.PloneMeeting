@@ -2,7 +2,7 @@
 #
 # File: testVotes.py
 #
-# Copyright (c) 2012 by PloneGov
+# Copyright (c) 2013 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -147,7 +147,7 @@ class testVotes(PloneMeetingTestCase):
                 lastState = m1.queryState()
         # close the meeting so votes are not editable anymore by anybody
         self.do(m1, 'close')
-        self._checkVotesNotEditableFor(item1)        
+        self._checkVotesNotEditableFor(item1)
 
     def _checkVotesNotEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager',]):
         '''Helper method for checking that a user can NOT edit votes.'''

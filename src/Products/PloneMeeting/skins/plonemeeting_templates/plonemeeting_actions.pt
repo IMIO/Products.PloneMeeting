@@ -63,12 +63,12 @@
             <td tal:condition="python: object.getItemNumber() &gt; 1" class="noPadding">
               <img name="moveUp" title="move_item_up" i18n:domain="PloneMeeting" i18n:attributes="title" style="cursor:pointer"
                    tal:attributes="src string: $portal_url/arrowUp.png;
-                                   onClick python:'moveMeetingItem(\'up\', \'%s\', null)' % objectUID"/>
+                                   onClick python: 'moveMeetingItem(\''+ meetingItem.absolute_url() +'/@@change_item_order?moveType=up\', null)'"/>
             </td>
             <td tal:condition="python: object.getItemNumber() &lt; totalNbOfItems" class="noPadding">
               <img name="moveDown" title="move_item_down" i18n:domain="PloneMeeting" i18n:attributes="title" style="cursor:pointer"
                    tal:attributes="src string: $portal_url/arrowDown.png;
-                                   onClick python:'moveMeetingItem(\'down\', \'%s\', null)' % objectUID"/>
+                                   onClick python: 'moveMeetingItem(\''+ meetingItem.absolute_url() +'/@@change_item_order?moveType=down\', null)'"/>
             </td>
           </tr>
         </table>
