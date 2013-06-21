@@ -3,9 +3,13 @@ Products.PloneMeeting Changelog
 Older versions than 3.0 can be found at http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/
 Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 
-3.0.2 (unreleased)
+3.0.2 (2013-06-21)
 ------------------
 - Adapted tests infrastructure to make it easy to override by a subproduct
+- Adapted to work with Products.PloneHotfix20130618
+- Ajax toggle to discuss take 3rd case (send an email) into account
+- Moved "annexes_macros", "go to item" and "change items order" to BrowserViews
+- Use Meeting.meetingClosedStates in Meeting.mayChangeItemsOrder to avoid subproduct to override it in most cases
 
 3.0.1 (2013-06-07)
 ------------------
