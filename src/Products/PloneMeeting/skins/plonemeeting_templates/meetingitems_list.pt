@@ -130,7 +130,7 @@
         <tal:comment replace="nothing">We show inside the column header the button
              for presenting several items at once</tal:comment>
         <form name="selectItemsForm" tal:condition="not: itemsNumbering"
-              tal:attributes="action python: meeting.absolute_url_path() + '/meeting_presentseveralitems'">
+              tal:attributes="action python: meeting.absolute_url_path() + '/presentSeveralItems'">
           <input type="hidden" name="uids" value=""/>
           <input type="hidden" name="iStartNumber"/>
           <input type="hidden" name="lStartNumber"/>

@@ -33,6 +33,7 @@ from zope.i18n import translate
 from Products.CMFCore.permissions import ReviewPortalContent, ModifyPortalContent
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.WorkflowCore import WorkflowException
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions, IMeetingWorkflowActions
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, kupuFieldIsEmpty, \
     fieldIsEmpty, KUPU_EMPTY_VALUES, checkPermission, getCurrentMeetingObject, \
@@ -2071,25 +2072,50 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def decideSeveralItems(self, uids=None, transition=None):
         '''On meeting, we can decided severals items at once.
            p_uids is A STRING representing items separated by commas.
-           p_transition is the transition to trigger for given items.'''
-        transition = transition or self.REQUEST.get('transition', None)
+           This string ENDS WITH a final comma so is like :
+           'itemuid1,itemuid2,itemuid3,itemuid4,'
+           p_transition is the transition to trigger on given items.'''
         if transition is None:
             return self.portal_plonemeeting.gotoReferer()
 
-        uids = uids or self.REQUEST.get('uids', [])
         if not uids:
             msg = self.translate('no_selected_items', domain='PloneMeeting')
             self.plone_utils.addPortalMessage(msg)
             return self.portal_plonemeeting.gotoReferer()
 
-        for uid in uids.split(',')[:-1]:
-            obj = self.uid_catalog.searchResults(UID=uid)[0].getObject()
+        uid_catalog = getToolByName(self, 'uid_catalog')
+        wf_tool = getToolByName(self, 'portal_workflow')
+        for uid in uids.split(','):
+            if not uid:
+                continue
+            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
             try:
-                self.portal_workflow.doActionFor(obj, transition)
+                wf_tool.doActionFor(obj, transition)
             except WorkflowException:
                 continue
         return self.portal_plonemeeting.gotoReferer()
 
+    security.declarePublic('presentSeveralItems')
+    def presentSeveralItems(self, uids=None):
+        '''On meeting, we can present severals items at once.
+           p_uids is A STRING representing items separated by commas.
+           This string ENDS WITH a final comma so is like :
+           'itemuid1,itemuid2,itemuid3,itemuid4,'
+           p_transition is the transition to trigger on given items.'''
+        if not uids:
+            msg = self.translate('no_selected_items', domain='PloneMeeting')
+            self.plone_utils.addPortalMessage(msg)
+            return self.portal_plonemeeting.gotoReferer()
+
+        uid_catalog = getToolByName(self, 'uid_catalog')
+        wf_tool = getToolByName(self, 'portal_workflow')
+        for uid in uids.split(','):
+            if not uid:
+                continue
+            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
+            wf_tool.doActionFor(obj, 'present')
+
+        return self.portal_plonemeeting.gotoReferer()
 
 
 registerType(Meeting, PROJECTNAME)

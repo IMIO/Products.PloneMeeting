@@ -183,6 +183,33 @@ class testMeeting(PloneMeetingTestCase):
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', 'i2', 'i3', ])
 
+    def test_pm_PresentSeveralItems(self):
+        """
+          Test the functionnality to present several items at once
+        """
+        # create a meeting with items, unpresent presented items
+        login(self.portal, 'pmManager')
+        meeting = self._createMeetingWithItems()
+        # remove every presented items so we can
+        # present them at once
+        items = []
+        for item in meeting.getItems():
+            # save items uid so we will present them after
+            items.append(item)
+            self.do(item, 'backToValidated')
+        # no more items in the meeting
+        self.assertFalse(meeting.getItems())
+        # every items are 'validated'
+        for item in items:
+            self.assertEquals(item.queryState(), 'validated')
+            self.assertFalse(item.hasMeeting())
+        # present every items
+        meeting.presentSeveralItems(",".join([item.UID() for item in items]))
+        # every items are 'presented' in the meeting
+        for item in items:
+            self.assertEquals(item.queryState(), 'presented')
+            self.assertTrue(item.hasMeeting())
+
     def test_pm_DecideSeveralItems(self):
         """
           Test the functionnality to decide several items at once
@@ -193,21 +220,21 @@ class testMeeting(PloneMeetingTestCase):
         if 'publish' in self.transitions(meeting):
             self.do(meeting, 'publish')
         self.do(meeting, 'freeze')
-        uids = []
+        itemUids = []
         allItems = meeting.getItems()
         #set decision and place all items, except the last in uids
         for item in allItems:
             item.setDecision(self.decisionText)
             if item != allItems[-1]:
-                uids.append(item.UID())
+                itemUids.append(item.UID())
         self.do(meeting, 'decide')
         #back item to itemFrozen state
         for item in allItems:
             if item.queryState() == 'accepted':
                 self.do(item, 'backToItemFrozen')
         #initialize request variables used in decideSeveralItems method
-        meeting.REQUEST.set('transition', 'accept')
-        meeting.REQUEST.set('uids', ",".join(uids)+",")
+        self.request.set('transition', 'accept')
+        self.request.set('uids', ",".join(itemUids))
         meeting.decideSeveralItems()
         #after execute method, all items, except the last, are accepted
         for item in allItems[:-1]:
