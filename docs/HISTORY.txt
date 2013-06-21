@@ -3,6 +3,10 @@ Products.PloneMeeting Changelog
 Older versions than 3.0 can be found at http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/
 Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 
+3.0.3 (unreleased)
+-----------------
+- Nothing yet
+
 3.0.2 (2013-06-21)
 ------------------
 - Adapted tests infrastructure to make it easy to override by a subproduct
