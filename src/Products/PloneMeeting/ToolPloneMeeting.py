@@ -34,7 +34,7 @@ import re
 from appy.gen import No
 from appy.shared.data import nativeNames
 from AccessControl import Unauthorized
-from OFS.CopySupport import _cb_decode
+from OFS import CopySupport
 from BTrees.OOBTree import OOBTree
 from zExceptions import NotFound
 from Acquisition import aq_base
@@ -1536,7 +1536,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Check that we can paste the items in copiedData.
            We can paste if items come from the same meetingConfig.
            Used in the paste_items.cpy script.'''
-        itemPaths = _cb_decode(copiedData)[1]
+        itemPaths = CopySupport._cb_decode(copiedData)[1]
         meetingConfig = self.getMeetingConfig(destFolder)
         itemTypeName = meetingConfig.getItemTypeName()
         for itemPath in itemPaths:
@@ -1577,7 +1577,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             newItem = getattr(destFolder, itemId['new_id'])
             # Get the copied item, we will need information from it
             copiedItem = None
-            copiedId = _cb_decode(copiedData)[1][i]
+            copiedId = CopySupport._cb_decode(copiedData)[1][i]
             m = OFS.Moniker.loadMoniker(copiedId)
             try:
                 copiedItem = m.bind(destFolder.getPhysicalRoot())
