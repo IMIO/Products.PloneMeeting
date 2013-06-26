@@ -268,17 +268,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    StringField(
-        name='availableInterfaceLanguages',
-        default=defValues.availableInterfaceLanguages,
-        widget=StringField._properties['widget'](
-            description="AvailableInterfaceLanguages",
-            description_msgid="available_interface_languages_descr",
-            label='Availableinterfacelanguages',
-            label_msgid='PloneMeeting_label_availableInterfaceLanguages',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
     LinesField(
         name='availableOcrLanguages',
         default=defValues.availableOcrLanguages,
@@ -315,6 +304,7 @@ schema = Schema((
             label='Modeladaptations',
             label_msgid='PloneMeeting_label_modelAdaptations',
             i18n_domain='PloneMeeting',
+            visible=False,
         ),
         multiValued=1,
         vocabulary='listModelAdaptations',
@@ -485,7 +475,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     __dav_marshall__ = True  # Tool is folderish so normally it can't be
     # marshalled through WebDAV.
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
-    hsLanguages = ['en', 'fr', 'de', 'nl', 'es']
     backPages = {'categories': 'data', 'classifiers': 'data',
                  'meetingfiletypes': 'data', 'meetingusers': 'users',
                  'podtemplates': 'doc'}
@@ -507,7 +496,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.unindexObject()
 
         ##code-section post-edit-method-footer #fill in your manual code here
-        self.updateLanguageSettings()
         performModelAdaptations(self)
         self.adapted().onEdit(isCreated=False)
         ##/code-section post-edit-method-footer
@@ -519,7 +507,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
-        self.updateLanguageSettings()
         self.adapted().onEdit(isCreated=True)
         # give the "PloneMeeting: Add MeetingUser" permission to MeetingObserverGlobal role
         self.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingUser'], ('Manager', 'MeetingObserverGlobal'))
@@ -547,43 +534,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getCustomFields')
     def getCustomFields(self, cols):
         return getCustomSchemaFields(schema, self.schema, cols)
-
-    security.declarePublic('updateLanguageSettings')
-    def updateLanguageSettings(self):
-        '''Updates, at the portal_languages level, language settings according
-           to what is found in field "availableInterfaceLanguages".'''
-        # Configure languages
-        pl = self.portal_languages
-        languages = self.getAvailableInterfaceLanguages()
-        if languages.strip():
-            sl = [lg.strip() for lg in languages.split(',')]
-            cookieNegotiation = 1
-            requestNegotiation = 0
-        else:
-            sl = self.hsLanguages
-            cookieNegotiation = 0
-            requestNegotiation = 1
-        pl.manage_setLanguageSettings(
-            defaultLanguage=pl.getDefaultLanguage(),
-            supportedLanguages=sl, setContentN=False,
-            setCookieN=cookieNegotiation, setRequestN=requestNegotiation,
-            setPathN=False, setForcelanguageUrls=True,
-            setAllowContentLanguageFallback=None,
-            setUseCombinedLanguageCodes=None, displayFlags=False,
-            startNeutral=False)
-
-    security.declarePublic('getAvailableInterfaceLanguages')
-    def getAvailableInterfaceLanguages(self, splitted=False, names=False, **kwargs):
-        '''We override the default accessor for field
-           "availableInterfaceLanguages", so we can get the splitted version
-           of the field content.'''
-        res = self.getField('availableInterfaceLanguages').get(self, **kwargs)
-        if not splitted or not res:
-            return res
-        splitted = res.split(',')
-        if not names:
-            return splitted
-        return [nativeNames[name] for name in splitted]
 
     security.declarePublic('getActiveGroups')
     def getActiveGroups(self, notEmptySuffix=None):
@@ -1896,6 +1846,21 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Finally, prefix the date with "Meeting of" when required.
         if prefixed:
             res = translate('meeting_of', domain='PloneMeeting', context=self.REQUEST) + ' ' + res
+        return res
+
+    security.declarePublic('findSecondLanguage')
+    def findSecondLanguage(self):
+        '''The second language used is the second language in portal_languages.supported_langs
+           that is not the defaultLanguage considered as the 'first language'.'''
+        languagesTool = getToolByName(self, 'portal_languages')
+        supported_langs = languagesTool.getSupportedLanguages()
+        res = None
+        if len(supported_langs) == 2:
+            defaultLanguage = languagesTool.getDefaultLanguage()
+            for supported_lang in supported_langs:
+                if not supported_lang == defaultLanguage:
+                    res = supported_lang
+                    break
         return res
 
     def _checkTransitionGuard(self, guard, sm, wf_def, ob):

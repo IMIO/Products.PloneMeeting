@@ -6,15 +6,11 @@
       i18n:domain="PloneMeeting">
 
 <body>
-  <div metal:define-macro="header">
-    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" /><br/>
-  </div>
   <div metal:define-macro="body"
        tal:define="mode python:'view';
                    tool python: context.portal_plonemeeting;
                    member tool/getUser;
                    bilingual python: 'secondLanguageCfg' in tool.getModelAdaptations();
-                   langs python: tool.getAvailableInterfaceLanguages(True, True);
                    usedAttrs python:()">
     <fieldset tal:condition="python: member.has_role('Manager')">
       <legend i18n:translate="params_as_special_user"></legend>
@@ -26,7 +22,7 @@
           <td width="70%" tal:define="fieldName python:'duty'">
             <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
           </td>
-        <tr valign="top">  
+        <tr valign="top">
           <td tal:define="field python:here.getField('usages')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>

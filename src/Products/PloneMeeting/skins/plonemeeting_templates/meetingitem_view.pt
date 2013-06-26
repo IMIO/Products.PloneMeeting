@@ -26,8 +26,7 @@
                                   showColors tool/showColorsForUser;
                                   usedAttrs meetingConfig/getUsedItemAttributes;
                                   usedMeetingAttributes meetingConfig/getUsedMeetingAttributes;
-                                  bilingual python: 'secondLanguage' in tool.getModelAdaptations();
-                                  langs python: tool.getAvailableInterfaceLanguages(True, True);">
+                                  bilingual python: 'secondLanguage' in tool.getModelAdaptations();">
 
   <script language="javascript"
     tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">

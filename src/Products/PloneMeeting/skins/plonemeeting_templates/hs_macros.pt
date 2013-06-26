@@ -49,8 +49,7 @@
   This macro allows to edit a field with content that is possibly to be
   encoded in two languages. It requires the name of the field as "fieldName",
   which must correspond to a valid field on "context"; "bilingual" which, if
-  True, indicates that there are 2 languages. "langs" must be the list of
-  supported languages.
+  True, indicates that there are 2 languages.
 </tal:comment>
 <metal:field define-macro="editContentField"
    tal:define="field python: context.getField(fieldName);
@@ -61,17 +60,19 @@
   <tal:monolanguage condition="not: bilingual">
     <metal:field use-macro="python:context.widget(fieldName, mode='edit')"/>
   </tal:monolanguage>
-  <table tal:condition="bilingual" cellpadding="0" cellspacing="0" width="100%">
+  <table tal:condition="bilingual" cellpadding="0" cellspacing="0" width="100%"
+         tal:define="firstLanguage context/portal_languages/getDefaultLanguage;
+                     secondLanguage context/portal_plonemeeting/findSecondLanguage;">
     <tr valign="top">
      <td width="50%">
       <div style="position: relative">
-       <span class="hsLanguage" tal:content="python: langs[0]" tal:condition="isRich"></span>
+       <span class="hsLanguage" tal:content="firstLanguage" tal:condition="isRich"></span>
        <metal:f use-macro="python:context.widget(fieldName, mode='edit')"/>
       </div>
      </td>
      <td width="50%">
       <div style="position: relative">
-       <span class="hsLanguage" tal:content="python: langs[1]" tal:condition="isRich"></span>
+       <span class="hsLanguage" tal:content="secondLanguage" tal:condition="isRich"></span>
        <metal:f use-macro="python:context.widget(fieldName+'2', mode='edit')"/>
       </div>
      </td>
@@ -227,7 +228,6 @@ document.location.reload(true);
   </tal:discuss>
   <tal:comment replace="nothing">Item title</tal:comment>
   <span tal:replace="here/getName"/>
-  <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
   <br/>
   <tal:comment replace="nothing">Item number and reference</tal:comment>
   <tal:itemRef condition="python: context.adapted().mustShowItemReference()">
@@ -329,32 +329,6 @@ document.location.reload(true);
   <tal:noFrontPageDocument condition="not: frontPage">
     <p><span i18n:translate="">hs_welcome_body</span></p>
   </tal:noFrontPageDocument>
-</div>
-
-<tal:comment replace="nothing">
-  If several languages are supported, this macro displays a language selector.
-</tal:comment>
-<div metal:define-macro="hsLanguageSelector" id="portal-languageselector"
-     tal:define="availLanguages context/portal_plonemeeting/getAvailableInterfaceLanguages"
-     tal:condition="python: availLanguages and (availLanguages.find(',') != -1)">
-
-  <script language="javascript">
-    function toggleLanguage(url, selectWidget, searchId, pageName){
-      var newLanguage = selectWidget.options[selectWidget.selectedIndex].value;
-      var newUrl = url + "?set_language=" + newLanguage;
-      if (searchId) newUrl = newUrl + '&search=' + searchId;
-      if (pageName) newUrl = newUrl + '&pageName=' + pageName;
-      window.location = newUrl;
-    }
-  </script>
-  <select tal:define="lgTool python: context.portal_languages;
-                      userLanguage context/portal_plonemeeting/getUserLanguage"
-          tal:attributes="onchange python: 'toggleLanguage(\'%s\', this, \'%s\', \'%s\')' % (request['ACTUAL_URL'], request.get('search', ''), request.get('pageName', ''))">
-    <tal:lg repeat="lg lgTool/getSupportedLanguages">
-      <option tal:define="lgInfo python: lgTool.getAvailableLanguageInformation().get(lg, None)"
-              tal:content="lgInfo/native" tal:attributes="value lg; selected python:userLanguage==lg"></option>
-    </tal:lg>
-  </select>
 </div>
 
 <div id="meeting_users_"

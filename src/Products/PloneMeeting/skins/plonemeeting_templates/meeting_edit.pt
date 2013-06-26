@@ -8,7 +8,7 @@
 <metal:base_body use-macro="base_macros/body">
 
 <metal:widgets fill-slot="widgets"
-           tal:define="member context/@@plone_portal_state/member; 
+           tal:define="member context/@@plone_portal_state/member;
                        border python: test(member.has_role('Manager'), 'enable_border', 'disable_border');
                        dummy python:request.set(border, 1);
                        tool python: context.portal_plonemeeting;
@@ -16,7 +16,6 @@
                        portal context/portal_url/getPortalObject;
                        meetingConfig python: tool.getMeetingConfig(here);
                        bilingual python: 'secondLanguage' in tool.getModelAdaptations();
-                       langs python: tool.getAvailableInterfaceLanguages(True, True);
                        usedAttrs meetingConfig/getUsedMeetingAttributes;
                        useUserReplacements meetingConfig/getUseUserReplacements;">
 

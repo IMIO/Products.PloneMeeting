@@ -22,10 +22,11 @@ import os
 from Products.CMFCore.utils import getToolByName
 import transaction
 ##code-section HEAD
-from Products.PloneMeeting.config import *
+from DateTime import DateTime
 from BTrees.OOBTree import OOBTree
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import \
      WorkflowPolicyConfig_id
+from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.utils import \
      sendMailIfRelevant, addRecurringItemsIfRelevant, updateIndexes, \
@@ -342,6 +343,15 @@ def reInstall(context):
     '''Reinstalls the product.'''
     profileId = u'profile-Products.PloneMeeting:default'
     context.runAllImportStepsFromProfile(profileId)
+
+
+def addDemoData(context):
+    ''' '''
+    # create 5 meetings : 2 passed, 1 current and 2 future
+    today = DateTime()
+    dates = [today-14, today-7, today, today+7, today+14]
+    for date in dates:
+        pass
 
 
 # Code executed after a workflow transition has been triggered -----------------
