@@ -91,6 +91,8 @@ class ToolInitializer:
             except BadRequest:
                 # If we raise a BadRequest, it is that the id is already in use.
                 logger.warn(MEETING_ID_EXISTS % mConfig.id)
+        # finally, create the current user (admin) member area
+        self.site.portal_membership.createMemberArea()
         return self.successMessage
 
 # Functions that correspond to the PloneMeeting profile import steps -----------
