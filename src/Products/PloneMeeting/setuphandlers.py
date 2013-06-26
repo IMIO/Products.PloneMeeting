@@ -22,18 +22,17 @@ import os
 from Products.CMFCore.utils import getToolByName
 import transaction
 ##code-section HEAD
-from DateTime import DateTime
 from BTrees.OOBTree import OOBTree
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import \
-     WorkflowPolicyConfig_id
+    WorkflowPolicyConfig_id
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.utils import \
-     sendMailIfRelevant, addRecurringItemsIfRelevant, updateIndexes, \
-     sendAdviceToGiveMailIfRelevant
+    sendMailIfRelevant, addRecurringItemsIfRelevant, updateIndexes, \
+    sendAdviceToGiveMailIfRelevant
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
 from Products.PloneMeeting.ExternalApplication import \
-     sendNotificationsIfRelevant
+    sendNotificationsIfRelevant
 from Products.PloneMeeting.MeetingItem import MeetingItem
 
 folderViews = ('meetingfolder_redirect_view', 'meetingfolder_view')

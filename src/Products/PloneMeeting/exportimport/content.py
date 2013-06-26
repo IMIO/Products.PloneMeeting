@@ -83,7 +83,6 @@ class ToolInitializer:
         # Register classes again, after model adaptations have been performed
         # (see comment in __init__.py)
         registerClasses()
-        self.tool.updateLanguageSettings()
         self.tool.addExternalApplications(d.externalApplications)
         self.tool.addUsersAndGroups(d.groups, d.usersOutsideGroups)
         for mConfig in d.meetingConfigs:

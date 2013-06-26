@@ -959,9 +959,9 @@ def getFieldContent(obj, name, force=None, sep='-', **kwargs):
         return field.get(obj)
     else:
         # Get the name of the 2 languages
-        languages = tool.getAvailableInterfaceLanguages().split(',')[:2]
+        firstLanguage = self.portal_languages.getDefaultLanguage()[0:2]
         userLanguage = tool.getUserLanguage()
-        if (userLanguage not in languages) or (userLanguage == languages[0]):
+        if (userLanguage not in languages) or (userLanguage == firstLanguage):
             return field.get(obj)
         else:
             return obj.getField(field.getName()+'2').get(obj, **kwargs)
