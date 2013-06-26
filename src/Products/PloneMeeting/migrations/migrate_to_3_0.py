@@ -370,8 +370,13 @@ class Migrate_To_3_0(Migrator):
                 continue
             if obj._at_creation_flag:
                 updated = updated + 1
-                # call processForm with dummy values so existing values are kept
-                obj.processForm(values={'dummy': ''})
+                # we can not call processForm again on a under creation MeetingGroup
+                # because it would try to create Plone groups and fail...
+                if not obj.meta_type == 'MeetingGroup':
+                    # call processForm with dummy values so existing values are kept
+                    obj.processForm(values={'dummy': ''})
+                else:
+                    obj._at_creation_flag = False
         # manage MeetingConfigs and contained elements
         for mc in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             # there are 2 levels of elements in the MeetingConfig
