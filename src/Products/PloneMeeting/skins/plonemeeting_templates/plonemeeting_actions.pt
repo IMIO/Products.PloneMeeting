@@ -1,4 +1,7 @@
-<tal:comment replace="nothing">Requires "object", optional "showIcons"</tal:comment>
+<tal:comment replace="nothing">
+Requires "object", optional "showIcons"
+A 'hasAction' is initialized to False and set to True if at least one action is displayed, if not a '-' will be displayed...
+</tal:comment>
 
 <metal:actions define-macro="ploneMeetingActions" i18n:domain="plone"
      tal:define="showIcons showIcons|nothing;
@@ -6,7 +9,8 @@
                  mayChangeOrder mayChangeOrder|nothing;
                  objectUID object/UID;
                  portal_url context/@@plone_portal_state/portal_url;
-                 portal context/@@plone_portal_state/portal;">
+                 portal context/@@plone_portal_state/portal;
+                 global hasAction python: False;">
 
   <table class="no-style-table nosort" tal:attributes="align python:test(showIcons, 'right', 'left')">
     <tr>
@@ -15,7 +19,8 @@
           class="noPadding" align="left">
         <tal:transition define="transitionId python: transition['id'];
                                 imageName python:  transitionId + '.png';
-                                confirm python: str(transition['confirm']).lower()"
+                                confirm python: str(transition['confirm']).lower();
+                                global hasAction python: True;"
                         condition="transition/may_trigger">
 
           <a href="@@triggertransition"
@@ -58,7 +63,8 @@
 
       <tal:comment replace="nothing">Arrows (only icons) for moving items up or down in a meeting</tal:comment>
       <td tal:condition="python: showArrows and mayChangeOrder" class="noPadding">
-        <table class="no-style-table" cellspacing="0" cellpadding="0">
+        <table class="no-style-table" cellspacing="0" cellpadding="0"
+               tal:define="global hasAction python: True;">
           <tr>
             <td tal:condition="python: object.getItemNumber() &gt; 1" class="noPadding">
               <img name="moveUp" title="move_item_up" i18n:domain="PloneMeeting" i18n:attributes="title" style="cursor:pointer"
@@ -76,7 +82,8 @@
 
       <tal:comment replace="nothing">Delete icon/button</tal:comment>
       <td tal:condition="python: member.has_permission('Delete objects', object) and object.wfConditions().mayDelete()" class="noPadding">
-        <form name="deleteUidForm" action="delete_givenuid" tal:attributes="action string:${object/absolute_url}/delete_givenuid">
+        <form name="deleteUidForm" action="delete_givenuid" tal:attributes="action string:${object/absolute_url}/delete_givenuid"
+              tal:define="global hasAction python: True;">
             <input type="hidden" name="selected_uid" tal:attributes="value objectUID" />
             <tal:comment replace="nothing">Icon</tal:comment>
             <img tal:condition="showIcons" i18n:attributes="title" title="Delete"
@@ -91,7 +98,8 @@
 
       <tal:comment replace="nothing">Delete a meeting with its items</tal:comment>
       <td tal:condition="python: (object.meta_type == 'Meeting') and member.has_permission('Delete objects', object) and member.has_role('Manager')" class="noPadding">
-        <form name="deleteWholeMeetingForm" action="delete_givenuid">
+        <form name="deleteWholeMeetingForm" action="delete_givenuid"
+              tal:define="global hasAction python: True;">
             <input type="hidden" name="selected_uid" tal:attributes="value objectUID" />
             <input type="hidden" name="wholeMeeting" value="True"/>
             <tal:comment replace="nothing">Icon</tal:comment>
@@ -113,6 +121,7 @@
         <tal:comment replace="nothing">Icon. We show this only in showIcons more, because if we are not in
             this mode, the "edit" tab is present so is is redundant.</tal:comment>
         <a tal:condition="showIcons"
+           tal:define="global hasAction python: True;"
            tal:attributes="href string:${object/absolute_url}/edit">
           <img src="edit.gif" tal:attributes="src string:$portal_url/edit.gif" title="Edit" i18n:attributes="title" />
         </a>
@@ -122,7 +131,8 @@
       <td tal:repeat="action python: context.listObjectButtonsActions(object)" class="noPadding">
 
           <tal:comment replace="nothing">Icon</tal:comment>
-          <a tal:attributes="href python: action[0]" tal:condition="python: showIcons and action[1]">
+          <a tal:define="global hasAction python: True;"
+             tal:attributes="href python: action[0]" tal:condition="python: showIcons and action[1]">
             <img tal:attributes="src python: portal_url + '/' + action[1];
                                  title python: action[2];" i18n:attributes="title" />
           </a>
@@ -134,5 +144,6 @@
                                value python: action[2];"/>
       </td>
     </tr>
+    <tr tal:condition="not: hasAction"><td>-</td></tr>
   </table>
 </metal:actions>
