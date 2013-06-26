@@ -45,10 +45,12 @@ class ItemTemplateView(BrowserView):
         rq = self.request
         # Find the template ID within the meeting configuration
         itemId = rq.get('templateItem', None)
-        if not itemId: return None
+        if not itemId:
+            return None
         itemsFolder = getattr(self.meetingConfig, TOOL_FOLDER_RECURRING_ITEMS)
         templateItem = getattr(itemsFolder, itemId, None)
-        if not templateItem: return None
+        if not templateItem:
+            return None
         # Create the new item by duplicating the template item
         membershipTool = getToolByName(self.context, 'portal_membership')
         user = membershipTool.getAuthenticatedMember()
