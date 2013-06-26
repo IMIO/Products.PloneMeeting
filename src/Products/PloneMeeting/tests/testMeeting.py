@@ -233,9 +233,7 @@ class testMeeting(PloneMeetingTestCase):
             if item.queryState() == 'accepted':
                 self.do(item, 'backToItemFrozen')
         #initialize request variables used in decideSeveralItems method
-        self.request.set('transition', 'accept')
-        self.request.set('uids', ",".join(itemUids))
-        meeting.decideSeveralItems()
+        meeting.decideSeveralItems(",".join(itemUids), 'accept')
         #after execute method, all items, except the last, are accepted
         for item in allItems[:-1]:
             self.assertEquals(item.queryState(), 'accepted')
