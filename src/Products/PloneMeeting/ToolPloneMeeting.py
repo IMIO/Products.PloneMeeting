@@ -759,13 +759,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # * The "write_permission" on field "MeetingItem.annexes" is set on
         #   "PloneMeeting: Add annex". It means that people having this
         #   permission may also disassociate annexes from items.
-        mc_folder.manage_permission('Add portal content', ('Owner',), acquire=0)
-        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'], ('Owner',), acquire=0)
-        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'], ('MeetingManager',), acquire=0)
+        mc_folder.manage_permission('Add portal content', ('Owner', 'Manager', ), acquire=0)
+        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'], ('Owner', 'Manager', ), acquire=0)
+        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'], ('MeetingManager', 'Manager', ), acquire=0)
         # The following permission is needed for storing pod-generated documents
         # representing items or meetings directly into the ZODB (useful for
         # exporting data through WebDAV or for freezing the generated doc)
-        mc_folder.manage_permission('ATContentTypes: Add File', ploneMeetingUpdaters, acquire=0)
+        mc_folder.manage_permission('ATContentTypes: Add File', PLONEMEETING_UPDATERS, acquire=0)
         # Only Manager may change the set of allowable types in folders.
         mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
 

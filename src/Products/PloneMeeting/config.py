@@ -129,7 +129,7 @@ ploneMeetingRoles = (
 )
 
 # Roles that may create or edit item and/or meetings in PloneMeeting
-ploneMeetingUpdaters = ('MeetingManager', 'Manager', 'Owner')
+PLONEMEETING_UPDATERS = ('MeetingManager', 'Manager', 'Owner')
 
 ROOT_FOLDER = "mymeetings"
 MEETING_CONFIG = "meeting_config"
