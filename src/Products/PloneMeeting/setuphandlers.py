@@ -345,15 +345,6 @@ def reInstall(context):
     context.runAllImportStepsFromProfile(profileId)
 
 
-def addDemoData(context):
-    ''' '''
-    # create 5 meetings : 2 passed, 1 current and 2 future
-    today = DateTime()
-    dates = [today-14, today-7, today, today+7, today+14]
-    for date in dates:
-        pass
-
-
 # Code executed after a workflow transition has been triggered -----------------
 def do(action, event):
     '''What must I do when a transition is triggered on a meeting or item?'''
