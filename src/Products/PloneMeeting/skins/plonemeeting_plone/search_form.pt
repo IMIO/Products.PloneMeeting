@@ -75,7 +75,6 @@
 
   <h1 class="documentFirstHeading">
     <span i18n:translate="search_advanced"></span>
-    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
   </h1><br/>
   <form name="pmSearchForm" method="post" action="search_results">
     <table style="no-style-table" width="100%" cellspacing="0" cellpadding="0">

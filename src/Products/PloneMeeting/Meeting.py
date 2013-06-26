@@ -47,6 +47,9 @@ logger = logging.getLogger('PloneMeeting')
 # PloneMeetingError-related constants -----------------------------------------
 BEFOREDELETE_ERROR = 'A BeforeDeleteException was raised by "%s" while ' \
     'trying to delete a meeting with id "%s"'
+NO_SECOND_LANGUAGE_ERROR = 'Unable to find the second supported language in ' \
+    'portal_languages, either only one language is supported, or more than 2 languages' \
+    'are supported.  Please contact system administrator.'
 
 
 # Marshaller -------------------------------------------------------------------
@@ -1484,9 +1487,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         tool = self.portal_plonemeeting
         if "secondLanguageCfg" in tool.getModelAdaptations():
             # We will create a bilingual title
-            lgs = tool.getAvailableInterfaceLanguages().split(',')[:2]
-            date1 = tool.formatDate(self.getDate(), lang=lgs[0])
-            date2 = tool.formatDate(self.getDate(), lang=lgs[1])
+            firstLanguage = self.portal_languages.getDefaultLanguage()[0:2]
+            secondLanguage = tool.findSecondLanguage()[0:2]
+            if not secondLanguage:
+                raise TypeError(NO_SECOND_LANGUAGE_ERROR)
+            date1 = tool.formatDate(self.getDate(), lang=firstLanguage)
+            date2 = tool.formatDate(self.getDate(), lang=secondLanguage)
             self.setTitle('%s / %s' % (date1, date2))
         else:
             self.setTitle(tool.formatDate(self.getDate()))

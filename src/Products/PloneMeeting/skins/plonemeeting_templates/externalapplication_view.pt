@@ -8,7 +8,6 @@
   <div metal:define-macro="header">
   <h1 class="documentFirstHeading">
     <span tal:content="context/getName"></span>
-    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
   </h1>
   </div>
   <div metal:define-macro="body"
@@ -291,7 +290,7 @@
      <p align="center" class="portalMessage" tal:condition="request/davsync_users|nothing"
         tal:content="structure context/importUsers"/>
    </tal:action>
-   <div metal:use-macro="here/hs_macros/macros/showTransitions"></div> 
+   <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
   </div>
  </body>
 </html>

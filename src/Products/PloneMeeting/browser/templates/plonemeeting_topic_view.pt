@@ -15,7 +15,6 @@
       <span i18n:translate=""
             tal:define="topic view/getTopic;"
             tal:content="topic/Title|topic/getId" ></span>
-      <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
     </h1>
   </metal:title>
 

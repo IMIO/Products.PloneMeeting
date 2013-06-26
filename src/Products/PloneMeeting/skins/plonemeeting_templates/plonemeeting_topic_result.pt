@@ -38,7 +38,7 @@
                   showItemIsSigned    python: not isFake and not isDistant and ('itemIsSigned' in visibleColumns);
                   showPrefMeeting     python: not isFake and not isDistant and ('preferredMeeting' in visibleColumns);
                   showBudgetInfos     python: not isFake and not isDistant and ('budgetInfos' in visibleColumns);
-                  showActions         python: not isFake and not isDistant and (topic.id != 'searchalldecisions') and ('actions' in visibleColumns)">
+                  showActions         python: not isFake and not isDistant and ('actions' in visibleColumns)">
     <tr>
       <tal:comment replace="nothing">Title</tal:comment>
       <th class="pm_listing_th_title" tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
@@ -204,7 +204,7 @@
         <td tal:condition="python: 'state' in visibleColumns"
             tal:content="brain/review_state" i18n:domain="plone" i18n:translate=""></td>
 
-        <tal:itemOrMeeting condition="python: not isDistant and (resultMetaType in ('MeetingItem', 'Meeting')) and (topic.id != 'searchalldecisions')">
+        <tal:itemOrMeeting condition="python: not isDistant and (resultMetaType in ('MeetingItem', 'Meeting'))">
         <tal:comment replace="nothing">For performance reasons, when displaying all decisions, we avoid waking up
             Meeting objects as this query needs to wake up all Meeting objects.</tal:comment>
         <tal:wakeUpObject define="obj brain/getObject">

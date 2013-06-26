@@ -22,10 +22,11 @@ import os
 from Products.CMFCore.utils import getToolByName
 import transaction
 ##code-section HEAD
-from Products.PloneMeeting.config import *
+from DateTime import DateTime
 from BTrees.OOBTree import OOBTree
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import \
      WorkflowPolicyConfig_id
+from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.utils import \
      sendMailIfRelevant, addRecurringItemsIfRelevant, updateIndexes, \

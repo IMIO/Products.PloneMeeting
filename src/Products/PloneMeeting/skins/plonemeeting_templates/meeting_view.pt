@@ -19,7 +19,6 @@
     <span class="discreet">(<span tal:replace="python: context.getItemsCount()"></span>
       <span i18n:translate="">items_count</span>)
     </span>
-    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
   </h1>
   </metal:title>
   <metal:description fill-slot="content-description">
@@ -32,7 +31,6 @@
                   meetingConfig python:tool.getMeetingConfig(context);
                   meetingUid context/UID;
                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
-                  langs python: tool.getAvailableInterfaceLanguages(True, True);
                   iStartNumber python: context.getBatchStartNumber(late=False);
                   lStartNumber python: context.getBatchStartNumber(late=True);
                   showColors context/portal_plonemeeting/showColorsForUser;

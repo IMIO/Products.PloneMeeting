@@ -77,7 +77,6 @@
 
   <h1 class="documentFirstHeading">
     <span i18n:translate="heading_search_results" i18n:domain="plone"></span>
-    <metal:field use-macro="here/hs_macros/macros/hsLanguageSelector" />
   </h1>
 
   <tal:comment replace="nothing">Switch external applications</tal:comment>
