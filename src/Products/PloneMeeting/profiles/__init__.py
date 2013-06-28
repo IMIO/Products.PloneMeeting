@@ -20,7 +20,7 @@
 
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 
-# ------------------------------------------------------------------------------
+
 class Descriptor:
     '''This abstract class represents Python data that will be used for
        initializing an Archetypes object.'''
@@ -33,8 +33,10 @@ class Descriptor:
            from p_self.'''
         res = {}
         for k, v in self.__dict__.iteritems():
-            if k in self.excludedFields: continue
-            if k in kw: v = kw[k]
+            if k in self.excludedFields:
+                continue
+            if k in kw:
+                v = kw[k]
             if type(v) not in (list, tuple):
                 res[k] = v
             else:
@@ -42,7 +44,8 @@ class Descriptor:
                     res[k] = v
         # Add elements from kw that do not correspond to a field on self
         for k, v in kw.iteritems():
-            if k not in self.__dict__: res[k] = v
+            if k not in self.__dict__:
+                res[k] = v
         return res
 
     def setBilingual(self, name, value):
@@ -54,11 +57,12 @@ class Descriptor:
             setattr(self, name, value)
         else:
             setattr(self, name, value[0])
-            setattr(self, name+'2', value[1])
+            setattr(self, name + '2', value[1])
 
-# Concrete Descriptor classes --------------------------------------------------
+
 class RecurringItemDescriptor(Descriptor):
     excludedFields = ['title']
+
     def __init__(self, id, title, proposingGroup, description='', category='',
                  associatedGroups=(), decision='', itemKeywords='', itemTags=(),
                  meetingTransitionInsertingMe='_init_',
@@ -77,8 +81,10 @@ class RecurringItemDescriptor(Descriptor):
         self.meetingTransitionInsertingMe = meetingTransitionInsertingMe
         self.templateUsingGroups = templateUsingGroups
 
+
 class CategoryDescriptor(Descriptor):
-    multiSelectFields = ['usingGroups',]
+    multiSelectFields = ['usingGroups', ]
+
     def __init__(self, id, title, description='', categoryId='',
                  usingGroups=[], active=True):
         self.id = id
@@ -87,6 +93,7 @@ class CategoryDescriptor(Descriptor):
         self.categoryId = categoryId
         self.usingGroups = usingGroups
         self.active = active
+
 
 class MeetingFileTypeDescriptor(Descriptor):
     def __init__(self, id, title, theIcon, predefinedTitle,
@@ -97,6 +104,7 @@ class MeetingFileTypeDescriptor(Descriptor):
         self.setBilingual('predefinedTitle', predefinedTitle)
         self.decisionRelated = decisionRelated
         self.active = active
+
 
 class PodTemplateDescriptor(Descriptor):
     def __init__(self, id, title, description='', active=True):
@@ -113,11 +121,13 @@ class PodTemplateDescriptor(Descriptor):
         self.mailingLists = ''
         self.active = active
 
+
 class PloneGroupDescriptor(Descriptor):
     def __init__(self, id, title, roles):
         self.id = id
         self.title = title
         self.roles = roles
+
 
 class UserDescriptor(Descriptor):
     '''Useful for creating test users, so PloneMeeting may directly be tested
@@ -126,14 +136,16 @@ class UserDescriptor(Descriptor):
                  password='meeting', fullname=None):
         self.id = id
         self.globalRoles = globalRoles
-        self.email = email.replace(' AT ', '@') # Anti-spam
+        self.email = email.replace(' AT ', '@')  # Anti-spam
         self.password = password
         self.fullname = fullname
-        self.ploneGroups = [] #~[PloneGroupDescriptor]~
+        self.ploneGroups = []  # ~[PloneGroupDescriptor]~
+
 
 class MeetingUserDescriptor(Descriptor):
     multiSelectFields = ['usages']
     excludedFields = ['active', 'signatureImage']
+
     def __init__(self, id, gender='m', duty=None, replacementDuty=None,
                  usages=['voter'], signatureImage=None,
                  signatureIsDefault=False, active=True):
@@ -146,11 +158,13 @@ class MeetingUserDescriptor(Descriptor):
         self.signatureIsDefault = signatureIsDefault
         self.active = active
 
+
 class GroupDescriptor(Descriptor):
     multiSelectFields = ('itemAdviceStates', 'itemAdviceEditStates', 'itemAdviceViewStates')
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
     instance = None
+
     def get(klass):
         if not klass.instance:
             klass.instance = GroupDescriptor(None, None, None)
@@ -170,28 +184,33 @@ class GroupDescriptor(Descriptor):
         self.itemAdviceViewStates = []
         self.asCopyGroupOn = asCopyGroupOn
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
-        for role in MEETING_GROUP_SUFFIXES: setattr(self, role, [])
+        for role in MEETING_GROUP_SUFFIXES:
+            setattr(self, role, [])
         self.active = active
 
     def getUsers(self):
         res = []
         for role in MEETING_GROUP_SUFFIXES:
             for user in getattr(self, role):
-                if user not in res: res.append(user)
+                if user not in res:
+                    res.append(user)
         return res
 
     def getIdSuffixed(self, suffix='advisers'):
         return '%s_%s' % (self.id, suffix)
 
+
 class ExternalApplicationDescriptor(Descriptor):
     multiSelectFields = ('usages', 'notifyEvents')
     # Get a prototypical instances used for getting default values.
     instance = None
+
     def get(klass):
         if not klass.instance:
             klass.instance = ExternalApplicationDescriptor(None, None)
         return klass.instance
     get = classmethod(get)
+
     def __init__(self, id, title, usages=['import'], notifyUrl='',
                  notifyEmail=''):
         self.id = id
@@ -208,22 +227,24 @@ class ExternalApplicationDescriptor(Descriptor):
         self.secondUrl = ''
         self.deferredMeetingImport = False
 
+
 class MeetingConfigDescriptor(Descriptor):
     multiSelectFields = ('usedItemAttributes', 'historizedItemAttributes',
-        'recordItemHistoryStates', 'usedMeetingAttributes',
-        'historizedMeetingAttributes', 'recordMeetingHistoryStates',
-        'itemsListVisibleColumns', 'itemColumns', 'meetingColumns',
-        'workflowAdaptations', 'transitionsToConfirm', 'mailItemEvents',
-        'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates','itemDecidedStates',
-        'itemAdviceEditStates', 'itemAdviceViewStates', 'itemPowerObserversStates',
-        'meetingPowerObserversStates', 'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
-        'selectableCopyGroups', 'votesEncoder', 'itemTopicStates', 'meetingTopicStates',
-        'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues'
-    )
+                         'recordItemHistoryStates', 'usedMeetingAttributes',
+                         'historizedMeetingAttributes', 'recordMeetingHistoryStates',
+                         'itemsListVisibleColumns', 'itemColumns', 'meetingColumns',
+                         'workflowAdaptations', 'transitionsToConfirm', 'mailItemEvents',
+                         'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
+                         'itemAdviceEditStates', 'itemAdviceViewStates', 'itemPowerObserversStates',
+                         'meetingPowerObserversStates', 'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
+                         'selectableCopyGroups', 'votesEncoder', 'itemTopicStates', 'meetingTopicStates',
+                         'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues'
+                         )
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
     instance = None
+
     def get(klass):
         if not klass.instance:
             klass.instance = MeetingConfigDescriptor(None, None, None)
@@ -231,7 +252,7 @@ class MeetingConfigDescriptor(Descriptor):
     get = classmethod(get)
 
     def __init__(self, id, title, folderTitle, isDefault=False, active=True):
-        self.id = id # Identifier of the meeting config.
+        self.id = id  # Identifier of the meeting config.
         self.setBilingual('title', title)
         self.active = active
 
@@ -245,7 +266,7 @@ class MeetingConfigDescriptor(Descriptor):
         # Default value for the "budgetInfo" field on items.
         self.budgetDefault = ''
         self.folderTitle = folderTitle
-        self.shortName = '' # Will be used for deducing content types specific
+        self.shortName = ''  # Will be used for deducing content types specific
         # to this MeetingConfig (item, meeting)
         self.isDefault = isDefault
         # What is the number of the last item for this meeting config ?
@@ -272,7 +293,8 @@ class MeetingConfigDescriptor(Descriptor):
         # Some attributes on a meeting are optional, too.
         # Item states into which item events will be stored in item's history.
         self.recordItemHistoryStates = ('itempublished', 'itemfrozen',
-            'accepted', 'refused', 'confirmed', 'delayed', 'itemarchived')
+                                        'accepted', 'refused', 'confirmed',
+                                        'delayed', 'itemarchived')
         self.usedMeetingAttributes = ['assembly', 'signatures']
         # In the next field, you specify meeting fields for which you want to
         # keep track of changes.
@@ -305,7 +327,7 @@ class MeetingConfigDescriptor(Descriptor):
         # category or proposing group ?
         self.sortingMethodOnAddItem = "at_the_end"
         # List if item tags defined for this meeting config
-        self.allItemTags = '' # Must be terms separated by carriage returns in
+        self.allItemTags = ''  # Must be terms separated by carriage returns in
         # a string.
         # Must we sort the tags in alphabetic order ?
         self.sortAllItemTags = False
@@ -333,7 +355,7 @@ class MeetingConfigDescriptor(Descriptor):
         # POD templates --------------------------------------------------------
         self.podTemplates = []
         # MeetingUsers --------------------------------------------------------
-        self.meetingUsers = [] # ~[MeetingUserDescriptor]~
+        self.meetingUsers = []  # ~[MeetingUserDescriptor]~
 
         # Workflow- and security-related parameters ----------------------------
         self.itemWorkflow = 'meetingitem_workflow'
@@ -364,7 +386,7 @@ class MeetingConfigDescriptor(Descriptor):
             # Some important MeetingItem transitions
             'MeetingItem.backToProposed', 'MeetingItem.backToItemCreated',
             'MeetingItem.accept', 'MeetingItem.refuse', 'MeetingItem.delay',
-            ]
+        ]
         self.useCopies = False
         self.selectableCopyGroups = []
 
@@ -392,7 +414,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.meetingAppDefaultView = 'topic_searchallmeetings'
         # In the meetingitems_list.pt, you can choose which columns are shown
         self.itemsListVisibleColumns = ['state', 'categoryOrProposingGroup',
-            'annexes', 'annexesDecision', 'actions']
+                                        'annexes', 'annexesDecision', 'actions']
 
         # In item-related topic results, what columns are shown?
         self.itemColumns = ['creationDate', 'creator', 'state', 'annexes',
@@ -415,16 +437,16 @@ class MeetingConfigDescriptor(Descriptor):
         # Mail-related parameters -----------------------------------------------
         # Mail mode can be: activated, deactivated, test.
         self.mailMode = 'activated'
-        self.mailFormat = 'text' # Or html.
+        self.mailFormat = 'text'  # Or html.
         # What are the item-related events that trigger mail sending ?
         self.mailItemEvents = []
         # What are the meeting-related events that trigger mail sending?
         self.mailMeetingEvents = []
 
         # MeetingConfig sub-objects --------------------------------------------
-        self.categories = [] # ~[CategoryDescriptor]~
-        self.classifiers = [] # ~[CategoryDescriptor]~
-        self.recurringItems = [] # ~[RecurringItemDescriptor]~
+        self.categories = []  # ~[CategoryDescriptor]~
+        self.classifiers = []  # ~[CategoryDescriptor]~
+        self.recurringItems = []  # ~[RecurringItemDescriptor]~
         self.meetingFileTypes = []
 
         # Tasks-related parameters ---------------------------------------------
@@ -441,8 +463,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemAdviceStates = ['proposed', 'validated', 'presented',
                                  'itempublished']
         self.itemAdviceEditStates = ['proposed', 'validated']
-        self.itemAdviceViewStates = ['proposed', 'validated', 'presented',
-                                 'itempublished']
+        self.itemAdviceViewStates = ['proposed', 'validated', 'presented', 'itempublished']
         # List of item and meeting states the users in the MeetingConfig
         # corresponding powerObservers group will see the item/meeting
         self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'refused', 'delayed']
@@ -468,11 +489,13 @@ class MeetingConfigDescriptor(Descriptor):
         self.defaultVoteValue = 'not_yet'
         self.voteCondition = 'True'
 
+
 class PloneMeetingConfiguration(Descriptor):
     # The 'instance' static attribute stores an instance used for assigning
     # default values to the portal_plonemeeting tool when it is not initialized
     # through a profile.
     instance = None
+
     def get(klass):
         if not klass.instance:
             klass.instance = PloneMeetingConfiguration('My meetings', [], [])
@@ -513,8 +536,8 @@ class PloneMeetingConfiguration(Descriptor):
         # Title, Description, getDecision or SearchableText.
         self.showItemKeywordsTargets = False
         self.searchItemStates = []
-        self.meetingConfigs = meetingConfigs # ~[MeetingConfigDescriptor]~
-        self.groups = groups #~[GroupDescriptor]~
-        self.usersOutsideGroups = [] #~[UserDescriptor]~
-        self.externalApplications = [] #~[ExternalApplicationDescriptor]~
+        self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
+        self.groups = groups  # ~[GroupDescriptor]~
+        self.usersOutsideGroups = []  # ~[UserDescriptor]~
+        self.externalApplications = []  # ~[ExternalApplicationDescriptor]~
 # ------------------------------------------------------------------------------
