@@ -39,6 +39,7 @@ p {line-height: 1em;}
   text-align: left;
   width: auto;
   min-width: 274px;
+  z-index: 1;
 }
 
 .ploneMeetingSelectItem {
@@ -46,6 +47,9 @@ p {line-height: 1em;}
   width: 99%; /* If 100% a horizontal scrollbar is displayed */
   vertical-align: top !important;
   min-height: 18px;
+}
+#content p.ploneMeetingSelectItem {
+    margin-bottom: 0em;
 }
 
 .ploneMeetingSelectItemUnselected {

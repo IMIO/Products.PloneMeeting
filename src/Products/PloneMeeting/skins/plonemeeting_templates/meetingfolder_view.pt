@@ -23,16 +23,18 @@
                      contentTypes here/getAllowedTypes;
                      contentFilter contentFilter|request/contentFilter|nothing;
                      b_size b_size|request/b_size|python:100;
-                     view_title view_title|request/view_title|string:;
-                     contentsMethod python:test(here.portal_type=='Topic', here.queryCatalog, here.getFolderContents);
-                     batch batch|python:contentsMethod(contentFilter,batch=True, b_size=b_size);
+                     b_start python:0;
+                     b_start request/b_start | b_start;
+                     results python: here.restrictedTraverse('@@folderListing')(batch=True, b_size=b_size, b_start=b_start);
+                     Batch python:modules['Products.CMFPlone'].Batch;
+                     batch python: Batch(results, b_size, b_start);
                      here_url context/absolute_url;
                      portal context/@@plone_portal_state/portal;
                      normalizeString nocall:context/@@plone/normalizeString;
                      toLocalizedTime nocall:context/@@plone/toLocalizedTime;">
 
         <h1>
-          <span tal:attributes="class string:contenttype-${context/portal_type/lower}" tal:content="python: view_title and here.translate(view_title)" tal:omit-tag="">Directory Id</span>
+          <span tal:attributes="class string:contenttype-${context/portal_type/lower}" tal:content="context/Title" tal:omit-tag="">Directory Id</span>
         </h1>
 
       <!-- Add Item pulldown -->
@@ -142,7 +144,6 @@ elt.disabled = false;}
         </div>
        </metal:add_button>
       </div>
-      <br />
 
       <form name="folderContentsForm"
             method="post"
@@ -150,14 +151,17 @@ elt.disabled = false;}
             tal:attributes="action here_url">
 
         <!-- Do not show the up one level link if we are at the root of a meetingConfigFolder -->
+            <tal:upOneLevel define="parent_url python:here.navigationParent(here, fallThroughDefaultPage=False, checkPermissions=['View'])"
+                            condition="python: parent_url and not context.hasProperty('meeting_config')">
+            <br />
             <a href=""
                class="link-parent"
-               tal:define="parent_url python:here.navigationParent(here, fallThroughDefaultPage = False, checkPermissions = ['View'])"
-               tal:condition="python: parent_url and not context.hasProperty('meeting_config')"
                tal:attributes="href string:${parent_url}"
                i18n:translate="go_to_parent_url">
                 Up one level
             </a>
+            <br /><br />
+            </tal:upOneLevel>
 
             <p class="documentDescription"
                tal:content="here/Description"
@@ -183,18 +187,14 @@ elt.disabled = false;}
            </tal:comment>
         </metal:override>
         <metal:listing define-macro="folder_listing"
-                       tal:define="contentFilter contentFilter|python:{'path':'/'};
-                                   use_folder_contents site_properties/typesLinkToFolderContentsInFC|nothing;
-                                   use_view_action site_properties/typesUseViewActionInListings|python:();
-                                   query_path python:path('contentFilter/path|nothing') or request.get('path',None);">
+                       tal:define="use_view_action site_properties/typesUseViewActionInListings|python:();">
 
         <div class="visualClear"><!-- --></div>
 
         <!-- Navigation -->
-        <div metal:use-macro="here/batch_macros/macros/navigation" />
+        <div metal:use-macro="context/batch_macros/macros/navigation" />
 
-          <table id="sortable"
-                 class="listing"
+          <table class="listing"
                  summary="Content listing"
                  i18n:attributes="summary summary_content_listing;">
             <thead>
@@ -212,14 +212,14 @@ elt.disabled = false;}
                              i18n:attributes="title label_select_all_items; alt label_select_all_items;"
                   />
                   </th>
-                  <th>&nbsp;<tal:title i18n:translate="listingheader_title"
+                  <th class="nosort">&nbsp;<tal:title i18n:translate="listingheader_title"
                       >Title</tal:title>&nbsp;</th>
                   <metal:header_slot metal:define-slot="listingheader">
-                  <th>&nbsp;<tal:size i18n:translate="listingheader_size"
+                  <th class="nosort">&nbsp;<tal:size i18n:translate="listingheader_size"
                       >Size</tal:size>&nbsp;</th>
-                  <th>&nbsp;<tal:modified i18n:translate="listingheader_modified"
+                  <th class="nosort">&nbsp;<tal:modified i18n:translate="listingheader_modified"
                       >Modified</tal:modified>&nbsp;</th>
-                  <th>&nbsp;<tal:state i18n:translate="listingheader_status"
+                  <th class="nosort">&nbsp;<tal:state i18n:translate="listingheader_status"
                       >State</tal:state>&nbsp;</th>
                   </metal:header_slot>
                 </tr>
@@ -234,11 +234,11 @@ elt.disabled = false;}
                                showColors tool/showColorsForUser;
                                ">
                 <tal:items tal:repeat="item batch">
-                   <tr tal:define="oddrow               repeat/item/odd;
-                                   item_url             item/getURL|item/absolute_url;
+                   <tr tal:define="item                 item/getObject;
+                                   item_url             item/absolute_url;
                                    item_id              item/getId;
-                                   item_path            item/getPath|python:'/'.join(item.getPhysicalPath());
-                                   item_title_or_id     python: item.meta_type=='MeetingItem' and tool.getColoredLink(item.getObject(), showColors) or item.Title;
+                                   item_path            python:'/'.join(item.getPhysicalPath());
+                                   item_title_or_id     python: item.meta_type=='MeetingItem' and tool.getColoredLink(item, showColors) or item.Title();
                                    item_description     item/Description;
                                    item_type            item/portal_type;
                                    item_size            item/getObjSize;
@@ -248,13 +248,8 @@ elt.disabled = false;}
                                    item_state_title     python:context.portal_workflow.getTitleForStateOnType(item_wf_state, item_type);
                                    item_wf_state_class  python:'state-' + normalizeString(item_wf_state);
                                    item_use_view        python:item_type in use_view_action;
-                                   hasGetUrl            python:hasattr(item.aq_explicit, 'getURL');
-                                   item_rel_url         python:hasGetUrl and item.getURL(relative=1) or getRelativeContentURL(item);
-                                   browserDefaultResult here/browserDefault;
-                                   isBrowserDefault     python:len(browserDefaultResult[1]) == 1 and item.id == here.browserDefault()[1][0];
-                                   item_folderish item/@@plone/isStructuralFolder|item/isPrincipiaFolderish|nothing"
-                       tal:attributes="class python:test(oddrow, 'draggable even', 'draggable odd');
-                                       id item_id;" >
+                                   item_rel_url         python: getRelativeContentURL(item);"
+                       tal:attributes="id item_id;" >
 
                        <tal:comment replace="nothing">
                             * We have to check if the browserDefault stuff is really necessary
@@ -276,18 +271,15 @@ elt.disabled = false;}
 
                     </td>
                     <td tal:define="url python:test(item_use_view, item_url+'/view', item_url)">
-                        <span tal:attributes="class item_type_class">
                         <a href="#" tal:attributes="href  url;
                                                   title string: $item_type: $item_description;
                                                   class string:$item_wf_state_class visualIconPadding;">
-                            <strong tal:omit-tag="python:not isBrowserDefault">
-                            <label tal:content="structure item_title_or_id"
-                                   tal:attributes="for string:cb_$item_id">
+                        <span tal:attributes="class item_type_class">
+                            <span tal:content="structure item_title_or_id">
                               Item Title
-                            </label>
-                            </strong>
-                        </a>
+                            </span>
                         </span>
+                        </a>
 
                         <span class="state-expired"
                               tal:condition="python:portal.isExpired(item)"
@@ -317,19 +309,17 @@ elt.disabled = false;}
             </metal:block>
             </table>
             <!-- Navigation -->
-            <div metal:use-macro="here/batch_macros/macros/navigation" />
+            <div metal:use-macro="context/batch_macros/macros/navigation" />
         </metal:listing>
 
         <metal:buttons define-macro="folder_buttons">
         <br />
-        <tal:buttons tal:repeat="button context/listFolderButtonsActions|nothing"
-                     tal:define="contentFilter contentFilter|python:{'path':'/'};
-                                 query_path python:path('contentFilter/path|nothing') or request.get('path',None) or context.portal_type == 'Topic';">
+        <tal:buttons tal:repeat="button context/listFolderButtonsActions|nothing">
           <input class="context"
                  type="submit"
                  name=""
                  value=""
-                 tal:condition="python:(batch or here.cb_dataValid and button['id'] in ['paste', 'paste_plonemeeting', ]) and not ( query_path and button['id'] in ['cut','copy','paste'])"
+                 tal:condition="python:(batch or here.cb_dataValid and button['id'] in ['paste', 'paste_plonemeeting', ]) and not (button['id'] in ['cut','copy','paste'])"
                  i18n:attributes="value"
                  tal:attributes="value button/title;
                                  name button/url;
