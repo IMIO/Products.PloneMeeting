@@ -14,6 +14,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Ajax toggle to discuss take 3rd case (send an email) into account
 - Moved "annexes_macros", "go to item" and "change items order" to BrowserViews
 - Use Meeting.meetingClosedStates in Meeting.mayChangeItemsOrder to avoid subproduct to override it in most cases
+- Optimized meetingfolder_view : added possibility to create an item from a template and lighter code
 
 3.0.1 (2013-06-07)
 ------------------
