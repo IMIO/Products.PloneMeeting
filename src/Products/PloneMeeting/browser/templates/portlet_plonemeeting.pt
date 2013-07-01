@@ -57,7 +57,7 @@
         </a>
         <tal:comment replace="nothing">Create a new item from a template</tal:comment>
         <a class="link-overlay-pm" style="display: inline; padding-left: 0;"
-           href="@@createitemfromtemplate" tal:attributes="href string:${context/absolute_url}/createitemfromtemplate"
+           href="@@createitemfromtemplate" tal:attributes="href string:${meetingFolder/absolute_url}/createitemfromtemplate"
            tal:condition="python: userIsAmongCreators and templateItems and not ploneDiskAware">
         <img  style="cursor:pointer"
              tal:attributes="src string: $portal_url/new_from.png"

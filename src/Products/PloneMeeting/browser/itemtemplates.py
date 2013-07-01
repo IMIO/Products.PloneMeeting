@@ -54,7 +54,7 @@ class ItemTemplateView(BrowserView):
         # Create the new item by duplicating the template item
         membershipTool = getToolByName(self.context, 'portal_membership')
         user = membershipTool.getAuthenticatedMember()
-        newItem = templateItem.clone(newOwnerId=user.id)
+        newItem = templateItem.clone(newOwnerId=user.id, destFolder=self.context)
         return newItem
 
     @memoize

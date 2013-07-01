@@ -57,11 +57,12 @@
         template="templates/advices.pt"
       />
     <browser:page
-        for="*"
+        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
         name="createitemfromtemplate"
         class=".itemtemplates.ItemTemplateView"
         permission="zope2.View"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        allowed_attributes="getTemplateItems"
         template="templates/itemtemplates.pt"
       />
     <browser:page

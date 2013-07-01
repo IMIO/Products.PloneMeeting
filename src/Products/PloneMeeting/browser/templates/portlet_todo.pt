@@ -3,7 +3,7 @@
                 meetingFolder view/getPloneMeetingFolder;
                 tool view/getPloneMeetingTool">
 
-    <dt class="portletHeader" i18n:translate="todo_portlet_title">To do</dt>
+    <dt class="portletHeader" i18n:translate="To do">To do</dt>
 
     <tal:block repeat="topic view/getTopicsForPortletToDo">
        <tal:block define="brains python: view.getBrainsForPortletTodo(topic);

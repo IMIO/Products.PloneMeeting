@@ -19,8 +19,7 @@
     <div metal:fill-slot="main">
     <metal:main-macro define-macro="main">
     <metal:contentsmacro define-macro="contents"
-         tal:define="standalone python:1;
-                     contentTypes here/getAllowedTypes;
+         tal:define="contentTypes here/getAllowedTypes;
                      contentFilter contentFilter|request/contentFilter|nothing;
                      b_size b_size|request/b_size|python:100;
                      b_start python:0;
@@ -31,18 +30,20 @@
                      here_url context/absolute_url;
                      portal context/@@plone_portal_state/portal;
                      normalizeString nocall:context/@@plone/normalizeString;
-                     toLocalizedTime nocall:context/@@plone/toLocalizedTime;">
+                     toLocalizedTime nocall:context/@@plone/toLocalizedTime;
+                     tool python: context.portal_plonemeeting;
+                     userIsAmongCreators python: tool.userIsAmong('creators');
+                     hasItemTemplates python: context.restrictedTraverse('@@createitemfromtemplate').getTemplateItems()">
 
         <h1>
           <span tal:attributes="class string:contenttype-${context/portal_type/lower}" tal:content="context/Title" tal:omit-tag="">Directory Id</span>
         </h1>
 
       <!-- Add Item pulldown -->
-      <div tal:condition="standalone|nothing">
+      <div>
        <metal:add_button define-macro="add_button"
-                            tal:define="num_types python:len(contentTypes);">
-
-        <div id="">
+                         tal:define="num_types python:len(contentTypes);"
+                         tal:condition="userIsAmongCreators">
 
             <label for="select_add_item">
               <span i18n:domain="PloneMeeting" i18n:translate="">Select an item to add</span>
@@ -83,7 +84,6 @@ elt.disabled = false;}
 
     <tal:comment replace="nothing">Listbox for selecting a file type</tal:comment>
     <div class="field">
-      <input type="hidden" name="predefined_title" />
       <div class="ploneMeetingSelectContainer" style="width: 300px">
         <input type="hidden" tal:attributes="value request/type_name|nothing" id="idHidden1" name="type_name">
         <tal:comment replace="nothing">Select button</tal:comment>
@@ -132,16 +132,33 @@ elt.disabled = false;}
       </div>
      </div>
      &nbsp;
-              <input class="context input_disabled"
-                     id="select_add_item_button"
-                     type="submit"
-                     name="add_button"
-                     disabled
-                     value="label_choose_element_in_list"
-                     i18n:domain="PloneMeeting"
-                     i18n:attributes="value" />
-             </form>
-        </div>
+     <div style="float: left; padding-left: 0.5em;">
+            <input class="context input_disabled"
+                   id="select_add_item_button"
+                   type="submit"
+                   name="add_button"
+                   disabled
+                   value="label_choose_element_in_list"
+                   i18n:domain="PloneMeeting"
+                   i18n:attributes="value" />
+    </div>
+    <div tal:condition="hasItemTemplates"
+         style="float: left; padding-left: 0.5em;">
+        <a class="link-overlay-pm"
+           style="display: inline; padding-left: 0;"
+           href="@@createitemfromtemplate"
+           tal:attributes="href string:${context/absolute_url}/createitemfromtemplate">
+            <form>
+                <input type="submit" size="17"
+                       value="Create an item from a template"
+                       tal:attributes="value string:create_meeting_item_from"
+                       i18n:domain="PloneMeeting"
+                       i18n:attributes="value" class="hsButton">
+            </form>
+        </a>
+    </div>
+    </form>
+    <br />
        </metal:add_button>
       </div>
 
@@ -170,15 +187,15 @@ elt.disabled = false;}
             </p>
 
         <p class="discreet"
-           tal:condition="python: not batch and contentTypes"
+           tal:condition="python: not batch and userIsAmongCreators"
            i18n:translate="description_no_visible_items_add_paste">
            This folder has no visible items. To add content, press the
            add button, or paste content from another location.
         </p>
         <p class="discreet"
-           tal:condition="python: not batch and not contentTypes"
+           tal:condition="python: not batch and not userIsAmongCreators"
            i18n:translate="description_only_see_visible_items" i18n:domain="PloneMeeting">
-           You are just able to see visible elements here.
+           You are just able to see visible elements here. Please consult the 'manage' box here opposite.
         </p>
         <metal:override define-slot="override_slot">
            <tal:comment replace="nothing">
@@ -198,7 +215,7 @@ elt.disabled = false;}
                  summary="Content listing"
                  i18n:attributes="summary summary_content_listing;">
             <thead>
-              <metal:block tal:condition="batch|not:standalone|nothing">
+              <metal:block tal:condition="batch">
                 <tr>
                   <th class="nosort">
                       <input class="noborder"
@@ -226,11 +243,10 @@ elt.disabled = false;}
               </metal:block>
             </thead>
 
-            <metal:block tal:condition="batch|not:standalone|nothing">
+            <metal:block tal:condition="batch">
             <tbody tal:define="arrowUp portal/arrowUp.gif;
                                arrowDown portal/arrowDown.gif;
                                getRelativeContentURL nocall:portal/portal_url/getRelativeContentURL;
-                               tool python: context.portal_plonemeeting;
                                showColors tool/showColorsForUser;
                                ">
                 <tal:items tal:repeat="item batch">
