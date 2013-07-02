@@ -123,8 +123,8 @@ elt.disabled = false;}
              onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
              onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
              onclick="hidePloneMeetingSelectBox('typeNameBox','idImage1', 'value1', 'predefined_title1'); ploneMeetingSelectOnMouseOutItem(this)"
-             tal:attributes="class string:ploneMeetingSelectItem icons-imaged-dropdown contenttype-${type_name/id/lower};
-                             onclick python:'hidePloneMeetingSelectBox(\'typeNameBox\', \'idImage1' + str(num) + '\', \'' + ftName + '\', \'' + type_name.getId() + '\', \'' + type_name.Title() + '\');; ploneMeetingSelectOnMouseOutItem(this);; disable_select(this)';">
+             tal:attributes='class string:ploneMeetingSelectItem icons-imaged-dropdown contenttype-${type_name/id/lower};
+                             onclick string:hidePloneMeetingSelectBox("typeNameBox", "idImage1${num}", "${ftName}", "${type_name/getId}", "${type_name/Title}");; ploneMeetingSelectOnMouseOutItem(this);; disable_select(this);'>
             <span tal:content="ftName" />
            </p>
           </tal:loop>
