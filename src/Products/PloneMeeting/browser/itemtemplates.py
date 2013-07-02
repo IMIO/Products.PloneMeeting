@@ -67,7 +67,8 @@ class ItemTemplateView(BrowserView):
             if templates:
                 #check if the current user can use the template
                 tool = self.getPloneMeetingTool()
-                member = tool.portal_membership.getAuthenticatedMember()
+                membershipTool = getToolByName(self.portal, 'portal_membership')
+                member = membershipTool.getAuthenticatedMember()
                 memberGroups = tool.getGroups(member.getId())
                 memberGroupIds = [group.id for group in memberGroups]
                 for template in templates:
