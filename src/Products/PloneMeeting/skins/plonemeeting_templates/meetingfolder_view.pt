@@ -115,7 +115,7 @@ elt.disabled = false;}
             <img id="idImage10" src="pixel.gif" class="ploneMeetingSelectImage" />
             <span i18n:translate="" i18n:domain="PloneMeeting">make_a_choice</span>
           </p>
-          <tal:loop repeat="type_name python: context.allowedContentTypes()">
+          <tal:loop repeat="type_name contentTypes">
            <p tal:define="global num python: num + 1;
                           ftName python: context.utranslate(type_name.getId())"
              style="width: 277px;"
