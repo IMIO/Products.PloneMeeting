@@ -904,9 +904,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            the user has one of the PloneMeeting roles and if the meeting config
            is active.'''
         activeConfigs = self.getActiveConfigs()
-        # Are there at least 2 active meetingConfigs?
-        if not len(activeConfigs) > 1:
-            return False
         # Does the meetingConfig exist and is it active?
         if not meetingConfigId in [activeConfig.id for activeConfig in activeConfigs]:
             return False
