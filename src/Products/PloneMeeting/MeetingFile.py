@@ -578,7 +578,12 @@ def prepareClonedAnnexForConversion(object, event):
     annotations = IAnnotations(object)
     if 'collective.documentviewer' in annotations:
         del annotations['collective.documentviewer']
-    convertToImages(object, event)
+    # now call convertToImages because IObjectInitializedEvent is not called
+    # while copy/pasting an object (case in the duplication process)
+    # but check if a copyAnnexes is not set to False the REQUEST meaning
+    # that we are duplicating an item but that we do not copyAnnexes
+    if object.REQUEST.get('copyAnnexes', True):
+        convertToImages(object, event)
 
 
 def checkAfterConversion(object, event):

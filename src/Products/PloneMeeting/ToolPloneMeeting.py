@@ -1509,6 +1509,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         loggedUserId = self.portal_membership.getAuthenticatedMember().getId()
         userLocalRoles = destFolder.get_local_roles_for_userid(loggedUserId)
         destFolder.manage_addLocalRoles(loggedUserId, ('Owner',))
+        # save in the REQUEST if we want to copyAnnexes so conversion
+        # to images is not done if it is not the case...
+        # as annexes are actually pasted then removed if not copyAnnexes
+        # we have to do this to prevent annexes being converted uselessly...
+        self.REQUEST.set('copyAnnexes', copyAnnexes)
         # Perform the paste
         pasteResult = destFolder.manage_pasteObjects(copiedData)
         # Restore the previous local roles for this user
