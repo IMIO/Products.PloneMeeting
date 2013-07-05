@@ -63,15 +63,19 @@
         <tal:comment replace="nothing">Category or proposing group (if group is used as category)</tal:comment>
         <div class="discreet" tal:define="cat python: context.getCategory(True)" tal:condition="python: cat">
           <i><span tal:condition="not: meetingConfig/getUseGroupsAsCategories"
-                   i18n:translate="MeetingCategory"></span><span tal:condition="meetingConfig/getUseGroupsAsCategories"
+                   i18n:translate="MeetingCategory"></span>
+             <span tal:condition="meetingConfig/getUseGroupsAsCategories"
                    i18n:translate="PloneMeeting_label_proposingGroup"></span></i>:&nbsp;&nbsp;
              <span tal:content="python: cat.getName()"></span>
         </div>
 
-        <tal:comment replace="nothing">Proposing group (if group is not used as category)</tal:comment>
-        <div class="discreet" tal:condition="not: meetingConfig/getUseGroupsAsCategories">
+        <tal:comment replace="nothing">Proposing group (if group is not used as category),
+                                       could be empty in the case of a template item.</tal:comment>
+        <div class="discreet" tal:condition="python: not meetingConfig.getUseGroupsAsCategories()">
           <i><span i18n:translate="PloneMeeting_label_proposingGroup"></span></i>:&nbsp;&nbsp;
-             <span tal:content="python: getattr(tool, context.getProposingGroup()).Title()"></span>
+             <span tal:condition="context/getProposingGroup"
+                   tal:content="python: getattr(tool, context.getProposingGroup()).Title()"></span>
+             <span tal:condition="not: context/getProposingGroup">-</span>
         </div>
 
         <tal:comment replace="nothing">Associated groups</tal:comment>
