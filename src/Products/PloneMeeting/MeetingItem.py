@@ -1042,7 +1042,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         # Value could be '_none_' if it was displayed as listbox or None if
         # it was displayed as radio buttons...  Category use 'flex' format
-        if (not meetingConfig.getUseGroupsAsCategories()) and \
+        if (not self.isDefinedInTool()) and \
+           (not meetingConfig.getUseGroupsAsCategories()) and \
            (value == '_none_' or not value):
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
