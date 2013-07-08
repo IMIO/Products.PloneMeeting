@@ -85,8 +85,8 @@ powerobserver1 = UserDescriptor('powerobserver1',
                                 email="powerobserver1@plonemeeting.org",
                                 fullname='M. Power Observer1')
 # powerobserver1 is MeetingPowerObserverLocal because in the meetingPma '_powerobservers' group
-plonemeeting_assembly_powerobservers = PloneGroupDescriptor('plonemeeting-assembly_powerobservers',
-                                                            'plonemeeting-assembly_powerobservers',
+plonemeeting_assembly_powerobservers = PloneGroupDescriptor('plonegov-assembly_powerobservers',
+                                                            'plonegov-assembly_powerobservers',
                                                             [])
 powerobserver1.ploneGroups = [plonemeeting_assembly_powerobservers, ]
 powerobserver2 = UserDescriptor('powerobserver2',

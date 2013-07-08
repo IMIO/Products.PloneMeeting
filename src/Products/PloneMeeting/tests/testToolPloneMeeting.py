@@ -217,8 +217,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(self.tool.showPloneMeetingTab('wrong-meeting-config-id'), False)
         # The tab of 'meetingConfig1Id' is not viewable by MeetingPowerObserverLocal of 'meetingConfig2Id'
         login(self.portal, 'powerobserver1')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
         # If we disable one meetingConfig, it is no more shown
         login(self.portal, 'admin')
         self.do(getattr(self.tool, meetingConfig2Id), 'deactivate')
