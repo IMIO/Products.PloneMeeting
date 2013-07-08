@@ -4,9 +4,7 @@
    HubSessions data structures and workflows.'''
 
 from Products.Archetypes.atapi import *
-from Products.PloneMeeting.config import ReadDecision, WriteDecision, \
-     ReadObservations, ReadDecisionAnnex, WriteObservations, \
-     WriteDecisionAnnex, CopyOrMove
+from Products.PloneMeeting.config import ReadDecision, WriteDecision
 
 
 # Stuff for performing workflow adaptations ------------------------------------
@@ -25,6 +23,7 @@ WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the wo
 # this is made to be overrided if necessary
 WF_NOT_CREATOR_EDITS_UNLESS_CLOSED = ('delayed', 'refused', 'confirmed', 'itemarchived')
 
+
 def grantPermission(state, perm, role):
     '''For a given p_state, this function ensures that p_role is among roles
        who are granted p_perm.'''
@@ -33,6 +32,7 @@ def grantPermission(state, perm, role):
         roles = list(roles)
         roles.append(role)
         state.setPermission(perm, 0, roles)
+
 
 def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=None):
     '''This function applies workflow changes as specified by the
@@ -45,7 +45,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
     # combinations of adaptations exist, wrong combination of adaptations is
     # performed in meetingConfig.validate_workflowAdaptations.
     # If p_specificAdaptation is passed, just the relevant wfAdaptation is applied.
-    wfAdaptations = specificAdaptation and [specificAdaptation,] or meetingConfig.getWorkflowAdaptations()
+    wfAdaptations = specificAdaptation and [specificAdaptation, ] or meetingConfig.getWorkflowAdaptations()
     #while reinstalling a separate profile, the workflow could not exist
     meetingWorkflow = getattr(site.portal_workflow, meetingConfig.getMeetingWorkflow(), None)
     if not meetingWorkflow:
@@ -57,7 +57,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         return
 
     error = meetingConfig.validate_workflowAdaptations(wfAdaptations)
-    if error: raise Exception(error)
+    if error:
+        raise Exception(error)
 
     # "no_publication" removes state 'published' in the meeting workflow and
     # corresponding state 'itempublished' in the item workflow. The standard
@@ -71,7 +72,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         wf = meetingWorkflow
         # Delete transitions 'publish' and 'backToPublished'
         for tr in ('publish', 'backToPublished', 'republish'):
-            if tr in wf.transitions: wf.transitions.deleteTransitions([tr])
+            if tr in wf.transitions:
+                wf.transitions.deleteTransitions([tr])
         # Update connections between states and transitions
         wf.states['created'].setProperties(
             title='created', description='', transitions=['freeze'])
@@ -79,13 +81,15 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             title='frozen', description='',
             transitions=['backToCreated', 'decide'])
         # Delete state 'published'
-        if 'published' in wf.states: wf.states.deleteStates(['published'])
+        if 'published' in wf.states:
+            wf.states.deleteStates(['published'])
 
         # Then, update the item workflow.
         wf = itemWorkflow
         # Delete transitions 'itempublish' and 'backToItemPublished'
         for tr in ('itempublish', 'backToItemPublished'):
-            if tr in wf.transitions: wf.transitions.deleteTransitions([tr])
+            if tr in wf.transitions:
+                wf.transitions.deleteTransitions([tr])
         # Update connections between states and transitions
         wf.states['presented'].setProperties(
             title='presented', description='',
@@ -104,7 +108,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         wf = itemWorkflow
         # Delete transitions 'propose' and 'backToProposed'
         for tr in ('propose', 'backToProposed'):
-            if tr in wf.transitions: wf.transitions.deleteTransitions([tr])
+            if tr in wf.transitions:
+                wf.transitions.deleteTransitions([tr])
         # Update connection between states and transitions
         wf.states['itemcreated'].setProperties(
             title='itemcreated', description='', transitions=['validate'])
@@ -131,18 +136,22 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             site.__ac_roles__ = tuple(allRoles)
         # Create state "prevalidated"
         wf = itemWorkflow
-        if 'prevalidated' not in wf.states: wf.states.addState('prevalidated')
+        if 'prevalidated' not in wf.states:
+            wf.states.addState('prevalidated')
         # Create new transitions linking the new state to existing ones
         # ('proposed' and 'validated').
         for tr in ('prevalidate', 'backToPrevalidated'):
-            if tr not in wf.transitions: wf.transitions.addTransition(tr)
+            if tr not in wf.transitions:
+                wf.transitions.addTransition(tr)
         transition = wf.transitions['prevalidate']
-        transition.setProperties(title='prevalidate',
+        transition.setProperties(
+            title='prevalidate',
             new_state_id='prevalidated', trigger_type=1, script_name='',
-            actbox_name='prevalidate', actbox_url='',actbox_category='workflow',
+            actbox_name='prevalidate', actbox_url='', actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().mayPrevalidate()'})
         transition = wf.transitions['backToPrevalidated']
-        transition.setProperties(title='backToPrevalidated',
+        transition.setProperties(
+            title='backToPrevalidated',
             new_state_id='prevalidated', trigger_type=1, script_name='',
             actbox_name='backToPrevalidated', actbox_url='',
             actbox_category='workflow',
@@ -169,13 +178,15 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         # 'MeetingReviewer'.
         for permission in proposed.permission_roles.iterkeys():
             roles = list(proposed.permission_roles[permission])
-            if 'MeetingReviewer' not in roles: continue
+            if 'MeetingReviewer' not in roles:
+                continue
             roles.remove('MeetingReviewer')
             roles.append('MeetingPreReviewer')
             proposed.setPermission(permission, 0, roles)
         for permission in prevalidated.permission_roles.iterkeys():
             roles = list(prevalidated.permission_roles[permission])
-            if 'MeetingPreReviewer' not in roles: continue
+            if 'MeetingPreReviewer' not in roles:
+                continue
             roles.remove('MeetingPreReviewer')
             roles.append('MeetingReviewer')
             prevalidated.setPermission(permission, 0, roles)
@@ -189,7 +200,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         # workflow, MeetingReviewer and MeetingPreReviewer are granted exactly
         # the same rights.
         for stateName in wf.states.keys():
-            if stateName in ('itemcreated', 'proposed', 'prevalidated'):continue
+            if stateName in ('itemcreated', 'proposed', 'prevalidated'):
+                continue
             state = wf.states[stateName]
             for permission in state.permission_roles.iterkeys():
                 roles = state.permission_roles[permission]
@@ -219,11 +231,12 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
     if 'creator_initiated_decisions' in wfAdaptations:
         wf = itemWorkflow
         # Creator can read and write the "decision" field on item creation.
-        grantPermission(wf.states['itemcreated'], WriteDecision,'MeetingMember')
+        grantPermission(wf.states['itemcreated'], WriteDecision, 'MeetingMember')
         grantPermission(wf.states['itemcreated'], ReadDecision, 'MeetingMember')
         # (Pre)reviewer can write the "decision" field once proposed.
         writer = 'MeetingReviewer'
-        if 'pre_validation' in wfAdaptations: writer = 'MeetingPreReviewer'
+        if 'pre_validation' in wfAdaptations:
+            writer = 'MeetingPreReviewer'
         if 'proposed' in wf.states:
             grantPermission(wf.states['proposed'], WriteDecision, writer)
         # Reviewer can write the "decision" field once prevalidated
@@ -231,16 +244,17 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             grantPermission(wf.states['prevalidated'], WriteDecision,
                             'MeetingReviewer')
         # Group-related roles can read the decision during the whole process.
-        groupRoles = ['MeetingMember','MeetingReviewer','MeetingObserverLocal']
+        groupRoles = ['MeetingMember', 'MeetingReviewer', 'MeetingObserverLocal']
         if 'pre_validation' in wfAdaptations:
             groupRoles.append('MeetingPreReviewer')
         for stateName in groupDecisionReadStates:
-            if stateName not in wf.states: continue
+            if stateName not in wf.states:
+                continue
             for role in groupRoles:
                 try:
                     grantPermission(wf.states[stateName], ReadDecision, role)
                 except KeyError:
-                    pass # State 'prevalidated' may not exist.
+                    pass  # State 'prevalidated' may not exist.
         logger.info(WF_APPLIED % ("creator_initiated_decisions", meetingConfig.getId()))
 
     # "items_come_validated" removes the early steps of the item workflow: the
@@ -252,11 +266,13 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         # State 'validated' becomes the initial state
         wf.initial_state = 'validated'
         # Remove early transitions
-        for tr in ('propose','validate','backToProposed','backToItemCreated'):
-            if tr in wf.transitions: wf.transitions.deleteTransitions([tr])
+        for tr in ('propose', 'validate', 'backToProposed', 'backToItemCreated'):
+            if tr in wf.transitions:
+                wf.transitions.deleteTransitions([tr])
         # Remove early states
         for st in ('itemcreated', 'proposed'):
-            if st in wf.states: wf.states.deleteStates([st])
+            if st in wf.states:
+                wf.states.deleteStates([st])
         logger.info(WF_APPLIED % ("items_come_validated", meetingConfig.getId()))
 
     # "archiving" transforms item and meeting workflow into simple, one-state
@@ -268,22 +284,28 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         wf.initial_state = 'itemarchived'
         # Remove all transitions
         names = wf.transitions.keys()
-        if names: wf.transitions.deleteTransitions(names)
+        if names:
+            wf.transitions.deleteTransitions(names)
         # Remove all states but "itemarchived"
         names = wf.states.keys()
-        if 'itemarchived' in names: names.remove('itemarchived')
-        if names: wf.states.deleteStates(names)
+        if 'itemarchived' in names:
+            names.remove('itemarchived')
+        if names:
+            wf.states.deleteStates(names)
         # Keep only final state (archived) in meeting workflow
         wf = meetingWorkflow
         # State 'archived' becomes the initial state
         wf.initial_state = 'archived'
         # Remove all transitions
         names = wf.transitions.keys()
-        if names: wf.transitions.deleteTransitions(names)
+        if names:
+            wf.transitions.deleteTransitions(names)
         # Remove all states but "archived"
         names = wf.states.keys()
-        if 'archived' in names: names.remove('archived')
-        if names: wf.states.deleteStates(names)
+        if 'archived' in names:
+            names.remove('archived')
+        if names:
+            wf.states.deleteStates(names)
         logger.info(WF_APPLIED % ("archiving", meetingConfig.getId()))
 
     # "only_creator_may_delete" grants the permission to delete items to
@@ -292,7 +314,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
     if 'only_creator_may_delete' in wfAdaptations:
         wf = itemWorkflow
         for stateName in noDeleteStates:
-            if stateName not in wf.states: continue
+            if stateName not in wf.states:
+                continue
             state = wf.states[stateName]
             state.setPermission('Delete objects', 0, ['MeetingMember', 'Manager'])
         logger.info(WF_APPLIED % ("only_creator_may_delete", meetingConfig.getId()))
@@ -306,10 +329,12 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         # remove any permission for role "MeetingObserverGlobal".
         wf = itemWorkflow
         for stateName in noGlobalObsStates:
-            if stateName not in wf.states: continue
+            if stateName not in wf.states:
+                continue
             state = wf.states[stateName]
             for permission, roles in state.permission_roles.iteritems():
-                if 'MeetingObserverGlobal' not in roles: continue
+                if 'MeetingObserverGlobal' not in roles:
+                    continue
                 # Remove it from the roles for which this permission is granted.
                 newRoles = list(roles)
                 newRoles.remove('MeetingObserverGlobal')
@@ -324,7 +349,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             for stateName in wf.states:
                 state = wf.states[stateName]
                 for permission, roles in state.permission_roles.iteritems():
-                    if permission not in viewPermissions: continue
+                    if permission not in viewPermissions:
+                        continue
                     grantPermission(state, permission, 'MeetingObserverGlobal')
         logger.info(WF_APPLIED % ("everyone_reads_all", meetingConfig.getId()))
 
@@ -359,7 +385,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         roleManager = site.acl_users.portal_role_manager
         if 'MeetingManagerLocal' not in roleManager.listRoleIds():
             allRoles = list(site.__ac_roles__)
-            roleManager.addRole('MeetingManagerLocal','MeetingManagerLocal', '')
+            roleManager.addRole('MeetingManagerLocal', 'MeetingManagerLocal', '')
             allRoles.append('MeetingManagerLocal')
             site.__ac_roles__ = tuple(allRoles)
         # Patch the meeting workflow: everything that is granted to
@@ -382,6 +408,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                     grantPermission(state, permission, 'Owner')
         logger.info(WF_APPLIED % ("local_meeting_managers", meetingConfig.getId()))
 
+
 # Stuff for performing model adaptations ---------------------------------------
 def companionField(name, type='simple', label=None, searchable=False,
                    readPermission=None, writePermission=None, condition=None):
@@ -394,14 +421,18 @@ def companionField(name, type='simple', label=None, searchable=False,
     widgetType = StringWidget
     if type != 'simple':
         fieldType = TextField
-        if type == 'rich': widgetType = RichWidget
-        else: widgetType = TextAreaWidget
+        if type == 'rich':
+            widgetType = RichWidget
+        else:
+            widgetType = TextAreaWidget
     # Create the widget definition
-    if not label: label = 'PloneMeeting_label_%s' % name
+    if not label:
+        label = 'PloneMeeting_label_%s' % name
     label += '2'
     widget = widgetType(label=name.capitalize(), label_msgid=label,
                         i18n_domain='PloneMeeting')
-    if condition: widget.condition = condition
+    if condition:
+        widget.condition = condition
     # Create the type definition
     required = name == 'title'
     res = fieldType(name=name+'2', widget=widget, required=required)
@@ -412,8 +443,10 @@ def companionField(name, type='simple', label=None, searchable=False,
         res.default_output_type = "text/html"
     if type == 'text':
         res.allowable_content_types = ('text/plain',)
-    if readPermission: res.read_permission = readPermission
-    if writePermission: res.write_permission = writePermission
+    if readPermission:
+        res.read_permission = readPermission
+    if writePermission:
+        res.write_permission = writePermission
     return res
 
 # ------------------------------------------------------------------------------
@@ -421,19 +454,20 @@ def companionField(name, type='simple', label=None, searchable=False,
 # "secondLanguageCfg", which allows to manage content in a second language.
 cf = companionField
 
-additions= {
+additions = {
   # Additional fields for MeetingItem
-  "MeetingItem": (cf('title', searchable=True),
-    cf('description', type='rich', searchable=True),
-    cf('detailedDescription', type='rich'),
-    cf('decision', type='rich', searchable=True,
-       readPermission="PloneMeeting: Read decision",
-       writePermission="PloneMeeting: Write decision"),
-    cf('observations', type='rich',
-       label='PloneMeeting_itemObservations',
-       condition="python: here.attributeIsUsed('observations')",
-       readPermission="PloneMeeting: Read item observations",
-       writePermission="PloneMeeting: Write item observations")),
+  "MeetingItem":
+    (cf('title', searchable=True),
+     cf('description', type='rich', searchable=True),
+     cf('detailedDescription', type='rich'),
+     cf('decision', type='rich', searchable=True,
+        readPermission="PloneMeeting: Read decision",
+        writePermission="PloneMeeting: Write decision"),
+     cf('observations', type='rich',
+        label='PloneMeeting_itemObservations',
+        condition="python: here.attributeIsUsed('observations')",
+        readPermission="PloneMeeting: Read item observations",
+        writePermission="PloneMeeting: Write item observations")),
 
   # Additional fields for Meeting
   "Meeting": (cf('observations', type='rich',
@@ -449,21 +483,24 @@ additions= {
   "MeetingGroup":        (cf('title'), cf('description', type='text')),
   "ExternalApplication": (cf('title'),),
   "MeetingConfig":       (cf('title'),),
-  "MeetingUser": (
-    cf('duty', condition="python: here.isManager()"),
-    cf('replacementDuty', condition="python: here.isManager()")),
+  "MeetingUser":
+    (cf('duty', condition="python: here.isManager()"),
+     cf('replacementDuty', condition="python: here.isManager()")),
 }
+
+
 def patchSchema(typeName):
     '''This function updates, if required, the schema of content tyne named
        p_typeName with additional fields from a model adaptation.'''
     global additions
-    exec 'from Products.PloneMeeting.%s import %s as cType'% (typeName,typeName)
+    exec 'from Products.PloneMeeting.%s import %s as cType' % (typeName, typeName)
     toAdd = additions[typeName]
     # Update the schema only if it hasn't been already done.
-    if not cType.schema._fields.has_key(toAdd[0].getName()):
+    if not toAdd[0].getName() in cType.schema._fields:
         for field in toAdd:
             cType.schema.addField(field)
             cType.schema.moveField(field.getName(), after=field.getName()[:-1])
+
 
 def performModelAdaptations(tool):
     '''Performs the required model adaptations.'''
@@ -473,5 +510,6 @@ def performModelAdaptations(tool):
         patchSchema('MeetingItem')
     if 'secondLanguageCfg' in adaptations:
         for contentType in additions.iterkeys():
-            if (contentType != 'MeetingItem'): patchSchema(contentType)
+            if (contentType != 'MeetingItem'):
+                patchSchema(contentType)
 # ------------------------------------------------------------------------------
