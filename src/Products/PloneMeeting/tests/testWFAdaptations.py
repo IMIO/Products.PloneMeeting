@@ -331,7 +331,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 login(self.portal, 'pmCreator2')
                 self.failIf(self.hasPermission('View', i1))
-        #check that the meeting have been published
+        # check that the meeting have been published
         self.failUnless(isPublished)
 
     def _no_global_observation_active(self):
@@ -343,11 +343,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
         for tr in i1.wfConditions().transitionsForPresentingAnItem:
-            login(self.portal, 'pmManager')
+            self.changeUser('pmManager')
             self.do(i1, tr)
-            login(self.portal, 'pmCreator1')
+            self.changeUser('pmCreator1')
             self.failUnless(self.hasPermission('View', i1))
-            login(self.portal, 'pmCreator2')
+            self.changeUser('pmCreator2')
             self.failIf(self.hasPermission('View', i1))
         # now here i1 is "presented"
         # once meeting/items are "published", it is NOT visible because of the wfAdaptation
@@ -367,6 +367,25 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.failIf(self.hasPermission('View', i1))
         #check that the meeting have been published
         self.failUnless(isPublished)
+        # check every decided states of the item
+        # set the meeting back to decided
+        login(self.portal, 'admin')
+        while not m1.queryState() == 'decided':
+            self.do(m1, [tr for tr in self.transitions(m1) if tr.startswith('back')][0])
+        # now the meeting is 'decided', put i1 backToFrozen and test every available decided state
+        while not i1.queryState() in ['itemfrozen', 'itempublished', ]:
+            self.do(i1, [tr for tr in self.transitions(i1) if tr.startswith('back')][0])
+        # now check every item decision
+        self.changeUser('pmManager')
+        availableDecisionTransitions = [tr for tr in self.transitions(i1) if not tr.startswith('back')]
+        for availableDecisionTransition in availableDecisionTransitions:
+            self.do(i1, availableDecisionTransition)
+            self.changeUser('pmCreator2')
+            self.failIf(self.hasPermission('View', i1))
+            self.changeUser('pmManager')
+            # compute backTransition
+            backTransition = [tr for tr in self.transitions(i1) if tr.startswith('back')][0]
+            self.do(i1, backTransition)
 
     def test_pm_WFA_everyone_reads_all(self):
         '''Test the workflowAdaptation 'everyone_reads_all'.'''
