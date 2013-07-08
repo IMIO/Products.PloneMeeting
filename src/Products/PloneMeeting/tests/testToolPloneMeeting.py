@@ -203,7 +203,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         meetingConfig2Id = self.meetingConfig2.getId()
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
-        # every roles of the application can see the tabs
+        # every roles of the application can see the tabs, except MeetingPowerObserverLocal
         login(self.portal, 'pmManager')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
@@ -215,14 +215,15 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
         # If a wrong meetingConfigId is passed, it returns False
         self.assertEquals(self.tool.showPloneMeetingTab('wrong-meeting-config-id'), False)
-        # If we disable one meetingConfig, no more tab is shown, there must be
-        # at least 2 active meetingConfigs for the tabs to be displayed
+        # The tab of 'meetingConfig1Id' is not viewable by MeetingPowerObserverLocal of 'meetingConfig2Id'
+        login(self.portal, 'powerobserver1')
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
+        # If we disable one meetingConfig, it is no more shown
         login(self.portal, 'admin')
         self.do(getattr(self.tool, meetingConfig2Id), 'deactivate')
         login(self.portal, 'pmManager')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
-        # Even an activated meetingConfig will not show his tab if it is alone...
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
 
     def test_pm_SetupProcessForCreationFlag(self):
         '''Test that every elements created by the setup process

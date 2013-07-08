@@ -2021,18 +2021,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Creates a Plone group that will be used to apply the MeetingPowerObserverLocal
            local role on every items of this MeetingConfig regarding self.itemPowerObserverStates.'''
         groupId = "%s_%s" % (self.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-        if groupId in self.portal_groups.listGroupIds():
-            return
-        enc = self.portal_properties.site_properties.getProperty(
-            'default_charset')
-        groupTitle = '%s (%s)' % (
-            self.Title().decode(enc),
-            translate(POWEROBSERVERS_GROUP_SUFFIX, domain='PloneMeeting', context=self.REQUEST))
-        # a default Plone group title is NOT unicode.  If a Plone group title is
-        # edited TTW, his title is no more unicode if it was previously...
-        # make sure we behave like Plone...
-        groupTitle = groupTitle.encode(enc)
-        self.portal_groups.addGroup(groupId, title=groupTitle)
+        if not groupId in self.portal_groups.listGroupIds():
+            enc = self.portal_properties.site_properties.getProperty(
+                'default_charset')
+            groupTitle = '%s (%s)' % (
+                self.Title().decode(enc),
+                translate(POWEROBSERVERS_GROUP_SUFFIX, domain='PloneMeeting', context=self.REQUEST))
+            # a default Plone group title is NOT unicode.  If a Plone group title is
+            # edited TTW, his title is no more unicode if it was previously...
+            # make sure we behave like Plone...
+            groupTitle = groupTitle.encode(enc)
+            self.portal_groups.addGroup(groupId, title=groupTitle)
         # now define local_roles on the tool so it is accessible by this group
         self.portal_plonemeeting.manage_addLocalRoles(groupId, ('MeetingPowerObserverLocal',))
         # but we do not want this group to access every MeetingConfigs so
