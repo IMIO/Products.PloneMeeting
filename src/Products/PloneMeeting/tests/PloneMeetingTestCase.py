@@ -350,7 +350,7 @@ class PloneMeetingTestCase(unittest2.TestCase):
             self.fail("missing test methods %s from PloneMeeting test class '%s'" %
                       (missing, self.__class__.__name__))
 
-    def test_tescasesubproduct_VerifyTestFiles(self):
+    def test_testcasesubproduct_VerifyTestFiles(self):
         """
           This test is called by the base TestCase file of the subproduct.
           We check that every test files in Products.PloneMeeting are also in this sub-product.
