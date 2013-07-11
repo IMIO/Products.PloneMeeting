@@ -156,8 +156,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         late4.reindexObject()
         # present the items
         for item in (late1, late2, late3, late4):
-            for tr in item.wfConditions().transitionsForPresentingAnItem:
-                self.do(item, tr)
+            self.presentItem(item)
         item1 = meeting.getItemsInOrder()[0]
         item2 = meeting.getItemsInOrder()[1]
         item3 = meeting.getItemsInOrder()[2]

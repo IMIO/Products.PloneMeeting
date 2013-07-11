@@ -75,7 +75,7 @@ class PloneMeetingTestCase(unittest2.TestCase, pmhelpers):
         self.wfTool = self.portal.portal_workflow
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Create admin user
-        self.createUser('admin', ('Member', 'Manager'))
+        self.createUser('admin', ('Member', 'Manager', 'MeetingManager', ))
         # Import the test profile
         login(self.portal, 'admin')
         #setup_tool = getToolByName(self.portal, 'portal_setup')
@@ -83,7 +83,7 @@ class PloneMeetingTestCase(unittest2.TestCase, pmhelpers):
         #    'profile-Products.PloneMeeting:test', 'initializetool-PloneMeeting',
         #    run_dependencies=True)
         # Create some member areas
-        for userId in ('pmManager', 'pmCreator1', 'pmCreator2'):
+        for userId in ('pmManager', 'pmCreator1', 'pmCreator2', 'admin', ):
             _createHomeFolder(self.portal, userId)
         # Disable notifications mechanism. This way, the test suite may be
         # executed even on production sites that contain many real users.

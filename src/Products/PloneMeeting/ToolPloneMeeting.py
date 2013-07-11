@@ -1702,7 +1702,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Adds a new Plone user from p_userData which is a UserDescriptor
            instance if it does not already exist.'''
         usersDb = self.acl_users.source_users
-        if usersDb.getUserById(userData.id):
+        if usersDb.getUserById(userData.id) or userData.id == 'admin':
             return  # Already exists.
         self.portal_registration.addMember(
             userData.id, userData.password,

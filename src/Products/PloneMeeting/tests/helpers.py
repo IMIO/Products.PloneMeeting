@@ -36,6 +36,8 @@ class PloneMeetingTestingHelpers:
 
     def _createMeetingWithItems(self):
         '''Create a meeting with a bunch of items.'''
+        currentUser = self.portal.portal_membership.getAuthenticatedMember().getId()
+        self.changeUser('admin')
         meetingDate = DateTime()
         meeting = self.create('Meeting', date=meetingDate)
         item1 = self.create('MeetingItem')  # id=o2
@@ -61,6 +63,7 @@ class PloneMeetingTestingHelpers:
         item5.setCategory('events')
         for item in (item1, item2, item3, item4, item5):
             self.presentItem(item)
+        self.changeUser(currentUser)
         return meeting
 
     def proposeItem(self, item):

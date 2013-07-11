@@ -313,6 +313,8 @@ def _configureCKeditor(site):
     logger.info('Defining CKeditor as the new default editor for every users and configuring it...')
     try:
         site.cputils_configure_ckeditor(custom='plonemeeting')
+        # add the "highlight red" style
+        
     except AttributeError:
         logger.warning("Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "
                        "installed and that the cputils_configure_ckeditor method is available")

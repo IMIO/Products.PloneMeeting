@@ -153,25 +153,22 @@ class testMeeting(PloneMeetingTestCase):
         i3.setTitle('i3')
         i3.reindexObject()
         #for now, no items are presentable...
-        self.assertEquals(len(m1.getAvailableItems()), 0)
-        self.assertEquals(len(m2.getAvailableItems()), 0)
-        self.assertEquals(len(m3.getAvailableItems()), 0)
-        ##propose and validate the items
-        #use transitionsForPresentingAnItem but do not do the last transition
-        #that is supposed to be 'present'
+        self.assertEquals(len(m1.adapted().getAvailableItems()), 0)
+        self.assertEquals(len(m2.adapted().getAvailableItems()), 0)
+        self.assertEquals(len(m3.adapted().getAvailableItems()), 0)
+        # validate the items
         for item in (i1, i2, i3):
-            for tr in item.wfConditions().transitionsForPresentingAnItem[:-1]:
-                self.do(item, tr)
+            self.validateItem(item)
         #now, check that available items have some respect
         #the first meeting has only one item, the one with no preferred meeting selected
         itemTitles = []
-        for brain in m1.getAvailableItems():
+        for brain in m1.adapted().getAvailableItems():
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', ])
         #the second meeting has 2 items, the no preferred meeting one and the i2
         #for wich we selected this meeting as preferred
         itemTitles = []
-        for brain in m2.getAvailableItems():
+        for brain in m2.adapted().getAvailableItems():
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', 'i2', ])
         #the third has 3 items
@@ -179,7 +176,7 @@ class testMeeting(PloneMeetingTestCase):
         #--> the second item because the meeting date is in the future
         #--> the i3 where we selected m3 as preferred meeting
         itemTitles = []
-        for brain in m3.getAvailableItems():
+        for brain in m3.adapted().getAvailableItems():
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', 'i2', 'i3', ])
 
