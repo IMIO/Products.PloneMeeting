@@ -28,8 +28,6 @@ from ZPublisher.HTTPRequest import FileUpload
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
 
-from DateTime.DateTime import DateTime
-
 from zope.annotation.interfaces import IAnnotations
 
 from plone.app.testing.helpers import setRoles
@@ -43,6 +41,7 @@ import Products.PloneMeeting
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.testing import PM_TESTS_PROFILE_FUNCTIONAL
+from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers as pmhelpers
 
 
 class TestFile:
@@ -53,7 +52,7 @@ class TestFile:
         self.headers = None
 
 
-class PloneMeetingTestCase(unittest2.TestCase):
+class PloneMeetingTestCase(unittest2.TestCase, pmhelpers):
     '''Base class for defining PloneMeeting test cases.'''
 
     # Some default content
@@ -221,36 +220,6 @@ class PloneMeetingTestCase(unittest2.TestCase):
             obj.processForm()
         return obj
 
-    def _createMeetingWithItems(self):
-        '''Create a meeting with a bunch of items.'''
-        meetingDate = DateTime()
-        meeting = self.create('Meeting', date=meetingDate)
-        item1 = self.create('MeetingItem')  # id=o2
-        item1.setProposingGroup('vendors')
-        item1.setAssociatedGroups(('developers',))
-        item1.setPrivacy('public')
-        item1.setCategory('research')
-        item2 = self.create('MeetingItem')  # id=o3
-        item2.setProposingGroup('developers')
-        item2.setPrivacy('public')
-        item2.setCategory('development')
-        item3 = self.create('MeetingItem')  # id=o4
-        item3.setProposingGroup('vendors')
-        item3.setPrivacy('secret')
-        item3.setCategory('development')
-        item4 = self.create('MeetingItem')  # id=o5
-        item4.setProposingGroup('developers')
-        item4.setPrivacy('secret')
-        item4.setCategory('events')
-        item5 = self.create('MeetingItem')  # id=o6
-        item5.setProposingGroup('vendors')
-        item5.setPrivacy('public')
-        item5.setCategory('events')
-        for item in (item1, item2, item3, item4, item5):
-            for tr in item.wfConditions().transitionsForPresentingAnItem:
-                self.do(item, tr)
-        return meeting
-
     def setAttributes(self, obj, **attrs):
         '''Set the attributes contained in p_attrs on an object p_obj. Some
            attributes cannot be set in invokeFactory because related permissions
@@ -339,8 +308,8 @@ class PloneMeetingTestCase(unittest2.TestCase):
         # if we do not inheritate from a PloneMeeting test class, just return...
         if pmInheritatedClass.__class__.__name__ == localTestClass.__class__.__name__:
             return
-        tpm = self.getTestMethods(self.__class__.__bases__[-1], 'test_pm_')
-        tsp = self.getTestMethods(self, 'test_subproduct_call_')
+        tpm = self._getTestMethods(self.__class__.__bases__[-1], 'test_pm_')
+        tsp = self._getTestMethods(self, 'test_subproduct_call_')
         missing = []
         for key in tpm:
             key2 = key.replace('test_pm_', 'test_subproduct_call_')
@@ -350,15 +319,21 @@ class PloneMeetingTestCase(unittest2.TestCase):
             self.fail("missing test methods %s from PloneMeeting test class '%s'" %
                       (missing, self.__class__.__name__))
 
+    def _getTestMethods(self, module, prefix):
+        """
+          Helper method that get test methods for underlying subproduct.
+        """
+        methods = {}
+        for name in dir(module):
+            if name.startswith(prefix):
+                methods[name] = 0
+        return methods
+
     def test_testcasesubproduct_VerifyTestFiles(self):
         """
           This test is called by the base TestCase file of the subproduct.
           We check that every test files in Products.PloneMeeting are also in this sub-product.
         """
-        if hasattr(self.__class__.__bases__[0], 'verifyTestFilesAlreadyDone'):
-            return
-        else:
-            setattr(self.__class__.__bases__[0], 'verifyTestFilesAlreadyDone', True)
         from zope.testing.testrunner.find import find_test_files
         # list test files from Products.PloneMeeting
         options = self._resultForDoCleanups.options
@@ -384,7 +359,8 @@ class PloneMeetingTestCase(unittest2.TestCase):
         pm_files = [f[0] for f in pm_files_generator if 'Products.PloneMeeting' in f[0]]
         options.test_path = saved_test_path
         # now check that every PloneMeeting files are managed by subproduct
-        subproduct_testfiles = [f.split('/')[-1] for f in subproduct_files if not f.split('/')[-1].startswith('testCustom')]
+        subproduct_testfiles = [f.split('/')[-1] for f in subproduct_files if not
+                                f.split('/')[-1].startswith('testCustom')]
         pm_testfiles = [f.split('/')[-1] for f in pm_files]
         # there should not be a file in PloneMeeting that is not in this subproduct...
         # a subproduct can ignore some PloneMeeting test files in self.subproductIgnoredTestFiles
