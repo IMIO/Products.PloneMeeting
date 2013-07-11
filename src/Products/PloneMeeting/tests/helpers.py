@@ -29,6 +29,10 @@ class PloneMeetingTestingHelpers:
     TRANSITIONS_FOR_PROPOSING_ITEM_1 = TRANSITIONS_FOR_PROPOSING_ITEM_2 = ('propose', )
     TRANSITIONS_FOR_VALIDATING_ITEM_1 = TRANSITIONS_FOR_VALIDATING_ITEM_2 = ('propose', 'validate', )
     TRANSITIONS_FOR_PRESENTING_ITEM_1 = TRANSITIONS_FOR_PRESENTING_ITEM_2 = ('propose', 'validate', 'present', )
+    BACK_TO_WF_PATH = {'proposed': ('backToItemFrozen', 'backToPresented', 'backToValidated', 'backToProposed', ),
+                       'validated': ('backToItemFrozen', 'backToPresented', 'backToValidated', )}
+    WF_STATE_NAME_MAPPINGS = {'proposed': 'proposed',
+                              'validated': 'validated'}
 
     def _createMeetingWithItems(self):
         '''Create a meeting with a bunch of items.'''
@@ -82,9 +86,22 @@ class PloneMeetingTestingHelpers:
 
     def backToState(self, itemOrMeeting, state):
         """Set the p_item back to p_state."""
+        # if a wf path is defined in BACK_TO_WF_PATH to go to relevant state, use it
+        # if not, trigger every 'backToXXX' existing transition
+        useDefinedWfPath = False
+        if state in self.BACK_TO_WF_PATH:
+            transitions = self.BACK_TO_WF_PATH[state]
+            useDefinedWfPath = True
+        else:
+            transitions = self.transitions(itemOrMeeting)
+        # check if a mapping exist for state name
+        if state in self.WF_STATE_NAME_MAPPINGS:
+            state = self.WF_STATE_NAME_MAPPINGS[state]
         while not itemOrMeeting.queryState() == state:
-            for tr in self.transitions(itemOrMeeting):
-                if tr.startswith('back'):
+            if not useDefinedWfPath:
+                transitions = self.transitions(itemOrMeeting)
+            for tr in transitions:
+                if tr.startswith('back') and (useDefinedWfPath and tr in self.transitions(itemOrMeeting)):
                     self.do(itemOrMeeting, tr)
                     break
 

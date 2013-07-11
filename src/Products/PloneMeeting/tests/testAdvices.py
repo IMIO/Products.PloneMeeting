@@ -212,7 +212,7 @@ class testAdvices(PloneMeetingTestCase):
         item1 = self.create('MeetingItem', **data)
         self.assertEquals(item1.needsAdvices(), True)
         self.failIf(item1.willInvalidateAdvices())
-        self.do(item1, 'propose')
+        self.proposeItem(item1)
         # login as adviser and add an advice
         self.changeUser('pmReviewer2')
         self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
@@ -232,7 +232,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(item1.hasAdvices())
         item1.setFieldFromAjax('decision', item1.getDecision() + '<p>Another new line</p>')
         # validate the item
-        self.do(item1, 'validate')
+        self.validateItem(item1)
         # login as a user that can edit the item when it is 'validated'
         self.changeUser('pmManager')
         # now that the item is validated, editing it will invalidate advices
