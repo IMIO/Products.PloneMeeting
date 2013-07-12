@@ -79,17 +79,12 @@ class testPerformances(PloneMeetingTestCase):
             # add annexes
             for j in range(number_of_annexes):
                 self.addAnnex(item, annexTitle="Annex number %d" % j)
-            # present to item
-            transitions = item.wfConditions().transitionsForPresentingAnItem
-            for transition in transitions:
-                self.do(item, transition)
+            # present the item
+            self.presentItem(item)
             # set the meeting in the 'decided' state
-            for transition in self.transitionsToCloseAMeeting:
-                if meeting.queryState() == 'decided':
-                    break
-                self.do(meeting, transition)
+            self.decideMeeting(meeting)
             # in some wfs, deciding a meeting will accept every items...
-            # et back items to the 'itemfrozen' state
+            # set back items to the 'itemfrozen' state
             for itemInMeeting in meeting.getItems():
                 if itemInMeeting.queryState() == 'itemfrozen':
                     break
