@@ -33,7 +33,11 @@ class PloneMeetingTestingHelpers:
     TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('publish', )
     TRANSITIONS_FOR_FREEZING_MEETING_1 = TRANSITIONS_FOR_FREEZING_MEETING_2 = ('publish', 'freeze', )
     TRANSITIONS_FOR_DECIDING_MEETING_1 = TRANSITIONS_FOR_DECIDING_MEETING_2 = ('publish', 'freeze', 'decide', )
-    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('publish', 'freeze', 'decide', 'close', 'archive', )
+    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('publish',
+                                                                             'freeze',
+                                                                             'decide',
+                                                                             'close',
+                                                                             'archive', )
 
     BACK_TO_WF_PATH = {'proposed': ('backToItemFrozen', 'backToPresented', 'backToValidated', 'backToProposed', ),
                        'validated': ('backToItemFrozen', 'backToPresented', 'backToValidated', )}
@@ -140,7 +144,6 @@ class PloneMeetingTestingHelpers:
            the _x here above in TRANSITIONS_FOR_CLOSING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(meeting, getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber)))
-
 
     def backToState(self, itemOrMeeting, state):
         """Set the p_item back to p_state."""
