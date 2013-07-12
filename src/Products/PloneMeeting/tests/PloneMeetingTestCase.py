@@ -41,7 +41,7 @@ import Products.PloneMeeting
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.testing import PM_TESTS_PROFILE_FUNCTIONAL
-from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers as pmhelpers
+from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 
 
 class TestFile:
@@ -52,7 +52,7 @@ class TestFile:
         self.headers = None
 
 
-class PloneMeetingTestCase(unittest2.TestCase, pmhelpers):
+class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
     '''Base class for defining PloneMeeting test cases.'''
 
     # Some default content

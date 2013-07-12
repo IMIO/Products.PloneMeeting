@@ -140,30 +140,7 @@ muser_voter2 = MeetingUserDescriptor('voter2', duty='Voter2',
                                      usages=['assemblyMember', 'voter', ])
 
 # Meeting configuration
-meetingPga = MeetingConfigDescriptor(
-    'plonegov-assembly', 'PloneGov assembly', 'PloneGov assembly',
-    isDefault=True)
-meetingPga.shortName = 'Pga'
-meetingPga.assembly = 'Bill Gates, Steve Jobs'
-meetingPga.signatures = meetingPga.assembly
-meetingPga.categories = [deployment, maintenance, development, events,
-                         research, projects, marketing, subproducts]
-meetingPga.meetingFileTypes = [
-    financialAnalysis, legalAnalysis, budgetAnalysis, itemAnnex,
-    decisionAnnex]
-meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
-meetingPga.sortingMethodOnAddItem = 'on_categories'
-meetingPga.useGroupsAsCategories = False
-meetingPga.useAdvices = True
-meetingPga.itemAdviceStates = ['proposed', 'validated']
-meetingPga.itemAdviceEditStates = ['proposed', ]
-meetingPga.itemAdviceViewStates = ['presented', ]
-meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
-meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
-meetingPga.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
-meetingPga.useCopies = True
-meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
-# Second meeting type: a fictitious PloneMeeting assembly ----------------------
+# PloneMeeting assembly
 
 # Recurring items
 recItem1 = RecurringItemDescriptor(
@@ -216,6 +193,32 @@ meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
                            cadranel_signer, muser_voter1, muser_voter2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
+
+# Plonegov-assembly
+meetingPga = MeetingConfigDescriptor(
+    'plonegov-assembly', 'PloneGov assembly', 'PloneGov assembly',
+    isDefault=True)
+meetingPga.shortName = 'Pga'
+meetingPga.assembly = 'Bill Gates, Steve Jobs'
+meetingPga.signatures = meetingPga.assembly
+meetingPga.categories = [deployment, maintenance, development, events,
+                         research, projects, marketing, subproducts]
+meetingPga.meetingFileTypes = [
+    financialAnalysis, legalAnalysis, budgetAnalysis, itemAnnex,
+    decisionAnnex]
+meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
+meetingPga.sortingMethodOnAddItem = 'on_categories'
+meetingPga.useGroupsAsCategories = False
+meetingPga.useAdvices = True
+meetingPga.itemAdviceStates = ['proposed', 'validated']
+meetingPga.itemAdviceEditStates = ['proposed', ]
+meetingPga.itemAdviceViewStates = ['presented', ]
+meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
+meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
+meetingPga.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
+meetingPga.useCopies = True
+meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
+
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
                                  (developers, vendors, endUsers))

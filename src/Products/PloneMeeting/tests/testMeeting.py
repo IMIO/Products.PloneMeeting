@@ -45,21 +45,21 @@ class testMeeting(PloneMeetingTestCase):
            sort methods tested here are "on_categories" and
            "on_proposing_groups".'''
         login(self.portal, 'pmManager')
-        for meetingConfig in ('plonegov-assembly', 'plonemeeting-assembly'):
-            self.setMeetingConfig(meetingConfig)
-            meeting = self._createMeetingWithItems()
-            if meetingConfig == 'plonemeeting-assembly':
-                # There is a recurring item in this one
+        for meetingConfig in (self.meetingConfig.getId(), self.meetingConfig2.getId()):
+            if meetingConfig == self.meetingConfig.getId():
+                # There are 2 recurring items in self.meetingConfig
                 expected = ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6']
             else:
                 expected = ['o3', 'o4', 'o5', 'o6', 'o2']
+            self.setMeetingConfig(meetingConfig)
+            meeting = self._createMeetingWithItems()
             self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                               expected)
 
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
         login(self.portal, 'pmManager')
-        self.setMeetingConfig('plonegov-assembly')
+        self.setMeetingConfig(self.meetingConfig2.getId())
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['o3', 'o4', 'o5', 'o6', 'o2'])
@@ -83,7 +83,7 @@ class testMeeting(PloneMeetingTestCase):
     def test_pm_InsertItemPrivacyThenCategories(self):
         '''Sort method tested here is "on_privacy_then_categories".'''
         login(self.portal, 'pmManager')
-        self.setMeetingConfig('plonegov-assembly')
+        self.setMeetingConfig(self.meetingConfig2.getId())
         self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_categories')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
@@ -113,11 +113,11 @@ class testMeeting(PloneMeetingTestCase):
         m1 = self._createMeetingWithItems()
         self.assertEquals(self.meetingConfig.getLastMeetingNumber(), 0)
         self.assertEquals(m1.getMeetingNumber(), -1)
-        self.do(m1, 'publish')
+        self.publishMeeting(m1)
         self.assertEquals(m1.getMeetingNumber(), 1)
         self.assertEquals(self.meetingConfig.getLastMeetingNumber(), 1)
         m2 = self._createMeetingWithItems()
-        self.do(m2, 'publish')
+        self.publishMeeting(m2)
         self.assertEquals(m2.getMeetingNumber(), 2)
         self.assertEquals(self.meetingConfig.getLastMeetingNumber(), 2)
 
@@ -128,6 +128,13 @@ class testMeeting(PloneMeetingTestCase):
           - with no preferred meeting
           - items for wich the preferredMeeting is not a future meeting
         """
+        login(self.portal, 'pmManager')
+        for meetingConfig in (self.meetingConfig.getId(), self.meetingConfig2.getId()):
+            self.setMeetingConfig(meetingConfig)
+            self._checkAvailableItems()
+
+    def _checkAvailableItems(self):
+        """Helper method for test_pm_AvailableItems."""
         #create 3 meetings
         #we can do every steps as a MeetingManager
         login(self.portal, 'pmManager')
@@ -143,14 +150,19 @@ class testMeeting(PloneMeetingTestCase):
         #one with m3 as preferredMeeting
         i1 = self.create('MeetingItem')
         i1.setTitle('i1')
-        i1.reindexObject()
         i2 = self.create('MeetingItem')
         i2.setPreferredMeeting(m2.UID())
         i2.setTitle('i2')
-        i2.reindexObject()
         i3 = self.create('MeetingItem')
         i3.setPreferredMeeting(m3.UID())
         i3.setTitle('i3')
+        # set a category if the meetingConfig use it
+        if not self.meetingConfig.getUseGroupsAsCategories():
+            i1.setCategory('development')
+            i2.setCategory('research')
+            i3.setCategory('events')
+        i1.reindexObject()
+        i2.reindexObject()
         i3.reindexObject()
         #for now, no items are presentable...
         self.assertEquals(len(m1.adapted().getAvailableItems()), 0)
@@ -214,9 +226,7 @@ class testMeeting(PloneMeetingTestCase):
         #create a meeting
         login(self.portal, 'pmManager')
         meeting = self._createMeetingWithItems()
-        if 'publish' in self.transitions(meeting):
-            self.do(meeting, 'publish')
-        self.do(meeting, 'freeze')
+        self.freezeMeeting(meeting)
         itemUids = []
         allItems = meeting.getItems()
         #set decision and place all items, except the last in uids
@@ -224,7 +234,7 @@ class testMeeting(PloneMeetingTestCase):
             item.setDecision(self.decisionText)
             if item != allItems[-1]:
                 itemUids.append(item.UID())
-        self.do(meeting, 'decide')
+        self.decideMeeting(meeting)
         #back item to itemFrozen state
         for item in allItems:
             if item.queryState() == 'accepted':
