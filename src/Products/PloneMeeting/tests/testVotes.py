@@ -72,7 +72,7 @@ class testVotes(PloneMeetingTestCase):
         self.changeUser('pmManager')
         lastState = m1.queryState()
         while not lastState == 'decided':
-            for tr in self.transitionsToCloseAMeeting:
+            for tr in self._getTransitionsToCloseAMeeting():
                 if tr in self.transitions(m1):
                     self.do(m1, tr)
                     break
@@ -140,7 +140,7 @@ class testVotes(PloneMeetingTestCase):
         # check while meeting evolve
         lastState = m1.queryState()
         while not lastState == 'decided':
-            for tr in self.transitionsToCloseAMeeting:
+            for tr in self._getTransitionsToCloseAMeeting():
                 if tr in self.transitions(m1):
                     self.do(m1, tr)
                     break
@@ -244,7 +244,7 @@ class testVotes(PloneMeetingTestCase):
         # voters can vote until the meeting is closed
         lastState = m1.queryState()
         while not lastState == 'closed':
-            for tr in self.transitionsToCloseAMeeting:
+            for tr in self._getTransitionsToCloseAMeeting():
                 if tr in self.transitions(m1):
                     self.do(m1, tr)
                     break

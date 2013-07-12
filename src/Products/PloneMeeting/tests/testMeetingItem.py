@@ -685,7 +685,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # in PloneMeeting default wf, 'itemfrozen' items are viewable by everybody (having MeetingObserverGlobal role)
         # but it will not be the case here for 'powerobservers'
         while not meeting.queryState() == 'frozen':
-            for tr in self.transitionsToCloseAMeeting:
+            for tr in self._getTransitionsToCloseAMeeting():
                 if tr in self.transitions(meeting):
                     self.do(meeting, tr)
                     break

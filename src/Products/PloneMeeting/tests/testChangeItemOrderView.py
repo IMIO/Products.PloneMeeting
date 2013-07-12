@@ -206,7 +206,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
             item.setDecision('<p>Dummy decision</p>')
             item.reindexObject(idxs=['getDecision', ])
         # items order is changeable until the meeting is in a closed state
-        for tr in self.transitionsToCloseAMeeting:
+        for tr in self._getTransitionsToCloseAMeeting():
             if tr in self.transitions(meeting):
                 self.do(meeting, tr)
                 # order still changeable

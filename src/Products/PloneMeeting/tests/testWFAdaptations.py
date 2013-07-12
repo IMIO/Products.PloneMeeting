@@ -309,7 +309,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # now here i1 is "presented"
         # once meeting/items are "published", it is visible by everybody
         isPublished = False
-        for tr in self.transitionsToCloseAMeeting:
+        for tr in self._getTransitionsToCloseAMeeting():
             login(self.portal, 'pmManager')
             if tr in self.transitions(m1):
                 self.do(m1, tr)
@@ -346,7 +346,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # now here i1 is "presented"
         # once meeting/items are "published", it is NOT visible because of the wfAdaptation
         isPublished = False
-        for tr in self.transitionsToCloseAMeeting:
+        for tr in self._getTransitionsToCloseAMeeting():
             login(self.portal, 'pmManager')
             if tr in self.transitions(m1):
                 self.do(m1, tr)
@@ -411,7 +411,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # now here i1 is "presented"
         # once meeting/items are "published", it is visible by everybody
         isPublished = False
-        for tr in self.transitionsToCloseAMeeting:
+        for tr in self._getTransitionsToCloseAMeeting():
             login(self.portal, 'pmManager')
             if tr in self.transitions(m1):
                 self.do(m1, tr)
@@ -453,7 +453,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # now here i1 is "presented"
         # once meeting/items are "published", it is visible by everybody
         isPublished = False
-        for tr in self.transitionsToCloseAMeeting:
+        for tr in self._getTransitionsToCloseAMeeting():
             login(self.portal, 'pmManager')
             if tr in self.transitions(m1):
                 self.do(m1, tr)
@@ -494,7 +494,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             login(self.portal, 'pmCreator1')
             # the creator can no more modify the item
             self.failIf(self.hasPermission('Modify portal content', i1))
-        for tr in self.transitionsToCloseAMeeting:
+        for tr in self._getTransitionsToCloseAMeeting():
             login(self.portal, 'pmManager')
             if tr in self.transitions(m1):
                 self.do(m1, tr)
@@ -522,7 +522,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                 self.failUnless(self.hasPermission('Modify portal content', i1))
             else:
                 self.failIf(self.hasPermission('Modify portal content', i1))
-        for tr in self.transitionsToCloseAMeeting:
+        for tr in self._getTransitionsToCloseAMeeting():
             login(self.portal, 'pmManager')
             if tr in self.transitions(m1):
                 self.do(m1, tr)
