@@ -166,10 +166,14 @@ meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendor
 # Second meeting type: a fictitious PloneMeeting assembly ----------------------
 
 # Recurring items
-recItem = RecurringItemDescriptor(
+recItem1 = RecurringItemDescriptor(
     'recItem1', 'Recurring item #1',
     '', category='developers', description='<p>This is the first recurring item.</p>',
-    decision='Recurring Item approved')
+    decision='First recurring item approved')
+recItem2 = RecurringItemDescriptor(
+    'recItem2', 'Recurring item #2',
+    '', category='developers', description='<p>This is the second recurring item.</p>',
+    decision='Second recurring item approved')
 # item templates
 template1 = RecurringItemDescriptor(
     'template1', 'Template1',
@@ -203,7 +207,7 @@ meetingPma.sortingMethodOnAddItem = 'on_proposing_groups'
 meetingPma.useGroupsAsCategories = True
 meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism', 'User interface'))
 meetingPma.sortAllItemTags = True
-meetingPma.recurringItems = (recItem, template1, template2, )
+meetingPma.recurringItems = (recItem1, recItem2, template1, template2, )
 # use same values as meetingPga for powerObserversStates
 meetingPma.itemPowerObserversStates = meetingPga.itemPowerObserversStates
 meetingPma.meetingPowerObserversStates = meetingPga.meetingPowerObserversStates

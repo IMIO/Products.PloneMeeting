@@ -50,7 +50,7 @@ class testMeeting(PloneMeetingTestCase):
             meeting = self._createMeetingWithItems()
             if meetingConfig == 'plonemeeting-assembly':
                 # There is a recurring item in this one
-                expected = ['recItem1', 'o3', 'o5', 'o2', 'o4', 'o6']
+                expected = ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6']
             else:
                 expected = ['o3', 'o4', 'o5', 'o6', 'o2']
             self.assertEquals([item.id for item in meeting.getItemsInOrder()],
@@ -70,7 +70,7 @@ class testMeeting(PloneMeetingTestCase):
         self.meetingConfig.setSortingMethodOnAddItem('on_all_groups')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                          ['recItem1', 'o3', 'o5', 'o2', 'o4', 'o6'])
+                          ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
 
     def test_pm_InsertItemPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy_then_proposing_groups".'''
@@ -78,7 +78,7 @@ class testMeeting(PloneMeetingTestCase):
         self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_proposing_groups')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                          ['recItem1', 'o3', 'o2', 'o6', 'o5', 'o4'])
+                          ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o5', 'o4'])
 
     def test_pm_InsertItemPrivacyThenCategories(self):
         '''Sort method tested here is "on_privacy_then_categories".'''
@@ -94,17 +94,17 @@ class testMeeting(PloneMeetingTestCase):
         login(self.portal, 'pmManager')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                          ['recItem1', 'o3', 'o5', 'o2', 'o4', 'o6'])
+                          ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
         #remove an item
         item5 = getattr(meeting, 'o5')
         meeting.removeItem(item5)
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                          ['recItem1', 'o3', 'o2', 'o4', 'o6'])
+                          ['recItem1', 'recItem2', 'o3', 'o2', 'o4', 'o6'])
         #delete a linked item
         item4 = getattr(meeting, 'o4')
         meeting.restrictedTraverse('@@delete_givenuid')(item4.UID())
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                          ['recItem1', 'o3', 'o2', 'o6'])
+                          ['recItem1', 'recItem2', 'o3', 'o2', 'o6'])
 
     def test_pm_MeetingNumbers(self):
         '''Tests that meetings receive correctly their numbers from the config
