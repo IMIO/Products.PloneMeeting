@@ -632,6 +632,8 @@ schema = Schema((
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('assembly')",
             label_msgid="meeting_assembly",
+            description="MeetingAssembly",
+            description_msgid="assembly_meeting_descr",
             label='Assembly',
             i18n_domain='PloneMeeting',
         ),
@@ -2124,6 +2126,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return self.portal_plonemeeting.gotoReferer()
 
 
+
 registerType(Meeting, PROJECTNAME)
 # end of class Meeting
 
@@ -2141,3 +2144,4 @@ def onAddMeeting(meeting, event):
     user = meeting.portal_membership.getAuthenticatedMember()
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 ##/code-section module-footer
+
