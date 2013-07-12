@@ -173,7 +173,7 @@ meetingPma.shortName = 'Pma'
 meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Arnaud Hubaux, Jean-Michel Abe, Stephan Geulette, ' \
                       'Godefroid Chapelle, Gaetan Deberdt, Gaetan Delannay'
-meetingPma.signatures = meetingPga.assembly
+meetingPma.signatures = 'Bill Gates, Steve Jobs'
 meetingPma.categories = [development, research]
 meetingPma.meetingFileTypes = [
     financialAnalysis, overheadAnalysis, itemAnnex, decisionAnnex, marketingAnalysis]
@@ -186,8 +186,8 @@ meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism'
 meetingPma.sortAllItemTags = True
 meetingPma.recurringItems = (recItem1, recItem2, template1, template2, )
 # use same values as meetingPga for powerObserversStates
-meetingPma.itemPowerObserversStates = meetingPga.itemPowerObserversStates
-meetingPma.meetingPowerObserversStates = meetingPga.meetingPowerObserversStates
+meetingPma.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
+meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
 meetingPma.useVotes = True
 meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
                            cadranel_signer, muser_voter1, muser_voter2]
@@ -200,7 +200,7 @@ meetingPga = MeetingConfigDescriptor(
     isDefault=True)
 meetingPga.shortName = 'Pga'
 meetingPga.assembly = 'Bill Gates, Steve Jobs'
-meetingPga.signatures = meetingPga.assembly
+meetingPga.signatures = 'Bill Gates, Steve Jobs'
 meetingPga.categories = [deployment, maintenance, development, events,
                          research, projects, marketing, subproducts]
 meetingPga.meetingFileTypes = [

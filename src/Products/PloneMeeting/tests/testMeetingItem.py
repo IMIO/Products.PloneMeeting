@@ -308,13 +308,11 @@ class testMeetingItem(PloneMeetingTestCase):
         #his reviewer validate it
         login(self.portal, 'pmReviewer1')
         #trigger transitions until the item is in state 'validated'
-        while not i1.queryState() == 'validated':
-            for tr in i1.wfConditions().transitionsForPresentingAnItem[1:-1]:
-                self.do(i1, tr)
+        self.validateItem(i1)
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         login(self.portal, 'pmManager')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        self.do(i1, 'present')
+        self.presentItem(i1)
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # do necessary transitions on the meeting before being able to accept an item
         necessaryMeetingTransitionsToAcceptItem = self._getNecessaryMeetingTransitionsToAcceptItem()
@@ -496,24 +494,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType().UID(),
                           self.meetingConfig2.getFileTypes(decisionRelated=True)[0].UID())
 
-    def _getTransitionToReachState(self, obj, state):
-        '''Given a state, return a transition that will set the obj in this state.'''
-        wf = self.wfTool.getWorkflowsFor(obj)[0]
-        res = ''
-        availableTransitions = self.transitions(obj)
-        for transition in wf.transitions.values():
-            if not transition.id in availableTransitions:
-                continue
-            if transition.new_state_id == state:
-                res = transition.id
-                break
-        return res
-
-    def _getNecessaryMeetingTransitionsToAcceptItem(self):
-        '''Returns the necessary transitions to trigger on the Meeting before being
-           able to accept an item.'''
-        return ['publish', 'freeze', ]
-
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
            the TAL expression defined on every MeetingGroup.asCopyGroupOn.'''
@@ -611,8 +591,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(self.hasPermission('View', i1))
         # validate the item
         login(self.portal, 'pmManager')
-        self.do(i1, 'propose')
-        self.do(i1, 'validate')
+        self.validateItem(i1)
         # while validated, the item is no more viewable by vendors
         login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
@@ -741,24 +720,18 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         meetingDate = DateTime('2008/06/12 08:00:00')
         meeting = self.create('Meeting', date=meetingDate)
-        self.changeUser('pmCreator1')
-        self.do(item, 'propose')
-        self.changeUser('pmReviewer1')
-        self.do(item, 'validate')
-        self.changeUser('pmManager')
-        self.do(item, 'present')
+        self.presentItem(item)
         self.assertEquals(item.maySignItem(authMember()), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
-        self.do(meeting, 'publish')
+        self.freezeMeeting(meeting)
         self.assertEquals(item.maySignItem(authMember()), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
-        self.do(meeting, 'freeze')
-        self.assertEquals(item.maySignItem(authMember()), False)
-        self.assertRaises(Unauthorized, item.setItemIsSigned, True)
-        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
-        self.do(meeting, 'decide')
+        self.decideMeeting(meeting)
+        # depending on the workflow used, 'deciding' a meeting can 'accept' every not yet accepted items...
+        if not item.queryState() == 'accepted':
+            self.do(item, 'accept')
         # now that the item is accepted, MeetingManagers can sign it
         self.assertEquals(item.maySignItem(authMember()), True)
         item.setItemIsSigned(True)
@@ -772,13 +745,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item.getItemIsSigned(), True)
         # check accessing setItemIsSigned directly
         item.setItemIsSigned(False)
-        self.do(meeting, 'close')
+        self.closeMeeting(meeting)
         # still able to sign an unsigned item in a closed meeting
         self.assertEquals(item.maySignItem(authMember()), True)
-        self.do(meeting, 'archive')
-        # still able to sign an unsigned item in an archived meeting
-        self.assertEquals(item.maySignItem(authMember()), True)
-        # once signed in a closed/archived meeting, no more able to unsign the item
+        # once signed in a closed meeting, no more able to unsign the item
         item.setItemIsSigned(True)
         self.assertEquals(item.maySignItem(authMember()), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, False)
@@ -798,15 +768,15 @@ class testMeetingItem(PloneMeetingTestCase):
         # create a 'public' and a 'secret' item
         self.changeUser('pmManager')
         publicItem = self.create('MeetingItem')
+        publicItem.setCategory('development')
+        publicItem.reindexObject()
         secretItem = self.create('MeetingItem')
         secretItem.setPrivacy('secret')
+        secretItem.setCategory('development')
+        secretItem.reindexObject()
         meeting = self.create('Meeting', date=DateTime('2013/06/01 08:00:00'))
-        self.do(publicItem, 'propose')
-        self.do(secretItem, 'propose')
-        self.do(publicItem, 'validate')
-        self.do(secretItem, 'validate')
-        self.do(publicItem, 'present')
-        self.do(secretItem, 'present')
+        self.presentItem(publicItem)
+        self.presentItem(secretItem)
         for transition in self._getNecessaryMeetingTransitionsToAcceptItem():
             self.do(meeting, transition)
         # now that the meeting has been published, the items are viewable

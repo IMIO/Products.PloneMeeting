@@ -30,9 +30,6 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
 class testMeetingCategory(PloneMeetingTestCase):
     '''Tests the MeetingCategory class methods.'''
 
-    def setUp(self):
-        PloneMeetingTestCase.setUp(self)
-
     def test_pm_CanNotRemoveLinkedMeetingCategory(self):
         '''While removing a MeetingCategory, it should raise if it is linked...'''
         self.meetingConfig.setUseGroupsAsCategories(False)

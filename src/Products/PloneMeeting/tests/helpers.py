@@ -33,6 +33,7 @@ class PloneMeetingTestingHelpers:
     TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('publish', )
     TRANSITIONS_FOR_FREEZING_MEETING_1 = TRANSITIONS_FOR_FREEZING_MEETING_2 = ('publish', 'freeze', )
     TRANSITIONS_FOR_DECIDING_MEETING_1 = TRANSITIONS_FOR_DECIDING_MEETING_2 = ('publish', 'freeze', 'decide', )
+    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('publish', 'freeze', 'decide', 'close', )
 
     BACK_TO_WF_PATH = {'proposed': ('backToItemFrozen', 'backToPresented', 'backToValidated', 'backToProposed', ),
                        'validated': ('backToItemFrozen', 'backToPresented', 'backToValidated', )}
@@ -67,6 +68,24 @@ class PloneMeetingTestingHelpers:
         for item in (item1, item2, item3, item4, item5):
             self.presentItem(item)
         return meeting
+
+    def _getNecessaryMeetingTransitionsToAcceptItem(self):
+        '''Returns the necessary transitions to trigger on the Meeting before being
+           able to accept an item.'''
+        return ['publish', 'freeze', ]
+
+    def _getTransitionToReachState(self, obj, state):
+        '''Given a state, return a transition that will set the obj in this state.'''
+        wf = self.wfTool.getWorkflowsFor(obj)[0]
+        res = ''
+        availableTransitions = self.transitions(obj)
+        for transition in wf.transitions.values():
+            if not transition.id in availableTransitions:
+                continue
+            if transition.new_state_id == state:
+                res = transition.id
+                break
+        return res
 
     def proposeItem(self, item):
         '''Propose passed p_item using TRANSITIONS_FOR_PROPOSING_ITEM_x.
@@ -109,6 +128,14 @@ class PloneMeetingTestingHelpers:
            the _x here above in TRANSITIONS_FOR_DECIDING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(meeting, getattr(self, ('TRANSITIONS_FOR_DECIDING_MEETING_%d' % meetingConfigNumber)))
+
+    def closeMeeting(self, meeting):
+        '''Close passed p_meeting using TRANSITIONS_FOR_CLOSING_MEETING_x.
+           The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
+           the _x here above in TRANSITIONS_FOR_CLOSING_MEETING_x is 1 or 2.'''
+        meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
+        self._doTransitionsFor(meeting, getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber)))
+
 
     def backToState(self, itemOrMeeting, state):
         """Set the p_item back to p_state."""
