@@ -33,7 +33,7 @@ class PloneMeetingTestingHelpers:
     TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('publish', )
     TRANSITIONS_FOR_FREEZING_MEETING_1 = TRANSITIONS_FOR_FREEZING_MEETING_2 = ('publish', 'freeze', )
     TRANSITIONS_FOR_DECIDING_MEETING_1 = TRANSITIONS_FOR_DECIDING_MEETING_2 = ('publish', 'freeze', 'decide', )
-    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('publish', 'freeze', 'decide', 'close', )
+    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('publish', 'freeze', 'decide', 'close', 'archive', )
 
     BACK_TO_WF_PATH = {'proposed': ('backToItemFrozen', 'backToPresented', 'backToValidated', 'backToProposed', ),
                        'validated': ('backToItemFrozen', 'backToPresented', 'backToValidated', )}
