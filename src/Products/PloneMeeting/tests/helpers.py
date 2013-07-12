@@ -69,6 +69,11 @@ class PloneMeetingTestingHelpers:
             self.presentItem(item)
         return meeting
 
+    def _getTransitionsToCloseAMeeting(self):
+        """ """
+        meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
+        return getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber))
+
     def _getNecessaryMeetingTransitionsToAcceptItem(self):
         '''Returns the necessary transitions to trigger on the Meeting before being
            able to accept an item.'''

@@ -65,16 +65,10 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _no_publication_inactive(self):
         '''Tests while 'no_publication' wfAdaptation is inactive.'''
-        m1 = self._createMeetingWithItems()
-        i1 = m1.getItems()[0]
-        while not 'publish' in self.transitions(m1):
-            for tr in self.transitionsToCloseAMeeting:
-                if tr in self.transitions(m1):
-                    self.do(m1, tr)
-                    break
-        self.failUnless('publish' in self.transitions(m1))
-        self.do(m1, 'publish')
-        self.assertEqual(i1.queryState(), 'itempublished')
+        meeting = self._createMeetingWithItems()
+        item = meeting.getItems()[0]
+        self.publishMeeting(meeting)
+        self.assertEqual(item.queryState(), 'itempublished')
 
     def _no_publication_active(self):
         '''Tests while 'no_publication' wfAdaptation is active.'''
@@ -82,13 +76,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf('publish' in self.transitions(m1))
         for item in m1.getItems():
             item.setDecision('<p>My decision<p>')
-        for tr in self.transitionsToCloseAMeeting:
+        for tr in self._getTransitionsToCloseAMeeting():
             if tr in self.transitions(m1):
                 lastTriggeredTransition = tr
                 self.do(m1, tr)
                 self.failIf('publish' in self.transitions(m1))
         # check that we are able to reach the end of the wf process
-        self.assertEquals(lastTriggeredTransition, self.transitionsToCloseAMeeting[-1])
+        self.assertEquals(lastTriggeredTransition, self._getTransitionsToCloseAMeeting()[-1])
 
     def test_pm_WFA_no_proposal(self):
         '''Test the workflowAdaptation 'no_proposal'.

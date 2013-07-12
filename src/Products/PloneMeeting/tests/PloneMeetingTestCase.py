@@ -98,7 +98,6 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         self.annexFile = 'INSTALL.TXT'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
-        self.transitionsToCloseAMeeting = ('publish', 'freeze', 'decide', 'close', 'archive')
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()
