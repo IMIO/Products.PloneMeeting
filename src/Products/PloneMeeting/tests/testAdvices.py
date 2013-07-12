@@ -38,6 +38,7 @@ class testAdvices(PloneMeetingTestCase):
     def setUp(self):
         """
         """
+        super(testAdvices, self).setUp()
         self.setMeetingConfig(self.meetingConfig2.getId())
         self.meetingConfig.setItemAdviceStates(('proposed', 'validated', ))
         self.meetingConfig.setItemAdviceEditStates(('proposed', ))
