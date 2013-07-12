@@ -42,7 +42,8 @@ class testVotes(PloneMeetingTestCase):
         PloneMeetingTestCase.setUp(self)
         # avoid recurring items
         login(self.portal, 'admin')
-        self.meetingConfig.recurringitems.manage_delObjects([self.meetingConfig.recurringitems.objectValues()[0].getId(), ])
+        self.meetingConfig.recurringitems.manage_delObjects(
+            [self.meetingConfig.recurringitems.objectValues()[0].getId(), ])
 
     def test_pm_MayConsultVotes(self):
         '''Test when a user may consult votes...'''
@@ -56,14 +57,14 @@ class testVotes(PloneMeetingTestCase):
         item1.setDecision('<p>A decision</p>')
         # nobody can consult votes until the item is presented
         self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', ])
-        self.do(item1, 'propose')
+        self.proposeItem(item1)
         self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
         self.changeUser('pmReviewer1')
-        self.do(item1, 'validate')
+        self.validateItem(item1)
         self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
         self.changeUser('pmManager')
         m1 = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
-        self.do(item1, 'present')
+        self.presentItem(item1)
         # even while presented, creators and reviewers
         # can not consult votes
         self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
@@ -82,7 +83,7 @@ class testVotes(PloneMeetingTestCase):
         # now that the meeting is decided, votes are consultable by everybody
         self._checkVotesConsultableFor(item1)
         # close the meeting so items are decided
-        self.do(m1, 'close')
+        self.closeMeeting(m1)
         self._checkVotesConsultableFor(item1)
 
     def _checkVotesConsultableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
@@ -238,7 +239,8 @@ class testVotes(PloneMeetingTestCase):
         self.request.set('vote_value_voter2', 'wrong_value')
         with self.assertRaises(ValueError) as cm:
             item1.onSaveItemPeopleInfos()
-        self.assertEquals(cm.exception.message, 'Trying to set vote with another value than ones defined in meetingConfig.usedVoteValues!')
+        self.assertEquals(cm.exception.message,
+                          'Trying to set vote with another value than ones defined in meetingConfig.usedVoteValues!')
         # voters can vote until the meeting is closed
         lastState = m1.queryState()
         while not lastState == 'closed':

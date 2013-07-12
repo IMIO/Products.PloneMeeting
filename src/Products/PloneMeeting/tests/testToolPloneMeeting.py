@@ -132,10 +132,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Add one annex
         self.addAnnex(item)
         # Now, validate the item. In this state, annexes are not removable.
-        self.do(item, 'propose')
-        self.changeUser('pmReviewer1')
-        self.do(item, 'validate')
-        login(self.portal, 'pmCreator1')
+        self.validateItem(item)
         clonedItem = item.clone()
         # The item is cloned in the pmCreator1 personal folder. We should
         # have now two elements in the folder
@@ -153,9 +150,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Add one annex
         self.addAnnex(item2)
         # Add advices to item2
-        self.do(item2, 'propose')
-        login(self.portal, 'pmReviewer1')
-        self.do(item2, 'validate')
+        self.validateItem(item2)
         login(self.portal, 'pmReviewer2')
         item2.editAdvice(group=self.portal.portal_plonemeeting.vendors, adviceType='positive', comment='My comment')
         login(self.portal, 'pmCreator1')
