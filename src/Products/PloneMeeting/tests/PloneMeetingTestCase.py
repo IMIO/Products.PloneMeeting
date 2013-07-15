@@ -179,7 +179,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         '''Get the meeting folder for the current meeting config.'''
         return self.tool.getPloneMeetingFolder(self.meetingConfig.id)
 
-    def create(self, objectType, folder=None, **attrs):
+    def create(self, objectType, folder=None, autoAddCategory=True, **attrs):
         '''Creates an instance of a meeting (if p_objectType is 'Meeting') or
            meeting item (if p_objectType is 'MeetingItem') and
            returns the created object. p_attrs is a dict of attributes
@@ -211,6 +211,12 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             # optionalAdvisers are not set (???) by invokeFactory...
             if 'optionalAdvisers' in attrs:
                 obj.setOptionalAdvisers(attrs['optionalAdvisers'])
+            # define a category for the item if necessary
+            if autoAddCategory and not \
+               self.meetingConfig.getUseGroupsAsCategories() and not \
+               obj.getCategory():
+                aCategory = self.meetingConfig.getCategories()[0].getId()
+                obj.setCategory(aCategory)
         # Some attributes in attrs are not taken into account.
         # The setAttributes method can set attrs after the object is created.
         if hasattr(obj.aq_inner, 'processForm'):
@@ -302,7 +308,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         """
         # our test class always inheritate from a PloneMeeting test class
         # except the testCustomXXX that are proper to MeetingCommunes
-        pmInheritatedClass = self.__class__.__bases__[-1]
+        pmInheritatedClass = self.__class__.__bases__[0]
         localTestClass = self
         # if we do not inheritate from a PloneMeeting test class, just return...
         if pmInheritatedClass.__class__.__name__ == localTestClass.__class__.__name__:
