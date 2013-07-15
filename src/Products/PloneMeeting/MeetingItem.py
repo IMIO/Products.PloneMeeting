@@ -2672,17 +2672,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 meetingRole = ploneGroup.getProperties()['meetingRole']
                 self.manage_addLocalRoles(groupId, (meetingRole,))
         if self.isCopiesEnabled():
-            # Add the local roles corresponding to the selected copyGroups.
-            # We give the MeetingObserverLocalCopy role to the selected groups.
-            # This will give them a read-only access to the item.
-            copyGroups = self.getCopyGroups()
-            if copyGroups:
-                for copyGroup in copyGroups:
-                    self.manage_addLocalRoles(
-                        copyGroup, ('MeetingObserverLocalCopy',))
+            self.updateCopyGroupsLocalRoles()
         # Update advices after updateLocalRoles because updateLocalRoles
         # reinitialize existing local roles
         self.updateAdvices(invalidate=self.willInvalidateAdvices())
+
+    security.declarePublic('updateCopyGroupsLocalRoles')
+    def updateCopyGroupsLocalRoles(self):
+        '''Give the MeetingPowerObserverLocal local role to the copy groups
+           depending on what is defined in the corresponding meetingConfig.'''
+        # Add the local roles corresponding to the selected copyGroups.
+        # We give the MeetingPowerObserverLocal role to the selected groups.
+        # This will give them a read-only access to the item.
+        copyGroups = self.getCopyGroups()
+        if copyGroups:
+            for copyGroup in copyGroups:
+                self.manage_addLocalRoles(
+                    copyGroup, ('MeetingObserverLocalCopy',))
 
     security.declarePublic('updatePowerObserversLocalRoles')
     def updatePowerObserversLocalRoles(self):
