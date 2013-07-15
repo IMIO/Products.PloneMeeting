@@ -496,12 +496,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.unrestrictedUsers = ''
         self.dateFormat = '%d %mt %Y'
         self.extractTextFromFiles = False
-        # If no availableInterfaceLanguage is specified, the user interface
-        # language will be the one as defined in the user's browser settings.
-        # Else, it will also be the case, but a language selector will allow the
-        # user to switch between available languages. This field is a string
-        # containing comma-separated 2-char language codes.
-        self.availableInterfaceLanguages = ''
         self.availableOcrLanguages = ('eng',)
         self.defaultOcrLanguage = 'eng'
         self.modelAdaptations = []
