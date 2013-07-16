@@ -524,13 +524,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(i4.getCopyGroups() == ('developers_reviewers',))
         # Now, creating an item that will make the condition on the MeetingGroup
         # True will make it add the relevant copyGroups
+        # moreover, check that auto added copyGroups add correctly
+        # relevant local roles for copyGroups
+        self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
         i5 = self.create('MeetingItem', proposingGroup='vendors')
         # We only have the '_reviewers' group, not the '_advisers'
         # as not in self.meetingConfig.selectableCopyGroups
         self.failUnless(i5.getCopyGroups() == ('developers_reviewers',))
-        # some special localRoles are added for autoAddedCopyGroups
+        # corresponding local roles are added because copyGroups
+        # can access the item when it is in state 'itemcreated'
         self.failUnless('developers_reviewers' in i5.__ac_local_roles__.keys())
-        self.failUnless('MeetingObserverLocalCopy' in i5.__ac_local_roles__['developers_reviewers'])
+        self.failUnless('MeetingPowerObserverLocal' in i5.__ac_local_roles__['developers_reviewers'])
         # addAutoCopyGroups is triggered upon each edit (at_post_edit_script)
         self.meetingConfig.vendors.setAsCopyGroupOn(
             "python: item.getProposingGroup() == 'vendors' and ['reviewers', ] or []")
@@ -542,13 +546,18 @@ class testMeetingItem(PloneMeetingTestCase):
         i5.at_post_edit_script()
         self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
         # check that local_roles are correct
-        self.failUnless('MeetingObserverLocalCopy' in i5.__ac_local_roles__['vendors_reviewers'])
+        self.failUnless('MeetingPowerObserverLocal' in i5.__ac_local_roles__['vendors_reviewers'])
 
     def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
-           Only 'MeetingPowerObserverLocal' local role should be impacted.'''
+           Only 'MeetingPowerObserverLocal' local role should be impacted.
+           Test also that using copyGroups given to _advisers groups still work as expected
+           with advisers used for advices functionnality.'''
         # to ease test override, consider that we can give advices when the item is created for this test
         self.meetingConfig.setItemAdviceStates(['itemcreated', 'proposed', 'validated', ])
+        # activate copyGroups when the item is 'itemcreated' so we can check
+        # behaviour between copyGroups and advisers
+        self.meetingConfig.setItemCopyGroupsStates(['itemcreated', ])
         login(self.portal, 'pmManager')
         i1 = self.create('MeetingItem')
         # add developers in optionalAdvisers
@@ -563,28 +572,40 @@ class testMeetingItem(PloneMeetingTestCase):
         i1.setCopyGroups(('developers_advisers', 'vendors_advisers'))
         i1.updateLocalRoles()
         i1.updateAdvices()
-        for principalId, localRoles in i1.get_local_roles():
-            if principalId == 'developers_advisers':
-                self.failUnless(('MeetingObserverLocalCopy', 'MeetingPowerObserverLocal') == localRoles)
-            if principalId == 'vendors_advisers':
-                self.failUnless(('MeetingObserverLocalCopy',) == localRoles)
+        # first make sure that we still have 'developers_advisers' in local roles
+        # because it is specified by copyGroups
+        self.failUnless('developers_advisers' in i1.__ac_local_roles__)
+        self.failUnless('vendors_advisers' in i1.__ac_local_roles__)
+        # related _advisers group have the ('MeetingPowerObserverLocal',) local roles
+        self.failUnless(i1.__ac_local_roles__['developers_advisers'] == ['MeetingPowerObserverLocal'])
+        self.failUnless(i1.__ac_local_roles__['vendors_advisers'] == ['MeetingPowerObserverLocal'])
         # now, remove developers in optionalAdvisers
         i1.setOptionalAdvisers(())
         i1.updateAdvices()
+        # the MeetingPowerObserverLocal local role is still assigned because of copyGroups...
         for principalId, localRoles in i1.get_local_roles():
             if principalId == 'developers_advisers':
-                self.failUnless(('MeetingObserverLocalCopy',) == localRoles)
+                self.failUnless(('MeetingPowerObserverLocal',) == localRoles)
             if principalId == 'vendors_advisers':
-                self.failUnless(('MeetingObserverLocalCopy',) == localRoles)
+                self.failUnless(('MeetingPowerObserverLocal',) == localRoles)
+        # if we remvoe copyGroups, MeetingPowerObserverLocal local roles disappear
+        i1.setCopyGroups(())
+        i1.processForm()
+        # only the _powerobservers group have the MeetingPowerObserverLocal role, no other groups
+        self.failUnless(i1.__ac_local_roles__['%s_powerobservers' % self.meetingConfig.getId()] ==
+                        ['MeetingPowerObserverLocal'])
+        for principalId, localRoles in i1.get_local_roles():
+            if not principalId.endswith(POWEROBSERVERS_GROUP_SUFFIX):
+                self.failIf(('MeetingPowerObserverLocal',) == localRoles)
 
     def test_pm_CopyGroups(self):
-        '''Test that if a group is set as copyGroups, the item is Viewable.
-           This test problem discribed here : https://dev.plone.org/ticket/13310.'''
+        '''Test that if a group is set as copyGroups, the item is Viewable.'''
         self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
         self.meetingConfig.setUseCopies(True)
+        self.meetingConfig.setItemCopyGroupsStates(('validated', ))
         login(self.portal, 'pmManager')
         i1 = self.create('MeetingItem')
-        # by default 'pmCreator2' and 'pmReviewer2' can not see the item
+        # by default 'pmCreator2' and 'pmReviewer2' can not see the item until it is validated
         login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         login(self.portal, 'pmReviewer2')
@@ -592,16 +613,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # validate the item
         login(self.portal, 'pmManager')
         self.validateItem(i1)
-        # while validated, the item is no more viewable by vendors
+        # not viewable because no copyGroups defined...
         login(self.portal, 'pmCreator2')
         self.failIf(self.hasPermission('View', i1))
         login(self.portal, 'pmReviewer2')
         self.failIf(self.hasPermission('View', i1))
-        # no add copyGroups
         login(self.portal, 'pmManager')
         i1.setCopyGroups(('vendors_reviewers',))
-        i1.updateLocalRoles()
-        i1.reindexObject()
+        i1.processForm()
         # getCopyGroups is a KeywordIndex, test different cases
         self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_reviewers')), 1)
         self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_creators')), 0)
@@ -611,12 +630,24 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(self.hasPermission('View', i1))
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', i1))
-        # remove copyGroups
+        # item only viewable by copy groups when in state 'validated'
+        # put it back to 'itemcreated', then test
         login(self.portal, 'pmManager')
+        self.backToState(i1, 'itemcreated')
+        login(self.portal, 'pmCreator2')
+        self.failIf(self.hasPermission('View', i1))
+        login(self.portal, 'pmReviewer2')
+        self.failIf(self.hasPermission('View', i1))
+        # put it to validated again then remove copy groups
+        login(self.portal, 'pmManager')
+        self.validateItem(i1)
+        login(self.portal, 'pmCreator2')
+        self.failIf(self.hasPermission('View', i1))
+        login(self.portal, 'pmReviewer2')
+        self.failUnless(self.hasPermission('View', i1))
+        # remove copyGroups
         i1.setCopyGroups(())
-        i1.updateLocalRoles()
-        # this test https://dev.plone.org/ticket/13310
-        i1.reindexObject()
+        i1.processForm()
         self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_reviewers')), 0)
         # Vendors can not see the item anymore
         login(self.portal, 'pmCreator2')

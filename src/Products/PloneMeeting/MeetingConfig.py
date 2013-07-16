@@ -1239,6 +1239,21 @@ schema = Schema((
         multiValued=1,
         vocabulary='listSelectableCopyGroups',
     ),
+    LinesField(
+        name='itemCopyGroupsStates',
+        widget=MultiSelectionWidget(
+            description="ItemCopyGroupsStates",
+            description_msgid="item_copygroups_states_descr",
+            label='Itemcopygroupsstates',
+            label_msgid='PloneMeeting_label_itemCopyGroupsStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemCopyGroupsStates,
+        enforceVocabulary=False,
+    ),
     BooleanField(
         name='useVotes',
         default=defValues.useVotes,
@@ -2873,3 +2888,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+

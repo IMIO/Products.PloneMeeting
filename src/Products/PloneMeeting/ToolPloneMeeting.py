@@ -304,7 +304,6 @@ schema = Schema((
             label='Modeladaptations',
             label_msgid='PloneMeeting_label_modelAdaptations',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         multiValued=1,
         vocabulary='listModelAdaptations',
@@ -2220,13 +2219,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('updatePowerObservers')
     def updatePowerObservers(self):
-        '''Update local_roles regargind the PowerObservers for every meetings and items.'''
+        '''Update local_roles regarging the PowerObservers for every meetings and items.'''
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
             raise Unauthorized
         for b in self.portal_catalog(meta_type=('Meeting', 'MeetingItem')):
             obj = b.getObject()
             obj.updatePowerObserversLocalRoles()
+            # Update security
+            obj.reindexObject(idxs=['allowedRolesAndUsers', ])
+        self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
+
+    security.declarePublic('updateCopyGroups')
+    def updateCopyGroups(self):
+        '''Update local_roles regarging the copyGroups for every items.'''
+        user = self.portal_membership.getAuthenticatedMember()
+        if not user.has_role('Manager'):
+            raise Unauthorized
+        for b in self.portal_catalog(meta_type=('MeetingItem', )):
+            obj = b.getObject()
+            obj.updateCopyGroupsLocalRoles()
             # Update security
             obj.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
@@ -2291,21 +2304,35 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 history.append(event)
         obj.workflow_history[obj.getWorkflowName()] = tuple(history)
 
-    def removeMeetingObserverLocalRolesFor(self, obj, suffix):
-        '''Remove the MeetingPowerObserverLocal local roles on p_obj for the given p_suffix
-           suffixed groups.  This method is used to remove MeetingPowerObserverLocal local roles
-           before adding it with a particular way that depends on the functionnality.'''
-        # First, remove MeetingPowerObserverLocal local roles granted to given suffix.
+    security.declarePublic('removeGivenLocalRolesFor')
+    def removeGivenLocalRolesFor(self, obj, role_to_remove, suffixes=[], notForGroups=[]):
+        '''Remove the p_role_to_remove local roles on p_obj for the given p_suffixes
+           suffixed groups but not for given p_notForGroups groups.
+           This method is used to remove specific local roles before adding
+           it with a particular way that depends on the functionnality.'''
         toRemove = []
+        # prepend a '_' before suffix name, because 'observers' and 'powerobservers'
+        # for example end with same part...
+        suffixes = ['_%s' % suffix for suffix in suffixes]
         for principalId, localRoles in obj.get_local_roles():
-            if principalId.endswith(suffix):
+            considerSuffix = False
+            # check if we have to take current principalId into
+            # accound regarding his suffix and p_suffixes
+            if suffixes:
+                for suffix in suffixes:
+                    if principalId.endswith(suffix):
+                        considerSuffix = True
+                        break
+            else:
+                considerSuffix = True
+            if considerSuffix and not principalId in notForGroups:
                 # Only remove 'MeetingPowerObserverLocal' as the groups could
                 # have other local roles given by other functionnalities like "copyGroups"
-                if len(localRoles) > 1 and 'MeetingPowerObserverLocal' in localRoles:
+                if len(localRoles) > 1 and role_to_remove in localRoles:
                     existingLocalRoles = list(localRoles)
-                    existingLocalRoles.remove('MeetingPowerObserverLocal')
+                    existingLocalRoles.remove(role_to_remove)
                     obj.manage_setLocalRoles(principalId, existingLocalRoles)
-                elif 'MeetingPowerObserverLocal' in localRoles:
+                elif role_to_remove in localRoles:
                     toRemove.append(principalId)
         obj.manage_delLocalRoles(toRemove)
 

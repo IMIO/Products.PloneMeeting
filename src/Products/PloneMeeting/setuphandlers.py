@@ -97,7 +97,7 @@ def setupCatalogMultiplex(context):
     explicit add classes (meta_types) be indexed in catalogs (white)
     or removed from indexing in a catalog (black)
     """
-    if isNotPloneMeetingProfile(context): return
+    if isNotPloneMeetingProfile(context): return 
     site = context.getSite()
     #dd#
     muliplexed = ['ToolPloneMeeting', 'MeetingCategory', 'MeetingConfig', 'MeetingFileType', 'MeetingGroup', 'ExternalApplication', 'PodTemplate', 'MeetingUser']
@@ -307,6 +307,7 @@ def postInstall(context):
     viewer_settings['show_search_on_group_view'] = False
 
 
+
 ##code-section FOOT
 def _configureCKeditor(site):
     '''Make sure CKeditor is the new default editor used by everyone...'''
@@ -314,7 +315,7 @@ def _configureCKeditor(site):
     try:
         site.cputils_configure_ckeditor(custom='plonemeeting')
         # add the "highlight red" style
-        
+
     except AttributeError:
         logger.warning("Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "
                        "installed and that the cputils_configure_ckeditor method is available")
@@ -355,7 +356,8 @@ def do(action, event):
     actionMethod = getattr(actionsAdapter, action)
     actionMethod(event)
     # Update MeetingPowerObserverLocal local roles given to the
-    # corresponding MeetingConfig powerobsevers group
+    # corresponding MeetingConfig powerobsevers group, necessary if event.object
+    # is a Meeting or an Item
     event.object.updatePowerObserversLocalRoles()
     if objectType == 'MeetingItem':
         # Update the local roles linked to advices if relevant
@@ -396,6 +398,8 @@ def onItemTransition(obj, event):
             if not obj._checkAlreadyClonedToOtherMC(otherMC):
                 obj.cloneToOtherMeetingConfig(otherMC)
     do(action, event)
+    # update local roles regarding copyGroups when changing item's state
+    obj.updateCopyGroupsLocalRoles()
 
 
 def onMeetingTransition(obj, event):

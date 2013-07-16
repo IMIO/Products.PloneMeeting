@@ -121,9 +121,6 @@ ploneMeetingRoles = (
     # Guys that may see items because the application wants it
     # It is the case for people having to give an advice on an item
     'MeetingPowerObserverLocal',
-    # Guys who may see items that the item creator has selected in the
-    # copyGroups box. This is a read-ony access to the item.
-    'MeetingObserverLocalCopy',
     # Guy who may see meetings and items once published (global role).
     'MeetingObserverGlobal',
 )

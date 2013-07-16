@@ -34,7 +34,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -131,7 +130,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -148,7 +146,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -244,7 +241,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -261,7 +257,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -358,7 +353,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -377,7 +371,6 @@
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
    <permission-role>MeetingArchiveObserver</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -468,7 +461,6 @@
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
    <permission-role>MeetingArchiveObserver</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -480,7 +472,6 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -524,7 +515,6 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
@@ -552,7 +542,6 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -571,7 +560,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -658,7 +646,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -675,7 +662,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -763,7 +749,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -780,7 +765,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingMember</permission-role>
    <permission-role>MeetingObserverUnpublished</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -870,7 +854,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingMember</permission-role>
    <permission-role>MeetingObserverUnpublished</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -885,7 +868,6 @@
    <permission-role>MeetingReviewer</permission-role>
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -964,7 +946,6 @@
    <permission-role>MeetingReviewer</permission-role>
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -981,7 +962,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -1078,7 +1058,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>
@@ -1095,7 +1074,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingMember</permission-role>
    <permission-role>MeetingObserverUnpublished</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
   <permission-map name="Add portal content"
@@ -1185,7 +1163,6 @@
    <permission-role>MeetingObserverLocal</permission-role>
    <permission-role>MeetingMember</permission-role>
    <permission-role>MeetingObserverUnpublished</permission-role>
-   <permission-role>MeetingObserverLocalCopy</permission-role>
    <permission-role>MeetingPowerObserverLocal</permission-role>
   </permission-map>
  </state>

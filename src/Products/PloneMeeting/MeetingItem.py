@@ -2464,7 +2464,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 del self.advices[groupId]
         # Update advice-related local roles.
         # First, remove MeetingPowerObserverLocal local roles granted to advisers.
-        tool.removeMeetingObserverLocalRolesFor(self, suffix='_advisers')
+        # but not for copyGroups related
+        tool.removeGivenLocalRolesFor(self,
+                                      role_to_remove='MeetingPowerObserverLocal',
+                                      suffixes=['advisers', ],
+                                      notForGroups=self.getCopyGroups())
         # Then, add local roles for advisers.
         itemState = self.queryState()
         for group in (mandatoryAdvisers, optionalAdvisers):
@@ -2671,8 +2675,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 ploneGroup = self.portal_groups.getGroupById(groupId)
                 meetingRole = ploneGroup.getProperties()['meetingRole']
                 self.manage_addLocalRoles(groupId, (meetingRole,))
-        if self.isCopiesEnabled():
-            self.updateCopyGroupsLocalRoles()
+        # update local roles regarding copyGroups
+        self.updateCopyGroupsLocalRoles()
         # Update advices after updateLocalRoles because updateLocalRoles
         # reinitialize existing local roles
         self.updateAdvices(invalidate=self.willInvalidateAdvices())
@@ -2681,21 +2685,38 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def updateCopyGroupsLocalRoles(self):
         '''Give the MeetingPowerObserverLocal local role to the copy groups
            depending on what is defined in the corresponding meetingConfig.'''
+        if not self.isCopiesEnabled():
+            return
+        # First, remove MeetingPowerObserverLocal local roles granted to
+        # MEETING_GROUP_SUFFIXES suffixed groups.  As this is the case also for
+        # advisers, we do not remove this role for advisers
+        advisers = self.advices.keys()
+        adviserGroups = ['%s_advisers' % adviser for adviser in advisers]
+        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
+                                                          role_to_remove='MeetingPowerObserverLocal',
+                                                          suffixes=MEETING_GROUP_SUFFIXES,
+                                                          notForGroups=adviserGroups)
+        # check if copyGroups should have access to this item for current review state
+        itemState = self.queryState()
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        if not itemState in cfg.getItemCopyGroupsStates():
+            return
         # Add the local roles corresponding to the selected copyGroups.
         # We give the MeetingPowerObserverLocal role to the selected groups.
         # This will give them a read-only access to the item.
         copyGroups = self.getCopyGroups()
         if copyGroups:
             for copyGroup in copyGroups:
-                self.manage_addLocalRoles(
-                    copyGroup, ('MeetingObserverLocalCopy',))
+                self.manage_addLocalRoles(copyGroup, ('MeetingPowerObserverLocal',))
 
     security.declarePublic('updatePowerObserversLocalRoles')
     def updatePowerObserversLocalRoles(self):
         '''Give the MeetingPowerObserverLocal local role to the corresponding
            MeetingConfig 'powerobservers' group.'''
         # First, remove MeetingPowerObserverLocal local roles granted to powerobservers.
-        self.portal_plonemeeting.removeMeetingObserverLocalRolesFor(self, suffix=POWEROBSERVERS_GROUP_SUFFIX)
+        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
+                                                          role_to_remove='MeetingPowerObserverLocal',
+                                                          suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
         # Then, add local roles for powerobservers.
         itemState = self.queryState()
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
@@ -3542,6 +3563,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(data)
             i = i + 1
         return res
+
 
 
 registerType(MeetingItem, PROJECTNAME)

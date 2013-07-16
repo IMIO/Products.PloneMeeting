@@ -6,7 +6,6 @@
     <role name="MeetingMember"/>
     <role name="MeetingObserverGlobal"/>
     <role name="MeetingObserverLocal"/>
-    <role name="MeetingObserverLocalCopy"/>
     <role name="MeetingObserverUnpublished"/>
     <role name="MeetingPowerObserverLocal"/>
     <role name="MeetingReviewer"/>

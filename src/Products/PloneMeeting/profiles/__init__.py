@@ -389,6 +389,7 @@ class MeetingConfigDescriptor(Descriptor):
         ]
         self.useCopies = False
         self.selectableCopyGroups = []
+        self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
 
         # GUI-related parameters -----------------------------------------------
         # In the "items" portlet, item-related topics will only search items

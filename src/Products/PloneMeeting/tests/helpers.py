@@ -39,8 +39,18 @@ class PloneMeetingTestingHelpers:
                                                                              'close',
                                                                              'archive', )
 
-    BACK_TO_WF_PATH = {'proposed': ('backToItemFrozen', 'backToPresented', 'backToValidated', 'backToProposed', ),
-                       'validated': ('backToItemFrozen', 'backToPresented', 'backToValidated', )}
+    BACK_TO_WF_PATH = {'itemcreated': ('backToItemFrozen',
+                                       'backToPresented',
+                                       'backToValidated',
+                                       'backToProposed',
+                                       'backToItemCreated', ),
+                       'proposed': ('backToItemFrozen',
+                                    'backToPresented',
+                                    'backToValidated',
+                                    'backToProposed', ),
+                       'validated': ('backToItemFrozen',
+                                     'backToPresented',
+                                     'backToValidated', )}
     WF_STATE_NAME_MAPPINGS = {'proposed': 'proposed',
                               'validated': 'validated'}
 

@@ -1704,7 +1704,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Give the MeetingPowerObserverLocal local role to the corresponding
            MeetingConfig 'powerobservers' group on self.'''
         # First, remove MeetingPowerObserverLocal local roles granted to powerobservers.
-        self.portal_plonemeeting.removeMeetingObserverLocalRolesFor(self, suffix=POWEROBSERVERS_GROUP_SUFFIX)
+        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
+                                                          role_to_remove='MeetingPowerObserverLocal',
+                                                          suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
         # Then, add local roles for powerobservers.
         meetingState = self.queryState()
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
@@ -2144,4 +2146,3 @@ def onAddMeeting(meeting, event):
     user = meeting.portal_membership.getAuthenticatedMember()
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 ##/code-section module-footer
-
