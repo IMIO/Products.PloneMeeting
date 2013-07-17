@@ -788,40 +788,42 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_IsPrivacyViewable(self):
         '''
-          Test who can access an item when it's privacy is 'private'.
+          Test who can access an item when it's privacy is 'secret'.
           By default, only members of the proposing group and super users
           (MeetingManager, Manager, PowerObservers) can access the item.
-          Test in an environment where every items are published in a certain moment.
-          User of same proposingGroup and super observers can access a secret item.
+          Use copyGroups to test this.
         '''
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        # we will use the copyGroups to check who can fully access item and who can not
+        self.meetingConfig.setItemCopyGroupsStates(('presented', ))
         # make powerobserver1 a PowerObserver
         self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' %
                                                       (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
         # create a 'public' and a 'secret' item
         self.changeUser('pmManager')
+        # add copyGroups that check that 'external' viewers can access the item but not isPrivacyViewable
         publicItem = self.create('MeetingItem')
         publicItem.setCategory('development')
+        publicItem.setCopyGroups('vendors_reviewers')
         publicItem.reindexObject()
         secretItem = self.create('MeetingItem')
         secretItem.setPrivacy('secret')
         secretItem.setCategory('development')
+        secretItem.setCopyGroups('vendors_reviewers')
         secretItem.reindexObject()
-        meeting = self.create('Meeting', date=DateTime('2013/06/01 08:00:00'))
+        self.create('Meeting', date=DateTime('2013/06/01 08:00:00'))
         self.presentItem(publicItem)
         self.presentItem(secretItem)
-        for transition in self._getNecessaryMeetingTransitionsToAcceptItem():
-            self.do(meeting, transition)
-        # now that the meeting has been published, the items are viewable
-        # by everyone but not privacyVieawble...
-        self.changeUser('pmCreator2')
+        # log in as a user that is in copyGroups
+        self.changeUser('pmReviewer2')
         member = self.portal.portal_membership.getAuthenticatedMember()
-        # the user can see the item because it is published
+        # the user can see the item because he is in the copyGroups
         # not because he is in the same proposing group
         secretItemPloneGroupsOfProposingGroup = getattr(self.tool,
                                                         secretItem.getProposingGroup()).getPloneGroups(idsOnly=True)
         self.failIf(set(secretItemPloneGroupsOfProposingGroup).intersection
                     (set(self.portal.portal_groups.getGroupsForPrincipal(member))))
-        # pmCreator2 can access the item but the item is not privacyViewable
+        # pmReviewer2 can access the item but the item is not privacyViewable
         self.failUnless(self.hasPermission('View', secretItem))
         self.failUnless(self.hasPermission('View', publicItem))
         self.failIf(secretItem.isPrivacyViewable())
