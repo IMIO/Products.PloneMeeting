@@ -40,7 +40,7 @@ import Products.PloneMeeting
 #from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
-from Products.PloneMeeting.testing import PM_TESTS_PROFILE_FUNCTIONAL
+from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 
 
@@ -62,7 +62,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
                'Meeting': Meeting_schema}
     subproductIgnoredTestFiles = ['testPerformances.py', 'testConversionWithDocumentViewer.py']
 
-    layer = PM_TESTS_PROFILE_FUNCTIONAL
+    layer = PM_TESTING_PROFILE_FUNCTIONAL
 
     def setUp(self):
         # Define some useful attributes
