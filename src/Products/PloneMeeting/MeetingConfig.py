@@ -2048,11 +2048,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             groupTitle = groupTitle.encode(enc)
             self.portal_groups.addGroup(groupId, title=groupTitle)
         # now define local_roles on the tool so it is accessible by this group
-        self.portal_plonemeeting.manage_addLocalRoles(groupId, ('MeetingPowerObserverLocal',))
+        self.portal_plonemeeting.manage_addLocalRoles(groupId, (POWEROBSERVERLOCAL_USECASES['power_observers'],))
         # but we do not want this group to access every MeetingConfigs so
         # remove inheritance on self and define these local_roles for self too
         self.__ac_local_roles_block__ = True
-        self.manage_addLocalRoles(groupId, ('MeetingPowerObserverLocal',))
+        self.manage_addLocalRoles(groupId, (POWEROBSERVERLOCAL_USECASES['power_observers'],))
 
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
@@ -2888,4 +2888,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-

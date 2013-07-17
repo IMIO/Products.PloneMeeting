@@ -2326,8 +2326,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 considerSuffix = True
             if considerSuffix and not principalId in notForGroups:
-                # Only remove 'MeetingPowerObserverLocal' as the groups could
-                # have other local roles given by other functionnalities like "copyGroups"
+                # Only remove 'role_to_remove' as the groups could
+                # have other local roles given by other functionnalities
                 if len(localRoles) > 1 and role_to_remove in localRoles:
                     existingLocalRoles = list(localRoles)
                     existingLocalRoles.remove(role_to_remove)
