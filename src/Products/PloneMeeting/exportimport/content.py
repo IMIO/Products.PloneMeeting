@@ -97,14 +97,14 @@ class ToolInitializer:
 
 # Functions that correspond to the PloneMeeting profile import steps -----------
 def isTestOrArchiveProfile(context):
-    isTest = context.readDataFile("PloneMeeting_test_marker.txt")
+    isTest = context.readDataFile("PloneMeeting_testing_marker.txt")
     isArchive = context.readDataFile("PloneMeeting_archive_marker.txt")
     return isTest or isArchive
 
 def initializeTool(context):
     '''Initialises the PloneMeeting tool based on information from the current
        profile.'''
-    # This method is called by several profiles: test, archive. Because of a bug
+    # This method is called by several profiles: testing, archive. Because of a bug
     # in portal_setup, the method can be wrongly called by the default profile.
     if not isTestOrArchiveProfile(context): return
     # Installs HubSessions/PloneMeeting if not already done
