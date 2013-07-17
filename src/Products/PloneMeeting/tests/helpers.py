@@ -38,7 +38,7 @@ class PloneMeetingTestingHelpers:
                                                                              'decide',
                                                                              'close',
                                                                              'archive', )
-
+    TRANSITIONS_FOR_ACCEPTING_ITEMS_1 = TRANSITIONS_FOR_ACCEPTING_ITEMS_2 = ('publish', 'freeze', )
     BACK_TO_WF_PATH_1 = BACK_TO_WF_PATH_2 = {
         'itemcreated': ('backToItemFrozen',
                         'backToPresented',
@@ -93,7 +93,8 @@ class PloneMeetingTestingHelpers:
     def _getNecessaryMeetingTransitionsToAcceptItem(self):
         '''Returns the necessary transitions to trigger on the Meeting before being
            able to accept an item.'''
-        return ['publish', 'freeze', ]
+        meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
+        return getattr(self, ('TRANSITIONS_FOR_ACCEPTING_ITEMS_%d' % meetingConfigNumber))
 
     def _getTransitionToReachState(self, obj, state):
         '''Given a state, return a transition that will set the obj in this state.'''
