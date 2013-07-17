@@ -713,25 +713,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # powerobserver2 can not see anything in meetingConfig
         self.changeUser(userThatCanNotSee)
         self.failIf(self.hasPermission('View', (presentedItem.getMeeting(), validatedItem, presentedItem)))
-        self.changeUser('pmManager')
-        # in PloneMeeting default wf, 'itemfrozen' items are viewable by everybody (having MeetingObserverGlobal role)
-        # but it will not be the case here for 'powerobservers'
-        while not meeting.queryState() == 'frozen':
-            for tr in self._getTransitionsToCloseAMeeting():
-                if tr in self.transitions(meeting):
-                    self.do(meeting, tr)
-                    break
-        self.changeUser(userThatCanSee)
-        frozenItem = meeting.getItems()[0]
-        self.assertEquals(frozenItem.queryState(), 'itemfrozen')
-        # but the 'powerobserver1' can not see it because powerobservers groups
-        # do not have the 'MeetingObserverGlobal' role
-        self.failIf(self.hasPermission('View', frozenItem))
-        # a frozen meeting is accessible by a powerobservers
-        self.failUnless(self.hasPermission('View', frozenItem.getMeeting()))
-        # powerobserver2 can not see anything in meetingConfig
+        # powerobservers do not have the MeetingObserverGlobal role
+        self.failIf('MeetingObserverGlobal' in self.portal.portal_membership.getAuthenticatedMember().getRoles())
         self.changeUser(userThatCanNotSee)
-        self.failIf(self.hasPermission('View', (frozenItem, frozenItem.getMeeting())))
+        self.failIf('MeetingObserverGlobal' in self.portal.portal_membership.getAuthenticatedMember().getRoles())
 
     def test_pm_ItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
