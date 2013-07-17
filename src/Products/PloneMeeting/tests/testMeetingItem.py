@@ -296,18 +296,17 @@ class testMeetingItem(PloneMeetingTestCase):
         login(self.portal, 'pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
         m1 = self.create('Meeting', date=meetingDate)
-        #a creator creates an item
+        # a creator creates an item
         login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         i1.setCategory('development')
         i1.setDecision('<p>My decision</p>', mimetype='text/html')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        #propose the item
-        self.do(i1, i1.wfConditions().transitionsForPresentingAnItem[0])
+        # propose the item
+        self.proposeItem(i1)
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        #his reviewer validate it
+        # his reviewer validate it
         login(self.portal, 'pmReviewer1')
-        #trigger transitions until the item is in state 'validated'
         self.validateItem(i1)
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         login(self.portal, 'pmManager')
@@ -320,62 +319,62 @@ class testMeetingItem(PloneMeetingTestCase):
             self.do(m1, transition)
             self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         self.do(i1, 'accept')
-        #still not sendable as 'plonemeeting-assembly' not in item.otherMeetingConfigsClonableTo
+        # still not sendable as 'plonemeeting-assembly' not in item.otherMeetingConfigsClonableTo
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        #define on the item that we want to send it to the 'plonemeeting-assembly'
+        # define on the item that we want to send it to the 'plonemeeting-assembly'
         i1.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
-        #now it is sendable by a MeetingManager
+        # now it is sendable by a MeetingManager
         self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        #but not by the creator
+        # but not by the creator
         login(self.portal, 'pmCreator1')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        #if not activated in the config, it is not sendable anymore
+        # if not activated in the config, it is not sendable anymore
         login(self.portal, 'admin')
         self.meetingConfig.setMeetingConfigsToCloneTo(())
         self.meetingConfig.at_post_edit_script()
         login(self.portal, 'pmManager')
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
 
-        #ok, activate it and send it!
+        # ok, activate it and send it!
         login(self.portal, 'admin')
         self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
         self.meetingConfig.at_post_edit_script()
         login(self.portal, 'pmManager')
         self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         i1.cloneToOtherMeetingConfig(otherMeetingConfigId)
-        #the item has not been created because the destination folder to create the item in does not exist
+        # the item has not been created because the destination folder to create the item in does not exist
         annotations = IAnnotations(i1)
         annotationKey = i1._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
         self.failIf(annotationKey in annotations)
-        #now create the destination folder so we can send the item
+        # now create the destination folder so we can send the item
         self.changeUser('pmCreator1')
         self.tool.getPloneMeetingFolder(otherMeetingConfigId)
-        #try again
+        # try again
         login(self.portal, 'pmManager')
         self.failUnless(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         i1.cloneToOtherMeetingConfig(otherMeetingConfigId)
-        #the item as been sent to another mc
-        #the new item is linked to it and his portal_type is de portal_type of the new meetingConfig
-        #the uid of the new item has been saved in the original item annotations
+        # the item as been sent to another mc
+        # the new item is linked to it and his portal_type is de portal_type of the new meetingConfig
+        # the uid of the new item has been saved in the original item annotations
         annotations = IAnnotations(i1)
         annotationKey = i1._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
         newUID = annotations[annotationKey]
         newItem = self.portal.uid_catalog(UID=newUID)[0].getObject()
-        #the newItem is linked to the original
+        # the newItem is linked to the original
         self.failUnless(newItem.getPredecessor().UID() == i1.UID())
-        #the newItem has a new portal_type
+        # the newItem has a new portal_type
         self.failIf(newItem.portal_type == i1.portal_type)
         self.failUnless(newItem.portal_type == self.tool.getMeetingConfig(newItem).getItemTypeName())
-        #the new item is created in his initial state
+        # the new item is created in his initial state
         self.failUnless(self.wfTool.getInfoFor(newItem, 'review_state') == 'itemcreated')
-        #the original item is no more sendable to the same meetingConfig
+        # the original item is no more sendable to the same meetingConfig
         self.failIf(i1.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        #while cloning to another meetingConfig, some fields that are normally kept
-        #while duplicating an item are no more kept, like category or classifier that
-        #depends on the meetingConfig the item is in
+        # while cloning to another meetingConfig, some fields that are normally kept
+        # while duplicating an item are no more kept, like category or classifier that
+        # depends on the meetingConfig the item is in
         self.failIf(newItem.getCategory() == i1.getCategory())
-        #if we remove the newItem, the reference in the original item annotation is removed
-        #and the original item is sendable again
+        # if we remove the newItem, the reference in the original item annotation is removed
+        # and the original item is sendable again
         self.changeUser('pmCreator1')
         self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
         self.changeUser('pmManager')
@@ -443,13 +442,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # Propose the item
         self.do(i1, i1.wfConditions().transitionsForPresentingAnItem[0])
         login(self.portal, 'pmReviewer1')
-        # Trigger transitions until the item is in state 'validated'
-        while not i1.queryState() == 'validated':
-            for tr in i1.wfConditions().transitionsForPresentingAnItem[1:-1]:
-                self.do(i1, tr)
+        self.validateItem(i1)
         login(self.portal, 'pmManager')
-        # Accept the item
-        self.do(i1, 'present')
+        self.presentItem(i1)
         # Do necessary transitions on the meeting before being able to accept an item
         necessaryMeetingTransitionsToAcceptItem = self._getNecessaryMeetingTransitionsToAcceptItem()
         for transition in necessaryMeetingTransitionsToAcceptItem:
