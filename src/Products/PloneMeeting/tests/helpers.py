@@ -39,18 +39,20 @@ class PloneMeetingTestingHelpers:
                                                                              'close',
                                                                              'archive', )
 
-    BACK_TO_WF_PATH = {'itemcreated': ('backToItemFrozen',
-                                       'backToPresented',
-                                       'backToValidated',
-                                       'backToProposed',
-                                       'backToItemCreated', ),
-                       'proposed': ('backToItemFrozen',
-                                    'backToPresented',
-                                    'backToValidated',
-                                    'backToProposed', ),
-                       'validated': ('backToItemFrozen',
-                                     'backToPresented',
-                                     'backToValidated', )}
+    BACK_TO_WF_PATH_1 = BACK_TO_WF_PATH_2 = {
+        'itemcreated': ('backToItemFrozen',
+                        'backToPresented',
+                        'backToValidated',
+                        'backToProposed',
+                        'backToItemCreated', ),
+        'proposed': ('backToItemFrozen',
+                     'backToPresented',
+                     'backToValidated',
+                     'backToProposed', ),
+        'validated': ('backToItemFrozen',
+                      'backToPresented',
+                      'backToValidated', )}
+
     WF_STATE_NAME_MAPPINGS = {'proposed': 'proposed',
                               'validated': 'validated'}
 
@@ -157,11 +159,13 @@ class PloneMeetingTestingHelpers:
 
     def backToState(self, itemOrMeeting, state):
         """Set the p_item back to p_state."""
-        # if a wf path is defined in BACK_TO_WF_PATH to go to relevant state, use it
+        # if a wf path is defined in BACK_TO_WF_PATH_x to go to relevant state, use it
         # if not, trigger every 'backToXXX' existing transition
+        meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
+        BACK_TO_WF_PATH = getattr(self, 'BACK_TO_WF_PATH_%d' % meetingConfigNumber)
         useDefinedWfPath = False
-        if state in self.BACK_TO_WF_PATH:
-            transitions = self.BACK_TO_WF_PATH[state]
+        if state in BACK_TO_WF_PATH:
+            transitions = BACK_TO_WF_PATH[state]
             useDefinedWfPath = True
         else:
             transitions = self.transitions(itemOrMeeting)
