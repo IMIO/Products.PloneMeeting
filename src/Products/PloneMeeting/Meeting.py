@@ -1704,7 +1704,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Give the MeetingPowerObserverLocal local role to the corresponding
            MeetingConfig 'powerobservers' group on self.'''
         # First, remove MeetingPowerObserverLocal local roles granted to powerobservers.
-        role_to_remove = POWEROBSERVERLOCAL_USECASES['power_observers']
+        role_to_remove = READER_USECASES['power_observers']
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
                                                           role_to_remove=role_to_remove,
                                                           suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
@@ -1714,7 +1714,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if not meetingState in cfg.getMeetingPowerObserversStates():
             return
         powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-        self.manage_addLocalRoles(powerObserversGroupId, (POWEROBSERVERLOCAL_USECASES['power_observers'],))
+        self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['power_observers'],))
 
     security.declareProtected('Modify portal content', 'transformRichTextField')
     def transformRichTextField(self, fieldName, richContent):

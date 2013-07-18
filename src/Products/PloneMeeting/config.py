@@ -103,13 +103,13 @@ MEETING_GROUP_SUFFIXES = MEETINGROLES.keys()
 # users that will be able to see the items in state corresponding to MeetingConfig.itemPowerObserverStates
 POWEROBSERVERS_GROUP_SUFFIX = 'powerobservers'
 
-# This is a mapping between usecases around the role MeetingPowerObserverLocal
+# This is a mapping between usecases around the role Reader, so users that can see
 # By default, the same role is used for different usecases, so it will give the same view permission by the wf
 # If a special usecase needs to use another role, it can be specified in a sub-plugin
-POWEROBSERVERLOCAL_USECASES = {
-    'copy_groups': 'MeetingPowerObserverLocal',
-    'advices': 'MeetingPowerObserverLocal',
-    'power_observers': 'MeetingPowerObserverLocal',
+READER_USECASES = {
+    'copy_groups': 'Reader',
+    'advices': 'Reader',
+    'power_observers': 'Reader',
 }
 
 ploneMeetingRoles = (

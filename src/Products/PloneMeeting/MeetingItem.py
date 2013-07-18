@@ -2463,9 +2463,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                groupId not in advisers:
                 del self.advices[groupId]
         # Update advice-related local roles.
-        # First, remove MeetingPowerObserverLocal local roles granted to advisers.
+        # First, remove 'Reader' local roles granted to advisers.
         # but not for copyGroups related
-        role_to_remove = POWEROBSERVERLOCAL_USECASES['advices']
+        role_to_remove = READER_USECASES['advices']
         tool.removeGivenLocalRolesFor(self,
                                       role_to_remove=role_to_remove,
                                       suffixes=['advisers', ],
@@ -2480,7 +2480,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                    (itemState not in mGroup.getItemAdviceEditStates(cfg))and \
                    (itemState not in mGroup.getItemAdviceViewStates(cfg)):
                     continue
-                self.manage_addLocalRoles(ploneGroup, (POWEROBSERVERLOCAL_USECASES['advices'],))
+                self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
         # Invalidate advices if needed
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
@@ -2693,7 +2693,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # advisers, we do not remove this role for advisers
         advisers = self.advices.keys()
         adviserGroups = ['%s_advisers' % adviser for adviser in advisers]
-        role_to_remove = POWEROBSERVERLOCAL_USECASES['copy_groups']
+        role_to_remove = READER_USECASES['copy_groups']
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
                                                           role_to_remove=role_to_remove,
                                                           suffixes=MEETING_GROUP_SUFFIXES,
@@ -2709,14 +2709,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyGroups = self.getCopyGroups()
         if copyGroups:
             for copyGroup in copyGroups:
-                self.manage_addLocalRoles(copyGroup, (POWEROBSERVERLOCAL_USECASES['copy_groups'],))
+                self.manage_addLocalRoles(copyGroup, (READER_USECASES['copy_groups'],))
 
     security.declarePublic('updatePowerObserversLocalRoles')
     def updatePowerObserversLocalRoles(self):
         '''Give the MeetingPowerObserverLocal local role to the corresponding
            MeetingConfig 'powerobservers' group.'''
         # First, remove MeetingPowerObserverLocal local roles granted to powerobservers.
-        role_to_remove = POWEROBSERVERLOCAL_USECASES['power_observers']
+        role_to_remove = READER_USECASES['power_observers']
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
                                                           role_to_remove=role_to_remove,
                                                           suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
@@ -2726,7 +2726,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not itemState in cfg.getItemPowerObserversStates():
             return
         powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-        self.manage_addLocalRoles(powerObserversGroupId, (POWEROBSERVERLOCAL_USECASES['power_observers'],))
+        self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['power_observers'],))
 
     security.declareProtected(ModifyPortalContent, 'processForm')
     def processForm(self, *args, **kwargs):
