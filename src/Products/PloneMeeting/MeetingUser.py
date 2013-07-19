@@ -367,7 +367,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         if (loggedUser.id == mUser.getId()) or \
            loggedUser.has_role('MeetingManager') or \
            loggedUser.has_role('Manager') or \
-           item.getMeeting().isDecided():
+           item.getMeeting().adapted().isDecided():
             return True
         return False
 
@@ -545,4 +545,3 @@ registerType(MeetingUser, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-
