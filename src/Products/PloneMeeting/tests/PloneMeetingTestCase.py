@@ -22,6 +22,7 @@
 
 import unittest2
 import os.path
+from Acquisition import aq_base
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
 
@@ -131,17 +132,9 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
            Note that p_obj may be a list of object instead of a single object.
            In this case, the method returns True if the currently logged user
            has p_permission on every object of the list.'''
-        # borg localroles are memoized...
-        # so while checking local roles twice, there could be problems...
-        # remove memoized localroles
-        annotations = IAnnotations(self.portal.REQUEST)
-        annotations_to_delete = []
-        for annotation in annotations.keys():
-            if annotation.startswith('borg.localrole.workspace.checkLocalRolesAllowed'):
-                annotations_to_delete.append(annotation)
 
-        for annotation_to_delete in annotations_to_delete:
-            del annotations[annotation_to_delete]
+        # make sure we do not have permission check cache problems...
+        self.cleanMemoize()
 
         sm = getSecurityManager()
         res = True
@@ -223,6 +216,8 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             # at_post_create_script is called by processForm
             # but processForm manage the _at_creation_flag
             obj.processForm()
+        # make sure we do not have permission check cache problems...
+        self.cleanMemoize()
         return obj
 
     def setAttributes(self, obj, **attrs):
@@ -288,6 +283,27 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         theAnnex = item.uid_catalog(UID=annexUid)[0].getObject()
         self.assertNotEquals(theAnnex.size(), 0)
         return theAnnex
+
+    def cleanMemoize(self, obj=None):
+        """
+          Remove every memoized informations : memoize on the REQUEST and on the object
+        """
+        # borg localroles are memoized...
+        # so while checking local roles twice, there could be problems...
+        # remove memoized localroles
+        annotations = IAnnotations(self.portal.REQUEST)
+        annotations_to_delete = []
+        for annotation in annotations.keys():
+            if annotation.startswith('borg.localrole.workspace.checkLocalRolesAllowed'):
+                annotations_to_delete.append(annotation)
+
+        for annotation_to_delete in annotations_to_delete:
+            del annotations[annotation_to_delete]
+
+        if 'plone.memoize' in annotations:
+            annotations['plone.memoize'].clear()
+        if obj and hasattr(aq_base(obj), '_memojito_'):
+            delattr(obj, '_memojito_')
 
     # Workflow-related methods -------------------------------------------------
     def do(self, obj, transition):

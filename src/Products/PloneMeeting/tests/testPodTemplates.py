@@ -36,7 +36,6 @@ class testPodTemplates(PloneMeetingTestCase):
         # Create an item as creator
         login(self.portal, 'pmManager')
         item = self.create('MeetingItem')
-        item.setCategory('development')
         podTemplates = self.meetingConfig.getAvailablePodTemplates(item)
         self.assertEquals(len(podTemplates), 1)
         self.assertEquals(podTemplates[0].Title(), 'Meeting item')
