@@ -70,16 +70,7 @@ class testVotes(PloneMeetingTestCase):
         self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
         # decide the meeting
         self.changeUser('pmManager')
-        lastState = m1.queryState()
-        while not lastState == 'decided':
-            for tr in self._getTransitionsToCloseAMeeting():
-                if tr in self.transitions(m1):
-                    self.do(m1, tr)
-                    break
-            if m1.queryState() == lastState:
-                raise Exception, "Infinite loop...  Not able to find a 'decided' state for the Meeting 'm1'."
-            else:
-                lastState = m1.queryState()
+        self.decideMeeting(m1)
         # now that the meeting is decided, votes are consultable by everybody
         self._checkVotesConsultableFor(item1)
         # close the meeting so items are decided
@@ -120,14 +111,14 @@ class testVotes(PloneMeetingTestCase):
         item1.setDecision('<p>A decision</p>')
         # nobody can edit votes until the item is presented
         self._checkVotesNotEditableFor(item1)
-        self.do(item1, 'propose')
+        self.proposeItem(item1)
         self._checkVotesNotEditableFor(item1)
         self.changeUser('pmReviewer1')
-        self.do(item1, 'validate')
+        self.validateItem(item1)
         self._checkVotesNotEditableFor(item1)
         self.changeUser('pmManager')
         m1 = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
-        self.do(item1, 'present')
+        self.presentItem(item1)
         # even while presented, creators, reviewers, voters and MeetingManagers (not in MeetingConfig.votesEncoder)
         # can not edit votes
         self._checkVotesNotEditableFor(item1)
@@ -139,7 +130,7 @@ class testVotes(PloneMeetingTestCase):
         self._checkVotesEditableFor(item1, userIds=['pmManager', ])
         # check while meeting evolve
         lastState = m1.queryState()
-        while not lastState == 'decided':
+        while not m1.adapted().isDecided():
             for tr in self._getTransitionsToCloseAMeeting():
                 if tr in self.transitions(m1):
                     self.do(m1, tr)
@@ -151,7 +142,7 @@ class testVotes(PloneMeetingTestCase):
             else:
                 lastState = m1.queryState()
         # close the meeting so votes are not editable anymore by anybody
-        self.do(m1, 'close')
+        self.closeMeeting(m1)
         self._checkVotesNotEditableFor(item1)
 
     def _checkVotesNotEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
@@ -197,15 +188,15 @@ class testVotes(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message, 'Trying to set vote for unexisting voter!')
         # in fact, no voter available...
         self.failIf(item1.getAttendees('voter'))
-        self.do(item1, 'propose')
+        self.proposeItem(item1)
         self.failIf(item1.getAttendees('voter'))
         self.changeUser('pmReviewer1')
-        self.do(item1, 'validate')
+        self.validateItem(item1)
         self.failIf(item1.getAttendees('voter'))
         # ...until the item is in a meeting
         self.changeUser('pmManager')
         m1 = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
-        self.do(item1, 'present')
+        self.presentItem(item1)
         self.assertEquals([voter.getId() for voter in item1.getAttendees('voter')], ['voter1', 'voter2', ])
         # now voters and MeetingManagers can edit votes
         # a voter can not vote for somebody else
@@ -243,7 +234,7 @@ class testVotes(PloneMeetingTestCase):
                           'Trying to set vote with another value than ones defined in meetingConfig.usedVoteValues!')
         # voters can vote until the meeting is closed
         lastState = m1.queryState()
-        while not lastState == 'closed':
+        while not m1.adapted().isDecided():
             for tr in self._getTransitionsToCloseAMeeting():
                 if tr in self.transitions(m1):
                     self.do(m1, tr)
@@ -253,6 +244,8 @@ class testVotes(PloneMeetingTestCase):
             else:
                 lastState = m1.queryState()
         # a MeetingManager can not change vote values
+        import ipdb; ipdb.set_trace()
+        item1.onSaveItemPeopleInfos()
         self.assertRaises(Unauthorized, item1.onSaveItemPeopleInfos)
 
     def test_pm_SecretVotes(self):
@@ -267,12 +260,12 @@ class testVotes(PloneMeetingTestCase):
         item1 = self.create('MeetingItem', **data)
         item1.setDecision('<p>A decision</p>')
         # present the item in a meeting so votes functionnality is active
-        self.do(item1, 'propose')
+        self.proposeItem(item1)
         self.changeUser('pmReviewer1')
-        self.do(item1, 'validate')
+        self.validateItem(item1)
         self.changeUser('pmManager')
         self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
-        self.do(item1, 'present')
+        self.presentItem(item1)
         # votes are not secret by default
         self.failIf(item1.getVotesAreSecret())
         # can not switch votes mode to secret if some votes already encoded
