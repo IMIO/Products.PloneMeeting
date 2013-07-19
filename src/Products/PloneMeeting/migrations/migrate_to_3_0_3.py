@@ -54,7 +54,26 @@ class Migrate_To_3_0_3(Migrator):
             obj.updatePowerObserversLocalRoles()
             # Update security as local_roles are modified by updateLocalRoles
             obj.reindexObject(idxs=['allowedRolesAndUsers', ])
-        logger.info('MeetingItems local roles have been updated.')
+        logger.info('Updating local_roles for portal_plonemeeting and MeetingConfigs...')
+        tool = self.portal.portal_plonemeeting
+        # remove local_roles regarding old role 'MeetingPowerObserverLocal' on portal_plonemeeting
+        toolLocalRoles = dict(tool.__ac_local_roles__)
+        for principal in tool.__ac_local_roles__:
+            if 'MeetingPowerObserverLocal' in tool.__ac_local_roles__[principal]:
+                toolLocalRoles.pop(principal)
+        tool.__ac_local_roles__ = dict(toolLocalRoles)
+        # roles on portal_plonemeeting are added by MeetingConfig.createPowerObserversGroup
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # remove local_roles regarding old role 'MeetingPowerObserverLocal' on cfg
+            cfgLocalRoles = dict(cfg.__ac_local_roles__)
+            for principal in cfg.__ac_local_roles__:
+                if 'MeetingPowerObserverLocal' in cfg.__ac_local_roles__[principal]:
+                    cfgLocalRoles.pop(principal)
+            cfg.__ac_local_roles__ = dict(cfgLocalRoles)
+            # this create and update relevant local roles
+            # if the group already exists, local roles are update nevertheless
+            cfg.createPowerObserversGroup()
+        logger.info('Done.')
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0.3...')
