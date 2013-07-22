@@ -234,7 +234,7 @@ class testVotes(PloneMeetingTestCase):
                           'Trying to set vote with another value than ones defined in meetingConfig.usedVoteValues!')
         # voters can vote until the meeting is closed
         lastState = m1.queryState()
-        while not m1.adapted().isDecided():
+        while not lastState == 'closed':
             for tr in self._getTransitionsToCloseAMeeting():
                 if tr in self.transitions(m1):
                     self.do(m1, tr)
@@ -244,8 +244,6 @@ class testVotes(PloneMeetingTestCase):
             else:
                 lastState = m1.queryState()
         # a MeetingManager can not change vote values
-        import ipdb; ipdb.set_trace()
-        item1.onSaveItemPeopleInfos()
         self.assertRaises(Unauthorized, item1.onSaveItemPeopleInfos)
 
     def test_pm_SecretVotes(self):
