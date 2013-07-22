@@ -363,6 +363,12 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         # self.__module__ is like 'Products.MySubProducts.tests.MySubProductTestCase'
         subproduct_name = self.__module__.split('tests')[0][0:-1]
         subproduct_files = [f[0] for f in subproduct_files_generator if subproduct_name in f[0]]
+        # if we do not find any test files using Products.MyProduct, check with Products/MyProduct
+        # probably we are in a development buildout...
+        if not subproduct_files:
+            subproduct_name = subproduct_name.replace('.', '/')
+            subproduct_files_generator = find_test_files(options)
+        subproduct_files = [f[0] for f in subproduct_files_generator if subproduct_name in f[0]]
         # get test files for PloneMeeting
         # find PloneMeeting package path
         import os
