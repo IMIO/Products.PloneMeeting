@@ -40,6 +40,11 @@ class PloneMeetingTestingHelpers:
                                                                              'archive', )
     TRANSITIONS_FOR_ACCEPTING_ITEMS_1 = TRANSITIONS_FOR_ACCEPTING_ITEMS_2 = ('publish', 'freeze', )
     BACK_TO_WF_PATH_1 = BACK_TO_WF_PATH_2 = {
+        # Meeting
+        'created': ('backToFrozen',
+                    'backToPublished',
+                    'backToCreated',),
+        # MeetingItem
         'itemcreated': ('backToItemFrozen',
                         'backToPresented',
                         'backToValidated',
@@ -56,33 +61,36 @@ class PloneMeetingTestingHelpers:
     WF_STATE_NAME_MAPPINGS = {'proposed': 'proposed',
                               'validated': 'validated'}
 
-    def _createMeetingWithItems(self):
+    def _createMeetingWithItems(self, withItems=True):
         '''Create a meeting with a bunch of items.'''
         meetingDate = DateTime()
         meeting = self.create('Meeting', date=meetingDate)
-        item1 = self.create('MeetingItem')  # id=o2
-        item1.setProposingGroup('vendors')
-        item1.setAssociatedGroups(('developers',))
-        item1.setPrivacy('public')
-        item1.setCategory('research')
-        item2 = self.create('MeetingItem')  # id=o3
-        item2.setProposingGroup('developers')
-        item2.setPrivacy('public')
-        item2.setCategory('development')
-        item3 = self.create('MeetingItem')  # id=o4
-        item3.setProposingGroup('vendors')
-        item3.setPrivacy('secret')
-        item3.setCategory('development')
-        item4 = self.create('MeetingItem')  # id=o5
-        item4.setProposingGroup('developers')
-        item4.setPrivacy('secret')
-        item4.setCategory('events')
-        item5 = self.create('MeetingItem')  # id=o6
-        item5.setProposingGroup('vendors')
-        item5.setPrivacy('public')
-        item5.setCategory('events')
-        for item in (item1, item2, item3, item4, item5):
-            self.presentItem(item)
+        # a meeting could be created with items if it has
+        # recurring items...  But we can also add some more...
+        if withItems:
+            item1 = self.create('MeetingItem')  # id=o2
+            item1.setProposingGroup('vendors')
+            item1.setAssociatedGroups(('developers',))
+            item1.setPrivacy('public')
+            item1.setCategory('research')
+            item2 = self.create('MeetingItem')  # id=o3
+            item2.setProposingGroup('developers')
+            item2.setPrivacy('public')
+            item2.setCategory('development')
+            item3 = self.create('MeetingItem')  # id=o4
+            item3.setProposingGroup('vendors')
+            item3.setPrivacy('secret')
+            item3.setCategory('development')
+            item4 = self.create('MeetingItem')  # id=o5
+            item4.setProposingGroup('developers')
+            item4.setPrivacy('secret')
+            item4.setCategory('events')
+            item5 = self.create('MeetingItem')  # id=o6
+            item5.setProposingGroup('vendors')
+            item5.setPrivacy('public')
+            item5.setCategory('events')
+            for item in (item1, item2, item3, item4, item5):
+                self.presentItem(item)
         return meeting
 
     def _getTransitionsToCloseAMeeting(self):
