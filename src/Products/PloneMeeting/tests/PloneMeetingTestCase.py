@@ -368,7 +368,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         if not subproduct_files:
             subproduct_name = subproduct_name.replace('.', '/')
             subproduct_files_generator = find_test_files(options)
-        subproduct_files = [f[0] for f in subproduct_files_generator if subproduct_name in f[0]]
+            subproduct_files = [f[0] for f in subproduct_files_generator if subproduct_name in f[0]]
         # get test files for PloneMeeting
         # find PloneMeeting package path
         import os
