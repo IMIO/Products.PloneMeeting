@@ -87,7 +87,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmCreator1b')
         # Check that now MeetingMember(s) can't remove the item anymore
         self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), item.UID())
-        self.changeUser('pmReviewer1')
+        # but a super user could
+        self.changeUser('pmManager')
         self.portal.restrictedTraverse('@@delete_givenuid')(annex1.UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.failIf(len(parentFolder.objectValues()) != 0)
