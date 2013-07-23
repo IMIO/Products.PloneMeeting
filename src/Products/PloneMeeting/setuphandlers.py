@@ -313,17 +313,19 @@ def _configureCKeditor(site):
     '''Make sure CKeditor is the new default editor used by everyone...'''
     logger.info('Defining CKeditor as the new default editor for every users and configuring it (styles)...')
     try:
+        # this will install collective.ckeditor if it is not already the case...
         site.cputils_configure_ckeditor(custom='plonemeeting')
         # remove every styles defined by default and add the "highlight red" style if not already done...
         cke_props = site.portal_properties.ckeditor_properties
-        enc = site.portal_properties.site_properties.getProperty('default_charset')
-        if not 'highlight-red' in cke_props.menuStyles:
+        if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
+            enc = site.portal_properties.site_properties.getProperty('default_charset')
             msg = translate('ckeditor_style_highlight_in_red',
                             domain='PloneMeeting',
                             context=site.REQUEST).encode('utf-8')
             cke_props.menuStyles = \
-                unicode("[\n{ name : '%s'\t\t, element : 'span', "
-                        "attributes : { 'class' : 'highlight-red' } },\n]\n" % msg,
+                unicode("[\n%s\n{ name : '%s'\t\t, element : 'span', "
+                        "attributes : { 'class' : 'highlight-red' } },\n]\n" %
+                        (CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg),
                         enc)
     except AttributeError:
         logger.warning("Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "

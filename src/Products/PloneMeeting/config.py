@@ -189,6 +189,9 @@ NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
 SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY = 'PloneMeeting-sent_to_other_meetingconfig_'
 CLONE_TO_OTHER_MC_ACTION_SUFFIX = 'clone_to_other_mc_'
 
+# Value added in the CKeditor menuStyles to specify that it has been customized
+CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG = '/* Styles have been customized, do not remove this line! */'
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the
