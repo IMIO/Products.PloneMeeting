@@ -53,7 +53,6 @@ from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import AccessContentsInformation, DeleteObjects, View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.PloneBatch import Batch
-from plone.app.layout.navigation.interfaces import INavigationRoot
 from Products.DCWorkflow.Transitions import TRIGGER_USER_ACTION
 from Products.DCWorkflow.Expression import StateChangeInfo, createExprContext
 from Products.ATContentTypes import permission as ATCTPermissions
@@ -158,17 +157,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         required=True,
-    ),
-    BooleanField(
-        name='navigateLocally',
-        default=defValues.navigateLocally,
-        widget=BooleanField._properties['widget'](
-            description_msgid="navigate_locally",
-            description="NavigateLocally",
-            label='Navigatelocally',
-            label_msgid='PloneMeeting_label_navigateLocally',
-            i18n_domain='PloneMeeting',
-        ),
     ),
     StringField(
         name='functionalAdminEmail',
@@ -657,14 +645,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             rootFolder.setConstrainTypesMode(1)
             rootFolder.setLocallyAllowedTypes(['Folder'])
             rootFolder.setImmediatelyAddableTypes(['Folder'])
-            # If "navigateLocally" is True, we set rootFolder as
-            # INavigationRoot.
-            # Beware that the home portlet will follow this and will point on
-            # the local INavigationRoot. The solution is to change the action
-            # index_html to set "string:${portal/portal_url/getPortalPath}".
-            if self.getNavigateLocally():
-                directlyProvides(rootFolder, INavigationRoot)
-                rootFolder.reindexObject()
 
         root_folder = getattr(home_folder, ROOT_FOLDER)
         if not hasattr(root_folder, meetingConfigId):

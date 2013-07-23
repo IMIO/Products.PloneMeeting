@@ -189,9 +189,7 @@
           <td tal:define="field python:here.getField('meetingFolderTitle')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('navigateLocally')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
+          <td></td>
         </tr>
       </table>
     </fieldset>

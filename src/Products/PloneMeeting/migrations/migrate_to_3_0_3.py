@@ -3,6 +3,10 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 from Products.PloneMeeting.migrations import Migrator
 
+from Acquisition import aq_base
+from plone.app.layout.navigation.interfaces import INavigationRoot
+from zope.interface import noLongerProvides
+
 
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_0_3(Migrator):
@@ -31,6 +35,7 @@ class Migrate_To_3_0_3(Migrator):
                 self.portal.acl_users.portal_role_manager.removeRole('MeetingPowerObserverLocal')
             except KeyError:
                 pass
+        logger.info('Done.')
 
     def _updateLocalRoles(self):
         '''Roles 'MeetingPowerObserverLocal' and 'MeetingObserverLocalCopy' disappeared, we need to update
@@ -75,17 +80,33 @@ class Migrate_To_3_0_3(Migrator):
             cfg.createPowerObserversGroup()
         logger.info('Done.')
 
+    def _removeToolNavigateLocallyFunctionnality(self):
+        '''ToolPloneMeeting.navigateLocally has been removed, so :
+           - remove INavigationRoot interface that was set on personal folders
+           - remove attribute on portal_plonemeeting'''
+        MembersPath = self.portal.Members.getPhysicalPath()
+        brains = self.portal.portal_catalog(portal_type=('Folder', ), path={'query': '/'.join(MembersPath), 'depth': 3})
+        logger.info('Removing INavigationRoot marked interface, scanning %d folders...' % len(brains))
+        for brain in brains:
+            obj = brain.getObject()
+            if INavigationRoot.providedBy(obj):
+                noLongerProvides(obj, INavigationRoot)
+        if hasattr(aq_base(self.portal.portal_plonemeeting), 'navigateLocally'):
+            delattr(self.portal.portal_plonemeeting, 'navigateLocally')
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0.3...')
 
         self._removeUselessRoles()
-        self._updateLocalRoles()
-        # update catalogs regarding permission changes in workflows
-        self.refreshDatabase(catalogs=True,
-                             catalogsToRebuild=['portal_catalog',
-                                                'uid_catalog',
-                                                'reference_catalog', ],
-                             workflows=False)
+        #self._updateLocalRoles()
+        self._removeToolNavigateLocallyFunctionnality()
+        # update catalogs regarding permission changes in workflows and provided interfaces
+        #self.refreshDatabase(catalogs=True,
+        #                     catalogsToRebuild=['portal_catalog',
+        #                                        'uid_catalog',
+        #                                        'reference_catalog', ],
+        #                     workflows=False)
         self.finish()
 
 
@@ -95,7 +116,8 @@ def migrate(context):
 
        1) Remove unused roles 'MeetingPowerObserverLocal' and 'MeetingObserverLocalCopy';
        2) Update local roles of items to remove 'MeetingObserverLocalCopy' no more used local role;
-       3) Update catalogs and workflows
+       3) Remove the INavigationRoot interface that was marked on some personal folders;
+       4) Update catalogs and workflows
     '''
     Migrate_To_3_0_3(context).run()
 # ------------------------------------------------------------------------------

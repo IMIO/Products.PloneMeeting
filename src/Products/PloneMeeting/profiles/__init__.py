@@ -511,7 +511,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.ploneDiskAware = False
         self.unoEnabledPython = ''
         self.openOfficePort = 2002
-        self.navigateLocally = False
         self.functionalAdminEmail = ''
         self.functionalAdminName = ''
         self.usedColorSystem = 'no_color'
