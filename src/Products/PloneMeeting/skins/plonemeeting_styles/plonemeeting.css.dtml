@@ -468,6 +468,12 @@ text-decoration: underline;
 /* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
 .highlightRedefinedValue {color: red;}
 
+/* Add a highlight-red style useable in CKeditor to highlight modified elements */
+/* See ticket #901 on http://trac.imio.be */
+.highlight-red {
+color:red;
+}
+
 /* CSS for MeetingItem.privacy */
 /* While displayed as a single item (meetingitem_view) */
 .item_privacy_public {

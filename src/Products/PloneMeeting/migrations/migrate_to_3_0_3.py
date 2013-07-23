@@ -99,14 +99,16 @@ class Migrate_To_3_0_3(Migrator):
         logger.info('Migrating to PloneMeeting 3.0.3...')
 
         self._removeUselessRoles()
-        #self._updateLocalRoles()
+        self._updateLocalRoles()
         self._removeToolNavigateLocallyFunctionnality()
+        # reinstall so CKeditor styles are updated
+        self.reinstall()
         # update catalogs regarding permission changes in workflows and provided interfaces
-        #self.refreshDatabase(catalogs=True,
-        #                     catalogsToRebuild=['portal_catalog',
-        #                                        'uid_catalog',
-        #                                        'reference_catalog', ],
-        #                     workflows=False)
+        self.refreshDatabase(catalogs=True,
+                             catalogsToRebuild=['portal_catalog',
+                                                'uid_catalog',
+                                                'reference_catalog', ],
+                             workflows=False)
         self.finish()
 
 
