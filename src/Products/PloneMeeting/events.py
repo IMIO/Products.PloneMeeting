@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# File: setuphandlers.py
+# File: events.py
 #
 # Copyright (c) 2013 by Imio.be
 # Generator: ArchGenXML Version 2.7
