@@ -34,12 +34,10 @@ from Products.PloneMeeting.utils import \
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
 from Products.PloneMeeting.ExternalApplication import \
     sendNotificationsIfRelevant
-from Products.PloneMeeting.MeetingItem import MeetingItem
 
 folderViews = ('meetingfolder_redirect_view', 'meetingfolder_view')
 pmGroupProperties = ('meetingRole', 'meetingGroupId')
 noSearchTypes = ('Folder',)
-podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 # Indexes used by HubSessions
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''
@@ -388,67 +386,4 @@ def do(action, event):
     eventName = '%s.%s' % (objectType, event.transition.id)
     sendNotificationsIfRelevant(event.object, eventName)
 
-
-def onItemTransition(obj, event):
-    '''Called whenever a transition has been fired on an item.'''
-    if not event.transition or (obj != event.object):
-        return
-    transitionId = event.transition.id
-    if transitionId.startswith('backTo'):
-        action = 'doCorrect'
-    elif transitionId.startswith('item'):
-        action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
-    else:
-        action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
-    # check if we need to send the item to another meetingConfig
-    if obj.queryState() in MeetingItem.itemPositiveDecidedStates:
-        otherMCs = obj.getOtherMeetingConfigsClonableTo()
-        for otherMC in otherMCs:
-            # if already cloned to another MC, pass.  This could be the case
-            # if the item is accepted, corrected then accepted again
-            if not obj._checkAlreadyClonedToOtherMC(otherMC):
-                obj.cloneToOtherMeetingConfig(otherMC)
-    do(action, event)
-    # update local roles regarding copyGroups when changing item's state
-    obj.updateCopyGroupsLocalRoles()
-
-
-def onMeetingTransition(obj, event):
-    '''Called whenever a transition has been fired on a meeting.'''
-    if not event.transition or (obj != event.object):
-        return
-    transitionId = event.transition.id
-    action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
-    do(action, event)
-
-
-def onMeetingGroupTransition(obj, event):
-    '''Called whenever a transition has been fired on a meetingGroup.'''
-    if not event.transition or (obj != event.object):
-        return
-    transitionId = event.transition.id
-    # If we deactivate a MeetingGroup, every users of sub Plone groups are
-    # transfered to the '_observers' suffixed Plone group
-    if transitionId == 'deactivate':
-        # Remove every users from the linked Plone groups and
-        # save them so we can add them after to the '_observers' suffixed group
-        userIds = []
-        groupsTool = getToolByName(obj, 'portal_groups')
-        for ploneGroupId in obj.getPloneGroups(idsOnly=True):
-            memberIds = groupsTool.getGroupMembers(ploneGroupId)
-            userIds = userIds + list(memberIds)
-            for memberId in memberIds:
-                groupsTool.removePrincipalFromGroup(memberId, ploneGroupId)
-        observersGroupId = obj.getPloneGroupId('observers')
-        # Add every users that where belonging to different Plone groups
-        # to the '_observers' group
-        for userId in userIds:
-            groupsTool.addPrincipalToGroup(userId, observersGroupId)
-        # Remove the group from every meetingConfigs.selectableCopyGroups
-        reviewersGroupId = obj.getPloneGroupId('reviewers')
-        for mc in obj.portal_plonemeeting.objectValues('MeetingConfig'):
-            selectableCopyGroups = list(mc.getSelectableCopyGroups())
-            if reviewersGroupId in selectableCopyGroups:
-                selectableCopyGroups.remove(reviewersGroupId)
-                mc.setSelectableCopyGroups(selectableCopyGroups)
 ##/code-section FOOT

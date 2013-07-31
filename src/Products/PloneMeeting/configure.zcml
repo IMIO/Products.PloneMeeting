@@ -41,15 +41,15 @@
 
   <subscriber for=".interfaces.IMeetingItem
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".setuphandlers.onItemTransition"/>
+              handler=".events.onItemTransition"/>
 
   <subscriber for=".interfaces.IMeeting
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".setuphandlers.onMeetingTransition"/>
+              handler=".events.onMeetingTransition"/>
 
   <subscriber for=".interfaces.IMeetingGroup
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".setuphandlers.onMeetingGroupTransition"/>
+              handler=".events.onMeetingGroupTransition"/>
 
   <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
   <subscriber
