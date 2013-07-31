@@ -95,12 +95,21 @@ class Migrate_To_3_0_3(Migrator):
             delattr(self.portal.portal_plonemeeting, 'navigateLocally')
         logger.info('Done.')
 
+    def _disableUserPreferences(self):
+        '''Disable user preferences until the relevant roadmap is not finished.
+           The problem is when things are activated in the configuration and not on the user
+           preferences because this was changed before (see ticket #6445).
+        '''
+        logger.info('Disabling user preferences')
+        self.tool.setEnableUserPreferences(False)
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0.3...')
 
         self._removeUselessRoles()
         self._updateLocalRoles()
         self._removeToolNavigateLocallyFunctionnality()
+        self._disableUserPreferences()
         # reinstall so CKeditor styles are updated
         self.reinstall()
         # update catalogs regarding permission changes in workflows and provided interfaces
@@ -119,7 +128,8 @@ def migrate(context):
        1) Remove unused roles 'MeetingPowerObserverLocal' and 'MeetingObserverLocalCopy';
        2) Update local roles of items to remove 'MeetingObserverLocalCopy' no more used local role;
        3) Remove the INavigationRoot interface that was marked on some personal folders;
-       4) Update catalogs and workflows
+       4) Disable user preferences;
+       4) Update catalogs and workflows.
     '''
     Migrate_To_3_0_3(context).run()
 # ------------------------------------------------------------------------------
