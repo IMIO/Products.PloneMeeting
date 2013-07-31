@@ -2555,7 +2555,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([user.getId()])
         self.manage_addLocalRoles(user.getId(), ('Owner',))
         self.updateLocalRoles()
-        # Update MeetingPowerObserverLocal local roles given to the
+        # Update 'power observers' local roles given to the
         # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
         # is selected as viewable by 'powerobservers'
         self.updatePowerObserversLocalRoles()
@@ -2684,11 +2684,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('updateCopyGroupsLocalRoles')
     def updateCopyGroupsLocalRoles(self):
-        '''Give the MeetingPowerObserverLocal local role to the copy groups
+        '''Give the 'power observers' local role to the copy groups
            depending on what is defined in the corresponding meetingConfig.'''
         if not self.isCopiesEnabled():
             return
-        # First, remove MeetingPowerObserverLocal local roles granted to
+        # First, remove 'power observers' local roles granted to
         # MEETING_GROUP_SUFFIXES suffixed groups.  As this is the case also for
         # advisers, we do not remove this role for advisers
         advisers = self.advices.keys()
@@ -2704,7 +2704,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not itemState in cfg.getItemCopyGroupsStates():
             return
         # Add the local roles corresponding to the selected copyGroups.
-        # We give the MeetingPowerObserverLocal role to the selected groups.
+        # We give the 'power observer' role to the selected groups.
         # This will give them a read-only access to the item.
         copyGroups = self.getCopyGroups()
         if copyGroups:
@@ -2713,9 +2713,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('updatePowerObserversLocalRoles')
     def updatePowerObserversLocalRoles(self):
-        '''Give the MeetingPowerObserverLocal local role to the corresponding
+        '''Configure local role for use case 'power_observers' to the corresponding
            MeetingConfig 'powerobservers' group.'''
-        # First, remove MeetingPowerObserverLocal local roles granted to powerobservers.
+        # First, remove 'power observer' local roles granted to powerobservers.
         role_to_remove = READER_USECASES['power_observers']
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
                                                           role_to_remove=role_to_remove,

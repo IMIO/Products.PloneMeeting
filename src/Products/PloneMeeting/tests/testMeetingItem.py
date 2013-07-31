@@ -545,7 +545,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
-           Only 'MeetingPowerObserverLocal' local role should be impacted.
+           Only 'power observers' corresponding local role local should be impacted.
            Test also that using copyGroups given to _advisers groups still work as expected
            with advisers used for advices functionnality.'''
         # to ease test override, consider that we can give advices when the item is created for this test
@@ -571,22 +571,22 @@ class testMeetingItem(PloneMeetingTestCase):
         # because it is specified by copyGroups
         self.failUnless('developers_advisers' in i1.__ac_local_roles__)
         self.failUnless('vendors_advisers' in i1.__ac_local_roles__)
-        # related _advisers group have the ('MeetingPowerObserverLocal',) local roles
+        # related _advisers group have the ('Reader',) local roles
         self.failUnless(i1.__ac_local_roles__['developers_advisers'] == [READER_USECASES['copy_groups']])
         self.failUnless(i1.__ac_local_roles__['vendors_advisers'] == [READER_USECASES['copy_groups']])
         # now, remove developers in optionalAdvisers
         i1.setOptionalAdvisers(())
         i1.updateAdvices()
-        # the MeetingPowerObserverLocal local role is still assigned because of copyGroups...
+        # the 'copy groups' corresponding local role is still assigned because of copyGroups...
         for principalId, localRoles in i1.get_local_roles():
             if principalId == 'developers_advisers':
                 self.failUnless((READER_USECASES['copy_groups'],) == localRoles)
             if principalId == 'vendors_advisers':
                 self.failUnless((READER_USECASES['copy_groups'],) == localRoles)
-        # if we remvoe copyGroups, MeetingPowerObserverLocal local roles disappear
+        # if we remove copyGroups, corresponding local roles disappear
         i1.setCopyGroups(())
         i1.processForm()
-        # only the _powerobservers group have the MeetingPowerObserverLocal role, no other groups
+        # only the _powerobservers group have the corresponding local role, no other groups
         self.failUnless(i1.__ac_local_roles__['%s_powerobservers' % self.meetingConfig.getId()] ==
                         [READER_USECASES['power_observers']])
         for principalId, localRoles in i1.get_local_roles():

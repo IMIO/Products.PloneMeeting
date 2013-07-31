@@ -198,7 +198,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         meetingConfig2Id = self.meetingConfig2.getId()
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
-        # every roles of the application can see the tabs, except MeetingPowerObserverLocal
+        # every roles of the application can see the tabs, except 'power observers' corresponding role
         login(self.portal, 'pmManager')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
@@ -210,7 +210,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
         # If a wrong meetingConfigId is passed, it returns False
         self.assertEquals(self.tool.showPloneMeetingTab('wrong-meeting-config-id'), False)
-        # The tab of 'meetingConfig1Id' is not viewable by MeetingPowerObserverLocal of 'meetingConfig2Id'
+        # The tab of 'meetingConfig1Id' is not viewable by 'power observers' corresponding role of 'meetingConfig2Id'
         login(self.portal, 'powerobserver1')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)

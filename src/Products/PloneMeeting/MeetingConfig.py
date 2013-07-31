@@ -2033,7 +2033,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createPowerObserversGroup')
     def createPowerObserversGroup(self):
-        '''Creates a Plone group that will be used to apply the MeetingPowerObserverLocal
+        '''Creates a Plone group that will be used to apply the 'Reader'
            local role on every items of this MeetingConfig regarding self.itemPowerObserverStates.'''
         groupId = "%s_%s" % (self.getId(), POWEROBSERVERS_GROUP_SUFFIX)
         if not groupId in self.portal_groups.listGroupIds():

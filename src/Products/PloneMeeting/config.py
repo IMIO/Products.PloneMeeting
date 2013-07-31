@@ -127,9 +127,6 @@ ploneMeetingRoles = (
     'MeetingReviewer',
     # Guys who may see items of people from their group (local role)
     'MeetingObserverLocal',
-    # Guys that may see items because the application wants it
-    # It is the case for people having to give an advice on an item
-    'MeetingPowerObserverLocal',
     # Guy who may see meetings and items once published (global role).
     'MeetingObserverGlobal',
 )

@@ -32,7 +32,7 @@ def do(action, event):
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
     actionMethod(event)
-    # Update MeetingPowerObserverLocal local roles given to the
+    # Update power observers local roles given to the
     # corresponding MeetingConfig powerobsevers group, necessary if event.object
     # is a Meeting or an Item
     event.object.updatePowerObserversLocalRoles()

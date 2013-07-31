@@ -1660,7 +1660,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
         self.forceHTMLContentTypeForEmptyRichFields()
-        # Update MeetingPowerObserverLocal local roles given to the
+        # Update 'power observers' local roles given to the
         # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
         # is selected as viewable by 'powerobservers'
         self.updatePowerObserversLocalRoles()
@@ -1701,9 +1701,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     security.declarePublic('updatePowerObserversLocalRoles')
     def updatePowerObserversLocalRoles(self):
-        '''Give the MeetingPowerObserverLocal local role to the corresponding
+        '''Give the 'power observers' local role to the corresponding
            MeetingConfig 'powerobservers' group on self.'''
-        # First, remove MeetingPowerObserverLocal local roles granted to powerobservers.
+        # First, remove 'power observers' local roles granted to powerobservers.
         role_to_remove = READER_USECASES['power_observers']
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
                                                           role_to_remove=role_to_remove,
