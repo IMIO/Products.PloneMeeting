@@ -355,35 +355,4 @@ def reInstall(context):
     profileId = u'profile-Products.PloneMeeting:default'
     context.runAllImportStepsFromProfile(profileId)
 
-
-# Code executed after a workflow transition has been triggered -----------------
-def do(action, event):
-    '''What must I do when a transition is triggered on a meeting or item?'''
-    objectType = event.object.meta_type
-    actionsAdapter = event.object.wfActions()
-    # Execute some actions defined in the corresponding adapter
-    actionMethod = getattr(actionsAdapter, action)
-    actionMethod(event)
-    # Update MeetingPowerObserverLocal local roles given to the
-    # corresponding MeetingConfig powerobsevers group, necessary if event.object
-    # is a Meeting or an Item
-    event.object.updatePowerObserversLocalRoles()
-    if objectType == 'MeetingItem':
-        # Update the local roles linked to advices if relevant
-        event.object.updateAdvices()
-        # Send mail if relevant
-        sendAdviceToGiveMailIfRelevant(event)
-    elif objectType == 'Meeting':
-        # Add recurring items to the meeting if relevant
-        addRecurringItemsIfRelevant(event.object, event.transition.id)
-        # Send mail if relevant
-        sendMailIfRelevant(event.object, event.transition.id, 'View')
-    # Freeze POD documents if needed
-    podTransition = '%s_%s' % (podTransitionPrefixes[objectType],
-                               event.transition.id)
-    freezePodDocumentsIfRelevant(event.object, podTransition)
-    # Send notifications to external applications if needed
-    eventName = '%s.%s' % (objectType, event.transition.id)
-    sendNotificationsIfRelevant(event.object, eventName)
-
 ##/code-section FOOT
