@@ -5,7 +5,15 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 
 3.0.3 (unreleased)
 -----------------
-- Nothing yet
+- Limited use of roles, removed MeetingPowerObserverLocal and MeetingObserverLocalCopy
+- Added possibility to define states in wich items are viewable by copy groups
+- Managed annexes conversion (collective.documentviewer) of duplicated items
+- Removed ToolPloneMeeting.navigateLocally parameter
+- If a user can not view an item anymore after having triggered a transition on it, display a clear message
+- Create memberarea for user 'admin' at PloneMeeting install time
+- Configure CKeditor styles at install time
+- Moved events subscribers code from setuphandlers.py to events.py
+- Defined helpers.py in tests so subplugins can override existing tests easily
 
 3.0.2 (2013-06-21)
 ------------------
