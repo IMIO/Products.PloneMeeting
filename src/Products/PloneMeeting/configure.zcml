@@ -10,7 +10,6 @@
   <include package="communesplone.iconified_document_actions"/>
   <include package="imio.pm.locales"/>
   <include package="collective.documentviewer"/>
-  <include package="imio.pm.locales"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
