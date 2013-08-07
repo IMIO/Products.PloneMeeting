@@ -38,7 +38,7 @@ from Products.PloneMeeting.ExternalApplication import \
 folderViews = ('meetingfolder_redirect_view', 'meetingfolder_view')
 pmGroupProperties = ('meetingRole', 'meetingGroupId')
 noSearchTypes = ('Folder',)
-# Indexes used by HubSessions
+# Indexes used by PloneMeeting
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''
 indexInfo = {
@@ -61,6 +61,8 @@ indexInfo = {
              'getConfigId': 'FieldIndex',
              'indexUsages': 'KeywordIndex',
             }
+# Metadata to create in portal_catalog, it has to correspond to an index in indexInfo
+metadataInfo = ('getTitle2', 'getDate', 'getProposingGroup', )
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # Index "indexUsages" does not use Archetype-generated getter "getUsages"
 # because in this case, both fields MeetingUser.usages and MeetingItem.usages
@@ -144,19 +146,12 @@ def updateRoleMappings(context):
 
 def postInstall(context):
     """Called at the end of the setup process. """
-    if isNotPloneMeetingProfile(context): return
+    if isNotPloneMeetingProfile(context):
+        return
     site = context.getSite()
 
     # Create or update indexes
-    updateIndexes(site, indexInfo, logger)
-    if 'getTitle2' not in site.portal_catalog.schema():
-        site.portal_catalog.addColumn('getTitle2')
-    if 'getDate' not in site.portal_catalog.schema():
-        site.portal_catalog.addColumn('getDate')
-    # Remove the silly "getClassifier" index whose content was *real* Category
-    # objects (bug since HS/PM 2.0.0), and that produced indexation errors.
-    if 'getClassifier' in site.portal_catalog.indexes():
-        site.portal_catalog.delIndex('getClassifier')
+    updateIndexes(site, indexInfo, logger, metadataInfo)
 
     # We add meetingfolder_redirect_view and meetingfolder_view to the list of
     # available views for type "Folder".

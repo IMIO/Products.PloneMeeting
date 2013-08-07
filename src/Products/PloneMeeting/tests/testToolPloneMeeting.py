@@ -150,6 +150,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Add one annex
         self.addAnnex(item2)
         # Add advices to item2
+        item2.setOptionalAdvisers(('vendors', ))
         self.validateItem(item2)
         login(self.portal, 'pmReviewer2')
         item2.editAdvice(group=self.portal.portal_plonemeeting.vendors, adviceType='positive', comment='My comment')

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# File: testToolPloneMeeting.py
+# File: testMeetingCategory.py
 #
-# Copyright (c) 2007-2012 by PloneGov
+# Copyright (c) 2007-2013 by Imio.be
 #
 # GNU General Public License (GPL)
 #

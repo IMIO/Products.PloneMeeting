@@ -134,6 +134,8 @@ ploneMeetingRoles = (
 # Roles that may create or edit item and/or meetings in PloneMeeting
 PLONEMEETING_UPDATERS = ('MeetingManager', 'Manager', 'Owner')
 
+# The id used for the root folder added to the member personal area that
+# will contain every meetingConfigs available to the member
 ROOT_FOLDER = "mymeetings"
 MEETING_CONFIG = "meeting_config"
 
@@ -145,8 +147,10 @@ TOOL_FOLDER_FILE_TYPES = 'meetingfiletypes'
 TOOL_FOLDER_POD_TEMPLATES = 'podtemplates'
 TOOL_FOLDER_MEETING_USERS = 'meetingusers'
 
+# Name of properties used on topics
 TOPIC_TYPE = 'meeting_topic_type'
 TOPIC_SEARCH_SCRIPT = 'topic_search_script'
+TOPIC_SEARCH_FILTERS = 'topic_search_filters'
 TOPIC_TAL_EXPRESSION = 'topic_tal_expression'
 
 # If, for a topic, a specific script is used for the search, and if this topic

@@ -103,6 +103,14 @@ class Migrate_To_3_0_3(Migrator):
         logger.info('Disabling user preferences')
         self.tool.setEnableUserPreferences(False)
 
+    def _configureCatalogIndexesAndMetadata(self):
+        '''Add 'getProposingGroup' as a metadata and remove 'getClassifier'.'''
+        logger.info('Configuring portal_catalog')
+        if 'getClassifier' in self.portal.portal_catalog.indexes():
+            self.portal.portal_catalog.delIndex('getClassifier')
+        if not 'getProposingGroup' in self.portal.portal_catalog.schema():
+            self.portal.portal_catalog.addColumn('getProposingGroup')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0.3...')
 
@@ -110,6 +118,7 @@ class Migrate_To_3_0_3(Migrator):
         self._updateLocalRoles()
         self._removeToolNavigateLocallyFunctionnality()
         self._disableUserPreferences()
+        self._configureCatalogIndexesAndMetadata()
         # reinstall so CKeditor styles are updated
         self.reinstall()
         # update catalogs regarding permission changes in workflows and provided interfaces
@@ -129,7 +138,8 @@ def migrate(context):
        2) Update local roles of items to remove 'MeetingObserverLocalCopy' no more used local role;
        3) Remove the INavigationRoot interface that was marked on some personal folders;
        4) Disable user preferences;
-       4) Update catalogs and workflows.
+       5) Migrate some catalog indexes and metadatas;
+       6) Update catalogs and workflows.
     '''
     Migrate_To_3_0_3(context).run()
 # ------------------------------------------------------------------------------

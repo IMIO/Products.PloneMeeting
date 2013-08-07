@@ -14,6 +14,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Configure CKeditor styles at install time
 - Moved events subscribers code from setuphandlers.py to events.py
 - Defined helpers.py in tests so subplugins can override existing tests easily
+- Added MeetingConfig.searchItemsWithFilters, a topic search configurable using a property defining filters on the relevant topic
 
 3.0.2 (2013-06-21)
 ------------------

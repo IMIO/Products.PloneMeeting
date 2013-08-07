@@ -2148,7 +2148,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for state in group.getItemAdviceStates(self):
                 itemStates.add(state)
         # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
+        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
@@ -2169,7 +2169,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Add a '1' at the end of every group id: we want "given" advices.
         groupIds = [g.id + '1' for g in groups]
         # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
+        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
@@ -2188,7 +2188,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries all items for which the current user is in copyGroups.'''
         member = self.portal_membership.getAuthenticatedMember()
         userGroups = self.portal_groups.getGroupsForPrincipal(member)
-        params = {'portal_type': self.getItemTypeName(),
+        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'getCopyGroups' use 'OR' by default
                   'getCopyGroups': userGroups,
                   'sort_on': sortKey,
@@ -2201,6 +2201,54 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         params.update(kwargs)
         # Perform the query in portal_catalog
         return self.portal_catalog(**params)
+
+    security.declarePublic('searchItemsWithFilters')
+    def searchItemsWithFilters(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Returns a list of items.  Do the search regarding parameters defined in the
+           'topic_search_filters' property defined on the topic.  This contains 2 particular values :
+           - 'query' that does a first query filtering as much as possible (first filter);
+           - 'filters' that will apply on brains returned by 'query'.
+           kwargs[TOPIC_SEARCH_FILTERS] is like :
+           {'query': {'review_state': ('itemcreated', 'validated', ),
+                      'getProposingGroup': ('group_id_1', 'group_id_2'), },
+            'filters': ({'getProposingGroup': ('group_id_1', ), 'review_state': ('itemcreated', )},
+                        {'getProposingGroup': ('group_id_2', ), 'review_state': ('validated', )},),
+            }
+        '''
+        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder
+                  }
+        # search filters are passed in kwargs
+        searchFilters = kwargs.pop(TOPIC_SEARCH_FILTERS)
+        # Manage additional ui filters
+        if filterKey:
+            params[filterKey] = Keywords(filterValue).get()
+        # update params with kwargs
+        params.update(kwargs)
+        # update params with 'query' given in searchFilters
+        params.update(searchFilters['query'])
+        # Perform the first filtering query in portal_catalog
+        brains = self.portal_catalog(**params)
+        # now apply filters
+        res = []
+        for brain in brains:
+            # now apply every searchFilter, if one is correct, then we keep the brain
+            # searchFilters are applied with a 'OR' behaviour, so if one is ok, we keep the brain
+            for searchFilter in searchFilters['filters']:
+                # now compare every searchFilter to the current brain, if a complete searchFilter
+                # is ok, then we keep the brain, either, we do not append it to 'res'
+                for key in searchFilter:
+                    filterIsRight = True
+                    if not getattr(brain, key) in searchFilter[key]:
+                        filterIsRight = False
+                        break
+                # if we found a sub_filter that works, then we keep the brain
+                if filterIsRight:
+                    break
+            if filterIsRight:
+                res.append(brain)
+        return res
 
     security.declarePublic('getTopicResults')
     def getTopicResults(self, topic, isFake):
@@ -2238,6 +2286,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     criterionValue = criterion.value
                     if criterionValue:
                         kwargs[str(criterion.field)] = criterionValue
+                # if the topic has a TOPIC_SEARCH_FILTERS, we add it to kwargs
+                # also because it is the called search script that will use it
+                searchFilters = topic.getProperty(TOPIC_SEARCH_FILTERS, None)
+                if searchFilters:
+                    # the search filters are stored in a text property but are
+                    # in reality dicts, so use eval() so it is considered correctly
+                    kwargs[TOPIC_SEARCH_FILTERS] = eval(searchFilters)
                 brains = getattr(self, methodId)(sortKey, sortOrder,
                                                  filterKey, filterValue, **kwargs)
             else:

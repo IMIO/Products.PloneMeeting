@@ -2,7 +2,7 @@
 #
 # File: testAdvices.py
 #
-# Copyright (c) 2012 by CommunesPlone.org
+# Copyright (c) 2013 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -172,6 +172,26 @@ class testAdvices(PloneMeetingTestCase):
         item1.at_post_edit_script()
         login(self.portal, 'pmReviewer2')
         self.assertEquals(item1.getAdvicesToGive(), ([], []))
+
+    def test_pm_CanNotGiveAdviceIfNotAsked(self):
+        '''
+          Test that an adviser that can access an item can not give his advice
+          if it was not asked.
+        '''
+        # create an item and ask advice of 'vendors'
+        login(self.portal, 'pmCreator1')
+        item1 = self.create('MeetingItem')
+        item1.setOptionalAdvisers(('vendors',))
+        item1.at_post_edit_script()
+        self.proposeItem(item1)
+        # if a user tries to give an advice for the 'developers' group,
+        # it will raise an Unauthorized
+        self.changeUser('pmAdviser1')
+        self.assertRaises(Unauthorized,
+                          item1.editAdvice,
+                          group=self.portal.portal_plonemeeting.developers,
+                          adviceType='positive',
+                          comment='My comment')
 
     def test_pm_GiveAdviceOnCreatedItem(self,
                                         itemAdviceStates=('itemcreated', 'proposed', 'validated',),

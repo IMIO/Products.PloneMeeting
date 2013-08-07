@@ -1294,13 +1294,14 @@ class ZCTextIndexInfo:
     index_type = 'Okapi BM25 Rank'
 
 
-def updateIndexes(ploneSite, indexInfo, logger):
-    '''This method creates or updates, in a p_ploneSite, definitions of indexes
+def updateIndexes(portal, indexInfo, logger, metadataInfo=()):
+    '''This method creates or updates, in a p_portal, definitions of indexes
        in its portal_catalog, based on index-related information given in
        p_indexInfo. p_indexInfo is a dictionary of the form
        {s_indexName:s_indexType}. Here are some examples of index types:
-       "FieldIndex", "ZCTextIndex", "DateIndex".'''
-    catalog = ploneSite.portal_catalog
+       "FieldIndex", "ZCTextIndex", "DateIndex".
+       p_metadataInfo is a list of metadata to create from given p_indexInfo.'''
+    catalog = portal.portal_catalog
     zopeCatalog = catalog._catalog
     for indexName, indexType in indexInfo.iteritems():
         # If this index already exists but with a different type, remove it.
@@ -1317,8 +1318,10 @@ def updateIndexes(ploneSite, indexInfo, logger):
                 catalog.addIndex(indexName, indexType)
             else:
                 catalog.addIndex(indexName, indexType, extra=ZCTextIndexInfo)
+            if indexName in metadataInfo and not indexName in catalog.schema():
+                catalog.addColumn(indexName)
             # Indexing database content based on this index.
-            catalog.reindexIndex(indexName, ploneSite.REQUEST)
+            catalog.reindexIndex(indexName, portal.REQUEST)
             logger.info('Created index "%s" of type "%s"...' % (indexName, indexType))
 
 

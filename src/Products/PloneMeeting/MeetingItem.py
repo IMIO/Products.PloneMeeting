@@ -2312,6 +2312,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         if group.id not in self.advices:
             self.updateAdvices()
+            # if still not, raise Unauthorized, trying to add a not asked advice
+            if group.id not in self.advices:
+                raise Unauthorized
         if group.id not in self.advices:
             return
         advice = self.advices[group.id]
