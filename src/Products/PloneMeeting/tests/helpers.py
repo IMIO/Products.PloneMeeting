@@ -167,7 +167,8 @@ class PloneMeetingTestingHelpers:
         self._doTransitionsFor(meeting, getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber)))
 
     def backToState(self, itemOrMeeting, state):
-        """Set the p_item back to p_state."""
+        """Set the p_item back to p_state.
+           Given p_state MUST BE original state name, aka state existing in PloneMeeting workflow."""
         # if a wf path is defined in BACK_TO_WF_PATH_x to go to relevant state, use it
         # if not, trigger every 'backToXXX' existing transition
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
