@@ -37,7 +37,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
         # an advice can be given when an item is 'proposed' or 'validated'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(), ('proposed', 'validated'))
+        self.assertEquals(self.meetingConfig.getItemAdviceStates(), (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated'))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -64,7 +64,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchAdvisedItems('', '', '', ''))
         # an advice can be given when an item is 'proposed' or 'validated'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(), ('proposed', 'validated'))
+        self.assertEquals(self.meetingConfig.getItemAdviceStates(), (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated'))
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -101,7 +101,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         '''Test the searchItemsInCopy method.  This should return a list of items
            a user is in copy of.'''
         # specify that copyGroups can see the item when it is proposed
-        self.meetingConfig.setItemCopyGroupsStates(('proposed', 'validated', ))
+        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
         # create an item and set another service in copy of
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -126,9 +126,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the filters is correct, the brain is kept
         kwargs = {}
         # we want items of 'vendors' that are 'proposed' and items of 'developers' that are 'validated'
-        filters = {'query': {'review_state': ('proposed', 'validated', ),
+        filters = {'query': {'review_state': (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ),
                              'getProposingGroup': ('vendors', 'developers'), },
-                   'filters': ({'getProposingGroup': ('vendors', ), 'review_state': ('proposed', )},
+                   'filters': ({'getProposingGroup': ('vendors', ), 'review_state': (self.WF_STATE_NAME_MAPPINGS['proposed'], )},
                                {'getProposingGroup': ('developers', ), 'review_state': ('validated', )},),
         }
         kwargs[TOPIC_SEARCH_FILTERS] = filters

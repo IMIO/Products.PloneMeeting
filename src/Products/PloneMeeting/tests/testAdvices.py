@@ -40,8 +40,8 @@ class testAdvices(PloneMeetingTestCase):
         """
         super(testAdvices, self).setUp()
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.meetingConfig.setItemAdviceStates(('proposed', 'validated', ))
-        self.meetingConfig.setItemAdviceEditStates(('proposed', ))
+        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         self.meetingConfig.setItemAdviceViewStates(('presented', ))
 
     def test_pm_ViewItemToAdvice(self):
@@ -161,7 +161,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, item1.deleteAdvice, 'vendors')
         # put the item back in a state where 'pmReviewer2' can remove the advice
         login(self.portal, 'pmManager')
-        self.backToState(item1, 'proposed')
+        self.backToState(item1, self.PROPOSED_STATE_NAME)
         login(self.portal, 'pmReviewer2')
         # remove the advice
         item1.deleteAdvice('vendors')

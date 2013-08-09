@@ -549,7 +549,7 @@ class testMeetingItem(PloneMeetingTestCase):
            Test also that using copyGroups given to _advisers groups still work as expected
            with advisers used for advices functionnality.'''
         # to ease test override, consider that we can give advices when the item is created for this test
-        self.meetingConfig.setItemAdviceStates(['itemcreated', 'proposed', 'validated', ])
+        self.meetingConfig.setItemAdviceStates(['itemcreated', self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ])
         # activate copyGroups when the item is 'itemcreated' so we can check
         # behaviour between copyGroups and advisers
         self.meetingConfig.setItemCopyGroupsStates(['itemcreated', ])
