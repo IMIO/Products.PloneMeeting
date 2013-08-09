@@ -3590,6 +3590,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             j = 1
             imagesPaths = os.listdir(pathToImages)
+            # keep order as listdir does return elements in an arbitrary order
+            # imagesPaths is like ['dump_1.png', 'dump_3.png', 'dump_4.png', 'dump_2.png', 'dump_5.png', ]
+            imagesPaths.sort()
             data['number_of_images'] = len(imagesPaths)
             for imagePath in imagesPaths:
                 data['images'].append({'number': j,
@@ -3616,4 +3619,3 @@ def onAddMeetingItem(item, event):
     user = item.portal_membership.getAuthenticatedMember()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
 ##/code-section module-footer
-
