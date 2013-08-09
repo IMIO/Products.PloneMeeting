@@ -880,9 +880,10 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''There can't be several meetings with the same date and hour.'''
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
         # add GMT+x value
-        localizedValue = value + ' ' + DateTime._localzone
+        localizedValue0 = value + ' ' + DateTime._localzone0
+        localizedValue1 = value + ' ' + DateTime._localzone1
         otherMeetings = self.portal_catalog(portal_type=cfg.getMeetingTypeName(),
-                                            getDate=DateTime(localizedValue))
+                                            getDate=(DateTime(localizedValue0), DateTime(localizedValue1), ))
         if otherMeetings:
             for m in otherMeetings:
                 if m.getObject() != self:
