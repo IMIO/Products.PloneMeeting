@@ -161,7 +161,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, item1.deleteAdvice, 'vendors')
         # put the item back in a state where 'pmReviewer2' can remove the advice
         login(self.portal, 'pmManager')
-        self.backToState(item1, self.PROPOSED_STATE_NAME)
+        self.backToState(item1, 'proposed')
         login(self.portal, 'pmReviewer2')
         # remove the advice
         item1.deleteAdvice('vendors')
