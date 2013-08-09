@@ -111,6 +111,20 @@ class Migrate_To_3_0_3(Migrator):
         if not 'getProposingGroup' in self.portal.portal_catalog.schema():
             self.portal.portal_catalog.addColumn('getProposingGroup')
 
+    def _initItemMotivationHTML(self):
+        '''We added a new optional field MeetingItem.motivation, this is an HTML field,
+           for existing MeetingItem, we need to initialize this field or HTML is not handled correctly...'''
+        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
+        logger.info('Initializing new field MeetingItem.motivation for %d MeetingItem objects...' % len(brains))
+        for brain in brains:
+            obj = brain.getObject()
+            obj.forceHTMLContentTypeForEmptyRichFields()
+        logger.info('Initializing new field MeetingItem.motivation for items of MeetingConfigs...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            for item in cfg.recurringitems.objectValues('MeetingItem'):
+                item.forceHTMLContentTypeForEmptyRichFields()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0.3...')
 
@@ -119,6 +133,7 @@ class Migrate_To_3_0_3(Migrator):
         self._removeToolNavigateLocallyFunctionnality()
         self._disableUserPreferences()
         self._configureCatalogIndexesAndMetadata()
+        self._initItemMotivationHTML()
         # reinstall so CKeditor styles are updated
         self.reinstall()
         # update catalogs regarding permission changes in workflows and provided interfaces
@@ -139,7 +154,8 @@ def migrate(context):
        3) Remove the INavigationRoot interface that was marked on some personal folders;
        4) Disable user preferences;
        5) Migrate some catalog indexes and metadatas;
-       6) Update catalogs and workflows.
+       6) Initialize new field MeetingItem.motivation so it is considered as text/html;
+       7) Update catalogs and workflows.
     '''
     Migrate_To_3_0_3(context).run()
 # ------------------------------------------------------------------------------
