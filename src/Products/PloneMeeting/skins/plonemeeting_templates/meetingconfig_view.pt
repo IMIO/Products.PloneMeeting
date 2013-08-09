@@ -73,6 +73,13 @@
           <td tal:define="field python:here.getField('budgetDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('defaultMeetingItemMotivation')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('folderTitle')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
@@ -82,6 +89,7 @@
             <b i18n:translate="PloneMeeting_label_shortName"></b>:
             <span tal:content="context/getShortName"/>
           </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('isDefault')">
@@ -93,6 +101,7 @@
           <td tal:define="field python:here.getField('lastMeetingNumber')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('yearlyInitMeetingNumber')">
@@ -101,6 +110,7 @@
           <td tal:define="field python:here.getField('configVersion')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
           <td></td>
         </tr>
         <tr valign="top">

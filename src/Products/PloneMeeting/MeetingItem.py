@@ -678,6 +678,24 @@ schema = Schema((
         read_permission="PloneMeeting: Read optional advisers",
     ),
     TextField(
+        name='motivation',
+        widget=RichWidget(
+            rows=15,
+            condition="python: here.attributeIsUsed('motivation')",
+            label='Motivation',
+            label_msgid='PloneMeeting_label_motivation',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_method="getDefaultMotivation",
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
+    ),
+    TextField(
         name='decision',
         widget=RichWidget(
             rows=15,
@@ -1036,6 +1054,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.signatureNotAlone(res)
         return res
 
+    security.declarePublic('getDeliberation')
+    def getDeliberation(self):
+        '''Returns the entire deliberation depending on fields used.'''
+        return self.getMotivation() + self.getDecision()
+
     def validate_category(self, value):
         '''Checks that, if we do not use groups as categories, a category is
            specified.'''
@@ -1085,8 +1108,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getDefaultBudgetInfo')
     def getDefaultBudgetInfo(self):
         '''The default budget info is to be found in the config.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        return meetingConfig.getBudgetDefault()
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        return cfg.getBudgetDefault()
+
+    security.declarePublic('getDefaultMotivation')
+    def getDefaultMotivation(self):
+        '''Returns the default item motivation content from the MeetingConfig.'''
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        return cfg.getDefaultMeetingItemMotivation()
 
     security.declarePublic('showToDiscuss')
     def showToDiscuss(self):
@@ -3587,3 +3616,4 @@ def onAddMeetingItem(item, event):
     user = item.portal_membership.getAuthenticatedMember()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
 ##/code-section module-footer
+

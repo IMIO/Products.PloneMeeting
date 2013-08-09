@@ -159,7 +159,7 @@ DEFAULT_TOPIC_ITEM_COUNT = 20
 
 ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 
-DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription',
+DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
                          'decision', 'classifier', 'category', 'budgetInfos',
                          'budgetRelated']
 

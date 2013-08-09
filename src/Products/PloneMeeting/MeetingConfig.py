@@ -192,6 +192,21 @@ schema = Schema((
         ),
         default_content_type='text/plain',
     ),
+    TextField(
+        name='defaultMeetingItemMotivation',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            description="DefaultMeetingItemMotivation",
+            description_msgid="config_default_meetingitem_motivation_descr",
+            rows=15,
+            label='Defaultmeetingitemmotivation',
+            label_msgid='PloneMeeting_label_defaultMeetingItemMotivation',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default=defValues.defaultMeetingItemMotivation,
+        default_output_type="text/x-html-safe",
+    ),
     StringField(
         name='folderTitle',
         widget=StringField._properties['widget'](
@@ -2943,3 +2958,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+

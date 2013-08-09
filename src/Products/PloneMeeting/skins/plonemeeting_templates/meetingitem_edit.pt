@@ -123,6 +123,9 @@
         <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
         <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
 
+        <tal:field define="fieldName python: 'motivation'">
+          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+        </tal:field>
         <tal:field define="fieldName python: 'decision'">
           <metal:f use-macro="context/hs_macros/macros/editContentField"/>
         </tal:field>

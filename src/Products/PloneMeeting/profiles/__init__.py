@@ -263,8 +263,8 @@ class MeetingConfigDescriptor(Descriptor):
         # "Places" describe some predefined places where meetings occur. It is a
         # text widget that should contain one place per line.
         self.places = ''
-        # Default value for the "budgetInfo" field on items.
         self.budgetDefault = ''
+        self.defaultMeetingItemMotivation = ''
         self.folderTitle = folderTitle
         self.shortName = ''  # Will be used for deducing content types specific
         # to this MeetingConfig (item, meeting)
