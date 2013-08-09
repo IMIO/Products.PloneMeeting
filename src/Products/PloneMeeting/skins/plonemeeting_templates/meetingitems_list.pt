@@ -231,7 +231,7 @@
                   tal:content="structure meetingItem/Description"></span>
             <tal:comment replace="nothing">We have to check that the current user can see the decision field too...</tal:comment>
             <i tal:condition="python: isDecided and not meetingItem.fieldIsEmpty('decision') and member.has_permission('PloneMeeting: Read decision', meetingItem)"
-               tal:content="structure meetingItem/getDecision"></i>
+               tal:content="structure meetingItem/getDeliberation"></i>
           </span>
           <tal:comment replace="nothing">Item reference, annexes and decision-related annexes</tal:comment>
           <table class="no-style-table" cellpadding="0" cellspacing="0" width="100%">
