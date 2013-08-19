@@ -3,7 +3,7 @@ Products.PloneMeeting Changelog
 Older versions than 3.0 can be found at http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/
 Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 
-3.0.3 (unreleased)
+3.0.3 (2013-08-19)
 ------------------
 - Limited use of roles, removed MeetingPowerObserverLocal and MeetingObserverLocalCopy
 - Added possibility to define states in wich items are viewable by copy groups
