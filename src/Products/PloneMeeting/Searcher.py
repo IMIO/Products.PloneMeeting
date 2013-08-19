@@ -1,12 +1,23 @@
-# ------------------------------------------------------------------------------
+# -*- coding: utf-8 -*-
+#
+# File: Searcher.py
+#
+# Copyright (c) 2013 by Imio.be
+# Generator: ArchGenXML Version 2.7
+#            http://plone.org/products/archgenxml
+#
 # GNU General Public License (GPL)
-# ------------------------------------------------------------------------------
+#
 
-from appy.gen.utils import Keywords
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
+
+
 from Products.CMFPlone.PloneBatch import Batch
-from Products.PloneMeeting.utils import getDateFromRequest
+from Products.PloneMeeting.utils import getDateFromRequest, prepareSearchValue
 
-# ------------------------------------------------------------------------------
+
 class Searcher:
     '''The searcher creates and executes queries in the portal_catalog
        which are triggered by the user from the "advanced search" screen in
@@ -16,7 +27,7 @@ class Searcher:
         self.meetingConfig = meetingConfig
         self.portalCatalog = meetingConfig.portal_catalog
         self.tool = meetingConfig.getParentNode()
-        self.rq = meetingConfig.REQUEST # The Zope REQUEST object.
+        self.rq = meetingConfig.REQUEST  # The Zope REQUEST object.
         self.searchedType = searchedType
         self.sortKey = sortKey
         self.sortOrder = sortOrder
@@ -28,7 +39,8 @@ class Searcher:
     def getMultiValue(self, paramName):
         '''Gets a multi-valued element.'''
         res = self.searchParams.get(paramName, [])
-        if isinstance(res, basestring): res = [res]
+        if isinstance(res, basestring):
+            res = [res]
         # For every string value, there may be several values within one value,
         # separated with char "*".
         valuesToAdd = None
@@ -36,8 +48,10 @@ class Searcher:
         for v in res:
             if '*' in v:
                 values = v.split('*')
-                if not valuesToAdd: valuesToAdd = []
-                if not valuesToRemove: valuesToRemove = [] 
+                if not valuesToAdd:
+                    valuesToAdd = []
+                if not valuesToRemove:
+                    valuesToRemove = []
                 valuesToAdd += values
                 valuesToRemove.append(v)
         if valuesToAdd:
@@ -48,21 +62,15 @@ class Searcher:
 
     def addKeywords(self, res, fieldName):
         '''Adds self.keywords to the search parameters p_res for the field
-           named p_fieldName. p_res[p_fieldName] may already contain a Keywords
-           instance if a filter has been defined. In that case, we must merge
-           the keywords.'''
-        if res.has_key(fieldName) and isinstance(res[fieldName], Keywords):
-            # Merge the keywords
-            res[fieldName].merge(self.keywords)
-        else:
-            res[fieldName] = self.keywords
+           named p_fieldName.'''
+        res[fieldName] = self.keywords
 
     def getItemSearchParams(self, mainParams, dateInterval):
         '''Adds to dict p_mainParams the parameters which are specific for
            performing (an) item-specific query(ies) in the portal_catalog.'''
         res = mainParams.copy()
         res['portal_type'] = self.meetingConfig.getItemTypeName()
-        res['created'] = {'query': dateInterval, 'range':'minmax'}
+        res['created'] = {'query': dateInterval, 'range': 'minmax'}
         res['sort_on'] = self.sortKey or 'created'
         if self.keywords:
             # What fields need to be queried?
@@ -80,7 +88,7 @@ class Searcher:
         if associatedGroups:
             operator = self.searchParams.get('ag_operator', 'or')
             if (operator == 'and') and (len(associatedGroups) > 1):
-                associatedGroups = {'operator': 'and', 'query': associatedGroups,}
+                associatedGroups = {'operator': 'and', 'query': associatedGroups, }
             res['getAssociatedGroups'] = associatedGroups
         categories = self.getMultiValue('categories')
         if categories:
@@ -99,9 +107,10 @@ class Searcher:
            performing (a) meeting-specific query(ies) in the portal_catalog.'''
         res = mainParams.copy()
         res['portal_type'] = self.meetingConfig.getMeetingTypeName()
-        res['getDate'] = {'query': dateInterval, 'range':'minmax'}
+        res['getDate'] = {'query': dateInterval, 'range': 'minmax'}
         res['sort_on'] = self.sortKey or 'getDate'
-        if self.keywords: self.addKeywords(res, 'Title')
+        if self.keywords:
+            self.addKeywords(res, 'Title')
         return res
 
     def getAnnexSearchParams(self, mainParams, dateInterval):
@@ -109,7 +118,7 @@ class Searcher:
            performing (an) annex-specific query(ies) in the portal_catalog.'''
         res = mainParams.copy()
         res['portal_type'] = 'MeetingFile'
-        res['created'] = {'query': dateInterval, 'range':'minmax'}
+        res['created'] = {'query': dateInterval, 'range': 'minmax'}
         res['sort_on'] = self.sortKey or 'created'
         if self.keywords:
             # Search among annex title and content
@@ -120,10 +129,6 @@ class Searcher:
 
     def queryCatalog(self, params):
         '''Performs a single query catalog.'''
-        # First, transform every Keywords instance into a string.
-        for fieldName in params.keys():
-            if isinstance(params[fieldName], Keywords):
-                params[fieldName] = params[fieldName].get()
         # Then, perform the query
         # Is it a local query or a query to a distant site?
         if self.searchParams.get('search_site', '_local') != '_local':
@@ -148,7 +153,7 @@ class Searcher:
         res = []
         moreBrains = True
         nextIndexes = [0] * len(results)
-        nextCandidates = {} # ~{i_listNumber: brain}~
+        nextCandidates = {}  # ~{i_listNumber: brain}~
         while moreBrains:
             # Compute next candidates
             nextCandidates.clear()
@@ -172,7 +177,7 @@ class Searcher:
                     else:
                         # Compare the current winner to this candidate
                         winnerKey = self.getValueFromIndex(winner, sortKey)
-                        candidateKey = self.getValueFromIndex(candidate,sortKey)
+                        candidateKey = self.getValueFromIndex(candidate, sortKey)
                         # The comparison condition follows sort order
                         if self.sortOrder == 'reverse':
                             condition = winnerKey < candidateKey
@@ -191,22 +196,23 @@ class Searcher:
     def searchAnnexes(self, params):
         '''Executes the portal_catalog search(es) for querying annexes, and
            returns corresponding brains.'''
-        res = [] # We will begin by storing here a list of lists of brains.
+        res = []  # We will begin by storing here a list of lists of brains.
         # Indeed, several queries may be performed.
-        if params.has_key('Title'):
+        if 'Title' in params:
             # Execute the Title-related query
-            tParams = params.copy();
-            if tParams.has_key('indexExtractedText'):
+            tParams = params.copy()
+            if 'indexExtractedText' in tParams:
                 del tParams['indexExtractedText']
             res.append(self.queryCatalog(tParams))
-            del params['Title'] # The title has been "consumed".
-            if params.has_key('indexExtractedText'):
+            del params['Title']  # The title has been "consumed".
+            if 'indexExtractedText' in params:
                 # Execute the extractedText-related query
                 res.append(self.queryCatalog(params))
         # No result yet? Execute the single query from p_params.
         if not res:
             res.append(self.queryCatalog(params))
-        if len(res) == 1: return res[0]
+        if len(res) == 1:
+            return res[0]
         else:
             sortKey = params['sort_on']
             return self.mergeResults(res, sortKey)[:params['sort_limit']]
@@ -219,12 +225,16 @@ class Searcher:
         # Determine "from" and "to" dates that determine the time period for
         # the search.
         fromDate = getDateFromRequest(rq.get('from_day'),
-            rq.get('from_month'), rq.get('from_year'), start=True)
+                                      rq.get('from_month'),
+                                      rq.get('from_year'),
+                                      start=True)
         toDate = getDateFromRequest(rq.get('to_day'),
-            rq.get('to_month'), rq.get('to_year'), start=False)
+                                    rq.get('to_month'),
+                                    rq.get('to_year'),
+                                    start=False)
         # Prepare the keywords query if keywords have been entered by the user
         if rq.get('keywords', None):
-            self.keywords = Keywords(rq.get('keywords'))
+            self.keywords = prepareSearchValue(rq.get('keywords'))
         # Prepare main search parameters.
         mainParams = {'sort_limit': self.tool.getMaxSearchResults(),
                       'sort_order': self.sortOrder}
@@ -232,7 +242,7 @@ class Searcher:
         # keywords in a column header for further filtering the search), we take
         # it into account here.
         if self.filterKey:
-            mainParams[self.filterKey] = Keywords(self.filterValue)
+            mainParams[self.filterKey] = prepareSearchValue(self.filterValue)
         # Perform the search.
         batchSize = self.tool.getMaxShownFound(self.searchedType)
         if self.searchedType == 'MeetingItem':

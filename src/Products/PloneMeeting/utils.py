@@ -1288,6 +1288,19 @@ def spanifyLink(htmltag):
 
 
 # ------------------------------------------------------------------------------
+def prepareSearchValue(value):
+    '''Prepare given p_value to execute a query in the portal_catalog
+       with a ZCTextIndex by adding a '*' at the end of each word.'''
+    words = value.split(' ')
+    res = []
+    for word in words:
+        if not word:
+            continue
+        res.append(word + '*')
+    return ' '.join(res)
+
+
+# ------------------------------------------------------------------------------
 class ZCTextIndexInfo:
     '''Silly class used for storing information about a ZCTextIndex.'''
     lexicon_id = "plone_lexicon"
