@@ -1458,7 +1458,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'only_creator_may_delete', 'pre_validation',
                      'items_come_validated', 'archiving', 'no_publication',
                      'no_proposal', 'everyone_reads_all',
-                     'creator_edits_unless_closed', 'local_meeting_managers')
+                     'creator_edits_unless_closed', 'local_meeting_managers',
+                     'return_to_service', )
     ##/code-section class-header
 
     # Methods
@@ -2469,6 +2470,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(("askDiscussItem", translate('event_ask_discuss_item', domain=d, context=self.REQUEST)))
         res.append(("itemClonedToThisMC", translate('event_item_clone_to_this_mc', domain=d, context=self.REQUEST)))
         res.append(("annexConversionError", translate('event_item_annex_conversion_error', domain=d, context=self.REQUEST)))
+        if 'return_to_service' in self.getWorkflowAdaptations():
+            res.append(("returnedToService", translate('event_item_returned_to_service', domain=d, context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingEvents')
@@ -2958,4 +2961,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-

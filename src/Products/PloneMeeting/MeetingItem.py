@@ -381,6 +381,13 @@ class MeetingItemWorkflowConditions:
                 res = True
         return res
 
+    security.declarePublic('mayReturnToService')
+    def mayReturnToService(self):
+        res = False
+        if checkPermission(ReviewPortalContent, self.context):
+            res = True
+        return res
+
     security.declarePublic('isLateFor')
     def isLateFor(self, meeting):
         if meeting and \
@@ -492,6 +499,11 @@ class MeetingItemWorkflowActions:
     security.declarePrivate('doItemArchive')
     def doItemArchive(self, stateChange):
         pass
+
+    security.declarePrivate('doReturn_to_service')
+    def doReturn_to_service(self, stateChange):
+        '''Send an email when returned to service if relevant...'''
+        self.context.sendMailIfRelevant('returnedToService', 'Modify portal content', isRole=False)
 
 InitializeClass(MeetingItemWorkflowActions)
 ##/code-section module-header
@@ -1426,11 +1438,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # The item is in the list of normal or late items for p_meeting.
             # Check if we must show a decision-related status for the item
             # (delayed, refused...).
-            adap = item.adapted()
-            if adap.isDelayed():
+            itemState = item.queryState()
+            if itemState == 'delayed':
                 res.append(('delayed.png', 'icon_help_delayed'))
-            elif adap.isRefused():
+            elif itemState == 'refused':
                 res.append(('refused.png', 'icon_help_refused'))
+            elif itemState == 'returned_to_service':
+                res.append(('return_to_service.png', 'returned_to_service'))
             # Display icons about sent/cloned to other meetingConfigs
             clonedToOtherMCIds = item._getOtherMeetingConfigsImAmClonedIn()
             for clonedToOtherMCId in clonedToOtherMCIds:
@@ -1993,16 +2007,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         if item.hasMeeting() and (item.getMeeting().queryState() != 'created'):
             return True
-
-    security.declarePublic('isDelayed')
-    def isDelayed(self):
-        '''See doc in interfaces.py'''
-        return self.getSelf().queryState() == 'delayed'
-
-    security.declarePublic('isRefused')
-    def isRefused(self):
-        '''See doc in interfaces.py'''
-        return self.getSelf().queryState() == 'refused'
 
     security.declarePublic('getSpecificDocumentContext')
     def getSpecificDocumentContext(self):

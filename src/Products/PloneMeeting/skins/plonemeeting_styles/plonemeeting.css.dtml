@@ -126,7 +126,9 @@ margin-top: -1.1em;
 .state-proposed, .label-state-proposed { color: #ff6c00 !important; }
 .state-validated, .label-state-validated { color: blue !important; }
 .state-presented, .label-state-presented { color: brown !important; }
-.state-itemfrozen, .label-state-itemfrozen, .state-frozen, .label-state-frozen { color: cornflowerBlue !important; }
+.state-itemfrozen, .label-state-itemfrozen,
+.state-frozen, .label-state-frozen,
+.state-returned_to_service, .label-state-returned_to_service { color: cornflowerBlue !important; }
 .state-itempublished, .label-state-itempublished, .state-published, .label-state-published { color: darkgoldenrod !important; }
 .state-accepted, .label-state-accepted { color: #64c168 !important; }
 .state-confirmed, .label-state-confirmed { color: green !important; }

@@ -122,7 +122,7 @@ class MeetingWorkflowConditions:
     def _allItemsAreDelayed(self):
         '''Are all items contained in this meeting delayed ?'''
         for item in self.context.getAllItems(ordered=True):
-            if not item.adapted().isDelayed():
+            if not item.queryState() == 'delayed':
                 return False
         return True
 
