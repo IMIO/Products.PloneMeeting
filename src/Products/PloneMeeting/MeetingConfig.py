@@ -24,7 +24,6 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import mimetypes
-from appy.gen.utils import Keywords
 from App.class_init import InitializeClass
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
@@ -35,7 +34,7 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.ActionInformation import Action
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
-    getCustomSchemaFields, HubSessionsMarshaller, getFieldContent
+    getCustomSchemaFields, HubSessionsMarshaller, getFieldContent, prepareSearchValue
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -2171,7 +2170,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   'review_state': list(itemStates), }
         # Manage filter
         if filterKey:
-            params[filterKey] = Keywords(filterValue).get()
+            params[filterKey] = prepareSearchValue(filterValue)
         # update params with kwargs
         params.update(kwargs)
         # Perform the query in portal_catalog
@@ -2192,7 +2191,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   'review_state': self.getItemTopicStates(), }
         # Manage filter
         if filterKey:
-            params[filterKey] = Keywords(filterValue).get()
+            params[filterKey] = prepareSearchValue(value)
         # update params with kwargs
         params.update(kwargs)
         # Perform the query in portal_catalog
@@ -2211,7 +2210,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   'review_state': self.getItemTopicStates(), }
         # Manage filter
         if filterKey:
-            params[filterKey] = Keywords(filterValue).get()
+            params[filterKey] = prepareSearchValue(value)
         # update params with kwargs
         params.update(kwargs)
         # Perform the query in portal_catalog
@@ -2238,7 +2237,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         searchFilters = kwargs.pop(TOPIC_SEARCH_FILTERS)
         # Manage additional ui filters
         if filterKey:
-            params[filterKey] = Keywords(filterValue).get()
+            params[filterKey] = prepareSearchValue(value)
         # update params with kwargs
         params.update(kwargs)
         # update params with 'query' given in searchFilters
@@ -2280,6 +2279,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Is there a filter defined?
         filterKey = rq.get('filterKey', '')
         filterValue = rq.get('filterValue', '').decode('utf-8')
+
         if not isFake:
             # Execute the query corresponding to the topic.
             if not sortKey:
@@ -2317,7 +2317,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 params['sort_on'] = sortKey
                 params['sort_order'] = sortOrder
                 if filterKey:
-                    params[filterKey] = Keywords(filterValue).get()
+                    params[filterKey] = prepareSearchValue(filterValue)
                 brains = self.portal_catalog(**params)
             res = self.getParentNode().batchAdvancedSearch(
                 brains, topic, rq, batch_size=batchSize)
