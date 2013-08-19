@@ -1291,12 +1291,26 @@ def spanifyLink(htmltag):
 def prepareSearchValue(value):
     '''Prepare given p_value to execute a query in the portal_catalog
        with a ZCTextIndex by adding a '*' at the end of each word.'''
+    # first remove nasty characters meaning something as a search string
+    toRemove = '?-+*()'
+    for char in toRemove:
+        value.replace(char, ' ')
+
     words = value.split(' ')
     res = []
+    # do not add a star at the end of some words
+    noAddStartFor = ['OR', 'AND', ]
     for word in words:
         if not word:
             continue
-        res.append(word + '*')
+        addAStar = True
+        for elt in noAddStartFor:
+            if word.endswith(elt):
+                addAStar = False
+                break
+        if addAStar:
+            word = word + '*'
+        res.append(word)
     return ' '.join(res)
 
 
