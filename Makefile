@@ -4,8 +4,9 @@ all: run
 
 .PHONY: bootstrap
 bootstrap:
-	/srv/python268/bin/virtualenv --no-site-packages .
-	./bin/python bootstrap.py
+	/srv/python275/bin/virtualenv --no-site-packages .
+	./bin/easy_install "distribute<0.7"
+	./bin/python bootstrap.py -v 2.1.1
 
 .PHONY: buildout
 buildout:
