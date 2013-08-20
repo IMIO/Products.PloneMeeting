@@ -10,8 +10,6 @@ from zope.interface import noLongerProvides
 
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_0_3(Migrator):
-    def __init__(self, context):
-        Migrator.__init__(self, context)
 
     def _removeUselessRoles(self):
         """Remove no more used 'MeetingObserverLocalCopy' and 'MeetingPowerObserverLocal' roles."""
@@ -135,7 +133,7 @@ class Migrate_To_3_0_3(Migrator):
         self._configureCatalogIndexesAndMetadata()
         self._initItemMotivationHTML()
         # reinstall so CKeditor styles are updated
-        self.reinstall()
+        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         # update catalogs regarding permission changes in workflows and provided interfaces
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['portal_catalog',

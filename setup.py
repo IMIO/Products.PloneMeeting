@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '3.0.3dev'
+version = '3.0.4dev'
 
 setup(name='Products.PloneMeeting',
       version=version,
@@ -38,6 +38,7 @@ setup(name='Products.PloneMeeting',
           'collective.ckeditor',
           'collective.documentviewer',
           'communesplone.iconified_document_actions',
-          'imio.pm.locales', ],
+          'imio.pm.locales',
+          'imio.migrator', ],
       entry_points={},
       )

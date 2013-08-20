@@ -6,8 +6,6 @@ from Products.PloneMeeting.migrations import Migrator
 
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_0_2(Migrator):
-    def __init__(self, context):
-        Migrator.__init__(self, context)
 
     def _correctCreatedContentLanguage(self):
         '''Make sure every created content is using site default and site default is correct...'''
