@@ -38,6 +38,7 @@ setup(name='Products.PloneMeeting',
           'collective.ckeditor',
           'collective.documentviewer',
           'communesplone.iconified_document_actions',
-          'imio.pm.locales', ],
+          'imio.pm.locales',
+          'imio.migrator', ],
       entry_points={},
       )

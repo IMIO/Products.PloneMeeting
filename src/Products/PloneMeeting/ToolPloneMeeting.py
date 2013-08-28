@@ -47,7 +47,6 @@ import OFS.Moniker
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
-from zope.interface import directlyProvides
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import AccessContentsInformation, DeleteObjects, View
@@ -1367,8 +1366,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Triggers a p_transition on an p_obj.'''
         rq = self.REQUEST
         obj = self.uid_catalog(UID=rq['objectUid'])[0].getObject()
-        self.portal_workflow.doActionFor(obj, rq.get('transition'),
-                                         comment=rq.get('comment'))
+        try:
+            self.portal_workflow.doActionFor(obj, rq.get('transition'),
+                                             comment=rq.get('comment'))
+        except WorkflowException:
+            # fail silently if the user triggered a transition he could not
+            # this avoid WorkflowException error in the UI if a user double-click on an icon
+            # triggering a workflow transition
+            logger.info("WorkflowException in ToolPloneMeeting.triggerTransition, the user '%s' "
+                        "tried to trigger the transition '%s' but he could not.  Double click in the UI?" %
+                        (self.portal_membership.getAuthenticatedMember().getId(), rq.get('transition')))
+            pass
         msg = translate('%s_done_descr' % rq['transition'],
                         domain="PloneMeeting", context=self.REQUEST)
         self.plone_utils.addPortalMessage(msg)

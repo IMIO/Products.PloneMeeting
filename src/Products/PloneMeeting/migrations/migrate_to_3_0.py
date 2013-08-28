@@ -7,8 +7,6 @@ from Products.PloneMeeting.migrations import Migrator
 
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_0(Migrator):
-    def __init__(self, context):
-        Migrator.__init__(self, context)
 
     def _removeIconExprObjectsOnTypes(self):
         '''Remove icon_expr_object on portal_types relative to PloneMeeting.'''

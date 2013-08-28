@@ -217,6 +217,7 @@ elt.disabled = false;}
             <thead>
               <metal:block tal:condition="batch">
                 <tr>
+                  <th></th>
                   <th class="nosort">
                       <input class="noborder"
                              type="checkbox"
@@ -271,6 +272,24 @@ elt.disabled = false;}
                             * We have to check if the browserDefault stuff is really necessary
                             * Create title_or_id metadata in the catalog (why not just use item.Title or item.getId? (alecm))
                        </tal:comment>
+
+              <td class="draggable">
+               <tal:block tal:define="quoted_id item/getId;">
+                <a href=""
+                   title="Move item up"
+                   i18n:attributes="title title_move_item_up;"
+                   tal:attributes="href string:${context/absolute_url}/folder_position?position=up&amp;id=${quoted_id}&template_id=meetingfolder_view">
+                  &#9650;
+                </a>
+                &nbsp;
+                <a href=""
+                   title="Move item down"
+                   i18n:attributes="title title_move_item_down;"
+                   tal:attributes="href string:${context/absolute_url}/folder_position?position=down&amp;id=${quoted_id}&template_id=meetingfolder_view">
+                  &#9660;
+                </a>
+               </tal:block>
+              </td>
 
                        <td>
                            <input type="checkbox"
