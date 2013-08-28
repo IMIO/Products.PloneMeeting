@@ -20,6 +20,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Defined helpers.py in tests so subplugins can override existing tests easily
 - Added MeetingConfig.searchItemsWithFilters, a topic search configurable using a property defining filters on the relevant topic
 - Added field MeetingItem.motivation that let the user have granularity while defining decision if he wants to split 'motivation' and 'decision'
+- Do not raise a WorkflowException in ToolPloneMeeting.triggerTransition if transition to trigger is not available, this avoid UI double click problems
 
 3.0.2 (2013-06-21)
 ------------------
