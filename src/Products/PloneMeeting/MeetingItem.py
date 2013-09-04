@@ -335,6 +335,34 @@ class MeetingItemWorkflowConditions:
         elif currentState == 'delayed':
             return True
 
+    security.declarePublic('mayBackToMeeting')
+    def mayBackToMeeting(self, transitionName):
+        """Specific guard for the 'return_to_proposing_group' wfAdaptation.
+           As we have only one guad_expr for potentially several transitions departing
+           from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
+        user = self.context.portal_membership.getAuthenticatedMember()
+        if not checkPermission(ReviewPortalContent, self.context) and not \
+           user.has_role('MeetingManager'):
+            return
+        # get the linked meeting and check his state
+        meeting = self.context.getMeeting()
+        meetingState = meeting.queryState()
+        # we will set the item back to a state that depend on the meeting state
+        if meetingState in ['created', ] and \
+           transitionName == 'backTo_presented_from_returned_to_proposing_group':
+            return True
+        if meetingState in ['published', ] and \
+           transitionName == 'backTo_itempublished_from_returned_to_proposing_group':
+            return True
+        if meetingState in ['frozen', 'decided', ] and \
+           transitionName == 'backTo_itemfrozen_from_returned_to_proposing_group':
+            return True
+        if meetingState in ['closed', 'archived', ]:
+            return No(translate('can_not_return_to_meeting_because_closed_or_archived',
+                                 domain="PloneMeeting",
+                                 context=self.context.REQUEST))
+        return False
+
     security.declarePublic('mayDelete')
     def mayDelete(self):
         res = True
@@ -381,8 +409,8 @@ class MeetingItemWorkflowConditions:
                 res = True
         return res
 
-    security.declarePublic('mayReturnToService')
-    def mayReturnToService(self):
+    security.declarePublic('mayReturnToProposingGroup')
+    def mayReturnToProposingGroup(self):
         res = False
         if checkPermission(ReviewPortalContent, self.context):
             res = True
@@ -500,10 +528,10 @@ class MeetingItemWorkflowActions:
     def doItemArchive(self, stateChange):
         pass
 
-    security.declarePrivate('doReturn_to_service')
-    def doReturn_to_service(self, stateChange):
-        '''Send an email when returned to service if relevant...'''
-        self.context.sendMailIfRelevant('returnedToService', 'Modify portal content', isRole=False)
+    security.declarePrivate('doReturn_to_proposing_group')
+    def doReturn_to_proposing_group(self, stateChange):
+        '''Send an email when returned to proposing group if relevant...'''
+        self.context.sendMailIfRelevant('returnedToProposingGroup', 'Modify portal content', isRole=False)
 
 InitializeClass(MeetingItemWorkflowActions)
 ##/code-section module-header
@@ -1443,8 +1471,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(('delayed.png', 'icon_help_delayed'))
             elif itemState == 'refused':
                 res.append(('refused.png', 'icon_help_refused'))
-            elif itemState == 'returned_to_service':
-                res.append(('return_to_service.png', 'returned_to_service'))
+            elif itemState == 'returned_to_proposing_group':
+                res.append(('return_to_proposing_group.png', 'icon_help_returned_to_proposing_group'))
             # Display icons about sent/cloned to other meetingConfigs
             clonedToOtherMCIds = item._getOtherMeetingConfigsImAmClonedIn()
             for clonedToOtherMCId in clonedToOtherMCIds:

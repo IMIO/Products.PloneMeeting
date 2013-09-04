@@ -1458,7 +1458,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'items_come_validated', 'archiving', 'no_publication',
                      'no_proposal', 'everyone_reads_all',
                      'creator_edits_unless_closed', 'local_meeting_managers',
-                     'return_to_service', )
+                     'return_to_proposing_group', )
     ##/code-section class-header
 
     # Methods
@@ -2455,23 +2455,47 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            sent.'''
         d = 'PloneMeeting'
         res = [
-            ("lateItem", translate('event_late_item', domain=d, context=self.REQUEST)),
-            ("itemPresented", translate('event_item_presented', domain=d, context=self.REQUEST)),
-            ("itemUnpresented", translate('event_item_unpresented', domain=d, context=self.REQUEST)),
-            ("itemDelayed", translate('event_item_delayed', domain=d, context=self.REQUEST)),
-            ("annexAdded", translate('event_add_annex', domain=d, context=self.REQUEST)),
+            ("lateItem", translate('event_late_item',
+                                   domain=d,
+                                   context=self.REQUEST)),
+            ("itemPresented", translate('event_item_presented',
+                                        domain=d,
+                                        context=self.REQUEST)),
+            ("itemUnpresented", translate('event_item_unpresented',
+                                          domain=d,
+                                          context=self.REQUEST)),
+            ("itemDelayed", translate('event_item_delayed',
+                                      domain=d,
+                                      context=self.REQUEST)),
+            ("annexAdded", translate('event_add_annex',
+                                     domain=d,
+                                     context=self.REQUEST)),
         ]
         if self.getUseAdvices():
-            res += [("adviceToGive", translate('event_advice_to_give', domain=d, context=self.REQUEST)),
-                    ("adviceEdited", translate('event_add_advice', domain=d, context=self.REQUEST)),
-                    ("adviceInvalidated", translate('event_invalidate_advice', domain=d, context=self.REQUEST))
+            res += [("adviceToGive", translate('event_advice_to_give',
+                                               domain=d,
+                                               context=self.REQUEST)),
+                    ("adviceEdited", translate('event_add_advice',
+                                               domain=d,
+                                               context=self.REQUEST)),
+                    ("adviceInvalidated", translate('event_invalidate_advice',
+                                                    domain=d,
+                                                    context=self.REQUEST))
                     ]
         if 'toDiscuss' in self.getUsedItemAttributes():
-            res.append(("askDiscussItem", translate('event_ask_discuss_item', domain=d, context=self.REQUEST)))
-        res.append(("itemClonedToThisMC", translate('event_item_clone_to_this_mc', domain=d, context=self.REQUEST)))
-        res.append(("annexConversionError", translate('event_item_annex_conversion_error', domain=d, context=self.REQUEST)))
-        if 'return_to_service' in self.getWorkflowAdaptations():
-            res.append(("returnedToService", translate('event_item_returned_to_service', domain=d, context=self.REQUEST)))
+            res.append(("askDiscussItem", translate('event_ask_discuss_item',
+                                                    domain=d,
+                                                    context=self.REQUEST)))
+        res.append(("itemClonedToThisMC", translate('event_item_clone_to_this_mc',
+                                                    domain=d,
+                                                    context=self.REQUEST)))
+        res.append(("annexConversionError", translate('event_item_annex_conversion_error',
+                                                      domain=d,
+                                                      context=self.REQUEST)))
+        if 'return_to_proposing_group' in self.getWorkflowAdaptations():
+            res.append(("returnedToProposingGroup", translate('event_item_returned_to_proposing_group',
+                                                              domain=d,
+                                                              context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingEvents')

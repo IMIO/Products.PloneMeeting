@@ -1366,9 +1366,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Triggers a p_transition on an p_obj.'''
         rq = self.REQUEST
         obj = self.uid_catalog(UID=rq['objectUid'])[0].getObject()
+        wfTool = getToolByName(self, 'portal_workflow')
         try:
-            self.portal_workflow.doActionFor(obj, rq.get('transition'),
-                                             comment=rq.get('comment'))
+            wfTool.doActionFor(obj,
+                               rq.get('transition'),
+                               comment=rq.get('comment'))
         except WorkflowException:
             # fail silently if the user triggered a transition he could not
             # this avoid WorkflowException error in the UI if a user double-click on an icon
@@ -1377,7 +1379,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         "tried to trigger the transition '%s' but he could not.  Double click in the UI?" %
                         (self.portal_membership.getAuthenticatedMember().getId(), rq.get('transition')))
             pass
-        msg = translate('%s_done_descr' % rq['transition'],
+        # use transition title to translate so if several transitions have the same title,
+        # we manage only one translation
+        transition_title = wfTool.getWorkflowsFor(obj)[0].transitions[rq['transition']].title or rq['transition']
+        msg = translate('%s_done_descr' % transition_title,
                         domain="PloneMeeting", context=self.REQUEST)
         self.plone_utils.addPortalMessage(msg)
         user = self.portal_membership.getAuthenticatedMember()

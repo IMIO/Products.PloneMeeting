@@ -102,7 +102,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            a user is in copy of.'''
         # specify that copyGroups can see the item when it is proposed
         self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
-        # create an item and set another service in copy of
+        # create an item and set another proposing group in copy of
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setCopyGroups(('developers_reviewers',))

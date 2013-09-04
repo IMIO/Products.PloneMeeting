@@ -128,7 +128,7 @@ table.no-style-table td {
 .state-presented, .label-state-presented { color: brown !important; }
 .state-itemfrozen, .label-state-itemfrozen,
 .state-frozen, .label-state-frozen,
-.state-returned_to_service, .label-state-returned_to_service { color: cornflowerBlue !important; }
+.state-returned_to_proposing_group, .label-state-returned_to_proposing_group { color: cornflowerBlue !important; }
 .state-itempublished, .label-state-itempublished, .state-published, .label-state-published { color: darkgoldenrod !important; }
 .state-accepted, .label-state-accepted { color: #64c168 !important; }
 .state-confirmed, .label-state-confirmed { color: green !important; }

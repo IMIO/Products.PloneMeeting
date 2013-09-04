@@ -15,10 +15,10 @@ groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
 NO_DELETE_STATES = ('proposed', 'prevalidated', 'validated', 'presented',
                     'itempublished', 'itemfrozen', 'accepted', 'refused',
                     'delayed', 'confirmed')
-# state to clone regarding permissions that will have the state 'returned_to_service'
-RETURN_TO_SERVICE_STATE_TO_CLONE = 'itemcreated'
-# states of the meeting from wich an item can be 'returned_to_service'
-RETURN_TO_SERVICE_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
+# state to clone regarding permissions that will have the state 'returned_to_proposing_group'
+RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
+# states of the meeting from wich an item can be 'returned_to_proposing_group'
+RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
 
 viewPermissions = ('View', 'Access contents information')
 WF_APPLIED = 'Workflow change "%s" applied for meetingConfig "%s".'
@@ -413,37 +413,52 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                     grantPermission(state, permission, 'Owner')
         logger.info(WF_APPLIED % ("local_meeting_managers", meetingConfig.getId()))
     # when an item is linked to a meeting, most of times, creators lose modify rights on it
-    # with this, the item can be 'returned_to_service' when in a meeting then the creators
+    # with this, the item can be 'returned_to_proposing_group' when in a meeting then the creators
     # can modify it if necessary and send it back to the MeetingManagers when done
-    if 'return_to_service' in wfAdaptations:
-        if 'returned_to_service' not in itemWorkflow.states:
-            # add the 'returned_to_service' state and clone the permissions from RETURN_TO_SERVICE_STATE_TO_CLONE
-            itemWorkflow.states.addState('returned_to_service')
-            newState = getattr(itemWorkflow.states, 'returned_to_service')
-            stateToClonePermissions = getattr(itemWorkflow.states, RETURN_TO_SERVICE_STATE_TO_CLONE)
+    if 'return_to_proposing_group' in wfAdaptations:
+        if 'returned_to_proposing_group' not in itemWorkflow.states:
+            # add the 'returned_to_proposing_group' state and clone the
+            # permissions from RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+            itemWorkflow.states.addState('returned_to_proposing_group')
+            newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
+            stateToClonePermissions = getattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE)
             newState.permission_roles = stateToClonePermissions.permission_roles
-            # now create the necessary transitions : one to go to 'returned_to_service' state
+            # now create the necessary transitions : one to go to 'returned_to_proposing_group' state
             # and x to go back to relevant state depending on current meeting state
-            # first, the transition 'return_to_service'
-            itemWorkflow.transitions.addTransition('return_to_service')
-            transition = itemWorkflow.transitions['return_to_service']
+            # first, the transition 'return_to_proposing_group'
+            itemWorkflow.transitions.addTransition('return_to_proposing_group')
+            transition = itemWorkflow.transitions['return_to_proposing_group']
             transition.setProperties(
-                title='return_to_service',
-                new_state_id='returned_to_service', trigger_type=1, script_name='',
-                actbox_name='return_to_service', actbox_url='', actbox_category='workflow',
-                props={'guard_expr': 'python:here.wfConditions().mayReturnToService()'})
+                title='return_to_proposing_group',
+                new_state_id='returned_to_proposing_group', trigger_type=1, script_name='',
+                actbox_name='return_to_proposing_group', actbox_url='', actbox_category='workflow',
+                props={'guard_expr': 'python:here.wfConditions().mayReturnToProposingGroup()'})
             # Update connections between states and transitions and create new transitions
-            for stateName in RETURN_TO_SERVICE_FROM_ITEM_STATES:
+            newTransitionNames = []
+            for stateName in RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES:
                 if stateName not in itemWorkflow.states:
                     continue
-                # first specify that we can go to 'return_to_service' from this state
+                # first specify that we can go to 'return_to_proposing_group' from this state
                 currentTransitions = list(itemWorkflow.states[stateName].transitions)
-                currentTransitions.append('return_to_service')
+                currentTransitions.append('return_to_proposing_group')
                 itemWorkflow.states[stateName].transitions = tuple(currentTransitions)
                 # then build a back transition name with given stateName
-                transitionName = 'back_to_%s_from_returned_to_service' % stateName
+                transitionName = 'backTo_%s_from_returned_to_proposing_group' % stateName
+                newTransitionNames.append(transitionName)
                 itemWorkflow.transitions.addTransition(transitionName)
-        logger.info(WF_APPLIED % ("return_to_service", meetingConfig.getId()))
+                transition = itemWorkflow.transitions[transitionName]
+                # use a specific guard_expr 'mayBackToMeeting'
+                transition.setProperties(
+                    title='return_to_meeting',
+                    new_state_id=stateName, trigger_type=1, script_name='',
+                    actbox_name=transitionName, actbox_url='', actbox_category='workflow',
+                    props={'guard_expr': 'python:here.wfConditions().mayBackToMeeting("%s")' % transitionName})
+            # now that we created back transitions, we can assign them to newState 'returned_to_proposing_group'
+                        # set properties for new 'returned_to_proposing_group' state
+            newState.setProperties(
+                title='returned_to_proposing_group', description='',
+                transitions=newTransitionNames)
+        logger.info(WF_APPLIED % ("return_to_proposing_group", meetingConfig.getId()))
 
 
 # Stuff for performing model adaptations ---------------------------------------
