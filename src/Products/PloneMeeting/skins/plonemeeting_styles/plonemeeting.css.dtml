@@ -632,6 +632,11 @@ dl.searchResults cite {
     float:right;
 }
 
+/* hide the personal-preferences tab when the user go to his preferences to avoid him to do nasty things... */
+#contentview-user_data-personal-preferences {
+    display: none;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
