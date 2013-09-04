@@ -19,6 +19,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Make the search work with accented characters
 - Rely on imio.migrator
 - Do not raise a WorkflowException in ToolPloneMeeting.triggerTransition if transition to trigger is not available, this avoid UI double click problems
+- Let user access personal-information and change-password tabs in personal preferences
 
 3.0.2 (2013-06-21)
 ------------------

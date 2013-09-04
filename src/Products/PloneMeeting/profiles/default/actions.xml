@@ -131,11 +131,17 @@
    </object>
   </object>
 
-  <!-- Hide some user-related Plone actions -->
+  <!-- Manage the user preferences action, change the link to point to @@personal-information instead
+      of @@personal-preferences as we hide this tab to avoid user doing nasty things... -->
   <object name="user" meta_type="CMF Action Category">
    <object name="preferences" meta_type="CMF Action">
-    <property name="visible">False</property>
+    <property name="url_expr">string:${globals_view/navigationRootUrl}/@@personal-information</property>
+    <property name="visible">True</property>
    </object>
+  </object>
+
+  <!-- Hide some user-related Plone actions -->
+  <object name="user" meta_type="CMF Action Category">
    <object name="dashboard" meta_type="CMF Action">
     <property name="visible">False</property>
    </object>

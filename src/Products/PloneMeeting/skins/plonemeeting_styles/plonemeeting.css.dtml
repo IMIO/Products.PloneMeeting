@@ -12,62 +12,62 @@ p {line-height: 1em;}
 .ploneMeetingSelectContainer{ float: left; }
 
 .ploneMeetingSelectButton {
-  cursor: pointer;
-  border: 1px solid &dtml-globalBorderColor;;
-  background-color: white;
-  padding: 0px;
-  color: &dtml-fontColor;;
-  text-align: left;
-  width: auto;
-  height: 18px !important;
-  padding-right: 24px;
-  margin-top: 5px;
+    cursor: pointer;
+    border: 1px solid &dtml-globalBorderColor;;
+    background-color: white;
+    padding: 0px;
+    color: &dtml-fontColor;;
+    text-align: left;
+    width: auto;
+    height: 18px !important;
+    padding-right: 24px;
+    margin-top: 5px;
 }
 
 .ploneMeetingSelectBox {
-  cursor: pointer;
-  border-width: 1px;
-  border-color: &dtml-globalBorderColor;;
-  background-color: white;
-  padding: 0px;
-  color: &dtml-fontColor;;
-  display: none;
-  position: absolute;
-  border-style: inset;
-  height: auto;
-  overflow: auto;
-  text-align: left;
-  width: auto;
-  min-width: 274px;
-  z-index: 1;
+    cursor: pointer;
+    border-width: 1px;
+    border-color: &dtml-globalBorderColor;;
+    background-color: white;
+    padding: 0px;
+    color: &dtml-fontColor;;
+    display: none;
+    position: absolute;
+    border-style: inset;
+    height: auto;
+    overflow: auto;
+    text-align: left;
+    width: auto;
+    min-width: 274px;
+    z-index: 1;
 }
 
 .ploneMeetingSelectItem {
-  margin: 0px 1px 0px 1px;
-  width: 99%; /* If 100% a horizontal scrollbar is displayed */
-  vertical-align: top !important;
-  min-height: 18px;
+    margin: 0px 1px 0px 1px;
+    width: 99%; /* If 100% a horizontal scrollbar is displayed */
+    vertical-align: top !important;
+    min-height: 18px;
 }
 #content p.ploneMeetingSelectItem {
     margin-bottom: 0em;
 }
 
 .ploneMeetingSelectItemUnselected {
-  background-color: &dtml-globalBackgroundColor;;
+    background-color: &dtml-globalBackgroundColor;;
 }
 
 .ploneMeetingSelectImage {
-  max-height: 16px;
-  max-width: 16px;
-  vertical-align: top;
+    max-height: 16px;
+    max-width: 16px;
+    vertical-align: top;
 }
 
 .ploneMeetingSelectDropdownIcon{
-  height: 16px;
-  background-image: url(<dtml-var portal_url>/drop_down.png);
-  background-repeat: no-repeat;
-  background-position: right;
-  min-width: 250px;
+    height: 16px;
+    background-image: url(<dtml-var portal_url>/drop_down.png);
+    background-repeat: no-repeat;
+    background-position: right;
+    min-width: 250px;
 }
 
 /* while copy/pasting a table from Word in CKeditor
@@ -84,24 +84,24 @@ p {line-height: 1em;}
 .cke_show_borders table.cke_show_border > thead > tr > th,
 .cke_show_borders table.cke_show_border > tfoot > tr > td,
 .cke_show_borders table.cke_show_border > tfoot > tr > th {
-  border: 1px solid black !important;
+    border: 1px solid black !important;
 }
 
 .no-style-table {
-  border: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 tr.even table.advices td {
-  background-color: white !important;
+    background-color: white !important;
 }
 
 table.no-style-table td {
-  border: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  vertical-align: middle;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    vertical-align: middle;
 }
 .itemsNavigation {margin-bottom: 0.3em; margin-top: 0.3em; }
 #archetypes-fieldname-title2 input { font-size: 160%; width:99%;}
@@ -115,8 +115,8 @@ table.no-style-table td {
 }
 
 .pm_workflowstate {
-float: right;
-margin-top: -1.1em;
+    float: right;
+    margin-top: -1.1em;
 }
 
 /* Colors on states */
@@ -180,31 +180,31 @@ margin-top: -1.1em;
 .actionMenuAX .actionMenuHeaderAX a { display: inline; }
 .actionMenuAX.activated .actionMenuHeaderAX a,
 .actionMenuAX.deactivated .actionMenuHeaderAX a {
-  padding: 0 0.2em 0 0.2em !important;
-  cursor: pointer;
-  border: 0 none white;
+    padding: 0 0.2em 0 0.2em !important;
+    cursor: pointer;
+    border: 0 none white;
 }
 
 .actionMenuDisabled { padding: 0 0.5em 0 0.5em !important; cursor: pointer; }
 .actionMenuAX .actionMenuContentAX {
-  display: none;
-  position: absolute;
-  top: 1.7em; /* Position of the popup menu relative to its "anchor"=the main menu) */
-  right: -1px;
-  height: auto;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
+    display: none;
+    position: absolute;
+    top: 1.7em; /* Position of the popup menu relative to its "anchor"=the main menu) */
+    right: -1px;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
 }
 
 #content .actionMenuAX .actionMenuContentAX ul {
-  display: block;
-  background-color: white;
-  border: 1px solid #CCCCCC;
-  margin: -1px 0 0 0;
-  padding: 0;
-  cursor: pointer;
-  list-style: none;
+    display: block;
+    background-color: white;
+    border: 1px solid #CCCCCC;
+    margin: -1px 0 0 0;
+    padding: 0;
+    cursor: pointer;
+    list-style: none;
 }
 
 .actionMenuAX.activated { z-index: 20; }
@@ -213,55 +213,55 @@ margin-top: -1.1em;
 .actionMenuAX.deactivated .actionMenuContentAX { display: none !important; }
 
 .actionMenuAX .actionMenuContentAX li {
-  float: none;
-  padding: 0;
-  margin: 0;
-  border: 0;
+    float: none;
+    padding: 0;
+    margin: 0;
+    border: 0;
 }
 
 .actionMenuAX .actionMenuContentAX li a {
-  display: block;
-  white-space: nowrap;
-  padding: 0 0.5em;
-  margin: 0.0em 0;
+    display: block;
+    white-space: nowrap;
+    padding: 0 0.5em;
+    margin: 0.0em 0;
 }
 
 .actionMenuAX .actionMenuContentAX .selected {
-  display: block;
-  white-space: nowrap;
-  padding: 0 0.5em;
-  margin: 0.0em 0;
+    display: block;
+    white-space: nowrap;
+    padding: 0 0.5em;
+    margin: 0.0em 0;
 }
 
 .actionMenuAX .actionMenuContentAX li a:hover { color: #436976; }
 
 .actionMenuAX .actionMenuContentAX .actionSeparator {
-  margin-top: 0.1em;
-  padding-top: 0.1em;
-  border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+    margin-top: 0.1em;
+    padding-top: 0.1em;
+    border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
 }
 
 .actionMenuAX .actionMenuContentAX .actionSeparator div.currentDefaultPage {
-  margin-top: 0.2em;
-  padding: 0.2em 0.5em 0em 0.5em;
-  white-space: nowrap;
-  border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+    margin-top: 0.2em;
+    padding: 0.2em 0.5em 0em 0.5em;
+    white-space: nowrap;
+    border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
 }
 
 .actionMenuAX .actionMenuContentAX .actionSeparator div.actionLabel {
-  margin-top: 0.2em;
-  padding: 0.2em 0.5em 0em 0.5em;
-  white-space: nowrap;
-  border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
-  background-color: &dtml-contentViewBorderColor;;
-  color: &dtml-contentViewBackgroundColor;;
-  cursor: default;
+    margin-top: 0.2em;
+    padding: 0.2em 0.5em 0em 0.5em;
+    white-space: nowrap;
+    border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+    background-color: &dtml-contentViewBorderColor;;
+    color: &dtml-contentViewBackgroundColor;;
+    cursor: default;
 }
 
 /* collective.documentviewer : hide some elements... */
 
 .close-fullscreen, .DV-navigation {
-  display: none;
+    display: none;
 }
 
 .actionMenuContentAdvice { width: 350px; }
@@ -286,49 +286,49 @@ li.pmLinks div.annexTitleNotPrintable {
 
 /* place an icon before the annex title if there was an error during conversion */
 .erroredConversion, dd li span.erroredConversion {
-  background-image: url(<dtml-var portal_url>/errored_conversion.png);
-  background-repeat: no-repeat;
-  background-position: 0px 0px;
-  padding-left: 16px !important;
+    background-image: url(<dtml-var portal_url>/errored_conversion.png);
+    background-repeat: no-repeat;
+    background-position: 0px 0px;
+    padding-left: 16px !important;
 }
 
 /* small fixes with position of icon displayed before annex title depending on following tag */
 dd li a.erroredConversion, tr span.erroredConversion {
-  background-position: 0px 1px;
+    background-position: 0px 1px;
 }
 
 .contentBatchAction {
-  float: left !important;
-  padding: 0 0.5em;
-  border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
-  border-right: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
-  border-left: none !important;
-  border-collapse: collapse;
-  position: relative;
-  top: -1px;
-  margin-left: -0.5em !important;
+    float: left !important;
+    padding: 0 0.5em;
+    border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+    border-right: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
+    border-left: none !important;
+    border-collapse: collapse;
+    position: relative;
+    top: -1px;
+    margin-left: -0.5em !important;
 }
 
 #objectHistory_img {
-  cursor:pointer;
-  margin-top: 3px;
+    cursor:pointer;
+    margin-top: 3px;
 }
 
 #objectMenu.actionMenuAX .actionMenuContentAX li { display: block; }
 #objectMenu.actionMenuAX .actionMenuContentAX li,
 #objectMenu.actionMenuAX .actionMenuContentAX li a:hover {
-    background-position: 3px 50%;
-    margin-left: 0;
+      background-position: 3px 50%;
+      margin-left: 0;
 }
 #objectMenu.actionMenuAX .actionMenuContentAX li a { padding-left: 22px; }
 
 .actionMenuSelected {
-  display: block;
-  cursor: default;
-  background-image: url(<dtml-var portal_url>/bullet_icon.gif);
-  background-repeat: no-repeat;
-  background-position: 0% 3px;
-  padding-left: 16px !important;
+    display: block;
+    cursor: default;
+    background-image: url(<dtml-var portal_url>/bullet_icon.gif);
+    background-repeat: no-repeat;
+    background-position: 0% 3px;
+    padding-left: 16px !important;
 }
 
 #templateMenu li a { padding-left: 16px; }
@@ -336,46 +336,46 @@ dd li a.erroredConversion, tr span.erroredConversion {
 input[type=radio] {margin: 0;}
 
 .noPadding {
-  padding-right: 0em !important;
-  padding-left: 0em !important;
-  padding-top: 0em !important;
-  padding-bottom: 0em !important;
+    padding-right: 0em !important;
+    padding-left: 0em !important;
+    padding-top: 0em !important;
+    padding-bottom: 0em !important;
 }
 
 .hsButton {
-  background: #DEE7EC none no-repeat scroll 0% 0%;
-  cursor: pointer;
-  font-size: 85%;
-  border: 1px solid #AEAEAE;
-  text-align: center;
-  height: 1.9em;
-  margin: 0 2px 0 0;
+    background: #DEE7EC none no-repeat scroll 0% 0%;
+    cursor: pointer;
+    font-size: 85%;
+    border: 1px solid #AEAEAE;
+    text-align: center;
+    height: 1.9em;
+    margin: 0 2px 0 0;
 }
 
 .hsButtonWF {
-  background-color: #DEE7EC;
+    background-color: #DEE7EC;
 }
 
 /* Buttons used for worflow transitions can be designed button by button */
 .hsButtonWF_propose, .hsButtonWF_validate {
-  background-color: #DEE7EC;
+    background-color: #DEE7EC;
 }
 
 .hsButtonAction {
-  background-color: #F4F6F7;
+    background-color: #F4F6F7;
 }
 
 /* Buttons used for actions can be designed button by button */
 .hsButtonAction_delete, .hsButtonAction_deleteWholeMeeting, .hsButtonAction_duplicate {
-  background-color: #F4F6F7;
+    background-color: #F4F6F7;
 }
 
 .fakeButton {
-  background: #ffd5c0 url(&dtml-portal_url;/fakeTransition.gif) no-repeat scroll 3px 2px;
-  font-style: italic;
-  cursor: help;
-  padding: 0 3px 0 9px;
-  color: #474747;
+    background: #ffd5c0 url(&dtml-portal_url;/fakeTransition.gif) no-repeat scroll 3px 2px;
+    font-style: italic;
+    cursor: help;
+    padding: 0 3px 0 9px;
+    color: #474747;
 }
 .hsCancel { background-color: white; }
 
@@ -392,8 +392,8 @@ input[type=radio] {margin: 0;}
 .portletCell.pmLink.even a,
 #content li.pmLinks a,
 #content span.pmLinks a {
-  color: red;
-  text-decoration:none;
+    color: red;
+    text-decoration:none;
 }
 
 .documentContent { padding: 1em 0.5em 2.5em 1em !important; }
@@ -402,29 +402,29 @@ input[type=radio] {margin: 0;}
 .searchItem { font-weight: normal; font-style: italic; }
 
 div.hsDialog {
-  display: none;
-  position: absolute;
-  top: 30%;
-  left: 35%;
-  width: 350px;
-  z-index : 100;
-  background: white;
-  padding: 8px;
-  border: 1px solid gray;
+    display: none;
+    position: absolute;
+    top: 30%;
+    left: 35%;
+    width: 350px;
+    z-index : 100;
+    background: white;
+    padding: 8px;
+    border: 1px solid gray;
 }
 
 div.hsGrey {
-  display: none;
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  width:100%;
-  height:100%;
-  background:gray;
-  filter:alpha(Opacity=50);
-  opacity:0.5;
-  -moz-opacity:0.5;
-  -khtml-opacity:0.5
+    display: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width:100%;
+    height:100%;
+    background:gray;
+    filter:alpha(Opacity=50);
+    opacity:0.5;
+    -moz-opacity:0.5;
+    -khtml-opacity:0.5
 }
 
 .hsActions {position: relative; top: 1.7em; right: 1.3em; z-index:10;}
@@ -433,35 +433,34 @@ div.hsGrey {
 legend .hsLanguage {top: -0.3em; right: 5px;}
 
 .hsPopup {
-  display:none;
-  border: 1px solid gray;
-  position: absolute;
-  background-color: white;
-  padding: 0.3em;
-  z-index: 5;
-  right: 10px;
+    display:none;
+    border: 1px solid gray;
+    position: absolute;
+    background-color: white;
+    padding: 0.3em;
+    z-index: 5;
+    right: 10px;
 }
 
 .hsPopup a:hover {
-text-decoration: underline;
+    text-decoration: underline;
 }
 
 /* CSS for data changes in object histories. */
 .dataChanges { border: 0; }
 .dataChanges th {
-  font-style: italic;
-  background-color: transparent !important;
-  border: 0 none transparent !important;
-  padding: 0 !important;
-
+    font-style: italic;
+    background-color: transparent !important;
+    border: 0 none transparent !important;
+    padding: 0 !important;
 }
 
 .dataChanges td {
-  padding: 0.3em 0 0 0 !important;
-  border-top: 1px dashed grey !important;
-  border-right: 0 none transparent !important;
-  border-left: 0 none transparent !important;
-  border-bottom: 0 none transparent !important;
+    padding: 0.3em 0 0 0 !important;
+    border-top: 1px dashed grey !important;
+    border-right: 0 none transparent !important;
+    border-left: 0 none transparent !important;
+    border-bottom: 0 none transparent !important;
 }
 .highlight {background-color: yellow}
 
@@ -471,90 +470,87 @@ text-decoration: underline;
 /* Add a highlight-red style useable in CKeditor to highlight modified elements */
 /* See ticket #901 on http://trac.imio.be */
 .highlight-red {
-color:red;
+    color:red;
 }
 
 /* CSS for MeetingItem.privacy */
 /* While displayed as a single item (meetingitem_view) */
 .item_privacy_public {
-color: green;
+    color: green;
 }
 .item_privacy_secret {
-color: #FF934A;
+    color: #FF934A;
 }
 /* While displayed in a Meeting */
 .meeting_item_privacy_secret {
-background-color: #E8E8E8;
+    background-color: #E8E8E8;
 }
 .meeting_item_privacy_public {
-background-color: transparent;
+    background-color: transparent;
 }
 
 /* CSS for portlet todo */
 .portletTodo dt, .portletPloneMeeting dt {
-border: 0;
+    border: 0;
 }
 .portletTodo, .portletPloneMeeting {
-border: 1px solid &dtml-globalBorderColor;;
+    border: 1px solid &dtml-globalBorderColor;;
 }
 .portletTodo .portletSection {
-margin: 0;
-padding-left: 0.5em;
-padding-top: 0.2em;
-padding-bottom: 0.2em;
+    margin: 0;
+    padding-left: 0.5em;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
 }
 .portletTodo dd.portletSection a:link,
 .portletTodo dd.portletSection a:visited {
-color: &dtml-fontColor;;
+    color: &dtml-fontColor;;
 }
 .portletTodo .portletCell {
-margin: 0;
-padding-left: 1em;
-padding-top: 0.2em;
-padding-bottom: 0.2em;
+    margin: 0;
+    padding-left: 1em;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
 }
 .portletPloneMeetingHeaderIcons {
-float:right;
-display: inline;
-padding-right: 5px;
+    float:right;
+    display: inline;
+    padding-right: 5px;
 }
 
 .todoSeeAll {
-display: block;
-text-align: right;
-font-size: 95%;
+    display: block;
+    text-align: right;
+    font-size: 95%;
 }
 
 .pod_template_icon_odt {
-background: transparent url(&dtml-portal_url;/odt.png) no-repeat scroll 0 3px;
-padding: 3px 0px 2px 20px;
+    background: transparent url(&dtml-portal_url;/odt.png) no-repeat scroll 0 3px;
+    padding: 3px 0px 2px 20px;
 }
-
 .pod_template_icon_doc {
-background: transparent url(&dtml-portal_url;/doc.png) no-repeat scroll 0 3px;
-padding: 3px 0px 2px 20px;
+    background: transparent url(&dtml-portal_url;/doc.png) no-repeat scroll 0 3px;
+    padding: 3px 0px 2px 20px;
 }
-
 .pod_template_icon_pdf {
-background: transparent url(&dtml-portal_url;/pdf.png) no-repeat scroll 0 3px;
-padding: 3px 0px 2px 20px;
+    background: transparent url(&dtml-portal_url;/pdf.png) no-repeat scroll 0 3px;
+    padding: 3px 0px 2px 20px;
 }
-
 .pod_template_icon_rtf {
-background: transparent url(&dtml-portal_url;/rtf.png) no-repeat scroll 0 3px;
-padding: 3px 0px 2px 20px;
+    background: transparent url(&dtml-portal_url;/rtf.png) no-repeat scroll 0 3px;
+    padding: 3px 0px 2px 20px;
 }
 
 .input_disabled {
-color: grey !important;
-border-color: lightgrey !important;
-cursor: not-allowed !important;
+    color: grey !important;
+    border-color: lightgrey !important;
+    cursor: not-allowed !important;
 }
 
 .toDiscussEditable, .itemIsSignedEditable, .annexToPrintEditable {
-border-bottom: 2px dotted grey;
-padding-bottom: 2px;
-cursor:pointer;
+    border-bottom: 2px dotted grey;
+    padding-bottom: 2px;
+    cursor:pointer;
 }
 
 .ToDiscuss {
@@ -616,22 +612,27 @@ span#meetingItems INPUT[type=text], span#lateItems INPUT[type=text] {
 }
 
 .warningInMeetingConfig {
-color: red;
+    color: red;
 }
 
 /* plone.app.search, hide some elements while using the @@search until we use it, see ticket #5515 */
 #search-results-bar dl, #search-results-bar #searchResultsSort {
-display: none;
+    display: none;
 }
 .searchPage #rss-subscription, .searchPage h1 {
-display: none;
+    display: none;
 }
 dl.searchResults cite {
-display: none;
+    display: none;
 }
 
 #showItemsDecidedTransitions{
-float:right;
+    float:right;
+}
+
+/* hide the personal-preferences tab when the user go to his preferences to avoid him to do nasty things... */
+#contentview-user_data-personal-preferences {
+    display: none;
 }
 
 /* </dtml-with> */
