@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # GNU General Public License (GPL)
 '''This module allows to perform some standard sets of adaptations in the
-   HubSessions data structures and workflows.'''
+   PloneMeeting data structures and workflows.'''
 
 from Products.Archetypes.atapi import *
 from Products.PloneMeeting.config import ReadDecision, WriteDecision
@@ -15,10 +15,11 @@ groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
 NO_DELETE_STATES = ('proposed', 'prevalidated', 'validated', 'presented',
                     'itempublished', 'itemfrozen', 'accepted', 'refused',
                     'delayed', 'confirmed')
-# state to clone regarding permissions that will have the state 'returned_to_proposing_group'
-# the state must exist in used workflow, in a exterme case, a special state,
-# like special_state_for_return_to_proposing_group can exist in the workflow
-# without having any transitions for this usecase if we have very special permissions for this role...
+# for the 'return_to_proposing_group' wfAdaptation, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+# is the state to clone regarding permissions that will have the state 'returned_to_proposing_group',
+# the state must exist in used workflow. If none of the state existing in the default workflow fit our need,
+# you can still add an arbitrary workflowState to the workflow called for example 'state_for_return_to_proposing_group' where
+# you will define custom permissions for this wfAdaptation...
 RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
 # states of the meeting from wich an item can be 'returned_to_proposing_group'
 RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
