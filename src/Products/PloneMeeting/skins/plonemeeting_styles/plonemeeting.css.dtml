@@ -127,8 +127,8 @@ table.no-style-table td {
 .state-validated, .label-state-validated { color: blue !important; }
 .state-presented, .label-state-presented { color: brown !important; }
 .state-itemfrozen, .label-state-itemfrozen,
-.state-frozen, .label-state-frozen,
-.state-returned_to_proposing_group, .label-state-returned_to_proposing_group { color: cornflowerBlue !important; }
+.state-frozen, .label-state-frozen { color: cornflowerBlue !important; }
+.state-returned_to_proposing_group, .label-state-returned_to_proposing_group { color: grey !important; }
 .state-itempublished, .label-state-itempublished, .state-published, .label-state-published { color: darkgoldenrod !important; }
 .state-accepted, .label-state-accepted { color: #64c168 !important; }
 .state-confirmed, .label-state-confirmed { color: green !important; }
@@ -143,7 +143,10 @@ table.no-style-table td {
 .transition-propose { color: #ff6c00 !important; }
 .transition-validate { color: blue !important; }
 .transition-present { color: brown !important; }
-.transition-itemfreeze, .transition-freeze { color: cornflowerBlue !important; }
+.transition-itemfreeze,
+.transition-freeze { color: cornFlowerBlue !important; }
+.transition-return_to_meeting,
+.transition-return_to_proposing_group { color: grey !important; }
 .transition-itempublish, .transition-publish { color: darkgoldenrod !important; }
 .transition-accept { color: #64c168 !important; }
 .transition-confirm { color: green !important; }

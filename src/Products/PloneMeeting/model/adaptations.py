@@ -16,6 +16,9 @@ NO_DELETE_STATES = ('proposed', 'prevalidated', 'validated', 'presented',
                     'itempublished', 'itemfrozen', 'accepted', 'refused',
                     'delayed', 'confirmed')
 # state to clone regarding permissions that will have the state 'returned_to_proposing_group'
+# the state must exist in used workflow, in a exterme case, a special state,
+# like special_state_for_return_to_proposing_group can exist in the workflow
+# without having any transitions for this usecase if we have very special permissions for this role...
 RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
 # states of the meeting from wich an item can be 'returned_to_proposing_group'
 RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
@@ -422,7 +425,16 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             itemWorkflow.states.addState('returned_to_proposing_group')
             newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
             stateToClonePermissions = getattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE)
-            newState.permission_roles = stateToClonePermissions.permission_roles
+            # we must make sure the MeetingManagers still may access this item
+            # so add MeetingManager role to every cloned permissions
+            cloned_permission_roles = dict(stateToClonePermissions.permission_roles)
+            # we need to use an intermediate dict because roles are stored as a typle and we need a list...
+            cloned_permission_roles_with_meetingmanager = {}
+            for roles in cloned_permission_roles:
+                cloned_permission_roles_with_meetingmanager[roles] = list(cloned_permission_roles[roles])
+                if not 'MeetingManager' in roles:
+                    cloned_permission_roles_with_meetingmanager[roles].append('MeetingManager')
+            newState.permission_roles = cloned_permission_roles_with_meetingmanager
             # now create the necessary transitions : one to go to 'returned_to_proposing_group' state
             # and x to go back to relevant state depending on current meeting state
             # first, the transition 'return_to_proposing_group'

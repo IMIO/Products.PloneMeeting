@@ -186,6 +186,22 @@ colorSystems = (
 NOT_ENCODED_VOTE_VALUE = 'not_yet'
 NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
 
+# mapping definintions regarding the 'return_to_proposing_group' wfAdaptation
+# this is used in MeetingItem.mayBackToMeeting and may vary upon used workflow
+# the key is the transition triggerable on the item and the values are states
+# of the linked meeting in wich this transition can be triggered
+# the last key 'no_more_returnable_state' specify states in wich the item is no more
+# returnable to the meeting...
+# these mappings are easily overridable by a subproduct...
+RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposing_group':
+                                      ['created', ],
+                                      'backTo_itempublished_from_returned_to_proposing_group':
+                                      ['published', ],
+                                      'backTo_itemfrozen_from_returned_to_proposing_group':
+                                      ['frozen', 'decided', ],
+                                      'NO_MORE_RETURNABLE_STATES': ['closed', 'archived', ]
+                                      }
+
 # Keys used in annotations
 SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY = 'PloneMeeting-sent_to_other_meetingconfig_'
 CLONE_TO_OTHER_MC_ACTION_SUFFIX = 'clone_to_other_mc_'
