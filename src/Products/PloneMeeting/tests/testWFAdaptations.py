@@ -32,7 +32,8 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.config import WriteDecision
-from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED
+from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED, \
+    RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
 
 
 class testWFAdaptations(PloneMeetingTestCase):
@@ -49,7 +50,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                                'only_creator_may_delete', 'pre_validation',
                                'items_come_validated', 'archiving', 'no_publication',
                                'no_proposal', 'everyone_reads_all',
-                               'creator_edits_unless_closed', 'local_meeting_managers',)))
+                               'creator_edits_unless_closed', 'local_meeting_managers',
+                               'return_to_proposing_group', )))
 
     def test_pm_WFA_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.
@@ -59,7 +61,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._no_publication_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_publication')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_publication_active()
 
@@ -92,7 +94,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._no_proposal_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_proposal')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_proposal_active()
 
@@ -119,7 +121,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._pre_validation_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('pre_validation')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         # define pmManager as a prereviewer
         member = self.portal.portal_membership.getAuthenticatedMember()
@@ -158,7 +160,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._creator_initiated_decisions_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('creator_initiated_decisions')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._creator_initiated_decisions_active()
 
@@ -181,7 +183,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._items_come_validated_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('items_come_validated')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._items_come_validated_active()
 
@@ -190,7 +192,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         login(self.portal, 'pmCreator1')
         i1 = self.create('MeetingItem')
         self.assertEquals(i1.queryState(), 'itemcreated')
-        self.assertEquals(self.transitions(i1), ['propose',])
+        self.assertEquals(self.transitions(i1), ['propose', ])
 
     def _items_come_validated_active(self):
         '''Tests while 'items_come_validated' wfAdaptation is active.'''
@@ -205,7 +207,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._archiving_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('archiving')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._archiving_active()
 
@@ -233,7 +235,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._only_creator_may_delete_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('only_creator_may_delete')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._only_creator_may_delete_active()
 
@@ -287,7 +289,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._no_global_observation_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_global_observation')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_global_observation_active()
 
@@ -388,7 +390,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._everyone_reads_all_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('everyone_reads_all')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._everyone_reads_all_active()
 
@@ -475,7 +477,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._creator_edits_unless_closed_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('creator_edits_unless_closed')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._creator_edits_unless_closed_active()
 
@@ -539,12 +541,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'local_meeting_managers'.'''
         # create a MeetingManager and put it in another _creators group than
         # the default MeetingManager
-        self.createUser('pmManager2', ['Member', 'MeetingManager',])
+        self.createUser('pmManager2', ['Member', 'MeetingManager', ])
         self.portal.portal_membership.getMemberById('pmManager2')
         self.portal.portal_groups.addPrincipalToGroup('pmManager2', 'vendors_creators')
         login(self.portal, 'pmManager2')
         # create a MeetingManager in the same group than default MeetingManager
-        self.createUser('pmManager3', ['Member', 'MeetingManager',])
+        self.createUser('pmManager3', ['Member', 'MeetingManager', ])
         self.portal.portal_membership.getMemberById('pmManager3')
         self.portal.portal_groups.addPrincipalToGroup('pmManager3', 'developers_creators')
         login(self.portal, 'pmManager3')
@@ -552,7 +554,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._local_meeting_managers_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('local_meeting_managers')
-        logger = logging.getLogger('PloneMeeting: test')
+        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._local_meeting_managers_active()
 
@@ -579,6 +581,89 @@ class testWFAdaptations(PloneMeetingTestCase):
         # same group MeetingManagers can access the Meeting
         login(self.portal, 'pmManager3')
         self.failUnless(self.hasPermission('Modify portal content', m1))
+
+    def test_pm_WFA_return_to_proposing_group(self):
+        '''Test the workflowAdaptation 'return_to_proposing_group'.'''
+        # check while the wfAdaptation is not activated
+        self._return_to_proposing_group_inactive()
+        # activate the wfAdaptation and check
+        self.meetingConfig.setWorkflowAdaptations('return_to_proposing_group')
+        logger = logging.getLogger('PloneMeeting: testing')
+        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        self.logger = logger
+        self._return_to_proposing_group_active()
+
+    def _return_to_proposing_group_inactive(self):
+        '''Tests while 'return_to_proposing_group' wfAdaptation is inactive.'''
+        # make sure the 'return_to_proposing_group' state does not exist in the item WF
+        itemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
+        self.failIf('returned_to_proposing_group' in itemWF.states)
+
+    def _return_to_proposing_group_active(self):
+        '''Tests while 'return_to_proposing_group' wfAdaptation is active.'''
+        # make sure the 'return_to_proposing_group' state does not exist in the item WF
+        itemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
+        self.failUnless('returned_to_proposing_group' in itemWF.states)
+        # check from witch state we can go to 'returned_to_proposing_group', it corresponds
+        # to model.adaptations.RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
+        from_states = set()
+        for state in itemWF.states.values():
+            if 'return_to_proposing_group' in state.transitions:
+                from_states.add(state.id)
+        self.assertEquals(set(RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES), from_states)
+        # make sure permissions of the new state correspond to permissions of the state
+        # defined in the model.adaptations.RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE item state name
+        # just take care that for new state, MeetingManager have been added to every permissions
+        cloned_state_permissions = itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles
+        new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
+        for permission in cloned_state_permissions:
+            cloned_state_permission_with_meetingmanager = []
+            if not 'MeetingManager' in cloned_state_permissions:
+                cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
+                cloned_state_permission_with_meetingmanager.append('MeetingManager')
+            else:
+                cloned_state_permission_with_meetingmanager = cloned_state_permissions[permission]
+            self.assertEquals(cloned_state_permission_with_meetingmanager,
+                              new_state_permissions[permission])
+        # now test the RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS, if some custom permissions are defined,
+        # it will override the permissions coming from the state to clone permissions
+        from Products.PloneMeeting.model import adaptations
+        # first time the wfAdaptation was applied without a defined RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+        self.assertEquals(adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS, {})
+        # we will change the 'PloneMeeting: Write item observations' but for now, it is the same permissions than
+        # in the permissions cloned from the defined state to clone
+        CUSTOM_PERMISSION = 'PloneMeeting: Write item observations'
+        self.assertEquals(
+            itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION] +
+            ('MeetingManager', ),
+            tuple(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION]))
+        # we will add the 'MeetingMember' role, make sure it is not already there...
+        self.failIf('MeetingMember' in itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
+        # we define the custom permissions and we run the wfAdaptation again...
+        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {'PloneMeeting: Write item observations':
+                                                                    ['Manager', 'MeetingManager', 'MeetingMember', ]}
+        # clean wf, remove added state and transitions then apply wfAdaptations again
+        for transition in itemWF.states['returned_to_proposing_group'].transitions:
+            del itemWF.transitions[transition]
+        del itemWF.transitions['return_to_proposing_group']
+        del itemWF.states['returned_to_proposing_group']
+        performWorkflowAdaptations(self.portal, self.meetingConfig, self.logger)
+        # now our custom permission must be taken into account but other permissions should be the same than
+        # the ones defined in the state to clone permissions of
+        cloned_state_permissions = itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles
+        new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
+        for permission in cloned_state_permissions:
+            cloned_state_permission_with_meetingmanager = []
+            if not 'MeetingManager' in cloned_state_permissions:
+                cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
+                cloned_state_permission_with_meetingmanager.append('MeetingManager')
+            else:
+                cloned_state_permission_with_meetingmanager = cloned_state_permissions[permission]
+            # here check if we are treating our custom permission
+            if permission == CUSTOM_PERMISSION:
+                cloned_state_permission_with_meetingmanager.append('MeetingMember')
+            self.assertEquals(cloned_state_permission_with_meetingmanager,
+                              new_state_permissions[permission])
 
 
 def test_suite():

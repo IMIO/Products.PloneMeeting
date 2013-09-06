@@ -15,12 +15,25 @@ groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
 NO_DELETE_STATES = ('proposed', 'prevalidated', 'validated', 'presented',
                     'itempublished', 'itemfrozen', 'accepted', 'refused',
                     'delayed', 'confirmed')
+
 # for the 'return_to_proposing_group' wfAdaptation, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
 # is the state to clone regarding permissions that will have the state 'returned_to_proposing_group',
-# the state must exist in used workflow. If none of the state existing in the default workflow fit our need,
-# you can still add an arbitrary workflowState to the workflow called for example 'state_for_return_to_proposing_group' where
-# you will define custom permissions for this wfAdaptation...
+# the state must exist in used workflow. If none of the state existing in the default workflow
+# fit our need, you can still add an arbitrary workflowState to the workflow called for example
+# 'state_for_return_to_proposing_group' where you will define custom permissions for this wfAdaptation...
 RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
+# if a state to clone defined here above in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE is not enough
+# to manage permissions of the new state 'returned_to_proposing_group', we can define a full or partial
+# custom permissions dict that will update permissions that will be set.  This can be use together
+# with a RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE, the permissions defined here under in
+# RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS will override and be applied after cloned permissions
+# a valid value is something like :
+# {'Modify portal content': ['Manager', 'MeetingManager', 'MeetingMember', 'MeetingReviewer', ],
+#  'Review portal content': ['Manager', 'MeetingManager', 'MeetingReviewer', ],}
+# this way, MeetingMembers can edit the item but only MeetingReviewer can send it back to the
+# meeting managers and the other permissions are kept from the state to clone permissions defined
+# in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}  # {'PloneMeeting: Write item observations': ['Manager', 'MeetingManager', 'MeetingMember', ]}
 # states of the meeting from wich an item can be 'returned_to_proposing_group'
 RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
 
@@ -423,19 +436,27 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         if 'returned_to_proposing_group' not in itemWorkflow.states:
             # add the 'returned_to_proposing_group' state and clone the
             # permissions from RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+            # and apply permissions defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
             itemWorkflow.states.addState('returned_to_proposing_group')
             newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
-            stateToClonePermissions = getattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE)
-            # we must make sure the MeetingManagers still may access this item
-            # so add MeetingManager role to every cloned permissions
-            cloned_permission_roles = dict(stateToClonePermissions.permission_roles)
-            # we need to use an intermediate dict because roles are stored as a typle and we need a list...
+            # clone the permissions of the given RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE if it exists
             cloned_permission_roles_with_meetingmanager = {}
-            for roles in cloned_permission_roles:
-                cloned_permission_roles_with_meetingmanager[roles] = list(cloned_permission_roles[roles])
-                if not 'MeetingManager' in roles:
-                    cloned_permission_roles_with_meetingmanager[roles].append('MeetingManager')
+            if hasattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE):
+                stateToClonePermissions = getattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE)
+                # we must make sure the MeetingManagers still may access this item
+                # so add MeetingManager role to every cloned permissions
+                cloned_permission_roles = dict(stateToClonePermissions.permission_roles)
+                # we need to use an intermediate dict because roles are stored as a typle and we need a list...
+                for roles in cloned_permission_roles:
+                    cloned_permission_roles_with_meetingmanager[roles] = list(cloned_permission_roles[roles])
+                    if not 'MeetingManager' in roles:
+                        cloned_permission_roles_with_meetingmanager[roles].append('MeetingManager')
+            # no apply custom permissions defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+            cloned_permission_roles_with_meetingmanager.update(RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS)
+
+            # finally, apply computed permissions, aka cloned + custom
             newState.permission_roles = cloned_permission_roles_with_meetingmanager
+
             # now create the necessary transitions : one to go to 'returned_to_proposing_group' state
             # and x to go back to relevant state depending on current meeting state
             # first, the transition 'return_to_proposing_group'
