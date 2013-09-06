@@ -618,11 +618,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         for permission in cloned_state_permissions:
             cloned_state_permission_with_meetingmanager = []
-            if not 'MeetingManager' in cloned_state_permissions:
+            if not 'MeetingManager' in cloned_state_permissions[permission]:
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
                 cloned_state_permission_with_meetingmanager.append('MeetingManager')
             else:
-                cloned_state_permission_with_meetingmanager = cloned_state_permissions[permission]
+                cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
             self.assertEquals(cloned_state_permission_with_meetingmanager,
                               new_state_permissions[permission])
         # now test the RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS, if some custom permissions are defined,
@@ -634,8 +634,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # in the permissions cloned from the defined state to clone
         CUSTOM_PERMISSION = 'PloneMeeting: Write item observations'
         self.assertEquals(
-            itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION] +
-            ('MeetingManager', ),
+            itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION],
             tuple(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION]))
         # we will add the 'MeetingMember' role, make sure it is not already there...
         self.failIf('MeetingMember' in itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
@@ -654,16 +653,17 @@ class testWFAdaptations(PloneMeetingTestCase):
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         for permission in cloned_state_permissions:
             cloned_state_permission_with_meetingmanager = []
-            if not 'MeetingManager' in cloned_state_permissions:
+            if not 'MeetingManager' in cloned_state_permissions[permission]:
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
                 cloned_state_permission_with_meetingmanager.append('MeetingManager')
             else:
-                cloned_state_permission_with_meetingmanager = cloned_state_permissions[permission]
+                cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
             # here check if we are treating our custom permission
             if permission == CUSTOM_PERMISSION:
-                cloned_state_permission_with_meetingmanager.append('MeetingMember')
-            self.assertEquals(cloned_state_permission_with_meetingmanager,
-                              new_state_permissions[permission])
+                cloned_state_permission_with_meetingmanager = \
+                    adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[CUSTOM_PERMISSION]
+            self.assertEquals(tuple(cloned_state_permission_with_meetingmanager),
+                              tuple(new_state_permissions[permission]))
 
 
 def test_suite():
