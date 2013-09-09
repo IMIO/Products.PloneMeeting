@@ -24,8 +24,7 @@
 
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testMeetingGroup(PloneMeetingTestCase):

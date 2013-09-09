@@ -3,6 +3,10 @@ Products.PloneMeeting Changelog
 Older versions than 3.0 can be found at http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/
 Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 
+3.0.4 (unreleased)
+------------------
+- Nothing yet
+
 3.0.3 (2013-08-19)
 ------------------
 - Limited use of roles, removed MeetingPowerObserverLocal and MeetingObserverLocalCopy
@@ -20,6 +24,7 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Rely on imio.migrator
 - Do not raise a WorkflowException in ToolPloneMeeting.triggerTransition if transition to trigger is not available, this avoid UI double click problems
 - Let user access personal-information and change-password tabs in personal preferences
+- Added wfAdaptation 'send back to proposing group for correction'
 
 3.0.2 (2013-06-21)
 ------------------
