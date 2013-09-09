@@ -67,10 +67,6 @@ class IMeetingItemDocumentation:
        ArchGenXML 2, we document the provided methods in this absurd class.'''
     def getMeetingsAcceptingItems():
         '''Gets the meetings that can accept items.'''
-    def isDelayed():
-        '''Am I delayed ?'''
-    def isRefused():
-        '''Am I refused ?'''
     def getItemReference():
         '''Returns the reference associated to this item. If the format of your
            item references is simple, you should define it by a TAL expression,

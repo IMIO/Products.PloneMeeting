@@ -53,6 +53,7 @@ indexInfo = {
              'getDecision': 'ZCTextIndex',
              'getCopyGroups': 'KeywordIndex',
              'indexAdvisers': 'KeywordIndex',
+             'previous_review_state': 'FieldIndex',
              # Meeting-related indexes
              'getDate': 'DateIndex',
              # MeetingFile-related indexes

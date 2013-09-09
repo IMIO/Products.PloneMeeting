@@ -24,6 +24,9 @@
            factory=".Meeting.MeetingWorkflowActions"
            provides=".interfaces.IMeetingWorkflowActions" />
 
+  <!-- Indexes -->
+  <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
+
   <!-- add the blob field to MeetingFile -->
   <adapter
     name="plone.app.blob.subtypes.file"

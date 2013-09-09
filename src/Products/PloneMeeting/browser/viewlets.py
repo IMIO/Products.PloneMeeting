@@ -3,7 +3,7 @@ from plone.app.layout.viewlets import ViewletBase
 from zope.component import getMultiAdapter
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
-from plone.app.layout.viewlets.content import DocumentBylineViewlet
+
 
 # ------------------------------------------------------------------------------
 class PodTemplatesViewlet(ViewletBase):
@@ -13,6 +13,7 @@ class PodTemplatesViewlet(ViewletBase):
     def update(self):
         self.context_state = getMultiAdapter((self.context, self.request),
                                              name=u'plone_context_state')
+
     def getCurrentMeetingConfig(self):
         '''Returns the current meetingConfig.'''
         portal_plonemeeting = getToolByName(self.context, 'portal_plonemeeting')
@@ -31,12 +32,13 @@ class PodTemplatesViewlet(ViewletBase):
 
     index = ViewPageTemplateFile("templates/pod_templates.pt")
 
-# ------------------------------------------------------------------------------
+
 class WorkflowState(ViewletBase):
     '''This viewlet displays the workflow state.'''
     def update(self):
         self.context_state = getMultiAdapter((self.context, self.request),
                                              name=u'plone_context_state')
+
     def getObjectState(self):
         wfTool = getToolByName(self.context, 'portal_workflow')
         return wfTool.getInfoFor(self.context, 'review_state')
@@ -48,5 +50,3 @@ class WorkflowState(ViewletBase):
         return ''
 
     index = ViewPageTemplateFile("templates/workflowstate.pt")
-
-# ------------------------------------------------------------------------------

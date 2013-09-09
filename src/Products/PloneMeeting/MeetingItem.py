@@ -335,6 +335,41 @@ class MeetingItemWorkflowConditions:
         elif currentState == 'delayed':
             return True
 
+    security.declarePublic('mayBackToMeeting')
+    def mayBackToMeeting(self, transitionName):
+        """Specific guard for the 'return_to_proposing_group' wfAdaptation.
+           As we have only one guard_expr for potentially several transitions departing
+           from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
+        user = self.context.portal_membership.getAuthenticatedMember()
+        if not checkPermission(ReviewPortalContent, self.context) and not \
+           user.has_role('MeetingManager'):
+            return
+        # get the linked meeting
+        meeting = self.context.getMeeting()
+        meetingState = meeting.queryState()
+        # use RETURN_TO_PROPOSING_GROUP_MAPPINGS to know in wich meetingStates
+        # the given p_transitionName can be triggered
+        authorizedMeetingStates = RETURN_TO_PROPOSING_GROUP_MAPPINGS[transitionName]
+        if meetingState in authorizedMeetingStates:
+            return True
+        # if we did not return True, then return a No(...) message specifying that
+        # it can no more be returned to the meeting because the meeting is in some
+        # specifig states (like 'closed' for example)
+        if meetingState in RETURN_TO_PROPOSING_GROUP_MAPPINGS['NO_MORE_RETURNABLE_STATES']:
+            # avoid to display No(...) message for each transition having the 'mayBackToMeeting'
+            # guard expr, just return the No(...) msg for the first transitionName checking this...
+            if not 'may_not_back_to_meeting_warned_by' in self.context.REQUEST:
+                self.context.REQUEST.set('may_not_back_to_meeting_warned_by', transitionName)
+            if self.context.REQUEST.get('may_not_back_to_meeting_warned_by') == transitionName:
+                return No(translate('can_not_return_to_meeting_because_of_meeting_state',
+                                    mapping={'meetingState': translate(meetingState,
+                                                                       domain='plone',
+                                                                       context=self.context.REQUEST),
+                                             },
+                                    domain="PloneMeeting",
+                                    context=self.context.REQUEST))
+        return False
+
     security.declarePublic('mayDelete')
     def mayDelete(self):
         res = True
@@ -379,6 +414,13 @@ class MeetingItemWorkflowConditions:
             if self.context.hasMeeting() and \
                (self.context.getMeeting().queryState() == 'archived'):
                 res = True
+        return res
+
+    security.declarePublic('mayReturnToProposingGroup')
+    def mayReturnToProposingGroup(self):
+        res = False
+        if checkPermission(ReviewPortalContent, self.context):
+            res = True
         return res
 
     security.declarePublic('isLateFor')
@@ -492,6 +534,11 @@ class MeetingItemWorkflowActions:
     security.declarePrivate('doItemArchive')
     def doItemArchive(self, stateChange):
         pass
+
+    security.declarePrivate('doReturn_to_proposing_group')
+    def doReturn_to_proposing_group(self, stateChange):
+        '''Send an email when returned to proposing group if relevant...'''
+        self.context.sendMailIfRelevant('returnedToProposingGroup', 'Modify portal content', isRole=False)
 
 InitializeClass(MeetingItemWorkflowActions)
 ##/code-section module-header
@@ -1426,11 +1473,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # The item is in the list of normal or late items for p_meeting.
             # Check if we must show a decision-related status for the item
             # (delayed, refused...).
-            adap = item.adapted()
-            if adap.isDelayed():
+            itemState = item.queryState()
+            if itemState == 'delayed':
                 res.append(('delayed.png', 'icon_help_delayed'))
-            elif adap.isRefused():
+            elif itemState == 'refused':
                 res.append(('refused.png', 'icon_help_refused'))
+            elif itemState == 'returned_to_proposing_group':
+                res.append(('return_to_proposing_group.png', 'icon_help_returned_to_proposing_group'))
             # Display icons about sent/cloned to other meetingConfigs
             clonedToOtherMCIds = item._getOtherMeetingConfigsImAmClonedIn()
             for clonedToOtherMCId in clonedToOtherMCIds:
@@ -1993,16 +2042,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         if item.hasMeeting() and (item.getMeeting().queryState() != 'created'):
             return True
-
-    security.declarePublic('isDelayed')
-    def isDelayed(self):
-        '''See doc in interfaces.py'''
-        return self.getSelf().queryState() == 'delayed'
-
-    security.declarePublic('isRefused')
-    def isRefused(self):
-        '''See doc in interfaces.py'''
-        return self.getSelf().queryState() == 'refused'
 
     security.declarePublic('getSpecificDocumentContext')
     def getSpecificDocumentContext(self):

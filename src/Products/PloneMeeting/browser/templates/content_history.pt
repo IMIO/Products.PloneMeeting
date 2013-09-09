@@ -32,8 +32,9 @@
       </td>
       <td class="#"
           tal:condition="not: isDataChange"
-          tal:content="python: event['action'] and event['action'] or 'Created'" i18n:translate=""
-          tal:attributes="class python: showColors and ('transition-%s' % str(event['action']).lower()) or ''">Action</td>
+          tal:define="actionTitle python: event['action'] and view.getTransitionTitle(event['action']) or 'Created'"
+          tal:content="actionTitle" i18n:translate=""
+          tal:attributes="class python: showColors and ('transition-%s' % str(actionTitle).lower()) or ''">Action</td>
       <td tal:define="actorid python:event.get('actor');
                       actor python:context.portal_membership.getMemberInfo(actorid);
                       fullname actor/fullname|nothing;

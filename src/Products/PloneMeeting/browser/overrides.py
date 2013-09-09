@@ -1,5 +1,6 @@
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
+from plone.memoize.instance import memoize
 
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
@@ -12,6 +13,25 @@ class PloneMeetingContentHistoryView(ContentHistoryView):
       We want to display the content_history as a table.
     '''
     index = ViewPageTemplateFile("templates/content_history.pt")
+
+    def getTransitionTitle(self, transitionName):
+        """
+          Given a p_transitionName, return the defined title in portal_workflow
+          as it is what is really displayed in the template.
+        """
+        currentWF = self._getCurrentContextWorkflow()
+        if hasattr(currentWF.transitions, transitionName):
+            return currentWF.transitions[transitionName].title
+        else:
+            return transitionName
+
+    @memoize
+    def _getCurrentContextWorkflow(self):
+        """
+          Return currently used workflow.
+        """
+        wfTool = getToolByName(self.context, 'portal_workflow')
+        return wfTool.getWorkflowsFor(self.context)[0]
 
 
 class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):

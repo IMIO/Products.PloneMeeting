@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # GNU General Public License (GPL)
 '''This module allows to perform some standard sets of adaptations in the
-   HubSessions data structures and workflows.'''
+   PloneMeeting data structures and workflows.'''
 
 from Products.Archetypes.atapi import *
 from Products.PloneMeeting.config import ReadDecision, WriteDecision
@@ -12,9 +12,31 @@ noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',
                      'delayed', 'confirmed', 'itemarchived')
 groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
                            'itempublished', 'itemfrozen')
-noDeleteStates = ('proposed', 'prevalidated', 'validated', 'presented',
-                  'itempublished', 'itemfrozen', 'accepted', 'refused',
-                  'delayed', 'confirmed')
+NO_DELETE_STATES = ('proposed', 'prevalidated', 'validated', 'presented',
+                    'itempublished', 'itemfrozen', 'accepted', 'refused',
+                    'delayed', 'confirmed')
+
+# for the 'return_to_proposing_group' wfAdaptation, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+# is the state to clone regarding permissions that will have the state 'returned_to_proposing_group',
+# the state must exist in used workflow. If none of the state existing in the default workflow
+# fit our need, you can still add an arbitrary workflowState to the workflow called for example
+# 'state_for_return_to_proposing_group' where you will define custom permissions for this wfAdaptation...
+RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
+# if a state to clone defined here above in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE is not enough
+# to manage permissions of the new state 'returned_to_proposing_group', we can define a full or partial
+# custom permissions dict that will update permissions that will be set.  This can be use together
+# with a RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE, the permissions defined here under in
+# RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS will override and be applied after cloned permissions
+# a valid value is something like :
+# {'Modify portal content': ['Manager', 'MeetingManager', 'MeetingMember', 'MeetingReviewer', ],
+#  'Review portal content': ['Manager', 'MeetingManager', 'MeetingReviewer', ],}
+# this way, MeetingMembers can edit the item but only MeetingReviewer can send it back to the
+# meeting managers and the other permissions are kept from the state to clone permissions defined
+# in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}  # {'PloneMeeting: Write item observations': ['Manager', 'MeetingManager', 'MeetingMember', ]}
+# states of the meeting from wich an item can be 'returned_to_proposing_group'
+RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
+
 viewPermissions = ('View', 'Access contents information')
 WF_APPLIED = 'Workflow change "%s" applied for meetingConfig "%s".'
 WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
@@ -313,7 +335,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
     # (De-)activation of adaptation "pre_validation" impacts this one.
     if 'only_creator_may_delete' in wfAdaptations:
         wf = itemWorkflow
-        for stateName in noDeleteStates:
+        for stateName in NO_DELETE_STATES:
             if stateName not in wf.states:
                 continue
             state = wf.states[stateName]
@@ -407,6 +429,70 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 if stateName == 'created':
                     grantPermission(state, permission, 'Owner')
         logger.info(WF_APPLIED % ("local_meeting_managers", meetingConfig.getId()))
+    # when an item is linked to a meeting, most of times, creators lose modify rights on it
+    # with this, the item can be 'returned_to_proposing_group' when in a meeting then the creators
+    # can modify it if necessary and send it back to the MeetingManagers when done
+    if 'return_to_proposing_group' in wfAdaptations:
+        if 'returned_to_proposing_group' not in itemWorkflow.states:
+            # add the 'returned_to_proposing_group' state and clone the
+            # permissions from RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+            # and apply permissions defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+            itemWorkflow.states.addState('returned_to_proposing_group')
+            newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
+            # clone the permissions of the given RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE if it exists
+            cloned_permission_with_meetingmanager = {}
+            if hasattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE):
+                stateToClonePermissions = getattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE)
+                # we must make sure the MeetingManagers still may access this item
+                # so add MeetingManager role to every cloned permissions
+                cloned_permissions = dict(stateToClonePermissions.permission_roles)
+                # we need to use an intermediate dict because roles are stored as a tuple and we need a list...
+                for permission in cloned_permissions:
+                    cloned_permission_with_meetingmanager[permission] = list(cloned_permissions[permission])
+                    if not 'MeetingManager' in cloned_permissions[permission]:
+                        cloned_permission_with_meetingmanager[permission].append('MeetingManager')
+            # no apply custom permissions defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+            cloned_permission_with_meetingmanager.update(RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS)
+
+            # finally, apply computed permissions, aka cloned + custom
+            newState.permission_roles = cloned_permission_with_meetingmanager
+
+            # now create the necessary transitions : one to go to 'returned_to_proposing_group' state
+            # and x to go back to relevant state depending on current meeting state
+            # first, the transition 'return_to_proposing_group'
+            itemWorkflow.transitions.addTransition('return_to_proposing_group')
+            transition = itemWorkflow.transitions['return_to_proposing_group']
+            transition.setProperties(
+                title='return_to_proposing_group',
+                new_state_id='returned_to_proposing_group', trigger_type=1, script_name='',
+                actbox_name='return_to_proposing_group', actbox_url='', actbox_category='workflow',
+                props={'guard_expr': 'python:here.wfConditions().mayReturnToProposingGroup()'})
+            # Update connections between states and transitions and create new transitions
+            newTransitionNames = []
+            for stateName in RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES:
+                if stateName not in itemWorkflow.states:
+                    continue
+                # first specify that we can go to 'return_to_proposing_group' from this state
+                currentTransitions = list(itemWorkflow.states[stateName].transitions)
+                currentTransitions.append('return_to_proposing_group')
+                itemWorkflow.states[stateName].transitions = tuple(currentTransitions)
+                # then build a back transition name with given stateName
+                transitionName = 'backTo_%s_from_returned_to_proposing_group' % stateName
+                newTransitionNames.append(transitionName)
+                itemWorkflow.transitions.addTransition(transitionName)
+                transition = itemWorkflow.transitions[transitionName]
+                # use a specific guard_expr 'mayBackToMeeting'
+                transition.setProperties(
+                    title='return_to_meeting',
+                    new_state_id=stateName, trigger_type=1, script_name='',
+                    actbox_name=transitionName, actbox_url='', actbox_category='workflow',
+                    props={'guard_expr': 'python:here.wfConditions().mayBackToMeeting("%s")' % transitionName})
+            # now that we created back transitions, we can assign them to newState 'returned_to_proposing_group'
+                        # set properties for new 'returned_to_proposing_group' state
+            newState.setProperties(
+                title='returned_to_proposing_group', description='',
+                transitions=newTransitionNames)
+        logger.info(WF_APPLIED % ("return_to_proposing_group", meetingConfig.getId()))
 
 
 # Stuff for performing model adaptations ---------------------------------------
