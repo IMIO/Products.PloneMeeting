@@ -23,8 +23,8 @@
 #
 
 from OFS.ObjectManager import BeforeDeleteException
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from zope.i18n import translate
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testMeetingGroup(PloneMeetingTestCase):
@@ -72,6 +72,11 @@ class testMeetingGroup(PloneMeetingTestCase):
         # then fails because used in the configuration
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['vendors', ])
+        self.assertEquals(cm.exception.message,
+                          translate('can_not_delete_meetinggroup_config_meetingitem',
+                                    domain='plone',
+                                    mapping={'url': self.meetingConfig.recurringitems.template2.absolute_url()},
+                                    context=self.portal.REQUEST))
         self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_config_meetingitem')
         # so remove the item in the config (it could work by changing the proposingGroup too...)
         self.meetingConfig.recurringitems.manage_delObjects(['template2', ])
