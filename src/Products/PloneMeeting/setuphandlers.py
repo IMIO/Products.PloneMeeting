@@ -28,12 +28,8 @@ from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import \
     WorkflowPolicyConfig_id
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
-from Products.PloneMeeting.utils import \
-    sendMailIfRelevant, addRecurringItemsIfRelevant, updateIndexes, \
-    sendAdviceToGiveMailIfRelevant
-from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
-from Products.PloneMeeting.ExternalApplication import \
-    sendNotificationsIfRelevant
+from Products.PloneMeeting.utils import updateIndexes
+
 
 folderViews = ('meetingfolder_redirect_view', 'meetingfolder_view')
 pmGroupProperties = ('meetingRole', 'meetingGroupId')
