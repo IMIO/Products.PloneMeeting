@@ -2470,32 +2470,35 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("annexAdded", translate('event_add_annex',
                                      domain=d,
                                      context=self.REQUEST)),
-        ]
-        if self.getUseAdvices():
-            res += [("adviceToGive", translate('event_advice_to_give',
+            # relevant if advices are enabled
+            ("adviceToGive", translate('event_advice_to_give',
+                                       domain=d,
+                                       context=self.REQUEST)),
+            ("adviceEdited", translate('event_add_advice',
+                                       domain=d,
+                                       context=self.REQUEST)),
+            ("adviceInvalidated", translate('event_invalidate_advice',
+                                            domain=d,
+                                            context=self.REQUEST)),
+            # relevant if askToDiscuss is enabled
+            ("askDiscussItem", translate('event_ask_discuss_item',
+                                         domain=d,
+                                         context=self.REQUEST)),
+            # relevant if clone to another MC is enabled
+            ("itemClonedToThisMC", translate('event_item_clone_to_this_mc',
+                                             domain=d,
+                                             context=self.REQUEST)),
+            # relevant if annex conversion is enabled
+            ("annexConversionError", translate('event_item_annex_conversion_error',
                                                domain=d,
                                                context=self.REQUEST)),
-                    ("adviceEdited", translate('event_add_advice',
-                                               domain=d,
-                                               context=self.REQUEST)),
-                    ("adviceInvalidated", translate('event_invalidate_advice',
+            # relevant if wfAdaptation 'return to proposing group' is enabled
+            ("returnedToProposingGroup", translate('event_item_returned_to_proposing_group',
+                                                   domain=d,
+                                                   context=self.REQUEST)),
+            ("returnedToMeetingManagers", translate('event_item_returned_to_meeting_managers',
                                                     domain=d,
-                                                    context=self.REQUEST))
-                    ]
-        if 'toDiscuss' in self.getUsedItemAttributes():
-            res.append(("askDiscussItem", translate('event_ask_discuss_item',
-                                                    domain=d,
-                                                    context=self.REQUEST)))
-        res.append(("itemClonedToThisMC", translate('event_item_clone_to_this_mc',
-                                                    domain=d,
-                                                    context=self.REQUEST)))
-        res.append(("annexConversionError", translate('event_item_annex_conversion_error',
-                                                      domain=d,
-                                                      context=self.REQUEST)))
-        if 'return_to_proposing_group' in self.getWorkflowAdaptations():
-            res.append(("returnedToProposingGroup", translate('event_item_returned_to_proposing_group',
-                                                              domain=d,
-                                                              context=self.REQUEST)))
+                                                    context=self.REQUEST)), ]
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingEvents')

@@ -480,8 +480,8 @@ class MeetingItemWorkflowActions:
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
         meetingState = meeting.queryState()
-        wTool = self.context.portal_workflow
         if meetingState in self.meetingAlreadyFrozenStates:
+            wTool = self.context.portal_workflow
             try:
                 wTool.doActionFor(self.context, 'itempublish')
             except:
@@ -520,12 +520,22 @@ class MeetingItemWorkflowActions:
 
     security.declarePrivate('doCorrect')
     def doCorrect(self, stateChange):
+        """
+          This is an unique wf action called for every transitions beginning with 'backTo'.
+          Most of times we do nothing, but in some case, we check the old/new state and
+          do some specific treatment.
+        """
         # If we go back to "validated" we must remove the item from a meeting
-        if stateChange.new_state.id != "validated":
-            return
-        # We may have to send a mail.
-        self.context.sendMailIfRelevant('itemUnpresented', 'Owner', isRole=True)
-        self.context.getMeeting().removeItem(self.context)
+        if stateChange.new_state.id == "validated":
+            # We may have to send a mail.
+            self.context.sendMailIfRelevant('itemUnpresented', 'Owner', isRole=True)
+            self.context.getMeeting().removeItem(self.context)
+        # if an item was returned to proposing group for corrections and that
+        # this proposing group sends the item back to the meeting managers, we
+        # send an email to warn the MeetingManagers if relevant
+        if stateChange.old_state.id == "returned_to_proposing_group":
+            # We may have to send a mail.
+            self.context.sendMailIfRelevant('returnedToMeetingManagers', 'MeetingManager', isRole=True)
 
     security.declarePrivate('doConfirm')
     def doConfirm(self, stateChange):
@@ -538,7 +548,7 @@ class MeetingItemWorkflowActions:
     security.declarePrivate('doReturn_to_proposing_group')
     def doReturn_to_proposing_group(self, stateChange):
         '''Send an email when returned to proposing group if relevant...'''
-        self.context.sendMailIfRelevant('returnedToProposingGroup', 'Modify portal content', isRole=False)
+        self.context.sendMailIfRelevant('returnedToProposingGroup', 'MeetingMember', isRole=True)
 
 InitializeClass(MeetingItemWorkflowActions)
 ##/code-section module-header
@@ -2556,10 +2566,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
             for advice in self.advices.itervalues():
-                advice['type'] = 'not_given'
-                advice['date'] = ''
-                advice['comment'] = ''
-                advice['actor'] = ''
                 if 'actor' in advice and (advice['actor'] != userId):
                     # Send a mail to the guy that gave the advice.
                     if 'adviceInvalidated' in cfg.getUserParam(
@@ -2567,6 +2573,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         recipient = tool.getMailRecipient(advice['actor'])
                         if recipient:
                             sendMail([recipient], self, 'adviceInvalidated')
+                advice['type'] = 'not_given'
+                advice['date'] = ''
+                advice['comment'] = ''
+                advice['actor'] = ''
             self.plone_utils.addPortalMessage(translate('advices_invalidated',
                                               domain="PloneMeeting", context=self.REQUEST),
                                               type='info')
