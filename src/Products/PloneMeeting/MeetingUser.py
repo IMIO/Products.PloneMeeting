@@ -25,8 +25,8 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 from App.class_init import InitializeClass
 from zope.i18n import translate
-from Products.PloneMeeting.utils import \
-     getCustomAdapter, HubSessionsMarshaller, FakeMeetingUser, getFieldContent
+from Products.PloneMeeting.utils import getCustomAdapter, HubSessionsMarshaller, FakeMeetingUser, getFieldContent
+
 
 # Marshaller -------------------------------------------------------------------
 class MeetingUserMarshaller(HubSessionsMarshaller):
@@ -169,7 +169,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_adviceStyle',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary= True,
+        enforceVocabulary=True,
         vocabulary='listAdviceStyles',
         default_method="getDefaultAdviceStyle",
     ),
@@ -274,6 +274,8 @@ MeetingUser_schema = BaseSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 # Register the marshaller for DAV/XML export.
 MeetingUser_schema.registerLayer('marshall', MeetingUserMarshaller())
+
+
 ##/code-section after-schema
 
 class MeetingUser(BaseContent, BrowserDefaultMixin):
@@ -296,7 +298,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingUser': return self.context
+        if self.__class__.__name__ != 'MeetingUser':
+            return self.context
         return self
 
     security.declarePublic('getBilingual')
@@ -305,10 +308,12 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         return getFieldContent(self, name, force, sep)
 
     security.declarePublic('adapted')
-    def adapted(self): return getCustomAdapter(self)
+    def adapted(self):
+        return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
-    def onEdit(self, isCreated): '''See doc in interfaces.py.'''
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
 
     security.declarePublic('config')
     def config(self):
@@ -342,9 +347,9 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def listGenders(self):
         '''Lists the genders (M, F).'''
         res = DisplayList((
-                ("m",translate('gender_m', domain='PloneMeeting', context=self.REQUEST)),
-                ("f", translate('gender_f', domain='PloneMeeting', context=self.REQUEST)),
-              ))
+            ("m", translate('gender_m', domain='PloneMeeting', context=self.REQUEST)),
+            ("f", translate('gender_f', domain='PloneMeeting', context=self.REQUEST)),
+        ))
         return res
 
     def listUsages(self):
@@ -353,10 +358,10 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         d = 'PloneMeeting'
         _ = self.translate
         res = DisplayList((
-          ("assemblyMember", _('meeting_user_usage_assemblyMember', domain=d, context=self.REQUEST)),
-          ("signer", _('meeting_user_usage_signer', domain=d, context=self.REQUEST)),
-          ("voter", _("meeting_user_usage_voter", domain=d, context=self.REQUEST)),
-          ("asker", _("meeting_user_usage_asker", domain=d, context=self.REQUEST)),
+            ("assemblyMember", _('meeting_user_usage_assemblyMember', domain=d, context=self.REQUEST)),
+            ("signer", _('meeting_user_usage_signer', domain=d, context=self.REQUEST)),
+            ("voter", _("meeting_user_usage_voter", domain=d, context=self.REQUEST)),
+            ("asker", _("meeting_user_usage_asker", domain=d, context=self.REQUEST)),
         ))
         return res
 
@@ -392,7 +397,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         return False
 
     security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp): '''See doc in interfaces.py.'''
+    def onTransferred(self, extApp):
+        '''See doc in interfaces.py.'''
 
     security.declarePublic('isManager')
     def isManager(self):
@@ -462,15 +468,14 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
             if (event in ('lateItem', 'annexAdded', 'askDiscussItem')) and \
                isMeetingManager:
                 keepIt = True
-            elif event in ('itemPresented', 'itemUnpresented', 'itemDelayed', \
-                           'itemClonedToThisMC') and isCreator:
+            elif event in ('itemPresented', 'itemUnpresented', 'itemDelayed', 'itemClonedToThisMC') and isCreator:
                 keepIt = True
             elif event in ('adviceToGive', 'adviceInvalidated') and isAdviser:
                 keepIt = True
             elif event == 'adviceEdited':
-                keepIt = True # This event requires permission "View".
+                keepIt = True  # This event requires permission "View".
             if keepIt:
-                res.append( (event, allEvents.getValue(event)) )
+                res.append((event, allEvents.getValue(event)))
         return DisplayList(tuple(res))
 
     def getDefaultItemEvents(self):
@@ -480,7 +485,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         config = self.config()
         allEvents = config.listMeetingEvents()
         # On an archive site, there may be no transition defined on a meeting.
-        if not allEvents.keys(): return DisplayList()
+        if not allEvents.keys():
+            return DisplayList()
         selectedEvents = config.getMailMeetingEvents()
         res = []
         # Here, I could only keep transitions for which the user has the
@@ -488,8 +494,9 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         # meeting-related events can be seen by everyone.
         for event in selectedEvents:
             eventValue = allEvents.getValue(event)
-            if not eventValue: continue
-            res.append( (event, eventValue) )
+            if not eventValue:
+                continue
+            res.append((event, eventValue))
         return DisplayList(tuple(res))
 
     def getDefaultMeetingEvents(self):
@@ -498,10 +505,11 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def getForUseIn(self, meeting):
         '''Gets the user as playing a role in p_meeting, taking into account
            possible user replacements.'''
-        if not hasattr(meeting.aq_base, 'userReplacements'): return self
+        if not hasattr(meeting.aq_base, 'userReplacements'):
+            return self
         cfg = meeting.portal_plonemeeting.getMeetingConfig(meeting)
         # Is this user replaced by another user ?
-        if meeting.userReplacements.has_key(self.getId()):
+        if self.getId() in meeting.userReplacements:
             # Yes it is. Find the replacement.
             repl = getattr(cfg.meetingusers,
                            meeting.userReplacements[self.getId()])
@@ -510,7 +518,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
             return FakeMeetingUser(repl.getId(), repl, self)
         # Is this user a replacement for another user ?
         for baseUser, replUser in meeting.userReplacements.iteritems():
-            if self.getId() != replUser: continue
+            if self.getId() != replUser:
+                continue
             # Yes it is. Find the replaced person.
             repl = getattr(cfg.meetingusers, baseUser)
             # Return this user (self), but with adapted characteristics
@@ -523,7 +532,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def isPresent(self, item, meeting):
         '''Is this user present at p_meeting when p_item is discussed?'''
         aId = self.getId()
-        if aId in item.getItemAbsents(): return False
+        if aId in item.getItemAbsents():
+            return False
         if aId in meeting.getLateAttendees():
             entranceNumber = meeting.getEntranceItem(aId)
             if not entranceNumber or \
@@ -537,7 +547,6 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def indexUsages(self):
         '''Returns the index content for usages.'''
         return self.getUsages()
-
 
 
 registerType(MeetingUser, PROJECTNAME)
