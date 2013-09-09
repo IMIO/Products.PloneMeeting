@@ -77,7 +77,6 @@ class testMeetingGroup(PloneMeetingTestCase):
                                     domain='plone',
                                     mapping={'url': self.meetingConfig.recurringitems.template2.absolute_url()},
                                     context=self.portal.REQUEST))
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_config_meetingitem')
         # so remove the item in the config (it could work by changing the proposingGroup too...)
         self.meetingConfig.recurringitems.manage_delObjects(['template2', ])
         # now it works...
