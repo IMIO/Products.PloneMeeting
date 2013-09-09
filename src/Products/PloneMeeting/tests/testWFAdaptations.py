@@ -591,7 +591,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self.logger = logger
+        # test what should happen to the wf (added states and transitions)
         self._return_to_proposing_group_active()
+        # test the functionnality of returning an item to the proposing group
+        self._return_to_proposing_group_active_wf_functionality()
 
     def _return_to_proposing_group_inactive(self):
         '''Tests while 'return_to_proposing_group' wfAdaptation is inactive.'''
@@ -666,6 +669,51 @@ class testWFAdaptations(PloneMeetingTestCase):
                     adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[CUSTOM_PERMISSION]
             self.assertEquals(tuple(cloned_state_permission_with_meetingmanager),
                               tuple(new_state_permissions[permission]))
+
+    def _return_to_proposing_group_active_wf_functionality(self):
+        '''Tests the workflow functionality of using the 'return_to_proposing_group' wfAdaptation.'''
+        # while it is active, the creators of the item can edit the item as well as the MeetingManagers
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.validateItem(item)
+        # create a Meeting and add the item to it
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        self.presentItem(item)
+        # now that it is presented, the pmCreator1/pmReviewer1 can not edit it anymore
+        for userId in ('pmCreator1', 'pmReviewer1'):
+            self.changeUser(userId)
+            self.failIf(self.hasPermission('Modify portal content', item))
+        # the item can be send back to the proposing group by the MeetingManagers only
+        for userId in ('pmCreator1', 'pmReviewer1'):
+            self.changeUser(userId)
+            self.failIf(self.wfTool.getTransitionsFor(item))
+        self.changeUser('pmManager')
+        self.failUnless('return_to_proposing_group' in [tr['name'] for tr in self.wfTool.getTransitionsFor(item)])
+        # send the item back to the proposing group so the proposing group as an edit access to it
+        self.do(item, 'return_to_proposing_group')
+        self.changeUser('pmCreator1')
+        self.failUnless(self.hasPermission('Modify portal content', item))
+        # MeetingManagers can still edit it also
+        self.changeUser('pmManager')
+        self.failUnless(self.hasPermission('Modify portal content', item))
+        # the creator can send the item back to the meeting managers, as the meeting managers
+        for userId in ('pmCreator1', 'pmManager'):
+            self.changeUser(userId)
+            self.failUnless('backTo_presented_from_returned_to_proposing_group' in
+                            [tr['name'] for tr in self.wfTool.getTransitionsFor(item)])
+        # when the creator send the item back to the meeting, it is in the right state depending
+        # on the meeting state.  Here, when meeting is 'created', the item is back to 'presented'
+        self.do(item, 'backTo_presented_from_returned_to_proposing_group')
+        self.assertEquals(item.queryState(), 'presented')
+        # send the item back to proposing group, freeze the meeting then send the item back to the meeting
+        # the item should be now in the item state corresponding to the meeting frozen state, so 'itemfrozen'
+        self.do(item, 'return_to_proposing_group')
+        self.freezeMeeting(meeting)
+        self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
+        self.assertEquals(item.queryState(), 'itemfrozen')
 
 
 def test_suite():
