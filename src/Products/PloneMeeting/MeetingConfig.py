@@ -750,21 +750,6 @@ schema = Schema((
         enforceVocabulary= False,
     ),
     LinesField(
-        name='itemTopicStates',
-        widget=MultiSelectionWidget(
-            description="ItemTopicStates",
-            description_msgid="item_topic_states_descr",
-            label='Itemtopicstates',
-            label_msgid='PloneMeeting_label_itemTopicStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listItemStates',
-        default=defValues.itemTopicStates,
-        enforceVocabulary= False,
-    ),
-    LinesField(
         name='meetingTopicStates',
         widget=MultiSelectionWidget(
             description="MeetingTopicStates",
@@ -1476,11 +1461,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
     )
 
-    # List of topics that take care of the states defined in a meetingConfig
-    topicsUsingMeetingConfigStates = {
-        'MeetingItem': ('searchmyitems', 'searchallitems', ),
-        'Meeting': ('searchallmeetings', 'searchalldecisions', ),
-    }
+    # List of topics related to Meetings that take care
+    # of the states defined in a meetingConfig
+    meetingTopicsUsingMeetingConfigStates = ('searchallmeetings', 'searchalldecisions', )
     # MeetingConfig is folderish so normally it can't be marshalled through
     # WebDAV.
     __dav_marshall__ = True
@@ -1881,8 +1864,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 if criterionValue is not None:
                     if criterionType == 'ATPortalTypeCriterion':
                         concernedType = criterionValue[0]
-                        if criterionValue in ('MeetingItem', 'Meeting'):
-                            mustAddStateCriterium = True
                         topic.manage_addProperty(
                             TOPIC_TYPE, concernedType, 'string')
                         # This is necessary to add a script doing the search
@@ -1895,21 +1876,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         criterionValue = '%s%s' % \
                             (concernedType, self.getShortName())
                     criterion.setValue(criterionValue)
-            if mustAddStateCriterium:
-                # We must add a state-related criterium. But for an item or
-                # meeting-related topic ?
-                if topicId in ('searchallmeetings', 'searchalldecisions',) + \
-                   self.topicsUsingMeetingConfigStates['MeetingItem']:
-                    if topicId == 'searchallmeetings':
-                        getStatesMethod = self.getMeetingTopicStates
-                    elif topicId == 'searchalldecisions':
-                        getStatesMethod = self.getDecisionTopicStates
-                    else:
-                        # aka for searchmyitems and searchallitems
-                        getStatesMethod = self.getItemTopicStates
-                    stateCriterion = topic.addCriterion(
-                        field='review_state', criterion_type='ATListCriterion')
-                    stateCriterion.setValue(getStatesMethod())
             topic.setLimitNumber(True)
             topic.setItemCount(20)
             topic.setSortCriterion(sortCriterion, True)
@@ -1968,31 +1934,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('updateTopics')
     def updateTopics(self):
         '''Topic definitions may need to be updated if the some config-related
-           params have changed (like lists if states).'''
-        for topicGroup in ('MeetingItem', 'Meeting'):
-            # Update each default topic using the states defined in the config.
-            for topicId in self.topicsUsingMeetingConfigStates[topicGroup]:
-                # Delete the state-related criterion (normally it exists)
-                try:
-                    topic = getattr(self.topics, topicId)
-                except AttributeError:
-                    continue
-                try:
-                    topic.deleteCriterion('crit__review_state_ATListCriterion')
-                except AttributeError:
-                    pass
-                # Recreate it with the possibly updated list of states
-                stateCriterion = topic.addCriterion(
-                    field='review_state', criterion_type='ATListCriterion')
-                # Which method must I use for getting states ?
-                if topicGroup == 'MeetingItem':
-                    getStatesMethod = self.getItemTopicStates
-                else:
-                    if topicId == 'searchalldecisions':
-                        getStatesMethod = self.getDecisionTopicStates
-                    else:
-                        getStatesMethod = self.getMeetingTopicStates
-                stateCriterion.setValue(getStatesMethod())
+           params have changed (like lists if states used in Meetings related topics).'''
+        # Update each Meeting related topic using the states defined in MeetingConfig.meetingTopicStates
+        for topicId in self.meetingTopicsUsingMeetingConfigStates:
+            # Delete the state-related criterion (normally it exists)
+            try:
+                topic = getattr(self.topics, topicId)
+            except AttributeError:
+                continue
+            try:
+                topic.deleteCriterion('crit__review_state_ATListCriterion')
+            except AttributeError:
+                pass
+            # Recreate it with the possibly updated list of states
+            stateCriterion = topic.addCriterion(
+                field='review_state', criterion_type='ATListCriterion')
+            # Which method must I use for getting states ?
+            if topicId == 'searchalldecisions':
+                getStatesMethod = self.getDecisionTopicStates
+            else:
+                getStatesMethod = self.getMeetingTopicStates
+            stateCriterion.setValue(getStatesMethod())
 
     security.declarePublic('getTopics')
     def getTopics(self, topicType):
@@ -2218,8 +2180,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  'review_state': self.getItemTopicStates(), }
+                  'sort_order': sortOrder, }
         # Manage filter
         if filterKey:
             params[filterKey] = prepareSearchValue(value)
@@ -2237,8 +2198,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   # KeywordIndex 'getCopyGroups' use 'OR' by default
                   'getCopyGroups': userGroups,
                   'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  'review_state': self.getItemTopicStates(), }
+                  'sort_order': sortOrder, }
         # Manage filter
         if filterKey:
             params[filterKey] = prepareSearchValue(value)

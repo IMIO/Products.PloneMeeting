@@ -123,6 +123,25 @@ class Migrate_To_3_0_3(Migrator):
                 item.forceHTMLContentTypeForEmptyRichFields()
         logger.info('Done.')
 
+    def _removeItemTopicStatesFunctionnality(self):
+        '''The MeetingConfig.itemTopicStates attribute has been removed.  Update existing MeetingConfigs and
+           adapt topics that were relying on it...'''
+        logger.info('Completing removal of MeetingConfig.itemTopicStates attribute...')
+        topicsToAdapt = ('searchallitems', 'searchmyitems', 'searchalladviseditems', 'searchallitemsincopy', )
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # remove the attribute stored on the MeetingConfig object
+            if hasattr(aq_base(cfg), 'itemTopicStates'):
+                delattr(cfg, 'itemTopicStates')
+            # adapt some topics that where using it, remove the review_state criterion
+            for topicId in topicsToAdapt:
+                topic = getattr(cfg.topics, topicId, None)
+                if topic:
+                    try:
+                        topic.deleteCriterion('crit__review_state_ATListCriterion')
+                    except AttributeError:
+                        pass
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0.3...')
 
@@ -132,6 +151,7 @@ class Migrate_To_3_0_3(Migrator):
         self._disableUserPreferences()
         self._configureCatalogIndexesAndMetadata()
         self._initItemMotivationHTML()
+        self._removeItemTopicStatesFunctionnality()
         # reinstall so CKeditor styles are updated
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         # update catalogs regarding permission changes in workflows and provided interfaces
@@ -153,7 +173,8 @@ def migrate(context):
        4) Disable user preferences;
        5) Migrate some catalog indexes and metadatas;
        6) Initialize new field MeetingItem.motivation so it is considered as text/html;
-       7) Update catalogs and workflows.
+       7) Remove the MeetingConfig.itemTopicStates attribute and adapt places it was used in;
+       8) Update catalogs and workflows.
     '''
     Migrate_To_3_0_3(context).run()
 # ------------------------------------------------------------------------------

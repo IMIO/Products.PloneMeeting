@@ -237,7 +237,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates', 'itemPowerObserversStates',
                          'meetingPowerObserversStates', 'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
-                         'selectableCopyGroups', 'votesEncoder', 'itemTopicStates', 'meetingTopicStates',
+                         'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates',
                          'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues'
                          )
 
@@ -392,10 +392,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
 
         # GUI-related parameters -----------------------------------------------
-        # In the "items" portlet, item-related topics will only search items
-        # that are in one of the states listed in itemTopicStates
-        self.itemTopicStates = ('itemcreated', 'proposed', 'validated',
-                                'presented')
         # When the system displays the list of all meetings (the "all meetings"
         # topic), only meetings having one of the stated listed in
         # meetingTopicStates will be shown.

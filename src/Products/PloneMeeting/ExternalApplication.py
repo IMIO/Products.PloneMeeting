@@ -913,7 +913,6 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
         masterConfig.meetingWorkflow = 'meeting_workflow'
         masterConfig.workflowAdaptations = ['archiving']
         masterConfig.meetingAppDefaultView = 'topic_searchalldecisions'
-        masterConfig.itemTopicStates = ('itemarchived',)
         masterConfig.meetingTopicStates = ()
         masterConfig.decisionTopicStates = ('archived',)
         res = self.portal_plonemeeting.createMeetingConfig(masterConfig, self)
@@ -1297,4 +1296,3 @@ def sendNotificationsIfRelevant(object, event):
         if event in extApp.getNotifyEvents():
             extApp.notifyExternalApplication(object, event)
 ##/code-section module-footer
-

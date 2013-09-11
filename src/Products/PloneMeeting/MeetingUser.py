@@ -314,6 +314,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('config')
     def config(self):
@@ -399,6 +400,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'onTransferred')
     def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('isManager')
     def isManager(self):
@@ -547,6 +549,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def indexUsages(self):
         '''Returns the index content for usages.'''
         return self.getUsages()
+
 
 
 registerType(MeetingUser, PROJECTNAME)
