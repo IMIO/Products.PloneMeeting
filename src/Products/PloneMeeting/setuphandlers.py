@@ -297,6 +297,14 @@ def postInstall(context):
     viewer_settings['show_sidebar'] = False
     viewer_settings['show_search_on_group_view'] = False
 
+    # make sure the 'previous_review_state' is available in portal_atct
+    portal_atct = getToolByName(site, 'portal_atct')
+    portal_atct.updateIndex(index='previous_review_state',
+                            friendlyName='Previous review state',
+                            description='The previous object workflow state',
+                            enabled=True,
+                            criteria='ATListCriterion')
+
 
 ##code-section FOOT
 def _configureCKeditor(site):

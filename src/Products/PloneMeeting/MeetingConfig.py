@@ -1389,59 +1389,91 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     metaNames = ('Item', 'Meeting')
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
-    # Format is : topicId, a list of topic criteria, a sort_on attribute
-    # and a topicScriptId used to manage complex searches.
+    # Format is :
+    # - topicId
+    # - a list of topic criteria
+    # - a sort_on attribute
+    # - a topicScriptId used to manage complex searches
     topicsInfo = (
         # My items
         ('searchmyitems',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ('Creator', 'ATCurrentAuthorCriterion', None),),
          'created',
          '',
          "python: here.portal_plonemeeting.userIsAmong('creators')",
-         ()),
+         ),
         # All (visible) items
         ('searchallitems',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
          'created',
          '',
          '',
-         ()),
-        # Items in copy : need a script to do this search.
+         ),
+        # Items in copy : need a script to do this search
         ('searchallitemsincopy',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
-         'created', 'searchItemsInCopy',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsInCopy',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
-         ()),
-        # Items to advice : need a script to do this search.
+         ),
+        # Items to advice : need a script to do this search
         ('searchallitemstoadvice',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
-         'created', 'searchItemsToAdvice',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsToAdvice',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ()),
-        # Advised items : need a script to do this search.
+         ),
+        # Advised items : need a script to do this search
         ('searchalladviseditems',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
-         'created', 'searchAdvisedItems',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchAdvisedItems',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ()),
+         ),
+        # Items to correct : search items in state 'returned_to_proposing_group'
+        ('searchitemstocorrect',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ('review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
+         ),
+         'created',
+         '',
+         "python: here.portal_plonemeeting.userIsAmong('creators') and "
+         "'return_to_proposing_group' in here.getWorkflowAdaptations()",
+         ),
+        # Corrected items : search items for wich previous_review_state was 'returned_to_proposing_group'
+        ('searchcorrecteditems',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ('previous_review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
+         ),
+         'created',
+         '',
+         "python: here.portal_plonemeeting.isManager() and "
+         "'return_to_proposing_group' in here.getWorkflowAdaptations()",
+         ),
         # All not-yet-decided meetings
         ('searchallmeetings',
-        (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
+        (('Type', 'ATPortalTypeCriterion', ('Meeting',)),
+         ),
          'getDate',
          '',
          '',
-         ()),
+         ),
         # All decided meetings
         ('searchalldecisions',
-        (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
+        (('Type', 'ATPortalTypeCriterion', ('Meeting',)),
+         ),
          'getDate',
          '',
          '',
-         ()),
+         ),
     )
 
     # List of topics that take care of the states defined in a meetingConfig
@@ -1837,7 +1869,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('createTopics')
     def createTopics(self):
         '''Adds a bunch of topics within the 'topics' sub-folder.'''
-        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr, stateValues in self.topicsInfo:
+        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in self.topicsInfo:
             self.topics.invokeFactory('Topic', topicId)
             topic = getattr(self.topics, topicId)
             topic.setExcludeFromNav(True)
@@ -1848,10 +1880,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                criterion_type=criterionType)
                 if criterionValue is not None:
                     if criterionType == 'ATPortalTypeCriterion':
+                        concernedType = criterionValue[0]
                         if criterionValue in ('MeetingItem', 'Meeting'):
                             mustAddStateCriterium = True
                         topic.manage_addProperty(
-                            TOPIC_TYPE, criterionValue, 'string')
+                            TOPIC_TYPE, concernedType, 'string')
                         # This is necessary to add a script doing the search
                         # when the it is too complicated for a topic.
                         topic.manage_addProperty(
@@ -1860,11 +1893,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         topic.manage_addProperty(
                             TOPIC_TAL_EXPRESSION, topic_tal_expr, 'string')
                         criterionValue = '%s%s' % \
-                            (criterionValue, self.getShortName())
-                    criterion.setValue([criterionValue])
-                if stateValues:
-                    stateCriterion = topic.addCriterion(field='review_state', criterion_type='ATListCriterion')
-                    stateCriterion.setValue(stateValues)
+                            (concernedType, self.getShortName())
+                    criterion.setValue(criterionValue)
             if mustAddStateCriterium:
                 # We must add a state-related criterium. But for an item or
                 # meeting-related topic ?
