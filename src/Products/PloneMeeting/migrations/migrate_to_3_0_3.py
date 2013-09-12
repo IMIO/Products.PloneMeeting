@@ -142,6 +142,16 @@ class Migrate_To_3_0_3(Migrator):
                         pass
         logger.info('Done.')
 
+    def _updateToolSearchParameters(self):
+        '''Activate some advanced search options in portal_plonemeeting now that it is
+           the default behaviour in fresh PloneMeeting :
+           - set ToolPloneMeeting.showItemKeywordsTargets to True;
+           - set ToolPloneMeeting.searchItemStates to every available states.'''
+        logger.info('Updating tool search parameters...')
+        self.tool.setShowItemKeywordsTargets(True)
+        self.tool.setSearchItemStates(self.tool.listItemStates().keys())
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0.3...')
 
@@ -152,6 +162,7 @@ class Migrate_To_3_0_3(Migrator):
         self._configureCatalogIndexesAndMetadata()
         self._initItemMotivationHTML()
         self._removeItemTopicStatesFunctionnality()
+        self._updateToolSearchParameters()
         # reinstall so CKeditor styles are updated
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         # update catalogs regarding permission changes in workflows and provided interfaces
@@ -174,7 +185,8 @@ def migrate(context):
        5) Migrate some catalog indexes and metadatas;
        6) Initialize new field MeetingItem.motivation so it is considered as text/html;
        7) Remove the MeetingConfig.itemTopicStates attribute and adapt places it was used in;
-       8) Update catalogs and workflows.
+       8) Update portal_plonemeeting search parameters;
+       9) Update catalogs and workflows.
     '''
     Migrate_To_3_0_3(context).run()
 # ------------------------------------------------------------------------------

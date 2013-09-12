@@ -1272,8 +1272,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def listItemStates(self):
         res = DisplayList()
         for activeConfig in self.getActiveConfigs():
-            res = res + activeConfig.listItemStates()
-        return res
+            for itemState in activeConfig.listItemStates().items():
+                if not itemState[0] in res:
+                    res.add(itemState[0], itemState[1])
+        return res.sortedByValue()
 
     security.declarePublic('showMeetingView')
     def showMeetingView(self):

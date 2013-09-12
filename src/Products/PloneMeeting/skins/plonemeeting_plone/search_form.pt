@@ -29,10 +29,8 @@
 
   <metal:main fill-slot="main"
      tal:define="tool python: context.portal_plonemeeting;
-                 meetingConfigs tool/getActiveConfigs;
-                 onlyOneConfig python: len(meetingConfigs) == 1;
                  extApps python: tool.getActiveExternalApplications(usage='search');
-                 firstConfig python: meetingConfigs[0];
+                 currentMeetingConfig python: tool.getMeetingConfig(context);
                  associatedGroupsUsed python: tool.attributeIsUsed('item', 'associatedGroups');
                  categoryUsed python: tool.attributeIsUsed('item', 'category');
                  classifierUsed python: tool.attributeIsUsed('item', 'classifier');
@@ -40,16 +38,6 @@
 
   <script language="javascript">
   <!--
-  function askAllConfigData(configUrl, categoryUsed, classifierUsed) {
-    if (categoryUsed == 'True') {
-      askAjaxChunk('hook_categories', 'GET', configUrl, 'search_macros',
-                   'categories');
-    }
-    if (classifierUsed == 'True') {
-      askAjaxChunk('hook_classifiers', 'GET', configUrl, 'search_macros',
-                   'classifiers');
-    }
-  }
   var cbChecked = new Array();
   cbChecked['item_keywords_target'] = true;
   cbChecked['search_types'] = true;
@@ -99,14 +87,13 @@
           <label for="search_type_annexes" i18n:translate="search_type_annexes" class="searchItem"></label>&nbsp;
         </td>
         <tal:comment replace="nothing">Time interval for the search</tal:comment>
-        <td width="30%" tal:define="now python:DateTime();
+        <td width="30%" tal:define="now python:DateTime()+1;
                                     siteStart tool/getSiteStartDate;
                                     yearMin python: siteStart and (siteStart.year()-20) or (now.year()-20);
                                     yearMax python: now.year()+1;
-                                    startDate python:siteStart and siteStart or (now-730)">
+                                    startDate python:siteStart and siteStart or (now-732)">
           <label i18n:translate="search_time_period_label"></label><br class="discreet"/><br/>
           <table style="no-style-table" cellpadding="0" cellspacing="0">
-
             <tal:comment replace="nothing">"From" date</tal:comment>
             <tr valign="middle">
              <td><label i18n:translate="search_time_period_from" class="searchItem"></label>&nbsp;&nbsp;</td>
@@ -211,28 +198,15 @@
         </td>
         <tal:comment replace="nothing">What meeting configs and site to include in the search?</tal:comment>
         <td width="25%">
-          <tal:chooseMeetingConfig condition="not: onlyOneConfig">
-            <label i18n:translate="search_config_label"></label><br class="discreet"/>
-            <tal:meetingConfig repeat="meetingConfig meetingConfigs">
-              <input type="radio" class="noborder" name="search_config"
-                     tal:attributes="value meetingConfig/id; id meetingConfig/id;
-                                     checked python: meetingConfigs.index(meetingConfig)==0;
-                                     onClick python: 'askAllConfigData(\'%s\', \'%s\',\'%s\')' % (meetingConfig.absolute_url(), categoryUsed, classifierUsed)"/>
-              <label tal:attributes="for meetingConfig/id" tal:content="meetingConfig/Title" class="searchItem"></label><br/>
-            </tal:meetingConfig>
-          </tal:chooseMeetingConfig>
-          <tal:onlyOneConfig condition="onlyOneConfig">
-            <input type="hidden" name="search_config"
-                   tal:attributes="value python: meetingConfigs[0].id; id python:meetingConfigs[0].id"/>
-          </tal:onlyOneConfig>
-          <tal:chooseSite condition="python: len(extApps) &gt; 0">
-          <br tal:condition="not: onlyOneConfig"/>
-          <label i18n:translate="search_site_label"></label><br class="discreet"/>
-          <select name="search_site">
-            <option i18n:translate="search_site_local" value="_local"></option>
-            <option tal:repeat="extApp extApps" tal:attributes="value extApp/getId" tal:content="extApp/Title">
-            </option>
-          </select>
+              <input type="hidden" class="noborder" name="search_config"
+                     tal:attributes="value currentMeetingConfig/id;"/>
+          <tal:chooseSite condition="python: len(extApps) > 0">
+            <label i18n:translate="search_site_label"></label><br class="discreet"/>
+            <select name="search_site">
+              <option i18n:translate="search_site_local" value="_local"></option>
+              <option tal:repeat="extApp extApps" tal:attributes="value extApp/getId" tal:content="extApp/Title">
+              </option>
+            </select>
           </tal:chooseSite>
         </td>
       </tr>
@@ -297,7 +271,7 @@
                   tal:condition="python: not isArchiveSite and searchItemStates">
                 <label i18n:translate="item_state"></label><br/><br/>
                 <select name="itemState" multiple="multiple" size="7">
-                  <tal:options repeat="stateInfo python: firstConfig.listStates('Item')">
+                  <tal:options repeat="stateInfo python: currentMeetingConfig.listItemStates().items()">
                    <option tal:condition="python: stateInfo[0] in searchItemStates"
                            tal:attributes="value python: stateInfo[0]; title python: stateInfo[1]"
                            tal:content="python: tool.truncate(stateInfo[1])">
@@ -331,9 +305,7 @@
       </tr>
     </table>
   </form>
-  <script language="javascript"
-          tal:content="python: 'askAllConfigData(\'%s\',\'%s\',\'%s\')' % (firstConfig.absolute_url(), categoryUsed, classifierUsed)">
-  </script>
+
   </metal:main>
 </body>
 </html>

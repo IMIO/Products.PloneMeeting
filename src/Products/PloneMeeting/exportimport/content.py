@@ -36,7 +36,7 @@ logger = logging.getLogger('PloneMeeting')
 # PloneMeeting-Error related constants -----------------------------------------
 MEETING_ID_EXISTS = 'The meeting config with id "%s" already exists.'
 
-# ------------------------------------------------------------------------------
+
 class ToolInitializer:
     '''Initializes the PloneMeeting tool based on information from a given
        PloneMeeting profile.'''
@@ -93,13 +93,18 @@ class ToolInitializer:
                 logger.warn(MEETING_ID_EXISTS % mConfig.id)
         # finally, create the current user (admin) member area
         self.site.portal_membership.createMemberArea()
+        # update advanced search parameters on the tool
+        # now that MeetingConfigs have been created, we can define
+        # tool.searchItemStates, we select every item states by default
+        self.tool.setSearchItemStates(self.tool.listItemStates().keys())
         return self.successMessage
 
-# Functions that correspond to the PloneMeeting profile import steps -----------
+
 def isTestOrArchiveProfile(context):
     isTest = context.readDataFile("PloneMeeting_testing_marker.txt")
     isArchive = context.readDataFile("PloneMeeting_archive_marker.txt")
     return isTest or isArchive
+
 
 def initializeTool(context):
     '''Initialises the PloneMeeting tool based on information from the current
@@ -117,4 +122,3 @@ def initializeTool(context):
         context.getSite().portal_setup.runAllImportStepsFromProfile(profileId)
     # Initialises data from the profile.
     return ToolInitializer(context, PROJECTNAME).run()
-# ------------------------------------------------------------------------------

@@ -530,7 +530,7 @@ class PloneMeetingConfiguration(Descriptor):
         # If True, the following param will, on the search screen, display
         # radio buttons allowing to choose if item keywords encompass index
         # Title, Description, getDecision or SearchableText.
-        self.showItemKeywordsTargets = False
+        self.showItemKeywordsTargets = True
         self.searchItemStates = []
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.groups = groups  # ~[GroupDescriptor]~
