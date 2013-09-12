@@ -237,7 +237,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates', 'itemPowerObserversStates',
                          'meetingPowerObserversStates', 'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
-                         'selectableCopyGroups', 'votesEncoder', 'itemTopicStates', 'meetingTopicStates',
+                         'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates',
                          'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues'
                          )
 
@@ -392,10 +392,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
 
         # GUI-related parameters -----------------------------------------------
-        # In the "items" portlet, item-related topics will only search items
-        # that are in one of the states listed in itemTopicStates
-        self.itemTopicStates = ('itemcreated', 'proposed', 'validated',
-                                'presented')
         # When the system displays the list of all meetings (the "all meetings"
         # topic), only meetings having one of the stated listed in
         # meetingTopicStates will be shown.
@@ -534,7 +530,7 @@ class PloneMeetingConfiguration(Descriptor):
         # If True, the following param will, on the search screen, display
         # radio buttons allowing to choose if item keywords encompass index
         # Title, Description, getDecision or SearchableText.
-        self.showItemKeywordsTargets = False
+        self.showItemKeywordsTargets = True
         self.searchItemStates = []
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.groups = groups  # ~[GroupDescriptor]~

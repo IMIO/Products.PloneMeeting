@@ -549,14 +549,13 @@
       <p i18n:translate="meetingconfig_gui_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td width="33%" tal:define="field python:here.getField('itemTopicStates')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td width="34%" tal:define="field python:here.getField('meetingTopicStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td width="33%" tal:define="field python:here.getField('decisionTopicStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="33%">
           </td>
         </tr>
         <tr valign="top">

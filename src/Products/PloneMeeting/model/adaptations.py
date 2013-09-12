@@ -237,14 +237,6 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             toConfirm = list(toConfirm)
             toConfirm.append('MeetingItem.backToPrevalidated')
             meetingConfig.setTransitionsToConfirm(toConfirm)
-        # State "prevalidated" must be selected in itemTopicStates (queries)
-        queryStates = meetingConfig.getItemTopicStates()
-        if 'prevalidated' not in queryStates:
-            queryStates = list(queryStates)
-            queryStates.append('prevalidated')
-            meetingConfig.setItemTopicStates(queryStates)
-            # Update the topics definitions for taking this into account.
-            meetingConfig.updateTopics()
         logger.info(WF_APPLIED % ("pre_validation", meetingConfig.getId()))
 
     # "creator_initiated_decisions" means that decisions (field item.decision)

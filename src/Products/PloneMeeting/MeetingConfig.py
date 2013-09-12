@@ -750,21 +750,6 @@ schema = Schema((
         enforceVocabulary= False,
     ),
     LinesField(
-        name='itemTopicStates',
-        widget=MultiSelectionWidget(
-            description="ItemTopicStates",
-            description_msgid="item_topic_states_descr",
-            label='Itemtopicstates',
-            label_msgid='PloneMeeting_label_itemTopicStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listItemStates',
-        default=defValues.itemTopicStates,
-        enforceVocabulary= False,
-    ),
-    LinesField(
         name='meetingTopicStates',
         widget=MultiSelectionWidget(
             description="MeetingTopicStates",
@@ -1389,66 +1374,96 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     metaNames = ('Item', 'Meeting')
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
-    # Format is : topicId, a list of topic criteria, a sort_on attribute
-    # and a topicScriptId used to manage complex searches.
+    # Format is :
+    # - topicId
+    # - a list of topic criteria
+    # - a sort_on attribute
+    # - a topicScriptId used to manage complex searches
     topicsInfo = (
         # My items
         ('searchmyitems',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ('Creator', 'ATCurrentAuthorCriterion', None),),
          'created',
          '',
          "python: here.portal_plonemeeting.userIsAmong('creators')",
-         ()),
+         ),
         # All (visible) items
         ('searchallitems',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
          'created',
          '',
          '',
-         ()),
-        # Items in copy : need a script to do this search.
+         ),
+        # Items in copy : need a script to do this search
         ('searchallitemsincopy',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
-         'created', 'searchItemsInCopy',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsInCopy',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
-         ()),
-        # Items to advice : need a script to do this search.
+         ),
+        # Items to advice : need a script to do this search
         ('searchallitemstoadvice',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
-         'created', 'searchItemsToAdvice',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsToAdvice',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ()),
-        # Advised items : need a script to do this search.
+         ),
+        # Advised items : need a script to do this search
         ('searchalladviseditems',
-        (('Type', 'ATPortalTypeCriterion', 'MeetingItem'),),
-         'created', 'searchAdvisedItems',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchAdvisedItems',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ()),
+         ),
+        # Items to correct : search items in state 'returned_to_proposing_group'
+        ('searchitemstocorrect',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ('review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
+         ),
+         'created',
+         '',
+         "python: here.portal_plonemeeting.userIsAmong('creators') and "
+         "'return_to_proposing_group' in here.getWorkflowAdaptations()",
+         ),
+        # Corrected items : search items for wich previous_review_state was 'returned_to_proposing_group'
+        ('searchcorrecteditems',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ('previous_review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
+         ),
+         'created',
+         '',
+         "python: here.portal_plonemeeting.isManager() and "
+         "'return_to_proposing_group' in here.getWorkflowAdaptations()",
+         ),
         # All not-yet-decided meetings
         ('searchallmeetings',
-        (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
+        (('Type', 'ATPortalTypeCriterion', ('Meeting',)),
+         ),
          'getDate',
          '',
          '',
-         ()),
+         ),
         # All decided meetings
         ('searchalldecisions',
-        (('Type', 'ATPortalTypeCriterion', 'Meeting'),),
+        (('Type', 'ATPortalTypeCriterion', ('Meeting',)),
+         ),
          'getDate',
          '',
          '',
-         ()),
+         ),
     )
 
-    # List of topics that take care of the states defined in a meetingConfig
-    topicsUsingMeetingConfigStates = {
-        'MeetingItem': ('searchmyitems', 'searchallitems', ),
-        'Meeting': ('searchallmeetings', 'searchalldecisions', ),
-    }
+    # List of topics related to Meetings that take care
+    # of the states defined in a meetingConfig
+    meetingTopicsUsingMeetingConfigStates = ('searchallmeetings', 'searchalldecisions', )
     # MeetingConfig is folderish so normally it can't be marshalled through
     # WebDAV.
     __dav_marshall__ = True
@@ -1837,7 +1852,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('createTopics')
     def createTopics(self):
         '''Adds a bunch of topics within the 'topics' sub-folder.'''
-        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr, stateValues in self.topicsInfo:
+        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in self.topicsInfo:
             self.topics.invokeFactory('Topic', topicId)
             topic = getattr(self.topics, topicId)
             topic.setExcludeFromNav(True)
@@ -1848,10 +1863,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                criterion_type=criterionType)
                 if criterionValue is not None:
                     if criterionType == 'ATPortalTypeCriterion':
-                        if criterionValue in ('MeetingItem', 'Meeting'):
-                            mustAddStateCriterium = True
+                        concernedType = criterionValue[0]
                         topic.manage_addProperty(
-                            TOPIC_TYPE, criterionValue, 'string')
+                            TOPIC_TYPE, concernedType, 'string')
                         # This is necessary to add a script doing the search
                         # when the it is too complicated for a topic.
                         topic.manage_addProperty(
@@ -1860,26 +1874,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         topic.manage_addProperty(
                             TOPIC_TAL_EXPRESSION, topic_tal_expr, 'string')
                         criterionValue = '%s%s' % \
-                            (criterionValue, self.getShortName())
-                    criterion.setValue([criterionValue])
-                if stateValues:
-                    stateCriterion = topic.addCriterion(field='review_state', criterion_type='ATListCriterion')
-                    stateCriterion.setValue(stateValues)
-            if mustAddStateCriterium:
-                # We must add a state-related criterium. But for an item or
-                # meeting-related topic ?
-                if topicId in ('searchallmeetings', 'searchalldecisions',) + \
-                   self.topicsUsingMeetingConfigStates['MeetingItem']:
-                    if topicId == 'searchallmeetings':
-                        getStatesMethod = self.getMeetingTopicStates
-                    elif topicId == 'searchalldecisions':
-                        getStatesMethod = self.getDecisionTopicStates
-                    else:
-                        # aka for searchmyitems and searchallitems
-                        getStatesMethod = self.getItemTopicStates
-                    stateCriterion = topic.addCriterion(
-                        field='review_state', criterion_type='ATListCriterion')
-                    stateCriterion.setValue(getStatesMethod())
+                            (concernedType, self.getShortName())
+                    criterion.setValue(criterionValue)
             topic.setLimitNumber(True)
             topic.setItemCount(20)
             topic.setSortCriterion(sortCriterion, True)
@@ -1938,31 +1934,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('updateTopics')
     def updateTopics(self):
         '''Topic definitions may need to be updated if the some config-related
-           params have changed (like lists if states).'''
-        for topicGroup in ('MeetingItem', 'Meeting'):
-            # Update each default topic using the states defined in the config.
-            for topicId in self.topicsUsingMeetingConfigStates[topicGroup]:
-                # Delete the state-related criterion (normally it exists)
-                try:
-                    topic = getattr(self.topics, topicId)
-                except AttributeError:
-                    continue
-                try:
-                    topic.deleteCriterion('crit__review_state_ATListCriterion')
-                except AttributeError:
-                    pass
-                # Recreate it with the possibly updated list of states
-                stateCriterion = topic.addCriterion(
-                    field='review_state', criterion_type='ATListCriterion')
-                # Which method must I use for getting states ?
-                if topicGroup == 'MeetingItem':
-                    getStatesMethod = self.getItemTopicStates
-                else:
-                    if topicId == 'searchalldecisions':
-                        getStatesMethod = self.getDecisionTopicStates
-                    else:
-                        getStatesMethod = self.getMeetingTopicStates
-                stateCriterion.setValue(getStatesMethod())
+           params have changed (like lists if states used in Meetings related topics).'''
+        # Update each Meeting related topic using the states defined in MeetingConfig.meetingTopicStates
+        for topicId in self.meetingTopicsUsingMeetingConfigStates:
+            # Delete the state-related criterion (normally it exists)
+            try:
+                topic = getattr(self.topics, topicId)
+            except AttributeError:
+                continue
+            try:
+                topic.deleteCriterion('crit__review_state_ATListCriterion')
+            except AttributeError:
+                pass
+            # Recreate it with the possibly updated list of states
+            stateCriterion = topic.addCriterion(
+                field='review_state', criterion_type='ATListCriterion')
+            # Which method must I use for getting states ?
+            if topicId == 'searchalldecisions':
+                getStatesMethod = self.getDecisionTopicStates
+            else:
+                getStatesMethod = self.getMeetingTopicStates
+            stateCriterion.setValue(getStatesMethod())
 
     security.declarePublic('getTopics')
     def getTopics(self, topicType):
@@ -2188,8 +2180,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  'review_state': self.getItemTopicStates(), }
+                  'sort_order': sortOrder, }
         # Manage filter
         if filterKey:
             params[filterKey] = prepareSearchValue(value)
@@ -2207,8 +2198,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   # KeywordIndex 'getCopyGroups' use 'OR' by default
                   'getCopyGroups': userGroups,
                   'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  'review_state': self.getItemTopicStates(), }
+                  'sort_order': sortOrder, }
         # Manage filter
         if filterKey:
             params[filterKey] = prepareSearchValue(value)
@@ -2470,32 +2460,35 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("annexAdded", translate('event_add_annex',
                                      domain=d,
                                      context=self.REQUEST)),
-        ]
-        if self.getUseAdvices():
-            res += [("adviceToGive", translate('event_advice_to_give',
+            # relevant if advices are enabled
+            ("adviceToGive", translate('event_advice_to_give',
+                                       domain=d,
+                                       context=self.REQUEST)),
+            ("adviceEdited", translate('event_add_advice',
+                                       domain=d,
+                                       context=self.REQUEST)),
+            ("adviceInvalidated", translate('event_invalidate_advice',
+                                            domain=d,
+                                            context=self.REQUEST)),
+            # relevant if askToDiscuss is enabled
+            ("askDiscussItem", translate('event_ask_discuss_item',
+                                         domain=d,
+                                         context=self.REQUEST)),
+            # relevant if clone to another MC is enabled
+            ("itemClonedToThisMC", translate('event_item_clone_to_this_mc',
+                                             domain=d,
+                                             context=self.REQUEST)),
+            # relevant if annex conversion is enabled
+            ("annexConversionError", translate('event_item_annex_conversion_error',
                                                domain=d,
                                                context=self.REQUEST)),
-                    ("adviceEdited", translate('event_add_advice',
-                                               domain=d,
-                                               context=self.REQUEST)),
-                    ("adviceInvalidated", translate('event_invalidate_advice',
+            # relevant if wfAdaptation 'return to proposing group' is enabled
+            ("returnedToProposingGroup", translate('event_item_returned_to_proposing_group',
+                                                   domain=d,
+                                                   context=self.REQUEST)),
+            ("returnedToMeetingManagers", translate('event_item_returned_to_meeting_managers',
                                                     domain=d,
-                                                    context=self.REQUEST))
-                    ]
-        if 'toDiscuss' in self.getUsedItemAttributes():
-            res.append(("askDiscussItem", translate('event_ask_discuss_item',
-                                                    domain=d,
-                                                    context=self.REQUEST)))
-        res.append(("itemClonedToThisMC", translate('event_item_clone_to_this_mc',
-                                                    domain=d,
-                                                    context=self.REQUEST)))
-        res.append(("annexConversionError", translate('event_item_annex_conversion_error',
-                                                      domain=d,
-                                                      context=self.REQUEST)))
-        if 'return_to_proposing_group' in self.getWorkflowAdaptations():
-            res.append(("returnedToProposingGroup", translate('event_item_returned_to_proposing_group',
-                                                              domain=d,
-                                                              context=self.REQUEST)))
+                                                    context=self.REQUEST)), ]
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingEvents')

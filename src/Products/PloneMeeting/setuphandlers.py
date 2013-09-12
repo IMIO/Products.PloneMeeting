@@ -28,12 +28,8 @@ from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import \
     WorkflowPolicyConfig_id
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
-from Products.PloneMeeting.utils import \
-    sendMailIfRelevant, addRecurringItemsIfRelevant, updateIndexes, \
-    sendAdviceToGiveMailIfRelevant
-from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
-from Products.PloneMeeting.ExternalApplication import \
-    sendNotificationsIfRelevant
+from Products.PloneMeeting.utils import updateIndexes
+
 
 folderViews = ('meetingfolder_redirect_view', 'meetingfolder_view')
 pmGroupProperties = ('meetingRole', 'meetingGroupId')
@@ -300,6 +296,14 @@ def postInstall(context):
     viewer_settings['show_search'] = False
     viewer_settings['show_sidebar'] = False
     viewer_settings['show_search_on_group_view'] = False
+
+    # make sure the 'previous_review_state' is available in portal_atct
+    portal_atct = getToolByName(site, 'portal_atct')
+    portal_atct.updateIndex(index='previous_review_state',
+                            friendlyName='Previous review state',
+                            description='The previous object workflow state',
+                            enabled=True,
+                            criteria='ATListCriterion')
 
 
 ##code-section FOOT
