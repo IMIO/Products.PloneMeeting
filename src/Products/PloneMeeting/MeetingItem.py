@@ -52,7 +52,7 @@ from Products.PloneMeeting.utils import \
     getCurrentMeetingObject, checkPermission, sendMail, sendMailIfRelevant, \
     HubSessionsMarshaller, getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
-    setFieldFromAjax, spanifyLink, transformAllRichTextFields
+    setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -1108,7 +1108,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            on the next page.'''
         res = self.getField('decision').get(self, **kwargs)
         if keepWithNext:
-            res = self.signatureNotAlone(res)
+            res = signatureNotAlone(res)
         return res
 
     security.declarePublic('getDeliberation')
