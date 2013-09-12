@@ -38,6 +38,17 @@
 
   <script language="javascript">
   <!--
+  function askAllConfigData(configUrl, categoryUsed, classifierUsed) {
+    if (categoryUsed == 'True') {
+      askAjaxChunk('hook_categories', 'GET', configUrl, 'search_macros',
+                   'categories');
+    }
+    if (classifierUsed == 'True') {
+      askAjaxChunk('hook_classifiers', 'GET', configUrl, 'search_macros',
+                   'classifiers');
+    }
+  }
+
   var cbChecked = new Array();
   cbChecked['item_keywords_target'] = true;
   cbChecked['search_types'] = true;
@@ -305,6 +316,9 @@
       </tr>
     </table>
   </form>
+  <script language="javascript"
+          tal:content="python: 'askAllConfigData(\'%s\',\'%s\',\'%s\')' % (currentMeetingConfig.absolute_url(), categoryUsed, classifierUsed)">
+  </script>
 
   </metal:main>
 </body>
