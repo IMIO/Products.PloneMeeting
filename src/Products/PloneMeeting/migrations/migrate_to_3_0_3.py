@@ -152,6 +152,20 @@ class Migrate_To_3_0_3(Migrator):
         self.tool.setSearchItemStates(self.tool.listItemStates().keys())
         logger.info('Done.')
 
+    def _unindexItemsOfConfig(self):
+        '''In some old case (???) items of the config were visible in the application.
+           Make sure that items defined in the config are not in the portal_catalog.'''
+        logger.info('Removing items of the config from portal_catalog...')
+        # try to find items in portal_plonemeeting in the portal_catalog
+        brains = self.portal.portal_catalog(meta_type='MeetingItem',
+                                            path='/'.join(self.portal.getPhysicalPath() + ('portal_plonemeeting', )))
+        if brains:
+            logger.info('Unindexing %d items from the portal_catalog...' % len(brains))
+        for brain in brains:
+            obj = brain.getObject()
+            obj.unindexObject()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0.3...')
 
@@ -163,6 +177,7 @@ class Migrate_To_3_0_3(Migrator):
         self._initItemMotivationHTML()
         self._removeItemTopicStatesFunctionnality()
         self._updateToolSearchParameters()
+        self._unindexItemsOfConfig()
         # reinstall so CKeditor styles are updated
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         # update catalogs regarding permission changes in workflows and provided interfaces
@@ -186,7 +201,8 @@ def migrate(context):
        6) Initialize new field MeetingItem.motivation so it is considered as text/html;
        7) Remove the MeetingConfig.itemTopicStates attribute and adapt places it was used in;
        8) Update portal_plonemeeting search parameters;
-       9) Update catalogs and workflows.
+       9) Make sure items of the config are not in the portal_catalog;
+       10) Update catalogs and workflows.
     '''
     Migrate_To_3_0_3(context).run()
 # ------------------------------------------------------------------------------
