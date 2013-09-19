@@ -1231,10 +1231,11 @@ def transformAllRichTextFields(obj, onlyField=None):
         # Apply mandatory transforms
         fieldContent = formatXhtmlFieldForAppy(field.get(obj))
         # Apply standard transformations as defined in the config
-        if (field.getName() in fieldsToTransform) and \
+        # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
+        if ("%s.%s" % (obj.meta_type, field.getName()) in fieldsToTransform) and \
            not kupuFieldIsEmpty(fieldContent):
             for transform in transformTypes:
-                exec 'fieldContent = %s(obj, fieldContent)' % transform
+                exec 'fieldContent = %s(fieldContent)' % transform
         # Apply custom transformations if defined
         field.set(obj, obj.adapted().transformRichTextField(
                   field.getName(), fieldContent))
@@ -1242,7 +1243,7 @@ def transformAllRichTextFields(obj, onlyField=None):
 
 
 # ------------------------------------------------------------------------------
-def removeBlanks(obj, xhtmlContent):
+def removeBlanks(xhtmlContent):
     '''This method will remove any blank line in p_xhtmlContent.'''
     for emptyPara in KUPU_EMPTY_VALUES:
         xhtmlContent = xhtmlContent.replace(emptyPara, '')
@@ -1250,7 +1251,7 @@ def removeBlanks(obj, xhtmlContent):
 
 
 # ------------------------------------------------------------------------------
-def signatureNotAlone(obj, xhtmlContent):
+def signatureNotAlone(xhtmlContent):
     '''This method will set, on the p_xhtmlContent's last paragraph, a
        specific CSS class that will prevent, in ODT documents, signatures
        to stand alone on their last page.'''

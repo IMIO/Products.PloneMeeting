@@ -39,6 +39,7 @@ from zope.i18n import translate
 from collective.documentviewer import storage
 from collective.documentviewer.settings import Settings
 from collective.documentviewer.settings import GlobalSettings
+from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
@@ -52,7 +53,7 @@ from Products.PloneMeeting.utils import \
     getCurrentMeetingObject, checkPermission, sendMail, sendMailIfRelevant, \
     HubSessionsMarshaller, getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
-    setFieldFromAjax, spanifyLink, transformAllRichTextFields
+    setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -1108,7 +1109,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            on the next page.'''
         res = self.getField('decision').get(self, **kwargs)
         if keepWithNext:
-            res = self.signatureNotAlone(res)
+            res = signatureNotAlone(res)
         return res
 
     security.declarePublic('getDeliberation')
@@ -2650,10 +2651,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         # Items that are created in the tool for creating recurring items
         # must not appear in searches.
-        if self.isDefinedInTool():
-            self.unindexObject()
-        else:
-            self.reindexObject()
+        self.reindexObject()
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Item at %s created by "%s".' % (self.absolute_url_path(), userId))
 
@@ -2674,13 +2672,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.forceHTMLContentTypeForEmptyRichFields()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
-        if self.isDefinedInTool():
-            self.unindexObject()
-        else:
-            self.reindexObject()
+        self.reindexObject()
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Item at %s edited by "%s".' %
                     (self.absolute_url_path(), userId))
+
+    security.declareProtected(ModifyPortalContent, 'reindexObject')
+    def reindexObject(self, idxs=None):
+        """
+          Override so items defined in the tool are not indexed.
+        """
+        if self.isDefinedInTool():
+            return
+        CatalogMultiplex.reindexObject(self, idxs)
+
+    security.declareProtected(ModifyPortalContent, 'indexObject')
+    def indexObject(self):
+        """
+          Override so items defined in the tool are not indexed.
+        """
+        if self.isDefinedInTool():
+            return
+        CatalogMultiplex.indexObject(self)
 
     security.declarePublic('forceHTMLContentTypeForEmptyRichFields')
     def forceHTMLContentTypeForEmptyRichFields(self):
