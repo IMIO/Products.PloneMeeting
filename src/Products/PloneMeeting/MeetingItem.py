@@ -426,14 +426,14 @@ class MeetingItemWorkflowConditions:
 
     security.declarePublic('isLateFor')
     def isLateFor(self, meeting):
-        if meeting and \
-           (meeting.queryState() in self.meetingNotClosedStates) and \
+        if meeting and (meeting.queryState() in self.meetingNotClosedStates) and \
            (meeting.UID() == self.context.getPreferredMeeting()):
             itemValidationDate = self._getDateOfAction(self.context, 'validate')
-            meetingPublicationDate = self._getDateOfAction(meeting, 'publish')
-            if itemValidationDate and meetingPublicationDate:
-                if itemValidationDate > meetingPublicationDate:
+            meetingFreezingDate = self._getDateOfAction(meeting, 'freeze')
+            if itemValidationDate and meetingFreezingDate:
+                if itemValidationDate > meetingFreezingDate:
                     return True
+        return False
 
 InitializeClass(MeetingItemWorkflowConditions)
 

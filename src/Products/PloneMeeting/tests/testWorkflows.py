@@ -221,10 +221,10 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item2, 'present')
         self.do(item3, 'present')
         self.addAnnex(item2)
-        # So now I should have two normal items (do not forget the autoadded
-        # recurring item) and one late item in the meeting
-        self.failIf(len(meeting.getItems()) != 3)
-        self.failIf(len(meeting.getLateItems()) != 2)
+        # So now I should have 5 normal items (do not forget the autoadded
+        # recurring item) and no late item
+        self.failIf(len(meeting.getItems()) != 5)
+        self.failIf(len(meeting.getLateItems()) != 0)
         # pmReviewer1 now adds an annex to item1
         self.changeUser('pmReviewer1')
         self.addAnnex(item1)
@@ -379,23 +379,24 @@ class testWorkflows(PloneMeetingTestCase):
         # The 2 recurring items inserted at meeting creation must be in it
         self.failIf(len(meeting.getItems()) != 3)
         self.failIf(len(meeting.getLateItems()) != 0)
-        self.do(meeting, 'publish')
-        # Now, a late item should have been added
-        self.failIf(len(meeting.getItems()) != 3)
+        # meeting has not already been frozen, so when publishing, the added recurring
+        # item is considered as a normal item
+        self.publishMeeting(meeting)
+        self.failIf(len(meeting.getItems()) != 4)
+        self.failIf(len(meeting.getLateItems()) != 0)
+        # now freeze the meeting, future added items will be considered as late
+        self.freezeMeeting(meeting)
+        self.failIf(len(meeting.getItems()) != 4)
         self.failIf(len(meeting.getLateItems()) != 1)
         # Back to created: rec item 2 is not inserted.
         # We can not 'backToCreated' a meeting if some late items are into it...
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.getLateItems()[0].UID())
-        self.do(meeting, 'backToCreated')
-        self.failIf(len(meeting.getItems()) != 3)
+        self.backToState(meeting, 'created')
+        self.failIf(len(meeting.getItems()) != 4)
         self.failIf(len(meeting.getLateItems()) != 0)
         #a recurring item can be added several times...
-        self.do(meeting, 'publish')
-        self.failIf(len(meeting.getItems()) != 3)
-        self.failIf(len(meeting.getLateItems()) != 1)
-        # we freeze the meeting, an late item is added
-        self.do(meeting, 'freeze')
-        self.failIf(len(meeting.getItems()) != 3)
+        self.freezeMeeting(meeting)
+        self.failIf(len(meeting.getItems()) != 4)
         self.failIf(len(meeting.getLateItems()) != 2)
         # put a past date for the meeting so we can decide it
         meetingDate = DateTime('2008/06/12 08:00:00')
@@ -403,9 +404,9 @@ class testWorkflows(PloneMeetingTestCase):
         # an item need a decisionText to be decided...
         for item in (meeting.getItems() + meeting.getLateItems()):
             item.setDecision(self.decisionText)
-        self.do(meeting, 'decide')
+        self.decideMeeting(meeting)
         # a recurring item is added during the 'decide' transition
-        self.failIf(len(meeting.getItems()) != 3)
+        self.failIf(len(meeting.getItems()) != 4)
         self.failIf(len(meeting.getLateItems()) != 3)
         # now test with hardcoded transitions
         from Products.PloneMeeting.MeetingItem import MeetingItemWorkflowConditions
@@ -413,7 +414,7 @@ class testWorkflows(PloneMeetingTestCase):
         oldValue2 = MeetingItemWorkflowConditions.transitionsForPresentingAnItem
         MeetingItemWorkflowConditions.useHardcodedTransitionsForPresentingAnItem = True
         meeting2 = self.create('Meeting', date='2008/12/11 09:00:00')
-        # this meeting should contains the 2 usual recurring items
+        # this meeting should contains the 3 usual recurring items
         self.failIf(len(meeting2.getItems()) != 3)
         # if transitions for presenting an item are not correct
         # the item will no be inserted in the meeting

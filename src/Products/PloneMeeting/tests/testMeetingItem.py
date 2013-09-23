@@ -821,6 +821,53 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(secretItem.isPrivacyViewable())
         self.failUnless(publicItem.isPrivacyViewable())
 
+    def test_pm_IsLateFor(self):
+        '''
+          Test the isLateFor method, so when an item is considered as late when it
+          is about inserting it in a living meeting.  An item is supposed late when
+          the date of validation is newer than the date of freeze of the meeting
+          we want to insert the item in.  A late item can be inserted in a meeting when
+          the meeting is in MeetingItem.meetingNotClosedStates states.
+        '''
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        # no matter who create the item, do everything as MeetingManager
+        self.changeUser('pmManager')
+        # create an item
+        lateItem = self.create('MeetingItem')
+        # create a meeting and insert an item so it can be frozen
+        lambdaItem = self.create('MeetingItem')
+        meeting = self.create('Meeting', date=DateTime('2013/06/01 08:00:00'))
+        self.presentItem(lambdaItem)
+        # validate the item before freeze of the meeting, it is not considered as late
+        self.validateItem(lateItem)
+        self.freezeMeeting(meeting)
+        self.failIf(lateItem.wfConditions().isLateFor(meeting))
+        # now correct the item and validate it again so it is considered as late item
+        self.backToState(lateItem, 'itemcreated')
+        self.validateItem(lateItem)
+        # still not considered as late item as preferredMeeting is not set to meeting.UID()
+        self.failIf(lateItem.wfConditions().isLateFor(meeting))
+        # set preferredMeeting so it is considered as late now...
+        lateItem.setPreferredMeeting(meeting.UID())
+        # if the meeting is not in relevant states (MeetingItem.meetingNotClosedStates),
+        # the item is not considered as late...
+        self.backToState(meeting, 'created')
+        self.failIf(lateItem.wfConditions().isLateFor(meeting))
+        # now make the item considered as late item again and test
+        # every states of MeetingItem.meetingNotClosedStates
+        self.freezeMeeting(meeting)
+        self.backToState(lateItem, 'itemcreated')
+        self.validateItem(lateItem)
+        # for now, it is considered as late
+        self.failUnless(lateItem.wfConditions().isLateFor(meeting))
+        for tr in self.TRANSITIONS_FOR_CLOSING_MEETING_2:
+            if tr in self.transitions(meeting):
+                self.do(meeting, tr)
+            if meeting.queryState() in lateItem.wfConditions().meetingNotClosedStates:
+                self.failUnless(lateItem.wfConditions().isLateFor(meeting))
+            else:
+                self.failIf(lateItem.wfConditions().isLateFor(meeting))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
