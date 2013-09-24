@@ -107,6 +107,8 @@ class Migrate_To_3_0(Migrator):
                 changed = False
                 item = brain.getObject()
                 for annex in (item.getAnnexes() + item.getAnnexesDecision()):
+                    if not annex:
+                        continue
                     annexUpdated = annex._updateMeetingFileType(cfg)
                     if annexUpdated:
                         changed = True

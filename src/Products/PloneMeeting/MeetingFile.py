@@ -418,7 +418,8 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         mftFolder = cfg.meetingfiletypes
         existingFileTypesUids = [ft.UID() for ft in mftFolder.getFileTypes(decisionRelated=decisionRelated,
                                                                            onlyActive=False)]
-        existingFileTypesIds = [ft.getId() for ft in mftFolder.getFileTypes(decisionRelated=decisionRelated)]
+        existingFileTypesIds = [ft.getId() for ft in mftFolder.getFileTypes(decisionRelated=decisionRelated,
+                                                                            onlyActive=False)]
         mft = self.getMeetingFileType()
         if not mft or not mft.UID() in existingFileTypesUids:
             # get the corresponding meetingFileType in the current meetingConfig
