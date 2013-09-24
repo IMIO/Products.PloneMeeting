@@ -1,0 +1,5 @@
+<tal:comment replace="nothing">Display meeting assembly real value</tal:comment>
+<fieldset>
+    <legend i18n:translate="display_meeting_assembly_legend" i18n:domain="PloneMeting">Assembly stored on the linked meeting</legend>
+    <tal:block replace="structure view/getMeetingAssembly">Meeting assembly</tal:block>
+</fieldset>

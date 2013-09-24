@@ -5,9 +5,8 @@
 jQuery(function($){
     $('a.link-overlay-pm').prepOverlay({
         subtype: 'ajax',
-        closeselector: '[name="form.button.Cancel"]',
+        closeselector: '[name="form.buttons.cancel"]',
    });
-
 });
 
 // prepare overlays in ajax frames
@@ -55,8 +54,8 @@ jQuery(function($) {
 $('a.link-overlay-pm.transition-overlay').each(function(){
     $(this).attr('href',$(this).attr('href') + '&iStartNumber=' + iStartNumber + '&lStartNumber=' + lStartNumber);
     })
-})
-initializePMOverlays()
+  })
+  initializePMOverlays()
 }
 
 

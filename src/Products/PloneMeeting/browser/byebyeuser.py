@@ -17,8 +17,8 @@ class ByebyeUser(BrowserView):
 
     def __call__(self):
         form = self.request.form
-        submitted = form.get('form.button.Save', False)
-        cancelled = form.get('form.button.Cancel', False)
+        submitted = form.get('form.buttons.save', False)
+        cancelled = form.get('form.buttons.cancel', False)
         if submitted:
             if not self.userId:
                 return self.request.RESPONSE.redirect(self.context.absolute_url())

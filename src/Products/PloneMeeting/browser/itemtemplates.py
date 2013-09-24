@@ -24,8 +24,8 @@ class ItemTemplateView(BrowserView):
         if not self.getTemplateItems():
             self.request.RESPONSE.redirect(self.context.absolute_url())
         form = self.request.form
-        submitted = form.get('form.button.Save', False)
-        cancelled = form.get('form.button.Cancel', False)
+        submitted = form.get('form.buttons.save', False)
+        cancelled = form.get('form.buttons.cancel', False)
         if submitted:
             newItem = self.createItemFromTemplate()
             if not newItem:

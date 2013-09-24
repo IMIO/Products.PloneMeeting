@@ -58,6 +58,11 @@ DirectoryView.registerDirectory('skins', product_globals)
 
 
 ##code-section custom-init-head #fill in your manual code here
+from zope.i18nmessageid import MessageFactory
+
+PMMessageFactory = MessageFactory("PloneMeeting")
+
+
 class FakeBrain:
     '''This class behaves like a brain retrieved from a query to a ZCatalog. It
        is used for representing a fake brain that was generated from a search in
@@ -151,4 +156,3 @@ def initialize(context):
         if not elem.startswith('__'): FakeBrain.security.declarePublic(elem)
     InitializeClass(FakeBrain)
     ##/code-section custom-init-bottom
-

@@ -25,8 +25,8 @@
     </tal:templateItems><br />
     <div align="center">
       <input type="hidden" name="form.HTTP_REFERER" value="#" tal:attributes="value context/REQUEST/HTTP_REFERER" />
-      <input type="submit" name="form.button.Save" class="context" value="create_meeting_item" i18n:attributes="value" />
-      <input type="submit" name="form.button.Cancel" class="standalone" value="Cancel" i18n:attributes="value" i18n:domain="plone" />
+      <input type="submit" name="form.buttons.save" class="context" value="create_meeting_item" i18n:attributes="value" />
+      <input type="submit" name="form.buttons.cancel" class="standalone" value="Cancel" i18n:attributes="value" i18n:domain="plone" />
     </div>
     </form>
 

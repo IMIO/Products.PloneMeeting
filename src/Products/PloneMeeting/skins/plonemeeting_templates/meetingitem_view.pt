@@ -26,7 +26,8 @@
                                   showColors tool/showColorsForUser;
                                   usedAttrs meetingConfig/getUsedItemAttributes;
                                   usedMeetingAttributes meetingConfig/getUsedMeetingAttributes;
-                                  bilingual python: 'secondLanguage' in tool.getModelAdaptations();">
+                                  bilingual python: 'secondLanguage' in tool.getModelAdaptations();
+                                  portal context/plone_portal_state/portal;">
 
   <script language="javascript"
     tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
@@ -94,8 +95,13 @@
         <tal:comment replace="nothing">Item assembly</tal:comment>
         <div class="discreet"
              tal:condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
-          <tal:defines define="redefinedItemAssembly python: context.getItemAssembly(real=True).strip().replace('\n', '<br/>')">
+          <tal:defines define="redefinedItemAssembly python: context.getItemAssembly(real=True)">
           <i tal:attributes="class python: redefinedItemAssembly and 'highlightRedefinedValue' or ''"><span i18n:translate="item_attendees"></span></i>:&nbsp;&nbsp;
+          <a href="manage_item_assembly_form" class="link-overlay-pm manage-item-assembly-overlay">
+            <img src="#"
+               tal:attributes="src string:${portal_url}/manage.png;"
+               tal:condition="python: member.has_permission('Modify portal content', context) and context.Schema()['itemAssembly'].widget.testCondition(context.aq_parent, portal, context)" />
+          </a>
              <span tal:replace="structure context/getStrikedItemAssembly"/>
           </tal:defines>
         </div>
@@ -207,9 +213,14 @@
         <tal:comment replace="nothing">Item signatures</tal:comment>
         <div class="discreet"
              tal:condition="python: meeting and ('signatures' in usedMeetingAttributes)">
-          <tal:defines define="redefinedItemSignatures python: context.getItemSignatures(real=True).strip().replace('\n', '<br/>')">
+          <tal:defines define="redefinedItemSignatures python: context.getItemSignatures(real=True)">
+          <a href="#" class="">
+            <img src="#"
+               tal:attributes="src string:${portal_url}/manage.png;"
+               tal:condition="python: member.has_permission('Modify portal content', context) and context.Schema()['itemSignatures'].widget.testCondition(context.aq_parent, portal, context)" />
+          </a>&nbsp;
           <i tal:attributes="class python: redefinedItemSignatures and 'highlightRedefinedValue' or ''"><span i18n:translate="meeting_signatures"></span></i>:&nbsp;&nbsp;
-             <span tal:replace="structure context/getItemSignatures"/>
+          <span tal:replace="structure python: context.getItemSignatures().replace('\n', '<br />')"/>
           </tal:defines>
         </div>
         </td>

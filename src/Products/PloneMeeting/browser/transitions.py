@@ -29,8 +29,8 @@ class ConfirmTransitionView(BrowserView):
         # either we received form.submitted in the request because we are triggering
         # a transition that does not need a confirmation or we clicked on the save button of
         # the confirmation popup
-        submitted = form.get('form.button.Save', False) or form.get('form.submitted', False)
-        cancelled = form.get('form.button.Cancel', False)
+        submitted = form.get('form.buttons.save', False) or form.get('form.submitted', False)
+        cancelled = form.get('form.buttons.cancel', False)
         if submitted:
             self.tool.triggerTransition()
         elif cancelled:

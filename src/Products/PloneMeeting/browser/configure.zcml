@@ -193,12 +193,21 @@
         allowed_attributes="isAsynchToggleEnabled"/>
     <!-- macros -->
     <browser:page
-       name="annexes-macros"
-       for="Products.PloneMeeting.interfaces.IMeetingItem"
-       class=".annexes.AnnexesMacros"
-       template="templates/annexesmacros.pt"
-       permission="zope2.View"
+        name="annexes-macros"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        class=".annexes.AnnexesMacros"
+        template="templates/annexesmacros.pt"
+        permission="zope2.View"
     />
+    <!-- View that manage item assembly -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="manage_item_assembly_form"
+        class=".forms.ManageItemAssemblyFormWrapper"
+        permission="zope2.View"
+      />
+
     <!-- PloneMeeting-specific portlets -->
     <include package="plone.app.portlets" />
 

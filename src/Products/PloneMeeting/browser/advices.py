@@ -54,8 +54,8 @@ class AddEditAdvice(BrowserView):
         if not self.initMeetingGroupId():
             self.request.RESPONSE.redirect(self.context.absolute_url())
         form = self.request.form
-        cancelled = form.get('form.button.Cancel', False)
-        submitted = form.get('form.button.Save', False)
+        cancelled = form.get('form.buttons.cancel', False)
+        submitted = form.get('form.buttons.save', False)
         if submitted:
             # proceed, call the private method MeetingItem.editAdvice(self, group, adviceType, comment):
             group = getattr(self.meetingConfig.aq_inner.aq_parent, form.get('meetingGroupId'))
