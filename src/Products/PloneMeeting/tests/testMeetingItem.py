@@ -829,7 +829,6 @@ class testMeetingItem(PloneMeetingTestCase):
           we want to insert the item in.  A late item can be inserted in a meeting when
           the meeting is in MeetingItem.meetingNotClosedStates states.
         '''
-        self.setMeetingConfig(self.meetingConfig2.getId())
         # no matter who create the item, do everything as MeetingManager
         self.changeUser('pmManager')
         # create an item
