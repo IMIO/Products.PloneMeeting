@@ -604,6 +604,18 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _return_to_proposing_group_active(self):
         '''Tests while 'return_to_proposing_group' wfAdaptation is active.'''
+        # we subdvise this test in 3, testing every constants, this way,
+        # a subplugin can call these test separately
+        # RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
+        self._return_to_proposing_group_active_from_item_states()
+        # RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+        self._return_to_proposing_group_active_state_to_clone()
+        # RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+        self._return_to_proposing_group_active_custom_permissions()
+
+    def _return_to_proposing_group_active_from_item_states(self):
+        '''Helper method to test 'return_to_proposing_group' wfAdaptation regarding the
+           RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES defined value.'''
         # make sure the 'return_to_proposing_group' state does not exist in the item WF
         itemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
         self.failUnless('returned_to_proposing_group' in itemWF.states)
@@ -613,10 +625,18 @@ class testWFAdaptations(PloneMeetingTestCase):
         for state in itemWF.states.values():
             if 'return_to_proposing_group' in state.transitions:
                 from_states.add(state.id)
-        self.assertEquals(set(RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES), from_states)
+        # at least every states in from_states were defined in RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
+        self.failIf(from_states.difference(set(RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES)))
+
+    def _return_to_proposing_group_active_state_to_clone(self):
+        '''Helper method to test 'return_to_proposing_group' wfAdaptation regarding the
+           RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE defined value.'''
         # make sure permissions of the new state correspond to permissions of the state
         # defined in the model.adaptations.RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE item state name
         # just take care that for new state, MeetingManager have been added to every permissions
+        # this has only sense if using it, aka no RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+        # this could be the case if a subproduct (MeetingXXX) calls this test...
+        itemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
         cloned_state_permissions = itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         for permission in cloned_state_permissions:
@@ -628,6 +648,11 @@ class testWFAdaptations(PloneMeetingTestCase):
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
             self.assertEquals(cloned_state_permission_with_meetingmanager,
                               new_state_permissions[permission])
+
+    def _return_to_proposing_group_active_custom_permissions(self):
+        '''Helper method to test 'return_to_proposing_group' wfAdaptation regarding the
+           RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS defined value.'''
+        itemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
         # now test the RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS, if some custom permissions are defined,
         # it will override the permissions coming from the state to clone permissions
         from Products.PloneMeeting.model import adaptations
