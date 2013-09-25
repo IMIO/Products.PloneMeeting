@@ -34,11 +34,11 @@
     factory="plone.app.blob.subtypes.file.SchemaExtender" />
 
   <subscriber for=".interfaces.IMeetingItem
-                   zope.app.container.interfaces.IObjectAddedEvent"
+                   zope.container.interfaces.IObjectAddedEvent"
               handler=".MeetingItem.onAddMeetingItem"/>
 
   <subscriber for=".interfaces.IMeeting
-                   zope.app.container.interfaces.IObjectAddedEvent"
+                   zope.container.interfaces.IObjectAddedEvent"
               handler=".Meeting.onAddMeeting"/>
 
   <subscriber for=".interfaces.IMeetingItem

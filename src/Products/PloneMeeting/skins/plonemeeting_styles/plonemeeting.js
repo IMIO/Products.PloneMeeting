@@ -387,7 +387,7 @@ function getAjaxChunk(pos) {
     if (xhrObjects[pos].xhr.readyState == 1) {
       // The request has been initialized: display the waiting radar
       var hookElem = document.getElementById(hook);
-      if (hookElem) hookElem.innerHTML = "<div align=\"center\"><img src=\"waiting.gif\"/><\/div>";
+      if (hookElem) hookElem.innerHTML = "<div align=\"center\"><img src=\"spinner.gif\"/><\/div>";
     }
     if (xhrObjects[pos].xhr.readyState == 4) {
       // We have received the HTML chunk

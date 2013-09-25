@@ -393,7 +393,7 @@
                            onClick python:'toggleItemsList(\'availableItems\', this)'"
            style="cursor:pointer"/>
     </legend>
-    <span id="availableItems"><div align="center"><img tal:attributes="src string: $portal_url/waiting.gif"/></div></span>
+    <span id="availableItems"><div align="center"><img tal:attributes="src string: $portal_url/spinner.gif"/></div></span>
   </fieldset>
 
   <tal:comment replace="nothing">Show items that are presented into the current meeting</tal:comment>
@@ -404,7 +404,7 @@
                            onClick python:'toggleItemsList(\'meetingItems\', this)'"
            style="cursor:pointer"/>
     </legend>
-    <span id="meetingItems"><div align="center"><img tal:attributes="src string: $portal_url/waiting.gif"/></div></span>
+    <span id="meetingItems"><div align="center"><img tal:attributes="src string: $portal_url/spinner.gif"/></div></span>
   </fieldset>
 
   <tal:comment replace="nothing">Show items that are "late"-presented into the current meeting</tal:comment>
@@ -420,7 +420,7 @@
                            onClick python:'toggleItemsList(\'lateItems\', this)'"
            style="cursor:pointer"/>
     </legend>
-    <span id="lateItems"><div align="center"><img tal:attributes="src string: $portal_url/waiting.gif"/></div></span>
+    <span id="lateItems"><div align="center"><img tal:attributes="src string: $portal_url/spinner.gif"/></div></span>
   </fieldset>
 
   <tal:comment replace="nothing">Action on selected items</tal:comment>

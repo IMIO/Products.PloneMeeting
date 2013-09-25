@@ -134,7 +134,7 @@
 
   <table cellspacing="0" cellpadding="0" class="itemsNavigation"
          tal:define="startNumber python: int(request.get('b_start', 0))+1;
-                     batchSize batch/size;
+                     batchSize batch/length;
                      wholeSize batch/sequence_length;
                      jsParams python: '\'%s\', \'%s\', \'%s\', \'%%d\', \'%s\', \'%s\', \'%s\'' % (request['hookId'], meetingConfig.absolute_url(), topic.id, request.get('sortKey', ''), request.get('sortOrder', ''), request.get('filterKey', ''));
                      maxReached python: wholeSize == tool.getMaxSearchResults();

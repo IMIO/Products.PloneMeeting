@@ -231,7 +231,7 @@
             title="help_no_preview_available_under_conversion"
             i18n:domain="PloneMeeting"
             i18n:attributes="title">
-         <img src="waiting.gif" tal:attributes="src string:${portal_url}/waiting.gif" width="16" height="16" />
+         <img src="spinner.gif" tal:attributes="src string:${portal_url}/spinner.gif" width="16" height="16" />
          <span tal:content="annex/Title" />
        </div>
        <div class="annexTitle annexTitleNotPrintable" tal:condition="python: conversionStatus == 'conversion_error' and not isRealManager"
