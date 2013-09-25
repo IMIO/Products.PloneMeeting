@@ -80,16 +80,23 @@
         </div>
 
         <tal:comment replace="nothing">Associated groups</tal:comment>
-        <div class="discreet" tal:condition="python: 'associatedGroups' in usedAttrs">
+        <div class="discreet" tal:condition="python: 'associatedGroups' in usedAttrs"
+                              tal:define="associatedGroups context/getAssociatedGroups;">
           <i><span i18n:translate="PloneMeeting_label_associatedGroups"></span></i>:&nbsp;&nbsp;
-             <span tal:repeat="associatedGroup here/getAssociatedGroups"
-                   tal:content="structure python: getattr(tool, associatedGroup).Title() + '&nbsp;&nbsp;'"></span>
+             <tal:displayAssociatedGroups condition="associatedGroups">
+                <span metal:use-macro="python: here.widget('associatedGroups', mode='view')" />
+             </tal:displayAssociatedGroups>
+             <span tal:condition="not: associatedGroups">-</span>
         </div>
 
         <tal:comment replace="nothing">Copy groups for this item</tal:comment>
-        <div class="discreet" tal:condition="python: context.isCopiesEnabled()">
+        <div class="discreet" tal:condition="python: context.isCopiesEnabled()"
+                              tal:define="copyGroups context/getCopyGroups;">
           <i><span i18n:translate="PloneMeeting_label_copyGroups"></span></i>:&nbsp;&nbsp;
-             <span metal:use-macro="python: here.widget('copyGroups', mode='view')" />
+             <tal:displayCopyGroups condition="copyGroups">
+                <span metal:use-macro="python: here.widget('copyGroups', mode='view')" />
+             </tal:displayCopyGroups>
+             <span tal:condition="not: copyGroups">-</span>
         </div>
 
         <tal:comment replace="nothing">Item assembly</tal:comment>
@@ -180,7 +187,9 @@
              tal:condition="context/isClonableToOtherMeetingConfigs"
              tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
           <i><span i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span></i>:&nbsp;&nbsp;
-             <span metal:use-macro="python: here.widget('otherMeetingConfigsClonableTo', mode='view')" />
+             <tal:displayOtherMeetingConfigsClonableTo tal:condition="otherMCs">
+                <span metal:use-macro="python: here.widget('otherMeetingConfigsClonableTo', mode='view')" />
+             </tal:displayOtherMeetingConfigsClonableTo>
              <span tal:condition="not: otherMCs">-</span>
         </div>
         <tal:comment replace="nothing">Privacy</tal:comment>
