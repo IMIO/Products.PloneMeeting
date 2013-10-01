@@ -199,14 +199,36 @@
         template="templates/annexesmacros.pt"
         permission="zope2.View"
     />
-    <!-- View that manage item assembly -->
+    <!-- Form that manage item assembly -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="manage_item_assembly_form"
-        class=".forms.ManageItemAssemblyFormWrapper"
-        permission="zope2.View"
+        class=".itemassembly.ManageItemAssemblyFormWrapper"
+        permission="cmf.ModifyPortalContent"
       />
+    <!-- Form that manage item signtures -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="manage_item_signatures_form"
+        class=".itemsignatures.ManageItemSignaturesFormWrapper"
+        permission="cmf.ModifyPortalContent"
+      />
+
+    <!-- special view that make it possible to redirect from an overlay and show status messages afterward -->
+    <browser:page
+        for="*"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="redirect_view"
+        class=".redirect.RedirectView"
+        permission="zope2.View"
+        />
+    <adapter
+        for="zope.publisher.interfaces.browser.IBrowserRequest"
+        provides="Products.PloneMeeting.interfaces.IRedirect"
+        factory=".redirect.Redirect"
+        />
 
     <!-- PloneMeeting-specific portlets -->
     <include package="plone.app.portlets" />

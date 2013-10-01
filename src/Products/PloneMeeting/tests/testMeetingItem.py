@@ -22,9 +22,11 @@
 # 02110-1301, USA.
 #
 
+from AccessControl import Unauthorized
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getMultiAdapter
 from plone.app.testing import login
 from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.utils import getToolByName
@@ -866,6 +868,96 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.failUnless(lateItem.wfConditions().isLateFor(meeting))
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
+
+
+    def test_pm_manageItemAssembly(self):
+        """
+          This tests the form that manage itemAssembly and that can apply it on several items.
+        """
+        self.changeUser('admin')
+        # make items inserted in a meeting inserted in this order
+        self.meetingConfig.setSortingMethodOnAddItem('at_the_end')
+        # remove recurring items if any as we are playing with item number here under
+        recurringItemsIds = []
+        for item in self.meetingConfig.recurringitems.objectValues():
+            recurringItemsIds.append(item.getId())
+        self.meetingConfig.recurringitems.manage_delObjects(ids=recurringItemsIds)
+        # a user create an item and we insert it into a meeting
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setDecision('<p>A decision</p>')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        # define an assembly on the meeting
+        meeting.setAssembly('Meeting assembly')
+        self.presentItem(item)
+        # make the form item_assembly_default works
+        self.request['PUBLISHED'].context = item
+        form = getMultiAdapter((item, self.request), name='manage_item_assembly_form').form_instance
+        form.update()
+        # by default, item assembly is the one defined on the meeting
+        self.assertEquals(item.getItemAssembly(), meeting.getAssembly())
+        # now use the form to change the item assembly
+        self.request.form['form.widgets.item_assembly'] = u'Item assembly'
+        form.handleApplyItemAssembly(form, None)
+        self.assertNotEquals(item.getItemAssembly(), meeting.getAssembly())
+        self.assertEquals(item.getItemAssembly(), '<p>Item assembly</p>')
+        # if the user is not portal_plonemeeting.isManager, it raises Unauthorized
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, form.update)
+        # now add several items to the meeting and check if they get correctly
+        # updated as this functaionnlity is made to update several items at once
+        item2 = self.create('MeetingItem')
+        item2.setDecision('<p>A decision</p>')
+        item3 = self.create('MeetingItem')
+        item3.setDecision('<p>A decision</p>')
+        item4 = self.create('MeetingItem')
+        item4.setDecision('<p>A decision</p>')
+        item5 = self.create('MeetingItem')
+        item5.setDecision('<p>A decision</p>')
+        item6 = self.create('MeetingItem')
+        item6.setDecision('<p>A decision</p>')
+        self.changeUser('pmManager')
+        for elt in (item2, item3, item4, item5, item6):
+            self.presentItem(elt)
+        # now update item3, item4 and item5, for now their itemAssembly is the meeting assembly
+        self.assertEquals(item2.getItemAssembly(), '<p>Meeting assembly</p>')
+        self.assertEquals(item3.getItemAssembly(), '<p>Meeting assembly</p>')
+        self.assertEquals(item4.getItemAssembly(), '<p>Meeting assembly</p>')
+        self.assertEquals(item5.getItemAssembly(), '<p>Meeting assembly</p>')
+        self.assertEquals(item6.getItemAssembly(), '<p>Meeting assembly</p>')
+        form = getMultiAdapter((item2, self.request), name='manage_item_assembly_form').form_instance
+        form.update()
+        self.request.form['form.widgets.item_assembly'] = u'Item assembly 2'
+        self.request.form['form.widgets.apply_until_item_number'] = u'4'
+        # now apply, relevant items must have been updated
+        form.handleApplyItemAssembly(form, None)
+        # item was not updated
+        self.assertEquals(item.getItemAssembly(), '<p>Item assembly</p>')
+        # items 'item2', 'item3' and 'item4' were updated
+        self.assertEquals(item2.getItemAssembly(), '<p>Item assembly 2</p>')
+        self.assertEquals(item3.getItemAssembly(), '<p>Item assembly 2</p>')
+        self.assertEquals(item4.getItemAssembly(), '<p>Item assembly 2</p>')
+        # 2 last items were not updated
+        self.assertEquals(item5.getItemAssembly(), '<p>Meeting assembly</p>')
+        self.assertEquals(item6.getItemAssembly(), '<p>Meeting assembly</p>')
+        # now test that if an item in the items we want to update is not editable
+        # it is just not updated but other items are correctly updated
+        # just manipulate item4 and make 'Modify portal content' only available to 'Manager'
+        item4.manage_changePermissions({'Modify portal content': ['Manager', ]})
+        self.failIf(self.hasPermission('Modify portal content', item4))
+        # now update item2, item2, item4 and item5
+        self.request.form['form.widgets.item_assembly'] = u'Item assembly 3'
+        self.request.form['form.widgets.apply_until_item_number'] = u'5'
+        # Apply
+        form.handleApplyItemAssembly(form, None)
+        self.assertEquals(item2.getItemAssembly(), '<p>Item assembly 3</p>')
+        self.assertEquals(item3.getItemAssembly(), '<p>Item assembly 3</p>')
+        # item4 could not be updated
+        self.assertEquals(item4.getItemAssembly(), '<p>Item assembly 2</p>')
+        self.assertEquals(item5.getItemAssembly(), '<p>Item assembly 3</p>')
+        # item6 is not updated as we wanted to update items until number 5
+        self.assertEquals(item6.getItemAssembly(), '<p>Meeting assembly</p>')
 
 
 def test_suite():

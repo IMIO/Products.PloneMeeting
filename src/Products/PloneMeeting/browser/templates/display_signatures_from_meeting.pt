@@ -1,0 +1,5 @@
+<tal:comment replace="nothing">Display meeting signatures real value</tal:comment>
+<fieldset>
+    <legend i18n:translate="display_meeting_signatures_legend" i18n:domain="PloneMeeting">Signatures stored on the linked meeting</legend>
+    <tal:block replace="structure view/getMeetingSignatures">Meeting signatures</tal:block>
+</fieldset>

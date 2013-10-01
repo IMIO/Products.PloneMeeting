@@ -20,6 +20,7 @@
 # 02110-1301, USA.
 #
 
+from AccessControl import Unauthorized
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
 from zope import interface, schema
@@ -31,7 +32,9 @@ from z3c.form.contentprovider import ContentProviders
 
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.interfaces import IRedirect
 
 
 def item_assembly_default():
@@ -48,12 +51,19 @@ def item_assembly_default():
 
 
 class IManageItemAssembly(interface.Interface):
-    item_assembly = schema.Text(title=_(u"Item assembly"),
+    item_assembly = schema.Text(title=_(u"Item assembly to apply"),
+                                description=_(u"Enter the item assembly to be applied.  The value displayed "
+                                              u"by default is the value of the current item."),
                                 defaultFactory=item_assembly_default,)
+    apply_until_item_number = schema.Int(title=_(u"Apply until item number"),
+                                         description=_(u"If you specify a number, the item assembly entered here above will be applied from "
+                                                       u"current item to the item number entered.  Leave empty to only apply for current item."),
+                                         required=False,)
 
 
 class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
     """
+      This ContentProvider will just display the assembly defined on the linked meeting.
     """
     template = ViewPageTemplateFile('templates/display_assembly_from_meeting.pt')
 
@@ -73,6 +83,10 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
 
 
 class ManageItemAssemblyForm(form.Form):
+    """
+      This form will help MeetingManagers manage itemAssembly by being able to redefine it on a single
+      item without having to use the edit form and to apply redefined value until the item number he wants.
+    """
     implements(IFieldsAndContentProvidersForm)
 
     fields = field.Fields(IManageItemAssembly)
@@ -84,6 +98,7 @@ class ManageItemAssemblyForm(form.Form):
     contentProviders['meetingAssembly'].position = 0
     label = _(u"Manage item assembly")
     description = u''
+    _finishedSent = False
 
     def __init__(self, context, request):
         self.context = context
@@ -92,14 +107,17 @@ class ManageItemAssemblyForm(form.Form):
                                domain='PloneMeeting',
                                context=self.request)
 
-    @button.buttonAndHandler(_('Proceed'), name='proceed_item_assembly')
-    def handleProceedItemAssembly(self, action):
+    @button.buttonAndHandler(_('Apply'), name='apply_item_assembly')
+    def handleApplyItemAssembly(self, action):
         data, errors = self.extractData()
         if errors:
             self.status = self.formErrorsMessage
             return
         # do adapt item assembly
-        self._doProceedItemAssembly()
+        self.item_assembly = self.request.form.get('form.widgets.item_assembly')
+        self.apply_until_item_number = self.request.form.get('form.widgets.apply_until_item_number') and \
+            int(self.request.form.get('form.widgets.apply_until_item_number')) or 0
+        self._doApplyItemAssembly()
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
@@ -107,6 +125,10 @@ class ManageItemAssemblyForm(form.Form):
 
     def update(self):
         """ """
+        # raise Unauthorized if current user is not a Manager/MeetingManager
+        if not self.context.portal_plonemeeting.isManager():
+            raise Unauthorized
+
         super(ManageItemAssemblyForm, self).update()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
@@ -116,14 +138,52 @@ class ManageItemAssemblyForm(form.Form):
         form.Form.updateWidgets(self)
 
     def render(self):
+        if self._finishedSent:
+            IRedirect(self.request).redirect(self.context.absolute_url())
+            return ""
         return super(ManageItemAssemblyForm, self).render()
 
-    def _doSendToPloneMeeting(self):
+    def _doApplyItemAssembly(self):
         """
           The method actually do the job, set the itemAssembly on self.context
           and following items if defined
         """
-        self.context.setItemAssembly(self.itemAssembly)
+        def getItemsToUpdate():
+            """
+              Return items we want to update regarding the number defined in apply_until_item_number
+            """
+            currentItemNumber = self.context.getItemNumber(relativeTo='meeting')
+            if not self.apply_until_item_number or \
+               self.apply_until_item_number < currentItemNumber:
+                return [self.context, ]
+            else:
+                return self.context.getMeeting().getItemsInOrder()[currentItemNumber-1:self.apply_until_item_number]
+
+        itemsToUpdate = getItemsToUpdate()
+        itemAssemblyWritePermission = self.context.Schema()['itemAssembly'].write_permission
+        notUpdatedItems = []
+        member = self.context.restrictedTraverse('@@plone_portal_state').member()
+        plone_utils = getToolByName(self.context, 'plone_utils')
+        for itemToUpdate in itemsToUpdate:
+            # if the user could not edit the item_assembly for itemToUpdate, we save the item number
+            if not member.has_permission(itemAssemblyWritePermission, itemToUpdate):
+                notUpdatedItems.append(itemToUpdate)
+                continue
+            # we have the right to update the item, so let's do it!
+            itemToUpdate.setItemAssembly(self.item_assembly)
+        if notUpdatedItems:
+            formattedNotUpdatedItems = []
+            for notUpdatedItem in notUpdatedItems:
+                formatted = "<a href='%s' title='%s'>%d</a>" % (notUpdatedItem.absolute_url(),
+                                                                unicode(notUpdatedItem.Title(), 'utf-8'),
+                                                                notUpdatedItem.getItemNumber(relativeTo='meeting'))
+                formattedNotUpdatedItems.append(formatted)
+            translated_message = _('manage_item_not_update_items_numbers',
+                                   mapping={'itemNumbers': ', '.join(formattedNotUpdatedItems)})
+            plone_utils.addPortalMessage(translated_message, 'warning')
+        else:
+            plone_utils.addPortalMessage(_("Item assemblies have been updated."))
+        self._finishedSent = True
 
 
 from plone.z3cform.layout import wrap_form

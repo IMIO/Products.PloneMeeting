@@ -470,7 +470,10 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
 .highlight {background-color: yellow}
 
 /* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
-.highlightRedefinedValue {color: red;}
+.highlightRedefinedValue,
+.highlightRedefinedValue.itemAssemblyEditable span,
+.highlightRedefinedValue.itemSignaturesEditable span
+{color: red;}
 
 /* Add a highlight-red style useable in CKeditor to highlight modified elements */
 /* See ticket #901 on http://trac.imio.be */
@@ -552,10 +555,40 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
     cursor: not-allowed !important;
 }
 
-.toDiscussEditable, .itemIsSignedEditable, .annexToPrintEditable {
-    border-bottom: 2px dotted grey;
+.toDiscussEditable,
+.itemIsSignedEditable,
+.annexToPrintEditable,
+.itemAssemblyEditable i,
+.itemSignaturesEditable i {
+    border-bottom: 2px dotted;
     padding-bottom: 2px;
     cursor:pointer;
+}
+/* remove padding-bottom */
+.itemAssemblyEditable i,
+.itemSignaturesEditable i {
+    padding-bottom: 0px;
+}
+/* add some space before displayed itemAssembly (itemSignatures) if itemAssembly (itemSignatures) is editable */
+div.itemAssemblyEditable,
+div.itemSignaturesEditable {
+    margin-bottom: 5px;
+}
+
+/* make the textarea displayed in the manage itemAssembly/itemSignatures having a higher height */
+#form #form-widgets-item_assembly,
+#form #form-widgets-item_signatures {
+    height: 200px;
+}
+
+/* limit width of field propagate_until_item_number in itemAssembly/itemSignatures management overlays */
+#form #form-widgets-apply_until_item_number {
+    width: 3em;
+}
+
+/* center controls displayed on z3c.forms */
+#form .formControls {
+    text-align: center;
 }
 
 .ToDiscuss {

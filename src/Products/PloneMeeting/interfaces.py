@@ -6,6 +6,15 @@ from zope.interface import Interface
 from zope.publisher.interfaces.browser import IBrowserRequest
 
 
+class IRedirect(Interface):
+    """
+    """
+    def redirect():
+        """
+          Redirect to the right place in case we use plone.app.jquerytools overlays
+        """
+
+
 class IPloneMeetingLayer(IBrowserRequest):
     """
       Define a layer so some elements are only added for it
@@ -13,45 +22,56 @@ class IPloneMeetingLayer(IBrowserRequest):
     pass
 ##/code-section HEAD
 
+
 class IMeetingItem(Interface):
     """Marker interface for .MeetingItem.MeetingItem
     """
+
 
 class IMeeting(Interface):
     """Marker interface for .Meeting.Meeting
     """
 
+
 class IToolPloneMeeting(Interface):
     """Marker interface for .ToolPloneMeeting.ToolPloneMeeting
     """
+
 
 class IMeetingCategory(Interface):
     """Marker interface for .MeetingCategory.MeetingCategory
     """
 
+
 class IMeetingConfig(Interface):
     """Marker interface for .MeetingConfig.MeetingConfig
     """
+
 
 class IMeetingFileType(Interface):
     """Marker interface for .MeetingFileType.MeetingFileType
     """
 
+
 class IMeetingFile(Interface):
     """Marker interface for .MeetingFile.MeetingFile
     """
+
 
 class IMeetingGroup(Interface):
     """Marker interface for .MeetingGroup.MeetingGroup
     """
 
+
 class IExternalApplication(Interface):
     """Marker interface for .ExternalApplication.ExternalApplication
     """
 
+
 class IPodTemplate(Interface):
     """Marker interface for .PodTemplate.PodTemplate
     """
+
 
 class IMeetingUser(Interface):
     """Marker interface for .MeetingUser.MeetingUser

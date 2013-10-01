@@ -9,6 +9,16 @@ jQuery(function($){
    });
 });
 
+jQuery(function($){
+    $('a.link-overlay-pm.manage-item-assembly-overlay').prepOverlay({
+        subtype: 'ajax',
+        formselector: '#form',
+        noform: 'redirect',
+        redirect: $.plonepopups.redirectbasehref,
+        closeselector: '[name="form.buttons.cancel"]'
+   });
+});
+
 // prepare overlays in ajax frames
 // this method is made to initialize overlays in the ajax-frame
 // because they are not correctly initialized at page load
@@ -22,21 +32,21 @@ jQuery(function($) {
   // Add byebye user popup
   $('a.link-overlay-pm.byebye-overlay').prepOverlay({
         subtype: 'ajax',
-        closeselector: '[name="form.button.Cancel"]',
+        closeselector: '[name="form.buttons.cancel"]',
   });
 });
 jQuery(function($) {
   // Add advice popup
   $('a.link-overlay-pm.advice-overlay').prepOverlay({
         subtype: 'ajax',
-        closeselector: '[name="form.button.Cancel"]',
+        closeselector: '[name="form.buttons.cancel"]',
   });
 });
 jQuery(function($) {
   // Add transition confirmation popup
   $('a.link-overlay-pm.transition-overlay').prepOverlay({
         subtype: 'ajax',
-        closeselector: '[name="form.button.Cancel"]',
+        closeselector: '[name="form.buttons.cancel"]',
   });
 });
 // as this method is called on the onmousover event of the ajax-frame
