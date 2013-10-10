@@ -94,7 +94,7 @@ class ManageItemAssemblyForm(form.Form):
 
     contentProviders = ContentProviders()
     contentProviders['meetingAssembly'] = DisplayAssemblyFromMeetingProvider
-    # put the 'meetingAssembly' in first position
+    # put the 'meetingAssembly' content provider in first position
     contentProviders['meetingAssembly'].position = 0
     label = _(u"Manage item assembly")
     description = u''

@@ -869,7 +869,6 @@ class testMeetingItem(PloneMeetingTestCase):
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
 
-
     def test_pm_manageItemAssembly(self):
         """
           This tests the form that manage itemAssembly and that can apply it on several items.
