@@ -673,6 +673,10 @@ dl.searchResults cite {
     display: none;
 }
 
+.overlay-history .pb-ajax > div {
+    width: 97%;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
