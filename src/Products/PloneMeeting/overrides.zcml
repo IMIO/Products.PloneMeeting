@@ -29,6 +29,14 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
+    <!-- Render the document byline -->
+    <browser:viewlet
+        name="plone.belowcontenttitle.documentbyline"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class=".browser.overrides.PloneMeetingDocumentBylineViewlet"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View"
+        />
 
     <!-- Override the contenthistory template displayed in the history popup
          to display things as a table -->
@@ -46,12 +54,12 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
-    <!-- Render the document byline -->
-    <browser:viewlet
-        name="plone.belowcontenttitle.documentbyline"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
-        class=".browser.overrides.PloneMeetingDocumentBylineViewlet"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+    <browser:page
+        for="*"
+        name="at_utils"
+        class=".browser.overrides.Utils"
+        allowed_interface="Products.Archetypes.interfaces.utils.IUtils"
         permission="zope2.View"
         />
+
 </configure>
