@@ -2,15 +2,22 @@
 /* <dtml-with base_properties> */
 /* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
 
-/* PloneMeeting implementation of a selection box whose elements are icons + texts */
 fieldset {line-height: 1em; margin: 0.5em 0; }
-p {line-height: 1em;}
-.even { background-color: #f5f5f5; }
+p {
+    line-height: 1em;
+}
+.even {
+    background-color: #f5f5f5;
+}
 
-.ploneMeetingRef{ vertical-align: sub; }
+.ploneMeetingRef{
+    vertical-align: sub;
+}
 
-.ploneMeetingSelectContainer{ float: left; }
-
+/* PloneMeeting implementation of a selection box whose elements are icons + texts */
+.ploneMeetingSelectContainer{
+    float: left;
+}
 .ploneMeetingSelectButton {
     cursor: pointer;
     border: 1px solid &dtml-globalBorderColor;;
@@ -23,7 +30,6 @@ p {line-height: 1em;}
     padding-right: 24px;
     margin-top: 5px;
 }
-
 .ploneMeetingSelectBox {
     cursor: pointer;
     border-width: 1px;
@@ -41,7 +47,6 @@ p {line-height: 1em;}
     min-width: 274px;
     z-index: 1;
 }
-
 .ploneMeetingSelectItem {
     margin: 0px 1px 0px 1px;
     width: 99%; /* If 100% a horizontal scrollbar is displayed */
@@ -51,17 +56,14 @@ p {line-height: 1em;}
 #content p.ploneMeetingSelectItem {
     margin-bottom: 0em;
 }
-
 .ploneMeetingSelectItemUnselected {
     background-color: &dtml-globalBackgroundColor;;
 }
-
 .ploneMeetingSelectImage {
     max-height: 16px;
     max-width: 16px;
     vertical-align: top;
 }
-
 .ploneMeetingSelectDropdownIcon{
     height: 16px;
     background-image: url(<dtml-var portal_url>/drop_down.png);
@@ -280,7 +282,7 @@ li.pmLinks div.annexTitle {
     padding-right: 30px;
     display: block;
 }
-.annexTitleNotPrintable{
+.annexTitleNotPrintable {
     cursor: help;
     white-space: nowrap;
 }
@@ -472,8 +474,9 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
 /* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
 .highlightRedefinedValue,
 .highlightRedefinedValue.itemAssemblyEditable span,
-.highlightRedefinedValue.itemSignaturesEditable span
-{color: red;}
+.highlightRedefinedValue.itemSignaturesEditable span {
+    color: red;
+}
 
 /* Add a highlight-red style useable in CKeditor to highlight modified elements */
 /* See ticket #901 on http://trac.imio.be */
