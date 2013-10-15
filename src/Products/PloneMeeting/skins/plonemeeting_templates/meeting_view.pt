@@ -369,7 +369,7 @@
   <tal:comment replace="nothing">Signatures. Backward compatibility for people that used the 'signatures' field</tal:comment>
   <div class="discreet" tal:condition="python: ('signatures' in usedAttrs) or context.getSignatures()">
     <b i18n:translate="meeting_signatures"></b>&nbsp;&nbsp;
-       <span tal:replace="python: context.getSignatures().replace('\r\n', '<br/>').replace('\n', '<br/>')"/>
+       <span tal:replace="structure python: context.getSignatures().replace('\r\n', '<br/>').replace('\n', '<br/>')"/>
   </div>
 
   <div class="discreet">
