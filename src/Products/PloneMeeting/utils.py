@@ -333,8 +333,14 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if obj.meta_type == 'Meeting':
         translationMapping['meetingTitle'] = obj.Title().decode(enc)
         translationMapping['meetingLongTitle'] = tool.formatDate(obj.getDate(), prefixed=True)
+        translationMapping['meetingState'] = translate(obj.queryState(),
+                                                       domain='plone',
+                                                       context=obj.REQUEST)
     elif obj.meta_type == 'MeetingItem':
         translationMapping['itemTitle'] = obj.Title().decode(enc)
+        translationMapping['itemState'] = translate(obj.queryState(),
+                                                    domain='plone',
+                                                    context=obj.REQUEST)
         translationMapping['lastAnnexTitle'] = ''
         translationMapping['lastAnnexTypeTitle'] = ''
         lastAnnex = obj.getLastInsertedAnnex()
@@ -355,17 +361,46 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         subject = customRes[0].encode(enc)
         body = customRes[1].encode(enc)
     else:
-        subjectLabel = '%s_mail_subject' % event
+        subjectLabel = u'%s_mail_subject' % event
         subject = translate(subjectLabel,
                             domain=d,
                             mapping=translationMapping,
                             context=obj.REQUEST)
+        # special case for translations of event concerning state change
+        # if we can not translate the specific translation msgid, we use a default msgid
+        # so for example if meeting_state_changed_decide_mail_subject could not be translated
+        # we will translate meeting_state_changed_default_mail_subject
+        if subject is subjectLabel and (subjectLabel.startswith('meeting_state_changed_') or
+                                        subjectLabel.startswith('item_state_changed_')):
+            if subjectLabel.startswith('meeting_state_changed_'):
+                subjectLabel = u'meeting_state_changed_default_mail_subject'
+            else:
+                subjectLabel = u'item_state_changed_default_mail_subject'
+            subject = translate(subjectLabel,
+                                domain=d,
+                                mapping=translationMapping,
+                                context=obj.REQUEST)
         subject = subject.encode(enc)
-        bodyLabel = '%s_mail_body' % event
+        bodyLabel = u'%s_mail_body' % event
         body = translate(bodyLabel,
                          domain=d,
                          mapping=translationMapping,
-                         context=obj.REQUEST).encode(enc)
+                         context=obj.REQUEST)
+        # special case for translations of event concerning state change
+        # if we can not translate the specific translation msgid, we use a default msgid
+        # so for example if meeting_state_changed_decide_mail_body could not be translated
+        # we will translate meeting_state_changed_default_mail_body
+        if body is bodyLabel and (bodyLabel.startswith('meeting_state_changed_') or
+                                  bodyLabel.startswith('item_state_changed_')):
+            if bodyLabel.startswith('meeting_state_changed_'):
+                bodyLabel = u'meeting_state_changed_default_mail_body'
+            else:
+                bodyLabel = u'item_state_changed_default_mail_body'
+            body = translate(bodyLabel,
+                             domain=d,
+                             mapping=translationMapping,
+                             context=obj.REQUEST)
+        body = body.encode(enc)
     adminFromAddress = _getEmailAddress(
         portal.getProperty('email_from_name'),
         portal.getProperty('email_from_address'), enc)

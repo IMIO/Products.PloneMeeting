@@ -57,6 +57,14 @@
       handler="Products.PloneMeeting.migrations.migrate_to_3_0_3.migrate"
       profile="Products.PloneMeeting:default" />
 
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 3.1.0"
+      description=""
+      source="3.0.3"
+      destination="3.1.0"
+      handler="Products.PloneMeeting.migrations.migrate_to_3_1_0.migrate"
+      profile="Products.PloneMeeting:default" />
+
   <!-- ##/code-section profiles.zcml-bottom -->
 
 </configure>

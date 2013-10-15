@@ -1857,7 +1857,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             topic = getattr(self.topics, topicId)
             topic.setExcludeFromNav(True)
             topic.setTitle(topicId)
-            mustAddStateCriterium = False
             for criterionName, criterionType, criterionValue in topicCriteria:
                 criterion = topic.addCriterion(field=criterionName,
                                                criterion_type=criterionType)
@@ -2351,7 +2350,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for state in workflow.states.objectValues():
             if excepted and (state.id == excepted):
                 continue
-            res.append((state.id, translate(state.id, domain="plone", context=self.REQUEST)))
+            res.append((state.id, translate(state.title, domain="plone", context=self.REQUEST)))
         return res
 
     security.declarePublic('listTransitions')
@@ -2362,7 +2361,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         exec 'workflowName = self.get%sWorkflow()' % objectType
         workflow = getattr(self.portal_workflow, workflowName)
         for t in workflow.transitions.objectValues():
-            name = translate(t.id, domain="plone", context=self.REQUEST) + ' (' + t.id + ')'
+            name = translate(t.title, domain="plone", context=self.REQUEST) + ' (' + t.id + ')'
             # Indeed several transitions can have the same translation
             # (ie "correct")
             res.append((t.id, name))
@@ -2489,7 +2488,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("returnedToMeetingManagers", translate('event_item_returned_to_meeting_managers',
                                                     domain=d,
                                                     context=self.REQUEST)), ]
-        return DisplayList(tuple(res))
+        # a notification can also be sent on every item transition
+        # create a separated result (res_transitions) so we can easily sort it
+        item_transitions = self.listTransitions('Item')
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_transitions:
+            res_transitions.append(("item_state_changed_%s" % item_transition_id, item_transition_name))
+
+        return DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
 
     security.declarePublic('listMeetingEvents')
     def listMeetingEvents(self):
@@ -2497,7 +2503,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            sent.'''
         # Those events correspond to transitions of the workflow that governs
         # meetings.
-        return DisplayList(tuple(self.listTransitions('Meeting'))).sortedByValue()
+        # we just preprend a 'meeting_state_changed_'
+        meeting_transitions = self.listTransitions('Meeting')
+        res = []
+        for meeting_transition_id, meeting_transition_name in meeting_transitions:
+            res.append(("meeting_state_changed_%s" % meeting_transition_id, meeting_transition_name))
+        return DisplayList(res).sortedByValue()
 
     security.declarePublic('getFileTypes')
     def getFileTypes(self, decisionRelated=False, typesIds=[], onlyActive=True):

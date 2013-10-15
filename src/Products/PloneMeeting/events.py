@@ -39,13 +39,15 @@ def do(action, event):
     if objectType == 'MeetingItem':
         # Update the local roles linked to advices if relevant
         event.object.updateAdvices()
-        # Send mail if relevant
+        # Send mail regarding advices to give if relevant
         sendAdviceToGiveMailIfRelevant(event)
+        # Send mail if relevant
+        sendMailIfRelevant(event.object, "item_state_changed_%s" % event.transition.id, 'View')
     elif objectType == 'Meeting':
         # Add recurring items to the meeting if relevant
         addRecurringItemsIfRelevant(event.object, event.transition.id)
         # Send mail if relevant
-        sendMailIfRelevant(event.object, event.transition.id, 'View')
+        sendMailIfRelevant(event.object, "meeting_state_changed_%s" % event.transition.id, 'View')
     # Freeze POD documents if needed
     podTransition = '%s_%s' % (podTransitionPrefixes[objectType],
                                event.transition.id)
