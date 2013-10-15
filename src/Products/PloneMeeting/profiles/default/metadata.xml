@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <metadata>
-  <version>3.1dev</version>
+  <version>3.1.0dev</version>
   <!-- ##code-section METADATA -->
   <dependencies>
     <dependency>profile-Products.CMFPlacefulWorkflow:CMFPlacefulWorkflow</dependency>
