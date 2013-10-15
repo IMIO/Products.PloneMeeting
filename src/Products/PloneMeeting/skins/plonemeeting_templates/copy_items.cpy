@@ -25,7 +25,7 @@ if not mtool.checkPermission('Copy or Move', context):
 
 parent = context.getParentNode()
 try:
-    parent.manage_copyObjects(context.getId(), REQUEST=None)
+    parent.manage_copyObjects(context.getId(), REQUEST, REQUEST.RESPONSE)
 except CopyError:
     message = _(u'${title} is not copyable.',
                 mapping={u'title' : context.title_or_id()})
