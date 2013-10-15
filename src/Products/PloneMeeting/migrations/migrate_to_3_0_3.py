@@ -166,6 +166,14 @@ class Migrate_To_3_0_3(Migrator):
             obj.unindexObject()
         logger.info('Done.')
 
+    def _updateAnnexesIndex(self):
+        '''The key in annex index for 'uid' is now 'UID'.'''
+        logger.info('Updating every items annexIndex')
+        for brain in self.portal.portal_catalog(meta_type='MeetingItem'):
+            item = brain.getObject()
+            item.updateAnnexIndex()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0.3...')
 
@@ -178,6 +186,7 @@ class Migrate_To_3_0_3(Migrator):
         self._removeItemTopicStatesFunctionnality()
         self._updateToolSearchParameters()
         self._unindexItemsOfConfig()
+        self._updateAnnexesIndex()
         # reinstall so CKeditor styles are updated
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         # update catalogs regarding permission changes in workflows and provided interfaces
