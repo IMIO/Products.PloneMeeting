@@ -24,6 +24,8 @@
 
 
 from DateTime import DateTime
+from DateTime.DateTime import _findLocalTimeZoneName
+from zope.i18n import translate
 from plone.app.testing import login
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
@@ -245,6 +247,66 @@ class testMeeting(PloneMeetingTestCase):
         for item in allItems[:-1]:
             self.assertEquals(item.queryState(), 'accepted')
         self.assertEquals(allItems[-1].queryState(), 'itemfrozen')
+
+    def test_pm_validate_date(self):
+        """
+          Test the Meeting.date validator "validate_date" : validates that 2 meetings can
+          not occur the same day at the same hour.
+        """
+        # find current timezone
+        currentTimeZone = DateTime.timezone(DateTime())
+        otherTimeZone = (currentTimeZone is _findLocalTimeZoneName(0)) and \
+            _findLocalTimeZoneName(1) or _findLocalTimeZoneName(0)
+        # create a meeting
+        login(self.portal, 'pmManager')
+        meetingDate1 = '2013/01/01 12:00 %s' % currentTimeZone
+        # value to validate is without GMT+x
+        meetingDate1Value = '2013/01/01 12:00'
+        m1 = self.create('Meeting', date=DateTime(meetingDate1))
+        # for now it validates as only one meeting exists
+        self.assertIsNone(m1.validate_date(meetingDate1Value))
+        # create a second meeting with another date
+        meetingDate2 = '2013/11/05 15:00 %s' % otherTimeZone
+        # value to validate is without GMT+x
+        meetingDate2Value = '2013/11/05 15:00'
+        m2 = self.create('Meeting', date=DateTime(meetingDate2))
+        # validates also as it is another date than m1's one
+        self.assertIsNone(m2.validate_date(meetingDate2Value))
+        # now try to use meetingDate1 for m2
+        # it does not validate but returns warning message
+        self.assertEquals(m2.validate_date(meetingDate1Value),
+                          translate('meeting_with_same_date_exists',
+                                    domain='PloneMeeting',
+                                    context=self.request))
+        # same if we use meetingDate2 for m1
+        self.assertEquals(m1.validate_date(meetingDate2Value),
+                          translate('meeting_with_same_date_exists',
+                                    domain='PloneMeeting',
+                                    context=self.request))
+        # but everything is right for lambda dates
+        self.assertIsNone(m1.validate_date('2013/06/06 16:00'))
+        self.assertIsNone(m2.validate_date('2013/12/06 16:00'))
+        # now test that we can not create 2 meetings with same date
+        # using different timezones.  Create a meeting that use same
+        # date as m1 but with otherTimeZone
+        meetingDate3 = '2013/01/01 12:00 %s' % otherTimeZone
+        m3 = self.create('Meeting', date=DateTime(meetingDate3))
+        # m1 and m3 dates are the same but with different timezone
+        m1Date = m1.getDate()
+        m3Date = m3.getDate()
+        self.assertEquals(m1Date.year(), m3Date.year())
+        self.assertEquals(m1Date.month(), m3Date.month())
+        self.assertEquals(m1Date.day(), m3Date.day())
+        self.assertEquals(m1Date.hour(), m3Date.hour())
+        self.assertEquals(m1Date.minute(), m3Date.minute())
+        # but in reality, as m1 and m3 are not in the same timezone, they are different
+        self.assertNotEquals(m1Date, m3Date)
+        # so if we try to validate, even if not the same, it does not
+        # validate because these are same dates in different timezones...
+        self.assertEquals(m3.validate_date(meetingDate1Value),
+                          translate('meeting_with_same_date_exists',
+                                    domain='PloneMeeting',
+                                    context=self.request))
 
 
 def test_suite():

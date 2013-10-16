@@ -28,6 +28,7 @@ from appy.gen import No
 from collections import OrderedDict
 from App.class_init import InitializeClass
 from DateTime import DateTime
+from DateTime.DateTime import _findLocalTimeZoneName
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.permissions import ReviewPortalContent, ModifyPortalContent
@@ -880,8 +881,11 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''There can't be several meetings with the same date and hour.'''
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
         # add GMT+x value
-        localizedValue0 = value + ' ' + DateTime._localzone0
-        localizedValue1 = value + ' ' + DateTime._localzone1
+        localizedValue0 = value + ' ' + _findLocalTimeZoneName(0)
+        localizedValue1 = value + ' ' + _findLocalTimeZoneName(1)
+        # make sure we look for existing meetings in both possible
+        # time zones because if we just changed timezone, we could create
+        # another meeting with same date of an existing that was created with previous timezone...
         otherMeetings = self.portal_catalog(portal_type=cfg.getMeetingTypeName(),
                                             getDate=(DateTime(localizedValue0), DateTime(localizedValue1), ))
         if otherMeetings:
