@@ -3,9 +3,15 @@ Products.PloneMeeting Changelog
 Older versions than 3.0 can be found at http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/
 Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 
-3.1 (unreleased)
-----------------
-- Nothing yet
+3.1.0 (unreleased)
+------------------
+- Moved to Plone 4.3.2
+- Added functionnality to easily manage/propagate item assembly/signatures on several items
+- Added topic searches 'search items to validate' and 'search items to prevalidate'
+- Added possibility to send email notification upon each item transition
+- Corrected copy_items when using meetingfolder_view to work between meetingfolder_view and others
+- Corrected bug where history was not showing if historization was activated
+- Added wfAdaptation 'hide decision to users when under writing by meeting managers'
 
 3.0.3 (2013-08-19)
 ------------------
