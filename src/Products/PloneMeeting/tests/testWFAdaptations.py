@@ -133,10 +133,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         # define pmManager as a prereviewer
         member = self.portal.portal_membership.getAuthenticatedMember()
-        groups = [group for group in member.getGroups() if group.endswith('_reviewers')]
-        groups = [group.replace('reviewers', 'prereviewers') for group in groups]
-        for group in groups:
-            self.portal.portal_groups.addPrincipalToGroup(member.getId(), group)
+        self._turnUserIntoPrereviewer(member)
         self._pre_validation_active(member.getId())
 
     def _pre_validation_inactive(self):

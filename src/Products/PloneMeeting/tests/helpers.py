@@ -28,6 +28,7 @@ class PloneMeetingTestingHelpers:
 
     TRANSITIONS_FOR_PROPOSING_ITEM_1 = TRANSITIONS_FOR_PROPOSING_ITEM_2 = ('propose', )
     TRANSITIONS_FOR_VALIDATING_ITEM_1 = TRANSITIONS_FOR_VALIDATING_ITEM_2 = ('propose', 'validate', )
+    TRANSITIONS_FOR_PREVALIDATING_ITEM_1 = TRANSITIONS_FOR_PREVALIDATING_ITEM_2 = ('propose', 'prevalidate', )
     TRANSITIONS_FOR_PRESENTING_ITEM_1 = TRANSITIONS_FOR_PRESENTING_ITEM_2 = ('propose', 'validate', 'present', )
 
     TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('publish', )
@@ -126,6 +127,13 @@ class PloneMeetingTestingHelpers:
            the _x here above in TRANSITIONS_FOR_PROPOSING_ITEM_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(item, getattr(self, ('TRANSITIONS_FOR_PROPOSING_ITEM_%d' % meetingConfigNumber)))
+
+    def prevalidateItem(self, item):
+        '''Prevalidate passed p_item using TRANSITIONS_FOR_PREVALIDATING_ITEM_x.
+           The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
+           the _x here above in TRANSITIONS_FOR_PREVALIDATING_ITEM_x is 1 or 2.'''
+        meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
+        self._doTransitionsFor(item, getattr(self, ('TRANSITIONS_FOR_PREVALIDATING_ITEM_%d' % meetingConfigNumber)))
 
     def validateItem(self, item):
         '''Validate passed p_item using TRANSITIONS_FOR_VALIDATING_ITEM_x.

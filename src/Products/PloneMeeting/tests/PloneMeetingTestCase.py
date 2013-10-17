@@ -314,6 +314,17 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             recurringItemsIds.append(item.getId())
         meetingConfig.recurringitems.manage_delObjects(ids=recurringItemsIds)
 
+    def _turnUserIntoPrereviewer(self, member):
+        """
+          Helper method for adding a given p_member to every '_prereviewers' group
+          corresponding to every '_reviewers' group he is in.
+        """
+        groups = [group for group in member.getGroups() if group.endswith('_reviewers')]
+        groups = [group.replace('reviewers', 'prereviewers') for group in groups]
+        for group in groups:
+            self.portal.portal_groups.addPrincipalToGroup(member.getId(), group)
+
+
     # Workflow-related methods -------------------------------------------------
     def do(self, obj, transition):
         '''Executes a workflow p_transition on a given p_obj.'''

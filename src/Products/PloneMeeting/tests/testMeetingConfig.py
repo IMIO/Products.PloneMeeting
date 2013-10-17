@@ -22,8 +22,10 @@
 # 02110-1301, USA.
 #
 
+import logging
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.config import TOPIC_SEARCH_FILTERS
+from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 
 
 class testMeetingConfig(PloneMeetingTestCase):
@@ -114,6 +116,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setCopyGroups(('developers_reviewers',))
+        item.reindexObject()
         self.failIf(self.meetingConfig.searchItemsInCopy('', '', '', ''))
         # connect as a member of 'developers_reviewers'
         self.changeUser('pmReviewer1')
@@ -123,6 +126,76 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.proposeItem(item)
         item.reindexObject()
         self.failUnless(self.meetingConfig.searchItemsInCopy('', '', '', ''))
+
+    def test_pm_searchItemsToValidate(self):
+        '''Test the searchItemsToValidate method.  This should return a list of items
+           a user ***really*** has to validate.
+           Items to validate are items in state 'proposed' or 'prevalidated' if wfAdaptation
+           'pre_validation' is used, and for wich current user is really reviewer.'''
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.proposeItem(item)
+        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.changeUser('pmReviewer1')
+        self.failUnless(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
+        # the search does returns him the item, it should not as he is just a reviewer
+        # but not able to really validate the new item
+        self.meetingConfig.setUseCopies(True)
+        self.meetingConfig.setItemCopyGroupsStates(('proposed', ))
+        item.setCopyGroups(('vendors_reviewers',))
+        item.at_post_edit_script()
+        self.changeUser('pmReviewer2')
+        # the user can see the item
+        self.failUnless(self.hasPermission('View', item))
+        # but the search will not return it
+        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        # if the item is validated, it will not appear for pmReviewer1 anymore
+        self.changeUser('pmReviewer1')
+        self.failUnless(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.validateItem(item)
+        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+
+    def test_pm_searchItemsToPrevalidate(self):
+        '''Test the searchItemsToPrevalidate method.  This should return a list of items
+           a user ***really*** has to prevalidate.
+           Items to prevalidate are items in state 'proposed' when wfAdaptation
+           'pre_validation' is active, and for wich current user is really reviewer.'''
+        # activate the 'pre_validation' wfAdaptation
+        self.meetingConfig.setWorkflowAdaptations('pre_validation')
+        logger = logging.getLogger('PloneMeeting: testing')
+        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.proposeItem(item)
+        self.failIf(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
+        self.changeUser('pmReviewer1')
+        # define pmReviewer1 as a prereviewer
+        self._turnUserIntoPrereviewer(self.portal.portal_membership.getAuthenticatedMember())
+        # change again to 'pmReviewer1' so changes in his groups are taken into account
+        self.changeUser('pmReviewer1')
+        # the next available transition is 'prevalidate'
+        self.failUnless('prevalidate' in self.transitions(item))
+        self.failUnless(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
+        # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
+        # the search does returns him the item, it should not as he is just a reviewer
+        # but not able to really validate the new item
+        self.meetingConfig.setUseCopies(True)
+        self.meetingConfig.setItemCopyGroupsStates(('proposed', ))
+        item.setCopyGroups(('vendors_reviewers',))
+        item.at_post_edit_script()
+        self.changeUser('pmReviewer2')
+        # the user can see the item
+        self.failUnless(self.hasPermission('View', item))
+        # but the search will not return it
+        self.failIf(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
+        # if the item is prevalidated, it will not appear for pmReviewer1 anymore
+        self.changeUser('pmReviewer1')
+        self.failUnless(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
+        self.prevalidateItem(item)
+        self.failIf(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
 
     def test_pm_searchItemsWithFilters(self):
         '''Test the searchItemsWithFilters method.  This should return a list of items

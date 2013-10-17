@@ -2178,6 +2178,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for groupId in groupIds:
             if groupId.endswith('_reviewers'):
+                # append group name without suffix
                 res.append(groupId[:-10])
         # if we use pre_validation, the state in which are items to validate is 'prevalidated'
         # if not using the WFAdaptation 'pre_validation', the items are in state 'proposed'
@@ -2210,7 +2211,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for groupId in groupIds:
             if groupId.endswith('_prereviewers'):
-                res.append(groupId[:-10])
+                # append group name without suffix
+                res.append(groupId[:-13])
         params = {'portal_type': self.getItemTypeName(),
                   'getProposingGroup': res,
                   'review_state': 'proposed',
