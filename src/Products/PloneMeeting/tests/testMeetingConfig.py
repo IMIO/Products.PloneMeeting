@@ -115,11 +115,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         # create an item and set another proposing group in copy of
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setCopyGroups(('developers_reviewers',))
+        item.setCopyGroups(('vendors_reviewers',))
+        item.at_post_edit_script()
         item.reindexObject()
         self.failIf(self.meetingConfig.searchItemsInCopy('', '', '', ''))
         # connect as a member of 'developers_reviewers'
-        self.changeUser('pmReviewer1')
+        self.changeUser('pmReviewer2')
         # the item is not proposed so not listed
         self.failIf(self.meetingConfig.searchItemsInCopy('', '', '', ''))
         # propose the item, it will be listed
