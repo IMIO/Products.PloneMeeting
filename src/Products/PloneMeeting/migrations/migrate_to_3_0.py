@@ -410,7 +410,7 @@ class Migrate_To_3_0(Migrator):
     def run(self):
         logger.info('Migrating to PloneMeeting 3.0...')
         # the Meeting 'published' state has become 'decisions_published' now, so :
-        # - find Meetings in 'published' in MeetingConfigs where 'add_published_state' wfAdaptation is activbe
+        # - find Meetings in 'published' in MeetingConfigs where 'add_published_state' wfAdaptation is active
         # - set them back to 'decided'
         # - returns the list of modified uids
         # - reinstall

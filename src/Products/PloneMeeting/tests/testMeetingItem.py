@@ -877,10 +877,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # make items inserted in a meeting inserted in this order
         self.meetingConfig.setSortingMethodOnAddItem('at_the_end')
         # remove recurring items if any as we are playing with item number here under
-        recurringItemsIds = []
-        for item in self.meetingConfig.recurringitems.objectValues():
-            recurringItemsIds.append(item.getId())
-        self.meetingConfig.recurringitems.manage_delObjects(ids=recurringItemsIds)
+        self._removeRecurringItems(self.meetingConfig)
         # a user create an item and we insert it into a meeting
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

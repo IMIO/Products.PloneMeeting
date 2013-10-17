@@ -305,6 +305,15 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         if obj and hasattr(aq_base(obj), '_memojito_'):
             delattr(obj, '_memojito_')
 
+    def _removeRecurringItems(self, meetingConfig):
+        """
+          Helper method for removing every recurring items of a given p_meetingConfig
+        """
+        recurringItemsIds = []
+        for item in meetingConfig.recurringitems.objectValues():
+            recurringItemsIds.append(item.getId())
+        meetingConfig.recurringitems.manage_delObjects(ids=recurringItemsIds)
+
     # Workflow-related methods -------------------------------------------------
     def do(self, obj, transition):
         '''Executes a workflow p_transition on a given p_obj.'''

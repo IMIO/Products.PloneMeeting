@@ -46,12 +46,20 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
         self.assertEquals(set(self.meetingConfig.listWorkflowAdaptations()),
-                          set(('no_global_observation', 'creator_initiated_decisions',
-                               'only_creator_may_delete', 'pre_validation',
-                               'items_come_validated', 'archiving', 'no_publication',
-                               'no_proposal', 'everyone_reads_all',
-                               'creator_edits_unless_closed', 'local_meeting_managers',
-                               'return_to_proposing_group', )))
+                          set(('archiving',
+                               'creator_edits_unless_closed',
+                               'creator_initiated_decisions',
+                               'everyone_reads_all',
+                               'hide_decisions_when_under_writing',
+                               'items_come_validated',
+                               'local_meeting_managers',
+                               'no_global_observation',
+                               'no_proposal',
+                               'no_publication',
+                               'only_creator_may_delete',
+                               'pre_validation',
+                               'return_to_proposing_group',
+                               )))
 
     def test_pm_WFA_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.
@@ -739,6 +747,118 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.freezeMeeting(meeting)
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.assertEquals(item.queryState(), 'itemfrozen')
+
+    def test_pm_WFA_hide_decisions_when_under_writing(self):
+        '''Test the workflowAdaptation 'hide_decisions_when_under_writing'.
+           If meeting is in 'decided' state, only the MeetingManagers can
+           view the real decision. The other people view a standard
+           message taken from the MeetingConfig.'''
+        login(self.portal, 'admin')
+        self._removeRecurringItems(self.meetingConfig)
+        login(self.portal, 'pmManager')
+        # check while the wfAdaptation is not activated
+        self._hide_decisions_when_under_writing_inactive()
+        # activate the wfAdaptation and check
+        self.meetingConfig.setWorkflowAdaptations('hide_decisions_when_under_writing')
+        logger = logging.getLogger('PloneMeeting: testing')
+        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        self._hide_decisions_when_under_writing_active()
+        # test also for the meetingConfig2 if it uses a different workflow
+        if self.meetingConfig.getMeetingWorkflow() == self.meetingConfig2.getMeetingWorkflow():
+            return
+        self.meetingConfig = self.meetingConfig2
+        self._hide_decisions_when_under_writing_inactive()
+        self.meetingConfig.setWorkflowAdaptations('hide_decisions_when_under_writing')
+        logger = logging.getLogger('PloneMeeting: testing')
+        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        # check while the wfAdaptation is not activated
+        self._hide_decisions_when_under_writing_active()
+
+    def _hide_decisions_when_under_writing_inactive(self):
+        '''Tests while 'hide_decisions_when_under_writing' wfAdaptation is inactive.
+           In this case, the decision is always accessible by the creator no matter it is
+           adapted by any MeetingManagers.  There is NO extra 'decisions_published' state moreover.'''
+        meetingWF = getattr(self.wfTool, self.meetingConfig.getMeetingWorkflow())
+        self.failIf('decisions_published' in meetingWF.states)
+        login(self.portal, 'pmManager')
+        meeting = self.create('Meeting', date=DateTime('2013/01/01 12:00'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>testing decision field</p>')
+        self.presentItem(item)
+        self.changeUser('pmCreator1')
+        # relevant users can see the decision
+        self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
+        self.changeUser('pmManager')
+        self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
+        self.freezeMeeting(meeting)
+        self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
+        # maybe we have a 'publish' transition
+        if 'publish' in self.transitions(meeting):
+            self.do(meeting, 'publish')
+            self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
+        self.decideMeeting(meeting)
+        # set a decision...
+        item.setDecision('<p>Decision adapted by pmManager</p>')
+        item.reindexObject()
+        # it is immediatelly viewable by the item's creator as
+        # the 'hide_decisions_when_under_writing' wfAdaptation is not enabled
+        login(self.portal, 'pmCreator1')
+        self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+        self.changeUser('pmManager')
+        self.closeMeeting(meeting)
+        self.assertEquals(meeting.queryState(), 'closed')
+        login(self.portal, 'pmCreator1')
+        self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+
+    def _hide_decisions_when_under_writing_active(self):
+        '''Tests while 'hide_decisions_when_under_writing' wfAdaptation is active.'''
+        meetingWF = getattr(self.wfTool, self.meetingConfig.getMeetingWorkflow())
+        self.failUnless('decisions_published' in meetingWF.states)
+        login(self.portal, 'pmManager')
+        meeting = self.create('Meeting', date=DateTime('2013/01/01 12:00'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>testing decision field</p>')
+        self.presentItem(item)
+        self.changeUser('pmCreator1')
+        # relevant users can see the decision
+        self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
+        self.changeUser('pmManager')
+        self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
+        self.freezeMeeting(meeting)
+        self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
+        # maybe we have a 'publish' transition
+        if 'publish' in self.transitions(meeting):
+            self.do(meeting, 'publish')
+            self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
+        self.decideMeeting(meeting)
+        # set a decision...
+        item.setDecision('<p>Decision adapted by pmManager</p>')
+        item.reindexObject()
+        login(self.portal, 'pmCreator1')
+        self.assertEquals(meeting.queryState(), 'decided')
+        self.assertEquals(item.getDecision(),
+                          '<p>The decision is currently under edit by managers, you can not access it.</p>')
+        self.changeUser('pmManager')
+        # MeetingManagers see it correctly
+        self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+        # a 'publish_decisions' transition is added after 'decide'
+        self.do(meeting, 'publish_decisions')
+        self.assertEquals(meeting.queryState(), 'decisions_published')
+        self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+        # now that the meeting is in the 'decisions_published' state, decision is viewable to item's creator
+        login(self.portal, 'pmCreator1')
+        self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+        # items are automatically set to a final specific state when decisions are published
+        self.assertEquals(item.queryState(),
+                          self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['publish_decisions'])
+        self.changeUser('pmManager')
+        # every items of the meeting are in the same final specific state
+        for itemInMeeting in meeting.getItems():
+            self.assertEquals(itemInMeeting.queryState(),
+                              self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['publish_decisions'])
+        self.do(meeting, 'close')
+        login(self.portal, 'pmCreator1')
+        self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
 
 
 def test_suite():

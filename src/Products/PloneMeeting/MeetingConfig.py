@@ -1405,6 +1405,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
          ),
+        # Items to prevalidate : need a script to do this search
+        ('searchitemstoprevalidate',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsToPrevalidate',
+         "python: 'pre_validation' in here.wfAdaptations() and here.portal_plonemeeting.userIsAmong('prereviewers')",
+         ),
+        # Items to validate : need a script to do this search
+        ('searchitemstovalidate',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsToValidate',
+         "python: here.portal_plonemeeting.userIsAmong('reviewers')",
+         ),
         # Items to advice : need a script to do this search
         ('searchallitemstoadvice',
         (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
@@ -1473,7 +1489,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'items_come_validated', 'archiving', 'no_publication',
                      'no_proposal', 'everyone_reads_all',
                      'creator_edits_unless_closed', 'local_meeting_managers',
-                     'return_to_proposing_group', )
+                     'return_to_proposing_group', 'hide_decisions_when_under_writing', )
     ##/code-section class-header
 
     # Methods
@@ -1624,6 +1640,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # Archiving is incompatible with any other workflow adaptation
             return msg
         if ('no_proposal' in v) and ('pre_validation' in v):
+            return msg
+        # 'hide_decisions_when_under_writing' and 'no_publication' are not working together
+        if ('hide_decisions_when_under_writing' in v) and ('no_publication' in v):
             return msg
 
     security.declarePrivate('listItemRelatedColumns')
@@ -1853,6 +1872,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def createTopics(self):
         '''Adds a bunch of topics within the 'topics' sub-folder.'''
         for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in self.topicsInfo:
+            if topicId in self.topics.objectIds():
+                logger.info("Trying to add an already existing topic with id '%s', skipping..." % topicId)
+                continue
             self.topics.invokeFactory('Topic', topicId)
             topic = getattr(self.topics, topicId)
             topic.setExcludeFromNav(True)
@@ -2141,6 +2163,67 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Gets the name of the portal_type of the meeting for this
            config.'''
         return 'Meeting%s' % self.getShortName()
+
+    security.declarePublic('searchItemsToValidate')
+    def searchItemsToValidate(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Return a list of items that the user can validate.
+           Items to validate are items in state 'proposed' for wich the current user has the
+           permission to trigger the 'validate' workflow transition.  To avoid waking up the
+           object, we will check that the current user is in the _reviewers group corresponding
+           to the item proposing group (that is indexed).  So if the item proposing group is
+           'secretariat' and the user is member of 'secretariat_reviewers',
+           then he is able to validate the item.'''
+        member = self.portal_membership.getAuthenticatedMember()
+        groupIds = self.portal_groups.getGroupsForPrincipal(member)
+        res = []
+        for groupId in groupIds:
+            if groupId.endswith('_reviewers'):
+                res.append(groupId[:-10])
+        # if we use pre_validation, the state in which are items to validate is 'prevalidated'
+        # if not using the WFAdaptation 'pre_validation', the items are in state 'proposed'
+        usePreValidationWFAdaptation = 'pre_validation' in self.getWorkflowAdaptations()
+        params = {'portal_type': self.getItemTypeName(),
+                  'getProposingGroup': res,
+                  'review_state': usePreValidationWFAdaptation and ('prevalidated', ) or ('proposed', ),
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder
+                  }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(filterValue)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
+
+    security.declarePublic('searchItemsToPrevalidate')
+    def searchItemsToPrevalidate(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Return a list of items that the user can prevalidate.
+           Items to prevalidate are items in state 'proposed' for wich the current user has the
+           permission to trigger the 'validate' workflow transition.  To avoid waking up the
+           object, we will check that the current user is in the _prereviewers group corresponding
+           to the item proposing group (that is indexed).  So if the item proposing group is
+           'secretariat' and the user is member of 'secretariat_prereviewers',
+           then he is able to prevalidate the item.'''
+        member = self.portal_membership.getAuthenticatedMember()
+        groupIds = self.portal_groups.getGroupsForPrincipal(member)
+        res = []
+        for groupId in groupIds:
+            if groupId.endswith('_prereviewers'):
+                res.append(groupId[:-10])
+        params = {'portal_type': self.getItemTypeName(),
+                  'getProposingGroup': res,
+                  'review_state': 'proposed',
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder
+                  }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(filterValue)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
 
     security.declarePublic('searchItemsToAdvice')
     def searchItemsToAdvice(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):

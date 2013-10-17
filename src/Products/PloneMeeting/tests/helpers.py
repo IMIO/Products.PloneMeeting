@@ -36,8 +36,7 @@ class PloneMeetingTestingHelpers:
     TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('publish',
                                                                              'freeze',
                                                                              'decide',
-                                                                             'close',
-                                                                             'archive', )
+                                                                             'close', )
     TRANSITIONS_FOR_ACCEPTING_ITEMS_1 = TRANSITIONS_FOR_ACCEPTING_ITEMS_2 = ('publish', 'freeze', )
     BACK_TO_WF_PATH_1 = BACK_TO_WF_PATH_2 = {
         # Meeting
@@ -60,6 +59,10 @@ class PloneMeetingTestingHelpers:
 
     WF_STATE_NAME_MAPPINGS = {'proposed': 'proposed',
                               'validated': 'validated'}
+
+    # in which state an item must be after an particular meeting transition?
+    ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'confirmed',
+                                              'close': 'confirmed', }
 
     def _createMeetingWithItems(self, withItems=True):
         '''Create a meeting with a bunch of items.'''

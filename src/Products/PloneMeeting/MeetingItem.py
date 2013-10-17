@@ -255,7 +255,7 @@ class MeetingItemWorkflowConditions:
 
     security.declarePublic('mayDecide')
     def mayDecide(self):
-        '''May this item be considered as "decided" ?'''
+        '''May this item be "decided" ?'''
         res = False
         if checkPermission(ReviewPortalContent, self.context) and \
            self.context.hasMeeting():
@@ -280,7 +280,7 @@ class MeetingItemWorkflowConditions:
     security.declarePublic('mayConfirm')
     def mayConfirm(self):
         if checkPermission(ReviewPortalContent, self.context) and \
-           self.context.getMeeting().queryState() in ('decided', 'closed'):
+           self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
             return True
 
     security.declarePublic('mayCorrect')
@@ -373,10 +373,10 @@ class MeetingItemWorkflowConditions:
 
     security.declarePublic('mayDelete')
     def mayDelete(self):
-        res = True
-        if self.context.getRawAnnexesDecision():
-            res = False
-        return res
+        """
+          Hook for controlling delete action on a MeetingItem.
+        """
+        return True
 
     security.declarePublic('mayDeleteAnnex')
     def mayDeleteAnnex(self, annex):
@@ -444,7 +444,7 @@ class MeetingItemWorkflowActions:
     security = ClassSecurityInfo()
 
     # Possible states of "frozen" meetings
-    meetingAlreadyFrozenStates = ('frozen', 'decided')
+    meetingAlreadyFrozenStates = ('frozen', 'decided', 'published', 'decisions_published', 'closed', )
 
     def __init__(self, item):
         self.context = item
@@ -1100,17 +1100,31 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         OrderedBaseFolder.__init__(self, *args, **kwargs)
         self.annexIndex = PersistentList()
 
+    security.declarePublic('getDecision')
     def getDecision(self, keepWithNext=False, **kwargs):
         '''Overridden version of 'decision' field accessor. It allows to specify
            p_keepWithNext=True. In that case, the last paragraph of bullet in
            field "decision" will get a specific CSS class that will keep it with
            next paragraph. Useful when including the decision in a document
            template and avoid having the signatures, just below it, being alone
-           on the next page.'''
+           on the next page.
+           Manage the 'hide_decisions_when_under_writing' workflowAdaptation that
+           hides the decision for non-managers if meeting state is 'decided.'''
+        item = self.getSelf()
         res = self.getField('decision').get(self, **kwargs)
         if keepWithNext:
-            res = signatureNotAlone(res)
+            res = self.signatureNotAlone(res)
+        meetingConfig = item.portal_plonemeeting.getMeetingConfig(item)
+        adaptations = meetingConfig.getWorkflowAdaptations()
+        tool = getToolByName(item, 'portal_plonemeeting')
+        if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
+           item.getMeeting().queryState() == 'decided' and not tool.isManager():
+            return translate('decision_under_edit',
+                             domain='PloneMeeting',
+                             context=item.REQUEST,
+                             default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return res
+    getRawDecision = getDecision
 
     security.declarePublic('getDeliberation')
     def getDeliberation(self):

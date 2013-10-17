@@ -37,7 +37,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
         # an advice can be given when an item is 'proposed' or 'validated'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(), (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated'))
+        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
+                          (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated'))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -53,7 +54,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEquals(self.meetingConfig.searchItemsToAdvice('', '', '', '')[0].UID, item.UID())
         # when an advice on an item is given, the item is noe more returned by searchItemsToAdvice
         # so pmAdviser1 gives his advice
-        item.editAdvice(group=self.portal.portal_plonemeeting.developers, adviceType='positive', comment='My comment')
+        item.editAdvice(group=self.portal.portal_plonemeeting.developers,
+                        adviceType='positive',
+                        comment='My comment')
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
 
     def test_pm_searchAdvisedItems(self):
@@ -64,7 +67,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchAdvisedItems('', '', '', ''))
         # an advice can be given when an item is 'proposed' or 'validated'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(), (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated'))
+        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
+                          (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated'))
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -73,7 +77,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         item1.reindexObject()
         # give an advice
         self.changeUser('pmAdviser1')
-        item1.editAdvice(group=self.portal.portal_plonemeeting.developers, adviceType='positive', comment='My comment')
+        item1.editAdvice(group=self.portal.portal_plonemeeting.developers,
+                         adviceType='positive',
+                         comment='My comment')
         self.failUnless(self.meetingConfig.searchAdvisedItems('', '', '', ''))
         # another user will not see given advices
         self.changeUser('pmCreator1')
@@ -89,7 +95,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.proposeItem(item2)
         item2.reindexObject()
         self.changeUser('pmManager')
-        item2.editAdvice(group=self.portal.portal_plonemeeting.vendors, adviceType='positive', comment='My comment')
+        item2.editAdvice(group=self.portal.portal_plonemeeting.vendors,
+                         adviceType='positive',
+                         comment='My comment')
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 2)
         self.changeUser('pmAdviser1')
@@ -128,8 +136,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         # we want items of 'vendors' that are 'proposed' and items of 'developers' that are 'validated'
         filters = {'query': {'review_state': (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ),
                              'getProposingGroup': ('vendors', 'developers'), },
-                   'filters': ({'getProposingGroup': ('vendors', ), 'review_state': (self.WF_STATE_NAME_MAPPINGS['proposed'], )},
-                               {'getProposingGroup': ('developers', ), 'review_state': ('validated', )},),
+                   'filters': ({'getProposingGroup': ('vendors', ),
+                                'review_state': (self.WF_STATE_NAME_MAPPINGS['proposed'], )},
+                               {'getProposingGroup': ('developers', ),
+                                'review_state': ('validated', )},),
         }
         kwargs[TOPIC_SEARCH_FILTERS] = filters
         self.changeUser('pmManager')

@@ -421,6 +421,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 if stateName == 'created':
                     grantPermission(state, permission, 'Owner')
         logger.info(WF_APPLIED % ("local_meeting_managers", meetingConfig.getId()))
+
     # when an item is linked to a meeting, most of times, creators lose modify rights on it
     # with this, the item can be 'returned_to_proposing_group' when in a meeting then the creators
     # can modify it if necessary and send it back to the MeetingManagers when done
@@ -485,6 +486,66 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 title='returned_to_proposing_group', description='',
                 transitions=newTransitionNames)
         logger.info(WF_APPLIED % ("return_to_proposing_group", meetingConfig.getId()))
+
+    # "hide_decisions_when_under_writing" add state 'decisions_published' in the meeting workflow between the 'decided' and
+    # the 'closed' states.  The idea is to hide the decisions to non MeetingManagers when the meeting is 'decided'
+    # and to let everyone (that can see the item) access the decision when the meeting state is 'decisions_published'.
+    # To do so, we take this wfAdaptation into account in the MeetingItem.getDecision that hides it
+    # for non MeetingManagers
+    if 'hide_decisions_when_under_writing' in wfAdaptations:
+        wf = meetingWorkflow
+        # add state 'decision_published'
+        if 'decisions_published' not in wf.states:
+            wf.states.addState('decisions_published')
+            # Create new transitions linking the new state to existing ones
+            # ('decided' and 'closed').
+            # add transitions 'publish_decision' and 'backToDecisionPublished'
+            for tr in ('publish_decisions', 'backToDecisionsPublished'):
+                if tr not in wf.transitions:
+                    wf.transitions.addTransition(tr)
+            transition = wf.transitions['publish_decisions']
+            transition.setProperties(title='publish_decisions',
+                                     new_state_id='decisions_published', trigger_type=1, script_name='',
+                                     actbox_name='publish_decisions', actbox_url='', actbox_category='workflow',
+                                     props={'guard_expr': 'python:here.wfConditions().mayPublishDecisions()'})
+            transition = wf.transitions['backToDecisionsPublished']
+            transition.setProperties(title='backToDecisionsPublished',
+                                     new_state_id='decisions_published', trigger_type=1, script_name='',
+                                     actbox_name='backToDecisionsPublished', actbox_url='',
+                                     actbox_category='workflow',
+                                     props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
+            # Update connections between states and transitions
+            wf.states['decided'].setProperties(
+                title='decided', description='',
+                transitions=['backToFrozen', 'publish_decisions'])
+            wf.states['decisions_published'].setProperties(
+                title='decisions_published', description='',
+                transitions=['backToDecided', 'close'])
+            wf.states['closed'].setProperties(
+                title='closed', description='',
+                transitions=['backToDecisionsPublished', ])
+            # Initialize permission->roles mapping for new state "decisions_published",
+            # which is the same as state "frozen" (or "decided")in the previous setting.
+            frozen = wf.states['frozen']
+            decisions_published = wf.states['decisions_published']
+            for permission, roles in frozen.permission_roles.iteritems():
+                decisions_published.setPermission(permission, 0, roles)
+            # Transition "backToPublished" must be protected by a popup, like
+            # any other "correct"-like transition.
+            toConfirm = meetingConfig.getTransitionsToConfirm()
+            if 'Meeting.backToDecisionsPublished' not in toConfirm:
+                toConfirm = list(toConfirm)
+                toConfirm.append('Meeting.backToDecisionsPublished')
+                meetingConfig.setTransitionsToConfirm(toConfirm)
+            # State "decisions_published" must be selected in DecisionTopicStates (queries)
+            queryStates = meetingConfig.getDecisionTopicStates()
+            if 'decisions_published' not in queryStates:
+                queryStates = list(queryStates)
+                queryStates.append('decisions_published')
+                meetingConfig.setDecisionTopicStates(queryStates)
+                # Update the topics definitions for taking this into account.
+                meetingConfig.updateTopics()
+        logger.info(WF_APPLIED % ("hide_decisions_when_under_writing", meetingConfig.getId()))
 
 
 # Stuff for performing model adaptations ---------------------------------------

@@ -37,7 +37,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions, IMeetingWorkflowActions
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, kupuFieldIsEmpty, \
-    fieldIsEmpty, KUPU_EMPTY_VALUES, checkPermission, getCurrentMeetingObject, \
+    fieldIsEmpty, KUPU_EMPTY_VALUES, checkPermission, \
     HubSessionsMarshaller, addRecurringItemsIfRelevant, getLastEvent, \
     kupuEquals, getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
@@ -141,6 +141,15 @@ class MeetingWorkflowConditions:
             return No(translate('item_required_to_publish', domain="PloneMeeting", context=self.context.REQUEST))
         return True
 
+    security.declarePublic('mayPublishDecisions')
+    def mayPublishDecisions(self):
+        '''Used when 'hide_decisions_when_under_writing' wfAdaptation is active.'''
+        res = False
+        # The user just needs the "Review portal content" permission on the object
+        if checkPermission(ReviewPortalContent, self.context):
+            res = True
+        return res
+
     security.declarePublic('mayFreeze')
     def mayFreeze(self):
         return self.mayPublish()
@@ -172,14 +181,8 @@ class MeetingWorkflowConditions:
         if not checkPermission(ReviewPortalContent, self.context):
             return
         currentState = self.context.queryState()
-        if currentState in ('published', 'frozen'):
-            publishedObject = getCurrentMeetingObject(self.context)
-            # If we are not on the 'Meeting' page and we try to 'correct' it, HS
-            # will try to change presented items' states, which will not be
-            # possible if the published object is not the Meeting.
-            if isinstance(publishedObject, Meeting) and \
-               not self.context.getRawLateItems() and \
-               not self._atLeastOneDecisionIsTaken():
+        if currentState in ('published', 'frozen', 'decisions_published', ):
+            if checkPermission(ReviewPortalContent, self.context):
                 return True
         elif currentState == 'decided':
             # Going back from "decided" to previous state is not a true "undo".
@@ -269,6 +272,11 @@ class MeetingWorkflowActions:
             if item.queryState() == 'presented':
                 self.context.portal_workflow.doActionFor(item, 'itempublish')
 
+    security.declarePrivate('doPublish_decisions')
+    def doPublish_decisions(self, stateChange):
+        '''When the wfAdaptation 'hide_decisions_when_under_writing' is activated.'''
+        self._adaptEveryItemsOnMeetingClosure()
+
     security.declarePrivate('doFreeze')
     def doFreeze(self, stateChange):
         '''When freezing the meeting, I must set automatically all items
@@ -294,13 +302,19 @@ class MeetingWorkflowActions:
             if item.queryState() == 'itemfrozen':
                 self.context.portal_workflow.doActionFor(item, 'accept')
 
+    def _adaptEveryItemsOnMeetingClosure(self):
+        """
+          Helper method for correctly settings items when the meeting is closed.
+        """
+        for item in self.context.getAllItems(ordered=True):
+            if item.queryState() == 'accepted':
+                self.context.portal_workflow.doActionFor(item, 'confirm')
+
     security.declarePrivate('doClose')
     def doClose(self, stateChange):
         # All items in state "accepted" (that were thus not confirmed yet)
         # are automatically set to "confirmed".
-        for item in self.context.getAllItems(ordered=True):
-            if item.queryState() == 'accepted':
-                self.context.portal_workflow.doActionFor(item, 'confirm')
+        self._adaptEveryItemsOnMeetingClosure()
         # For this meeting, what is the number of the first item ?
         meetingConfig = self.context.portal_plonemeeting.getMeetingConfig(
             self.context)
@@ -353,6 +367,11 @@ class MeetingWorkflowActions:
                 do(item, 'backToItemPublished')
                 do(item, 'backToPresented')
                 # This way we "hide" again all late items.
+
+    security.declarePrivate('doBackToDecisionsPublished')
+    def doBackToDecisionsPublished(self, stateChange):
+        '''When the wfAdaptation 'hide_decisions_when_under_writing' is activated.'''
+        pass
 
     security.declarePrivate('doBackToFrozen')
     def doBackToFrozen(self, stateChange):
@@ -1815,7 +1834,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('isDecided')
     def isDecided(self):
         meeting = self.getSelf()
-        return meeting.queryState() in ('decided', 'closed', 'archived')
+        return meeting.queryState() in ('decided', 'closed', 'archived', 'decisions_published', )
 
     security.declarePublic('i18n')
     def i18n(self, msg, domain="PloneMeeting"):
