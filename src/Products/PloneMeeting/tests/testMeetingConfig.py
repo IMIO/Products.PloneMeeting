@@ -111,13 +111,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         '''Test the searchItemsInCopy method.  This should return a list of items
            a user is in copy of.'''
         # specify that copyGroups can see the item when it is proposed
+        self.meetingConfig.setUseCopies(True)
         self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
         # create an item and set another proposing group in copy of
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        # give a view access to members of vendors, like pmReviewer2
         item.setCopyGroups(('vendors_reviewers',))
         item.at_post_edit_script()
-        item.reindexObject()
         self.failIf(self.meetingConfig.searchItemsInCopy('', '', '', ''))
         # connect as a member of 'developers_reviewers'
         self.changeUser('pmReviewer2')
