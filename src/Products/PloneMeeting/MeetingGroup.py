@@ -270,9 +270,10 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
             for mc in self.portal_plonemeeting.objectValues('MeetingConfig'):
                 # The meetingGroup can be referenced in selectableCopyGroups.
-                if self.getPloneGroupId(suffix="advisers") in \
-                mc.getSelectableCopyGroups():
-                    raise BeforeDeleteException, \
+                for groupSuffix in MEETING_GROUP_SUFFIXES:
+                    groupId = self.getPloneGroupId(groupSuffix)
+                    if groupId in mc.getSelectableCopyGroups():
+                        raise BeforeDeleteException, \
                             "can_not_delete_meetinggroup_meetingconfig"
             # Then check that every linked Plone group is empty because we are
             # going to delete them.

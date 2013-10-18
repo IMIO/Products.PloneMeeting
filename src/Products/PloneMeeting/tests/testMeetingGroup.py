@@ -39,7 +39,15 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertEquals(item.getProposingGroup(), 'developers')
         # now try to remove corresponding group
         self.changeUser('admin')
-        # it first fails because the corresponding Plone groups are not empty
+        # first fails because used in the configuration, in selectableCopyGroups
+        self.failUnless('developers_reviewers' in self.meetingConfig.getSelectableCopyGroups())
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingconfig')
+        # so removes selectableCopyGroups from the meetingConfigs
+        self.meetingConfig.setSelectableCopyGroups(())
+        self.meetingConfig2.setSelectableCopyGroups(())
+        # then it fails because the corresponding Plone groups are not empty
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
         self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_plonegroup')
@@ -60,7 +68,7 @@ class testMeetingGroup(PloneMeetingTestCase):
 
         # removing a used group in the configuration fails too
         self.assertEquals(self.meetingConfig.recurringitems.template2.getProposingGroup(), 'vendors')
-        # first fails because corresponding Plone groups are not empty...
+        # then fails because corresponding Plone groups are not empty...
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['vendors', ])
         self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_plonegroup')
@@ -69,7 +77,9 @@ class testMeetingGroup(PloneMeetingTestCase):
         for ploneGroup in vendors.getPloneGroups():
             for memberId in ploneGroup.getGroupMemberIds():
                 ploneGroup.removeMember(memberId)
-        # then fails because used in the configuration
+
+
+        # then fails because used by an item present in the configuration
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['vendors', ])
         self.assertEquals(cm.exception.message,
