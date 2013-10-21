@@ -31,7 +31,7 @@ class testMeetingGroup(PloneMeetingTestCase):
     '''Tests the MeetingCategory class methods.'''
 
     def test_pm_CanNotRemoveUsedMeetingGroup(self):
-        '''While removing a MeetingGroup, it should raise if it is used...'''
+        '''While removing a MeetingGroup, it should raise if it is used on an item...'''
         self.changeUser('pmManager')
         # create an item
         item = self.create('MeetingItem')
@@ -39,7 +39,8 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertEquals(item.getProposingGroup(), 'developers')
         # now try to remove corresponding group
         self.changeUser('admin')
-        # first fails because used in the configuration, in selectableCopyGroups
+
+        # 1) fails because used in the configuration, in selectableCopyGroups
         self.failUnless('developers_reviewers' in self.meetingConfig.getSelectableCopyGroups())
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
@@ -47,7 +48,8 @@ class testMeetingGroup(PloneMeetingTestCase):
         # so removes selectableCopyGroups from the meetingConfigs
         self.meetingConfig.setSelectableCopyGroups(())
         self.meetingConfig2.setSelectableCopyGroups(())
-        # then it fails because the corresponding Plone groups are not empty
+
+        # 2) fails because the corresponding Plone groups are not empty
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
         self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_plonegroup')
@@ -56,7 +58,26 @@ class testMeetingGroup(PloneMeetingTestCase):
         for ploneGroup in developers.getPloneGroups():
             for memberId in ploneGroup.getGroupMemberIds():
                 ploneGroup.removeMember(memberId)
-        # this time it complains about a linked meetingitem
+        # check that it works if left users in the Plone groups are
+        # "not found" users, aka when you delete a user from Plone without removing him
+        # before from groups he is in, a special "not found" user will still be assigned to the groups...
+        # to test, add a new user, assign it to the developers_creators group, remove the user
+        # it should not complain about 'can_not_delete_meetinggroup_plonegroup'
+        self.portal.portal_membership.addMember(id='new_test_user',
+                                                password='12345',
+                                                roles=('Member', ),
+                                                domains=())
+        self.portal.portal_groups.addPrincipalToGroup('new_test_user', 'developers_creators')
+        self.portal.portal_membership.deleteMembers(('new_test_user', ))
+        # now we have a 'not found' user in developers_creators
+        self.assertTrue(('new_test_user', '<new_test_user: not found>') in
+                        self.portal.acl_users.source_groups.listAssignedPrincipals('developers_creators'))
+        # but it does not raise an exception with message 'can_not_delete_meetinggroup_plonegroup'
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
+        self.assertNotEquals(cm.exception.message, 'can_not_delete_meetinggroup_plonegroup')
+
+        # 3) complains about a linked meetingitem
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
         self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingitem')
@@ -66,7 +87,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(hasattr(self.tool, 'developers'))
 
-        # removing a used group in the configuration fails too
+        # 4) removing a used group in the configuration fails too
         self.assertEquals(self.meetingConfig.recurringitems.template2.getProposingGroup(), 'vendors')
         # then fails because corresponding Plone groups are not empty...
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -78,8 +99,7 @@ class testMeetingGroup(PloneMeetingTestCase):
             for memberId in ploneGroup.getGroupMemberIds():
                 ploneGroup.removeMember(memberId)
 
-
-        # then fails because used by an item present in the configuration
+        # 5) then fails because used by an item present in the configuration
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['vendors', ])
         self.assertEquals(cm.exception.message,
