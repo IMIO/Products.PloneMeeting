@@ -524,9 +524,9 @@ class PloneMeetingConfiguration(Descriptor):
         self.enableAnnexPreview = False
         self.siteStartDate = None
         self.maxSearchResults = 50
-        self.maxShownFoundItems = 10
-        self.maxShownFoundMeetings = 10
-        self.maxShownFoundAnnexes = 10
+        self.maxShownFoundItems = 20
+        self.maxShownFoundMeetings = 20
+        self.maxShownFoundAnnexes = 20
         # If True, the following param will, on the search screen, display
         # radio buttons allowing to choose if item keywords encompass index
         # Title, Description, getDecision or SearchableText.

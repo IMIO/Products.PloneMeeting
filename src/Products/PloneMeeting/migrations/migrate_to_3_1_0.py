@@ -13,8 +13,8 @@ class Migrate_To_3_1_0(Migrator):
         logger.info('Adapting values for every MeetingConfig.mailMeetingEvents...')
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             mailMeetingEvents = cfg.getMailMeetingEvents()
-            # if nothing defined, just pass
-            if not mailMeetingEvents:
+            # if nothing defined or already done, just pass
+            if not mailMeetingEvents or mailMeetingEvents[0].startswith('meeting_state_changed_'):
                 continue
             # adapt existing stored values, prepend a 'meeting_state_changed_'
             res = []
@@ -66,8 +66,24 @@ class Migrate_To_3_1_0(Migrator):
         originalTopicsInfos = MeetingConfig.topicsInfo
         MeetingConfig.topicsInfo = newTopicsInfo
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # createTopics manage the fact that the topic already exists
             cfg.createTopics()
         MeetingConfig.topicsInfo = originalTopicsInfos
+        logger.info('Done.')
+
+    def _updateMaxShownFoundDefaultValues(self):
+        '''Update 3 values on portal_plonemeeting :
+           - maxShownFoundItems
+           - maxShownFoundMeetings
+           - maxShownFoundAnnexes
+           Set the value to '20' if it uses old default that was '10'.'''
+        logger.info('Updating maxShownFound default values on portal_plonemeeting...')
+        if self.tool.getMaxShownFoundItems() == 10:
+            self.tool.setMaxShownFoundItems(20)
+        if self.tool.getMaxShownFoundMeetings() == 10:
+            self.tool.setMaxShownFoundMeetings(20)
+        if self.tool.getMaxShownFoundAnnexes() == 10:
+            self.tool.setMaxShownFoundAnnexes(20)
         logger.info('Done.')
 
     def run(self):
@@ -76,6 +92,7 @@ class Migrate_To_3_1_0(Migrator):
         self._adaptConfigsMailMeetingEventsValues()
         self._adaptConfigsWFAdaptationsValues()
         self._addMissingTopics()
+        self._updateMaxShownFoundDefaultValues()
         self.finish()
 
 
