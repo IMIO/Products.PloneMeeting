@@ -72,23 +72,38 @@ class FakeBrain:
     modified = None
     review_state = None
     Title2 = None
-    def has_key(self, key): return hasattr(self, key)
-    def getPath(self): return self.path
-    def getURL(self, relative=0): return self.url
-    def _unrestrictedGetObject(self): return self
+
+    def has_key(self, key):
+        return hasattr(self, key)
+
+    def getPath(self):
+        return self.path
+
+    def getURL(self, relative=0):
+        return self.url
+
+    def _unrestrictedGetObject(self):
+        return self
+
     def pretty_title_or_id(self):
         res = self.Title
         if hasattr(self, 'Title2') and self.Title2:
             res += u' / %s' % self.Title2
         return res
-    def getObject(self, REQUEST=None): return self
-    def getRID(self): return self.url
-class PloneMeetingError(Exception): pass
+
+    def getObject(self, REQUEST=None):
+        return self
+
+    def getRID(self):
+        return self.url
+
+
+class PloneMeetingError(Exception):
+    pass
 
 # Another monkey patch in the "isURL" validator: why is the "file" protocol
 # excluded?
-from Products.validation.validators.BaseValidators import \
-     baseValidators, protocols
+from Products.validation.validators.BaseValidators import baseValidators, protocols
 protocols += ('file',)
 for valid in baseValidators:
     if valid.name == 'isURL':

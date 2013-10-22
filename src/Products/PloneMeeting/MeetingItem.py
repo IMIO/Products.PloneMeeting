@@ -79,6 +79,8 @@ REC_ITEM_ERROR = 'There was an error while trying to generate recurring ' \
 BEFOREDELETE_ERROR = 'A BeforeDeleteException was raised by "%s" while ' \
     'trying to delete an item with id "%s"'
 WRONG_ADVICE_TYPE_ERROR = 'The given adviceType "%s" does not exist!'
+INSERT_ITEM_ERROR = 'There was an error when inserting the item, ' \
+                    'please contact system administrator!'
 
 
 # Marshaller ------------------------------------------------------------------
@@ -162,7 +164,7 @@ class MeetingItemMarshaller(HubSessionsMarshaller):
 
 InitializeClass(MeetingItemMarshaller)
 
-# Adapters ---------------------------------------------------------------------
+
 class MeetingItemWorkflowConditions:
     '''Adapts a MeetingItem to interface IMeetingItemWorkflowConditions.'''
     implements(IMeetingItemWorkflowConditions)
@@ -209,7 +211,6 @@ class MeetingItemWorkflowConditions:
         elif action == 'itempublish':
             return self._getDateOfAction(obj, 'itemfreeze')
 
-    # Implementation of methods from the interface I realize -------------------
     security.declarePublic('mayPropose')
     def mayPropose(self):
         '''We may propose an item if the workflow permits it and if the
@@ -895,7 +896,8 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
+            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and " \
+                      "here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
             label='Itemassembly',
@@ -909,7 +911,8 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures')",
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and " \
+                      "here.getMeeting().attributeIsUsed('signatures')",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
             label='Itemsignatures',
@@ -922,7 +925,8 @@ schema = Schema((
     LinesField(
         name='itemSignatories',
         widget=MultiSelectionWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatories')",
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and " \
+                      "here.getMeeting().attributeIsUsed('signatories')",
             description="ItemSignatories",
             description_msgid="item_signatories_descr",
             size=10,
@@ -1403,8 +1407,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         self.getItemNumber(relativeTo='meeting')-1
                 else:
                     # Start from the last item number in the meeting config.
-                    meetingConfig = self.portal_plonemeeting.getMeetingConfig(
-                        self)
+                    meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
                     res = meetingConfig.getLastItemNumber()
                     # ... take into account all the meetings scheduled before
                     # this one...
@@ -1567,7 +1570,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns a list of groups that will restrict the use of this item
            when used (usage) as an item template.'''
         res = []
-        meetingGroups = self.portal_plonemeeting.getActiveGroups()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        meetingGroups = tool.getMeetingGroups()
         for group in meetingGroups:
             res.append((group.id, group.Title()))
         return DisplayList(tuple(res))
@@ -1632,11 +1636,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            propose this item. Return groups that have at least one creator,
            excepted if we are on an archive site.'''
         res = []
-        tool = self.portal_plonemeeting
+        tool = getToolByName(self, 'portal_plonemeeting')
         if tool.isArchiveSite():
             allGroups = tool.objectValues('MeetingGroup')
         else:
-            allGroups = tool.getActiveGroups(notEmptySuffix="creators")
+            allGroups = tool.getMeetingGroups(notEmptySuffix="creators")
         for group in allGroups:
             res.append((group.id, group.getName()))
         return DisplayList(tuple(res)).sortedByValue()
@@ -2194,22 +2198,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = None
         item = self.getSelf()
         if sortOrder == 'on_categories':
-            res = item.getCategory(True).getOrder()
+            # get the category order, pass onlySelectable to False so disabled categories
+            # are taken into account also, so we avoid problems with freshly disabled categories
+            # or when a category is restricted to a group a MeetingManager is not member of
+            res = item.getCategory(True).getOrder(onlySelectable=False)
         elif sortOrder == 'on_proposing_groups':
-            res = item.getProposingGroup(True).getOrder()
+            res = item.getProposingGroup(True).getOrder(onlyActive=False)
         elif sortOrder == 'on_all_groups':
-            res = item.getProposingGroup(True).getOrder(
-                item.getAssociatedGroups())
+            res = item.getProposingGroup(True).getOrder(item.getAssociatedGroups(), onlyActive=False)
         elif sortOrder in ('on_privacy_then_proposing_groups', 'on_privacy_then_categories', ):
+            tool = getToolByName(item, 'portal_plonemeeting')
             if sortOrder == 'on_privacy_then_proposing_groups':
                 # Second sorting on proposing groups
-                res = item.getProposingGroup(True).getOrder()
-                oneLevel = len(item.portal_plonemeeting.getActiveGroups())
+                res = item.getProposingGroup(True).getOrder(onlyActive=False)
+                oneLevel = len(tool.getMeetingGroups(onlyActive=False))
             else:
                 # Second sorting on categories
-                res = item.getCategory(True).getOrder()
-                mc = item.portal_plonemeeting.getMeetingConfig(item)
-                oneLevel = len(mc.getCategories())
+                res = item.getCategory(True).getOrder(onlySelectable=False)
+                mc = tool.getMeetingConfig(item)
+                oneLevel = len(mc.getCategories(onlySelectable=False))
             # How does that work?
             # We will define the order depending on the privacy order in
             # listPrivacyValues multiplied by the length of active MeetingGroups
@@ -2224,8 +2231,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Now we have the good order "level" depending on groups/categories
             # and privacy
             res = res + orderLevel
+
         if res is None:
-            raise 'sortOrder should be one of %s' % str(itemSortMethods[1:])
+            raise PloneMeetingError(INSERT_ITEM_ERROR)
         return res
 
     security.declarePublic('sendMailIfRelevant')
@@ -2242,7 +2250,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         portal = getToolByName(self, 'portal_url').getPortalObject()
         res = []
-        for mGroup in tool.getActiveGroups(notEmptySuffix='advisers'):
+        for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers'):
             # check if there is something to evaluate...
             strippedExprToEvaluate = mGroup.getGivesMandatoryAdviceOn().replace(' ', '')
             if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
@@ -2265,14 +2273,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            We get it by evaluating the TAL expression on every active
            MeetingGroup.asCopyGroupOn. The expression returns a list of suffixes
            or an empty list.  The method update existing copyGroups.'''
-        tool = self.portal_plonemeeting
-        portal = self.portal_url.getPortalObject()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        portal = getToolByName(self, 'portal_url').getPortalObject()
         cfg = tool.getMeetingConfig(self)
         res = []
         selectableCopyGroups = cfg.getSelectableCopyGroups()
         if not selectableCopyGroups:
             return
-        for mGroup in tool.getActiveGroups():
+        for mGroup in tool.getMeetingGroups():
             # check if there is something to evaluate...
             strippedExprToEvaluate = mGroup.getAsCopyGroupOn().replace(' ', '')
             if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
@@ -2307,10 +2315,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listOptionalAdvisers(self):
         '''Optional advisers for this item are MeetingGroups that are not among
            mandatory advisers and that have at least one adviser.'''
-        tool = self.portal_plonemeeting
+        tool = getToolByName(self, 'portal_plonemeeting')
         mandatoryAdvisers = self.getMandatoryAdvisers()
         res = []
-        for mGroup in tool.getActiveGroups(notEmptySuffix='advisers'):
+        for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers'):
             if mGroup.id not in mandatoryAdvisers:
                 res.append((mGroup.id, mGroup.getName()))
         return DisplayList(tuple(res)).sortedByValue()
@@ -3677,7 +3685,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(data)
             i = i + 1
         return res
-
 
 
 registerType(MeetingItem, PROJECTNAME)

@@ -22,11 +22,13 @@
 # 02110-1301, USA.
 #
 
-
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
+
 from zope.i18n import translate
+
 from plone.app.testing import login
+
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 
@@ -43,9 +45,7 @@ class testMeeting(PloneMeetingTestCase):
            a) plonegov-assembly: on_categories
               (with useGroupsAsCategories=True);
            b) plonemeeting-assembly: on_proposing_groups.
-
-           sort methods tested here are "on_categories" and
-           "on_proposing_groups".'''
+           Sort methods tested here are "on_categories" and "on_proposing_groups".'''
         login(self.portal, 'pmManager')
         for meetingConfig in (self.meetingConfig.getId(), self.meetingConfig2.getId()):
             if meetingConfig == self.meetingConfig.getId():
@@ -58,6 +58,33 @@ class testMeeting(PloneMeetingTestCase):
             self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                               expected)
 
+    def test_pm_InsertItemOnProposingGroupsWithDisabledGroup(self):
+        '''Test that inserting an item using the "on_proposing_groups" sorting method
+           in a meeting having items using a disabled proposing group and inserting an item
+           for wich the group is disabled works.'''
+        self.meetingConfig.setSortingMethodOnAddItem('on_proposing_groups')
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        orderedItems = meeting.getItemsInOrder()
+        self.assertEquals([item.id for item in orderedItems],
+                          ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
+        # now disable the group used by 3 last items 'o2', 'o4' and 'o6', that is 'vendors'
+        self.assertTrue(orderedItems[-1].getProposingGroup() == u'vendors')
+        self.assertTrue(orderedItems[-2].getProposingGroup() == u'vendors')
+        self.assertTrue(orderedItems[-3].getProposingGroup() == u'vendors')
+        # and insert a new item
+        self.changeUser('admin')
+        self.do(self.tool.vendors, 'deactivate')
+        self.changeUser('pmManager')
+        newItem = self.create('MeetingItem')
+        # Use the disabled category 'vendors'
+        newItem.setProposingGroup(u'vendors')
+        newItem.setDecision('<p>Default decision</p>')
+        self.presentItem(newItem)
+        # first of all, it works, and the item is inserted at the right position
+        self.assertEquals([item.id for item in meeting.getItemsInOrder()],
+                          ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6', 'o7', ])
+
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
         login(self.portal, 'pmManager')
@@ -66,30 +93,154 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['o3', 'o4', 'o5', 'o6', 'o2'])
 
-    def test_pm_InsertItemAllGroups(self):
-        '''Sort method tested here is "on_all_groups".'''
-        login(self.portal, 'pmManager')
-        self.meetingConfig.setSortingMethodOnAddItem('on_all_groups')
+    def test_pm_InsertItemOnCategoriesWithDisabledCategory(self):
+        '''Test that inserting an item using the "on_categories" sorting method
+           in a meeting having items using a disabled category and inserting an item
+           for wich the category is disabled works.'''
+        self.changeUser('pmManager')
+        self.setMeetingConfig(self.meetingConfig2.getId())
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
-                          ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
+                          ['o3', 'o4', 'o5', 'o6', 'o2'])
+        # now disable the category used for items 'o3' and 'o4', that is 'development'
+        # and insert a new item
+        self.changeUser('admin')
+        self.assertTrue(meeting.getItemsInOrder()[0].getCategory(), 'development')
+        self.do(self.meetingConfig.categories.development, 'deactivate')
+        self.changeUser('pmManager')
+        newItem = self.create('MeetingItem')
+        # Use the category of 'o5' and 'o6' that is 'events' so the new item will
+        # be inserted between 'o6' and 'o2'
+        newItem.setCategory(u'events')
+        newItem.setDecision('<p>Default decision</p>')
+        self.presentItem(newItem)
+        # first of all, it works, and the item is inserted at the right position
+        self.assertEquals([item.id for item in meeting.getItemsInOrder()],
+                          ['o3', 'o4', 'o5', 'o6', newItem.getId(), 'o2'])
+        # now test while inserting items using a disabled category
+        # remove newItem, change his category for a disabled one and present it again
+        self.backToState(newItem, 'proposed')
+        self.assertTrue(not newItem.hasMeeting())
+        newItem.setCategory('development')
+        self.assertTrue(newItem.getCategory(), u'developement')
+        self.presentItem(newItem)
+        self.assertEquals([item.id for item in meeting.getItemsInOrder()],
+                          ['o3', 'o4', newItem.getId(), 'o5', 'o6', 'o2'])
+
+    def test_pm_InsertItemAllGroups(self):
+        '''Sort method tested here is "on_all_groups".
+           It takes into account the group having the lowest position in all
+           group (aka proposing group + associated groups).'''
+        self.changeUser('pmManager')
+        self.meetingConfig.setSortingMethodOnAddItem('on_all_groups')
+        meeting = self._createMeetingWithItems()
+        orderedItems = meeting.getItemsInOrder()
+        # 'o2' as got an associated group 'developers' even if main proposing group is 'vendors'
+        self.assertTrue([item.id for item in orderedItems] ==
+                        ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6'])
+        # so 'o2' is inserted in 'developers' items even if it has the 'vendors' proposing group
+        self.assertTrue([item.getProposingGroup() for item in orderedItems] ==
+                        ['developers', 'developers', 'vendors', 'developers', 'developers', 'vendors', 'vendors'])
+        # because 'o2' has 'developers' in his associatedGroups
+        self.assertTrue([item.getAssociatedGroups() for item in orderedItems] ==
+                        [(), (), ('developers',), (), (), (), ()])
+
+    def test_pm_InsertItemOnAllGroupsWithDisabledGroup(self):
+        '''Sort method tested here is "on_all_groups" but with an associated group and
+           a proposing group that are disabled.'''
+        self.changeUser('pmManager')
+        self.meetingConfig.setSortingMethodOnAddItem('on_all_groups')
+        meeting = self._createMeetingWithItems()
+        self.assertTrue([item.id for item in meeting.getItemsInOrder()] ==
+                        ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6'])
+        # create an item with 'developers' as associatedGroup but deativate 'developers'...
+        newItem = self.create('MeetingItem')
+        newItem.setProposingGroup('vendors')
+        newItem.setDecision('<p>Default decision</p>')
+        newItem.setAssociatedGroups(('developers', ))
+        # deactivate the 'developers' group
+        self.changeUser('admin')
+        self.do(self.tool.developers, 'deactivate')
+        self.changeUser('pmManager')
+        self.presentItem(newItem)
+        # the item is correctly inserted and his associated group is taken into account
+        # no matter it is actually deactivated
+        self.assertTrue([item.id for item in meeting.getItemsInOrder()] ==
+                        ['recItem1', 'recItem2', 'o2', 'o3', 'o5', newItem.getId(), 'o4', 'o6'])
+        # we can also insert an item using a disabled proposing group
+        secondItem = self.create('MeetingItem')
+        secondItem.setProposingGroup('developers')
+        secondItem.setDecision('<p>Default decision</p>')
+        secondItem.setAssociatedGroups(('vendors', ))
+        self.presentItem(secondItem)
+        # it will be inserted at the end of 'developers' items
+        self.assertTrue([item.id for item in meeting.getItemsInOrder()] ==
+                        ['recItem1', 'recItem2', 'o2', 'o3', 'o5', newItem.getId(), secondItem.getId(), 'o4', 'o6'])
 
     def test_pm_InsertItemPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy_then_proposing_groups".'''
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_proposing_groups')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o5', 'o4'])
+        self.assertEquals([item.getPrivacy() for item in meeting.getItemsInOrder()],
+                          ['public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
+
+    def test_pm_InsertItemPrivacyThenProposingGroupsWithDisabledGroup(self):
+        '''Sort method tested here is "on_privacy_then_proposing_groups" but
+           with a deactivated group used as proposing group.'''
+        self.changeUser('pmManager')
+        self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_proposing_groups')
+        meeting = self._createMeetingWithItems()
+        self.assertEquals([item.id for item in meeting.getItemsInOrder()],
+                          ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o5', 'o4'])
+        # we can also insert an item using a disabled proposing group
+        self.changeUser('admin')
+        self.do(self.tool.vendors, 'deactivate')
+        self.changeUser('pmManager')
+        newItem = self.create('MeetingItem')
+        newItem.setProposingGroup('vendors')
+        newItem.setDecision('<p>Default decision</p>')
+        self.presentItem(newItem)
+        # it will be inserted at the end of 'developers' items
+        self.assertTrue([item.id for item in meeting.getItemsInOrder()] ==
+                        ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o7', 'o5', 'o4'])
 
     def test_pm_InsertItemPrivacyThenCategories(self):
         '''Sort method tested here is "on_privacy_then_categories".'''
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
         self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_categories')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['o3', 'o6', 'o2', 'o4', 'o5'])
+        self.assertEquals([item.getPrivacy() for item in meeting.getItemsInOrder()],
+                          ['public', 'public', 'public', 'secret', 'secret'])
+
+    def test_pm_InsertItemPrivacyThenCategoriesWithDisabledCategory(self):
+        '''Sort method tested here is "on_privacy_then_categories" but
+           with a deactivated category used.'''
+        self.changeUser('pmManager')
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        self.meetingConfig.setUseGroupsAsCategories(False)
+        self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_categories')
+        meeting = self._createMeetingWithItems()
+        self.assertEquals([item.id for item in meeting.getItemsInOrder()],
+                          ['o3', 'o6', 'o2', 'o4', 'o5'])
+        # we can also insert an item using a disabled category
+        self.changeUser('admin')
+        self.do(self.meetingConfig.categories.development, 'deactivate')
+        self.changeUser('pmManager')
+        newItem = self.create('MeetingItem')
+        newItem.setProposingGroup('vendors')
+        newItem.setCategory('development')
+        newItem.setDecision('<p>Default decision</p>')
+        newItem.setPrivacy('secret')
+        self.presentItem(newItem)
+        # it will be inserted at the end of 'developers' items
+        self.assertTrue([item.id for item in meeting.getItemsInOrder()] ==
+                        ['o3', 'o6', 'o2', 'o4', 'o7', 'o5'])
 
     def test_pm_RemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''

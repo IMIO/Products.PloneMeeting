@@ -131,16 +131,19 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
-    def getOrder(self):
+    def getOrder(self, onlySelectable=True):
         '''At what position am I among all the active categories of my
-           folder in the meeting config?'''
+           folder in the meeting config?  If p_onlySelectable is passed to
+           MeetingConfig.getCategories, see doc string in MeetingConfig.'''
         try:
             folderId = self.getParentNode().id
             classifiers = False
             if folderId == 'classifiers':
                 classifiers = True
+            # to avoid problems with categories that are disabled or
+            # restricted to some groups, we pass onlySelectable=False
             i = self.getParentNode().getParentNode().getCategories(
-                classifiers=classifiers).index(self)
+                classifiers=classifiers, onlySelectable=onlySelectable).index(self)
         except ValueError:
             i = None
         return i
@@ -238,7 +241,8 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
            for.'''
         res = []
         # Get every Plone group related to a MeetingGroup
-        meetingGroups = self.portal_plonemeeting.getActiveGroups()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        meetingGroups = tool.getMeetingGroups()
         for group in meetingGroups:
             res.append((group.id, group.Title()))
         return DisplayList(tuple(res))

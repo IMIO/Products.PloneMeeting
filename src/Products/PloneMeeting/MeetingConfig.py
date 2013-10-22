@@ -40,6 +40,7 @@ from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.Searcher import Searcher
 from Products.CMFCore.Expression import Expression, createExprContext
+from Products.CMFCore.utils import getToolByName
 defValues = MeetingConfigDescriptor.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
@@ -1545,7 +1546,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('validate_shortName')
     def validate_shortName(self, value):
         '''Checks that the short name is unique among all configs.'''
-        for cfg in self.portal_plonemeeting.objectValues('MeetingConfig'):
+        tool = getToolByName(self, 'portal_plonemeeting')
+        for cfg in tool.objectValues('MeetingConfig'):
             if (cfg != self) and (cfg.getShortName() == value):
                 return DUPLICATE_SHORT_NAME % value
 
@@ -1620,7 +1622,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listMeetingConfigsToCloneTo(self):
         '''List available meetingConfigs to clone items to.'''
         res = []
-        for mc in self.portal_plonemeeting.getActiveConfigs():
+        tool = getToolByName(self, 'portal_plonemeeting')
+        for mc in tool.getActiveConfigs():
             mcId = mc.getId()
             if not mcId == self.getId():
                 res.append((mcId, mc.Title()))
@@ -1930,6 +1933,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                aiId.endswith(self.getId()):
                 aitool.removeActionIcon('object_buttons', aiId)
 
+        tool = getToolByName(self, 'portal_plonemeeting')
         for configId in self.getMeetingConfigsToCloneTo():
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
             existingActionIds = [act.id for act in item_portal_type.listActions()]
@@ -1941,7 +1945,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'object.adapted().mayCloneToOtherMeetingConfig("%s")' \
                         % configId
             label = translate('clone_to', domain='PloneMeeting', context=self.REQUEST)
-            cfg = getattr(self.portal_plonemeeting, configId)
+            cfg = getattr(tool, configId)
             actionName = '%s %s' % (label.encode('utf-8'), cfg.Title())
             item_portal_type.addAction(id=actionId,
                                        name=actionName,
@@ -2076,7 +2080,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             groupTitle = groupTitle.encode(enc)
             self.portal_groups.addGroup(groupId, title=groupTitle)
         # now define local_roles on the tool so it is accessible by this group
-        self.portal_plonemeeting.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
+        tool = getToolByName(self, 'portal_plonemeeting')
+        tool.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
         # but we do not want this group to access every MeetingConfigs so
         # remove inheritance on self and define these local_roles for self too
         self.__ac_local_roles_block__ = True
@@ -2612,27 +2617,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getCategories')
-    def getCategories(self, classifiers=False, onlySelectables=True, userId=None):
+    def getCategories(self, classifiers=False, onlySelectable=True, userId=None):
         '''Returns the categories defined for this meeting config or the
-           classifiers if p_classifiers is True. If p_onlySelectables is True,
+           classifiers if p_classifiers is True. If p_onlySelectable is True,
            there will be a check to see if the category is available to the
-           current user, otherwise, we return
-           every existing MeetingCategories.
+           current user, otherwise, we return every existing MeetingCategories.
            If a p_userId is given, it will be used to be passed to isSelectable'''
+
         if classifiers:
             catFolder = self.classifiers
         elif self.getUseGroupsAsCategories():
-            return self.portal_plonemeeting.getActiveGroups()
+            tool = getToolByName(self, 'portal_plonemeeting')
+            return tool.getMeetingGroups()
         else:
             catFolder = self.categories
         res = []
-        if onlySelectables:
+        if onlySelectable:
             for cat in catFolder.objectValues('MeetingCategory'):
                 if cat.adapted().isSelectable(userId=userId):
                     res.append(cat)
         else:
             res = catFolder.objectValues('MeetingCategory')
-        return res
+        # be coherent as objectValues returns a LazyMap
+        return list(res)
 
     security.declarePublic('getAdvicesIconsWidth')
     def getAdvicesIconsWidth(self):
@@ -2698,12 +2705,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((role, role))
         return DisplayList(tuple(res))
 
-    security.declarePublic('getMeetingGroups')
-    def getMeetingGroups(self, suffixes=[]):
+    security.declarePublic('getPloneGroups')
+    def getPloneGroups(self, suffixes=[]):
         '''Returns the list of Plone groups that are related to a MeetingGroup.
            If p_suffixes is defined, we limit the search to Plone groups having
            those suffixes. (_creators, _advisers, ...).'''
-        meetingGroups = self.portal_plonemeeting.getActiveGroups()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        meetingGroups = tool.getMeetingGroups()
         res = []
         # If no p_suffix is given, we use all possible suffixes.
         if not suffixes:
@@ -2746,7 +2754,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            the item.'''
         res = []
         # Get every Plone group related to a MeetingGroup
-        meetingPloneGroups = self.getMeetingGroups()
+        meetingPloneGroups = self.getPloneGroups()
         for group in meetingPloneGroups:
             res.append((group.id, group.getProperty('title')))
         return DisplayList(tuple(res))
@@ -3047,7 +3055,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            logged user, this method returns the MeetingConfig-wide value.'''
         obj = self
         methodName = 'get%s%s' % (param[0].upper(), param[1:])
-        if self.portal_plonemeeting.getEnableUserPreferences():
+        tool = getToolByName(self, 'portal_plonemeeting')
+        if tool.getEnableUserPreferences():
             if not userId:
                 user = self.portal_membership.getAuthenticatedMember()
             else:

@@ -522,24 +522,26 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getCustomFields(self, cols):
         return getCustomSchemaFields(schema, self.schema, cols)
 
-    security.declarePublic('getActiveGroups')
-    def getActiveGroups(self, notEmptySuffix=None):
-        '''Gets the groups that are active. Moreover, we check that group
+    security.declarePublic('getMeetingGroups')
+    def getMeetingGroups(self, notEmptySuffix=None, onlyActive=True):
+        '''Gets the MeetingGroups, if p_notEmptySuffix is True, we check that group
            suffixes passed as argument are not empty. If it is the case, we do
-           not return the group neither.'''
+           not return the group neither.  If p_onlyActive is True, we also check
+           the MeetingGroup current review_state.'''
         res = []
         for group in self.objectValues('MeetingGroup'):
-            if self.portal_workflow.getInfoFor(group, 'review_state') == \
+            if onlyActive and not self.portal_workflow.getInfoFor(group, 'review_state') == \
                'active':
-                # Check that there is at least one user in the notEmptySuffix
-                # of the Plone group
-                if notEmptySuffix:
-                    ploneGroupId = group.getPloneGroupId(suffix=notEmptySuffix)
-                    zopeGroup = self.acl_users.getGroup(ploneGroupId)
-                    if len(zopeGroup.getMemberIds()):
-                        res.append(group)
-                else:
+                continue
+            # Check that there is at least one user in the notEmptySuffix
+            # of the Plone group
+            if notEmptySuffix:
+                ploneGroupId = group.getPloneGroupId(suffix=notEmptySuffix)
+                zopeGroup = self.acl_users.getGroup(ploneGroupId)
+                if len(zopeGroup.getMemberIds()):
                     res.append(group)
+            else:
+                res.append(group)
         return res
 
     security.declarePublic('getActiveConfigs')
@@ -575,7 +577,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         user = self.getUser(userId)
         groupIds = user.getGroups()
         if active:
-            mGroups = self.getActiveGroups()
+            mGroups = self.getMeetingGroups()
         else:
             mGroups = self.objectValues('MeetingGroup')
         for mGroup in mGroups:
@@ -614,7 +616,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 else:
                     res.append((existingGroupId, existingGroupId))
         else:
-            for group in self.portal_plonemeeting.getActiveGroups():
+            for group in self.getMeetingGroups():
                 res.append((group.id, group.getName()))
         return res
 

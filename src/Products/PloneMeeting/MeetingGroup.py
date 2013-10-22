@@ -25,14 +25,14 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 from App.class_init import InitializeClass
 from zope.i18n import translate
-from Products.PloneMeeting.utils import getCustomAdapter, \
-     HubSessionsMarshaller, getFieldContent
+from Products.PloneMeeting.utils import getCustomAdapter, HubSessionsMarshaller, getFieldContent
 from Products.PloneMeeting import PloneMeetingError
 import logging
 logger = logging.getLogger('PloneMeeting')
 from OFS.ObjectManager import BeforeDeleteException
 from Products.PloneMeeting.profiles import GroupDescriptor
 defValues = GroupDescriptor.get()
+
 
 # Marshaller -------------------------------------------------------------------
 class GroupMarshaller(HubSessionsMarshaller):
@@ -69,7 +69,7 @@ schema = Schema((
     ),
     StringField(
         name='givesMandatoryAdviceOn',
-        default= defValues.givesMandatoryAdviceOn,
+        default=defValues.givesMandatoryAdviceOn,
         widget=StringField._properties['widget'](
             size=100,
             description="GivesMandatoryAdviceOn",
@@ -81,7 +81,7 @@ schema = Schema((
     ),
     LinesField(
         name='itemAdviceStates',
-        default= defValues.itemAdviceStates,
+        default=defValues.itemAdviceStates,
         widget=MultiSelectionWidget(
             description="ItemAdviceStates",
             description_msgid="group_item_advice_states_descr",
@@ -94,7 +94,7 @@ schema = Schema((
     ),
     LinesField(
         name='itemAdviceEditStates',
-        default= defValues.itemAdviceEditStates,
+        default=defValues.itemAdviceEditStates,
         widget=MultiSelectionWidget(
             description="ItemAdviceEditStates",
             description_msgid="group_item_advice_edit_states_descr",
@@ -107,7 +107,7 @@ schema = Schema((
     ),
     LinesField(
         name='itemAdviceViewStates',
-        default= defValues.itemAdviceViewStates,
+        default=defValues.itemAdviceViewStates,
         widget=MultiSelectionWidget(
             description="ItemAdviceViewStates",
             description_msgid="group_item_advice_view_states_descr",
@@ -120,7 +120,7 @@ schema = Schema((
     ),
     StringField(
         name='asCopyGroupOn',
-        default= defValues.asCopyGroupOn,
+        default=defValues.asCopyGroupOn,
         widget=StringField._properties['widget'](
             size=100,
             description="AsCopyGroupOn",
@@ -216,19 +216,29 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         group.setProperties(meetingRole=MEETINGROLES[groupSuffix],
                             meetingGroupId=self.id)
 
-    def getOrder(self, associatedGroupIds=None):
+    def getOrder(self, associatedGroupIds=None, onlyActive=True):
         '''At what position am I among all the active groups ? If
            p_associatedGroupIds is not None or empty, this method must return
            the order of the lowest group among all associated groups (me +
-           associated groups).'''
-        activeGroups = self.getParentNode().getActiveGroups()
-        i = activeGroups.index(self)
+           associated groups).
+           If p_onlyActive is True, only consider active groups, if not
+           take also deactivated groups.'''
+        groups = self.getParentNode().getMeetingGroups(onlyActive=onlyActive)
+        i = groups.index(self)
+        # if we received associatedGroupIds we must consider associated group
+        # that has the lowest position
         if associatedGroupIds:
-            j = -1
-            for group in activeGroups:
-                j += 1
-                if (group.id in associatedGroupIds) and (j < i):
-                    i = j + 0.5
+            # groups are sorted so, the first we find, we return it
+            groupIds = [group.getId() for group in groups]
+            for groupId in groupIds:
+                if groupId in associatedGroupIds:
+                    # we found the associatedGroup with lowest position, now check
+                    # that the lowest position of this associated group is lower or not
+                    # than the position of the proposing group
+                    associatedGroupIndex = groupIds.index(groupId)
+                    if associatedGroupIndex < i:
+                        i = associatedGroupIndex
+                    break
         return i
 
     security.declarePrivate('at_post_create_script')
@@ -246,8 +256,8 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             groupId = self.getPloneGroupId(groupSuffix)
             ploneGroup = self.portal_groups.getGroupById(groupId)
             if ploneGroup:
-                raise PloneMeetingError("You can't create this MeetingGroup " \
-                                        "because a Plone groupe having id " \
+                raise PloneMeetingError("You can't create this MeetingGroup "
+                                        "because a Plone groupe having id "
                                         "'%s' already exists." % groupId)
         for groupSuffix in MEETING_GROUP_SUFFIXES:
             self._createPloneGroup(groupSuffix)
@@ -273,8 +283,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 for groupSuffix in MEETING_GROUP_SUFFIXES:
                     groupId = self.getPloneGroupId(groupSuffix)
                     if groupId in mc.getSelectableCopyGroups():
-                        raise BeforeDeleteException, \
-                            "can_not_delete_meetinggroup_meetingconfig"
+                        raise BeforeDeleteException("can_not_delete_meetinggroup_meetingconfig")
             # Then check that every linked Plone group is empty because we are
             # going to delete them.
             for role in MEETING_GROUP_SUFFIXES:
@@ -286,8 +295,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 # [('a_removed_user', '<a_removed_user: not found>'), ('pmCreator1', 'pmCreator1'), ]
                 groupsMembersWithoutNotFound = [member for member in groupMembers if not 'not found' in member[1]]
                 if groupsMembersWithoutNotFound:
-                    raise BeforeDeleteException, \
-                        "can_not_delete_meetinggroup_plonegroup"
+                    raise BeforeDeleteException("can_not_delete_meetinggroup_plonegroup")
             # And finally, check that meetingGroup is not linked to an existing
             # item.
             mgId = self.getId()
@@ -296,11 +304,11 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 for item in cfg.recurringitems.objectValues('MeetingItem'):
                     if item.getProposingGroup() == mgId or \
                        mgId in item.getAssociatedGroups():
-                        raise BeforeDeleteException, \
+                        raise BeforeDeleteException(
                             translate("can_not_delete_meetinggroup_config_meetingitem",
                                       domain="plone",
                                       mapping={'url': item.absolute_url()},
-                                      context=self.REQUEST)
+                                      context=self.REQUEST))
             # In the application
             for brain in self.portal_catalog(meta_type="MeetingItem"):
                 obj = brain.getObject()
@@ -310,8 +318,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                    (mgId in obj.getMandatoryAdvisers()):
                     # The meetingGroup is linked to an existing item, we can not
                     # delete it.
-                    raise BeforeDeleteException, \
-                        "can_not_delete_meetinggroup_meetingitem"
+                    raise BeforeDeleteException("can_not_delete_meetinggroup_meetingitem")
 
             # If everything passed correctly, we delete every linked (and empty)
             # Plone groups.
@@ -324,17 +331,23 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     security.declarePublic('getSelf')
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingGroup': return self.context
+        if self.__class__.__name__ != 'MeetingGroup':
+            return self.context
         return self
 
     security.declarePublic('adapted')
-    def adapted(self): return getCustomAdapter(self)
+    def adapted(self):
+        return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
-    def onEdit(self, isCreated): '''See doc in interfaces.py.'''
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
+        pass
 
     security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp): '''See doc in interfaces.py.'''
+    def onTransferred(self, extApp):
+        '''See doc in interfaces.py.'''
+        pass
 
     security.declarePublic('getItemAdviceStates')
     def getItemAdviceStates(self, cfg=None, **kwargs):
@@ -345,23 +358,25 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            is not empty it returns it; else, it returns the global, default list
            in cfg.itemAdviceStates.'''
         res = self.getField('itemAdviceStates').get(self, **kwargs)
-        if not res and cfg: res = cfg.getItemAdviceStates()
+        if not res and cfg:
+            res = cfg.getItemAdviceStates()
         return res
 
     security.declarePublic('getItemAdviceEditStates')
     def getItemAdviceEditStates(self, cfg=None, **kwargs):
         '''See docstring of previous method.'''
         res = self.getField('itemAdviceEditStates').get(self, **kwargs)
-        if not res and cfg: res = cfg.getItemAdviceEditStates()
+        if not res and cfg:
+            res = cfg.getItemAdviceEditStates()
         return res
 
     security.declarePublic('getItemAdviceViewStates')
     def getItemAdviceViewStates(self, cfg=None, **kwargs):
         '''See docstring of previous method.'''
         res = self.getField('itemAdviceViewStates').get(self, **kwargs)
-        if not res and cfg: res = cfg.getItemAdviceViewStates()
+        if not res and cfg:
+            res = cfg.getItemAdviceViewStates()
         return res
-
 
 
 registerType(MeetingGroup, PROJECTNAME)
