@@ -528,6 +528,9 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
 
     @memoize
     def _documentViewerPrintableExtensions(self):
+        """
+          Compute file extensions that will be considered as printable.
+        """
         from collective.documentviewer.config import CONVERTABLE_TYPES
         printableExtensions = []
         for convertable_type in CONVERTABLE_TYPES.iteritems():
@@ -581,7 +584,7 @@ def prepareClonedAnnexForConversion(object, event):
         del annotations['collective.documentviewer']
     # now call convertToImages because IObjectInitializedEvent is not called
     # while copy/pasting an object (case in the duplication process)
-    # but check if a copyAnnexes is not set to False the REQUEST meaning
+    # but check if a copyAnnexes is not set to False in the REQUEST meaning
     # that we are duplicating an item but that we do not copyAnnexes
     if object.REQUEST.get('copyAnnexes', True):
         convertToImages(object, event)
@@ -589,8 +592,8 @@ def prepareClonedAnnexForConversion(object, event):
 
 def checkAfterConversion(object, event):
     """
-      After conversion, check that there was not error, if an error occured, make sure the annex
-      is set to not toPrint and send an email if relevant.
+      After conversion, check that there was no error, if an error occured,
+      make sure the annex is set to not toPrint and send an email if relevant.
     """
     item = object.getItem()
     if event.status == 'failure':
@@ -615,7 +618,8 @@ def checkAfterConversion(object, event):
             object.plone_utils.addPortalMessage(
                 translate(msgid=msg,
                           domain='PloneMeeting',
-                          context=object.REQUEST), 'error')
+                          context=object.REQUEST),
+                'error')
 
         # email notification, check if the Manager is not 'playing' with conversion
         if isRealManager:

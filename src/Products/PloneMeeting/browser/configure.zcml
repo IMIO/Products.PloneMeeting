@@ -166,7 +166,8 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         allowed_attributes="removeGivenObject
                             getLinkedMeetingTitle
-                            getLinkedMeetingDate"
+                            getLinkedMeetingDate
+                            findFirstItemNumberForMeeting"
         permission="zope2.View" />
     <browser:page
         for="*"

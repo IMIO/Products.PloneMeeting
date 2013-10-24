@@ -24,12 +24,15 @@
 
 from AccessControl import Unauthorized
 from DateTime import DateTime
-from AccessControl import Unauthorized
+
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
+
 from plone.app.testing import login
+
 from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.utils import getToolByName
+
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX, READER_USECASES
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
@@ -954,6 +957,113 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item5.getItemAssembly(), '<p>Item assembly 3</p>')
         # item6 is not updated as we wanted to update items until number 5
         self.assertEquals(item6.getItemAssembly(), '<p>Meeting assembly</p>')
+
+    def test_pm_getItemNumber(self):
+        """Test the MeetingItem.getItemNumber method.
+           This only apply when the item is in a meeting.
+           Check docstring of MeetingItem.getItemNumber.
+           MeetingItem.getItemNumber(relativeTo='meetingConfig') use a memoized
+           call, so we need to cleanMemoize before calling it if the meeting firstItemNumber changed,
+           so if the meeting as been closed.
+        """
+        self.changeUser('pmManager')
+        # create an item
+        item = self.create('MeetingItem')
+        item.setDecision('<p>A decision</p>')
+        # until the item is not in a meeting, the call to
+        # getItemNumber will return None
+        self.assertIsNone(item.getItemNumber(relativeTo='itemsList'))
+        self.assertIsNone(item.getItemNumber(relativeTo='meeting'))
+        self.assertIsNone(item.getItemNumber(relativeTo='meetingConfig'))
+        # so insert the item in a meeting
+        # create a meeting with items
+        meeting = self._createMeetingWithItems()
+        self.presentItem(item)
+        # the item is inserted in 5th position so is stored itemNumber is 5
+        self.assertTrue(item.getField('itemNumber').get(item) == 5)
+        # it is the same than calling with relativeTo='itemsList' and relativeTo='meeting'
+        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
+        self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
+        # as no other meeting exist, it is the same result also for relativeTo='meetingConfig'
+        self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 5)
+        # now create an item that will be inserted as late item so in another list
+        self.freezeMeeting(meeting)
+        lateItem = self.create('MeetingItem')
+        lateItem.setDecision('<p>A decision</p>')
+        lateItem.setPreferredMeeting(meeting.UID())
+        self.presentItem(lateItem)
+        # it is presented as late item
+        self.assertTrue(lateItem.isLate())
+        # it is the first late item so his number in the late items list is 1
+        self.assertTrue(lateItem.getField('itemNumber').get(lateItem) == 1)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
+        # but regarding the whole meeting, his number his len of normal items + his stored number
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
+        # only existing meeting, so relativeTo='meetingConfig' is the same as relativeTo='meeting'
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == len(meeting.getItems()) + 1)
+
+        # now create a meeting BEFORE meeting so meeting will not be considered as only meeting
+        # in the meetingConfig and relativeTo='meeting' behaves normally
+        meeting2 = self._createMeetingWithItems(meetingDate=DateTime('2012/05/05 12:00'))
+        # we have 7 items in meeting2 and firstItemNumber is not set
+        self.assertTrue(meeting2.getItemsCount() == 7)
+        self.assertTrue(meeting2.getFirstItemNumber() == -1)
+        self.assertTrue(meeting2.getAllItems()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        # itemNumber relativeTo itemsList/meeting does not change but relativeTo meetingConfig changed
+        # for the normal item
+        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
+        self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
+        self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
+        # for the late item
+        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        # make sure it is the same result for non MeetingManagers as previous
+        # meeting2 is not viewable by common users by default as in state 'created'
+        self.changeUser('pmCreator1')
+        # the user can see item and lateItem
+        self.assertTrue(self.hasPermission('View', (item, lateItem, )))
+        # and getItemNumber returns the same result than for the MeetingManagers
+        # for item
+        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
+        self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
+        # a cleanMemoize is done when calling changeUser
+        self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
+        # for lateItem
+        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        # now set firstItemNumber for meeting2
+        self.changeUser('pmManager')
+        self.closeMeeting(meeting2)
+        self.cleanMemoize()
+        self.assertTrue(meeting2.queryState(), 'closed')
+        self.assertTrue(meeting2.getFirstItemNumber() == 1)
+        self.assertTrue(meeting2.getAllItems()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        # getItemNumber is still behaving the same
+        # for item
+        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
+        self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
+        self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
+        # for lateItem
+        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        # and set firstItemNumber for meeting
+        self.assertTrue(meeting.getFirstItemNumber() == -1)
+        self.closeMeeting(meeting)
+        self.cleanMemoize()
+        self.assertTrue(meeting.queryState(), 'closed')
+        self.assertTrue(meeting.getFirstItemNumber() == 8)
+        # getItemNumber is still behaving the same
+        # for item
+        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
+        self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
+        self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
+        # for lateItem
+        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
 
 
 def test_suite():

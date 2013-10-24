@@ -35,6 +35,7 @@ from App.class_init import InitializeClass
 from OFS.ObjectManager import BeforeDeleteException
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getMultiAdapter
 from zope.i18n import translate
 from collective.documentviewer import storage
 from collective.documentviewer.settings import Settings
@@ -58,8 +59,6 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 
 # PloneMeetingError-related constants -----------------------------------------
-NUMBERING_ERROR = 'No meeting is defined for this item. So it is not ' \
-    'possible to get an item number which is relative to the meeting config.'
 ITEM_REF_ERROR = 'There was an error in the TAL expression for defining the ' \
     'format of an item reference. Please check this in your meeting config. ' \
     'Original exception: %s'
@@ -1390,38 +1389,37 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              being "normal" or "late"): p_relativeTo="meeting";
            - the item number relative to the whole meeting config:
              p_relativeTo="meetingConfig"'''
+        # this method is only relevant if the item is in a meeting
         if not self.hasMeeting():
-            return
+            return None
+
         res = self.getField('itemNumber').get(self, **kwargs)
         if relativeTo == 'itemsList':
+            # we use the value stored in the 'itemNumber' field
             pass
         elif relativeTo == 'meeting':
+            # either we use the value stored in the 'itemNumber' field if
+            # it is a normal item, and if it is a late item, we compute length
+            # of normal items + value stored in the 'itemNumber' field
             if self.isLate():
                 res += len(self.getMeeting().getRawItems())
         elif relativeTo == 'meetingConfig':
-            if self.hasMeeting():
-                meeting = self.getMeeting()
-                meetingFirstItemNumber = meeting.getFirstItemNumber()
-                if meetingFirstItemNumber != -1:
-                    res = meetingFirstItemNumber + \
-                        self.getItemNumber(relativeTo='meeting')-1
-                else:
-                    # Start from the last item number in the meeting config.
-                    meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-                    res = meetingConfig.getLastItemNumber()
-                    # ... take into account all the meetings scheduled before
-                    # this one...
-                    meetingBrains = self.adapted().getMeetingsAcceptingItems()
-                    for brain in meetingBrains:
-                        m = brain._unrestrictedGetObject()
-                        if m.getDate() < meeting.getDate():
-                            res += len(m.getRawItems()) + \
-                                len(m.getRawLateItems())
-                    # ...then add the position of this item relative to its
-                    # meeting
-                    res += self.getItemNumber(relativeTo='meeting')
-        else:
-            raise PloneMeetingError(NUMBERING_ERROR)
+            meeting = self.getMeeting()
+            meetingFirstItemNumber = meeting.getFirstItemNumber()
+            if meetingFirstItemNumber != -1:
+                res = meetingFirstItemNumber + self.getItemNumber(relativeTo='meeting') - 1
+            else:
+                # here we need to know what is the "base number" to compute the item number on :
+                # we call findBaseNumberRelativeToMeetingConfig, see docstring there
+                # call the view on meeting because it is memoized and for example in meeting_view
+                # the meeting does not change but the item does
+                unrestrictedMethodsView = getMultiAdapter((meeting, meeting.REQUEST),
+                                                          name='pm_unrestricted_methods')
+                currentMeetingComputedFirstNumber = unrestrictedMethodsView.findFirstItemNumberForMeeting(meeting)
+                # now that we have the currentMeetingComputedFirstNumber, that is
+                # the theorical current meeting first number, we can compute current item
+                # number that is this number + current item number relativeTo the meeting - 1
+                res = currentMeetingComputedFirstNumber + self.getItemNumber(relativeTo='meeting') - 1
         return res
 
     security.declarePublic('getDefaultToDiscuss')

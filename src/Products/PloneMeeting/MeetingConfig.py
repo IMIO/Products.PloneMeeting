@@ -243,17 +243,6 @@ schema = Schema((
         ),
     ),
     IntegerField(
-        name='lastItemNumber',
-        default=defValues.lastItemNumber,
-        widget=IntegerField._properties['widget'](
-            description="LastItemNumber",
-            description_msgid="last_item_number_descr",
-            label='Lastitemnumber',
-            label_msgid='PloneMeeting_label_lastItemNumber',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
-    IntegerField(
         name='lastMeetingNumber',
         default=defValues.lastMeetingNumber,
         widget=IntegerField._properties['widget'](

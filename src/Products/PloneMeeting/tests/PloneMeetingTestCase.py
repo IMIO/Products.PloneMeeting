@@ -44,6 +44,16 @@ from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 
+# Force application logging level to DEBUG so we can use logger in tests
+import sys
+import logging
+pm_logger = logging.getLogger('PloneMeeting: testing')
+pm_logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+pm_logger.addHandler(handler)
+
 
 class TestFile:
     '''Stub class that simulates a file upload from a HTTP POST.'''
@@ -148,11 +158,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
     def changeUser(self, loginName):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
-        # remove 'plone.memoize' annotations about @@plone_portal_state
-        # or getting @@plone_portal_state.member() returns always the same user (the first logged in)
-        req_annotations = IAnnotations(self.request)
-        if 'plone.memoize' in req_annotations:
-            del IAnnotations(self.request)['plone.memoize']
+        self.cleanMemoize()
         login(self.portal, loginName)
 
     def _generateId(self, ploneFolder):
@@ -324,7 +330,6 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         for group in groups:
             self.portal.portal_groups.addPrincipalToGroup(member.getId(), group)
 
-
     # Workflow-related methods -------------------------------------------------
     def do(self, obj, transition):
         '''Executes a workflow p_transition on a given p_obj.'''
@@ -398,7 +403,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
                 pm_path = path
                 break
         if not pm_path:
-            raise Exception, 'Products.PloneMeeting path not found!'
+            raise Exception('Products.PloneMeeting path not found!')
         # change test_path to set it to Products.PloneMeeting
         saved_test_path = options.test_path
         options.test_path = [(pm_path, '')]

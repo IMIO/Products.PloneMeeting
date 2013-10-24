@@ -9,6 +9,8 @@ from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.tests.base.security import OmnipotentUser
 
+from plone.memoize.view import memoize
+
 
 class DeleteGivenUidView(BrowserView):
     """
@@ -181,6 +183,48 @@ class UnrestrictedMethodsView(BrowserView):
         meeting = self.context.getMeeting()
         if meeting:
             return meeting.getDate()
+
+    @memoize
+    def findFirstItemNumberForMeeting(self, meeting):
+        """
+          Return the base number to take into account while computing an item number.
+          This is used when given p_meeting firstItemNumber is -1, we need to look in previous
+          meetings for a defined firstItemNumber and compute number of items since that...
+        """
+        # Look for every meetings that take place before the given p_meeting
+        # and find a relevant firstItemNumber to base our count on
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        catalog = getToolByName(self, 'portal_catalog')
+        # previous meetings
+        # we need to make an unrestricted search because previous meetings
+        # could be unaccessible to the current user, for example by default a
+        # meeting in state 'created' is not viewable by items creators
+        brains = catalog.unrestrictedSearchResults(Type=cfg.getMeetingTypeName(),
+                                                   getDate={'query': meeting.getDate(),
+                                                            'range': 'max'},
+                                                   sort_on='getDate',
+                                                   sort_order='reverse')
+        # while looking for previous meetings, the current meeting is
+        # also returned so removes it from the brains
+        brains = brains[1:]
+        numberOfItemsBefore = 0
+        # if we found no defined firstItemNumber on meetings we will loop on, then
+        # we went up to the first meeting and his theorical default firstItemNumber is 1
+        previousFirstItemNumber = 1
+        for brain in brains:
+            # as we did an unrestrictedSearchResults in the portal_catalog
+            # we need to do a _unrestrictedGetObject to get the object from the brain
+            meetingObj = brain._unrestrictedGetObject()
+            # either we have a firstItemNumber defined on the meeting
+            # or -1, in this last case, we save number of items of the meeting
+            # and we continue to the previous meeting
+            numberOfItemsBefore += meetingObj.getItemsCount()
+            if not meetingObj.getFirstItemNumber() == -1:
+                previousFirstItemNumber = meetingObj.getFirstItemNumber()
+                break
+        # we return a number that would be the given p_meeting firstItemNumber
+        return (previousFirstItemNumber + numberOfItemsBefore)
 
 
 class ItemSign(BrowserView):

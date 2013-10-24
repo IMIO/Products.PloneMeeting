@@ -30,6 +30,7 @@ from App.class_init import InitializeClass
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
 from OFS.ObjectManager import BeforeDeleteException
+from zope.component import getMultiAdapter
 from zope.i18n import translate
 from Products.CMFCore.permissions import ReviewPortalContent, ModifyPortalContent
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
@@ -315,14 +316,10 @@ class MeetingWorkflowActions:
         # All items in state "accepted" (that were thus not confirmed yet)
         # are automatically set to "confirmed".
         self._adaptEveryItemsOnMeetingClosure()
-        # For this meeting, what is the number of the first item ?
-        meetingConfig = self.context.portal_plonemeeting.getMeetingConfig(
-            self.context)
-        self.context.setFirstItemNumber(meetingConfig.getLastItemNumber()+1)
-        # Update the item counter which is global to the meeting config
-        meetingConfig.setLastItemNumber(meetingConfig.getLastItemNumber() +
-                                        len(self.context.getItems()) +
-                                        len(self.context.getLateItems()))
+        # Set the firstItemNumber
+        unrestrictedMethodsView = getMultiAdapter((self.context, self.context.REQUEST),
+                                                  name='pm_unrestricted_methods')
+        self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumberForMeeting(self.context))
 
     security.declarePrivate('doArchive')
     def doArchive(self, stateChange):
@@ -336,12 +333,8 @@ class MeetingWorkflowActions:
 
     security.declarePrivate('doBackToDecided')
     def doBackToDecided(self, stateChange):
-        # Oups when closing a meeting we have updated the item counter (which
-        # is global to the meeting config). So here we must reverse our action.
-        cfg = self.context.portal_plonemeeting.getMeetingConfig(self.context)
-        cfg.setLastItemNumber(cfg.getLastItemNumber() -
-                              len(self.context.getItems()) -
-                              len(self.context.getLateItems()))
+        # Oups when closing a meeting we have updated the firsItemNumber
+        # we need to reverse our action
         self.context.setFirstItemNumber(-1)
 
     security.declarePrivate('doBackToCreated')

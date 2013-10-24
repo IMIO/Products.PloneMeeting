@@ -86,6 +86,17 @@ class Migrate_To_3_1_0(Migrator):
             self.tool.setMaxShownFoundAnnexes(20)
         logger.info('Done.')
 
+    def _removeLastItemNumberAttrOnMeetingConfigs(self):
+        '''The MeetingConfig.lastItemNumber has been removed, make sure the attribute
+           is no more defined on the MeetingConfig instances.'''
+        logger.info('Removing MeetingConfig.lastItemNumber attribute on every MeetingConfig instances...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            try:
+                del cfg.lastItemNumber
+            except AttributeError:
+                pass
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.1.0...')
 
@@ -93,6 +104,7 @@ class Migrate_To_3_1_0(Migrator):
         self._adaptConfigsWFAdaptationsValues()
         self._addMissingTopics()
         self._updateMaxShownFoundDefaultValues()
+        self._removeLastItemNumberAttrOnMeetingConfigs()
         self.finish()
 
 
@@ -100,7 +112,11 @@ class Migrate_To_3_1_0(Migrator):
 def migrate(context):
     '''This migration function:
 
-       1) Adapt stored values for every MeetingConfig.mailMeetingEvents.
+       1) Adapt stored values for every MeetingConfig.mailMeetingEvents;
+       2) The wfAdaptation 'add_published_state' has been renamed to 'hide_decisions_when_under_writing';
+       3) Add missing topics;
+       4) Update portal_plonemeeting maxShownFound values from 10 to 20;
+       5) Finish removal of attribute 'lastItemNumber' on existing MeetingConfig instances.
     '''
     Migrate_To_3_1_0(context).run()
 # ------------------------------------------------------------------------------

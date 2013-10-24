@@ -89,29 +89,20 @@
             <b i18n:translate="PloneMeeting_label_shortName"></b>:
             <span tal:content="context/getShortName"/>
           </td>
-          <td></td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('isDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('lastItemNumber')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('lastMeetingNumber')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('yearlyInitMeetingNumber')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('configVersion')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
-          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('enableAnnexToPrint')">

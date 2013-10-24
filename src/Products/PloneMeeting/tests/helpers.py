@@ -65,9 +65,8 @@ class PloneMeetingTestingHelpers:
     ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'confirmed',
                                               'close': 'confirmed', }
 
-    def _createMeetingWithItems(self, withItems=True):
+    def _createMeetingWithItems(self, withItems=True, meetingDate=DateTime()):
         '''Create a meeting with a bunch of items.'''
-        meetingDate = DateTime()
         meeting = self.create('Meeting', date=meetingDate)
         # a meeting could be created with items if it has
         # recurring items...  But we can also add some more...
@@ -94,6 +93,7 @@ class PloneMeetingTestingHelpers:
             item5.setPrivacy('public')
             item5.setCategory('events')
             for item in (item1, item2, item3, item4, item5):
+                item.setDecision('<p>A decision</p>')
                 self.presentItem(item)
         return meeting
 
