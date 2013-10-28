@@ -22,7 +22,14 @@
 # 02110-1301, USA.
 #
 
+import os
+import shutil
+from tempfile import mkdtemp
+
 from zope.annotation import IAnnotations
+
+from collective.documentviewer.settings import GlobalSettings
+
 from Products.statusmessages.interfaces import IStatusMessage
 from Products.PloneMeeting.MeetingFile import CONVERSION_ERROR
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
@@ -36,9 +43,10 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         PloneMeetingTestCase.setUp(self)
         # set storage to Blob for collective.documentviewer so everything is correctly
         # removed while the test finished
-        from collective.documentviewer.settings import GlobalSettings
+        _dir = mkdtemp()
         viewer_settings = GlobalSettings(self.portal)._metadata
         viewer_settings['storage_type'] = 'Blob'
+        viewer_settings['storage_location'] = _dir
         # annex preview is disabled by default in 'test' profile
         self.tool.setEnableAnnexPreview(True)
 
@@ -154,6 +162,78 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         annexAnnotations = IAnnotations(annex)['collective.documentviewer']
         clonedAnnexAnnotations = IAnnotations(clonedAnnex)['collective.documentviewer']
         self.failUnless(annexAnnotations['last_updated'] != clonedAnnexAnnotations['last_updated'])
+
+    def test_pm_getAnnexesToPrintUsingBlob(self):
+        """
+          Test the MeetingItem.getAnnexesToPrint method.  It is a helper method that
+          returns a dict containing usefull informations about annexes to print in a POD template.
+          This test when the global settings storage_type is 'Blob'.
+        """
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        annex.setToPrint(True)
+        # add a second annex but not set as toPrint
+        annex2 = self.addAnnex(item)
+        self.assertTrue(not annex2.getToPrint())
+
+        annexAnnotations = IAnnotations(annex)['collective.documentviewer']
+        # we have to call 'readers' on the blob the make sure it is really committed...
+        # or _p_blob_committed could not be set
+        annexAnnotations['blob_files']['large/dump_1.png'].readers
+        largeFileDumpImage1Path = annexAnnotations['blob_files']['large/dump_1.png']._p_blob_committed
+        expected = [{'images': [{'path': largeFileDumpImage1Path,
+                                 'number': 1}],
+                     'number_of_images': 1,
+                     'number': 1,
+                     'UID': annex.UID(),
+                     'title': annex.Title()}]
+        self.assertEquals(item.getAnnexesToPrint(), expected)
+
+    def test_pm_getAnnexesToPrintUsingFile(self):
+        """
+          Test the MeetingItem.getAnnexesToPrint method.  It is a helper method that
+          returns a dict containing usefull informations about annexes to print in a POD template.
+          This test when the global settings storage_type is 'File'.
+        """
+        viewer_settings = GlobalSettings(self.portal)._metadata
+        viewer_settings['storage_type'] = 'File'
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        annex.setToPrint(True)
+        annexUID = annex.UID()
+        # add a second annex but not set as toPrint
+        annex2 = self.addAnnex(item)
+        self.assertTrue(not annex2.getToPrint())
+        dvpdffiles = self.portal.unrestrictedTraverse('@@dvpdffiles')
+        filetraverser = dvpdffiles.publishTraverse(self.request, annexUID[0])
+        filetraverser = dvpdffiles.publishTraverse(self.request, annexUID[1])
+        filetraverser = dvpdffiles.publishTraverse(self.request, annexUID)
+        large = filetraverser.publishTraverse(self.request, 'large')
+        largeFileDumpImage1Path = large.context.path
+        expected = [{'images': [{'path': largeFileDumpImage1Path + '/dump_1.png',
+                                 'number': 1}],
+                     'number_of_images': 1,
+                     'number': 1,
+                     'UID': annex.UID(),
+                     'title': annex.Title()}]
+        self.assertEquals(item.getAnnexesToPrint(), expected)
+
+    def tearDown(self):
+        """
+          While using 'File' as storage_type, annexes are converted in a temporary
+          folder that is not removed automatically, so remove it manually...
+        """
+        PloneMeetingTestCase.tearDown(self)
+        viewer_settings = GlobalSettings(self.portal)._metadata
+        if viewer_settings['storage_type'] == 'Blob':
+            return
+
+        storage_location = GlobalSettings(self.portal).storage_location
+        # removed the temporary folder created during tests
+        if os.path.exists(storage_location):
+            shutil.rmtree(storage_location)
 
 
 def test_suite():

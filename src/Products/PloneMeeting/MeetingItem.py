@@ -23,7 +23,6 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-import os
 import re
 from collections import OrderedDict
 from appy.gen import No
@@ -37,8 +36,6 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
 from zope.i18n import translate
-from collective.documentviewer import storage
-from collective.documentviewer.settings import Settings
 from collective.documentviewer.settings import GlobalSettings
 from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
 from Products.CMFCore.Expression import Expression, createExprContext
@@ -3624,6 +3621,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           and second key is a tuple of path where to find relevant images to print :
           [
            {'title': 'My annex title',
+            'UID': 'annex_UID',
             'number_of_images': 2,
             'images': [{'image_number': 1,
                         'image_path': '/path/to/image1.png',},
@@ -3631,6 +3629,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         'image_path': '/path/to/image2.png',},
                       ]},
            {'title': 'My annex2 title',
+            'UID': 'annex2_UID',
             'number_of_images': 1,
             'images': [{'image_number': 1,
                         'image_path': '/path/to/image21.png',},
@@ -3639,10 +3638,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         """
         portal = getToolByName(self, 'portal_url').getPortalObject()
+        global_settings = GlobalSettings(portal)
+        request = self.REQUEST
         annexes = self.getAnnexesInOrder(decisionRelated)
-        basePathForImages = os.environ['PWD']
-        dv_global_settings = GlobalSettings(portal)
-        dvStorageLocation = dv_global_settings.storage_location
         res = []
         i = 1
         for annex in annexes:
@@ -3651,7 +3649,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             # if the annex needs to be printed, check if everything is ok to print it
             annex_annotations = IAnnotations(annex)
-            # must be converted successfully
+            # must have been converted successfully
             if not 'collective.documentviewer' in annex_annotations.keys() or not \
                'successfully_converted' in annex_annotations['collective.documentviewer'] or not \
                annex_annotations['collective.documentviewer']['successfully_converted'] is True:
@@ -3661,25 +3659,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # build path to images
             data = {}
             data['title'] = annex.Title()
+            annexUID = annex.UID()
+            data['UID'] = annex.UID()
             data['number'] = i
             data['images'] = []
-            dv_settings = Settings(annex)
-            resource_url = storage.getResourceRelURL(gsettings=dv_global_settings, settings=dv_settings)
-            # remove leading '@@dvpdffiles' view name
-            resource_url = resource_url.replace('@@dvpdffiles/', '', 1)
-            pathToImages = os.path.join(basePathForImages, dvStorageLocation, resource_url, 'large')
-            if not os.path.exists(pathToImages):
-                continue
-            j = 1
-            imagesPaths = os.listdir(pathToImages)
-            # keep order as listdir does return elements in an arbitrary order
-            # imagesPaths is like ['dump_1.png', 'dump_3.png', 'dump_4.png', 'dump_2.png', 'dump_5.png', ]
-            imagesPaths.sort()
-            data['number_of_images'] = len(imagesPaths)
-            for imagePath in imagesPaths:
-                data['images'].append({'number': j,
-                                       'path': os.path.join(pathToImages, imagePath)})
-                j = j + 1
+            data['number_of_images'] = annex_annotations['collective.documentviewer']['num_pages']
+            dvpdffiles = portal.unrestrictedTraverse('@@dvpdffiles')
+            filetraverser = dvpdffiles.publishTraverse(request, annexUID[0])
+            filetraverser = dvpdffiles.publishTraverse(request, annexUID[1])
+            filetraverser = dvpdffiles.publishTraverse(request, annexUID)
+            large = filetraverser.publishTraverse(request, 'large')
+            for image_number in range(data['number_of_images']):
+                realImageNumber = image_number + 1
+                large_image_dump = large.publishTraverse(request, 'dump_%d.png' % realImageNumber)
+                if global_settings.storage_type == 'Blob':
+                    blob = large_image_dump.settings.blob_files[large_image_dump.filepath]
+                    blob.readers
+                    path = blob._p_blob_committed
+                else:
+                    path = large_image_dump.context.path
+                data['images'].append({'number': realImageNumber,
+                                       'path': path,
+                                       })
             res.append(data)
             i = i + 1
         return res
