@@ -38,31 +38,37 @@ class testPerformances(PloneMeetingTestCase):
     def test_pm_Delay5ItemsWith0Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(5, 0)
+        pm_logger.info('Delay %d items containing %d annexes in each.' % (5, 0))
         self._delaySeveralItems(meeting, uids)
 
     def test_pm_Delay10ItemsWith0Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(10, 0)
+        pm_logger.info('Delay %d items containing %d annexes in each.' % (10, 0))
         self._delaySeveralItems(meeting, uids)
 
     def test_pm_Delay5ItemsWith5Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(5, 5)
+        pm_logger.info('Delay %d items containing %d annexes in each.' % (5, 5))
         self._delaySeveralItems(meeting, uids)
 
     def test_pm_Delay10ItemsWith5Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(10, 5)
+        pm_logger.info('Delay %d items containing %d annexes in each.' % (10, 5))
         self._delaySeveralItems(meeting, uids)
 
     def test_pm_Delay5ItemsWith10Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(5, 10)
+        pm_logger.info('Delay %d items containing %d annexes in each.' % (5, 10))
         self._delaySeveralItems(meeting, uids)
 
     def test_pm_Delay10ItemsWith10Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(10, 10)
+        pm_logger.info('Delay %d items containing %d annexes in each.' % (10, 10))
         self._delaySeveralItems(meeting, uids)
 
     def _setupForDelayingItems(self, number_of_items, number_of_annexes):
