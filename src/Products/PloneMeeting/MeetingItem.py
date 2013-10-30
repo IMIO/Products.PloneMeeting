@@ -3664,6 +3664,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data['number'] = i
             data['images'] = []
             data['number_of_images'] = annex_annotations['collective.documentviewer']['num_pages']
+            # we need to traverse to something like : @@dvpdffiles/c/7/c7e2e8b5597c4dc28cf2dee9447dcf9a/large/dump_1.png
             dvpdffiles = portal.unrestrictedTraverse('@@dvpdffiles')
             filetraverser = dvpdffiles.publishTraverse(request, annexUID[0])
             filetraverser = dvpdffiles.publishTraverse(request, annexUID[1])
@@ -3672,8 +3673,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for image_number in range(data['number_of_images']):
                 realImageNumber = image_number + 1
                 large_image_dump = large.publishTraverse(request, 'dump_%d.png' % realImageNumber)
+                # depending on the fact that we are using 'Blob' or 'File' as storage_type,
+                # the 'large' object is different.  Either a Blob ('Blob') or a DirectoryResource ('File')
                 if global_settings.storage_type == 'Blob':
                     blob = large_image_dump.settings.blob_files[large_image_dump.filepath]
+                    # if we do not check 'readers', the blob._p_blob_committed is sometimes None...
                     blob.readers
                     path = blob._p_blob_committed
                 else:
