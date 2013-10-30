@@ -41,7 +41,7 @@
                       <form action="deleteAdvice" name="deleteAdvice" tal:attributes="action python: meetingItem.absolute_url() + '/deleteAdvice'">
                         <input type="hidden" value="#" name="groupId" tal:attributes="value advice/id">
                         <img style="cursor:pointer"
-                             tal:attributes="src string:$portal_url/delete.png;"
+                             tal:attributes="src string:$portal_url/delete_icon.png;"
                              i18n:attributes="title"
                              title="Delete advice"
                              onclick="javascript:confirmDeleteObject(this)" />

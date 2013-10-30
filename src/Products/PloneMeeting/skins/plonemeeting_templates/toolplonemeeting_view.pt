@@ -72,7 +72,7 @@
                 <!-- Delete the meeting config -->
                 <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
                  <img title="label_remove_meetingconfig" i18n:attributes="title"
-                      tal:attributes="src string:$portal_url/delete.png"
+                      tal:attributes="src string:$portal_url/delete_icon.png"
                       onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
                 </form>
@@ -142,7 +142,7 @@
                 <!-- Delete the meeting group -->
                 <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
                  <img title="label_remove_meetinggroup" i18n:attributes="title"
-                      tal:attributes="src string:$portal_url/delete.png"
+                      tal:attributes="src string:$portal_url/delete_icon.png"
                       onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                 <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
 
@@ -245,7 +245,7 @@
                   </a>
                   <a tal:attributes="href python: extApp.absolute_url() + '/delete_confirmation'">
                   <img title="label_remove" i18n:attributes="title"
-                       tal:attributes="src string:$portal_url/delete.png"/>
+                       tal:attributes="src string:$portal_url/delete_icon.png"/>
                   </a>
                 </tal:actions>
               </td>

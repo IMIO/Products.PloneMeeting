@@ -617,7 +617,7 @@ document.location.reload(true);
       <td tal:condition="isDataChange">
         <span i18n:translate="data_change"></span>
         <img tal:condition="python: member.has_role('Manager')" style="cursor:pointer"
-             tal:attributes="src string:$portal_url/delete.png;
+             tal:attributes="src string:$portal_url/delete_icon.png;
                              onClick python: 'deleteEvent(\'%s\', \'%s\')' % (context.UID(), event['time'])"/>
       </td>
       <td tal:condition="not: isDataChange" tal:content="event/action" i18n:translate=""/>

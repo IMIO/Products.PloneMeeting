@@ -87,7 +87,7 @@ A 'hasAction' is initialized to False and set to True if at least one action is 
             <input type="hidden" name="selected_uid" tal:attributes="value objectUID" />
             <tal:comment replace="nothing">Icon</tal:comment>
             <img tal:condition="showIcons" i18n:attributes="title" title="Delete"
-                 tal:attributes="src string: $portal_url/delete.png"
+                 tal:attributes="src string: $portal_url/delete_icon.png"
                  onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
 
             <tal:comment replace="nothing">Button</tal:comment>

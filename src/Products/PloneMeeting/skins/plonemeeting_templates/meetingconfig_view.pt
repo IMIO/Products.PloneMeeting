@@ -279,7 +279,7 @@
                   <!-- Delete the file type -->
                   <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
                   <img title="label_remove" i18n:attributes="title"
-                       tal:attributes="src string:$portal_url/delete.png"
+                       tal:attributes="src string:$portal_url/delete_icon.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                   <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
                 </form>
@@ -346,7 +346,7 @@
                 <!-- Delete the category -->
                   <input type="hidden" name="selected_uid" tal:attributes="value obj/UID"/>
                     <img title="label_remove" i18n:attributes="title"
-                         tal:attributes="src string:$portal_url/delete.png"
+                         tal:attributes="src string:$portal_url/delete_icon.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                   <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
                 </form>
@@ -415,7 +415,7 @@
                 <!-- Delete the category -->
                   <input type="hidden" name="selected_uid" tal:attributes="value obj/UID"/>
                     <img title="label_remove" i18n:attributes="title"
-                         tal:attributes="src string:$portal_url/delete.png"
+                         tal:attributes="src string:$portal_url/delete_icon.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                     <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
                 </form>
@@ -482,7 +482,7 @@
                 <!-- Delete the item -->
                   <input type="hidden" name="selected_uid" tal:attributes="value obj/UID"/>
                     <img title="label_remove" i18n:attributes="title"
-                         tal:attributes="src string:$portal_url/delete.png"
+                         tal:attributes="src string:$portal_url/delete_icon.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                     <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
                 </form>
@@ -681,7 +681,7 @@
                   <!-- Delete the topic -->
                   <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
                   <img title="label_remove" i18n:attributes="title"
-                       tal:attributes="src string:$portal_url/delete.png"
+                       tal:attributes="src string:$portal_url/delete_icon.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                   <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
                 </form>
@@ -883,7 +883,7 @@
           <!-- Delete the user -->
             <input type="hidden" name="selected_uid" tal:attributes="value obj/UID"/>
               <img title="label_remove" i18n:attributes="title"
-                   tal:attributes="src string:$portal_url/delete.png"
+                   tal:attributes="src string:$portal_url/delete_icon.png"
                    onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
               <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
           </form>
@@ -959,7 +959,7 @@
                   <tal:comment replace="nothing">Delete it</tal:comment>
                   <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
                   <img title="label_remove" i18n:attributes="title"
-                       tal:attributes="src string:$portal_url/delete.png"
+                       tal:attributes="src string:$portal_url/delete_icon.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                   <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
                 </form>
