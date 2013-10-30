@@ -29,7 +29,7 @@
         <img tal:define="member context/@@plone_portal_state/member;
                          portal_url context/@@plone_portal_state/portal_url;"
              tal:condition="python: member.has_role('Manager')" style="cursor:pointer"
-             tal:attributes="src string:$portal_url/delete.png;
+             tal:attributes="src string:$portal_url/delete_icon.png;
                              onClick python: 'deleteEvent(\'%s\', \'%s\')' % (context.UID(), event['time'])"/>
       </td>
       <td class="#"
