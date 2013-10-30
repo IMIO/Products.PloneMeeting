@@ -1058,6 +1058,9 @@ MeetingItem_schema = OrderedBaseFolderSchema.copy() + \
 MeetingItem_schema.registerLayer('marshall', MeetingItemMarshaller())
 # Make title longer
 MeetingItem_schema['title'].widget.maxlength = '500'
+# Define a specific msgid for title
+MeetingItem_schema['title'].widget.i18n_domain = 'PloneMeeting'
+MeetingItem_schema['title'].widget.label_msgid = 'PloneMeeting_label_itemTitle'
 ##/code-section after-schema
 
 class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
