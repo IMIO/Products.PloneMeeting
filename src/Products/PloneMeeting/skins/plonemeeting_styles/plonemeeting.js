@@ -81,7 +81,7 @@ function findParent(node, className) {
 */
 function bringForward(elem) {
     /* Put backward all annexes groups and popups (excepted the current one) */
-    var annexGroups = cssQuery('table.contentActionsAX');
+    var annexGroups = $('table.contentActionsAX');
     var currentAnnexGroup = findParent(elem, "contentActionsAX");
     for (var i=0; i < annexGroups.length; i++) {
         if (annexGroups[i] == currentAnnexGroup){
@@ -95,7 +95,7 @@ function bringForward(elem) {
     }
 }
 function hideAllMenusAX(node) {
-    var menus = cssQuery('dl.actionMenuAX', node);
+    var menus = $('dl.actionMenuAX', node);
     for (var i=0; i < menus.length; i++) {
         replaceClassName(menus[i], 'activated', 'deactivated', true);
     }
@@ -153,7 +153,7 @@ function actionMenuMouseOverAX(event) {
 
     var switch_menu = false;
     // hide all menus
-    var menus = cssQuery('dl.actionMenuAX');
+    var menus = $('dl.actionMenuAX');
     for (var i=0; i < menus.length; i++) {
         var menu = menus[i]
         // check if the menu is visible
@@ -166,7 +166,7 @@ function actionMenuMouseOverAX(event) {
         }
     }
     if (switch_menu) {
-        var menu = cssQuery('#'+menu_id)[0];
+        var menu = $('#'+menu_id)[0];
         if (menu) {
             bringForward(this);
             replaceClassName(menu, 'deactivated', 'activated', true);
@@ -183,14 +183,14 @@ function initializeMenusAXStartingAt(node) {
   hideAllMenusAX(node);
 
   // Add toggle function to header links
-  var menu_headers = cssQuery('dl.actionMenuAX > dt.actionMenuHeaderAX > a', node);
+  var menu_headers = $('dl.actionMenuAX > dt.actionMenuHeaderAX > a', node);
   for (var i=0; i < menu_headers.length; i++) {
     var menu_header = menu_headers[i];
     menu_header.onclick = toggleMenuHandlerAX;
   }
   // Add hide function to all links in the dropdown, so the dropdown closes
   // when any link is clicked
-  var menu_contents = cssQuery('dl.actionMenuAX > dd.actionMenuContentAX', node);
+  var menu_contents = $('dl.actionMenuAX > dd.actionMenuContentAX', node);
   for (var i=0; i < menu_contents.length; i++) {
     menu_contents[i].onclick = hideMenusHandlerAX;
   }
@@ -585,7 +585,7 @@ function initRichTextField(rq, hook) {
      rich-text field through Ajax. */
   // Javascripts inside this zone will not be executed. So find them
   // and trigger their execution here.
-  var scripts = cssQuery('script', hook);
+  var scripts = $('script', hook);
   var fieldName = rq.hook.split('_')[1];
   for (var i=0; i<scripts.length; i++) {
     var scriptContent = scripts[i].innerHTML;
