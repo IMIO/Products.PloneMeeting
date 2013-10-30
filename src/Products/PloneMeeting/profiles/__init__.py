@@ -19,6 +19,7 @@
 # 02110-1301, USA.
 
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+DEFAULT_USER_PASSWORD = 'meeting'
 
 
 class Descriptor:
@@ -133,7 +134,7 @@ class UserDescriptor(Descriptor):
     '''Useful for creating test users, so PloneMeeting may directly be tested
        after a profile has been imported.'''
     def __init__(self, id, globalRoles, email='user AT plonemeeting.org',
-                 password='meeting', fullname=None):
+                 password=DEFAULT_USER_PASSWORD, fullname=None):
         self.id = id
         self.globalRoles = globalRoles
         self.email = email.replace(' AT ', '@')  # Anti-spam

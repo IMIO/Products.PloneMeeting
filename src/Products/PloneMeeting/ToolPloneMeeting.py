@@ -29,10 +29,11 @@ from Products.CMFCore.utils import UniqueObject
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
+import string
 import time
 import re
+from openid.cryptutil import randomString
 from appy.gen import No
-from appy.shared.data import nativeNames
 from AccessControl import Unauthorized
 from OFS import CopySupport
 from BTrees.OOBTree import OOBTree
@@ -55,6 +56,7 @@ from Products.CMFPlone.PloneBatch import Batch
 from Products.DCWorkflow.Transitions import TRIGGER_USER_ACTION
 from Products.DCWorkflow.Expression import StateChangeInfo, createExprContext
 from Products.ATContentTypes import permission as ATCTPermissions
+from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
@@ -1722,7 +1724,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.portal_registration.addMember(
             userData.id, userData.password,
             ['Member'] + userData.globalRoles,
-            properties={'username': userData.id, 'email': userData.email,
+            properties={'username': userData.id,
+                        'email': userData.email,
                         'fullname': userData.fullname or ''})
         # Add the user to some Plone groups
         groupsTool = self.portal_groups
@@ -1763,6 +1766,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            if p_usersOutsideGroups is not empty, it is a list of UserDescriptor
            instances that will serve to create the corresponding Plone users.'''
         groupsTool = self.portal_groups
+        # use a generated password if we are adding an instance
+        # in a mount point, aka an instance that will be in production one day...
+        portal = getToolByName(self, 'portal_url').getPortalObject()
+        is_mountpoint = len(portal.absolute_url_path().split('/')) > 2
+        password = is_mountpoint and randomString(8, (string.ascii_letters + string.digits)) or None
+        logger.info("The password used for added users is '%s'" % (password or DEFAULT_USER_PASSWORD))
         for groupDescr in groups:
             # Maybe the MeetingGroup already exists?
             # It could be the case if we are reapplying a configuration
@@ -1775,6 +1784,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 group.at_post_create_script()
             # Create users
             for userDescr in groupDescr.getUsers():
+                # if we defined a generated password here above, we use it
+                # either we use the password provided in the applied profile
+                if password:
+                    userDescr.password = password
                 self.addUser(userDescr)
             # Add users in the correct Plone groups.
             for groupSuffix in MEETING_GROUP_SUFFIXES:
