@@ -281,6 +281,9 @@ def postInstall(context):
     # manage safe_html
     _congfigureSafeHtml(site)
 
+    # adapt front-page
+    _adaptFrontPage(site)
+
     # configure collective.documentviewer
     from collective.documentviewer.settings import GlobalSettings
     viewer_settings = GlobalSettings(site)._metadata
@@ -350,6 +353,39 @@ def _congfigureSafeHtml(site):
         del site.portal_transforms.safe_html._config['nasty_tags']['strike']
     # reload transforms so changes are taken into account
     site.portal_transforms.reloadTransforms()
+
+
+def _adaptFrontPage(site):
+    '''
+      We adapt the front-page at install time.  To do it only at install time, we will compare front-page modified
+      and created attributes, if it is almost equals (in general there is a difference of 0.04 sec, we will
+      take here a difference of 0.5 seconds), then it means that it was not changed, we can update it.
+    '''
+    # first be sure that a front-page exists
+    frontPage = getattr(site, 'front-page', None)
+    if not frontPage:
+        return
+
+    # make sure we only adapt it at install time, so when creation and modification date are almost equal
+    if frontPage.modified() - frontPage.created() < 0.000005:
+        # disable presentation mode
+        frontPage.setPresentation(False)
+        # there is a difference of less than 0.5 seconds between last modification and creation date
+        # it means that practically, the front page was not adapted...
+        frontPageTitle = translate('front_page_title',
+                                   domain='PloneMeeting',
+                                   context=site.REQUEST)
+        frontPage.setTitle(frontPageTitle)
+        frontPageDescription = translate('front_page_description',
+                                         domain='PloneMeeting',
+                                         context=site.REQUEST)
+        frontPage.setDescription(frontPageDescription)
+        frontPageBody = translate('front_page_body',
+                                  domain='PloneMeeting',
+                                  context=site.REQUEST)
+        frontPage.setText(frontPageBody)
+        frontPage.setModificationDate(frontPage.created() + 0.000002)
+        frontPage.reindexObject()
 
 
 def reInstall(context):
