@@ -8,10 +8,26 @@ Version 1.x are for Plone2.5, 2.x are for Plone3.x and 3+ are for Plone4.x
 - Moved to Plone 4.3.2
 - Added functionnality to easily manage/propagate item assembly/signatures on several items
 - Added topic searches 'search items to validate' and 'search items to prevalidate'
+- Do not fail while adding an item in a meeting that contains items using a disabled category/proposing group
 - Added possibility to send email notification upon each item transition
+- Added wfAdaptation 'hide decision to users when under writing by meeting managers'
+- Optimized MeetingItem.getItemNumber so working with 'relativeTo=meetingConfig' is performant and always returns
+  the same result, no matter previous meetings are closed or not, no matter current user roles, ...
+- Override the Products.Archetypes @@at_utils view, use current Github version as
+  version in Plone 4.3.2 do not translate correctly in some cases
 - Corrected copy_items when using meetingfolder_view to work between meetingfolder_view and others
 - Corrected bug where history was not showing if historization was activated
-- Added wfAdaptation 'hide decision to users when under writing by meeting managers'
+- Do not avoid removal of a MeetingGroup if linked Plone groups still contains 'no found' users
+- Added functionnality to adapt freshly created site front-page (at install time)
+- Generate password for test users while detectng that we are creating a test instance
+  for production purpose (created in a mount point)
+- Use already existing (in Plone by default) delete_icon.png instead of our delete.png
+- Removed use of deprecated cssQuery in plonemeeting.js
+- Corrected bug where it was possible to remove a MeetingGroup still used in
+  a MeetingConfig.selectableCopyGroups field
+- Use 20 instead of 10 for number of elements shown in result listings
+- Adapted code in Meeting.validate_date as DateTime._localzone0/1 does not exist anymore
+- Display signatures on the meeting_view correctly
 
 3.0.3 (2013-08-19)
 ------------------
