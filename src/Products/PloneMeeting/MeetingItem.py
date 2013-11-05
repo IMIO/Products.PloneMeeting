@@ -1991,7 +1991,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         # either we use free textarea to define assembly...
         if item.getItemAssembly():
-            return tool.toHTMLStrikedContent(meeting.getAssembly())
+            return tool.toHTMLStrikedContent(item.getAssembly())
 
         # or we use MeetingUsers
         elif item.getAttendees():
