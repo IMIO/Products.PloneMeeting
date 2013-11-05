@@ -1440,10 +1440,11 @@ class Meeting(BaseContent, BrowserDefaultMixin):
           having this duty...  This is only relevant if MeetingUsers are enabled.
         '''
         meeting = self.getSelf()
+        tool = getToolByName(self, 'portal_plonemeeting')
         # either we use free textarea to define assembly...
         if meeting.getAssembly():
-            return meeting.getAssembly().replace('[[', '<strike>').replace(']]', '</strike>'). \
-                replace('<p>', '<p class="mltAssembly">')
+            return tool.toHTMLStrikedContent(meeting.getAssembly())
+
         # or we use MeetingUsers
         elif meeting.getAttendees():
             res = []
