@@ -2379,7 +2379,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(transition.id)
         return res
 
-
+    security.declarePublic('toHTMLStrikedContent')
+    def toHTMLStrikedContent(self, content):
+        """
+          Transform given p_content that is plain text having elements to strike between [[]]
+          to a HTML string using <strike> and surroung all this with a <p> for wich
+          we give a class='mltAssembly' attribute.
+        """
+        return content.replace('[[', '<strike>').replace(']]', '</strike>'). \
+            replace('<p>', '<p class="mltAssembly">')
 
 registerType(ToolPloneMeeting, PROJECTNAME)
 # end of class ToolPloneMeeting

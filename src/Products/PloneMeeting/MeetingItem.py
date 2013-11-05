@@ -1990,8 +1990,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         # either we use free textarea to define assembly...
         if item.getItemAssembly():
-            return item.getItemAssembly().replace('[[', '<strike>'). \
-                replace(']]', '</strike>').replace('<p>', '<p class="mltAssembly">')
+            return tool.toHTMLStrikedContent(meeting.getAssembly())
+
         # or we use MeetingUsers
         elif item.getAttendees():
             res = []
