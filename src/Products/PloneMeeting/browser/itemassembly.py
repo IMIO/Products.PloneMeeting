@@ -54,10 +54,12 @@ class IManageItemAssembly(interface.Interface):
     item_assembly = schema.Text(title=_(u"Item assembly to apply"),
                                 description=_(u"Enter the item assembly to be applied.  The value displayed "
                                               u"by default is the value of the current item."),
-                                defaultFactory=item_assembly_default,)
+                                defaultFactory=item_assembly_default,
+                                required=False,)
     apply_until_item_number = schema.Int(title=_(u"Apply until item number"),
-                                         description=_(u"If you specify a number, the item assembly entered here above will be applied from "
-                                                       u"current item to the item number entered.  Leave empty to only apply for current item."),
+                                         description=_(u"If you specify a number, the item assembly entered here "
+                                                       u"above will be applied from current item to the item number "
+                                                       u"entered.  Leave empty to only apply for current item."),
                                          required=False,)
 
 

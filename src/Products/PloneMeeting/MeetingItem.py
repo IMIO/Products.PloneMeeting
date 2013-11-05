@@ -892,7 +892,7 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and " \
+            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and "
                       "here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
@@ -907,7 +907,7 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and " \
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and "
                       "here.getMeeting().attributeIsUsed('signatures')",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
@@ -921,7 +921,7 @@ schema = Schema((
     LinesField(
         name='itemSignatories',
         widget=MultiSelectionWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and " \
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and "
                       "here.getMeeting().attributeIsUsed('signatories')",
             description="ItemSignatories",
             description_msgid="item_signatories_descr",
@@ -1980,7 +1980,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getStrikedItemAssembly')
     def getStrikedItemAssembly(self, groupByDuty=True):
         '''
-          Generates an HTML version of the itemAssembly :
+          Generates a HTML version of the itemAssembly :
           - strikes absents (represented using [[Member assembly name]])
           - add a 'mltAssembly' class to generated <p> so it can be used in the Pod Template
           If p_groupByDuty is True, the result will be generated with members having the same

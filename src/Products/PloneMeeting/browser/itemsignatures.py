@@ -54,11 +54,13 @@ class IManageItemSignatures(interface.Interface):
     item_signatures = schema.Text(title=_(u"Item signatures to apply"),
                                   description=_(u"Enter the item signatures to be applied.  The value displayed "
                                                 u"by default is the value of the current item."),
-                                  defaultFactory=item_signatures_default,)
+                                  defaultFactory=item_signatures_default,
+                                  required=False,)
     apply_until_item_number = schema.Int(title=_(u"Apply until item number"),
-                                             description=_(u"If you specify a number, the item signatures entered here above will be applied from "
-                                                           u"current item to the item number entered.  Leave empty to only apply for current item."),
-                                             required=False,)
+                                         description=_(u"If you specify a number, the item signatures entered "
+                                                       u"here above will be applied from current item to the item "
+                                                       u"number entered.  Leave empty to only apply for current item."),
+                                         required=False,)
 
 
 class DisplaySignaturesFromMeetingProvider(ContentProviderBase):
