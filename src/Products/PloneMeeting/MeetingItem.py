@@ -1988,9 +1988,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           having this duty...  This is only relevant if MeetingUsers are enabled.
         '''
         item = self.getSelf()
+        tool = getToolByName(self, 'portal_plonemeeting')
         # either we use free textarea to define assembly...
         if item.getItemAssembly():
-            return tool.toHTMLStrikedContent(meeting.getItemAssembly())
+            return tool.toHTMLStrikedContent(item.getItemAssembly())
 
         # or we use MeetingUsers
         elif item.getAttendees():
