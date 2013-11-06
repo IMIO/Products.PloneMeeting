@@ -28,7 +28,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Use already existing (in Plone by default) delete_icon.png instead of our delete.png
 - Removed use of deprecated cssQuery in plonemeeting.js
 - Corrected bug where it was possible to remove a MeetingGroup still used in
-  a MeetingConfig.selectableCopyGroups field
+  a MeetingConfig.selectableCopyGroups field or in a MeetingItem.copyGroups field
+- Make sure vocabularies used for differents fields do contain terms corresponding
+  to stored values on the object.  If term corresponding to stored value is not in the vocabulary,
+  we add it to the vocabulary so it always works
 - Use 20 instead of 10 for number of elements shown in result listings
 - Adapted code in Meeting.validate_date as DateTime._localzone0/1 does not exist anymore
 - Display signatures on the meeting_view correctly

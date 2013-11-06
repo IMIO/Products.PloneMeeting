@@ -310,16 +310,21 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                                       mapping={'url': item.absolute_url()},
                                       context=self.REQUEST))
             # In the application
+            # most of times, the real groupId is stored, but for MeetingItem.copyGroups, we
+            # store suffixed elements of the group, so compute suffixed elements for self and compare
+            suffixedGroups = set()
+            for groupSuffix in MEETING_GROUP_SUFFIXES:
+                suffixedGroups.add(self.getPloneGroupId(groupSuffix))
             for brain in self.portal_catalog(meta_type="MeetingItem"):
                 obj = brain.getObject()
                 if (obj.getProposingGroup() == mgId) or \
                    (mgId in obj.getAssociatedGroups()) or \
                    (mgId in obj.getOptionalAdvisers()) or \
-                   (mgId in obj.getMandatoryAdvisers()):
+                   (mgId in obj.getMandatoryAdvisers()) or \
+                   set(obj.getCopyGroups()).intersection(suffixedGroups):
                     # The meetingGroup is linked to an existing item, we can not
                     # delete it.
                     raise BeforeDeleteException("can_not_delete_meetinggroup_meetingitem")
-
             # If everything passed correctly, we delete every linked (and empty)
             # Plone groups.
             for role in MEETING_GROUP_SUFFIXES:

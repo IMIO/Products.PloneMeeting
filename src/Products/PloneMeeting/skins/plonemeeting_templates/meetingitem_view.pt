@@ -198,6 +198,7 @@
              </tal:displayOtherMeetingConfigsClonableTo>
              <span tal:condition="not: otherMCs">-</span>
         </div>
+
         <tal:comment replace="nothing">Privacy</tal:comment>
         <div class="discreet"
              tal:define="privacy context/getPrivacy"
@@ -259,11 +260,11 @@
     <tal:field define="fieldName python: 'detailedDescription'; ajaxEdit python:True">
        <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
     </tal:field>
+
     <tal:comment replace="nothing">Budgetary informations</tal:comment>
-    <fieldset tal:condition="python: 'budgetInfos' in usedAttrs and context.getBudgetRelated()">
-      <legend i18n:translate="PloneMeeting_label_budgetInfos">Budgetary informations</legend>
-      <div tal:replace="structure context/getBudgetInfos"></div>
-    </fieldset>
+    <tal:field define="fieldName python: 'budgetInfos'; ajaxEdit python:True">
+       <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+    </tal:field>
 
     <tal:comment replace="nothing">Motivation</tal:comment>
     <tal:field define="fieldName python: 'motivation'; ajaxEdit python:True">

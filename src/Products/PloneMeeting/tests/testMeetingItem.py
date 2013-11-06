@@ -1008,7 +1008,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # we have 7 items in meeting2 and firstItemNumber is not set
         self.assertTrue(meeting2.getItemsCount() == 7)
         self.assertTrue(meeting2.getFirstItemNumber() == -1)
-        self.assertTrue(meeting2.getAllItems()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # itemNumber relativeTo itemsList/meeting does not change but relativeTo meetingConfig changed
         # for the normal item
         self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
@@ -1039,7 +1039,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.assertTrue(meeting2.queryState(), 'closed')
         self.assertTrue(meeting2.getFirstItemNumber() == 1)
-        self.assertTrue(meeting2.getAllItems()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # getItemNumber is still behaving the same
         # for item
         self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
@@ -1064,6 +1064,119 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
         self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
         self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+
+    def test_pm_listMeetingsAcceptingItems(self):
+        """
+          This is the vocabulary for the field "preferredMeeting".
+          Check that we still have the stored value in the vocabulary, aka if the stored value
+          is no more in the vocabulary, it is still in it tough ;-)
+        """
+        self.changeUser('pmManager')
+        # create some meetings
+        m1 = self._createMeetingWithItems(meetingDate=DateTime('2013/05/13'))
+        m1UID = m1.UID()
+        m2 = self.create('Meeting', date=DateTime('2013/05/20'))
+        m2UID = m2.UID()
+        self.create('Meeting', date=DateTime('2013/05/27'))
+        # for now, these 3 meetings accept items
+        # create an item to check the method
+        item = self.create('MeetingItem')
+        # we havbe 3 meetings and one special element "whatever"
+        self.assertEquals(len(item.listMeetingsAcceptingItems()), 4)
+        self.assertTrue("whatever" in item.listMeetingsAcceptingItems().keys())
+        # now do m1 a meeting that do not accept any items anymore
+        self.closeMeeting(m1)
+        self.assertEquals(len(item.listMeetingsAcceptingItems()), 3)
+        # so m1 is no more in the vocabulary
+        self.assertTrue(m1UID not in item.listMeetingsAcceptingItems().keys())
+        # but if it was the preferredMeeting selected for the item
+        # it is present in the vocabulary
+        item.setPreferredMeeting(m1UID)
+        self.assertEquals(len(item.listMeetingsAcceptingItems()), 4)
+        self.assertTrue(m1UID in item.listMeetingsAcceptingItems().keys())
+        # if item.preferredMeeting is in the vocabulary by default, it works too
+        item.setPreferredMeeting(m2UID)
+        self.assertEquals(len(item.listMeetingsAcceptingItems()), 3)
+        self.assertTrue(m1UID not in item.listMeetingsAcceptingItems().keys())
+        self.assertTrue(m2UID in item.listMeetingsAcceptingItems().keys())
+        # delete meeting stored as preferredMeeting for the item
+        # it should not appear anymore in the vocabulary
+        # delete m2, avoid permission problems, do that as 'Manager'
+        self.changeUser('admin')
+        m2.aq_inner.aq_parent.manage_delObjects(ids=[m2.getId(), ])
+        self.changeUser('pmManager')
+        self.assertEquals(len(item.listMeetingsAcceptingItems()), 2)
+        self.assertTrue(m2UID not in item.listMeetingsAcceptingItems().keys())
+
+    def test_pm_listCopyGroups(self):
+        """
+          This is the vocabulary for the field "copyGroups".
+          Check that we still have the stored value in the vocabulary, aka if the stored value
+          is no more in the vocabulary, it is still in it tough ;-)
+        """
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        self.assertEquals(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        # now select the 'developers_reviewers' as copyGroup for the item
+        item.setCopyGroups(('developers_reviewers', ))
+        # still the complete vocabulary
+        self.assertEquals(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        # remove developers_reviewers from selectableCopyGroups in the meetingConfig
+        self.meetingConfig.setSelectableCopyGroups(('vendors_reviewers', ))
+        # still in the vocabulary because selected on the item
+        self.assertEquals(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        # unselect 'developers_reviewers' on the item, it will not appear anymore in the vocabulary
+        item.setCopyGroups(())
+        self.assertEquals(item.listCopyGroups().keys(), ['vendors_reviewers', ])
+
+    def test_pm_listAssociatedGroups(self):
+        """
+          This is the vocabulary for the field "associatedGroups".
+          Check that we still have the stored value in the vocabulary, aka if the stored value
+          is no more in the vocabulary, it is still in it tough ;-)
+        """
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        self.assertEquals(item.listAssociatedGroups().keys(), ['developers', 'vendors'])
+        # now select the 'developers' as associatedGroup for the item
+        item.setAssociatedGroups(('developers', ))
+        # still the complete vocabulary
+        self.assertEquals(item.listAssociatedGroups().keys(), ['developers', 'vendors'])
+        # disable developers MeetingGroup in the portal_plonemeeting
+        self.changeUser('admin')
+        self.do(self.tool.developers, 'deactivate')
+        self.changeUser('pmManager')
+        # still in the vocabulary because selected on the item
+        self.assertEquals(item.listAssociatedGroups().keys(), ['developers', 'vendors'])
+        # unselect 'developers' on the item, it will not appear anymore in the vocabulary
+        item.setAssociatedGroups(())
+        self.assertEquals(item.listAssociatedGroups().keys(), ['vendors', ])
+
+    def test_pm_listOptionalAdvisers(self):
+        """
+          This is the vocabulary for the field "optionalAdvisers".
+          Check that we still have the stored value in the vocabulary, aka if the stored value
+          is no more in the vocabulary, it is still in it tough ;-)
+        """
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        # now select the 'developers' as optionalAdvisers for the item
+        item.setOptionalAdvisers(('developers', ))
+        # still the complete vocabulary
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        # disable developers MeetingGroup in the portal_plonemeeting
+        self.changeUser('admin')
+        self.do(self.tool.developers, 'deactivate')
+        self.changeUser('pmManager')
+        # still in the vocabulary because selected on the item
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        # unselect 'developers' on the item, it will not appear anymore in the vocabulary
+        item.setOptionalAdvisers(())
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['vendors', ])
 
 
 def test_suite():

@@ -1580,9 +1580,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            m_getMeetingsAcceptingItems.'''
         res = [('whatever', 'Any meeting')]
         tool = self.portal_plonemeeting
+        # save meetingUIDs, it will be necessary here under
         for meetingBrain in self.adapted().getMeetingsAcceptingItems():
             res.append((meetingBrain.UID,
                         tool.formatDate(meetingBrain, withHour=True)))
+        # if one preferred meeting was already defined on self, add it
+        # to the vocabulary or editing an older item could loose that information
+        preferredMeetingUID = self.getPreferredMeeting()
+        # add it if we actually have a preferredMeetingUID stored
+        # and if it is not yet in the vocabulary!
+        if preferredMeetingUID and not preferredMeetingUID in [meetingInfo[0] for meetingInfo in res]:
+            # check that stored preferredMeeting still exists, if it
+            # is the case, add it the the vocabulary
+            catalog = getToolByName(self, 'portal_catalog')
+            brains = catalog(UID=preferredMeetingUID)
+            if brains:
+                preferredMeetingBrain = brains[0]
+                res.append((preferredMeetingBrain.UID,
+                            tool.formatDate(preferredMeetingBrain, withHour=True)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingTransitions')
@@ -1641,6 +1656,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             allGroups = tool.getMeetingGroups(notEmptySuffix="creators")
         for group in allGroups:
             res.append((group.id, group.getName()))
+
+        # make sure associatedGroups actually stored have their corresponding
+        # term in the vocabulary, if not, add it
+        associatedGroups = self.getAssociatedGroups()
+        if associatedGroups:
+            associatedGroupsInVocab = [group[0] for group in res]
+            for groupId in associatedGroups:
+                if not groupId in associatedGroupsInVocab:
+                    res.append((groupId, getattr(tool, groupId).getName()))
+
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePublic('listItemTags')
@@ -2320,6 +2345,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers'):
             if mGroup.id not in mandatoryAdvisers:
                 res.append((mGroup.id, mGroup.getName()))
+
+        # make sure optionalAdvisers actually stored have their corresponding
+        # term in the vocabulary, if not, add it
+        optionalAdvisers = self.getOptionalAdvisers()
+        if optionalAdvisers:
+            optionalAdvisersInVocab = [group[0] for group in res]
+            for groupId in optionalAdvisers:
+                if not groupId in optionalAdvisersInVocab:
+                    res.append((groupId, getattr(tool, groupId).getName()))
+
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePublic('listItemInitiators')
@@ -2927,6 +2962,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for groupId in cfg.getSelectableCopyGroups():
             group = self.portal_groups.getGroupById(groupId)
             res.append((groupId, group.getProperty('title')))
+
+        # make sure groups already selected for the current item
+        # and maybe not in the vocabulary are added to it so
+        # the field is correctly displayed while editing/viewing it
+        copyGroups = self.getCopyGroups()
+        if copyGroups:
+            copyGroupsInVocab = [group[0] for group in res]
+            for groupId in copyGroups:
+                if not groupId in copyGroupsInVocab:
+                    group = self.portal_groups.getGroupById(groupId)
+                    res.append((groupId, group.getProperty('title')))
+
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePublic('showDuplicateItemAction')
