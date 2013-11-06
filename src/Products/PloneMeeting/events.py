@@ -20,6 +20,7 @@ from Products.PloneMeeting.utils import \
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
 from Products.PloneMeeting.ExternalApplication import sendNotificationsIfRelevant
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting import PMMessageFactory as _
 
 podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 
@@ -93,32 +94,20 @@ def onMeetingTransition(obj, event):
 
 
 def onMeetingGroupTransition(obj, event):
-    '''Called whenever a transition has been fired on a meetingGroup.'''
+    '''Called whenever a transition has been fired on a MeetingGroup.'''
     if not event.transition or (obj != event.object):
         return
     transitionId = event.transition.id
-    # If we deactivate a MeetingGroup, every users of sub Plone groups are
-    # transfered to the '_observers' suffixed Plone group
+
     if transitionId == 'deactivate':
-        # Remove every users from the linked Plone groups and
-        # save them so we can add them after to the '_observers' suffixed group
-        userIds = []
-        groupsTool = getToolByName(obj, 'portal_groups')
-        for ploneGroupId in obj.getPloneGroups(idsOnly=True):
-            memberIds = groupsTool.getGroupMembers(ploneGroupId)
-            userIds = userIds + list(memberIds)
-            for memberId in memberIds:
-                groupsTool.removePrincipalFromGroup(memberId, ploneGroupId)
-        observersGroupId = obj.getPloneGroupId('observers')
-        # Add every users that where belonging to different Plone groups
-        # to the '_observers' group
-        for userId in userIds:
-            groupsTool.addPrincipalToGroup(userId, observersGroupId)
         # Remove the group from every meetingConfigs.selectableCopyGroups
-        reviewersGroupId = obj.getPloneGroupId('reviewers')
         for mc in obj.portal_plonemeeting.objectValues('MeetingConfig'):
-            selectableCopyGroups = list(mc.getSelectableCopyGroups())
-            if reviewersGroupId in selectableCopyGroups:
-                selectableCopyGroups.remove(reviewersGroupId)
+            for ploneGroupId in obj.getPloneGroups(idsOnly=True):
+                selectableCopyGroups = list(mc.getSelectableCopyGroups())
+                if ploneGroupId in selectableCopyGroups:
+                    selectableCopyGroups.remove(ploneGroupId)
                 mc.setSelectableCopyGroups(selectableCopyGroups)
+        # add a portal_message explaining what has been done to the user
+        plone_utils = getToolByName(obj, 'plone_utils')
+        plone_utils.addPortalMessage(_('meetinggroup_removed_from_meetingconfigs_selectablecopygroups'), 'info')
 ##/code-section FOOT

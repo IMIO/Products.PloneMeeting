@@ -532,8 +532,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            the MeetingGroup current review_state.'''
         res = []
         for group in self.objectValues('MeetingGroup'):
-            if onlyActive and not self.portal_workflow.getInfoFor(group, 'review_state') == \
-               'active':
+            if onlyActive and not group.queryState() == 'active':
                 continue
             # Check that there is at least one user in the notEmptySuffix
             # of the Plone group
@@ -623,13 +622,21 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('userIsAmong')
-    def userIsAmong(self, suffix):
+    def userIsAmong(self, suffix, onlyActive=True):
         '''Check if the currently logged user is in a p_suffix-related Plone
-           group.'''
+           group.
+           If p_onlyActive is True, we will check if the linked MeetingGroup is active.'''
         user = self.getUser()
+        if onlyActive:
+            activeMeetingGroupIds = [group.getId() for group in self.getMeetingGroups()]
         for groupId in user.getGroups():
             if groupId.endswith('_%s' % suffix):
-                return True
+                if onlyActive:
+                    # check that the linked MeetingGroup is active
+                    if self.getMeetingGroup(groupId).getId() in activeMeetingGroupIds:
+                        return True
+                else:
+                    return True
 
     security.declarePublic('getPloneMeetingFolder')
     def getPloneMeetingFolder(self, meetingConfigId, userId=None):

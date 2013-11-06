@@ -167,6 +167,46 @@ class testMeetingGroup(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(hasattr(self.tool, 'vendors'))
 
+    def test_pm_deactivatedGroupCanNoMoreBeUsed(self):
+        """
+          Check that when a MeetingGroup has been deactivated, it is no more useable in any
+          functionnality of the application...
+        """
+        # delete the 'vendors' group so we are sure that methods and conditions
+        # we need to remove every items using the 'vendors' group before being able to remove it...
+        self.changeUser('admin')
+        self.meetingConfig.recurringitems.manage_delObjects(['template2', ])
+        # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
+        self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', ))
+        self.meetingConfig2.setSelectableCopyGroups(('developers_reviewers', ))
+        # and remove users from vendors Plone groups
+        vendors = self.tool.vendors
+        for ploneGroup in vendors.getPloneGroups():
+            for memberId in ploneGroup.getGroupMemberIds():
+                ploneGroup.removeMember(memberId)
+        # now we can delete it...
+        self.tool.manage_delObjects(['vendors', ])
+        self.changeUser('pmManager')
+        # create an item so we can test vocabularies
+        item = self.create('MeetingItem')
+        self.assertTrue('developers' in item.listAssociatedGroups())
+        self.assertTrue('developers' in item.listProposingGroup())
+        self.assertTrue('developers_reviewers' in item.listCopyGroups())
+        self.assertTrue('developers' in item.listOptionalAdvisers())
+        self.assertTrue(self.tool.userIsAmong('creators'))
+        # after deactivation, the group is no more useable...
+        self.changeUser('admin')
+        developers = self.tool.developers
+        self.do(developers, 'deactivate')
+        self.changeUser('pmManager')
+        self.assertTrue('developers' not in item.listAssociatedGroups())
+        # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...
+        item.setProposingGroup('')
+        self.assertTrue('developers' not in item.listProposingGroup())
+        self.assertTrue('developers_reviewers' not in item.listCopyGroups())
+        self.assertTrue('developers' not in item.listOptionalAdvisers())
+        self.assertTrue(not self.tool.userIsAmong('creators'))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

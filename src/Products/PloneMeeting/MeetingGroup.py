@@ -168,6 +168,11 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
+    security.declarePublic('queryState')
+    def queryState(self):
+        '''In what state am I ?'''
+        return self.portal_workflow.getInfoFor(self, 'review_state')
+
     security.declarePublic('listItemStates')
     def listItemStates(self):
         '''Lists the states of the item workflow ("itemcreated" excepted).'''
