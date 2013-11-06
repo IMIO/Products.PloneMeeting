@@ -1656,6 +1656,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             allGroups = tool.getMeetingGroups(notEmptySuffix="creators")
         for group in allGroups:
             res.append((group.id, group.getName()))
+
+        # make sure associatedGroups actually stored have their corresponding
+        # term in the vocabulary, if not, add it
+        associatedGroups = self.getAssociatedGroups()
+        if associatedGroups:
+            associatedGroupsInVocab = [group[0] for group in res]
+            for groupId in associatedGroups:
+                if not groupId in associatedGroupsInVocab:
+                    res.append((groupId, getattr(tool, groupId).getName()))
+
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePublic('listItemTags')
@@ -2335,6 +2345,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers'):
             if mGroup.id not in mandatoryAdvisers:
                 res.append((mGroup.id, mGroup.getName()))
+
+        # make sure optionalAdvisers actually stored have their corresponding
+        # term in the vocabulary, if not, add it
+        optionalAdvisers = self.getOptionalAdvisers()
+        if optionalAdvisers:
+            optionalAdvisersInVocab = [group[0] for group in res]
+            for groupId in optionalAdvisers:
+                if not groupId in optionalAdvisersInVocab:
+                    res.append((groupId, getattr(tool, groupId).getName()))
+
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePublic('listItemInitiators')

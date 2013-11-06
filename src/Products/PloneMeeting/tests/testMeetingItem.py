@@ -1130,6 +1130,54 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setCopyGroups(())
         self.assertEquals(item.listCopyGroups().keys(), ['vendors_reviewers', ])
 
+    def test_pm_listAssociatedGroups(self):
+        """
+          This is the vocabulary for the field "associatedGroups".
+          Check that we still have the stored value in the vocabulary, aka if the stored value
+          is no more in the vocabulary, it is still in it tough ;-)
+        """
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        self.assertEquals(item.listAssociatedGroups().keys(), ['developers', 'vendors'])
+        # now select the 'developers' as associatedGroup for the item
+        item.setAssociatedGroups(('developers', ))
+        # still the complete vocabulary
+        self.assertEquals(item.listAssociatedGroups().keys(), ['developers', 'vendors'])
+        # disable developers MeetingGroup in the portal_plonemeeting
+        self.changeUser('admin')
+        self.do(self.tool.developers, 'deactivate')
+        self.changeUser('pmManager')
+        # still in the vocabulary because selected on the item
+        self.assertEquals(item.listAssociatedGroups().keys(), ['developers', 'vendors'])
+        # unselect 'developers' on the item, it will not appear anymore in the vocabulary
+        item.setAssociatedGroups(())
+        self.assertEquals(item.listAssociatedGroups().keys(), ['vendors', ])
+
+    def test_pm_listOptionalAdvisers(self):
+        """
+          This is the vocabulary for the field "optionalAdvisers".
+          Check that we still have the stored value in the vocabulary, aka if the stored value
+          is no more in the vocabulary, it is still in it tough ;-)
+        """
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        # now select the 'developers' as optionalAdvisers for the item
+        item.setOptionalAdvisers(('developers', ))
+        # still the complete vocabulary
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        # disable developers MeetingGroup in the portal_plonemeeting
+        self.changeUser('admin')
+        self.do(self.tool.developers, 'deactivate')
+        self.changeUser('pmManager')
+        # still in the vocabulary because selected on the item
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        # unselect 'developers' on the item, it will not appear anymore in the vocabulary
+        item.setOptionalAdvisers(())
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['vendors', ])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
