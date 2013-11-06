@@ -325,7 +325,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                     # The meetingGroup is linked to an existing item, we can not
                     # delete it.
                     raise BeforeDeleteException("can_not_delete_meetinggroup_meetingitem")
-
             # If everything passed correctly, we delete every linked (and empty)
             # Plone groups.
             for role in MEETING_GROUP_SUFFIXES:

@@ -1008,7 +1008,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # we have 7 items in meeting2 and firstItemNumber is not set
         self.assertTrue(meeting2.getItemsCount() == 7)
         self.assertTrue(meeting2.getFirstItemNumber() == -1)
-        self.assertTrue(meeting2.getAllItems()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # itemNumber relativeTo itemsList/meeting does not change but relativeTo meetingConfig changed
         # for the normal item
         self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
@@ -1039,7 +1039,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.assertTrue(meeting2.queryState(), 'closed')
         self.assertTrue(meeting2.getFirstItemNumber() == 1)
-        self.assertTrue(meeting2.getAllItems()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # getItemNumber is still behaving the same
         # for item
         self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
