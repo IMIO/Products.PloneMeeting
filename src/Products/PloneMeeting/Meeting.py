@@ -1151,11 +1151,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePrivate('validate_preMeetingDate')
     def validate_preMeetingDate(self, value):
         '''Checks that the preMeetingDate comes before the meeting date.'''
-        if not self.attributeIsUsed('preMeetingDate') or self.isTemporary():
+        if not value or not self.attributeIsUsed('preMeetingDate'):
             return
-        # The pre-meeting date is required if the field is in use.
-        if not value:
-            return translate('field_required', domain='PloneMeeting', context=self.REQUEST)
         # Get the meeting date from the request
         try:
             meetingDate = DateTime(self.REQUEST['date'])
