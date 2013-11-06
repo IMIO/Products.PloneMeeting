@@ -1108,6 +1108,28 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 2)
         self.assertTrue(m2UID not in item.listMeetingsAcceptingItems().keys())
 
+    def test_pm_listCopyGroups(self):
+        """
+          This is the vocabulary for the field "copyGroups".
+          Check that we still have the stored value in the vocabulary, aka if the stored value
+          is no more in the vocabulary, it is still in it tough ;-)
+        """
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        self.assertEquals(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        # now select the 'developers_reviewers' as copyGroup for the item
+        item.setCopyGroups(('developers_reviewers', ))
+        # still the complete vocabulary
+        self.assertEquals(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        # remove developers_reviewers from selectableCopyGroups in the meetingConfig
+        self.meetingConfig.setSelectableCopyGroups(('vendors_reviewers', ))
+        # still in the vocabulary because selected on the item
+        self.assertEquals(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        # unselect 'developers_reviewers' on the item, it will not appear anymore in the vocabulary
+        item.setCopyGroups(())
+        self.assertEquals(item.listCopyGroups().keys(), ['vendors_reviewers', ])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

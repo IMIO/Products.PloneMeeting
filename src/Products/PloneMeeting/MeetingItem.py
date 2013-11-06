@@ -2942,6 +2942,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for groupId in cfg.getSelectableCopyGroups():
             group = self.portal_groups.getGroupById(groupId)
             res.append((groupId, group.getProperty('title')))
+
+        # make sure groups already selected for the current item
+        # and maybe not in the vocabulary are added to it so
+        # the field is correctly displayed while editing/viewing it
+        copyGroups = self.getCopyGroups()
+        if copyGroups:
+            copyGroupsInVocab = [group[0] for group in res]
+            for groupId in copyGroups:
+                if not groupId in copyGroupsInVocab:
+                    group = self.portal_groups.getGroupById(groupId)
+                    res.append((groupId, group.getProperty('title')))
+
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePublic('showDuplicateItemAction')
