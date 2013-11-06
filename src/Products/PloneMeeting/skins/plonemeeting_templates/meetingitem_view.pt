@@ -198,6 +198,7 @@
              </tal:displayOtherMeetingConfigsClonableTo>
              <span tal:condition="not: otherMCs">-</span>
         </div>
+
         <tal:comment replace="nothing">Privacy</tal:comment>
         <div class="discreet"
              tal:define="privacy context/getPrivacy"
