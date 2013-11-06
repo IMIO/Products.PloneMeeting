@@ -78,16 +78,69 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertNotEquals(cm.exception.message, 'can_not_delete_meetinggroup_plonegroup')
 
         # 3) complains about a linked meetingitem
+        # checks on the item are made around :
+        # item.getProposingGroup
+        # item.getAssociatedGroups
+        # item.getOptionalAdvisers
+        # item.getMandatoryAdvisers
+        # item.getCopyGroups
+        # so check the 5 possible "states"
+
+        # first check when the item is using 'proposingGroup', it is the case here
+        # for item, make sure other conditions are False
+        item.setAssociatedGroups(())
+        item.setOptionalAdvisers(())
+        self.assertTrue('developers_advisers' not in item.getMandatoryAdvisers())
+        item.setCopyGroups(())
+        item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
         self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingitem')
-        # remove the item, then it works...
-        item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
+
+        # now check with item having associatedGroups
+        item.setProposingGroup('vendors')
+        item.setAssociatedGroups(('developers', ))
+        item.setOptionalAdvisers(())
+        self.assertTrue('developers_advisers' not in item.getMandatoryAdvisers())
+        item.setCopyGroups(())
+        item.at_post_edit_script()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingitem')
+
+        # now check with item having optionalAdvisers
+        item.setProposingGroup('vendors')
+        item.setAssociatedGroups(())
+        item.setOptionalAdvisers(('developers', ))
+        self.assertTrue('developers_advisers' not in item.getMandatoryAdvisers())
+        item.setCopyGroups(())
+        item.at_post_edit_script()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingitem')
+
+        # check with item having copyGroups
+        item.setProposingGroup('vendors')
+        item.setAssociatedGroups(())
+        item.setOptionalAdvisers(())
+        self.assertTrue('developers_advisers' not in item.getMandatoryAdvisers())
+        self.meetingConfig.setUseCopies(True)
+        item.setCopyGroups(('developers_reviewers', ))
+        item.at_post_edit_script()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingitem')
+
+        # remove copyGroups for item so it works...
+        item.setCopyGroups(())
+        item.at_post_edit_script()
         self.tool.manage_delObjects(['developers', ])
         # the group is actually removed
         self.failIf(hasattr(self.tool, 'developers'))
 
         # 4) removing a used group in the configuration fails too
+        # remove item because it uses 'vendors'
+        item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
         self.assertEquals(self.meetingConfig.recurringitems.template2.getProposingGroup(), 'vendors')
         # then fails because corresponding Plone groups are not empty...
         with self.assertRaises(BeforeDeleteException) as cm:
