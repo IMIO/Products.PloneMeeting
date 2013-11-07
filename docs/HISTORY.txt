@@ -39,6 +39,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Use 20 instead of 10 for number of elements shown in result listings
 - Adapted code in Meeting.validate_date as DateTime._localzone0/1 does not exist anymore
 - Display signatures on the meeting_view correctly
+- While deactivating a MeetingGroup, do not transfer users to the _observers Plone group,
+  let users in their Plone groups so they still have access to old items and advices but make
+  sure the deactivated group can no more be used anywhere
 
 3.0.3 (2013-08-19)
 ------------------
