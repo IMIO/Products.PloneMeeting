@@ -24,7 +24,7 @@
                               title meetingConfig/getName"/>
          <img style="cursor:pointer" title="hs_configuration" i18n:attributes="title"
               tal:condition="python: member.has_role('Manager')"
-              tal:attributes="onClick python: 'href: window.location=\'%s\'' % tool.absolute_url();
+              tal:attributes="onClick python: 'href: window.location=\'%s\'' % meetingConfig.absolute_url();
                               src string:$portal_url/pm_config.png"/>
          <img style="cursor:pointer" title="user_preferences" i18n:attributes="title"
               tal:condition="tool/getEnableUserPreferences"

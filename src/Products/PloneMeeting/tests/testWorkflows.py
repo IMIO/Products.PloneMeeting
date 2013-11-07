@@ -426,33 +426,17 @@ class testWorkflows(PloneMeetingTestCase):
         MeetingItemWorkflowConditions.transitionsForPresentingAnItem = oldValue2
 
     def test_pm_DeactivateMeetingGroup(self):
-        '''Deactivating a MeetingGroup will transfer every users of every
-           sub Plone groups to the '_observers' Plone group'''
-        # Work with the 'developers' MeetingGroup
+        '''Deactivating a MeetingGroup will remove every Plone groups from
+           every MeetingConfig.selectableCopyGroups field.'''
         login(self.portal, 'admin')
         developers = self.tool.developers
-        # By default, many users are in the different sub Plone groups
-        groupsTool = self.portal.portal_groups
-        self.failUnless(groupsTool.getGroupMembers('developers_creators'),
-                        ('pmCreator1', 'pmCreator1b', 'pmManager', ))
-        self.failUnless(groupsTool.getGroupMembers('developers_reviewers'),
-                        ('pmReviewer1', 'pmManager', ))
-        self.failUnless(groupsTool.getGroupMembers('developers_advisers'),
-                        ('pmAdviser1', 'pmManager', ))
-        self.failUnless(groupsTool.getGroupMembers('developers_observers'),
-                        ('pmReviewer1', 'pmManager', ))
-        for mc in self.tool.objectValues('MeetingConfig'):
-            self.failUnless(('developers_reviewers') in mc.getSelectableCopyGroups())
-        # When deactivating the MeetingGroup, every users are transfered to the
-        # 'developers_observers' Plone group
+        # for now, the 'developers_reviewers' is in self.meetingConfig.selectableCopyGroups
+        self.assertTrue('developers_reviewers' in self.meetingConfig.getSelectableCopyGroups())
+        self.assertTrue('developers_reviewers' in self.meetingConfig2.getSelectableCopyGroups())
+        # when deactivated, it is no more the case...
         self.do(developers, 'deactivate')
-        self.failIf(groupsTool.getGroupMembers('developers_creators'))
-        self.failIf(groupsTool.getGroupMembers('developers_reviewers'))
-        self.failIf(groupsTool.getGroupMembers('developers_advisers'))
-        self.failUnless(groupsTool.getGroupMembers('developers_observers'),
-                        ('pmCreator1', 'pmCreator1b', 'pmReviewer1', 'pmAdviser1', 'pmManager', ))
-        for mc in self.tool.objectValues('MeetingConfig'):
-            self.failIf(('developers_reviewers') in mc.getSelectableCopyGroups())
+        self.assertTrue('developers_reviewers' not in self.meetingConfig.getSelectableCopyGroups())
+        self.assertTrue('developers_reviewers' not in self.meetingConfig2.getSelectableCopyGroups())
 
 
 def test_suite():
