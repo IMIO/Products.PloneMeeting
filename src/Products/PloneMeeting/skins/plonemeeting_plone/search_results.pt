@@ -95,15 +95,21 @@
                          i18n:translate="search_again"></a></p>
 
   <tal:comment replace="nothing">Display matching items</tal:comment>
-  <div id="searchedItems" tal:condition="python: 'search_type_items' in searchTypes"></div>
+  <div id="searchedItems" tal:condition="python: 'search_type_items' in searchTypes">
+    <div align="center"><img src="spinner.gif" tal:attributes="src string:${portal_url}/spinner.gif"/></div>
+  </div>
   <br/>
 
   <tal:comment replace="nothing">Display matching meetings</tal:comment>
-  <div id="searchedMeetings" tal:condition="python: 'search_type_meetings' in searchTypes"></div>
+  <div id="searchedMeetings" tal:condition="python: 'search_type_meetings' in searchTypes">
+    <div align="center"><img src="spinner.gif" tal:attributes="src string:${portal_url}/spinner.gif"/></div>
+  </div>
   <br/>
 
   <tal:comment replace="nothing">Display matching annexes</tal:comment>
-  <div id="searchedAnnexes" tal:condition="python: 'search_type_annexes' in searchTypes"></div>
+  <div id="searchedAnnexes" tal:condition="python: 'search_type_annexes' in searchTypes">
+    <div align="center"><img src="spinner.gif" tal:attributes="src string:${portal_url}/spinner.gif"/></div>
+  </div>
 
   <div>
     <script language="javascript" tal:condition="python: 'search_type_items' in searchTypes">
