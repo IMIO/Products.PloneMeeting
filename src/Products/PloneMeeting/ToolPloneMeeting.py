@@ -628,7 +628,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            If p_onlyActive is True, we will check if the linked MeetingGroup is active.'''
         user = self.getUser()
         if onlyActive:
-            activeMeetingGroupIds = [group.getId() for group in self.getMeetingGroups()]
+            activeMeetingGroupIds = [group.getId() for group in self.getMeetingGroups(onlyActive=True)]
         for groupId in user.getGroups():
             if groupId.endswith('_%s' % suffix):
                 if onlyActive:
