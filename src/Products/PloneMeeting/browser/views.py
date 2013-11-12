@@ -125,7 +125,7 @@ class ObjectGoToView(BrowserView):
     """
     def __call__(self, objectId, idType):
         """
-          objectId is either an uid or an item numbe.  idType discriminate this.
+          objectId is either an uid or an item number.  idType discriminate this.
         """
         if idType == 'uid':
             # Search the object in the uid catalog

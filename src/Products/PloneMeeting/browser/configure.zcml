@@ -182,6 +182,12 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
     <browser:page
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        name="object_goto"
+        class=".views.ObjectGoToView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+    <browser:page
         name="change_item_order"
         class=".views.ChangeItemOrderView"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
