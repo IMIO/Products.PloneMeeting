@@ -97,6 +97,14 @@ class Migrate_To_3_1_0(Migrator):
                 pass
         logger.info('Done.')
 
+    def _addDefaultPlonePasswordPolicy(self):
+        '''Plone migration do not add 'Default Plone Password Policy'
+           validation plugin to acl_users, so make sure it is added.'''
+        logger.info('Adding \'Default Plone Password Policy\' to acl_users...')
+        from Products.PlonePAS.Extensions.Install import setupPasswordPolicyPlugin
+        setupPasswordPolicyPlugin(self.portal)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.1.0...')
 
@@ -105,6 +113,7 @@ class Migrate_To_3_1_0(Migrator):
         self._addMissingTopics()
         self._updateMaxShownFoundDefaultValues()
         self._removeLastItemNumberAttrOnMeetingConfigs()
+        self._addDefaultPlonePasswordPolicy()
         self.finish()
 
 
@@ -116,7 +125,8 @@ def migrate(context):
        2) The wfAdaptation 'add_published_state' has been renamed to 'hide_decisions_when_under_writing';
        3) Add missing topics;
        4) Update portal_plonemeeting maxShownFound values from 10 to 20;
-       5) Finish removal of attribute 'lastItemNumber' on existing MeetingConfig instances.
+       5) Finish removal of attribute 'lastItemNumber' on existing MeetingConfig instances;
+       6) Make sure the 'Default Plone Password Policy' exists in acl_users.
     '''
     Migrate_To_3_1_0(context).run()
 # ------------------------------------------------------------------------------
