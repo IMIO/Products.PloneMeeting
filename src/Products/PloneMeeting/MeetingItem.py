@@ -1618,10 +1618,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listOtherMeetingConfigsClonableTo')
     def listOtherMeetingConfigsClonableTo(self):
         '''Lists the possible other meetingConfigs the item can be cloned to.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
         res = []
         for mcId in meetingConfig.getMeetingConfigsToCloneTo():
-            res.append((mcId, getattr(self.portal_plonemeeting, mcId).Title()))
+            res.append((mcId, getattr(tool, mcId).Title()))
+        # if there was a value defined in the attribute and that
+        # this value is no more in the vocabulary, we need to add it to the vocabulary
+        # manually
+
+        # make sure otherMeetingConfigsClonableTo actually stored have their corresponding
+        # term in the vocabulary, if not, add it
+        otherMeetingConfigsClonableTo = self.getOtherMeetingConfigsClonableTo()
+        if otherMeetingConfigsClonableTo:
+            otherMeetingConfigsClonableToInVocab = [term[0] for term in res]
+            for meetingConfigId in otherMeetingConfigsClonableTo:
+                if not meetingConfigId in otherMeetingConfigsClonableToInVocab:
+                    res.append((meetingConfigId, getattr(tool, meetingConfigId).Title()))
         return DisplayList(tuple(res))
 
     security.declarePublic('listProposingGroup')
@@ -1631,7 +1644,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            to. If a group is already set, it is returned.
            If this item is being created or edited in portal_plonemeeting (as a
            recurring item), the list of active groups is returned.'''
-        tool = self.portal_plonemeeting
+        tool = getToolByName(self, 'portal_plonemeeting')
         groupId = self.getField('proposingGroup').get(self)
         isDefinedInTool = self.isDefinedInTool()
         res = tool.getSelectableGroups(isDefinedInTool=isDefinedInTool,
