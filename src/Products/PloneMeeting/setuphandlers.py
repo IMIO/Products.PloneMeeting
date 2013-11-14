@@ -225,8 +225,6 @@ def postInstall(context):
     for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
         meetingConfig.registerPortalTypes()
         meetingConfig.updatePortalTypes()
-        # Update the cloneToOtherMeetingConfig actions visibility
-        meetingConfig.updateCloneToOtherMCActions()
         # add default portal_tabs
         meetingConfig.createTab()
         # Perform workflow adaptations if required

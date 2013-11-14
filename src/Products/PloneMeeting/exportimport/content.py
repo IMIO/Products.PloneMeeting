@@ -103,10 +103,10 @@ class ToolInitializer:
         for mConfigId in meetingConfigsToCloneTo:
             if not meetingConfigsToCloneTo[mConfigId]:
                 continue
-            # initialize the attribute on the meetingConfig and call updateCloneToOtherMCActions
+            # initialize the attribute on the meetingConfig and call _updateCloneToOtherMCActions
             cfg = getattr(self.tool, mConfigId)
             cfg.setMeetingConfigsToCloneTo(meetingConfigsToCloneTo[mConfigId])
-            cfg.updateCloneToOtherMCActions()
+            cfg._updateCloneToOtherMCActions()
         # finally, create the current user (admin) member area
         self.site.portal_membership.createMemberArea()
         # update advanced search parameters on the tool
