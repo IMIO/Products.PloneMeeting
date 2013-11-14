@@ -3131,10 +3131,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         newOwnerId = self.Creator()
         cloneEventAction = 'create_to_%s_from_%s' % (destMeetingConfigId,
                                                      meetingConfig.getId())
-        fieldsToCopy = ['title', 'description', 'detailedDescription', 'decision']
-        # Copy also budget related fields if used in the destMeetingConfig
-        if 'budgetInfos' in destMeetingConfig.getUsedItemAttributes():
+        fieldsToCopy = ['title', 'description', 'detailedDescription', 'decision', ]
+        originUsedItemAttributes = meetingConfig.getUsedItemAttributes()
+        destUsedItemAttributes = destMeetingConfig.getUsedItemAttributes()
+        # Copy also budgetRelated fields if used in the destMeetingConfig
+        if 'budgetInfos' in originUsedItemAttributes and \
+           'budgetInfos' in destUsedItemAttributes:
             fieldsToCopy = fieldsToCopy + ['budgetRelated', 'budgetInfos']
+        # Copy also motivation if used in the destMeetingConfig
+        if 'motivation' in originUsedItemAttributes and \
+           'motivation' in destUsedItemAttributes:
+            fieldsToCopy = fieldsToCopy + ['motivation', ]
         newItem = self.clone(copyAnnexes=True, newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
