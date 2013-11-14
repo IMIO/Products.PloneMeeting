@@ -38,6 +38,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - While deactivating a MeetingGroup, do not transfer users to the _observers Plone group,
   let users in their Plone groups so they still have access to old items and advices but make
   sure the deactivated group can no more be used anywhere
+- Add missing PlonePAS 'Default Plone Password Policy' that is not in Plone 4.3.2
+  if you migrated the site from an older version
+
 
 3.0.3 (2013-08-19)
 ------------------

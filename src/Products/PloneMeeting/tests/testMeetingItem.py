@@ -270,31 +270,31 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_SendItemToOtherMC(self):
         '''Test the send an item to another meetingConfig functionnality'''
-        #check MeetingConfig behaviour
-        #while activating a meetingConfig to send items to, an action and an
-        #actionicon are created.  While deactivated, theses actions disappear
+        # check MeetingConfig behaviour :
+        # while activating a meetingConfig to send items to, an action is created.
+        # While deactivated, theses actions disappear
         login(self.portal, 'admin')
         self.meetingConfig.setUseGroupsAsCategories(False)
         typeName = self.meetingConfig.getItemTypeName()
         meetingConfigId = self.meetingConfig.getId()
         otherMeetingConfigId = self.meetingConfig2.getId()
+        # by default, the testing profile is configured so we have self.meetingConfig2Id
+        # in self.meetingConfig.meetingConfigsToCloneTo, so the actions exist...
         actionId = self.meetingConfig._getCloneToOtherMCActionId(otherMeetingConfigId, meetingConfigId)
-        #for now, the action does not exist on the type...
+        self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
+        # but if we remove the self.meetingConfig.meetingConfigsToCloneTos, then the action is remove too
+        self.meetingConfig.setMeetingConfigsToCloneTo([])
+        self.meetingConfig.at_post_edit_script()
         self.failIf(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         #... nor in portal_actionicons
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
-        # let's activate the functionnality
+        # let's activate the functionnality again and test
         self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
         self.meetingConfig.at_post_edit_script()
-        #an action is created
+        # an action is created
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
-        #actions and actionicons are removed if we deactivate the functionnality
-        self.meetingConfig.setMeetingConfigsToCloneTo(())
-        self.meetingConfig.at_post_edit_script()
-        self.failIf(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
-        #activate it and test now
-        self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
-        self.meetingConfig.at_post_edit_script()
+        # but we do not use portal_actionicons
+        self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
         # the item is sendable if it is 'accepted', the user is a MeetingManager,
         # the destMeetingConfig is selected in the MeetingItem.otherMeetingConfigsClonableTo
         # and it has not already been sent to this other meetingConfig
@@ -429,8 +429,6 @@ class testMeetingItem(PloneMeetingTestCase):
         login(self.portal, 'admin')
         self.meetingConfig.setUseGroupsAsCategories(False)
         otherMeetingConfigId = self.meetingConfig2.getId()
-        self.meetingConfig.setMeetingConfigsToCloneTo((otherMeetingConfigId,))
-        self.meetingConfig.at_post_edit_script()
         login(self.portal, 'pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
         m1 = self.create('Meeting', date=meetingDate)

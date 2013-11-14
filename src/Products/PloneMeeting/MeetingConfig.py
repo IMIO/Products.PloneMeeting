@@ -1798,6 +1798,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType.view_methods = basePortalType.view_methods
             portalType._aliases = basePortalType._aliases
             portalType._actions = tuple(basePortalType._cloneActions())
+        # Update the cloneToOtherMeetingConfig actions visibility
+        self._updateCloneToOtherMCActions()
 
     security.declarePrivate('registerPortalTypes')
     def registerPortalTypes(self):
@@ -1831,22 +1833,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 #could not exist at this time but we need to set it nevertheless
                 self.portal_workflow.setChainForPortalTypes([portalTypeName],
                                                             workflowName)
-                # Copy actions from the base portal type
-                basePortalType = getattr(self.portal_types, metaTypeName)
-                #set a correct factory and product based on the parent
-                portalType.i18n_domain = basePortalType.i18n_domain
-                portalType.icon_expr = basePortalType.icon_expr
-                portalType.content_meta_type = basePortalType.content_meta_type
-                portalType.factory = basePortalType.factory
-                portalType.immediate_view = basePortalType.immediate_view
-                portalType.product = basePortalType.product
-                portalType.filter_content_types = basePortalType.filter_content_types
-                portalType.allowed_content_types = basePortalType.allowed_content_types
-                portalType.allow_discussion = basePortalType.allow_discussion
-                portalType.default_view = basePortalType.default_view
-                portalType.view_methods = basePortalType.view_methods
-                portalType._aliases = basePortalType._aliases
-                portalType._actions = tuple(basePortalType._cloneActions())
                 # If type is MeetingItem-based, associate him with a different
                 # workflow in workflow policy portal_plonemeeting_policy
                 # moreover, we add the extra portal_types/actions
@@ -1856,6 +1842,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     toolPolicy.setChain(portalTypeName,
                                         ('plonemeeting_onestate_workflow',))
 
+        # Copy actions from the base portal type
+        self.updatePortalTypes()
         # Update the factory tool with the list of types to register
         self.portal_factory.manage_setPortalFactoryTypes(
             listOfTypeIds=factoryTypesToRegister+registeredFactoryTypes)
@@ -1905,29 +1893,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  destMeetingConfigId,
                                  meetingConfigId)
 
-    security.declarePrivate('updateCloneToOtherMCActions')
-    def updateCloneToOtherMCActions(self):
+    def _updateCloneToOtherMCActions(self):
         '''Manage the visibility of the object_button action corresponding to
-           the clone/send item to another meetingConfig functionality. Take even
-           deactivated meetingConfigs into account in case it would be
-           activated after.'''
-        # Every action has been removed by updatePortalTypes, so we need to add
-        # these actions now.
-        item_portal_type = self.portal_types[self.getItemTypeName()]
-        # Remove every actionicons of this mc before re-adding them (maybe).
-        aitool = self.portal_actionicons
-        for ai in aitool.listActionIcons():
-            aiId = ai.getActionId()
-            if aiId.startswith(CLONE_TO_OTHER_MC_ACTION_SUFFIX) and \
-               aiId.endswith(self.getId()):
-                aitool.removeActionIcon('object_buttons', aiId)
-
+           the clone/send item to another meetingConfig functionality.
+           This method should only be called if you are sure that no actions regarding
+           the 'send to other mc' functionnality exist.  Either, call updatePortalTypes that
+           actually remove every existing actions on the portal_type then call this submethod'''
         tool = getToolByName(self, 'portal_plonemeeting')
+        item_portal_type = self.portal_types[self.getItemTypeName()]
         for configId in self.getMeetingConfigsToCloneTo():
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
-            existingActionIds = [act.id for act in item_portal_type.listActions()]
-            if actionId in existingActionIds:
-                continue
             urlExpr = 'string:${object/absolute_url}/cloneToOtherMeeting' \
                       'Config?destMeetingConfigId=%s' % configId
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
@@ -2105,8 +2080,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Sort the item tags if needed
         self.setAllItemTagsField()
         self.updateIsDefaultFields()
-        # Update the cloneToOtherMeetingConfig actions visibility
-        self.updateCloneToOtherMCActions()
         # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
         # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
         self._manageEnableAnnexToPrint()
@@ -2132,8 +2105,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
         # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
         self._manageEnableAnnexToPrint()
-        # Update the cloneToOtherMeetingConfig actions visibility
-        self.updateCloneToOtherMCActions()
         self.adapted().onEdit(isCreated=False)  # Call sub-product code if any
 
     def _manageEnableAnnexToPrint(self):

@@ -193,6 +193,7 @@ meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
                            cadranel_signer, muser_voter1, muser_voter2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
+meetingPma.meetingConfigsToCloneTo = ['plonegov-assembly', ]
 
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(
