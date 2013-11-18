@@ -127,8 +127,8 @@ class ManageItemSignaturesForm(form.Form):
 
     def update(self):
         """ """
-        # raise Unauthorized if current user is not a Manager/MeetingManager
-        if not self.context.portal_plonemeeting.isManager():
+        # raise Unauthorized if current user can not manage itemAssembly
+        if not self.context.mayQuickEdit('itemAssembly'):
             raise Unauthorized
 
         super(ManageItemSignaturesForm, self).update()
@@ -150,6 +150,9 @@ class ManageItemSignaturesForm(form.Form):
           The method actually do the job, set the itemSignatures on self.context
           and following items if defined
         """
+        if not self.context.mayQuickEdit('itemAssembly'):
+            raise Unauthorized
+
         def getItemsToUpdate():
             """
               Return items we want to update regarding the number defined in apply_until_item_number
@@ -161,30 +164,11 @@ class ManageItemSignaturesForm(form.Form):
             else:
                 return self.context.getMeeting().getItemsInOrder()[currentItemNumber-1:self.apply_until_item_number]
 
-        itemsToUpdate = getItemsToUpdate()
-        itemSignaturesWritePermission = self.context.Schema()['itemSignatures'].write_permission
-        notUpdatedItems = []
-        member = self.context.restrictedTraverse('@@plone_portal_state').member()
-        plone_utils = getToolByName(self.context, 'plone_utils')
-        for itemToUpdate in itemsToUpdate:
-            # if the user could not edit the item_signatures for itemToUpdate, we save the item number
-            if not member.has_permission(itemSignaturesWritePermission, itemToUpdate):
-                notUpdatedItems.append(itemToUpdate)
-                continue
-            # we have the right to update the item, so let's do it!
+        for itemToUpdate in getItemsToUpdate():
             itemToUpdate.setItemSignatures(self.item_signatures)
-        if notUpdatedItems:
-            formattedNotUpdatedItems = []
-            for notUpdatedItem in notUpdatedItems:
-                formatted = "<a href='%s' title='%s'>%d</a>" % (notUpdatedItem.absolute_url(),
-                                                                unicode(notUpdatedItem.Title(), 'utf-8'),
-                                                                notUpdatedItem.getItemNumber(relativeTo='meeting'))
-                formattedNotUpdatedItems.append(formatted)
-            translated_message = _('manage_item_not_update_items_numbers',
-                                   mapping={'itemNumbers': ', '.join(formattedNotUpdatedItems)})
-            plone_utils.addPortalMessage(translated_message, 'warning')
-        else:
-            plone_utils.addPortalMessage(_("Item signatures have been updated."))
+
+        plone_utils = getToolByName(self.context, 'plone_utils')
+        plone_utils.addPortalMessage(_("Item signatures have been updated."))
         self._finishedSent = True
 
 

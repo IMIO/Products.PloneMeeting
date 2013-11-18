@@ -2215,6 +2215,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res = True
         return res
 
+    security.declarePublic('mayQuickEdit')
+    def mayQuickEdit(self, fieldName):
+        '''Check if the current p_fieldName can be quick edited thru the meetingitem_view.
+           By default, an item can be quickedited if the field condition is True (field is used,
+           current user is Manager, current item is linekd to a meeting) and if the meeting
+           the item is presented in is not considered as 'closed'.  Bypass if current user is
+           a real Manager (Site Administrator/Manager).'''
+        portal = getToolByName(self, 'portal_url').getPortalObject()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        if (self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not
+           self.getMeeting().queryState() in Meeting.meetingClosedStates) or tool.isManager(realManagers=True):
+            return True
+        return False
+
     security.declareProtected('Modify portal content', 'transformRichTextField')
     def transformRichTextField(self, fieldName, richContent):
         '''See doc in interfaces.py.'''

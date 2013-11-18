@@ -870,9 +870,11 @@ class testMeetingItem(PloneMeetingTestCase):
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
 
-    def test_pm_manageItemAssembly(self):
+    def test_pm_manageItemAssemblyAndSignatures(self):
         """
           This tests the form that manage itemAssembly and that can apply it on several items.
+          The behaviour of itemAssembly and itemSignatures is the same that is why we test it
+          in the same time...
         """
         self.changeUser('admin')
         # make items inserted in a meeting inserted in this order
@@ -887,21 +889,41 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime())
         # define an assembly on the meeting
         meeting.setAssembly('Meeting assembly')
+        meeting.setSignatures('Meeting signatures')
         self.presentItem(item)
         # make the form item_assembly_default works
         self.request['PUBLISHED'].context = item
-        form = getMultiAdapter((item, self.request), name='manage_item_assembly_form').form_instance
-        form.update()
-        # by default, item assembly is the one defined on the meeting
-        self.assertEquals(item.getItemAssembly(), meeting.getAssembly())
-        # now use the form to change the item assembly
-        self.request.form['form.widgets.item_assembly'] = u'Item assembly'
-        form.handleApplyItemAssembly(form, None)
-        self.assertNotEquals(item.getItemAssembly(), meeting.getAssembly())
-        self.assertEquals(item.getItemAssembly(), '<p>Item assembly</p>')
-        # if the user is not portal_plonemeeting.isManager, it raises Unauthorized
+        formAssembly = getMultiAdapter((item, self.request), name='manage_item_assembly_form').form_instance
+        formSignatures = getMultiAdapter((item, self.request), name='manage_item_signatures_form').form_instance
+        # for now, the itemAssembly/itemSignatures fields are not used, so it raises Unauthorized
+        self.assertFalse('itemAssembly' in self.meetingConfig.getUsedItemAttributes())
+        self.assertFalse('itemSignatures' in self.meetingConfig.getUsedItemAttributes())
+        self.assertRaises(Unauthorized, formAssembly.update)
+        self.assertRaises(Unauthorized, formSignatures.update)
+        # so use this field
+        self.meetingConfig.setUsedItemAttributes(self.meetingConfig.getUsedItemAttributes() +
+                                                 ('itemAssembly', 'itemSignatures', ))
+        self.meetingConfig.setUsedMeetingAttributes(self.meetingConfig.getUsedMeetingAttributes() +
+                                                    ('assembly', 'signatures', ))
+        # current user must be at least MeetingManager to use this
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, form.update)
+        self.assertRaises(Unauthorized, formAssembly.update)
+        self.assertRaises(Unauthorized, formSignatures.update)
+        self.changeUser('pmManager')
+        formAssembly.update()
+        formSignatures.update()
+        # by default, item assembly/signatures is the one defined on the meeting
+        self.assertEquals(item.getItemAssembly(), meeting.getAssembly())
+        self.assertEquals(item.getItemSignatures(), meeting.getSignatures())
+        # now use the form to change the item assembly/signatures
+        self.request.form['form.widgets.item_assembly'] = u'Item assembly'
+        self.request.form['form.widgets.item_signatures'] = u'Item signatures'
+        formAssembly.handleApplyItemAssembly(formAssembly, None)
+        formSignatures.handleApplyItemSignatures(formSignatures, None)
+        self.assertNotEquals(item.getItemAssembly(), meeting.getAssembly())
+        self.assertNotEquals(item.getItemSignatures(), meeting.getSignatures())
+        self.assertEquals(item.getItemAssembly(), '<p>Item assembly</p>')
+        self.assertEquals(item.getItemSignatures(), 'Item signatures')
         # now add several items to the meeting and check if they get correctly
         # updated as this functaionnlity is made to update several items at once
         item2 = self.create('MeetingItem')
@@ -923,38 +945,60 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item4.getItemAssembly(), '<p>Meeting assembly</p>')
         self.assertEquals(item5.getItemAssembly(), '<p>Meeting assembly</p>')
         self.assertEquals(item6.getItemAssembly(), '<p>Meeting assembly</p>')
-        form = getMultiAdapter((item2, self.request), name='manage_item_assembly_form').form_instance
-        form.update()
+        # now update item3, item4 and item5, for now their itemSignatures is the meeting signatures
+        self.assertEquals(item2.getItemSignatures(), 'Meeting signatures')
+        self.assertEquals(item3.getItemSignatures(), 'Meeting signatures')
+        self.assertEquals(item4.getItemSignatures(), 'Meeting signatures')
+        self.assertEquals(item5.getItemSignatures(), 'Meeting signatures')
+        self.assertEquals(item6.getItemSignatures(), 'Meeting signatures')
+        formAssembly = getMultiAdapter((item2, self.request), name='manage_item_assembly_form').form_instance
+        formAssembly.update()
+        formSignatures = getMultiAdapter((item2, self.request), name='manage_item_signatures_form').form_instance
+        formSignatures.update()
         self.request.form['form.widgets.item_assembly'] = u'Item assembly 2'
+        self.request.form['form.widgets.item_signatures'] = u'Item signatures 2'
         self.request.form['form.widgets.apply_until_item_number'] = u'4'
         # now apply, relevant items must have been updated
-        form.handleApplyItemAssembly(form, None)
+        formAssembly.handleApplyItemAssembly(formAssembly, None)
+        formSignatures.handleApplyItemSignatures(formSignatures, None)
         # item was not updated
         self.assertEquals(item.getItemAssembly(), '<p>Item assembly</p>')
+        self.assertEquals(item.getItemSignatures(), 'Item signatures')
         # items 'item2', 'item3' and 'item4' were updated
         self.assertEquals(item2.getItemAssembly(), '<p>Item assembly 2</p>')
         self.assertEquals(item3.getItemAssembly(), '<p>Item assembly 2</p>')
         self.assertEquals(item4.getItemAssembly(), '<p>Item assembly 2</p>')
+        self.assertEquals(item2.getItemSignatures(), 'Item signatures 2')
+        self.assertEquals(item3.getItemSignatures(), 'Item signatures 2')
+        self.assertEquals(item4.getItemSignatures(), 'Item signatures 2')
         # 2 last items were not updated
         self.assertEquals(item5.getItemAssembly(), '<p>Meeting assembly</p>')
         self.assertEquals(item6.getItemAssembly(), '<p>Meeting assembly</p>')
-        # now test that if an item in the items we want to update is not editable
-        # it is just not updated but other items are correctly updated
-        # just manipulate item4 and make 'Modify portal content' only available to 'Manager'
-        item4.manage_changePermissions({'Modify portal content': ['Manager', ]})
-        self.failIf(self.hasPermission('Modify portal content', item4))
-        # now update item2, item2, item4 and item5
+        self.assertEquals(item5.getItemSignatures(), 'Meeting signatures')
+        self.assertEquals(item6.getItemSignatures(), 'Meeting signatures')
+        # now update to the end
         self.request.form['form.widgets.item_assembly'] = u'Item assembly 3'
-        self.request.form['form.widgets.apply_until_item_number'] = u'5'
+        self.request.form['form.widgets.item_signatures'] = u'Item signatures 3'
+        self.request.form['form.widgets.apply_until_item_number'] = u'99'
         # Apply
-        form.handleApplyItemAssembly(form, None)
+        formAssembly.handleApplyItemAssembly(formAssembly, None)
+        formSignatures.handleApplyItemSignatures(formSignatures, None)
         self.assertEquals(item2.getItemAssembly(), '<p>Item assembly 3</p>')
         self.assertEquals(item3.getItemAssembly(), '<p>Item assembly 3</p>')
-        # item4 could not be updated
-        self.assertEquals(item4.getItemAssembly(), '<p>Item assembly 2</p>')
+        self.assertEquals(item3.getItemAssembly(), '<p>Item assembly 3</p>')
+        self.assertEquals(item4.getItemAssembly(), '<p>Item assembly 3</p>')
         self.assertEquals(item5.getItemAssembly(), '<p>Item assembly 3</p>')
-        # item6 is not updated as we wanted to update items until number 5
-        self.assertEquals(item6.getItemAssembly(), '<p>Meeting assembly</p>')
+        self.assertEquals(item6.getItemAssembly(), '<p>Item assembly 3</p>')
+        self.assertEquals(item2.getItemSignatures(), 'Item signatures 3')
+        self.assertEquals(item3.getItemSignatures(), 'Item signatures 3')
+        self.assertEquals(item3.getItemSignatures(), 'Item signatures 3')
+        self.assertEquals(item4.getItemSignatures(), 'Item signatures 3')
+        self.assertEquals(item5.getItemSignatures(), 'Item signatures 3')
+        self.assertEquals(item6.getItemSignatures(), 'Item signatures 3')
+        # if the linked meeting is considered as closed, the item can be quickEdited
+        self.closeMeeting(meeting)
+        self.assertRaises(Unauthorized, formAssembly.update)
+        self.assertRaises(Unauthorized, formSignatures.update)
 
     def test_pm_getItemNumber(self):
         """Test the MeetingItem.getItemNumber method.

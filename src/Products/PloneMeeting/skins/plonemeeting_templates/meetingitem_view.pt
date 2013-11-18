@@ -103,14 +103,14 @@
         <div class="discreet"
              tal:condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
           <tal:defines define="redefinedItemAssembly python: context.getItemAssembly(real=True);
-                               mayEdit python: member.has_permission('Modify portal content', context) and context.Schema()['itemAssembly'].widget.testCondition(context.getParentNode(), portal, context);
+                               mayQuickEdit python: context.mayQuickEdit('itemAssembly');
                                class_if_highlighted python: redefinedItemAssembly and 'highlightRedefinedValue' or '';
-                               class_to_use python: mayEdit and (class_if_highlighted and class_if_highlighted + ' itemAssemblyEditable' or 'itemAssemblyEditable') or class_if_highlighted">
+                               class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' itemAssemblyEditable' or 'itemAssemblyEditable') or class_if_highlighted">
           <div tal:attributes="class class_to_use"><i>
-              <a tal:condition="mayEdit" href="manage_item_assembly_form" class="link-overlay-pm manage-item-assembly-overlay">
+              <a tal:condition="mayQuickEdit" href="manage_item_assembly_form" class="link-overlay-pm manage-item-assembly-overlay">
               <span i18n:translate="item_assembly"></span>
               </a>
-              <span tal:condition="not: mayEdit"
+              <span tal:condition="not: mayQuickEdit"
                     tal:attributes="class class_to_use"
                     i18n:translate="item_assembly"></span>
           </i>:&nbsp;&nbsp;
@@ -230,14 +230,14 @@
         <div class="discreet"
              tal:condition="python: meeting and ('signatures' in usedMeetingAttributes)">
           <tal:defines define="redefinedItemSignatures python: context.getItemSignatures(real=True);
-                               mayEdit python: member.has_permission('Modify portal content', context) and context.Schema()['itemSignatures'].widget.testCondition(context.getParentNode(), portal, context);
+                               mayQuickEdit python: context.mayQuickEdit('itemSignatures');
                                class_if_highlighted python: redefinedItemSignatures and 'highlightRedefinedValue' or '';
-                               class_to_use python: mayEdit and (class_if_highlighted and class_if_highlighted + ' itemSignaturesEditable' or 'itemSignaturesEditable') or class_if_highlighted">
+                               class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' itemSignaturesEditable' or 'itemSignaturesEditable') or class_if_highlighted">
           <div tal:attributes="class class_to_use"><i>
-              <a tal:condition="mayEdit" href="manage_item_signatures_form" class="link-overlay-pm">
+              <a tal:condition="mayQuickEdit" href="manage_item_signatures_form" class="link-overlay-pm">
               <span i18n:translate="meeting_signatures"></span>
               </a>
-              <span tal:condition="not: mayEdit"
+              <span tal:condition="not: mayQuickEdit"
                     tal:attributes="class class_to_use"
                     i18n:translate="meeting_signatures"></span>
           </i>:&nbsp;&nbsp;
