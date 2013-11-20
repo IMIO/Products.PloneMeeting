@@ -26,7 +26,6 @@ from AccessControl import Unauthorized
 from DateTime import DateTime
 
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getMultiAdapter
 
 from plone.app.testing import login
 
@@ -893,8 +892,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.presentItem(item)
         # make the form item_assembly_default works
         self.request['PUBLISHED'].context = item
-        formAssembly = getMultiAdapter((item, self.request), name='manage_item_assembly_form').form_instance
-        formSignatures = getMultiAdapter((item, self.request), name='manage_item_signatures_form').form_instance
+        formAssembly = item.restrictedTraverse('@@manage_item_assembly_form').form_instance
+        formSignatures = item.restrictedTraverse('@@manage_item_signatures_form').form_instance
         # for now, the itemAssembly/itemSignatures fields are not used, so it raises Unauthorized
         self.assertFalse('itemAssembly' in self.meetingConfig.getUsedItemAttributes())
         self.assertFalse('itemSignatures' in self.meetingConfig.getUsedItemAttributes())
@@ -951,9 +950,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item4.getItemSignatures(), 'Meeting signatures')
         self.assertEquals(item5.getItemSignatures(), 'Meeting signatures')
         self.assertEquals(item6.getItemSignatures(), 'Meeting signatures')
-        formAssembly = getMultiAdapter((item2, self.request), name='manage_item_assembly_form').form_instance
+        formAssembly = item2.restrictedTraverse('@@manage_item_assembly_form').form_instance
         formAssembly.update()
-        formSignatures = getMultiAdapter((item2, self.request), name='manage_item_signatures_form').form_instance
+        formSignatures = item2.restrictedTraverse('@@manage_item_signatures_form').form_instance
         formSignatures.update()
         self.request.form['form.widgets.item_assembly'] = u'Item assembly 2'
         self.request.form['form.widgets.item_signatures'] = u'Item signatures 2'
@@ -995,6 +994,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item4.getItemSignatures(), 'Item signatures 3')
         self.assertEquals(item5.getItemSignatures(), 'Item signatures 3')
         self.assertEquals(item6.getItemSignatures(), 'Item signatures 3')
+        # the form is callable on an item even when decided (not editable anymore)
+        item2.manage_permission('Modify portal content', ['Manager', ])
+        self.failIf(self.hasPermission('Modify portal content', item2))
+        self.failUnless(self.hasPermission('View', item2))
+        item2.restrictedTraverse('@@manage_item_assembly_form')
+        item2.restrictedTraverse('@@manage_item_signatures_form')
         # if the linked meeting is considered as closed, the item can be quickEdited
         self.closeMeeting(meeting)
         self.assertRaises(Unauthorized, formAssembly.update)
