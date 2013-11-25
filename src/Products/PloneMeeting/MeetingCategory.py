@@ -164,7 +164,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
             isLinked = False
-            for brain in self.portal_catalog(meta_type="MeetingItem"):
+            for brain in self.portal_catalog(Type=self.getParentNode().getParentNode().getItemTypeName()):
                 obj = brain.getObject()
                 if obj.getCategory() == self.getId():
                     isLinked = True
@@ -179,8 +179,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
             if isLinked:
                 # The meetingCategory is linked to an existing item, we can not
                 # delete it.
-                raise BeforeDeleteException, \
-                    "can_not_delete_meetingcategory_meetingitem"
+                raise BeforeDeleteException("can_not_delete_meetingcategory_meetingitem")
         BaseContent.manage_beforeDelete(self, item, container)
 
     security.declarePublic('getSelf')
