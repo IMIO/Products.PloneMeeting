@@ -2690,10 +2690,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            may use for generating documents related to item or meeting p_obj.'''
         res = []
         podTemplateFolder = getattr(self, TOOL_FOLDER_POD_TEMPLATES)
+        wfTool = getToolByName(self, 'portal_workflow')
         for podTemplate in podTemplateFolder.objectValues():
-            if podTemplate.isApplicable(obj) and \
-                self.portal_workflow.getInfoFor(
-                    podTemplate, 'review_state') == 'active':
+            if wfTool.getInfoFor(podTemplate, 'review_state') == 'active' and \
+               podTemplate.isApplicable(obj):
                 res.append(podTemplate)
         return res
 
