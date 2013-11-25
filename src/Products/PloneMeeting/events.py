@@ -110,4 +110,10 @@ def onMeetingGroupTransition(obj, event):
         # add a portal_message explaining what has been done to the user
         plone_utils = getToolByName(obj, 'plone_utils')
         plone_utils.addPortalMessage(_('meetinggroup_removed_from_meetingconfigs_selectablecopygroups'), 'info')
+
+
+def onItemMoved(obj, event):
+    '''Called when an item is pasted cut/pasted, we need to update annexIndex.'''
+    obj.updateAnnexIndex()
+
 ##/code-section FOOT

@@ -25,7 +25,7 @@ from Products.PloneMeeting.config import *
 
 from Products.CMFCore.utils import UniqueObject
 
-    
+
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
@@ -2403,4 +2403,3 @@ registerType(ToolPloneMeeting, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

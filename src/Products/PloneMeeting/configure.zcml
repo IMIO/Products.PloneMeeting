@@ -67,6 +67,11 @@
          OFS.interfaces.IObjectClonedEvent"
     handler=".MeetingFile.prepareClonedAnnexForConversion" />
 
+  <subscriber
+    for=".interfaces.IMeetingItem
+         zope.lifecycleevent.ObjectMovedEvent"
+    handler=".events.onItemMoved" />
+
   <!-- when collective.documentviewer conversion finished, check that everything is right -->
   <subscriber
     for=".interfaces.IMeetingFile
