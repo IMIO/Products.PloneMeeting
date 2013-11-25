@@ -4,7 +4,7 @@ all: run
 
 .PHONY: bootstrap
 bootstrap:
-	/srv/python275/bin/virtualenv --no-site-packages .
+	virtualenv-2.7 --no-site-packages .
 	./bin/easy_install "distribute<0.7"
 	./bin/python bootstrap.py -v 2.1.1
 
