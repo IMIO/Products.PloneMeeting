@@ -609,7 +609,8 @@ function getRichTextContent(rq, params) {
   var theWidget = theForm[fieldName];
   if (ploneEditor == 'CKeditor'){
      /* with CKeditor the value is not stored in the widget so get the data from the real CKeditor instance */
-     theWidget.value = window.parent.CKEDITOR.instances[fieldName].getData();
+     theWidget.value = CKEDITOR.instances[fieldName].getData();
+     CKEDITOR.instances[fieldName].destroy();
   }
   /* Disable the Plone automatic detection of changes to the form. Indeed,
      Plone is not aware that we have sent the form, so he will try to display
