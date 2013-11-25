@@ -235,8 +235,8 @@
           <input type="radio" name="item_keywords_target" value="Description" id="item_Description"/>
           <label for="item_Description" i18n:translate="PloneMeeting_label_description" class="noborder"></label>&nbsp;
 
-          <input type="radio" name="item_keywords_target" value="getDecision" id="item_getDecision"/>
-          <label for="item_getDecision" i18n:translate="PloneMeeting_label_decision" class="noborder"></label>&nbsp;
+          <input type="radio" name="item_keywords_target" value="getDeliberation" id="item_getDeliberation"/>
+          <label for="item_getDeliberation" i18n:translate="PloneMeeting_label_deliberation" class="noborder"></label>&nbsp;
 
           <input type="radio" name="item_keywords_target" value="all" id="item_all" checked="checked"/>
           <label for="item_all" i18n:translate="hs_all" class="noborder"></label><br/><br/>

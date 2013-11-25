@@ -46,7 +46,7 @@ indexInfo = {
              'getProposingGroup': 'FieldIndex',
              'getAssociatedGroups': 'KeywordIndex',
              'getPreferredMeeting': 'FieldIndex',
-             'getDecision': 'ZCTextIndex',
+             'getDeliberation': 'ZCTextIndex',
              'getCopyGroups': 'KeywordIndex',
              'indexAdvisers': 'KeywordIndex',
              'previous_review_state': 'FieldIndex',

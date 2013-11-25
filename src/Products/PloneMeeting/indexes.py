@@ -28,3 +28,20 @@ def previous_review_state(obj):
     # action [-1] is last triggered action, but we want the previous one...
     previous_action = wh[wfName][-2]['review_state']
     return previous_action
+
+
+@indexer(IMeetingItem)
+def Description(obj):
+    """
+      Make sure to use 'text/plain' version of description field as it is normally
+      a TextField and that we store HTML data into it for MeetingItem
+    """
+    return obj.Description(mimetype='text/plain')
+
+
+@indexer(IMeetingItem)
+def getDeliberation(obj):
+    """
+      Make sure to use 'text/plain' version of getDeliberation field
+    """
+    return obj.getDeliberation(mimetype='text/plain')

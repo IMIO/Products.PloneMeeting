@@ -259,7 +259,8 @@ class MeetingItemWorkflowConditions:
             meeting = self.context.getMeeting()
             if (meeting.queryState() in self.meetingNotClosedStates) and \
                meeting.getDate().isPast():
-                if not self.context.fieldIsEmpty('decision'):
+                if not self.context.fieldIsEmpty('decision') or not \
+                   self.context.fieldIsEmpty('motivation'):
                     res = True
                 else:
                     itemNumber = self.context.getItemNumber(relativeTo='meeting')
@@ -1117,8 +1118,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('decision').get(self, **kwargs)
         if keepWithNext:
             res = self.signatureNotAlone(res)
-        meetingConfig = item.portal_plonemeeting.getMeetingConfig(item)
-        adaptations = meetingConfig.getWorkflowAdaptations()
+        cfg = item.portal_plonemeeting.getMeetingConfig(item)
+        adaptations = cfg.getWorkflowAdaptations()
         tool = getToolByName(item, 'portal_plonemeeting')
         if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
            item.getMeeting().queryState() == 'decided' and not tool.isManager():
@@ -1129,10 +1130,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
     getRawDecision = getDecision
 
+    security.declarePublic('getMotivation')
+    def getMotivation(self, **kwargs):
+        '''Overridden version of 'motivation' field accessor. It allows to manage
+           the 'hide_decisions_when_under_writing' workflowAdaptation that
+           hides the motivation/decision for non-managers if meeting state is 'decided.'''
+        item = self.getSelf()
+        cfg = item.portal_plonemeeting.getMeetingConfig(item)
+        adaptations = cfg.getWorkflowAdaptations()
+        tool = getToolByName(item, 'portal_plonemeeting')
+        if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
+           item.getMeeting().queryState() == 'decided' and not tool.isManager():
+            return translate('decision_under_edit',
+                             domain='PloneMeeting',
+                             context=item.REQUEST,
+                             default='<p>The decision is currently under edit by managers, you can not access it.</p>')
+        return self.getField('motivation').get(self, **kwargs)
+    getRawDecision = getDecision
+
     security.declarePublic('getDeliberation')
-    def getDeliberation(self):
+    def getDeliberation(self, **kwargs):
         '''Returns the entire deliberation depending on fields used.'''
-        return self.getMotivation() + self.getDecision()
+        return self.getMotivation(**kwargs) + self.getDecision(**kwargs)
 
     def validate_category(self, value):
         '''Checks that, if we do not use groups as categories, a category is

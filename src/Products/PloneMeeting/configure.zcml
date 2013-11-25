@@ -25,6 +25,8 @@
            provides=".interfaces.IMeetingWorkflowActions" />
 
   <!-- Indexes -->
+  <adapter name="Description" factory=".indexes.Description" />
+  <adapter name="getDeliberation" factory=".indexes.getDeliberation" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
 
   <!-- add the blob field to MeetingFile -->

@@ -780,31 +780,39 @@ class testWFAdaptations(PloneMeetingTestCase):
         login(self.portal, 'pmManager')
         meeting = self.create('Meeting', date=DateTime('2013/01/01 12:00'))
         item = self.create('MeetingItem')
+        item.setMotivation('<p>testing motivation field</p>')
         item.setDecision('<p>testing decision field</p>')
         self.presentItem(item)
         self.changeUser('pmCreator1')
         # relevant users can see the decision
+        self.assertEquals(item.getMotivation(), '<p>testing motivation field</p>')
         self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
         self.changeUser('pmManager')
+        self.assertEquals(item.getMotivation(), '<p>testing motivation field</p>')
         self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
         self.freezeMeeting(meeting)
+        self.assertEquals(item.getMotivation(), '<p>testing motivation field</p>')
         self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
         # maybe we have a 'publish' transition
         if 'publish' in self.transitions(meeting):
             self.do(meeting, 'publish')
+            self.assertEquals(item.getMotivation(), '<p>testing motivation field</p>')
             self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
         self.decideMeeting(meeting)
         # set a decision...
+        item.setMotivation('<p>Motivation adapted by pmManager</p>')
         item.setDecision('<p>Decision adapted by pmManager</p>')
         item.reindexObject()
         # it is immediatelly viewable by the item's creator as
         # the 'hide_decisions_when_under_writing' wfAdaptation is not enabled
         login(self.portal, 'pmCreator1')
+        self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
         self.changeUser('pmManager')
         self.closeMeeting(meeting)
         self.assertEquals(meeting.queryState(), 'closed')
         login(self.portal, 'pmCreator1')
+        self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
 
     def _hide_decisions_when_under_writing_active(self):
@@ -814,36 +822,47 @@ class testWFAdaptations(PloneMeetingTestCase):
         login(self.portal, 'pmManager')
         meeting = self.create('Meeting', date=DateTime('2013/01/01 12:00'))
         item = self.create('MeetingItem')
+        item.setMotivation('<p>testing motivation field</p>')
         item.setDecision('<p>testing decision field</p>')
         self.presentItem(item)
         self.changeUser('pmCreator1')
         # relevant users can see the decision
+        self.assertEquals(item.getMotivation(), '<p>testing motivation field</p>')
         self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
         self.changeUser('pmManager')
+        self.assertEquals(item.getMotivation(), '<p>testing motivation field</p>')
         self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
         self.freezeMeeting(meeting)
+        self.assertEquals(item.getMotivation(), '<p>testing motivation field</p>')
         self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
         # maybe we have a 'publish' transition
         if 'publish' in self.transitions(meeting):
             self.do(meeting, 'publish')
+            self.assertEquals(item.getMotivation(), '<p>testing motivation field</p>')
             self.assertEquals(item.getDecision(), '<p>testing decision field</p>')
         self.decideMeeting(meeting)
         # set a decision...
+        item.setMotivation('<p>Motivation adapted by pmManager</p>')
         item.setDecision('<p>Decision adapted by pmManager</p>')
         item.reindexObject()
         login(self.portal, 'pmCreator1')
         self.assertEquals(meeting.queryState(), 'decided')
+        self.assertEquals(item.getMotivation(),
+                          '<p>The decision is currently under edit by managers, you can not access it.</p>')
         self.assertEquals(item.getDecision(),
                           '<p>The decision is currently under edit by managers, you can not access it.</p>')
         self.changeUser('pmManager')
         # MeetingManagers see it correctly
+        self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
         # a 'publish_decisions' transition is added after 'decide'
         self.do(meeting, 'publish_decisions')
         self.assertEquals(meeting.queryState(), 'decisions_published')
+        self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
         # now that the meeting is in the 'decisions_published' state, decision is viewable to item's creator
         login(self.portal, 'pmCreator1')
+        self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
         # items are automatically set to a final specific state when decisions are published
         self.assertEquals(item.queryState(),
@@ -855,6 +874,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                               self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['publish_decisions'])
         self.do(meeting, 'close')
         login(self.portal, 'pmCreator1')
+        self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
 
 

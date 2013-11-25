@@ -133,7 +133,6 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         for item in meeting.getItems():
             item.setDecision('<p>Dummy decision</p>')
-            item.reindexObject(idxs=['getDecision', ])
         # freeze the meeting to be able to add late items
         if 'publish' in self.transitions(meeting):
             self.do(meeting, 'publish')

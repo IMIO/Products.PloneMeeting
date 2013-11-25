@@ -528,7 +528,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.maxShownFoundAnnexes = 20
         # If True, the following param will, on the search screen, display
         # radio buttons allowing to choose if item keywords encompass index
-        # Title, Description, getDecision or SearchableText.
+        # Title, Description, getDeliberation or SearchableText.
         self.showItemKeywordsTargets = True
         self.searchItemStates = []
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~

@@ -1868,7 +1868,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 text.append('<h2 id="itemTitle">%d. %s</h2>' % (itemNumber, item.Title()))
                 text.append('<div id="itemBody">')
                 if self.adapted().isDecided():
-                    itemBody = item.getDecision()
+                    itemBody = item.getDeliberation()
                 else:
                     itemBody = item.Description()
                 if not itemBody:
