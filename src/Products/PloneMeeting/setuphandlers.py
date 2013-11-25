@@ -95,7 +95,7 @@ def setupCatalogMultiplex(context):
     explicit add classes (meta_types) be indexed in catalogs (white)
     or removed from indexing in a catalog (black)
     """
-    if isNotPloneMeetingProfile(context): return
+    if isNotPloneMeetingProfile(context): return 
     site = context.getSite()
     #dd#
     muliplexed = ['ToolPloneMeeting', 'MeetingCategory', 'MeetingConfig', 'MeetingFileType', 'MeetingGroup', 'ExternalApplication', 'PodTemplate', 'MeetingUser']
@@ -307,6 +307,7 @@ def postInstall(context):
                             description='The previous object workflow state',
                             enabled=True,
                             criteria='ATListCriterion')
+
 
 
 ##code-section FOOT

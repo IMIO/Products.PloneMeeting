@@ -2,7 +2,7 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2013 by PloneGov
+# Copyright (c) 2013 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -181,16 +181,18 @@ schema = Schema((
     ),
     TextField(
         name='budgetDefault',
-        default=defValues.budgetDefault,
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
             description="BudgetDefault",
             description_msgid="config_budget_default_descr",
+            rows=15,
             label='Budgetdefault',
             label_msgid='PloneMeeting_label_budgetDefault',
             i18n_domain='PloneMeeting',
         ),
-        default_content_type='text/plain',
+        default_content_type="text/html",
+        default=defValues.budgetDefault,
+        default_output_type="text/x-html-safe",
     ),
     TextField(
         name='defaultMeetingItemMotivation',
@@ -3043,3 +3045,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+

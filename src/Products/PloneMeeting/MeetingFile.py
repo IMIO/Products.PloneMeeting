@@ -2,7 +2,7 @@
 #
 # File: MeetingFile.py
 #
-# Copyright (c) 2013 by PloneGov
+# Copyright (c) 2013 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -538,6 +538,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         return printableExtensions
 
 
+
 registerType(MeetingFile, PROJECTNAME)
 # end of class MeetingFile
 
@@ -641,3 +642,4 @@ def checkAfterConversion(object, event):
     except:
         pass
 ##/code-section module-footer
+

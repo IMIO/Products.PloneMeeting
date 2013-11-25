@@ -2,7 +2,7 @@
 #
 # File: ExternalApplication.py
 #
-# Copyright (c) 2013 by PloneGov
+# Copyright (c) 2013 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -1296,3 +1296,4 @@ def sendNotificationsIfRelevant(object, event):
         if event in extApp.getNotifyEvents():
             extApp.notifyExternalApplication(object, event)
 ##/code-section module-footer
+

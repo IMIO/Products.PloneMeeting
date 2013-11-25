@@ -2,7 +2,7 @@
 #
 # File: MeetingItem.py
 #
-# Copyright (c) 2013 by PloneGov
+# Copyright (c) 2013 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -893,8 +893,7 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and "
-                      "here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
+            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
             label='Itemassembly',
@@ -908,8 +907,7 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and "
-                      "here.getMeeting().attributeIsUsed('signatures')",
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures')",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
             label='Itemsignatures',
@@ -922,8 +920,7 @@ schema = Schema((
     LinesField(
         name='itemSignatories',
         widget=MultiSelectionWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and "
-                      "here.getMeeting().attributeIsUsed('signatories')",
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatories')",
             description="ItemSignatories",
             description_msgid="item_signatories_descr",
             size=10,
@@ -1146,7 +1143,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              context=item.REQUEST,
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return self.getField('motivation').get(self, **kwargs)
-    getRawDecision = getDecision
+    getRawMotivation = getMotivation
 
     security.declarePublic('getDeliberation')
     def getDeliberation(self, **kwargs):
@@ -2779,15 +2776,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         logger.info('Item at %s edited by "%s".' %
                     (self.absolute_url_path(), userId))
 
-    security.declareProtected(ModifyPortalContent, 'reindexObject')
-    def reindexObject(self, idxs=None):
-        """
-          Override so items defined in the tool are not indexed.
-        """
-        if self.isDefinedInTool():
-            return
-        CatalogMultiplex.reindexObject(self, idxs)
-
     security.declareProtected(ModifyPortalContent, 'indexObject')
     def indexObject(self):
         """
@@ -2796,6 +2784,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool():
             return
         CatalogMultiplex.indexObject(self)
+
+    security.declareProtected(ModifyPortalContent, 'reindexObject')
+    def reindexObject(self, idxs=None):
+        """
+          Override so items defined in the tool are not indexed.
+        """
+        if self.isDefinedInTool():
+            return
+        CatalogMultiplex.reindexObject(self, idxs)
 
     security.declarePublic('forceHTMLContentTypeForEmptyRichFields')
     def forceHTMLContentTypeForEmptyRichFields(self):
@@ -3792,6 +3789,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(data)
             i = i + 1
         return res
+
 
 
 registerType(MeetingItem, PROJECTNAME)

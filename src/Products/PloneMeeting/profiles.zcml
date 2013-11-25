@@ -15,7 +15,7 @@
       description="Extension profile for PloneMeeting."
       provides="Products.GenericSetup.interfaces.EXTENSION"
       />
-
+  
   <!-- ##code-section profiles.zcml-bottom #fill in your manual code here -->
   <genericsetup:registerProfile
       name="testing"

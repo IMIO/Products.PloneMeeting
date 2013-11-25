@@ -2,7 +2,7 @@
 #
 # File: ToolPloneMeeting.py
 #
-# Copyright (c) 2013 by PloneGov
+# Copyright (c) 2013 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -25,7 +25,7 @@ from Products.PloneMeeting.config import *
 
 from Products.CMFCore.utils import UniqueObject
 
-
+    
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
@@ -523,6 +523,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getCustomFields')
     def getCustomFields(self, cols):
         return getCustomSchemaFields(schema, self.schema, cols)
+
+    security.declarePublic('getMeetingGroup')
+    def getMeetingGroup(self, ploneGroupId):
+        '''Returns the meeting group containing the plone group with id
+            p_ploneGroupId.'''
+        ploneGroup = self.portal_groups.getGroupById(ploneGroupId)
+        props = ploneGroup.getProperties()
+        if 'meetingGroupId' in props and props['meetingGroupId']:
+            return getattr(self.aq_base, props['meetingGroupId'], None)
 
     security.declarePublic('getMeetingGroups')
     def getMeetingGroups(self, notEmptySuffix=None, onlyActive=True):
@@ -1304,15 +1313,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if user.id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
                     res = False
         return res
-
-    security.declarePublic('getMeetingGroup')
-    def getMeetingGroup(self, ploneGroupId):
-        '''Returns the meeting group containing the plone group with id
-            p_ploneGroupId.'''
-        ploneGroup = self.portal_groups.getGroupById(ploneGroupId)
-        props = ploneGroup.getProperties()
-        if 'meetingGroupId' in props and props['meetingGroupId']:
-            return getattr(self.aq_base, props['meetingGroupId'], None)
 
     security.declarePublic('getMeetingGroupsForSearch')
     def getMeetingGroupsForSearch(self):
@@ -2396,8 +2396,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return content.replace('[[', '<strike>').replace(']]', '</strike>'). \
             replace('<p>', '<p class="mltAssembly">')
 
+
+
 registerType(ToolPloneMeeting, PROJECTNAME)
 # end of class ToolPloneMeeting
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+

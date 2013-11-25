@@ -2,7 +2,7 @@
 #
 # File: PloneMeeting.py
 #
-# Copyright (c) 2013 by PloneGov
+# Copyright (c) 2013 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -171,3 +171,4 @@ def initialize(context):
         if not elem.startswith('__'): FakeBrain.security.declarePublic(elem)
     InitializeClass(FakeBrain)
     ##/code-section custom-init-bottom
+

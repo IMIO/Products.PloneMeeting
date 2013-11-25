@@ -2,7 +2,7 @@
 #
 # File: Meeting.py
 #
-# Copyright (c) 2013 by PloneGov
+# Copyright (c) 2013 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -2162,3 +2162,4 @@ def onAddMeeting(meeting, event):
     user = meeting.portal_membership.getAuthenticatedMember()
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 ##/code-section module-footer
+
