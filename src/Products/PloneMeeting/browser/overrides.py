@@ -2,9 +2,12 @@ from plone.app.layout.viewlets.content import ContentHistoryView, DocumentByline
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize.instance import memoize
 
+from imio.actionspanel.browser.views import ActionsPanelView
+
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
 class PloneMeetingContentHistoryView(ContentHistoryView):
@@ -107,6 +110,79 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
           we want everybody than can acces the item to see the history...
         """
         return True
+
+
+class BaseActionsPanelView(ActionsPanelView):
+    """
+    """
+    def __init__(self, context, request):
+        super(BaseActionsPanelView, self).__init__(context, request)
+        self.SECTIONS_TO_RENDER = ('renderTransitions',
+                                   'renderDelete',
+                                   'renderEdit',
+                                   'renderActions', )
+        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste', 'delete')
+
+    def renderDelete(self):
+        """
+        """
+        if self.mayDelete():
+            return ViewPageTemplateFile("templates/actions_panel_delete.pt")(self)
+        return ''
+
+    def mayDelete(self):
+        """
+          Check if current user may delete element.
+        """
+        member = self.context.restrictedTraverse('@@plone_portal_state').member()
+        isMeetingOrItem = self.context.meta_type in ('Meeting', 'MeetingItem')
+        return member.has_permission('Delete objects', self.context) and (isMeetingOrItem and self.context.wfConditions().mayDelete() or True)
+
+
+class MeetingItemActionsPanelView(BaseActionsPanelView):
+    """
+    """
+    def __init__(self, context, request):
+        super(MeetingItemActionsPanelView, self).__init__(context, request)
+        self.SECTIONS_TO_RENDER = ('renderTransitions',
+                                   'renderArrows',
+                                   'renderDelete',
+                                   'renderEdit',
+                                   'renderActions', )
+        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste', 'delete')
+
+    def renderArrows(self):
+        """
+        """
+        showArrows = self.kwargs.get('showArrows', False)
+        if showArrows and self.mayChangeOrder():
+            self.totalNbOfItems = self.kwargs['totalNbOfItems']
+            return ViewPageTemplateFile("templates/actions_panel_arrows.pt")(self)
+        return ''
+
+    def mayChangeOrder(self):
+        """
+          Check if current user can change elements order in case arrows are shown.
+        """
+        meeting = getCurrentMeetingObject(self.context)
+        return meeting.wfConditions().mayChangeItemsOrder()
+
+
+class MeetingActionsPanelView(MeetingItemActionsPanelView):
+    """
+    """
+    def __init__(self, context, request):
+        super(MeetingActionsPanelView, self).__init__(context, request)
+        self.SECTIONS_TO_RENDER = ['renderTransitions',
+                                   'renderDelete',
+                                   'renderDeleteWholeMeeting',
+                                   'renderEdit',
+                                   'renderActions', ]
+
+    def renderDeleteWholeMeeting(self):
+        """
+        """
+        return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
 
 
 # to be removed in Products.Archetypes 1.9.5+...

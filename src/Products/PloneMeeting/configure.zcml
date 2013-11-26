@@ -9,6 +9,7 @@
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="communesplone.iconified_document_actions"/>
   <include package="imio.pm.locales"/>
+  <include package="imio.actionspanel"/>
   <include package="collective.documentviewer"/>
 
   <adapter for=".interfaces.IMeetingItem"

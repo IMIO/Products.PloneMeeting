@@ -48,6 +48,26 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"/>
 
+    <!-- Override imio.actionspanel viewlet, hide it in viewlets.xml and display our own on Meeting and MeetingItem -->
+    <configure package="imio.actionspanel">
+    <browser:viewlet
+        name="plonemeeting.actionspanel"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
+        template="browser/actions_panel_viewlet.pt"
+        permission="zope2.View"/>
+    <browser:viewlet
+        name="plonemeeting.actionspanel"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
+        template="browser/actions_panel_viewlet.pt"
+        permission="zope2.View"/>
+    </configure>
+
     <!-- Overlays views -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
@@ -250,4 +270,5 @@
        renderer=".portlet_plonemeeting.Renderer"
        addview=".portlet_plonemeeting.AddForm"
        editview=".portlet_plonemeeting.EditForm"/>
+
 </configure>

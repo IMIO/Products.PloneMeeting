@@ -1,0 +1,22 @@
+<tal:comment replace="nothing">Delete a meeting with its items</tal:comment>
+<tal:defines define="member context/@@plone_portal_state/member;
+                     portal_url context/@@plone_portal_state/portal_url;">
+<td i18n:domain="plone"
+    tal:condition="python: (context.meta_type == 'Meeting') and member.has_permission('Delete objects', context) and member.has_role('Manager')" class="noPadding">
+  <form name="deleteWholeMeetingForm" action="delete_givenuid"
+        tal:define="dummy view/saveHasActions;">
+      <input type="hidden" name="selected_uid" tal:attributes="value context/UID" />
+      <input type="hidden" name="wholeMeeting" value="True"/>
+      <tal:comment replace="nothing">Icon</tal:comment>
+      <img tal:condition="view/useIcons" style="cursor:pointer"
+           title="delete_meeting_with_items" i18n:attributes="title"
+           tal:attributes="src string: $portal_url/delete_many.gif"
+           onClick="javascript:confirmDeleteObject(this, 'wholeMeeting')"/>
+
+      <tal:comment replace="nothing">Button</tal:comment>
+      <input tal:condition="not: view/useIcons" type="button" i18n:attributes="value"
+             value="delete_meeting_with_items"
+             onClick="javascript:confirmDeleteObject(this, 'wholeMeeting');" class="apButton apButtonAction apButtonAction_deleteWholeMeeting"/>
+  </form>
+</td>
+</tal:defines>
