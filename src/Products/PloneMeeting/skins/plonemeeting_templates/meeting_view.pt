@@ -458,13 +458,6 @@
       </tr>
     </table>
   </fieldset>
-
-  <tal:comment replace="nothing">Actions</tal:comment>
-  <br/>
-  <span tal:define="object python:here;">
-    <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions" />
-  </span>
-  <br/>
   </tal:mustShowPage>
 
   <tal:mustHidePage condition="not: showPage">

@@ -327,9 +327,7 @@
 
         <tal:comment replace="nothing">Actions</tal:comment>
         <td align="center" tal:condition="showActions">
-          <tal:actions define="object python: meetingItem; showIcons python:True;">
-            <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions"></div>
-          </tal:actions>
+            <tal:actions replace="structure python: meetingItem.restrictedTraverse('@@actions_panel').render(showArrows=True, **{'totalNbOfItems': totalNbOfItems})" />
         </td>
 
         <tal:comment replace="nothing">Checkbox for selecting the item. It is used in 2 cases:

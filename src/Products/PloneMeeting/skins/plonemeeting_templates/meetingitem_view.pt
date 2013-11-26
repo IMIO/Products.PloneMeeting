@@ -341,12 +341,6 @@
          tal:attributes="href python: config.absolute_url() + '?pageName=data#recItems'" i18n:translate="back"></a>
     </tal:itemInConfig>
 
-    <tal:comment replace="nothing">Actions</tal:comment>
-    <div tal:define="object python: here">
-        <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions" />
-    </div>
-    <p></p>
-
     <tal:comment replace="nothing">Tasks</tal:comment>
     <tal:tasks condition="meetingConfig/getTasksMacro">
     <span tal:define="tasksMacro python: path(meetingConfig.getTasksMacro() + '|nothing')"

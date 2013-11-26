@@ -279,30 +279,7 @@ document.location.reload(true);
   content type than Item or Meeting.
 </tal:comment>
 <div metal:define-macro="showTransitions" i18n:domain="PloneMeeting">
-  <table class="no-style-table">
-    <tr>
-      <td tal:repeat="transition python: context.portal_plonemeeting.getTransitionsFor(context)"
-          class="noPadding" align="left">
-        <a href="@@triggertransition"
-           tal:attributes="href python: context.absolute_url()
-                                        + '/triggertransition?objectUid='
-                                        + context.UID()
-                                        + '&transition='
-                                        + transition['name'] + '&form.submitted=boolean:True';">
-          <input class="hsButton" type="button"
-                 tal:attributes="value python: transition['title'] + ' ' + context.utranslate(msgid=context.portal_type, domain='plone');
-                                 size python: int(len(transition['title'])/1.2);" />
-        </a>
-      </td>
-      <tal:back define="parent context/getParentNode;
-                        parentIsTool python: parent.meta_type == 'ToolPloneMeeting'">
-        <td tal:condition="python: parentIsTool or (parent.getParentNode().meta_type == 'MeetingConfig')">
-          &nbsp;<a tal:attributes="href python: context.portal_plonemeeting.getBackUrl(context);"
-                   i18n:translate="back"></a>
-        </td>
-      </tal:back>
-    </tr>
-  </table>
+    <tal:actions replace="structure python: context.restrictedTraverse('@@actions_panel').render(useIcons=False, showTransitions=True, appendTypeNameToTransitionLabel=True, showArrows=False, showEdit=False, showDelete=False, showActions=False,)" />
 </div>
 
 <tal:comment replace="nothing">

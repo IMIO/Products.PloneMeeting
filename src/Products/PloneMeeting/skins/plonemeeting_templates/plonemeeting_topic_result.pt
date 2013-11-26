@@ -301,9 +301,7 @@
 
         <tal:comment replace="nothing">Actions</tal:comment>
         <td align="center" tal:condition="showActions">
-          <tal:actions define="object python: obj; showIcons python:True;">
-            <div metal:use-macro="here/plonemeeting_actions/macros/ploneMeetingActions"></div>
-          </tal:actions>
+            <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel').render()" />
         </td>
         </tal:wakeUpObject>
         </tal:itemOrMeeting>

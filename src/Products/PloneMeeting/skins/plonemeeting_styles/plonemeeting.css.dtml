@@ -350,34 +350,6 @@ input[type=radio] {margin: 0;}
     padding-bottom: 0em !important;
 }
 
-.hsButton {
-    background: #DEE7EC none no-repeat scroll 0% 0%;
-    cursor: pointer;
-    font-size: 85%;
-    border: 1px solid #AEAEAE;
-    text-align: center;
-    height: 1.9em;
-    margin: 0 2px 0 0;
-}
-
-.hsButtonWF {
-    background-color: #DEE7EC;
-}
-
-/* Buttons used for worflow transitions can be designed button by button */
-.hsButtonWF_propose, .hsButtonWF_validate {
-    background-color: #DEE7EC;
-}
-
-.hsButtonAction {
-    background-color: #F4F6F7;
-}
-
-/* Buttons used for actions can be designed button by button */
-.hsButtonAction_delete, .hsButtonAction_deleteWholeMeeting, .hsButtonAction_duplicate {
-    background-color: #F4F6F7;
-}
-
 .fakeButton {
     background: #ffd5c0 url(&dtml-portal_url;/fakeTransition.gif) no-repeat scroll 3px 2px;
     font-style: italic;
