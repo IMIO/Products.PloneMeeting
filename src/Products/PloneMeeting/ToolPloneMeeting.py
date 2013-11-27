@@ -47,7 +47,6 @@ import transaction
 import OFS.Moniker
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getMultiAdapter
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import AccessContentsInformation, DeleteObjects, View
@@ -1373,57 +1372,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if res:
                 firstBatchNumber = res[0].getItemNumber(relativeTo='meeting')
         return res, totalNbOfItems, batchSize, firstNumber, firstBatchNumber
-
-    security.declarePublic('triggerTransition')
-    def triggerTransition(self):
-        '''Triggers a p_transition on an p_obj.'''
-        rq = self.REQUEST
-        obj = self.uid_catalog(UID=rq['objectUid'])[0].getObject()
-        wfTool = getToolByName(self, 'portal_workflow')
-        try:
-            wfTool.doActionFor(obj,
-                               rq.get('transition'),
-                               comment=rq.get('comment'))
-        except WorkflowException:
-            # fail silently if the user triggered a transition he could not
-            # this avoid WorkflowException error in the UI if a user double-click on an icon
-            # triggering a workflow transition
-            logger.info("WorkflowException in ToolPloneMeeting.triggerTransition, the user '%s' "
-                        "tried to trigger the transition '%s' but he could not.  Double click in the UI?" %
-                        (self.portal_membership.getAuthenticatedMember().getId(), rq.get('transition')))
-            pass
-        # use transition title to translate so if several transitions have the same title,
-        # we manage only one translation
-        transition_title = wfTool.getWorkflowsFor(obj)[0].transitions[rq['transition']].title or rq['transition']
-        msg = translate('%s_done_descr' % transition_title,
-                        domain="PloneMeeting", context=self.REQUEST)
-        self.plone_utils.addPortalMessage(msg)
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_permission('View', obj):
-            # After having triggered a wfchange, it the current user
-            # can not access the obj anymore :
-            # - redirect the user to HTTP_REFERER if we where not on the obj
-            # - redirect the user to his home page if we were on the no more accessible obj
-            # - display a clear portal message
-            http_referer = self.REQUEST['HTTP_REFERER']
-            if http_referer.startswith(obj.absolute_url()):
-                # we were on the item, redirect to user home page
-                meetingFolderRedirectView = getMultiAdapter((obj.aq_inner.aq_parent, self.REQUEST),
-                                                            name='meetingfolder_redirect_view')
-                redirectToUrl = meetingFolderRedirectView.getFolderRedirectUrl()
-            else:
-                redirectToUrl = http_referer
-            # add a specific portal_message before redirecting the user
-            msg = translate('redirected_after_transition_not_viewable',
-                            domain="PloneMeeting",
-                            context=self.REQUEST,
-                            default="You have been redirected here because you do not have "
-                            "access anymore to the element you just changed the state for.")
-            self.plone_utils.addPortalMessage(msg, 'warning')
-
-            return rq.RESPONSE.redirect(redirectToUrl)
-        else:
-            return self.gotoReferer()
 
     security.declarePublic('gotoReferer')
     def gotoReferer(self):

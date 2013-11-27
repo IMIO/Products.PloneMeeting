@@ -239,24 +239,17 @@ class Migrate_To_3_0(Migrator):
             else:
                 # bypass guards for Manager
                 wf.manager_bypass = 1
-                # set some value in the request that will be used by the triggerTransition method here under
-                self.portal.REQUEST.set('transition', 'backToDecided')
-                self.portal.REQUEST.set('comment', "Set back to \'decided\' during migration to PM3.0 because actual "
-                                                   "state \'published\' does not exist anymore.")
+                # set some value to pass when triggering the transition here under
+                transition = 'backToDecided'
+                comment = "Set back to \'decided\' during migration to PM3.0 because " \
+                          "actual state \'published\' does not exist anymore."
                 for brain in brains:
                     obj = brain.getObject()
-                    uid = obj.UID()
-                    uids.append(uid)
-                    # use our tool to trigger transition so we can easily add a comment
-                    self.portal.REQUEST.set('objectUid', uid)
-                    self.portal.portal_plonemeeting.triggerTransition()
+                    # use '@@actions_panel').triggerTransition to trigger transition so we can easily add a comment
+                    obj.restrictedTraverse('@@actions_panel').triggerTransition(transition, comment)
                     logger.info("Set back meeting at '%s' to 'decided' for migration "
                                 "purpose" % '/'.join(obj.getPhysicalPath()))
                 logger.info("Meetings that were set back to 'decided' will be migrated after reinstall.")
-                # back to old application state
-                self.portal.REQUEST.set('transition', '')
-                self.portal.REQUEST.set('comment', '')
-                self.portal.REQUEST.set('objectUid', '')
                 wf.manager_bypass = 0
         return uids
 
