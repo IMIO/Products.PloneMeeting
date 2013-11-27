@@ -229,7 +229,11 @@ class MeetingActionsPanelView(BaseActionsPanelView):
     def renderDeleteWholeMeeting(self):
         """
         """
-        return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
+        member = self.context.restrictedTraverse('@@plone_portal_state').member()
+        if self.context.meta_type == 'Meeting' and \
+           member.has_permission('Delete objects', self.context) and \
+           member.has_role('Manager'):
+            return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
 
 
 # to be removed in Products.Archetypes 1.9.5+...
