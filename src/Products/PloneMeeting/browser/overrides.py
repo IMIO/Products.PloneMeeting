@@ -1,3 +1,5 @@
+from zope.component import getMultiAdapter
+
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize.instance import memoize
@@ -136,7 +138,8 @@ class BaseActionsPanelView(ActionsPanelView):
         """
         member = self.context.restrictedTraverse('@@plone_portal_state').member()
         isMeetingOrItem = self.context.meta_type in ('Meeting', 'MeetingItem')
-        return member.has_permission('Delete objects', self.context) and (isMeetingOrItem and self.context.wfConditions().mayDelete() or True)
+        return member.has_permission('Delete objects', self.context) and \
+            (isMeetingOrItem and self.context.wfConditions().mayDelete() or True)
 
     def mayEdit(self):
         """
@@ -146,6 +149,41 @@ class BaseActionsPanelView(ActionsPanelView):
         return member.has_permission('Modify portal content', self.context) and \
             self.useIcons and not \
             self.context.meta_type == 'MeetingFile'
+
+    def _transitionsToConfirm(self):
+        """
+          Return the list of transitions the user will have to confirm, aka
+          the user will be able to enter a comment for.
+          This is relevant for Meeting and MeetingItem.
+        """
+        toConfirm = []
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if cfg:
+            toConfirm = cfg.getTransitionsToConfirm()
+        return toConfirm
+
+    def _redirectToUrl(self):
+        """
+          Return the url the user must be redirected to.
+          This is relevant for Meeting and MeetingItem.
+        """
+        http_referer = self.request['HTTP_REFERER']
+        if http_referer.startswith(self.context.absolute_url()):
+            # we were on the item, redirect to user home page
+            meetingFolderRedirectView = getMultiAdapter((self.context.aq_inner.aq_parent, self.request),
+                                                        name='meetingfolder_redirect_view')
+            redirectToUrl = meetingFolderRedirectView.getFolderRedirectUrl()
+        else:
+            redirectToUrl = http_referer
+        return redirectToUrl
+
+    def _goToReferer(self):
+        """
+          Override _goToReferer to take some specific PloneMeeting case into account.
+        """
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        return tool.goToReferer()
 
 
 class MeetingItemActionsPanelView(BaseActionsPanelView):
@@ -176,18 +214,6 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         meeting = getCurrentMeetingObject(self.context)
         return meeting.wfConditions().mayChangeItemsOrder()
 
-    def _transitionsToConfirm(self):
-        """
-          Return the list of transitions the user will have to confirm, aka
-          the user will be able to enter a comment for.
-        """
-        toConfirm = []
-        tool = getToolByName(self, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if cfg:
-            toConfirm = cfg.getTransitionsToConfirm()
-        return toConfirm
-
 
 class MeetingActionsPanelView(BaseActionsPanelView):
     """
@@ -204,18 +230,6 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         """
         """
         return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
-
-    def _transitionsToConfirm(self):
-        """
-          Return the list of transitions the user will have to confirm, aka
-          the user will be able to enter a comment for.
-        """
-        toConfirm = []
-        tool = getToolByName(self, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if cfg:
-            toConfirm = cfg.getTransitionsToConfirm()
-        return toConfirm
 
 
 # to be removed in Products.Archetypes 1.9.5+...
