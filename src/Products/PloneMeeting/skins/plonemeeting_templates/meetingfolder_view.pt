@@ -153,7 +153,7 @@ elt.disabled = false;}
                        value="Create an item from a template"
                        tal:attributes="value string:create_meeting_item_from"
                        i18n:domain="PloneMeeting"
-                       i18n:attributes="value" class="hsButton">
+                       i18n:attributes="value" class="apButton">
             </form>
         </a>
     </div>

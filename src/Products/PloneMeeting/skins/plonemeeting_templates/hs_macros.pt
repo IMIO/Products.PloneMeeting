@@ -691,7 +691,7 @@ Needs moveUrl, firstId, lastId, obj</tal:comment>
         <input type="submit"
                tal:attributes="name python:transition;
                                value python:context.utranslate(msgid=transition, domain='plone');
-                               class string:hsButton hsButtonWF hsButtonWF_$transition;
+                               class string:apButton apButtonWF apButtonWF_$transition;
                                size python: int(len(transition));
                                onClick string:decideSelectedItems('$transition')"/>
       </span>

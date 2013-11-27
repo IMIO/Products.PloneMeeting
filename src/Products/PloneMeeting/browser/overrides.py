@@ -138,6 +138,15 @@ class BaseActionsPanelView(ActionsPanelView):
         isMeetingOrItem = self.context.meta_type in ('Meeting', 'MeetingItem')
         return member.has_permission('Delete objects', self.context) and (isMeetingOrItem and self.context.wfConditions().mayDelete() or True)
 
+    def mayEdit(self):
+        """
+          We override mayEdit to avoid the icon to be displayed for MeetingFiles.
+        """
+        member = self.context.restrictedTraverse('@@plone_portal_state').member()
+        return member.has_permission('Modify portal content', self.context) and \
+            self.useIcons and not \
+            self.context.meta_type == 'MeetingFile'
+
 
 class MeetingItemActionsPanelView(BaseActionsPanelView):
     """
@@ -167,8 +176,20 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         meeting = getCurrentMeetingObject(self.context)
         return meeting.wfConditions().mayChangeItemsOrder()
 
+    def _transitionsToConfirm(self):
+        """
+          Return the list of transitions the user will have to confirm, aka
+          the user will be able to enter a comment for.
+        """
+        toConfirm = []
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if cfg:
+            toConfirm = cfg.getTransitionsToConfirm()
+        return toConfirm
 
-class MeetingActionsPanelView(MeetingItemActionsPanelView):
+
+class MeetingActionsPanelView(BaseActionsPanelView):
     """
     """
     def __init__(self, context, request):
@@ -183,6 +204,18 @@ class MeetingActionsPanelView(MeetingItemActionsPanelView):
         """
         """
         return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
+
+    def _transitionsToConfirm(self):
+        """
+          Return the list of transitions the user will have to confirm, aka
+          the user will be able to enter a comment for.
+        """
+        toConfirm = []
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if cfg:
+            toConfirm = cfg.getTransitionsToConfirm()
+        return toConfirm
 
 
 # to be removed in Products.Archetypes 1.9.5+...
