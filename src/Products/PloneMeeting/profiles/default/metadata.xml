@@ -4,6 +4,7 @@
   <!-- ##code-section METADATA -->
   <dependencies>
     <dependency>profile-Products.CMFPlacefulWorkflow:CMFPlacefulWorkflow</dependency>
+    <dependency>profile-imio.actionspanel:default</dependency>
     <dependency>profile-collective.documentviewer:default</dependency>
   </dependencies>
   <!-- ##/code-section METADATA -->
