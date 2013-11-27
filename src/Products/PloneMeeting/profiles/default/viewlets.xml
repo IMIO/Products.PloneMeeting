@@ -15,7 +15,6 @@
   </hidden>
   <hidden manager="plone.belowcontentbody" skinname="*">
     <viewlet name="plone.abovecontenttitle.documentactions" />
-    <viewlet name="imio.actionspanel" />
   </hidden>
   <hidden manager="plone.abovecontentbody" skinname="*">
     <viewlet name="plone.belowcontentbody.contenthistory" />
