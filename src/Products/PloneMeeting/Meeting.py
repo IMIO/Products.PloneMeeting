@@ -2119,6 +2119,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 wf_tool.doActionFor(obj, transition)
             except WorkflowException:
                 continue
+        msg = self.translate('decide_several_items_done', domain='PloneMeeting')
+        self.plone_utils.addPortalMessage(msg)
         return self.portal_plonemeeting.gotoReferer()
 
     security.declarePublic('presentSeveralItems')
@@ -2162,4 +2164,3 @@ def onAddMeeting(meeting, event):
     user = meeting.portal_membership.getAuthenticatedMember()
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 ##/code-section module-footer
-
