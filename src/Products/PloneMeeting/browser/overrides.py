@@ -196,7 +196,6 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                                    'renderDelete',
                                    'renderEdit',
                                    'renderActions', )
-        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste', 'delete')
 
     def renderArrows(self):
         """
