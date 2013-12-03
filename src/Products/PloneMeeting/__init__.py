@@ -164,6 +164,8 @@ def initialize(context):
                               permission  = ADD_CONTENT_PERMISSIONS[klassname])
 
     ##code-section custom-init-bottom #fill in your manual code here
+    from AccessControl import allow_module
+    allow_module('Products.PloneMeeting.utils')
     from AccessControl import ClassSecurityInfo
     from App.class_init import InitializeClass
     FakeBrain.security = ClassSecurityInfo()
@@ -171,4 +173,3 @@ def initialize(context):
         if not elem.startswith('__'): FakeBrain.security.declarePublic(elem)
     InitializeClass(FakeBrain)
     ##/code-section custom-init-bottom
-
