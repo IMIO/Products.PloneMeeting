@@ -2479,9 +2479,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('editAdvice')
-    def editAdvice(self, group, adviceType, comment):
+    def editAdvice(self, group, adviceType, comment, adviceId):
         '''Creates or updates advice p_adviceType given in the name of p_group
-           with an optional p_comment.
+           with an optional p_comment.  p_adviceId is the id of the used meetingadvice.
            If something wrong occured, it means that someone is trying to hack
            and we raise an Unauthorized.'''
         # First of all, check that the current user actually can add the advice
@@ -2509,9 +2509,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not itemState in group.getItemAdviceEditStates(cfg):
                 raise Unauthorized
         advice['type'] = adviceType
-        advice['comment'] = comment.replace('\n', '<br/>').replace('\r', '')
+        advice['comment'] = comment.raw
         advice['actor'] = member.id
         advice['date'] = DateTime()
+        advice['advice_id'] = adviceId
         self.reindexObject()
         self.sendMailIfRelevant('adviceEdited', 'View', isRole=False)
 

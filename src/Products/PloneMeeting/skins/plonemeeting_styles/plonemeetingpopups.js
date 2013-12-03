@@ -2,21 +2,30 @@
 
 // prepare overlays for normal (non-ajax) pages
 // like meetingitem_view or overlays that you can raise from the portlet_plonemeeting
+jQuery(document).ready(function($) {
+
+jQuery(function($) {
+  // Add or edit advice popup
+  $('a.link-overlay-pm-advice').prepOverlay({
+        subtype: 'ajax',
+        closeselector: '[name="form.buttons.cancel"]',
+        config: {
+            onBeforeLoad : function (e) {
+                launchCKInstances();
+                return true;
+            }
+        }
+  });
+});
+
 jQuery(function($){
+    // Every common overelays
     $('a.link-overlay-pm').prepOverlay({
         subtype: 'ajax',
         closeselector: '[name="form.buttons.cancel"]',
    });
 });
 
-jQuery(function($){
-    $('a.link-overlay-pm.manage-item-assembly-overlay').prepOverlay({
-        subtype: 'ajax',
-        formselector: '#form',
-        noform: 'redirect',
-        redirect: $.plonepopups.redirectbasehref,
-        closeselector: '[name="form.buttons.cancel"]'
-   });
 });
 
 // prepare overlays in ajax frames
@@ -29,19 +38,22 @@ jQuery(function($){
 
 function initializePMOverlays(){
 jQuery(function($) {
-  // Add byebye user popup
-  $('a.link-overlay-pm.byebye-overlay').prepOverlay({
+  // every common overelays
+  $('a.link-overlay-pm').prepOverlay({
         subtype: 'ajax',
         closeselector: '[name="form.buttons.cancel"]',
   });
 });
+
 jQuery(function($) {
-  // Add advice popup
+  // Add or edit advice popup
   $('a.link-overlay-pm.advice-overlay').prepOverlay({
         subtype: 'ajax',
         closeselector: '[name="form.buttons.cancel"]',
+        onBeforeLoad: launchCKInstances(),
   });
 });
+
 jQuery(function($) {
   // Add transition confirmation popup
   $('a.link-overlay-actionspanel.transition-overlay').prepOverlay({
@@ -61,7 +73,7 @@ $('div.ajax-pm-frame').each(function(){
 // to pass iStartNumber and lStartNumber that are global JS variables defined on the meeting_view
 function initializePMOverlaysOnMeeting(){
 jQuery(function($) {
-$('a.link-overlay-pm.transition-overlay').each(function(){
+$('a.link-overlay-actionspanel.transition-overlay').each(function(){
     $(this).attr('href',$(this).attr('href') + '&iStartNumber=' + iStartNumber + '&lStartNumber=' + lStartNumber);
     })
   })

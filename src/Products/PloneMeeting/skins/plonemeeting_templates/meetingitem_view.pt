@@ -107,7 +107,7 @@
                                class_if_highlighted python: redefinedItemAssembly and 'highlightRedefinedValue' or '';
                                class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' itemAssemblyEditable' or 'itemAssemblyEditable') or class_if_highlighted">
           <div tal:attributes="class class_to_use"><i>
-              <a tal:condition="mayQuickEdit" href="manage_item_assembly_form" class="link-overlay-pm manage-item-assembly-overlay">
+              <a tal:condition="mayQuickEdit" href="manage_item_assembly_form" class="link-overlay-pm">
               <span i18n:translate="item_assembly"></span>
               </a>
               <span tal:condition="not: mayQuickEdit"

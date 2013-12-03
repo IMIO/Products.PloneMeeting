@@ -116,4 +116,23 @@ def onItemMoved(obj, event):
     '''Called when an item is pasted cut/pasted, we need to update annexIndex.'''
     obj.updateAnnexIndex()
 
+
+def onAdviceAdded(obj, event):
+    '''Called when a meetingadvice is added so we can warn parent item.'''
+    tool = getToolByName(obj, 'portal_plonemeeting')
+    group = getattr(tool, obj.advice_group)
+    obj.getParentNode().editAdvice(group, obj.advice_type, obj.advice_comment, obj.getId())
+
+
+def onAdviceModified(obj, event):
+    '''Called when a meetingadvice is modified so we can warn parent item.'''
+    tool = getToolByName(obj, 'portal_plonemeeting')
+    group = getattr(tool, obj.advice_group)
+    obj.getParentNode().editAdvice(group, obj.advice_type, obj.advice_comment, obj.getId())
+
+
+def onAdviceRemoved(obj, event):
+    '''Called when a meetingadvice is removed so we can warn parent item.'''
+    obj.getParentNode().deleteAdvice(obj.advice_group)
+
 ##/code-section FOOT

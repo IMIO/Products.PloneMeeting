@@ -95,7 +95,7 @@ def setupCatalogMultiplex(context):
     explicit add classes (meta_types) be indexed in catalogs (white)
     or removed from indexing in a catalog (black)
     """
-    if isNotPloneMeetingProfile(context): return 
+    if isNotPloneMeetingProfile(context): return
     site = context.getSite()
     #dd#
     muliplexed = ['ToolPloneMeeting', 'MeetingCategory', 'MeetingConfig', 'MeetingFileType', 'MeetingGroup', 'ExternalApplication', 'PodTemplate', 'MeetingUser']
@@ -308,6 +308,12 @@ def postInstall(context):
                             enabled=True,
                             criteria='ATListCriterion')
 
+    # make sure meetingadvice is in site_properties.types_not_searched
+    site_properties = site.portal_properties.site_properties
+    blacklisted = list(site_properties.getProperty('types_not_searched'))
+    if not 'meetingadvice' in blacklisted:
+        blacklisted.append('meetingadvice')
+        site_properties.manage_changeProperties(types_not_searched=blacklisted)
 
 
 ##code-section FOOT

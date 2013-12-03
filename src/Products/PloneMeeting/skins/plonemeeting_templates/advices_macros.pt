@@ -14,7 +14,7 @@
     <tr>
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
       <td tal:condition="advicesToAdd" class="noPadding">
-        <a href="@@addeditadvice" class="link-overlay-pm advice-overlay" tal:attributes="href string:${meetingItem/absolute_url}/addeditadvice">
+        <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${meetingItem/absolute_url}/++add++meetingadvice">
           <img i18n:attributes="title" title="advice_add" style="cursor:pointer"
                tal:attributes="src string:$portal_url/new.png;" />
         </a>
@@ -49,8 +49,8 @@
                     </td>
                     <td align="right" width="17px" class="noPadding" tal:condition="python: mayEdit or (advicesToAdd and advice.has_key('comment') and advice['comment'] and (advice['id'] in [a[0] for a in advicesToAdd]))">
                     <a href="@@addeditadvice"
-                       class="link-overlay-pm advice-overlay"
-                       tal:attributes="href python: meetingItem.absolute_url() + ('/addeditadvice?groupId=%s') % (advice['id'])">
+                       class="link-overlay-pm-advice"
+                       tal:attributes="href python: meetingItem.absolute_url() + '/%s/edit' % advice['advice_id']">
                       <img i18n:attributes="title" title="advice_edit" style="cursor:pointer"
                            tal:attributes="src string:$portal_url/edit.gif;" />
                     </a>

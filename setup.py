@@ -40,6 +40,7 @@ setup(name='Products.PloneMeeting',
           'communesplone.iconified_document_actions',
           'imio.pm.locales',
           'imio.migrator',
-          'imio.actionspanel', ],
+          'imio.actionspanel',
+          'plone.directives.form', ],
       entry_points={},
       )

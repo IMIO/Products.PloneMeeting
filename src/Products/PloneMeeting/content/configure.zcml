@@ -1,0 +1,27 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    i18n_domain="Products.PloneMeeting">
+
+    <include package="plone.behavior" file="meta.zcml"/>
+
+    <!-- Vocabularies -->
+    <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      factory=".advice.AdviceGroupVocabulary"
+      name="Products.PloneMeeting.content.advice.advice_group_vocabulary"
+    />
+    <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      factory=".advice.AdviceTypeVocabulary"
+      name="Products.PloneMeeting.content.advice.advice_type_vocabulary"
+    />
+
+    <!-- Schema policy -->
+    <utility
+        factory=".advice.MeetingAdviceSchemaPolicy"
+        name="schema_policy_meetingadvice"
+    />
+
+</configure>

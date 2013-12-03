@@ -6,6 +6,7 @@
 
   <!-- ##code-section configure.zcml.header -->
   <include package=".browser" />
+  <include package=".content" />
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="communesplone.iconified_document_actions"/>
   <include package="imio.pm.locales"/>
@@ -55,6 +56,22 @@
   <subscriber for=".interfaces.IMeetingGroup
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onMeetingGroupTransition"/>
+
+  <subscriber for=".interfaces.IMeetingGroup
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".events.onMeetingGroupTransition"/>
+
+  <subscriber for=".content.advice.IMeetingAdvice
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onAdviceModified"/>
+
+  <subscriber for=".content.advice.IMeetingAdvice
+                   zope.container.interfaces.IObjectAddedEvent"
+              handler=".events.onAdviceAdded"/>
+
+  <subscriber for=".content.advice.IMeetingAdvice
+                   zope.container.interfaces.IObjectRemovedEvent"
+              handler=".events.onAdviceRemoved"/>
 
   <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
   <subscriber
