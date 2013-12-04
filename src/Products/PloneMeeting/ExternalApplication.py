@@ -803,8 +803,8 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
             item.updateAnnexIndex()
         # Add advices
         if 'advices' not in toIgnore:
-            for advice in masterItem.advices:
-                item.advices[advice.id] = d = PersistentMapping()
+            for advice in masterItem.adviceIndex:
+                item.adviceIndex[advice.id] = d = PersistentMapping()
                 d['id'] = advice.id
                 d['name'] = advice.name
                 d['type'] = advice.type[1]
@@ -1296,4 +1296,3 @@ def sendNotificationsIfRelevant(object, event):
         if event in extApp.getNotifyEvents():
             extApp.notifyExternalApplication(object, event)
 ##/code-section module-footer
-

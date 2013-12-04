@@ -97,8 +97,8 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(self.hasPermission('View', (item2, item3)))
 
     def test_pm_AddEditDeleteAdvices(self):
-        '''This test the MeetingItem.getAdvicesToGive method.
-           MeetingItem.getAdvicesToGive returns 2 lists : first with addable advices and
+        '''This test the MeetingItem.getAdvicesGroupsInfosForUser method.
+           MeetingItem.getAdvicesGroupsInfosForUser returns 2 lists : first with addable advices and
            the second with editable/deletable advices.'''
         # creator for group 'developers'
         login(self.portal, 'pmCreator1')
@@ -113,7 +113,7 @@ class testAdvices(PloneMeetingTestCase):
         item1.at_post_edit_script()
         self.assertEquals(item1.needsAdvices(), True)
         # 'pmCreator1' has no addable nor editable advice to give
-        self.assertEquals(item1.getAdvicesToGive(), (None, None))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), (None, None))
         login(self.portal, 'pmReviewer2')
         self.failIf(self.hasPermission('View', item1))
         login(self.portal, 'pmCreator1')
@@ -124,7 +124,7 @@ class testAdvices(PloneMeetingTestCase):
                           group=self.portal.portal_plonemeeting.developers,
                           adviceType='positive',
                           comment='My comment')
-        self.assertEquals(item1.getAdvicesToGive(), (None, None))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), (None, None))
         login(self.portal, 'pmReviewer2')
         # the given 'adviceType' must exists (selected in the MeetingConfig.usedAdviceTypes)
         self.assertRaises(KeyError,
@@ -139,7 +139,7 @@ class testAdvices(PloneMeetingTestCase):
                           adviceType='positive',
                           comment='My comment')
         # 'pmReviewer2' has one advice to give for 'vendors' and no advice to edit
-        self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         self.assertEquals(item1.hasAdvices(), False)
         #give the advice
         item1.editAdvice(group=self.portal.portal_plonemeeting.vendors,
@@ -147,7 +147,7 @@ class testAdvices(PloneMeetingTestCase):
                          comment='My comment')
         self.assertEquals(item1.hasAdvices(), True)
         # 'pmReviewer2' has no more addable advice (as already given) but it is now an editable advice
-        self.assertEquals(item1.getAdvicesToGive(), ([], ['vendors']))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], ['vendors']))
         # given advice is correctly stored
         self.assertEquals(item1.advices['vendors']['type'], 'positive')
         self.assertEquals(item1.advices['vendors']['comment'], 'My comment')
@@ -156,7 +156,7 @@ class testAdvices(PloneMeetingTestCase):
         # now 'pmReviewer2' can't add (already given) or edit an advice
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
-        self.assertEquals(item1.getAdvicesToGive(), ([], []))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
         # if a user that can not remove the advice tries (here the item is validated), he gets Unauthorized
         self.assertRaises(Unauthorized, item1.deleteAdvice, 'vendors')
         # put the item back in a state where 'pmReviewer2' can remove the advice
@@ -165,13 +165,13 @@ class testAdvices(PloneMeetingTestCase):
         login(self.portal, 'pmReviewer2')
         # remove the advice
         item1.deleteAdvice('vendors')
-        self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         # remove the fact that we asked the advice
         login(self.portal, 'pmManager')
         item1.setOptionalAdvisers([])
         item1.at_post_edit_script()
         login(self.portal, 'pmReviewer2')
-        self.assertEquals(item1.getAdvicesToGive(), ([], []))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
 
     def test_pm_CanNotGiveAdviceIfNotAsked(self):
         '''
@@ -197,8 +197,8 @@ class testAdvices(PloneMeetingTestCase):
                                         itemAdviceStates=('itemcreated', 'proposed', 'validated',),
                                         itemAdviceEditStates=('itemcreated', 'proposed', 'validated',),
                                         itemAdviceViewStates=('itemcreated', 'proposed', 'validated',)):
-        '''This test the MeetingItem.getAdvicesToGive method.
-           MeetingItem.getAdvicesToGive returns 2 lists : first with addable advices and
+        '''This test the MeetingItem.getAdvicesGroupsInfosForUser method.
+           MeetingItem.getAdvicesGroupsInfosForUser returns 2 lists : first with addable advices and
            the second with editable/deletable advices.'''
         self.meetingConfig.setItemAdviceStates(itemAdviceStates)
         self.meetingConfig.setItemAdviceEditStates(itemAdviceEditStates)
@@ -215,7 +215,7 @@ class testAdvices(PloneMeetingTestCase):
         # check than the adviser can see the item
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
-        self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
 
     def test_pm_AdvicesInvalidation(self):
         '''Test the advice invalidation process.'''
@@ -236,7 +236,7 @@ class testAdvices(PloneMeetingTestCase):
         self.proposeItem(item1)
         # login as adviser and add an advice
         self.changeUser('pmReviewer2')
-        self.assertEquals(item1.getAdvicesToGive(), ([('vendors', u'Vendors')], []))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         # give an advice
         item1.editAdvice(group=self.portal.portal_plonemeeting.vendors, adviceType='positive', comment='My comment')
         # login as a user that can actually edit the item
@@ -262,7 +262,7 @@ class testAdvices(PloneMeetingTestCase):
         item1.restrictedTraverse('@@delete_givenuid')(annex1.UID())
         self.failIf(item1.hasAdvices())
         # put advices back so we can check other case where advices are invalidated
-        item1.advices['vendors']['type'] = 'positive'
+        item1.adviceIndex['vendors']['type'] = 'positive'
         item1.updateAdvices()
         self.failUnless(item1.hasAdvices())
         # adding an annex will invalidate advices
@@ -270,7 +270,7 @@ class testAdvices(PloneMeetingTestCase):
         annex1 = self.addAnnex(item1, annexType=self.annexFileType)
         self.failIf(item1.hasAdvices())
         # retrieve removed advices
-        item1.advices['vendors']['type'] = 'positive'
+        item1.adviceIndex['vendors']['type'] = 'positive'
         item1.updateAdvices()
         self.failUnless(item1.hasAdvices())
         # editing the item will invalidate advices
@@ -279,7 +279,7 @@ class testAdvices(PloneMeetingTestCase):
         item1.at_post_edit_script()
         self.failIf(item1.hasAdvices())
         # retrieve removed advices
-        item1.advices['vendors']['type'] = 'positive'
+        item1.adviceIndex['vendors']['type'] = 'positive'
         item1.updateAdvices()
         self.failUnless(item1.hasAdvices())
         # changing a field value thru ajax will invalidate advices

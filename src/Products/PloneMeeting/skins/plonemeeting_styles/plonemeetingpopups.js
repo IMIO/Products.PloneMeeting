@@ -47,10 +47,15 @@ jQuery(function($) {
 
 jQuery(function($) {
   // Add or edit advice popup
-  $('a.link-overlay-pm.advice-overlay').prepOverlay({
+  $('a.link-overlay-pm-advice').prepOverlay({
         subtype: 'ajax',
         closeselector: '[name="form.buttons.cancel"]',
-        onBeforeLoad: launchCKInstances(),
+        config: {
+            onBeforeLoad : function (e) {
+                launchCKInstances();
+                return true;
+            }
+        }
   });
 });
 

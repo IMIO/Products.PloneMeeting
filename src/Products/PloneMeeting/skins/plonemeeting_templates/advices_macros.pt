@@ -2,9 +2,9 @@
 <metal:icons metal:define-macro="advicesIcons" i18n:domain="PloneMeeting"
      tal:define="advicesByType meetingItem/getAdvicesByType;
                  adviceStyle python: meetingConfig.getUserParam('adviceStyle');
-                 adviceInfo python: meetingItem.getAdvicesToGive();
-                 advicesToAdd python: adviceInfo[0];
-                 advicesToEdit python: adviceInfo[1];
+                 advisableGroups python: meetingItem.getAdvicesGroupsInfosForUser();
+                 advicesToAdd python: advisableGroups[0];
+                 advicesToEdit python: advisableGroups[1];
                  portal_url context/@@plone_portal_state/portal_url;">
 
   <table width="#"
@@ -38,8 +38,8 @@
                     <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span>
                     </td>
                     <td align="right" width="17px" class="noPadding" tal:condition="mayEdit">
-                      <form action="deleteAdvice" name="deleteAdvice" tal:attributes="action python: meetingItem.absolute_url() + '/deleteAdvice'">
-                        <input type="hidden" value="#" name="groupId" tal:attributes="value advice/id">
+                      <form action="deleteAdvice" name="deleteAdvice" tal:attributes="action python: meetingItem.absolute_url() + '/@@delete_givenuid'">
+                        <input type="hidden" value="#" name="selected_uid" tal:attributes="value advice/advice_uid">
                         <img style="cursor:pointer"
                              tal:attributes="src string:$portal_url/delete_icon.png;"
                              i18n:attributes="title"
@@ -48,7 +48,7 @@
                       </form>
                     </td>
                     <td align="right" width="17px" class="noPadding" tal:condition="python: mayEdit or (advicesToAdd and advice.has_key('comment') and advice['comment'] and (advice['id'] in [a[0] for a in advicesToAdd]))">
-                    <a href="@@addeditadvice"
+                    <a href="edit"
                        class="link-overlay-pm-advice"
                        tal:attributes="href python: meetingItem.absolute_url() + '/%s/edit' % advice['advice_id']">
                       <img i18n:attributes="title" title="advice_edit" style="cursor:pointer"
@@ -59,7 +59,7 @@
 
                 </table>
                 <tal:details condition="python: (adviceType != 'not_given') and advice['comment']">
-                  <i style="font-size: 95%" tal:content="structure advice/comment"></i><br/>
+                  <i style="font-size: 95%" tal:content="structure advice/comment"></i>
                 </tal:details>
               </li>
             </ul>

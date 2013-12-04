@@ -519,7 +519,7 @@ def sendAdviceToGiveMailIfRelevant(event):
     cfg = tool.getMeetingConfig(event.object)
     if 'adviceToGive' not in cfg.getMailItemEvents():
         return
-    for groupId, adviceInfo in event.object.advices.iteritems():
+    for groupId, adviceInfo in event.object.adviceIndex.iteritems():
         adviceStates = getattr(tool, groupId).getItemAdviceStates(cfg)
         # Ignore advices that must not be given in the current item state
         if event.new_state.id not in adviceStates:

@@ -119,20 +119,16 @@ def onItemMoved(obj, event):
 
 def onAdviceAdded(obj, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
-    tool = getToolByName(obj, 'portal_plonemeeting')
-    group = getattr(tool, obj.advice_group)
-    obj.getParentNode().editAdvice(group, obj.advice_type, obj.advice_comment, obj.getId())
+    obj.getParentNode().updateAdvices()
 
 
 def onAdviceModified(obj, event):
     '''Called when a meetingadvice is modified so we can warn parent item.'''
-    tool = getToolByName(obj, 'portal_plonemeeting')
-    group = getattr(tool, obj.advice_group)
-    obj.getParentNode().editAdvice(group, obj.advice_type, obj.advice_comment, obj.getId())
+    obj.getParentNode().updateAdvices()
 
 
 def onAdviceRemoved(obj, event):
     '''Called when a meetingadvice is removed so we can warn parent item.'''
-    obj.getParentNode().deleteAdvice(obj.advice_group)
+    obj.getParentNode().updateAdvices()
 
 ##/code-section FOOT

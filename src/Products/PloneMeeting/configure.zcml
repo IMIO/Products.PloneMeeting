@@ -2,9 +2,14 @@
            xmlns:browser="http://namespaces.zope.org/browser"
            xmlns:five="http://namespaces.zope.org/five"
            xmlns:i18n="http://namespaces.zope.org/i18n"
+           xmlns:grok="http://namespaces.zope.org/grok"
            i18n_domain="PloneMeeting">
 
   <!-- ##code-section configure.zcml.header -->
+  <!-- we need to grok here for plone.directives to work... -->
+  <include package="five.grok" />
+  <grok:grok package="." />
+
   <include package=".browser" />
   <include package=".content" />
   <include package="Products.CMFPlacefulWorkflow"/>
@@ -12,6 +17,12 @@
   <include package="imio.pm.locales"/>
   <include package="imio.actionspanel"/>
   <include package="collective.documentviewer"/>
+  <include package="plone.app.dexterity" />
+  <include package="plone.directives.form" file="meta.zcml" />
+  <include package="plone.directives.form" />
+
+  <permission id="PloneMeeting.AddAdvice"
+              title="PloneMeeting: Add advice"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"

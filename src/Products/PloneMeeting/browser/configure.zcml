@@ -70,13 +70,6 @@
 
     <!-- Overlays views -->
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        name="addeditadvice"
-        class=".advices.AddEditAdvice"
-        permission="zope2.View"
-        template="templates/advices.pt"
-      />
-    <browser:page
         for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
         name="createitemfromtemplate"
         class=".itemtemplates.ItemTemplateView"

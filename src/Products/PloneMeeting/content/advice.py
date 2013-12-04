@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from zope.interface import implements
+from zope.interface import implements, Interface
 from zope import schema
 from zope.i18n import translate
 from zope.schema.interfaces import IVocabularyFactory
@@ -9,14 +9,13 @@ from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
 from plone.app.textfield import RichText
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
-from plone.directives.form import default_value
-from plone.supermodel import model
+from plone.directives import form
 
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
 
 
-class IMeetingAdvice(model.Schema):
+class IMeetingAdvice(Interface):
     """
         MeetingAdvice schema
     """
@@ -24,13 +23,13 @@ class IMeetingAdvice(model.Schema):
         title=_(u'Group'),
         description=_(u"Choose a group."),
         vocabulary=u'Products.PloneMeeting.content.advice.advice_group_vocabulary',
-        required=False,
+        required=True,
     )
     advice_type = schema.Choice(
         title=_(u'Type'),
         description=_(u"Choose a type."),
         vocabulary=u'Products.PloneMeeting.content.advice.advice_type_vocabulary',
-        required=False,
+        required=True,
     )
     advice_comment = RichText(
         title=_(u"Advice comment"),
@@ -42,9 +41,11 @@ class IMeetingAdvice(model.Schema):
     )
 
 
-@default_value(field=IMeetingAdvice['advice_type'])
-def default_manager(data):
-    return data.getCurrentMeetingConfig().getDefaultAdviceType()
+@form.default_value(field=IMeetingAdvice['advice_type'])
+def advice_typeDefaultValue(data):
+    tool = getToolByName(data.context, 'portal_plonemeeting')
+    cfg = tool.getMeetingConfig(data.context)
+    return cfg.getDefaultAdviceType()
 
 
 class MeetingAdvice(Container):
@@ -75,18 +76,20 @@ class AdviceGroupVocabulary(object):
         # take into account groups for wich user can add an advice
         # while adding an advice, the context is his parent, aka a MeetingItem
         if context.meta_type == 'MeetingItem':
-            advices_to_give = context.getAdvicesToGive()[0]
+            alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[0]]
         # take into account groups for wich user can edit an advice
         else:
-            advices_to_give = context.getAdvicesToGive()[1]
+            alterable_advices_groups = context.getAdvicesGroupsInfosForUser()[1]
 
-        if not advices_to_give:
+        if not alterable_advices_groups:
             return SimpleVocabulary(terms)
 
         tool = getToolByName(context, 'portal_plonemeeting')
 
-        for advice_to_give in advices_to_give:
-            terms.append(SimpleTerm(advice_to_give, advice_to_give, getattr(tool, advice_to_give).Title()))
+        for alterable_advices_group in alterable_advices_groups:
+            terms.append(SimpleTerm(alterable_advices_group,
+                                    alterable_advices_group,
+                                    getattr(tool, alterable_advices_group).Title()))
         return SimpleVocabulary(terms)
 
 
@@ -97,6 +100,6 @@ class AdviceTypeVocabulary(object):
         """"""
         terms = []
         cfg = context.portal_plonemeeting.getMeetingConfig(context)
-        for advice_type in cfg.getUsedAdviceTypes():
-            terms.append(SimpleTerm(advice_type, advice_type, advice_type))
+        for advice_id, advice_title in cfg.listAdviceTypes().items():
+            terms.append(SimpleTerm(advice_id, advice_id, advice_title))
         return SimpleVocabulary(terms)

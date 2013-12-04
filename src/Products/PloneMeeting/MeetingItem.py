@@ -141,8 +141,8 @@ class MeetingItemMarshaller(HubSessionsMarshaller):
             w(classifier.id)
         w('</classifier>')
         # Dump advices
-        w('<advices type="list" count="%d">' % len(item.advices))
-        for groupId, advice in item.advices.iteritems():
+        w('<advices type="list" count="%d">' % len(item.adviceIndex))
+        for groupId, advice in item.adviceIndex.iteritems():
             w('<advice type="object">')
             for key, value in advice.iteritems():
                 self.dumpField(res, key, value)
@@ -1100,6 +1100,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            "annexes icons" macro, for example.'''
         OrderedBaseFolder.__init__(self, *args, **kwargs)
         self.annexIndex = PersistentList()
+        # Create the dictionary for storing advices. Every key is the id of a
+        # MeetingGroup that must give an advice; every value is a dict with some
+        # information about the advice (creator, comment, date, etc)
+        self.adviceIndex = PersistentMapping()
 
     security.declarePublic('getDecision')
     def getDecision(self, keepWithNext=False, **kwargs):
@@ -2430,8 +2434,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = getattr(mc.meetingusers, res)
         return res
 
-    security.declarePublic('getAdvicesToGive')
-    def getAdvicesToGive(self):
+    security.declarePublic('getAdvicesGroupsInfosForUser')
+    def getAdvicesGroupsInfosForUser(self):
         '''This method returns 2 lists of groups in the name of which the
            currently logged user may, on this item:
            - add an advice;
@@ -2454,12 +2458,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         toAdd = []
         toEdit = []
         for group in meetingGroups:
-            if group.id not in self.advices:
+            if group.id not in self.adviceIndex:
                 continue
-            adviceType = self.advices[group.id]['type']
+            adviceType = self.adviceIndex[group.id]['type']
             if (adviceType == 'not_given') and \
                (itemState in group.getItemAdviceStates(cfg)):
-                toAdd.append((group.id, self.advices[group.id]['name']))
+                toAdd.append((group.id, self.adviceIndex[group.id]['name']))
             if (adviceType != 'not_given') and \
                (itemState in group.getItemAdviceEditStates(cfg)):
                 toEdit.append(group.id)
@@ -2469,7 +2473,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getAdvicesByType(self):
         '''Returns the list of advices, grouped by type.'''
         res = {}
-        for groupId, advice in self.advices.iteritems():
+        for groupId, advice in self.adviceIndex.iteritems():
             # Create the entry for this type of advice if not yet created.
             if advice['type'] not in res:
                 res[advice['type']] = advices = []
@@ -2478,79 +2482,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advices.append(advice.__dict__['data'])
         return res
 
-    security.declarePrivate('editAdvice')
-    def editAdvice(self, group, adviceType, comment, adviceId):
-        '''Creates or updates advice p_adviceType given in the name of p_group
-           with an optional p_comment.  p_adviceId is the id of the used meetingadvice.
-           If something wrong occured, it means that someone is trying to hack
-           and we raise an Unauthorized.'''
-        # First of all, check that the current user actually can add the advice
-        member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
-        if not group.getPloneGroupId('advisers') in member.getGroups():
-            raise Unauthorized
-        if group.id not in self.advices:
-            self.updateAdvices()
-            # if still not, raise Unauthorized, trying to add a not asked advice
-            if group.id not in self.advices:
-                raise Unauthorized
-        if group.id not in self.advices:
-            return
-        advice = self.advices[group.id]
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        if not adviceType in cfg.getUsedAdviceTypes():
-            raise KeyError, WRONG_ADVICE_TYPE_ERROR % adviceType
-        itemState = self.queryState()
-        if advice['type'] == 'not_given':
-            # we are adding a new advice, check that we are in the correct condition
-            if not itemState in group.getItemAdviceStates(cfg):
-                raise Unauthorized
-        else:
-            # we are editing an existing advice, check that we are in the correct condition
-            if not itemState in group.getItemAdviceEditStates(cfg):
-                raise Unauthorized
-        advice['type'] = adviceType
-        advice['comment'] = comment.raw
-        advice['actor'] = member.id
-        advice['date'] = DateTime()
-        advice['advice_id'] = adviceId
-        self.reindexObject()
-        self.sendMailIfRelevant('adviceEdited', 'View', isRole=False)
-
-    security.declarePublic('deleteAdvice')
-    def deleteAdvice(self, groupId):
-        '''Delete an advice for a given group.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        group = getattr(tool, groupId)
-        # First of all, check that the current user actually can manage
-        # advices for the given group
-        member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
-        if not group.getPloneGroupId('advisers') in member.getGroups():
-            raise Unauthorized
-        itemState = self.queryState()
-        # check that the item is in a state where we can remove an advice
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        if not itemState in group.getItemAdviceEditStates(cfg):
-            raise Unauthorized
-        # ok, proceed, the advice for the group is in the already given advices
-        # the user is an adviser for this group and in this item state, an advice
-        # can be removed
-        del self.advices[groupId]
-        self.updateAdvices()  # To recreate an empty dict for this adviser
-        self.reindexObject()
-        msg = translate('advice_deleted', domain='PloneMeeting', context=self.REQUEST)
-        self.plone_utils.addPortalMessage(msg)
-        self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+    security.declarePublic('getGivenAdvices')
+    def getGivenAdvices(self):
+        '''Returns the list of advices that has already been given by
+           computing a data dict from contained meetingadvices.'''
+        # for now, only contained elements in a MeetingItem of
+        # meta_type 'Dexterity Container' are meetingadvices...
+        res = {}
+        for advice in self.objectValues('Dexterity Container'):
+            res[advice.advice_group] = {'type': advice.advice_type,
+                                        'optional': True,
+                                        'id': advice.advice_group,
+                                        'name': advice.advice_group,
+                                        'advice_id': advice.getId(),
+                                        'advice_uid': advice.UID(),
+                                        'comment': advice.advice_comment and advice.advice_comment.raw,}
+        return res
 
     security.declarePublic('needsAdvices')
     def needsAdvices(self):
         '''Is there at least one advice that needs to be (or has already been)
            given on this item?'''
-        return bool(self.advices)
+        return bool(self.adviceIndex)
 
     security.declarePublic('hasAdvices')
     def hasAdvices(self):
         '''Is there at least one given advice on this item?'''
-        for advice in self.advices.itervalues():
+        for advice in self.adviceIndex.itervalues():
             if advice['type'] != 'not_given':
                 return True
         return False
@@ -2559,8 +2517,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def hasAdvice(self, groupId):
         '''Returns True if someone from p_groupId has given an advice on this
            item.'''
-        if (groupId in self.advices) and \
-           (self.advices[groupId]['type'] != 'not_given'):
+        if (groupId in self.adviceIndex) and \
+           (self.adviceIndex[groupId]['type'] != 'not_given'):
             return True
 
     security.declarePublic('willInvalidateAdvices')
@@ -2591,7 +2549,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns True if all mandatory advices for this item have been given
            and are all positive.'''
         if not hasattr(self, 'isRecurringItem'):
-            for advice in self.advices.itervalues():
+            for advice in self.adviceIndex.itervalues():
                 if not advice['optional'] and \
                    not advice['type'].startswith('positive'):
                     return False
@@ -2600,18 +2558,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'updateAdvices')
     def updateAdvices(self, invalidate=False):
         '''Every time an item is created or updated, this method updates the
-           dictionary self.advices: a key is added for every advice that needs
+           dictionary self.adviceIndex: a key is added for every advice that needs
            to be given, a key is removed for every advice that does not need to
            be given anymore. If p_invalidate = True, it means that advice
            invalidation is enabled and someone has modified the item: it means
            that all advices must be "not_given" again.'''
-        tool = self.portal_plonemeeting
-        cfg = tool.getMeetingConfig(self)
-        userId = self.portal_membership.getAuthenticatedMember().id
+        tool = getToolByName(self, 'portal_plonemeeting')
+        # clean adviceIndex and recompute it
+        self.adviceIndex = PersistentMapping()
         # Advices need not be given on recurring items.
         if self.isDefinedInTool():
-            for key in self.advices:
-                del self.advices[key]
             return
         # Compute mandatory and get optional advisers
         mandatoryAdvisers = self.getMandatoryAdvisers()
@@ -2623,37 +2579,39 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if adviser not in mandatoryAdvisers:
                 optionalAdvisers.append(adviser)
         self.setOptionalAdvisers(optionalAdvisers)
-        # Update the dictionary self.advices
-        advisers = set()
+        # Update the dictionary self.adviceIndex with every advices to give
         i = -1
+        # we keep the mandatory and optional advisers separated because we need
+        # to know what advices are optional or not
         for group in (mandatoryAdvisers, optionalAdvisers):
             i += 1
             optional = (i == 1)
             for groupId in group:
-                advisers.add(groupId)
-                if groupId not in self.advices:
-                    # We create an empty dictionary that will store advice info
-                    # once the advice will have been created.
-                    self.advices[groupId] = d = PersistentMapping()
-                    d['type'] = 'not_given'
-                    d['optional'] = optional
-                    d['id'] = groupId
-                    d['name'] = getattr(tool, groupId).getName().decode('utf-8')
-        # Remove, from self.advices, advices that are not required anymore.
-        for groupId in self.advices.keys():
-            if (self.advices[groupId]['type'] == 'not_given') and \
-               groupId not in advisers:
-                del self.advices[groupId]
+                # We create an empty dictionary that will store advice info
+                # once the advice will have been created.
+                self.adviceIndex[groupId] = d = PersistentMapping()
+                d['type'] = 'not_given'
+                d['optional'] = optional
+                d['id'] = groupId
+                d['name'] = getattr(tool, groupId).getName().decode('utf-8')
+        # now update self.adviceIndex with given advices
+        for groupId, adviceInfo in self.getGivenAdvices().iteritems():
+            # in case an already given advice does not need to be given anymore
+            # the groupId is in givenAdvice but not in self.adviceIndex for now
+            # that contains advices to give
+            if not groupId in self.annexIndex:
+                self.adviceIndex[groupId] = PersistentMapping()
+            self.adviceIndex[groupId].update(adviceInfo)
         # Update advice-related local roles.
         # First, remove 'Reader' local roles granted to advisers.
         # but not for copyGroups related
-        role_to_remove = READER_USECASES['advices']
         tool.removeGivenLocalRolesFor(self,
-                                      role_to_remove=role_to_remove,
+                                      role_to_remove=READER_USECASES['advices'],
                                       suffixes=['advisers', ],
                                       notForGroups=self.getCopyGroups())
         # Then, add local roles for advisers.
         itemState = self.queryState()
+        cfg = tool.getMeetingConfig(self)
         for group in (mandatoryAdvisers, optionalAdvisers):
             for groupId in group:
                 mGroup = getattr(tool, groupId)
@@ -2666,7 +2624,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Invalidate advices if needed
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
-            for advice in self.advices.itervalues():
+            userId = self.portal_membership.getAuthenticatedMember().id
+            for advice in self.adviceIndex.itervalues():
                 if 'actor' in advice and (advice['actor'] != userId):
                     # Send a mail to the guy that gave the advice.
                     if 'adviceInvalidated' in cfg.getUserParam(
@@ -2686,14 +2645,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def indexAdvisers(self):
         '''Return the list of adviser (MeetingGroup) ids. This is used to
            index info from self.advisers in portal_catalog.'''
-        if not hasattr(self, 'advices'):
+        if not hasattr(self, 'adviceIndex'):
             return ''
         res = []
         for group in (self.getMandatoryAdvisers(), self.getOptionalAdvisers()):
             for adviser in group:
                 suffix = '0'  # Has not been given yet
-                if (adviser in self.advices) and \
-                   (self.advices[adviser]['type'] != 'not_given'):
+                if (adviser in self.adviceIndex) and \
+                   (self.adviceIndex[adviser]['type'] != 'not_given'):
                     suffix = '1'  # Has been given
                 res.append(adviser + suffix)
         return res
@@ -2714,10 +2673,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # annexes (or two versions of it) will always have different URLs, so
         # we avoid problems due to browser caches.
         self.alreadyUsedAnnexNames = PersistentList()
-        # Create the dictionary for storing advices. Every key is the id of a
-        # MeetingGroup that must give an advice; every value is a dict with some
-        # information about the advice (creator, comment, date, etc)
-        self.advices = PersistentMapping()
         # The following field allows to store events that occurred in the life
         # of an item, like annex deletions or additions.
         self.itemHistory = PersistentList()
@@ -2885,11 +2840,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # First, remove 'power observers' local roles granted to
         # MEETING_GROUP_SUFFIXES suffixed groups.  As this is the case also for
         # advisers, we do not remove this role for advisers
-        advisers = self.advices.keys()
+        advisers = self.adviceIndex.keys()
         adviserGroups = ['%s_advisers' % adviser for adviser in advisers]
-        role_to_remove = READER_USECASES['copy_groups']
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove=role_to_remove,
+                                                          role_to_remove=READER_USECASES['copy_groups'],
                                                           suffixes=MEETING_GROUP_SUFFIXES,
                                                           notForGroups=adviserGroups)
         # check if copyGroups should have access to this item for current review state
@@ -2910,9 +2864,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Configure local role for use case 'power_observers' to the corresponding
            MeetingConfig 'powerobservers' group.'''
         # First, remove 'power observer' local roles granted to powerobservers.
-        role_to_remove = READER_USECASES['power_observers']
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove=role_to_remove,
+                                                          role_to_remove=READER_USECASES['power_observers'],
                                                           suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
         # Then, add local roles for powerobservers.
         itemState = self.queryState()
