@@ -1,6 +1,12 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
+    xmlns:grok="http://namespaces.zope.org/grok"
     i18n_domain="Products.PloneMeeting">
+
+    <!-- We need to grok here for plone.directives to work...
+         We put this in this configure.zcml because it is removed from main configure.zcml by aarchgenxml... -->
+    <include package="five.grok" />
+    <grok:grok package="." />
 
     <!-- Vocabularies -->
     <utility
