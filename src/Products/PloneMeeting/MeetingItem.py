@@ -29,6 +29,7 @@ from appy.gen import No
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from AccessControl import Unauthorized
+from AccessControl.PermissionRole import rolesForPermissionOn
 from DateTime import DateTime
 from App.class_init import InitializeClass
 from OFS.ObjectManager import BeforeDeleteException
@@ -40,7 +41,7 @@ from collective.documentviewer.settings import GlobalSettings
 from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
+from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View, AddPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.Meeting import Meeting
@@ -2555,6 +2556,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     return False
         return True
 
+    def _grantPermissionToRole(self, permission, role_to_give):
+        """
+          Grant given p_permission to given p_role_to_give on self.
+        """
+        roles = rolesForPermissionOn(permission, self)
+        if not role_to_give in roles:
+            # cleanup roles as the permission is also returned with a leading '_'
+            roles = [role for role in roles if not role.startswith('_')]
+            roles = roles + [role_to_give, ]
+            self.manage_permission(permission, roles)
+
+    def _removePermissionToRole(self, permission, role_to_remove):
+        """
+          Remove given p_permission to given p_role_to_remove on self.
+        """
+        roles = rolesForPermissionOn(permission, self)
+        if role_to_remove in roles:
+            # cleanup roles as the permission is also returned with a leading '_'
+            roles = [role for role in roles if not role.startswith('_')]
+            roles.remove(role_to_remove)
+            self.manage_permission(permission, roles)
+
     security.declareProtected('Modify portal content', 'updateAdvices')
     def updateAdvices(self, invalidate=False):
         '''Every time an item is created or updated, this method updates the
@@ -2602,16 +2625,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not groupId in self.annexIndex:
                 self.adviceIndex[groupId] = PersistentMapping()
             self.adviceIndex[groupId].update(adviceInfo)
-        # Update advice-related local roles.
+        # Clean-up advice-related local roles and granted permissions.
         # First, remove 'Reader' local roles granted to advisers.
         # but not for copyGroups related
         tool.removeGivenLocalRolesFor(self,
                                       role_to_remove=READER_USECASES['advices'],
                                       suffixes=['advisers', ],
                                       notForGroups=self.getCopyGroups())
+        # and remove specific permissions given to add advices
+        # make sure 'Add portal content' and 'PloneMeeting: Add advice' are not
+        # given to the READER_USECASES['advices'] role
+        self._removePermissionToRole(permission=AddPortalContent,
+                                     role_to_remove=READER_USECASES['advices'])
+        self._removePermissionToRole(permission=AddAdvice,
+                                     role_to_remove=READER_USECASES['advices'])
         # Then, add local roles for advisers.
         itemState = self.queryState()
         cfg = tool.getMeetingConfig(self)
+        wfTool = getToolByName(self, 'portal_workflow')
         for group in (mandatoryAdvisers, optionalAdvisers):
             for groupId in group:
                 mGroup = getattr(tool, groupId)
@@ -2619,8 +2650,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if (itemState not in mGroup.getItemAdviceStates(cfg)) and \
                    (itemState not in mGroup.getItemAdviceEditStates(cfg))and \
                    (itemState not in mGroup.getItemAdviceViewStates(cfg)):
+                    # make sure the advice given by groupId is no more editable
+                    if 'advice_id' in self.adviceIndex[groupId]:
+                        adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
+                        if adviceObj.queryState() == 'advice_under_edit':
+                            wfTool.doActionFor(adviceObj, 'giveAdvice')
                     continue
+                # give access to the item in any case
                 self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
+                # check if user must be able to add an advice, if not already given
+                if itemState in mGroup.getItemAdviceStates(cfg) and not groupId in self.getGivenAdvices():
+                    # advisers must be able to add a 'meetingadvice', give
+                    # relevant permissions to READER_USECASES['advices'] role
+                    # we need to give 'Add portal content' and 'PloneMeeting: Add advice' to
+                    # the READER_USECASES['advices'] role
+                    self._grantPermissionToRole(permission=AddPortalContent,
+                                                role_to_give=READER_USECASES['advices'])
+                    self._grantPermissionToRole(permission=AddAdvice,
+                                                role_to_give=READER_USECASES['advices'])
+
+                if itemState in mGroup.getItemAdviceEditStates(cfg):
+                    # make sure the advice given by groupId is in state 'advice_under_edit'
+                    if 'advice_id' in self.adviceIndex[groupId]:
+                        adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
+                        if not adviceObj.queryState() == 'advice_under_edit':
+                            wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
+                # if item needs to be accessible by advisers, it is already
+                # done by self.manage_addLocalRoles here above because it is necessary in any case
+                if itemState in mGroup.getItemAdviceViewStates(cfg):
+                    pass
+
         # Invalidate advices if needed
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.

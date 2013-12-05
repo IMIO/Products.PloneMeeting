@@ -88,6 +88,7 @@ ReadObservations = 'PloneMeeting: Read item observations'
 ReadDecisionAnnex = 'PloneMeeting: Read decision annex'
 WriteObservations = 'PloneMeeting: Write item observations'
 WriteDecisionAnnex = 'PloneMeeting: Write decision annex'
+AddAdvice = 'PloneMeeting: Add advice'
 CopyOrMove = 'Copy or Move'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))

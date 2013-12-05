@@ -72,6 +72,10 @@
               handler=".events.onAdviceModified"/>
 
   <subscriber for=".content.advice.IMeetingAdvice
+                   plone.dexterity.events.EditFinishedEvent"
+              handler=".events.onAdviceEditFinished"/>
+
+  <subscriber for=".content.advice.IMeetingAdvice
                    zope.container.interfaces.IObjectAddedEvent"
               handler=".events.onAdviceAdded"/>
 

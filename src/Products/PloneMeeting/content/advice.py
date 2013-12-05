@@ -59,6 +59,11 @@ class MeetingAdvice(Container):
                          domain="PloneMeeting",
                          default='Advice given on item "%s"' % self.getParentNode().Title())
 
+    def queryState(self):
+        '''In what state am I ?'''
+        wfTool = getToolByName(self, 'portal_workflow')
+        return wfTool.getInfoFor(self, 'review_state')
+
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
     """ """
@@ -73,23 +78,26 @@ class AdviceGroupVocabulary(object):
     def __call__(self, context):
         """"""
         terms = []
+        tool = getToolByName(context, 'portal_plonemeeting')
+
         # take into account groups for wich user can add an advice
         # while adding an advice, the context is his parent, aka a MeetingItem
         if context.meta_type == 'MeetingItem':
             alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[0]]
         # take into account groups for wich user can edit an advice
         else:
-            alterable_advices_groups = context.getAdvicesGroupsInfosForUser()[1]
-
-        if not alterable_advices_groups:
-            return SimpleVocabulary(terms)
-
-        tool = getToolByName(context, 'portal_plonemeeting')
+            alterable_advices_groups = context.getAdvicesGroupsInfosForUser()[1] or []
+            # make sure advice_type selected on advice is in the vocabulary
+            if not context.advice_group in alterable_advices_groups:
+                terms.append(SimpleTerm(context.advice_group,
+                                        context.advice_group,
+                                        getattr(tool, context.advice_group).Title()))
 
         for alterable_advices_group in alterable_advices_groups:
             terms.append(SimpleTerm(alterable_advices_group,
                                     alterable_advices_group,
                                     getattr(tool, alterable_advices_group).Title()))
+
         return SimpleVocabulary(terms)
 
 

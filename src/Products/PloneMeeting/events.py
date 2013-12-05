@@ -119,16 +119,38 @@ def onItemMoved(obj, event):
 
 def onAdviceAdded(obj, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
-    obj.getParentNode().updateAdvices()
+    item = obj.getParentNode()
+    item.updateAdvices()
+    item.reindexObject(idxs=['indexAdvisers', ])
+    # redirect to referer after add if it is not the edit form
+    http_referer = item.REQUEST['HTTP_REFERER']
+    if not http_referer.endswith('/edit'):
+        item.REQUEST.RESPONSE.redirect(http_referer)
 
 
 def onAdviceModified(obj, event):
     '''Called when a meetingadvice is modified so we can warn parent item.'''
-    obj.getParentNode().updateAdvices()
+    item = obj.getParentNode()
+    item.updateAdvices()
+    item.reindexObject(idxs=['indexAdvisers', ])
+
+
+def onAdviceEditFinished(obj, event):
+    '''Called when a meetingadvice is edited and we are at the end of the editing process.'''
+    # redirect to referer after edit if it is not the edit form
+    # this can not be done on zope.lifecycleevent.IObjectModifiedEvent because
+    # it is too early and the redirect is not done, but in the plone.dexterity.events.EditFinishedEvent
+    # it works as expected ;-)
+    item = obj.getParentNode()
+    http_referer = item.REQUEST['HTTP_REFERER']
+    if not http_referer.endswith('/edit'):
+        item.REQUEST.RESPONSE.redirect(http_referer)
 
 
 def onAdviceRemoved(obj, event):
     '''Called when a meetingadvice is removed so we can warn parent item.'''
-    obj.getParentNode().updateAdvices()
+    item = obj.getParentNode()
+    item.updateAdvices()
+    item.reindexObject(idxs=['indexAdvisers', ])
 
 ##/code-section FOOT
