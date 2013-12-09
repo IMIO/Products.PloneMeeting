@@ -23,6 +23,10 @@
 #
 
 import logging
+
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
+
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.config import TOPIC_SEARCH_FILTERS
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -54,11 +58,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         # only advisers can give an advice, so a creator for example will not see it
         self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 1)
         self.assertEquals(self.meetingConfig.searchItemsToAdvice('', '', '', '')[0].UID, item.UID())
-        # when an advice on an item is given, the item is noe more returned by searchItemsToAdvice
+        # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
         # so pmAdviser1 gives his advice
-        item.editAdvice(group=self.portal.portal_plonemeeting.developers,
-                        adviceType='positive',
-                        comment='My comment')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
 
     def test_pm_searchAdvisedItems(self):
@@ -79,9 +85,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         item1.reindexObject()
         # give an advice
         self.changeUser('pmAdviser1')
-        item1.editAdvice(group=self.portal.portal_plonemeeting.developers,
-                         adviceType='positive',
-                         comment='My comment')
+        createContentInContainer(item1,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
         self.failUnless(self.meetingConfig.searchAdvisedItems('', '', '', ''))
         # another user will not see given advices
         self.changeUser('pmCreator1')
@@ -97,9 +105,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.proposeItem(item2)
         item2.reindexObject()
         self.changeUser('pmManager')
-        item2.editAdvice(group=self.portal.portal_plonemeeting.vendors,
-                         adviceType='positive',
-                         comment='My comment')
+        createContentInContainer(item2,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 2)
         self.changeUser('pmAdviser1')

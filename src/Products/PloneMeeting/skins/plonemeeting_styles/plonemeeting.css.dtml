@@ -305,6 +305,12 @@ dd li a.erroredConversion, tr span.erroredConversion {
     background-position: 0px 1px;
 }
 
+/* highlight error message when an error occured on an edit form */
+.fieldErrorBox {
+    color: red;
+    font-weight: bold;
+}
+
 .contentBatchAction {
     float: left !important;
     padding: 0 0.5em;

@@ -32,6 +32,9 @@ from zope.component import getGlobalSiteManager
 from zope.i18n import translate
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.ActionInformation import Action
+from Products.CMFCore.Expression import Expression, createExprContext
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone import PloneMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
     getCustomSchemaFields, HubSessionsMarshaller, getFieldContent, prepareSearchValue
@@ -39,8 +42,6 @@ from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.Searcher import Searcher
-from Products.CMFCore.Expression import Expression, createExprContext
-from Products.CMFCore.utils import getToolByName
 defValues = MeetingConfigDescriptor.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
@@ -1600,6 +1601,50 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
+    security.declarePrivate('validate_workflowAdaptations')
+    def validate_workflowAdaptations(self, values):
+        '''This method ensures that the combination of used workflow
+           adaptations is valid.'''
+        if '' in values:
+            values.remove('')
+        msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
+        if 'items_come_validated' in values:
+            if ('creator_initiated_decisions' in values) or ('pre_validation' in values):
+                return msg
+        if ('archiving' in values) and (len(values) > 1):
+            # Archiving is incompatible with any other workflow adaptation
+            return msg
+        if ('no_proposal' in values) and ('pre_validation' in values):
+            return msg
+        # 'hide_decisions_when_under_writing' and 'no_publication' are not working together
+        if ('hide_decisions_when_under_writing' in values) and ('no_publication' in values):
+            return msg
+
+    security.declarePrivate('validate_itemAdviceEditStates')
+    def validate_itemAdviceEditStates(self, values):
+        '''This method ensures that the value given in itemAdviceEditStates
+           is a superset of what is given for itemAdviceStates, so a value in itemAdviceState
+           must be in itemAdviceEditStates.'''
+        if '' in values:
+            values.remove('')
+        v_set = set(values)
+        # try to get itemAdvicesStates from REQUEST in case we just changed the value
+        # of itemAdvicesStates, we must consider this new value and not the value stored in self.getItemAdviceStates
+        itemAdvicesStatesFromRequest = self.REQUEST.get('itemAdviceStates', ())
+        if '' in itemAdvicesStatesFromRequest:
+            itemAdvicesStatesFromRequest.remove('')
+        itemAdviceStates_set = set(itemAdvicesStatesFromRequest) or set(self.getItemAdviceStates())
+        if itemAdviceStates_set.difference(v_set):
+            return translate('itemAdviceEditStates_validation_error',
+                             domain='PloneMeeting',
+                             mapping={'missingStates': ', '.join([translate(state,
+                                                                            domain='plone',
+                                                                            context=self.REQUEST) for state in
+                                                                 itemAdviceStates_set.difference(v_set)])},
+                             context=self.REQUEST,
+                             default='Values defined in the \'itemEditStates\' field must contains at least '
+                                     'every values selected in the \'itemAdvicesStates\' field!')
+
     security.declarePrivate('listWorkflowAdaptations')
     def listWorkflowAdaptations(self):
         '''Lists the available workflow changes.'''
@@ -1619,25 +1664,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not mcId == self.getId():
                 res.append((mcId, mc.Title()))
         return DisplayList(tuple(res))
-
-    security.declarePrivate('validate_workflowAdaptations')
-    def validate_workflowAdaptations(self, v):
-        '''This method ensures that the combination of used workflow
-           adaptations is valid.'''
-        if '' in v:
-            v.remove('')
-        msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
-        if 'items_come_validated' in v:
-            if ('creator_initiated_decisions' in v) or ('pre_validation' in v):
-                return msg
-        if ('archiving' in v) and (len(v) > 1):
-            # Archiving is incompatible with any other workflow adaptation
-            return msg
-        if ('no_proposal' in v) and ('pre_validation' in v):
-            return msg
-        # 'hide_decisions_when_under_writing' and 'no_publication' are not working together
-        if ('hide_decisions_when_under_writing' in v) and ('no_publication' in v):
-            return msg
 
     security.declarePrivate('listItemRelatedColumns')
     def listItemRelatedColumns(self):
@@ -3045,4 +3071,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-

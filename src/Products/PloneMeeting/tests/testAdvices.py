@@ -24,11 +24,14 @@
 
 from DateTime import DateTime
 from AccessControl import Unauthorized
+from zope.schema.interfaces import RequiredMissing
 
 from plone.app.testing import login
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
 
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from Products.PloneMeeting.config import AddAdvice
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testAdvices(PloneMeetingTestCase):
@@ -40,8 +43,10 @@ class testAdvices(PloneMeetingTestCase):
         """
         super(testAdvices, self).setUp()
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
-        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        # user can only add an advice when the item is 'proposed'
+        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        # user can edit/delete a given advice when the item is 'proposed' or 'validated'
+        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
         self.meetingConfig.setItemAdviceViewStates(('presented', ))
 
     def test_pm_ViewItemToAdvice(self):
@@ -95,6 +100,12 @@ class testAdvices(PloneMeetingTestCase):
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
         self.failIf(self.hasPermission('View', (item2, item3)))
+        # now put the item back to itemcreated so it is no more viewable
+        # by 'pmReviewer2' as 'itemcreated' is not in self.meetingConfig.itemAdviceViewStates
+        self.changeUser('pmManager')
+        self.backToState(item1, 'itemcreated')
+        self.changeUser('pmReviewer2')
+        self.failIf(self.hasPermission('View', (item1, item2, item3)))
 
     def test_pm_AddEditDeleteAdvices(self):
         '''This test the MeetingItem.getAdvicesGroupsInfosForUser method.
@@ -120,51 +131,69 @@ class testAdvices(PloneMeetingTestCase):
         self.proposeItem(item1)
         # a user able to View the item can not add an advice, even if he tries...
         self.assertRaises(Unauthorized,
-                          item1.editAdvice,
-                          group=self.portal.portal_plonemeeting.developers,
-                          adviceType='positive',
-                          comment='My comment')
+                          createContentInContainer,
+                          item1,
+                          'meetingadvice')
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), (None, None))
         login(self.portal, 'pmReviewer2')
-        # the given 'adviceType' must exists (selected in the MeetingConfig.usedAdviceTypes)
-        self.assertRaises(KeyError,
-                          item1.editAdvice,
-                          group=self.portal.portal_plonemeeting.vendors,
-                          adviceType='wrong_advice_type',
-                          comment='My comment')
-        # even if the user can give an advice, he can not for another group
-        self.assertRaises(Unauthorized,
-                          item1.editAdvice,
-                          group=self.portal.portal_plonemeeting.developers,
-                          adviceType='positive',
-                          comment='My comment')
         # 'pmReviewer2' has one advice to give for 'vendors' and no advice to edit
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         self.assertEquals(item1.hasAdvices(), False)
-        #give the advice
-        item1.editAdvice(group=self.portal.portal_plonemeeting.vendors,
-                         adviceType='positive',
-                         comment='My comment')
+        # fields 'advice_type' and 'advice_group' are mandatory
+        form = item1.restrictedTraverse('++add++meetingadvice').form_instance
+        form.update()
+        errors = form.extractData()[1]
+        self.assertEquals(errors[0].error, RequiredMissing('advice_group'))
+        self.assertEquals(errors[1].error, RequiredMissing('advice_type'))
+        # value used for 'advice_type' and 'advice_group' must be correct
+        form.request.set('form.widgets.advice_type', u'wrong_value')
+        errors = form.extractData()[1]
+        self.assertEquals(errors[1].error, RequiredMissing('advice_type'))
+        # but if the value is correct, the field renders correctly
+        form.request.set('form.widgets.advice_type', u'positive')
+        data = form.extractData()[0]
+        self.assertEquals(data['advice_type'], u'positive')
+        # regarding 'advice_group' value, only correct are the ones in the vocabulary
+        # so using another will fail, for example, can not give an advice for another group
+        form.request.set('form.widgets.advice_group', self.portal.portal_plonemeeting.developers.getId())
+        data = form.extractData()[0]
+        self.assertFalse('advice_group' in data)
+        # we can use the values from the vocabulary
+        vocab = form.widgets.get('advice_group').terms.terms
+        self.failUnless('vendors' in vocab)
+        self.failUnless(len(vocab) == 1)
+        # give the advice, select a valid 'advice_group' and save
+        form.request.set('form.widgets.advice_group', u'vendors')
+        # the 3 fields 'advice_group', 'advice_type' and 'advice_comment' are handled correctly
+        data = form.extractData()[0]
+        self.assertTrue('advice_group' in data and 'advice_type' in data and 'advice_comment' in data)
+        self.assertTrue(len(data) == 3)
+        form.request.form['advice_group'] = u'vendors'
+        form.request.form['advice_type'] = u'positive'
+        form.request.form['advice_comment'] = RichTextValue(u'My comment')
+        form.createAndAdd(form.request.form)
         self.assertEquals(item1.hasAdvices(), True)
-        # 'pmReviewer2' has no more addable advice (as already given) but it is now an editable advice
+        # 'pmReviewer2' has no more addable advice (as already given) but has now an editable advice
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], ['vendors']))
         # given advice is correctly stored
-        self.assertEquals(item1.advices['vendors']['type'], 'positive')
-        self.assertEquals(item1.advices['vendors']['comment'], 'My comment')
+        self.assertEquals(item1.adviceIndex['vendors']['type'], 'positive')
+        self.assertEquals(item1.adviceIndex['vendors']['comment'], u'My comment')
         login(self.portal, 'pmReviewer1')
         self.validateItem(item1)
-        # now 'pmReviewer2' can't add (already given) or edit an advice
+        # now 'pmReviewer2' can't add (already given) an advice
+        # but he can still edit the advice he just gave
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
-        # if a user that can not remove the advice tries (here the item is validated), he gets Unauthorized
-        self.assertRaises(Unauthorized, item1.deleteAdvice, 'vendors')
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], ['vendors', ]))
+        # if a user that can not remove the advice tries he gets Unauthorized
+        self.changeUser('pmManager')
+        self.assertRaises(Unauthorized, item1.restrictedTraverse('@@delete_givenuid'), item1.meetingadvice.UID())
         # put the item back in a state where 'pmReviewer2' can remove the advice
         login(self.portal, 'pmManager')
         self.backToState(item1, 'proposed')
         login(self.portal, 'pmReviewer2')
         # remove the advice
-        item1.deleteAdvice('vendors')
+        item1.restrictedTraverse('@@delete_givenuid')(item1.meetingadvice.UID())
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         # remove the fact that we asked the advice
         login(self.portal, 'pmManager')
@@ -188,10 +217,9 @@ class testAdvices(PloneMeetingTestCase):
         # it will raise an Unauthorized
         self.changeUser('pmAdviser1')
         self.assertRaises(Unauthorized,
-                          item1.editAdvice,
-                          group=self.portal.portal_plonemeeting.developers,
-                          adviceType='positive',
-                          comment='My comment')
+                          createContentInContainer,
+                          item1,
+                          'meetingadvice')
 
     def test_pm_GiveAdviceOnCreatedItem(self,
                                         itemAdviceStates=('itemcreated', 'proposed', 'validated',),
@@ -216,6 +244,7 @@ class testAdvices(PloneMeetingTestCase):
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
+        self.failUnless(self.hasPermission(AddAdvice, item1))
 
     def test_pm_AdvicesInvalidation(self):
         '''Test the advice invalidation process.'''
@@ -230,63 +259,95 @@ class testAdvices(PloneMeetingTestCase):
             'category': 'maintenance',
             'optionalAdvisers': ('vendors',)
         }
-        item1 = self.create('MeetingItem', **data)
-        self.assertEquals(item1.needsAdvices(), True)
-        self.failIf(item1.willInvalidateAdvices())
-        self.proposeItem(item1)
+        item = self.create('MeetingItem', **data)
+        self.assertEquals(item.needsAdvices(), True)
+        self.failIf(item.willInvalidateAdvices())
+        self.proposeItem(item)
         # login as adviser and add an advice
         self.changeUser('pmReviewer2')
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
+        self.assertEquals(item.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         # give an advice
-        item1.editAdvice(group=self.portal.portal_plonemeeting.vendors, adviceType='positive', comment='My comment')
-        # login as a user that can actually edit the item
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # login as an user that can actually edit the item
         self.changeUser('pmReviewer1')
-        self.failUnless(self.hasPermission('Modify portal content', item1))
+        self.failUnless(self.hasPermission('Modify portal content', item))
         # modifying the item will not invalidate the advices
-        self.failIf(item1.willInvalidateAdvices())
-        item1.setDecision(item1.getDecision() + '<p>New line</p>')
-        item1.at_post_edit_script()
+        self.failIf(item.willInvalidateAdvices())
+        item.setDecision(item.getDecision() + '<p>New line</p>')
+        item.at_post_edit_script()
         # check that advices are still there
-        self.failUnless(item1.hasAdvices())
+        self.failUnless(item.hasAdvices())
         # adding an annex or editing a field thru ajax does not invalidate the item
-        annex1 = self.addAnnex(item1, annexType=self.annexFileType)
-        self.failUnless(item1.hasAdvices())
-        item1.setFieldFromAjax('decision', item1.getDecision() + '<p>Another new line</p>')
+        annex1 = self.addAnnex(item, annexType=self.annexFileType)
+        self.failUnless(item.hasAdvices())
+        item.setFieldFromAjax('decision', item.getDecision() + '<p>Another new line</p>')
         # validate the item
-        self.validateItem(item1)
+        self.validateItem(item)
         # login as a user that can edit the item when it is 'validated'
         self.changeUser('pmManager')
         # now that the item is validated, editing it will invalidate advices
-        self.failUnless(item1.willInvalidateAdvices())
+        self.failUnless(item.willInvalidateAdvices())
         # removing an annex will invalidate the advices
-        item1.restrictedTraverse('@@delete_givenuid')(annex1.UID())
-        self.failIf(item1.hasAdvices())
-        # put advices back so we can check other case where advices are invalidated
-        item1.adviceIndex['vendors']['type'] = 'positive'
-        item1.updateAdvices()
-        self.failUnless(item1.hasAdvices())
+        item.restrictedTraverse('@@delete_givenuid')(annex1.UID())
+        self.failIf(item.hasAdvices())
+        self.failIf(item.getGivenAdvices())
+        # given the advice again so we can check other case where advices are invalidated
+        self.backToState(item, 'proposed')
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmManager')
+        self.validateItem(item)
+        self.failUnless(item.hasAdvices())
+        self.failUnless(item.getGivenAdvices())
         # adding an annex will invalidate advices
-        self.failUnless(item1.willInvalidateAdvices())
-        annex1 = self.addAnnex(item1, annexType=self.annexFileType)
-        self.failIf(item1.hasAdvices())
-        # retrieve removed advices
-        item1.adviceIndex['vendors']['type'] = 'positive'
-        item1.updateAdvices()
-        self.failUnless(item1.hasAdvices())
+        self.failUnless(item.willInvalidateAdvices())
+        annex1 = self.addAnnex(item, annexType=self.annexFileType)
+        self.failIf(item.hasAdvices())
+        self.failIf(item.getGivenAdvices())
+        # given the advice again so we can check other case where advices are invalidated
+        self.backToState(item, 'proposed')
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmManager')
+        self.validateItem(item)
+        self.failUnless(item.hasAdvices())
+        self.failUnless(item.getGivenAdvices())
         # editing the item will invalidate advices
-        self.failUnless(item1.willInvalidateAdvices())
-        item1.setDecision(item1.getDecision() + '<p>Still another new line</p>')
-        item1.at_post_edit_script()
-        self.failIf(item1.hasAdvices())
-        # retrieve removed advices
-        item1.adviceIndex['vendors']['type'] = 'positive'
-        item1.updateAdvices()
-        self.failUnless(item1.hasAdvices())
+        self.failUnless(item.willInvalidateAdvices())
+        item.setDecision(item.getDecision() + '<p>Still another new line</p>')
+        item.at_post_edit_script()
+        self.failIf(item.hasAdvices())
+        self.failIf(item.getGivenAdvices())
+        # given the advice again so we can check other case where advices are invalidated
+        self.backToState(item, 'proposed')
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmManager')
+        self.validateItem(item)
+        self.failUnless(item.hasAdvices())
+        self.failUnless(item.getGivenAdvices())
         # changing a field value thru ajax will invalidate advices
-        self.failUnless(item1.willInvalidateAdvices())
-        item1.setFieldFromAjax('description', '<p>My new description</p>')
-        self.failIf(item1.hasAdvices())
-        self.failIf(item1.willInvalidateAdvices())
+        self.failUnless(item.willInvalidateAdvices())
+        item.setFieldFromAjax('description', '<p>My new description</p>')
+        self.failIf(item.hasAdvices())
+        self.failIf(item.getGivenAdvices())
+        self.failIf(item.willInvalidateAdvices())
 
 
 def test_suite():

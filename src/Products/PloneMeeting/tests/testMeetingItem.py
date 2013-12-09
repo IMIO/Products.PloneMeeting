@@ -562,7 +562,7 @@ class testMeetingItem(PloneMeetingTestCase):
         i1.updateAdvices()
         for principalId, localRoles in i1.get_local_roles():
             if principalId.endswith('_advisers'):
-                self.failUnless((READER_USECASES['advices'],) == localRoles)
+                self.failUnless(READER_USECASES['advices'] in localRoles)
         # add copy groups and update all local_roles (copy and adviser)
         self.meetingConfig.setSelectableCopyGroups(('developers_advisers', 'vendors_advisers'))
         self.meetingConfig.setUseCopies(True)

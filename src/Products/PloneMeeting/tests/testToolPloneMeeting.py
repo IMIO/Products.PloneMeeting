@@ -23,9 +23,11 @@
 #
 
 from plone.app.testing import login
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
+
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testToolPloneMeeting(PloneMeetingTestCase):
@@ -153,7 +155,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item2.setOptionalAdvisers(('vendors', ))
         self.validateItem(item2)
         login(self.portal, 'pmReviewer2')
-        item2.editAdvice(group=self.portal.portal_plonemeeting.vendors, adviceType='positive', comment='My comment')
+        createContentInContainer(item2,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
         login(self.portal, 'pmCreator1')
         destFolder = item1.getParentNode()
         # Copy items
@@ -182,10 +188,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item1AnnexesUids = [annex.UID() for annex in item1.getAnnexes()]
         self.failUnless(res1.annexIndex[0]['UID'] in res1AnnexesUids)
         self.failIf(len(set(item1AnnexesUids).intersection(set(res1AnnexesUids))) != 0)
-        #Now check item2 : no annexes nor advices
+        #Now check item2 : no annexes nor given advices
         self.assertEquals(len(res2.getAnnexes()), 0)
         self.assertEquals(len(res2.annexIndex), 0)
-        self.assertEquals(len(res2.advices), 0)
+        self.assertEquals(len(res2.getGivenAdvices()), 0)
+        self.assertEquals(len(res2.adviceIndex), 0)
         # Now check the 'keepReferencesOnCopy' attribute of MeetingFile.meetingFileType
         self.failUnless(res1.getAnnexes()[0].getMeetingFileType())
         self.failUnless(res1.getAnnexes()[1].getMeetingFileType())

@@ -1508,7 +1508,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             except ConflictError:
                 raise
             except:
-                raise PloneMeetingError, 'Could not copy.'
+                raise PloneMeetingError('Could not copy.')
             if newItem.__class__.__name__ != "MeetingItem":
                 continue
             # Let the logged user do everything on the newly created item
@@ -1527,6 +1527,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 oldHistory = newItem.workflow_history
                 tmpDict = {newWFName: oldHistory[oldWFName]}
                 newItem.workflow_history = tmpDict
+
+            # remove contained meetingadvices
+            newItem._removeEveryContainedAdvices()
 
             # Set fields not in the copyFields list to their default value
             #'id' and  'proposingGroup' will be kept in anyway

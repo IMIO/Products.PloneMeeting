@@ -2483,6 +2483,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advices.append(advice.__dict__['data'])
         return res
 
+    security.declarePrivate('getAdvices')
+    def getAdvices(self):
+        '''Returns a list of contained meetingadvice objects.'''
+        res = []
+        for obj in self.objectValues('Dexterity Container'):
+            if obj.portal_type == 'meetingadvice':
+                res.append(obj)
+        return res
+
     security.declarePublic('getGivenAdvices')
     def getGivenAdvices(self):
         '''Returns the list of advices that has already been given by
@@ -2490,7 +2499,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # for now, only contained elements in a MeetingItem of
         # meta_type 'Dexterity Container' are meetingadvices...
         res = {}
-        for advice in self.objectValues('Dexterity Container'):
+        for advice in self.getAdvices():
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': True,
                                         'id': advice.advice_group,
@@ -2556,27 +2565,39 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     return False
         return True
 
-    def _grantPermissionToRole(self, permission, role_to_give):
+    def _grantPermissionToRole(self, permission, role_to_give, obj):
         """
-          Grant given p_permission to given p_role_to_give on self.
+          Grant given p_permission to given p_role_to_give on given p_obj.
+          If p_obj is None, w
         """
-        roles = rolesForPermissionOn(permission, self)
+        roles = rolesForPermissionOn(permission, obj)
         if not role_to_give in roles:
             # cleanup roles as the permission is also returned with a leading '_'
             roles = [role for role in roles if not role.startswith('_')]
             roles = roles + [role_to_give, ]
-            self.manage_permission(permission, roles)
+            obj.manage_permission(permission, roles)
 
-    def _removePermissionToRole(self, permission, role_to_remove):
+    def _removePermissionToRole(self, permission, role_to_remove, obj):
         """
-          Remove given p_permission to given p_role_to_remove on self.
+          Remove given p_permission to given p_role_to_remove on given p_obj.
         """
-        roles = rolesForPermissionOn(permission, self)
+        roles = rolesForPermissionOn(permission, obj)
         if role_to_remove in roles:
             # cleanup roles as the permission is also returned with a leading '_'
             roles = [role for role in roles if not role.startswith('_')]
             roles.remove(role_to_remove)
-            self.manage_permission(permission, roles)
+            obj.manage_permission(permission, roles)
+
+    def _removeEveryContainedAdvices(self):
+        """
+          Remove given p_permission to given p_role_to_remove on given p_obj.
+        """
+        ids = []
+        for advice in self.getAdvices():
+            self._grantPermissionToRole('Delete objects', 'Authenticated', advice)
+            ids.append(advice.getId())
+        self.manage_delObjects(ids=ids)
+
 
     security.declareProtected('Modify portal content', 'updateAdvices')
     def updateAdvices(self, invalidate=False):
@@ -2587,6 +2608,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            invalidation is enabled and someone has modified the item: it means
            that all advices must be "not_given" again.'''
         tool = getToolByName(self, 'portal_plonemeeting')
+
+        # Invalidate advices if needed
+        if invalidate:
+            # Invalidate all advices. Send notification mail(s) if configured.
+            userId = self.portal_membership.getAuthenticatedMember().id
+            for advice in self.adviceIndex.itervalues():
+                if 'actor' in advice and (advice['actor'] != userId):
+                    # Send a mail to the guy that gave the advice.
+                    if 'adviceInvalidated' in cfg.getUserParam(
+                       'mailItemEvents', userId=advice['actor']):
+                        recipient = tool.getMailRecipient(advice['actor'])
+                        if recipient:
+                            sendMail([recipient], self, 'adviceInvalidated')
+            self.plone_utils.addPortalMessage(translate('advices_invalidated',
+                                                        domain="PloneMeeting",
+                                                        context=self.REQUEST),
+                                              type='info')
+            # remove every meetingadvice from self
+            # to be able to remove every contained meetingadvice, we need to mark
+            # them as deletable, aka we need to give permission 'Delete objects' on
+            # every meetingadvice to the role 'Authenticated', a role that current user has
+            self._removeEveryContainedAdvices()
+
         # clean adviceIndex and recompute it
         self.adviceIndex = PersistentMapping()
         # Advices need not be given on recurring items.
@@ -2632,13 +2676,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                       role_to_remove=READER_USECASES['advices'],
                                       suffixes=['advisers', ],
                                       notForGroups=self.getCopyGroups())
+        # And remove every local role 'Contributor' given to avisers
+        # it will be given back here above for groups that really need to give an advice
+        tool.removeGivenLocalRolesFor(self,
+                                      role_to_remove='Contributor',
+                                      suffixes=['advisers', ])
         # and remove specific permissions given to add advices
         # make sure 'Add portal content' and 'PloneMeeting: Add advice' are not
-        # given to the READER_USECASES['advices'] role
+        # given to the 'Contributor' role
         self._removePermissionToRole(permission=AddPortalContent,
-                                     role_to_remove=READER_USECASES['advices'])
+                                     role_to_remove='Contributor',
+                                     obj=self)
         self._removePermissionToRole(permission=AddAdvice,
-                                     role_to_remove=READER_USECASES['advices'])
+                                     role_to_remove='Contributor',
+                                     obj=self)
         # Then, add local roles for advisers.
         itemState = self.queryState()
         cfg = tool.getMeetingConfig(self)
@@ -2661,13 +2712,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # check if user must be able to add an advice, if not already given
                 if itemState in mGroup.getItemAdviceStates(cfg) and not groupId in self.getGivenAdvices():
                     # advisers must be able to add a 'meetingadvice', give
-                    # relevant permissions to READER_USECASES['advices'] role
+                    # relevant permissions to 'Contributor' role
                     # we need to give 'Add portal content' and 'PloneMeeting: Add advice' to
-                    # the READER_USECASES['advices'] role
+                    # the 'Contributor' role
+                    self.manage_addLocalRoles(ploneGroup, ('Contributor', ))
                     self._grantPermissionToRole(permission=AddPortalContent,
-                                                role_to_give=READER_USECASES['advices'])
+                                                role_to_give='Contributor',
+                                                obj=self)
                     self._grantPermissionToRole(permission=AddAdvice,
-                                                role_to_give=READER_USECASES['advices'])
+                                                role_to_give='Contributor',
+                                                obj=self)
 
                 if itemState in mGroup.getItemAdviceEditStates(cfg):
                     # make sure the advice given by groupId is in state 'advice_under_edit'
@@ -2679,26 +2733,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # done by self.manage_addLocalRoles here above because it is necessary in any case
                 if itemState in mGroup.getItemAdviceViewStates(cfg):
                     pass
-
-        # Invalidate advices if needed
-        if invalidate:
-            # Invalidate all advices. Send notification mail(s) if configured.
-            userId = self.portal_membership.getAuthenticatedMember().id
-            for advice in self.adviceIndex.itervalues():
-                if 'actor' in advice and (advice['actor'] != userId):
-                    # Send a mail to the guy that gave the advice.
-                    if 'adviceInvalidated' in cfg.getUserParam(
-                       'mailItemEvents', userId=advice['actor']):
-                        recipient = tool.getMailRecipient(advice['actor'])
-                        if recipient:
-                            sendMail([recipient], self, 'adviceInvalidated')
-                advice['type'] = 'not_given'
-                advice['date'] = ''
-                advice['comment'] = ''
-                advice['actor'] = ''
-            self.plone_utils.addPortalMessage(translate('advices_invalidated',
-                                              domain="PloneMeeting", context=self.REQUEST),
-                                              type='info')
 
     security.declarePublic('indexAdvisers')
     def indexAdvisers(self):
