@@ -42,9 +42,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         # by default, no item to advice...
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
-        # an advice can be given when an item is 'proposed' or 'validated'
+        # an advice can be given when an item is 'proposed'
         self.assertEquals(self.meetingConfig.getItemAdviceStates(),
-                          (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated'))
+                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -74,9 +74,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         # by default, no advices item...
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchAdvisedItems('', '', '', ''))
-        # an advice can be given when an item is 'proposed' or 'validated'
+        # an advice can be given when an item is 'proposed'
         self.assertEquals(self.meetingConfig.getItemAdviceStates(),
-                          (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated'))
+                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
