@@ -1,0 +1,71 @@
+<configure xmlns="http://namespaces.zope.org/zope"
+           xmlns:browser="http://namespaces.zope.org/browser"
+           xmlns:five="http://namespaces.zope.org/five"
+           xmlns:i18n="http://namespaces.zope.org/i18n"
+           i18n_domain="PloneMeeting">
+
+  <subscriber for=".interfaces.IMeetingItem
+                   zope.container.interfaces.IObjectAddedEvent"
+              handler=".MeetingItem.onAddMeetingItem"/>
+
+  <subscriber for=".interfaces.IMeeting
+                   zope.container.interfaces.IObjectAddedEvent"
+              handler=".Meeting.onAddMeeting"/>
+
+  <subscriber for=".interfaces.IMeetingItem
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".events.onItemTransition"/>
+
+  <subscriber for=".interfaces.IMeeting
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".events.onMeetingTransition"/>
+
+  <subscriber for=".interfaces.IMeetingGroup
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".events.onMeetingGroupTransition"/>
+
+  <subscriber for=".interfaces.IMeetingGroup
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".events.onMeetingGroupTransition"/>
+
+  <!-- meetingadvice events -->
+  <subscriber for=".content.advice.IMeetingAdvice
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onAdviceModified"/>
+
+  <subscriber for=".content.advice.IMeetingAdvice
+                   plone.dexterity.events.EditFinishedEvent"
+              handler=".events.onAdviceEditFinished"/>
+
+  <subscriber for=".content.advice.IMeetingAdvice
+                   zope.container.interfaces.IObjectAddedEvent"
+              handler=".events.onAdviceAdded"/>
+
+  <subscriber for=".content.advice.IMeetingAdvice
+                   zope.container.interfaces.IObjectRemovedEvent"
+              handler=".events.onAdviceRemoved"/>
+
+  <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
+  <subscriber
+    for=".interfaces.IMeetingFile
+         Products.Archetypes.interfaces.IObjectInitializedEvent"
+    handler=".MeetingFile.convertToImages" />
+
+  <!-- when an item is duplicated, convert annexes if necessary -->
+  <subscriber
+    for=".interfaces.IMeetingFile
+         OFS.interfaces.IObjectClonedEvent"
+    handler=".MeetingFile.prepareClonedAnnexForConversion" />
+
+  <subscriber
+    for=".interfaces.IMeetingItem
+         zope.lifecycleevent.ObjectMovedEvent"
+    handler=".events.onItemMoved" />
+
+  <!-- when collective.documentviewer conversion finished, check that everything is right -->
+  <subscriber
+    for=".interfaces.IMeetingFile
+         collective.documentviewer.interfaces.IConversionFinishedEvent"
+    handler=".MeetingFile.checkAfterConversion" />
+
+</configure>

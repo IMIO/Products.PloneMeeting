@@ -2609,8 +2609,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            be given anymore. If p_invalidate = True, it means that advice
            invalidation is enabled and someone has modified the item: it means
            that all advices must be "not_given" again.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        # no sense to compute advice on items defined in the configuration
+        if self.isDefinedInTool():
+            return
 
+        tool = getToolByName(self, 'portal_plonemeeting')
         # Invalidate advices if needed
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
@@ -2635,9 +2638,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # clean adviceIndex and recompute it
         self.adviceIndex = PersistentMapping()
-        # Advices need not be given on recurring items.
-        if self.isDefinedInTool():
-            return
+
         # Compute mandatory and get optional advisers
         mandatoryAdvisers = self.getMandatoryAdvisers()
         optAdvisers = self.getOptionalAdvisers()
@@ -2734,6 +2735,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # done by self.manage_addLocalRoles here above because it is necessary in any case
             if itemState in mGroup.getItemAdviceViewStates(cfg):
                 pass
+        self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
     security.declarePublic('indexAdvisers')
     def indexAdvisers(self):

@@ -24,6 +24,8 @@
 
 from DateTime import DateTime
 from AccessControl import Unauthorized
+from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.schema.interfaces import RequiredMissing
 
 from plone.app.testing import login
@@ -354,6 +356,58 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
         self.failIf(item.willInvalidateAdvices())
+
+    def test_pm_indexAdvisers(self):
+        '''Test the indexAdvisers index and check that it is always consistent.'''
+        # advices are activated for meetingConfig2
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        # an advice can be given when an item is 'proposed' or 'validated'
+        self.assertEquals(self.meetingConfig.getItemAdviceStates(), (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        # create an item to advice
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('developers', 'vendors', ))
+        self.proposeItem(item)
+        item.reindexObject()
+        # no advice to give as item is 'itemcreated'
+        self.changeUser('pmAdviser1')
+        self.assertEquals(set(item.indexAdvisers()), set(['developers0', 'vendors0', ]))
+        itemUID = item.UID()
+        brains = self.portal.portal_catalog(indexAdvisers='developers0')
+        self.assertEquals(len(brains), 1)
+        self.assertEquals(brains[0].UID, itemUID)
+        brains = self.portal.portal_catalog(indexAdvisers='vendors0')
+        self.assertEquals(len(brains), 1)
+        self.assertEquals(brains[0].UID, itemUID)
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # now that an advice has been given for the developers group, the indexAdvisers has been updated
+        self.assertEquals(set(item.indexAdvisers()), set(['developers1', 'vendors0', ]))
+        brains = self.portal.portal_catalog(indexAdvisers='developers1')
+        self.assertEquals(len(brains), 1)
+        self.assertEquals(brains[0].UID, itemUID)
+        # now change the value of the created meetingadvice.advice_group
+        item.meetingadvice.advice_group = self.portal.portal_plonemeeting.vendors.getId()
+        # notify modified
+        notify(ObjectModifiedEvent(item.meetingadvice))
+        self.assertEquals(set(item.indexAdvisers()), set(['developers0', 'vendors1', ]))
+        # the index in the portal_catalog is updated too
+        brains = self.portal.portal_catalog(indexAdvisers='vendors1')
+        self.assertEquals(len(brains), 1)
+        self.assertEquals(brains[0].UID, itemUID)
+        # delete the advice
+        item.restrictedTraverse('@@delete_givenuid')(item.meetingadvice.UID())
+        self.assertEquals(set(item.indexAdvisers()), set(['developers0', 'vendors0', ]))
+        # the index in the portal_catalog is updated too
+        brains = self.portal.portal_catalog(indexAdvisers='vendors0')
+        self.assertEquals(len(brains), 1)
+        self.assertEquals(brains[0].UID, itemUID)
+        brains = self.portal.portal_catalog(indexAdvisers='developers0')
+        self.assertEquals(len(brains), 1)
+        self.assertEquals(brains[0].UID, itemUID)
 
 
 def test_suite():

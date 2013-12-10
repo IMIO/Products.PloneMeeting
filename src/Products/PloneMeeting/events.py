@@ -121,7 +121,6 @@ def onAdviceAdded(obj, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
     item = obj.getParentNode()
     item.updateAdvices()
-    item.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
     # make the entire _advisers group Owner of the meetingadvice
     obj.manage_addLocalRoles('%s_advisers' % obj.advice_group, ('Owner', ))
     # redirect to referer after add if it is not the edit form
@@ -134,7 +133,6 @@ def onAdviceModified(obj, event):
     '''Called when a meetingadvice is modified so we can warn parent item.'''
     item = obj.getParentNode()
     item.updateAdvices()
-    item.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
 
 def onAdviceEditFinished(obj, event):
@@ -145,7 +143,6 @@ def onAdviceEditFinished(obj, event):
     # it works as expected ;-)
     item = obj.getParentNode()
     item.updateAdvices()
-    item.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
     http_referer = item.REQUEST['HTTP_REFERER']
     if not http_referer.endswith('/edit'):
         obj.REQUEST.RESPONSE.redirect(http_referer)
@@ -155,6 +152,5 @@ def onAdviceRemoved(obj, event):
     '''Called when a meetingadvice is removed so we can warn parent item.'''
     item = obj.getParentNode()
     item.updateAdvices()
-    item.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
 ##/code-section FOOT
