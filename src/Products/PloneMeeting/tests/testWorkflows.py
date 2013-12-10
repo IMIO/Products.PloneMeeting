@@ -27,8 +27,7 @@ from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
 from zope.annotation.interfaces import IAnnotations
 from Products.statusmessages.interfaces import IStatusMessage
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testWorkflows(PloneMeetingTestCase):

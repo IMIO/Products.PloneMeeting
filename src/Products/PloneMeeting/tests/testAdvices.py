@@ -185,8 +185,14 @@ class testAdvices(PloneMeetingTestCase):
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission('View', item1))
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], ['vendors', ]))
-        # if a user that can not remove the advice tries he gets Unauthorized
+        given_advice = getattr(item1, item1.adviceIndex['vendors']['advice_id'])
+        self.failUnless(self.hasPermission('Modify portal content', given_advice))
+        # another member of the same _advisers group may also edit the given advice
         self.changeUser('pmManager')
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], ['vendors', ]))
+        self.failUnless(self.hasPermission('Modify portal content', given_advice))
+        # if a user that can not remove the advice tries he gets Unauthorized
+        self.changeUser('pmReviewer1')
         self.assertRaises(Unauthorized, item1.restrictedTraverse('@@delete_givenuid'), item1.meetingadvice.UID())
         # put the item back in a state where 'pmReviewer2' can remove the advice
         login(self.portal, 'pmManager')

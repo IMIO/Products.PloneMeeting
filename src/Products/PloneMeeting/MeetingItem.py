@@ -2499,14 +2499,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # for now, only contained elements in a MeetingItem of
         # meta_type 'Dexterity Container' are meetingadvices...
         res = {}
+        tool = getToolByName(self, 'portal_plonemeeting')
         for advice in self.getAdvices():
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': True,
                                         'id': advice.advice_group,
-                                        'name': advice.advice_group,
+                                        'name': getattr(tool, advice.advice_group).getName().decode('utf-8'),
                                         'advice_id': advice.getId(),
                                         'advice_uid': advice.UID(),
-                                        'comment': advice.advice_comment and advice.advice_comment.raw,}
+                                        'comment': advice.advice_comment and advice.advice_comment.raw
+                                        }
         return res
 
     security.declarePublic('needsAdvices')
@@ -2666,7 +2668,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # in case an already given advice does not need to be given anymore
             # the groupId is in givenAdvice but not in self.adviceIndex for now
             # that contains advices to give
-            if not groupId in self.annexIndex:
+            if not groupId in self.adviceIndex:
                 self.adviceIndex[groupId] = PersistentMapping()
             self.adviceIndex[groupId].update(adviceInfo)
         # Clean-up advice-related local roles and granted permissions.
@@ -2694,45 +2696,44 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         itemState = self.queryState()
         cfg = tool.getMeetingConfig(self)
         wfTool = getToolByName(self, 'portal_workflow')
-        for group in (mandatoryAdvisers, optionalAdvisers):
-            for groupId in group:
-                mGroup = getattr(tool, groupId)
-                ploneGroup = '%s_advisers' % groupId
-                if (itemState not in mGroup.getItemAdviceStates(cfg)) and \
-                   (itemState not in mGroup.getItemAdviceEditStates(cfg))and \
-                   (itemState not in mGroup.getItemAdviceViewStates(cfg)):
-                    # make sure the advice given by groupId is no more editable
-                    if 'advice_id' in self.adviceIndex[groupId]:
-                        adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-                        if adviceObj.queryState() == 'advice_under_edit':
-                            wfTool.doActionFor(adviceObj, 'giveAdvice')
-                    continue
-                # give access to the item in any case
-                self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
-                # check if user must be able to add an advice, if not already given
-                if itemState in mGroup.getItemAdviceStates(cfg) and not groupId in self.getGivenAdvices():
-                    # advisers must be able to add a 'meetingadvice', give
-                    # relevant permissions to 'Contributor' role
-                    # we need to give 'Add portal content' and 'PloneMeeting: Add advice' to
-                    # the 'Contributor' role
-                    self.manage_addLocalRoles(ploneGroup, ('Contributor', ))
-                    self._grantPermissionToRole(permission=AddPortalContent,
-                                                role_to_give='Contributor',
-                                                obj=self)
-                    self._grantPermissionToRole(permission=AddAdvice,
-                                                role_to_give='Contributor',
-                                                obj=self)
+        for groupId in self.adviceIndex.iterkeys():
+            mGroup = getattr(tool, groupId)
+            ploneGroup = '%s_advisers' % groupId
+            if (itemState not in mGroup.getItemAdviceStates(cfg)) and \
+               (itemState not in mGroup.getItemAdviceEditStates(cfg))and \
+               (itemState not in mGroup.getItemAdviceViewStates(cfg)):
+                # make sure the advice given by groupId is no more editable
+                if 'advice_id' in self.adviceIndex[groupId]:
+                    adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
+                    if adviceObj.queryState() == 'advice_under_edit':
+                        wfTool.doActionFor(adviceObj, 'giveAdvice')
+                continue
+            # give access to the item in any case
+            self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
+            # check if user must be able to add an advice, if not already given
+            if itemState in mGroup.getItemAdviceStates(cfg) and not groupId in self.getGivenAdvices():
+                # advisers must be able to add a 'meetingadvice', give
+                # relevant permissions to 'Contributor' role
+                # we need to give 'Add portal content' and 'PloneMeeting: Add advice' to
+                # the 'Contributor' role
+                self.manage_addLocalRoles(ploneGroup, ('Contributor', ))
+                self._grantPermissionToRole(permission=AddPortalContent,
+                                            role_to_give='Contributor',
+                                            obj=self)
+                self._grantPermissionToRole(permission=AddAdvice,
+                                            role_to_give='Contributor',
+                                            obj=self)
 
-                if itemState in mGroup.getItemAdviceEditStates(cfg):
-                    # make sure the advice given by groupId is in state 'advice_under_edit'
-                    if 'advice_id' in self.adviceIndex[groupId]:
-                        adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-                        if not adviceObj.queryState() == 'advice_under_edit':
-                            wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
-                # if item needs to be accessible by advisers, it is already
-                # done by self.manage_addLocalRoles here above because it is necessary in any case
-                if itemState in mGroup.getItemAdviceViewStates(cfg):
-                    pass
+            if itemState in mGroup.getItemAdviceEditStates(cfg):
+                # make sure the advice given by groupId is in state 'advice_under_edit'
+                if 'advice_id' in self.adviceIndex[groupId]:
+                    adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
+                    if not adviceObj.queryState() == 'advice_under_edit':
+                        wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
+            # if item needs to be accessible by advisers, it is already
+            # done by self.manage_addLocalRoles here above because it is necessary in any case
+            if itemState in mGroup.getItemAdviceViewStates(cfg):
+                pass
 
     security.declarePublic('indexAdvisers')
     def indexAdvisers(self):
@@ -2741,13 +2742,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not hasattr(self, 'adviceIndex'):
             return ''
         res = []
-        for group in (self.getMandatoryAdvisers(), self.getOptionalAdvisers()):
-            for adviser in group:
-                suffix = '0'  # Has not been given yet
-                if (adviser in self.adviceIndex) and \
-                   (self.adviceIndex[adviser]['type'] != 'not_given'):
-                    suffix = '1'  # Has been given
-                res.append(adviser + suffix)
+        for groupId, advice in self.adviceIndex.iteritems():
+            suffix = '0'  # Has not been given yet
+            if advice['type'] != 'not_given':
+                suffix = '1'  # Has been given
+            res.append(groupId + suffix)
         return res
 
     security.declarePublic('isAdvicesEnabled')
@@ -3322,7 +3321,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not item.meta_type in ['Plone Site', 'MeetingItem', ]:
             user = self.portal_membership.getAuthenticatedMember()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
-            raise BeforeDeleteException, "can_not_delete_meetingitem_container"
+            raise BeforeDeleteException("can_not_delete_meetingitem_container")
         # if we are not removing the site and we are not in the creation process of
         # an item, manage predecessor
         if not item.meta_type == 'Plone Site' and not item._at_creation_flag:

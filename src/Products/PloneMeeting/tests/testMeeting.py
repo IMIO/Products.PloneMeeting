@@ -29,8 +29,7 @@ from zope.i18n import translate
 
 from plone.app.testing import login
 
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testMeeting(PloneMeetingTestCase):

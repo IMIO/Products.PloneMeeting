@@ -34,8 +34,7 @@ from Products.CMFCore.utils import getToolByName
 
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX, READER_USECASES
 from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testMeetingItem(PloneMeetingTestCase):
