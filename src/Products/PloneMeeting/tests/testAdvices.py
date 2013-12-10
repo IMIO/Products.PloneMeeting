@@ -45,11 +45,6 @@ class testAdvices(PloneMeetingTestCase):
         """
         super(testAdvices, self).setUp()
         self.setMeetingConfig(self.meetingConfig2.getId())
-        # user can only add an advice when the item is 'proposed'
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        # user can edit/delete a given advice when the item is 'proposed' or 'validated'
-        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
-        self.meetingConfig.setItemAdviceViewStates(('presented', ))
 
     def test_pm_ViewItemToAdvice(self):
         '''Test when an adviser can see the item his advice is asked on.
@@ -357,7 +352,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.getGivenAdvices())
         self.failIf(item.willInvalidateAdvices())
 
-    def test_pm_indexAdvisers(self):
+    def test_pm_IndexAdvisers(self):
         '''Test the indexAdvisers index and check that it is always consistent.'''
         # advices are activated for meetingConfig2
         self.setMeetingConfig(self.meetingConfig2.getId())
