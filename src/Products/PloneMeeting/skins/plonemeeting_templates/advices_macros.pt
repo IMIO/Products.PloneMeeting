@@ -33,7 +33,7 @@
             <ul style="cursor:default"> <tal:comment replace="nothing">List of group names</tal:comment>
               <li tal:repeat="advice python:advicesByType[adviceType]">
                 <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%"
-                       tal:define="mayEdit python: isRealManager or (advicesToEdit and (advice['id'] in advicesToEdit))">
+                       tal:define="mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given')">
                   <tr>
                     <td class="noPadding"> <tal:comment replace="nothing">Name is surrounded with () if optional.</tal:comment>
                     <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span>
