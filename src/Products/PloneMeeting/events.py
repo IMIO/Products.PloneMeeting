@@ -14,6 +14,7 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 
+import logging
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import \
     sendMailIfRelevant, addRecurringItemsIfRelevant, sendAdviceToGiveMailIfRelevant
@@ -123,6 +124,11 @@ def onAdviceAdded(obj, event):
     item.updateAdvices()
     # make the entire _advisers group Owner of the meetingadvice
     obj.manage_addLocalRoles('%s_advisers' % obj.advice_group, ('Owner', ))
+    # log
+    userId = obj.portal_membership.getAuthenticatedMember().getId()
+    logger = logging.getLogger('PloneMeeting')
+    logger.info('Advice at %s created by "%s".' %
+                (obj.absolute_url_path(), userId))
     # redirect to referer after add if it is not the edit form
     http_referer = item.REQUEST['HTTP_REFERER']
     if not http_referer.endswith('/edit'):
@@ -133,6 +139,11 @@ def onAdviceModified(obj, event):
     '''Called when a meetingadvice is modified so we can warn parent item.'''
     item = obj.getParentNode()
     item.updateAdvices()
+    # log
+    userId = obj.portal_membership.getAuthenticatedMember().getId()
+    logger = logging.getLogger('PloneMeeting')
+    logger.info('Advice at %s edited by "%s".' %
+                (obj.absolute_url_path(), userId))
 
 
 def onAdviceEditFinished(obj, event):
