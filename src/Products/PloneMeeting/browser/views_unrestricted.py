@@ -68,7 +68,7 @@ class DeleteGivenUidView(BrowserView):
                     obj.getMeeting().removeItem(obj)
             elif obj.meta_type == 'MeetingFile':
                 if item:
-                    item.updateAnnexIndex(obj, removeAnnex=True)
+                    item.restrictedTraverse('@@annexes').updateAnnexIndex(obj, removeAnnex=True)
                     item.updateHistory(
                         'delete', obj, decisionRelated=obj.isDecisionRelated())
                     if item.willInvalidateAdvices():

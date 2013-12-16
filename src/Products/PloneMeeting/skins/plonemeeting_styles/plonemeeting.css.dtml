@@ -210,7 +210,10 @@ table.no-style-table td {
     background-color: white;
     border: 1px solid #CCCCCC;
     margin: -1px 0 0 0;
-    padding: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
     cursor: pointer;
     list-style: none;
 }
@@ -354,6 +357,10 @@ input[type=radio] {margin: 0;}
     padding-left: 0em !important;
     padding-top: 0em !important;
     padding-bottom: 0em !important;
+}
+
+td.noPadding a {
+    padding: 0 !important;
 }
 
 .fakeButton {

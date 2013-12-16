@@ -54,6 +54,13 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
+    <browser:view
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        name="contenthistory"
+        class=".browser.overrides.PloneMeetingContentHistoryView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View"
+        />
     <browser:page
         for="*"
         name="at_utils"

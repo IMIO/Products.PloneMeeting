@@ -1,0 +1,42 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      lang="en"
+      metal:use-macro="context/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+<body>
+
+<metal:main fill-slot="content-core">
+  <metal:content-core define-macro="content-core">
+
+    <tal:comment replace="nothing">Force show of plone.belowcontenttitle viewlet while
+    the advice is displayed in an overlay because every vielwets are hidden in overlays...</tal:comment>
+    <div tal:condition="python: 'ajax_load' in context.REQUEST" id="viewlet-below-content-title">
+        <div tal:replace="structure provider:plone.belowcontenttitle" />
+    </div>
+
+    <dl class="enableFormTabbing">
+        <dt i18n:translate="">Advice</dt>
+        <dd>
+            <table class="no-style-table" width="100%">
+                <tr tal:repeat="widget view/widgets/values">
+                    <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+                    <td class="table_widget_value" tal:content="structure widget/render">Value</td>
+                </tr>
+            </table>
+        </dd>
+        <dt i18n:translate="">Annexes</dt>
+        <dd tal:define="decisionRelated python: False;
+                        showColors python: False;">
+          <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
+        </dd>
+    </dl>
+
+    <div class="visualClear"></div>
+
+  </metal:content-core>
+</metal:main>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-## Controller Python Script "annexes.cpy"
+## Controller Python Script "do_add_annex.cpy"
 ##bind container=container
 ##bind context=context
 ##bind namespace=
@@ -54,7 +54,9 @@ while not idMayBeUsed:
 
 annexes_view.addAnnex(idCandidate, annex_title, annex_file, decisionRelated, meetingFileType)
 
-state.set(status='success', portal_status_message="Changes made.")
+state.set(status='success')
+context.plone_utils.addPortalMessage('Annex correctly added.')
 rq.set('annex_type', None)
 rq.set('annex_title', None)
+
 return state

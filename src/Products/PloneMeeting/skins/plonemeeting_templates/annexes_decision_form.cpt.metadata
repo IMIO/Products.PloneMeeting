@@ -3,6 +3,5 @@ validators..=annexes_validate
 validators..Select=annexes_validate
 
 [actions]
-action.success=traverse_to:string:delete_givenuid
-action.success..Select=traverse_to:string:annexes
+action.success..Select=traverse_to:string:do_add_annex
 action.failure=traverse_to:string:annexes_decision_form

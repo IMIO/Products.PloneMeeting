@@ -213,7 +213,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             # by the conversion process for example
             annexIndexUids = [annex['UID'] for annex in item.annexIndex]
             if not self.UID() in annexIndexUids:
-                item.updateAnnexIndex()
+                item.restrictedTraverse('@@annexes').updateAnnexIndex()
             item.alreadyUsedAnnexNames.append(self.id)
         # at the end of creation, we know now if self.isDecisionRelated
         # and we can manage the self.toPrint default value
@@ -251,7 +251,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     def getAnnexInfo(self):
         '''Produces a dict with some useful info about this annex. This is
            used for indexing purposes (see method updateAnnexIndex in
-           MeetingItem.py).'''
+           browser/annexes.py).'''
         fileType = self.getMeetingFileType()
         portal_url = getToolByName(self, 'portal_url')
         res = {'Title': self.Title(),
@@ -634,7 +634,7 @@ def checkAfterConversion(object, event):
     # this is tested in testConversionWithDocumentViewer.testConvert
     if not hasattr(aq_base(object), 'pm_modification_date'):
         object.pm_modification_date = object.modification_date
-    item.updateAnnexIndex()
+    item.restrictedTraverse('@@annexes').updateAnnexIndex()
 
     # remove saved_request on annex
     try:
@@ -642,4 +642,3 @@ def checkAfterConversion(object, event):
     except:
         pass
 ##/code-section module-footer
-

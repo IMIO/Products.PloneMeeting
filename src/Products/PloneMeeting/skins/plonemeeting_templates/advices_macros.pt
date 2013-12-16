@@ -3,9 +3,11 @@
      tal:define="advicesByType meetingItem/getAdvicesByType;
                  adviceStyle python: meetingConfig.getUserParam('adviceStyle');
                  advisableGroups python: meetingItem.getAdvicesGroupsInfosForUser();
+                 item_url meetingItem/absolute_url;
                  advicesToAdd python: advisableGroups[0];
                  advicesToEdit python: advisableGroups[1];
                  portal_url context/@@plone_portal_state/portal_url;
+                 plone_view context/@@plone;
                  isRealManager python: tool.isManager(realManagers=True);">
 
   <table width="#"
@@ -15,7 +17,7 @@
     <tr>
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
       <td tal:condition="advicesToAdd" class="noPadding">
-        <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${meetingItem/absolute_url}/++add++meetingadvice">
+        <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
           <img i18n:attributes="title" title="advice_add" style="cursor:pointer"
                tal:attributes="src string:$portal_url/new.png;" />
         </a>
@@ -32,11 +34,29 @@
           <dd class="actionMenuContentAX actionMenuContentAdvice">
             <ul style="cursor:default"> <tal:comment replace="nothing">List of group names</tal:comment>
               <li tal:repeat="advice python:advicesByType[adviceType]">
+                <fieldset><legend><span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span></legend>
                 <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%"
                        tal:define="mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given')">
                   <tr>
-                    <td class="noPadding"> <tal:comment replace="nothing">Name is surrounded with () if optional.</tal:comment>
-                    <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span>
+                    <td class="noPadding" width="100%">
+                    </td>
+                    <td align="right" width="17px" class="noPadding"
+                        tal:condition="python: mayEdit or (advicesToAdd and advice.has_key('comment') and advice['comment'] and (advice['id'] in [a[0] for a in advicesToAdd]))">
+                    <a href="edit"
+                       class="link-overlay-pm-advice"
+                       tal:attributes="href string:${item_url}/${advice/advice_id}/edit">
+                      <img i18n:attributes="title" title="advice_edit" style="cursor:pointer"
+                           tal:attributes="src string:$portal_url/edit.gif;" />
+                    </a>
+                    </td>
+                    <td align="right" width="17px" class="noPadding" tal:condition="mayEdit">
+                      <a href="#"
+                         class="link-overlay-pm"
+                         tal:attributes="href string:${item_url}/${advice/advice_id}/annexes_form">
+                        <img src="manage_annexes.gif"
+                             i18n:attributes="title" title="Manage advice annexes"
+                             tal:attributes="src string:${portal_url}/manage_annexes.gif"/>
+                      </a>
                     </td>
                     <td align="right" width="17px" class="noPadding" tal:condition="mayEdit">
                       <form action="deleteAdvice" name="deleteAdvice" tal:attributes="action python: meetingItem.absolute_url() + '/@@delete_givenuid'">
@@ -48,20 +68,30 @@
                              onclick="javascript:confirmDeleteObject(this)" />
                       </form>
                     </td>
-                    <td align="right" width="17px" class="noPadding" tal:condition="python: mayEdit or (advicesToAdd and advice.has_key('comment') and advice['comment'] and (advice['id'] in [a[0] for a in advicesToAdd]))">
-                    <a href="edit"
-                       class="link-overlay-pm-advice"
-                       tal:attributes="href python: meetingItem.absolute_url() + '/%s/edit' % advice['advice_id']">
-                      <img i18n:attributes="title" title="advice_edit" style="cursor:pointer"
-                           tal:attributes="src string:$portal_url/edit.gif;" />
-                    </a>
+                  </tr>
+                  <tr>
+                    <td colspan="4">
+                        <tal:details condition="python: (adviceType != 'not_given')">
+                            <i style="font-size: 95%"
+                               tal:define="croppedComment python: plone_view.cropText(advice['comment'] or '', 200, '...')"
+                               tal:content="structure croppedComment"></i>
+                            <a href="#"
+                               class="link-overlay-pm"
+                               tal:attributes="href string:${item_url}/${advice/advice_id}/view"><span i18n:translate="">Access detailled advice</span></a>
+                          </tal:details>
                     </td>
                   </tr>
-
+                  <tr tal:condition="python: 'advice_id' in advice">
+                    <td colspan="4"
+                        align="right"
+                        class="advice_annexes"
+                        tal:define="meetingItem python: getattr(meetingItem, advice['advice_id']);
+                                    extra_css_class python: 'annexIcon';">
+                        <metal:annexes use-macro="meetingItem/@@annexes-macros/annexesIcons"/>
+                    </td>
+                  </tr>
                 </table>
-                <tal:details condition="python: (adviceType != 'not_given') and advice['comment']">
-                  <i style="font-size: 95%" tal:content="structure advice/comment"></i>
-                </tal:details>
+                </fieldset>
               </li>
             </ul>
           </dd>

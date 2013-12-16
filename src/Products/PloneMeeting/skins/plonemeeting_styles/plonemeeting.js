@@ -113,8 +113,13 @@ function toggleMenuHandlerAX(event) {
         // it's visible - hide it
         replaceClassName(container, 'activated', 'deactivated', true);
     } else {
-        // it's invisible - make it visible (and hide all others)
-        hideAllMenusAX()
+        // it's invisible - make it visible (and hide all others except if a container)
+        if (!findParent(container, "actionMenuAX")) {
+            hideAllMenusAX()
+        }
+        else {
+            hideAllMenusAX(findParent(container, "actionMenuAX"))
+        }
         bringForward(this);
         replaceClassName(container, 'deactivated', 'activated', true);
     }
@@ -122,7 +127,7 @@ function toggleMenuHandlerAX(event) {
 }
 function hideMenusHandlerAX(event) {
     if (!event) var event = window.event; // IE compatibility
-    hideAllMenusAX();
+    // hideAllMenusAX();
     return true;
 }
 function actionMenuDocumentMouseDownAX(event) {
@@ -192,7 +197,7 @@ function initializeMenusAXStartingAt(node) {
   // when any link is clicked
   var menu_contents = $('dl.actionMenuAX > dd.actionMenuContentAX', node);
   for (var i=0; i < menu_contents.length; i++) {
-    menu_contents[i].onclick = hideMenusHandlerAX;
+        menu_contents[i].onclick = hideMenusHandlerAX;
   }
 }
 

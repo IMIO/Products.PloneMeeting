@@ -68,6 +68,16 @@
         permission="zope2.View"/>
     </configure>
 
+
+    <!-- Custom view for meetingadvice -->
+    <browser:page
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        name="view"
+        class="plone.dexterity.browser.view.DefaultView"
+        template="templates/meetingadvice.pt"
+        permission="zope2.View"
+        />
+
     <!-- Overlays views -->
     <browser:page
         for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
@@ -203,14 +213,22 @@
         for="Products.PloneMeeting.interfaces.IMeeting"
         permission="zope2.View"
         allowed_attributes="isAsynchToggleEnabled"/>
-    <!-- macros -->
+    <!-- Annexes -->
     <browser:page
         name="annexes-macros"
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        for="*"
         class=".annexes.AnnexesMacros"
         template="templates/annexesmacros.pt"
+        permission="zope2.View"/>
+    <browser:page
+        name="annexes"
+        class=".annexes.AnnexesView"
+        for="*"
         permission="zope2.View"
-    />
+        allowed_attributes="addAnnex
+                            isValidAnnexId
+                            getAnnexesToPrint
+                            updateAnnexIndex"/>
     <!-- Form that manage item assembly -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

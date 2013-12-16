@@ -19,7 +19,8 @@ jQuery(function($) {
 });
 
 jQuery(function($){
-    // Every common overelays
+    // Every common overelays, must stay at the bottom of every defined overlays!!!
+    // Or it is taken before others because selector matches
     $('a.link-overlay-pm').prepOverlay({
         subtype: 'ajax',
         closeselector: '[name="form.buttons.cancel"]',

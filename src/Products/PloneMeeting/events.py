@@ -15,6 +15,7 @@ __docformat__ = 'plaintext'
 
 
 import logging
+from persistent.list import PersistentList
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import \
     sendMailIfRelevant, addRecurringItemsIfRelevant, sendAdviceToGiveMailIfRelevant
@@ -120,6 +121,15 @@ def onItemMoved(obj, event):
 
 def onAdviceAdded(obj, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
+    # Add a place to store annexIndex
+    obj.annexIndex = PersistentList()
+    # Create a "black list" of annex names. Every time an annex will be
+    # created for this item, the name used for it (=id) will be stored here
+    # and will not be removed even if the annex is removed. This way, two
+    # annexes (or two versions of it) will always have different URLs, so
+    # we avoid problems due to browser caches.
+    obj.alreadyUsedAnnexNames = PersistentList()
+
     item = obj.getParentNode()
     item.updateAdvices()
     # make the entire _advisers group Owner of the meetingadvice

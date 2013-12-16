@@ -20,7 +20,12 @@
     ploneMeetingSelectBoxes["annexTypeBox"] = annexTypeBox;
   </script>
   <tal:comment replace="nothing">Item header (title, reference, etc)</tal:comment>
-  <metal:header use-macro="here/hs_macros/macros/itemHeader"/>
+  <tal:itemHeader condition="python: context.meta_type == 'MeetingItem'">
+    <metal:header use-macro="here/hs_macros/macros/itemHeader"/>
+  </tal:itemHeader>
+  <tal:adviceHeader condition="python: context.meta_type != 'MeetingItem'">
+    <h1 class="documentFirstHeading" tal:content="context/Title"></h1>
+  </tal:adviceHeader>
 
   <tal:comment replace="nothing">Form for appending a new annex.</tal:comment>
   <form name="annexForm"
@@ -36,7 +41,7 @@
   <fieldset tal:define="fileTypes python:[ft for ft in meetingConfig.getFileTypes(decisionRelated) if ft.adapted().isSelectable()]">
     <legend i18n:translate="add_annex">Add an annex</legend>
 
-    <tal:showWarningWillInvalidateAdvices condition="context/willInvalidateAdvices">
+    <tal:showWarningWillInvalidateAdvices condition="python: context.meta_type == 'MeetingItem' and context.willInvalidateAdvices()">
     <dl class="portalMessage warning">
         <dt i18n:translate="" i18n:domain="plone">Warning</dt><dd i18n:translate="warning_invalidate_advices_with_annex" i18n:domain="PloneMeeting"></dd>
     </dl><br />
@@ -164,9 +169,18 @@
       <p><input class="context" type="submit" name="form.button.Select" value="Save" i18n:attributes="value label_save" i18n:domain="plone" /></p>
   </fieldset>
   </form>
+  <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
+</div>
 
-  <tal:comment replace="nothing">Table that shows the list of current annexes.</tal:comment>
-  <fieldset tal:define="annexes python: here.getAnnexesByType(decisionRelated, makeSubLists=False)">
+
+<div metal:define-macro="annexesShowMacro" i18n:domain="PloneMeeting">
+  <tal:comment replace="nothing">Table that shows the list of current annexes.
+  This macro needs : decisionRelated, showColors
+  </tal:comment>
+  <fieldset tal:define="tool python: context.portal_plonemeeting;
+                        meetingConfig python: context.portal_plonemeeting.getMeetingConfig(context);
+                        annexes python: context.restrictedTraverse('@@annexes').getAnnexesByType(decisionRelated, makeSubLists=False);
+                        member member|context/@@plone_portal_state/member;">
    <legend i18n:translate="existing_annexes">Annexes</legend>
    <div tal:condition="not: annexes" i18n:translate="no_annexes" class="discreet">No annexes</div>
    <table class="vertical listing"
@@ -202,7 +216,7 @@
      </tr>
    </table>
   </fieldset>
- </div>
+</div>
 
 
 <tal:comment replace="nothing">Requires "tool", "meetingConfig".
@@ -213,13 +227,14 @@
                                         target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows') and '_blank' or '';">
     <tal:withPreview define="isRealManager python: tool.isManager(realManagers=True);"
                      condition="previewEnabled">
-       <a style="float: right;"
-          href="#"
+       <a href="#"
           tal:attributes="href string:${portal_url}/${annex/absolute_url}/download"
           title="Download annex"
           i18n:domain="PloneMeeting"
           i18n:attributes="title">
-          <img src="download_icon.png" tal:attributes="src string:${portal_url}/download_icon.png" />
+          <img style="float: right;"
+               src="download_icon.png"
+               tal:attributes="src string:${portal_url}/download_icon.png" />
        </a>
        <div class="annexTitle" tal:condition="python: conversionStatus == 'successfully_converted'">
          <span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target, appendToUrl='/documentviewer#document/p1', additionalCSSClasses='classicpopup')"/>
@@ -259,20 +274,23 @@
 
 <tal:comment replace="nothing">Requires "meetingItem".
      Optional: "decisionRelated". If True, decision-related annexes are shown
-               instead of item-related annexes.</tal:comment>
+               instead of item-related annexes.
+               Extra css_class "extra_css_class" can be given to be applied on the icon <a> node.
+               This makes it possible to display a actionMenuAX in a actionMenuAX and getting it working...</tal:comment>
 <metal:icons define-macro="annexesIcons"
      i18n:domain="PloneMeeting"
      tal:define="decisionRelated decisionRelated|nothing;
                  decisionRelated python: decisionRelated and True or False;
-                 annexesByType python:meetingItem.getAnnexesByType(decisionRelated);
-                 DateTime python:modules['DateTime'];
+                 annexesByType python: meetingItem.restrictedTraverse('@@annexes').getAnnexesByType(decisionRelated);
+                 DateTime python: modules['DateTime'];
                  now python: DateTime.DateTime();
                  target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows') and '_blank' or '';
-                 tool python:context.portal_plonemeeting;
+                 tool python: context.portal_plonemeeting;
                  cssClasses python: 'contentActionsAX no-style-table';
                  global count python:0;
                  portal_url context/@@plone_portal_state/portal_url;
-                 previewEnabled tool/getEnableAnnexPreview;">
+                 previewEnabled tool/getEnableAnnexPreview;
+                 extra_css_class extra_css_class|nothing;">
 
   <table tal:condition="annexesByType" cellpadding="0" cellspacing="0"
          class="contentActionsAX no-style-table">
@@ -296,7 +314,7 @@
             tal:attributes="id python:'annexesMenu_' + str(count) + '_' + meetingItem.UID() + '_' + str(decisionRelated)"
             tal:condition="python: len(annexesGroup) > 1 or previewEnabled">
           <dt class="actionMenuHeaderAX pmLinks">
-              <a href="#"><img
+              <a href="#" class="#" tal:attributes="class extra_css_class"><img
                  tal:attributes="src imgUrl"/><b tal:condition="showColors"
                  tal:content="python: len(annexesGroup)"
                  tal:attributes="id python: tool.lastModifsConsultedOnAnnexes(annexesGroup) and 'pmNoNewContent' or 'pmNewContent';"></b><b tal:condition="not: showColors"
