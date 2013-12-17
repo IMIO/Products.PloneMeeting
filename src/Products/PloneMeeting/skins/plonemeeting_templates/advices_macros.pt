@@ -71,8 +71,7 @@
                   <tr>
                     <td colspan="4">
                         <tal:details condition="python: (adviceType != 'not_given')">
-                          <i style="font-size: 95%"
-                             tal:define="croppedComment python: plone_view.cropText(advice['comment'] or '', 200, '...')"
+                          <i tal:define="croppedComment python: plone_view.cropText(advice['comment'] or '', 200, '...')"
                              tal:content="structure croppedComment"></i>
                         </tal:details>
                     </td>
@@ -94,6 +93,9 @@
                     </td>
                   </tr>
                 </table>
+                <span class="discreet"
+                   tal:condition="python: adviceType == 'not_given'"
+                   i18n:translate="">This advice has not been given yet.</span>
                 </fieldset>
               </li>
             </ul>

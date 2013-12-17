@@ -219,7 +219,10 @@ table.no-style-table td {
     box-shadow: 5px 5px 5px grey;
     border-radius: 5px;
 }
-
+/* add some padding at the bottom of the advice menuAx panel */
+#content .actionMenuContentAX.actionMenuContentAdvice > ul {
+    padding-bottom: 0.5em;
+}
 
 /* add a pading-bottom under the AX panel */
 #content dd.actionMenuContentAX {
