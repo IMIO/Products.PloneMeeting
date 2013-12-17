@@ -20,6 +20,15 @@ class AnnexesView(BrowserView):
                  decisionRelated, meetingFileType, **kwargs):
         '''Create an annex (MeetingFile) with given parameters and adds it to
            this item.'''
+        # first of all, check if we can actually add the annex
+        if decisionRelated == 'True':
+            if not checkPermission("PloneMeeting: Write decision annex", self.context):
+                raise Unauthorized
+        else:
+            if not checkPermission("PloneMeeting: Add annex", self.context):
+                raise Unauthorized
+
+        # if we can, proceed
         if not idCandidate:
             idCandidate = annex_file.filename
         # Split leading underscore(s); else, Plone argues that you do not have the
@@ -50,14 +59,10 @@ class AnnexesView(BrowserView):
         newAnnex.setTitle(annex_title)
         newAnnex.setMeetingFileType(meetingFileType)
         if decisionRelated == 'True':
-            if not checkPermission("PloneMeeting: Write decision annex", self.context):
-                raise Unauthorized
             annexes = self.context.getAnnexesDecision()
             annexes.append(newAnnex)
             self.context.setAnnexesDecision(annexes)
         else:
-            if not checkPermission("PloneMeeting: Add annex", self.context):
-                raise Unauthorized
             annexes = self.context.getAnnexes()
             annexes.append(newAnnex)
             self.context.setAnnexes(annexes)
@@ -114,7 +119,7 @@ class AnnexesView(BrowserView):
         """
         portal = getToolByName(self.context, 'portal_url').getPortalObject()
         global_settings = GlobalSettings(portal)
-        annexes = self.context.getAnnexesInOrder(decisionRelated)
+        annexes = self.getAnnexesInOrder(decisionRelated)
         res = []
         i = 1
         for annex in annexes:
@@ -262,4 +267,3 @@ class AnnexesMacros(BrowserView):
 
     def now(self):
         return DateTime()
-

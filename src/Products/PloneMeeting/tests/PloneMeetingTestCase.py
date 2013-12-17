@@ -281,11 +281,16 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             annexTitle = fileType.getPredefinedTitle() or 'Annex title'
         # Create the annex
         idCandidate = None
-        item.addAnnex(idCandidate, annexTitle, annexFile,
-                      str(decisionRelated), meetingFileType=fileType)
+        annexes_view = item.restrictedTraverse('@@annexes')
+        annexes_view.addAnnex(idCandidate,
+                              annexTitle,
+                              annexFile,
+                              str(decisionRelated),
+                              meetingFileType=fileType)
         # Find the last created annex
-        annexUid = item.getAnnexesByType(decisionRelated, makeSubLists=False,
-                                         typesIds=[annexType])[-1]['UID']
+        annexUid = annexes_view.getAnnexesByType(decisionRelated,
+                                                 makeSubLists=False,
+                                                 typesIds=[annexType])[-1]['UID']
         theAnnex = item.uid_catalog(UID=annexUid)[0].getObject()
         self.assertNotEquals(theAnnex.size(), 0)
         return theAnnex

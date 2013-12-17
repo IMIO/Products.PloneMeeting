@@ -165,7 +165,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
 
     def test_pm_getAnnexesToPrintUsingBlob(self):
         """
-          Test the MeetingItem.getAnnexesToPrint method.  It is a helper method that
+          Test the @@annexes.getAnnexesToPrint method.  It is a helper method that
           returns a dict containing usefull informations about annexes to print in a POD template.
           This test when the global settings storage_type is 'Blob'.
         """
@@ -188,11 +188,11 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
                      'number': 1,
                      'UID': annex.UID(),
                      'title': annex.Title()}]
-        self.assertEquals(item.getAnnexesToPrint(), expected)
+        self.assertEquals(item.restrictedTraverse('@@annexes').getAnnexesToPrint(), expected)
 
     def test_pm_getAnnexesToPrintUsingFile(self):
         """
-          Test the MeetingItem.getAnnexesToPrint method.  It is a helper method that
+          Test the @@annexes.getAnnexesToPrint method.  It is a helper method that
           returns a dict containing usefull informations about annexes to print in a POD template.
           This test when the global settings storage_type is 'File'.
         """
@@ -218,7 +218,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
                      'number': 1,
                      'UID': annex.UID(),
                      'title': annex.Title()}]
-        self.assertEquals(item.getAnnexesToPrint(), expected)
+        self.assertEquals(item.restrictedTraverse('@@annexes').getAnnexesToPrint(), expected)
 
     def tearDown(self):
         """

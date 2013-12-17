@@ -205,6 +205,47 @@ class testAdvices(PloneMeetingTestCase):
         login(self.portal, 'pmReviewer2')
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
 
+    def test_pm_CanNotEditAnotherGroupAdvice(self):
+        '''
+          Test that when the advice of group1 and group2 is asked, group1 can not
+          do anything else but see advice given by group2 even when 'advices' are addable/editable.
+        '''
+        # create an item and ask advice of 'vendors'
+        login(self.portal, 'pmManager')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', 'developers', ))
+        item.at_post_edit_script()
+        # an advice can be given when an item is 'proposed'
+        self.proposeItem(item)
+        # add advice for 'vednors'
+        self.changeUser('pmAdviser1')
+        developers_advice = createContentInContainer(item,
+                                                     'meetingadvice',
+                                                     **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                                     'advice_type': u'positive',
+                                                     'advice_comment': RichTextValue(u'My comment')})
+        # can view/edit/delete is own advice
+        self.assertTrue(self.hasPermission('View', developers_advice))
+        self.assertTrue(self.hasPermission('Modify portal content', developers_advice))
+        self.assertTrue(self.hasPermission('Delete objects', developers_advice))
+        self.changeUser('pmReviewer2')
+        # can view
+        self.assertTrue(self.hasPermission('View', developers_advice))
+        # can not edit/delete
+        self.assertFalse(self.hasPermission('Modify portal content', developers_advice))
+        self.assertFalse(self.hasPermission('Delete objects', developers_advice))
+        vendors_advice = createContentInContainer(item,
+                                                  'meetingadvice',
+                                                  **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                                  'advice_type': u'positive',
+                                                  'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmAdviser1')
+        # can view
+        self.assertTrue(self.hasPermission('View', vendors_advice))
+        # can not edit/delete
+        self.assertFalse(self.hasPermission('Modify portal content', vendors_advice))
+        self.assertFalse(self.hasPermission('Delete objects', vendors_advice))
+
     def test_pm_CanNotGiveAdviceIfNotAsked(self):
         '''
           Test that an adviser that can access an item can not give his advice

@@ -116,7 +116,7 @@ def onMeetingGroupTransition(obj, event):
 
 def onItemMoved(obj, event):
     '''Called when an item is pasted cut/pasted, we need to update annexIndex.'''
-    obj.updateAnnexIndex()
+    obj.restrictedTraverse('@@annexes').updateAnnexIndex()
 
 
 def onAdviceAdded(obj, event):

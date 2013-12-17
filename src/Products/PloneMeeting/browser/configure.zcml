@@ -224,7 +224,7 @@
         name="annexes"
         class=".annexes.AnnexesView"
         for="*"
-        permission="zope2.View"
+        permission="zope.Public"
         allowed_attributes="addAnnex
                             isValidAnnexId
                             getAnnexesToPrint

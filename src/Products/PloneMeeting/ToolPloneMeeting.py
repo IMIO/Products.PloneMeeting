@@ -1572,6 +1572,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             newAnnex._updateMeetingFileType(meetingConfig)
                         # initialize toPrint correctly regarding configuration
                         newAnnex.setToPrint(toPrintDefault)
+                        # call processForm on the newAnnex so it is fully initialized
+                        newAnnex.processForm()
                         newAnnexes.append(newAnnex)
                     exec 'newItem.set%s(newAnnexes)' % annexType
             # The copy/paste has transferred history. We must clean the history
@@ -1595,11 +1597,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if userGroups:
                     newItem.setProposingGroup(userGroups[0].id)
 
-            # at_post_create_script updates the local roles (so removes role
+            # processForm manage every necessary creation steps and calls
+            # at_post_create_script that updates the local roles (so removes role
             # 'Manager' that we've set above) by calling MeetingItem.updateLocalRoles,
             # and also gives role "Owner" to the logged user.
-            newItem.at_post_create_script()
-            newItem.updateAnnexIndex()
+            newItem.processForm()
+            newItem.restrictedTraverse('@@annexes').updateAnnexIndex()
             if newOwnerId != loggedUserId:
                 self.plone_utils.changeOwnershipOf(newItem, newOwnerId)
             # Append the new item to the result.
@@ -2165,7 +2168,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not user.has_role('Manager'):
             raise Unauthorized
         for b in self.portal_catalog(meta_type='MeetingItem'):
-            b.getObject().updateAnnexIndex()
+            b.getObject().restrictedTraverse('@@annexes').updateAnnexIndex()
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
