@@ -221,10 +221,16 @@ table.no-style-table td {
 }
 
 
+/* add a pading-bottom under the AX panel */
 #content dd.actionMenuContentAX {
     padding: 0;
     padding-bottom: 5em;
     margin: 0;
+}
+
+/* specifically do not use a padding-bottom at the AX panel displaying annexes of advices */
+#content .actionMenuContentAdvice .advice_annexes dd.actionMenuContentAX {
+    padding-bottom: 0;
 }
 
 .actionMenuAX.activated { z-index: 20; }

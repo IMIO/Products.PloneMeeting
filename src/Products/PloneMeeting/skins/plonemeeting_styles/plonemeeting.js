@@ -1,6 +1,5 @@
-/* Dropdown for selecting an annex type */
+// Dropdown for selecting an annex type
 var ploneMeetingSelectBoxes = new Object();
-
 function displayPloneMeetingSelectBox(selectName) {
   var box = document.getElementById(ploneMeetingSelectBoxes[selectName]["box"]);
   var button = document.getElementById(ploneMeetingSelectBoxes[selectName]["button"]);

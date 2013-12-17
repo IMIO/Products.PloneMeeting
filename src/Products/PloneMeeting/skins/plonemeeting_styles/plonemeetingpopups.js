@@ -39,14 +39,6 @@ jQuery(function($){
 
 function initializePMOverlays(){
 jQuery(function($) {
-  // every common overelays
-  $('a.link-overlay-pm').prepOverlay({
-        subtype: 'ajax',
-        closeselector: '[name="form.buttons.cancel"]',
-  });
-});
-
-jQuery(function($) {
   // Add or edit advice popup
   $('a.link-overlay-pm-advice').prepOverlay({
         subtype: 'ajax',
@@ -57,6 +49,14 @@ jQuery(function($) {
                 return true;
             }
         }
+  });
+});
+
+jQuery(function($) {
+  // every common overelays
+  $('a.link-overlay-pm').prepOverlay({
+        subtype: 'ajax',
+        closeselector: '[name="form.buttons.cancel"]',
   });
 });
 
@@ -85,7 +85,6 @@ $('a.link-overlay-actionspanel.transition-overlay').each(function(){
   })
   initializePMOverlays()
 }
-
 
 // Open every links having the classicpopup class in a... classic popup...
 jQuery(document).ready(function($) {

@@ -40,8 +40,7 @@
                   <tr tal:condition="mayEdit">
                     <td class="noPadding" width="100%">
                     </td>
-                    <td align="right" width="17px" class="noPadding"
-                        tal:condition="python: mayEdit or (advicesToAdd and advice.has_key('comment') and advice['comment'] and (advice['id'] in [a[0] for a in advicesToAdd]))">
+                    <td align="right" width="17px" class="noPadding">
                     <a href="edit"
                        class="link-overlay-pm-advice"
                        tal:attributes="href string:${item_url}/${advice/advice_id}/edit">
@@ -72,10 +71,10 @@
                   <tr>
                     <td colspan="4">
                         <tal:details condition="python: (adviceType != 'not_given')">
-                            <i style="font-size: 95%"
-                               tal:define="croppedComment python: plone_view.cropText(advice['comment'] or '', 200, '...')"
-                               tal:content="structure croppedComment"></i>
-                          </tal:details>
+                          <i style="font-size: 95%"
+                             tal:define="croppedComment python: plone_view.cropText(advice['comment'] or '', 200, '...')"
+                             tal:content="structure croppedComment"></i>
+                        </tal:details>
                     </td>
                   </tr>
                   <tr tal:condition="python: 'advice_id' in advice">

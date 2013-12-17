@@ -277,6 +277,7 @@
     </tal:field>
 
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
+    <a name="adviceAndAnnexes"></a>
     <table width="100%" cellpadding="1" cellspacing="1"
            tal:define="meetingItem python: here;
                        hasAnnexes python: context.hasAnnexesWhere(decisionRelated=False);
