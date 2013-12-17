@@ -68,11 +68,26 @@ class Migrate_To_3_1_1(Migrator):
                     item.updateAdvices()
         logger.info('Done.')
 
+    def _finalizeAnnexesCreationProcess(self):
+        '''Before, when an item was duplicated with annexes, contained annexes where not fully
+           initialized, now it is the case.  Check older annexes and initialize it if necessary.'''
+        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
+        logger.info('Finishing creation process for annexes added in %d MeetingItem objects...' % len(brains))
+        for brain in brains:
+            item = brain.getObject()
+            annexes = item.objectValues('MeetingFile')
+            for annex in annexes:
+                if annex._at_creation_flag:
+                    logger.info('Annex at %s was initialized' % annex.absolute_url())
+                    annex.processForm()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.1.1...')
         self._configureCatalogIndexesAndMetadata()
         self._initDefaultBudgetHTML()
         self._updateAdvices()
+        self._finalizeAnnexesCreationProcess()
         # reinstall so 'getDeliberation' index is added and computed
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.finish()
@@ -85,7 +100,8 @@ def migrate(context):
        1) Removed the 'getDecision' index;
        2) Initialize field MeetingConfig.defaultBudget so it behaves correctly has RichText;
        3) Update advices as we moved from MeetingItem.advices to MeetingItem.adviceIndex;
-       4) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
+       4) Make sure every existing annexes creation process is correctly finished;
+       5) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
     '''
     Migrate_To_3_1_1(context).run()
 # ------------------------------------------------------------------------------
