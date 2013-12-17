@@ -216,6 +216,15 @@ table.no-style-table td {
     padding-right: 0.5em;
     cursor: pointer;
     list-style: none;
+    box-shadow: 5px 5px 5px grey;
+    border-radius: 5px;
+}
+
+
+#content dd.actionMenuContentAX {
+    padding: 0;
+    padding-bottom: 5em;
+    margin: 0;
 }
 
 .actionMenuAX.activated { z-index: 20; }
@@ -275,7 +284,7 @@ table.no-style-table td {
     display: none;
 }
 
-.actionMenuContentAdvice { width: 350px; }
+.actionMenuContentAdvice { width: 600px; }
 
 /* annexes displayed in the annexes_form (table of annexes) */
 td.pmLinks div.annexTitle {

@@ -37,7 +37,7 @@
                 <fieldset><legend><span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span></legend>
                 <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%"
                        tal:define="mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given')">
-                  <tr>
+                  <tr tal:condition="mayEdit">
                     <td class="noPadding" width="100%">
                     </td>
                     <td align="right" width="17px" class="noPadding"
@@ -49,7 +49,7 @@
                            tal:attributes="src string:$portal_url/edit.gif;" />
                     </a>
                     </td>
-                    <td align="right" width="17px" class="noPadding" tal:condition="mayEdit">
+                    <td align="right" width="17px" class="noPadding">
                       <a href="#"
                          class="link-overlay-pm"
                          tal:attributes="href string:${item_url}/${advice/advice_id}/annexes_form">
@@ -58,7 +58,7 @@
                              tal:attributes="src string:${portal_url}/manage_annexes.gif"/>
                       </a>
                     </td>
-                    <td align="right" width="17px" class="noPadding" tal:condition="mayEdit">
+                    <td align="right" width="17px" class="noPadding">
                       <form action="deleteAdvice" name="deleteAdvice" tal:attributes="action python: meetingItem.absolute_url() + '/@@delete_givenuid'">
                         <input type="hidden" value="#" name="selected_uid" tal:attributes="value advice/advice_uid">
                         <img style="cursor:pointer"
@@ -75,14 +75,18 @@
                             <i style="font-size: 95%"
                                tal:define="croppedComment python: plone_view.cropText(advice['comment'] or '', 200, '...')"
                                tal:content="structure croppedComment"></i>
-                            <a href="#"
-                               class="link-overlay-pm"
-                               tal:attributes="href string:${item_url}/${advice/advice_id}/view"><span i18n:translate="">Access detailled advice</span></a>
                           </tal:details>
                     </td>
                   </tr>
                   <tr tal:condition="python: 'advice_id' in advice">
-                    <td colspan="4"
+                    <td>
+                        <a href="#"
+                           class="link-overlay-pm"
+                           tal:attributes="href string:${item_url}/${advice/advice_id}/view">
+                            <span i18n:translate="">Access detailled advice</span>
+                        </a>
+                    </td>
+                    <td colspan="3"
                         align="right"
                         class="advice_annexes"
                         tal:define="meetingItem python: getattr(meetingItem, advice['advice_id']);
