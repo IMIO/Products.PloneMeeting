@@ -10,6 +10,8 @@
  <permission>Modify portal content</permission>
  <permission>Review portal content</permission>
  <permission>Delete objects</permission>
+ <permission>PloneMeeting: Add MeetingFile</permission>
+ <permission>PloneMeeting: Add annex</permission>
  <state state_id="advice_given"
         title="advice_given"
         i18n:attributes="title">
@@ -22,6 +24,14 @@
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
                   acquired="False">
    <permission-role>Manager</permission-role>
   </permission-map>
@@ -46,6 +56,16 @@
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="Modify portal content"
+                  acquired="False">
+   <permission-role>Owner</permission-role>
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add MeetingFile"
+                  acquired="False">
+   <permission-role>Owner</permission-role>
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Add annex"
                   acquired="False">
    <permission-role>Owner</permission-role>
    <permission-role>Manager</permission-role>
