@@ -54,15 +54,21 @@ class MeetingAdvice(Container):
 
     def Title(self):
         # we can not return a translated msg using _ so translate it
-        return translate('Advice given on item "${item_title}"',
-                         mapping={'item_title': self.getParentNode().Title()},
+        return translate("Advice given on item ${item_title}",
+                         mapping={'item_title': '"%s"' % unicode(self.getParentNode().Title(), 'utf-8')},
                          domain="PloneMeeting",
-                         default='Advice given on item "%s"' % self.getParentNode().Title())
+                         default='Advice given on item "%s"' % self.getParentNode().Title(),
+                         context=self.REQUEST)
 
     def queryState(self):
         '''In what state am I ?'''
         wfTool = getToolByName(self, 'portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
+
+    def numberOfAnnexes(self):
+        '''Return the number of viewable annexes.'''
+        catalog = getToolByName(self, 'portal_catalog')
+        return len(catalog(Type='MeetingFile', path='/'.join(self.getPhysicalPath())))
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):

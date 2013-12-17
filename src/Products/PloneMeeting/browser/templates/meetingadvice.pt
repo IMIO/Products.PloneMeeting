@@ -30,7 +30,7 @@
                 </tr>
             </table>
         </dd>
-        <dt i18n:translate="">Annexes</dt>
+        <dt><span i18n:translate="">Annexes</span>&nbsp;(<span tal:replace="context/numberOfAnnexes" />)</dt>
         <dd tal:define="decisionRelated python: False;
                         showColors python: False;">
           <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />

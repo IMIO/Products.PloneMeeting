@@ -2562,6 +2562,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
                     if not adviceObj.queryState() == 'advice_under_edit':
                         wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
+            else:
+                # make sure it is no more editable
+                if 'advice_id' in self.adviceIndex[groupId]:
+                    adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
+                    if not adviceObj.queryState() == 'advice_given':
+                        wfTool.doActionFor(adviceObj, 'giveAdvice')
             # if item needs to be accessible by advisers, it is already
             # done by self.manage_addLocalRoles here above because it is necessary in any case
             if itemState in mGroup.getItemAdviceViewStates(cfg):

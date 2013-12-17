@@ -52,27 +52,27 @@
   </permission-map>
   <permission-map name="Delete objects"
                   acquired="False">
-   <permission-role>Owner</permission-role>
+   <permission-role>Editor</permission-role>
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="Modify portal content"
                   acquired="False">
-   <permission-role>Owner</permission-role>
+   <permission-role>Editor</permission-role>
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Add MeetingFile"
                   acquired="False">
-   <permission-role>Owner</permission-role>
+   <permission-role>Editor</permission-role>
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Add annex"
                   acquired="False">
-   <permission-role>Owner</permission-role>
+   <permission-role>Editor</permission-role>
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
-   <permission-role>Owner</permission-role>
+   <permission-role>Editor</permission-role>
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="View"

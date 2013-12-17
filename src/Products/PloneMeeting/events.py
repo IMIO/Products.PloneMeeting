@@ -132,8 +132,8 @@ def onAdviceAdded(obj, event):
 
     item = obj.getParentNode()
     item.updateAdvices()
-    # make the entire _advisers group Owner of the meetingadvice
-    obj.manage_addLocalRoles('%s_advisers' % obj.advice_group, ('Owner', ))
+    # make the entire _advisers group able to edit the meetingadvice
+    obj.manage_addLocalRoles('%s_advisers' % obj.advice_group, ('Editor', ))
     # log
     userId = obj.portal_membership.getAuthenticatedMember().getId()
     logger = logging.getLogger('PloneMeeting')

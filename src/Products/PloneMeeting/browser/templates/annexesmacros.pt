@@ -169,7 +169,10 @@
       <p><input class="context" type="submit" name="form.button.Select" value="Save" i18n:attributes="value label_save" i18n:domain="plone" /></p>
   </fieldset>
   </form>
-  <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
+  <fieldset>
+   <legend i18n:translate="existing_annexes">Annexes</legend>
+   <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
+  </fieldset>
 </div>
 
 
@@ -177,11 +180,10 @@
   <tal:comment replace="nothing">Table that shows the list of current annexes.
   This macro needs : decisionRelated, showColors
   </tal:comment>
-  <fieldset tal:define="tool python: context.portal_plonemeeting;
-                        meetingConfig python: context.portal_plonemeeting.getMeetingConfig(context);
-                        annexes python: context.restrictedTraverse('@@annexes').getAnnexesByType(decisionRelated, makeSubLists=False);
-                        member member|context/@@plone_portal_state/member;">
-   <legend i18n:translate="existing_annexes">Annexes</legend>
+  <tal:defines define="tool python: context.portal_plonemeeting;
+                       meetingConfig python: context.portal_plonemeeting.getMeetingConfig(context);
+                       annexes python: context.restrictedTraverse('@@annexes').getAnnexesByType(decisionRelated, makeSubLists=False);
+                       member member|context/@@plone_portal_state/member;">
    <div tal:condition="not: annexes" i18n:translate="no_annexes" class="discreet">No annexes</div>
    <table class="vertical listing"
           tal:condition="annexes"
@@ -215,7 +217,7 @@
        </span>
      </tr>
    </table>
-  </fieldset>
+  </tal:defines>
 </div>
 
 
