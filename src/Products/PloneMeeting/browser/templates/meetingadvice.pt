@@ -16,6 +16,10 @@
         <div tal:replace="structure provider:plone.belowcontenttitle" />
     </div>
 
+    <script type="text/javascript">
+    jQuery(document).ready(removeLinkOnByLine);
+    </script>
+
     <dl class="enableFormTabbing">
         <dt i18n:translate="">Advice</dt>
         <dd>
