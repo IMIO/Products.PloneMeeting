@@ -2266,6 +2266,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = getattr(mc.meetingusers, res)
         return res
 
+    security.declarePrivate('getAdvices')
+    def getAdvices(self):
+        '''Returns a list of contained meetingadvice objects.'''
+        res = []
+        for obj in self.objectValues('Dexterity Container'):
+            if obj.portal_type == 'meetingadvice':
+                res.append(obj)
+        return res
+
     security.declarePublic('getAdvicesGroupsInfosForUser')
     def getAdvicesGroupsInfosForUser(self):
         '''This method returns 2 lists of groups in the name of which the
@@ -2312,15 +2321,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 advices = res[advice['type']]
             advices.append(advice.__dict__['data'])
-        return res
-
-    security.declarePrivate('getAdvices')
-    def getAdvices(self):
-        '''Returns a list of contained meetingadvice objects.'''
-        res = []
-        for obj in self.objectValues('Dexterity Container'):
-            if obj.portal_type == 'meetingadvice':
-                res.append(obj)
         return res
 
     security.declarePublic('getGivenAdvices')
