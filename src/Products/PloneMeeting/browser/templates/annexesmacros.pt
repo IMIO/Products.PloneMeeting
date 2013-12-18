@@ -173,6 +173,9 @@
    <legend i18n:translate="existing_annexes">Annexes</legend>
    <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
   </fieldset>
+
+  <metal:closeButton use-macro="here/@@pm-macros/closeButtonMacro" />
+
 </div>
 
 
@@ -274,7 +277,7 @@
 </metal:withOrWithoutPreview>
 
 
-<tal:comment replace="nothing">Requires "meetingItem".
+<tal:comment replace="nothing">Requires "obj".
      Optional: "decisionRelated". If True, decision-related annexes are shown
                instead of item-related annexes.
                Extra css_class "extra_css_class" can be given to be applied on the icon <a> node.
@@ -283,7 +286,7 @@
      i18n:domain="PloneMeeting"
      tal:define="decisionRelated decisionRelated|nothing;
                  decisionRelated python: decisionRelated and True or False;
-                 annexesByType python: meetingItem.restrictedTraverse('@@annexes').getAnnexesByType(decisionRelated);
+                 annexesByType python: obj.restrictedTraverse('@@annexes').getAnnexesByType(decisionRelated);
                  DateTime python: modules['DateTime'];
                  now python: DateTime.DateTime();
                  target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows') and '_blank' or '';
@@ -313,7 +316,7 @@
         <dl class="actionMenuAX"
             tal:define="imgUrl python:portal_url + '/' + annexesGroup[0]['iconUrl'];
                         global count python:count+1"
-            tal:attributes="id python:'annexesMenu_' + str(count) + '_' + meetingItem.UID() + '_' + str(decisionRelated)"
+            tal:attributes="id python:'annexesMenu_' + str(count) + '_' + obj.UID() + '_' + str(decisionRelated)"
             tal:condition="python: len(annexesGroup) > 1 or previewEnabled">
           <dt class="actionMenuHeaderAX pmLinks">
               <a href="#" class="#" tal:attributes="class extra_css_class"><img
@@ -325,7 +328,7 @@
           <dd class="actionMenuContentAX">
             <ul>
               <li class="pmLinks" tal:repeat="annex annexesGroup">
-                <metal:withOrWithoutPreview use-macro="meetingItem/@@annexes-macros/withOrWithoutPreview" />
+                <metal:withOrWithoutPreview use-macro="obj/@@annexes-macros/withOrWithoutPreview" />
               </li>
             </ul>
           </dd>

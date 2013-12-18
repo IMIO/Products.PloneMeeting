@@ -68,12 +68,10 @@
                       </form>
                     </td>
                   </tr>
-                  <tr>
+                  <tr tal:condition="python: (adviceType != 'not_given') and advice['comment']">
                     <td colspan="4">
-                        <tal:comment condition="python: (adviceType != 'not_given')">
-                          <i tal:define="croppedComment python: plone_view.cropText(advice['comment'] or '', 400, '...')"
-                             tal:content="structure croppedComment"></i>
-                        </tal:comment>
+                      <i tal:define="croppedComment python: plone_view.cropText(advice['comment'] or '', 400, '...')"
+                         tal:content="structure croppedComment"></i>
                     </td>
                   </tr>
                   <tr tal:condition="python: 'advice_id' in advice">
@@ -87,10 +85,12 @@
                     </td>
                     <td colspan="3"
                         align="right"
-                        class="advice_annexes"
-                        tal:define="meetingItem python: getattr(meetingItem, advice['advice_id']);
-                                    extra_css_class python: 'annexIcon';">
-                        <metal:annexes use-macro="meetingItem/@@annexes-macros/annexesIcons"/>
+                        class="advice_annexes">
+                        <tal:defines define="obj python: getattr(meetingItem, advice['advice_id']);
+                                             extra_css_class python: 'annexIcon';"
+                                     condition="python: bool(obj.annexIndex)">
+                            <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
+                        </tal:defines>
                     </td>
                   </tr>
                 </table>

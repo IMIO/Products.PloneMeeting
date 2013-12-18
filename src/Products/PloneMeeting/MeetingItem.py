@@ -2531,19 +2531,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for groupId in self.adviceIndex.iterkeys():
             mGroup = getattr(tool, groupId)
             ploneGroup = '%s_advisers' % groupId
+            adviceObj = None
+            if 'advice_id' in self.adviceIndex[groupId]:
+                adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
             if (itemState not in mGroup.getItemAdviceStates(cfg)) and \
                (itemState not in mGroup.getItemAdviceEditStates(cfg))and \
                (itemState not in mGroup.getItemAdviceViewStates(cfg)):
                 # make sure the advice given by groupId is no more editable
-                if 'advice_id' in self.adviceIndex[groupId]:
-                    adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-                    if adviceObj.queryState() == 'advice_under_edit':
+                if adviceObj and adviceObj.queryState() == 'advice_under_edit':
                         wfTool.doActionFor(adviceObj, 'giveAdvice')
                 continue
             # give access to the item in any case
             self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
             # check if user must be able to add an advice, if not already given
-            if itemState in mGroup.getItemAdviceStates(cfg) and not groupId in self.getGivenAdvices():
+            if itemState in mGroup.getItemAdviceStates(cfg) and not groupId in self.adviceIndex:
                 # advisers must be able to add a 'meetingadvice', give
                 # relevant permissions to 'Contributor' role
                 # we need to give 'Add portal content' and 'PloneMeeting: Add advice' to
@@ -2558,20 +2559,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             if itemState in mGroup.getItemAdviceEditStates(cfg):
                 # make sure the advice given by groupId is in state 'advice_under_edit'
-                if 'advice_id' in self.adviceIndex[groupId]:
-                    adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-                    if not adviceObj.queryState() == 'advice_under_edit':
+                if adviceObj and not adviceObj.queryState() == 'advice_under_edit':
                         wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
             else:
                 # make sure it is no more editable
-                if 'advice_id' in self.adviceIndex[groupId]:
-                    adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-                    if not adviceObj.queryState() == 'advice_given':
+                if adviceObj and not adviceObj.queryState() == 'advice_given':
                         wfTool.doActionFor(adviceObj, 'giveAdvice')
             # if item needs to be accessible by advisers, it is already
             # done by self.manage_addLocalRoles here above because it is necessary in any case
             if itemState in mGroup.getItemAdviceViewStates(cfg):
                 pass
+            # now index advice annexes
+            if self.adviceIndex[groupId]['type'] != 'not_given':
+                self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
     security.declarePublic('indexAdvisers')

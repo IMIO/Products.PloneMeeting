@@ -279,8 +279,7 @@
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
     <table width="100%" cellpadding="1" cellspacing="1"
-           tal:define="meetingItem python: here;
-                       hasAnnexes python: context.hasAnnexesWhere(decisionRelated=False);
+           tal:define="hasAnnexes python: context.hasAnnexesWhere(decisionRelated=False);
                        hasAnnexesDecision python: context.hasAnnexesWhere(decisionRelated=True);
                        hasAdvices python: meetingConfig.getUseAdvices() and context.needsAdvices()"
            tal:condition="python: hasAnnexes or hasAnnexesDecision or hasAdvices">
@@ -289,11 +288,11 @@
        <fieldset style="margin: 0;">
         <legend i18n:translate="existing_annexes">Annexes</legend>
         <table class="no-style-table" cellpadding="0" cellspacing="0">
-         <tr>
-           <td><metal:annexes use-macro="context/@@annexes-macros/annexesIcons"/></td>
+         <tr tal:define="obj python: context">
+           <td><metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/></td>
            <td tal:define="decisionRelated python:True"
                tal:condition="python: member.has_permission('PloneMeeting: Read decision annex', context) and hasAnnexesDecision">
-             <metal:annexes use-macro="context/@@annexes-macros/annexesIcons"/>
+             <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
            </td>
          </tr>
         </table>
@@ -310,7 +309,7 @@
       </td>
       <tal:comment replace="nothing">Advices</tal:comment>
       <td class="itemAdvicesCell" width="50%" tal:condition="hasAdvices">
-       <fieldset style="margin: 0;" >
+       <fieldset style="margin: 0;" tal:define="meetingItem python: context">
         <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
         <metal:advices use-macro="here/@@advices-macros/advicesIcons"/>
        </fieldset>
