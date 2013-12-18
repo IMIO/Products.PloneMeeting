@@ -186,6 +186,7 @@ colorSystems = (
 )
 NOT_ENCODED_VOTE_VALUE = 'not_yet'
 NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
+NOT_GIVEN_ADVICE_VALUE = 'not_given'
 
 # mapping definintions regarding the 'return_to_proposing_group' wfAdaptation
 # this is used in MeetingItem.mayBackToMeeting and may vary upon used workflow

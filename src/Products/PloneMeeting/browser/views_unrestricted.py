@@ -70,7 +70,7 @@ class DeleteGivenUidView(BrowserView):
                 if item:
                     item.restrictedTraverse('@@annexes').updateAnnexIndex(obj, removeAnnex=True)
                     item.updateHistory(
-                        'delete', obj, decisionRelated=obj.isDecisionRelated())
+                        'delete', obj, decisionRelated=obj.findRelatedTo() == 'item_decision' and True or False)
                     if item.willInvalidateAdvices():
                         item.updateAdvices(invalidate=True)
             elif obj.meta_type == 'Meeting':

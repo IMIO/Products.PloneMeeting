@@ -5,6 +5,7 @@ from Acquisition import aq_base
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 
 
 # The migration class ----------------------------------------------------------
@@ -40,7 +41,7 @@ class Migrate_To_3_1_1(Migrator):
             item = brain.getObject()
             if hasattr(aq_base(item), 'advices'):
                 for groupId, advice in aq_base(item).advices.iteritems():
-                    if advice['type'] != 'not_given':
+                    if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
                         advice_comment = advice['comment']
                         if not isinstance(advice['comment'], unicode):
                             advice_comment = unicode(advice_comment, 'utf-8')
@@ -82,12 +83,39 @@ class Migrate_To_3_1_1(Migrator):
                     annex.processForm()
         logger.info('Done.')
 
+    def _updateMeetingFileTypes(self):
+        '''Update MeetingFileTypes as we moved from field 'decisionRelated' that was a boolean
+           to 'relatedTo' that is now a list of values in wich available values are 'item', 'item_decision' or 'advice'.
+           If MeetingFileType.decisionRelated was False, set MeetingFileType.relatedTo to 'item', if it was True,
+           set MeetingFileType.relatedTo to 'item_decision'.'''
+        logger.info('Updating MeetingFileTypes relatedTo value')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            for mft in cfg.meetingfiletypes.objectValues('MeetingFileType'):
+                if not hasattr(aq_base(mft), 'decisionRelated'):
+                    # the migration was already executed, we pass...
+                    break
+                if mft.decisionRelated:
+                    mft.setRelatedTo('item_decision')
+                else:
+                    mft.setRelatedTo('item')
+                delattr(mft, 'decisionRelated')
+        logger.info('Done.')
+
+    def _updateAnnexIndex(self):
+        '''The annexIndex changed (added key 'relatedTo' instead of 'decisionRelated'),
+           we need to update it on every items and advices.'''
+        logger.info('Updating annexIndex...')
+        self.tool.reindexAnnexes()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.1.1...')
         self._configureCatalogIndexesAndMetadata()
         self._initDefaultBudgetHTML()
         self._updateAdvices()
         self._finalizeAnnexesCreationProcess()
+        self._updateMeetingFileTypes()
+        self._updateAnnexIndex()
         # reinstall so 'getDeliberation' index is added and computed
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.finish()
@@ -101,7 +129,9 @@ def migrate(context):
        2) Initialize field MeetingConfig.defaultBudget so it behaves correctly has RichText;
        3) Update advices as we moved from MeetingItem.advices to MeetingItem.adviceIndex;
        4) Make sure every existing annexes creation process is correctly finished;
-       5) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
+       5) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
+       6) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
+       6) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
     '''
     Migrate_To_3_1_1(context).run()
 # ------------------------------------------------------------------------------

@@ -285,10 +285,10 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         annexes_view.addAnnex(idCandidate,
                               annexTitle,
                               annexFile,
-                              str(decisionRelated),
+                              decisionRelated and 'item_decision' or 'item',
                               meetingFileType=fileType)
         # Find the last created annex
-        annexUid = annexes_view.getAnnexesByType(decisionRelated,
+        annexUid = annexes_view.getAnnexesByType(decisionRelated and 'item_decision' or 'item',
                                                  makeSubLists=False,
                                                  typesIds=[annexType])[-1]['UID']
         theAnnex = item.uid_catalog(UID=annexUid)[0].getObject()

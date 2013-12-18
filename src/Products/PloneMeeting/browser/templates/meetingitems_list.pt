@@ -245,11 +245,12 @@
               <table cellpadding="0" cellspacing="0" align="right">
                 <tr>
                   <td tal:condition="python: ('annexes' in visibleColumns) and isPrivacyViewable">
-                  <tal:defines define="obj python: meetingItem">
+                  <tal:defines define="obj python: meetingItem;
+                                       relatedTo string:item;">
                     <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
                   </tal:defines>
                   </td>
-                  <td tal:define="decisionRelated python:True"
+                  <td tal:define="relatedTo string:item_decision;"
                       tal:condition="python: showAnnexesDecision and isPrivacyViewable and member.has_permission('PloneMeeting: Read decision annex', meetingItem)">
                   <tal:defines define="obj python: meetingItem">
                     <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>

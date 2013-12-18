@@ -165,12 +165,13 @@
               <tr>
                 <tal:comment replace="nothing">Normal annexes</tal:comment>
                 <td tal:condition="showAnnexes">
-                <tal:defines define="obj python: meetingItem">
+                <tal:defines define="relatedTo string:item;
+                                     obj python: meetingItem">
                   <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
                 </tal:defines>
                 </td>
                 <tal:comment replace="nothing">Decision-related</tal:comment>
-                <td tal:define="decisionRelated python:True"
+                <td tal:define="relatedTo string:item_decision"
                     tal:condition="python: showAnnexesDecision and member.has_permission('PloneMeeting: Read decision annex', meetingItem)">
                 <tal:defines define="obj python: meetingItem">
                   <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>

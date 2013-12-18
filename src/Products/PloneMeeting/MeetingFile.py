@@ -183,6 +183,16 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         '''Calculates the icon for the AT default view'''
         self.getIcon()
 
+    security.declarePublic('findRelatedTo')
+    def findRelatedTo(self):
+        '''
+          Check what the corresponding MeetingFileType is relatedTo...
+        '''
+        mft = self.getMeetingFileType()
+        if mft:
+            return mft.getRelatedTo()
+        return ''
+
     security.declarePublic('getItem')
     def getItem(self):
         '''Returns the linked item.  Annexes are located in the item...'''
@@ -215,13 +225,16 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             if not self.UID() in annexIndexUids:
                 item.restrictedTraverse('@@annexes').updateAnnexIndex()
             item.alreadyUsedAnnexNames.append(self.id)
-        # at the end of creation, we know now if self.isDecisionRelated
+        # at the end of creation, we know now self.relatedTo
         # and we can manage the self.toPrint default value
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        if self.isDecisionRelated():
+        if self.findRelatedTo() == 'item_decision':
             self.setToPrint(cfg.getAnnexDecisionToPrintDefault())
-        else:
+        elif self.findRelatedTo() == 'item':
             self.setToPrint(cfg.getAnnexToPrintDefault())
+        else:
+            # relatedTo == 'advice'
+            self.setToPrint(cfg.getAnnexAdviceToPrintDefault())
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
         # Add text-extraction-related attributes
         rq = self.REQUEST
@@ -235,17 +248,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
         self.adapted().onEdit(isCreated=False)
-
-    security.declarePublic('isDecisionRelated')
-    def isDecisionRelated(self):
-        '''
-          Check that the corresponding MeetingFileType is decision related or not...
-        '''
-        mft = self.getMeetingFileType()
-        if mft and mft.getDecisionRelated() is True:
-            return True
-        else:
-            return False
 
     security.declarePublic('getAnnexInfo')
     def getAnnexInfo(self):
@@ -262,7 +264,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                # the item (parent) also has a pm_modification_date,
                # make sure we use the real MeetingFile's one
                'modification_date': aq_base(self).pm_modification_date,
-               'decisionRelated': self.isDecisionRelated(),
+               'relatedTo': self.findRelatedTo(),
                'conversionStatus': self.conversionStatus(),
                }
         return res
@@ -414,11 +416,11 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
           - or if we can not get a corresponding MeetingFileType, we use the default one (the first found).
           Returns True if the meetingFileType was actually updated
         '''
-        decisionRelated = self.isDecisionRelated()
+        relatedTo = self.findRelatedTo()
         mftFolder = cfg.meetingfiletypes
-        existingFileTypesUids = [ft.UID() for ft in mftFolder.getFileTypes(decisionRelated=decisionRelated,
+        existingFileTypesUids = [ft.UID() for ft in mftFolder.getFileTypes(relatedTo=relatedTo,
                                                                            onlyActive=False)]
-        existingFileTypesIds = [ft.getId() for ft in mftFolder.getFileTypes(decisionRelated=decisionRelated,
+        existingFileTypesIds = [ft.getId() for ft in mftFolder.getFileTypes(relatedTo=relatedTo,
                                                                             onlyActive=False)]
         mft = self.getMeetingFileType()
         if not mft or not mft.UID() in existingFileTypesUids:

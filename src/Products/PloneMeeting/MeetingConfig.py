@@ -291,7 +291,7 @@ schema = Schema((
     ),
     BooleanField(
         name='annexToPrintDefault',
-        default=False,
+        default=defValues.annexToPrintDefault,
         widget=BooleanField._properties['widget'](
             description="AnnexToPrintDefault",
             description_msgid="annex_to_print_default_descr",
@@ -302,12 +302,23 @@ schema = Schema((
     ),
     BooleanField(
         name='annexDecisionToPrintDefault',
-        default=False,
+        default=defValues.annexDecisionToPrintDefault,
         widget=BooleanField._properties['widget'](
             description="AnnexDecisionToPrintDefault",
             description_msgid="annex_decision_to_print_default_descr",
             label='Annexdecisiontoprintdefault',
             label_msgid='PloneMeeting_label_annexDecisionToPrintDefault',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
+    BooleanField(
+        name='annexAdviceToPrintDefault',
+        default=defValues.annexAdviceToPrintDefault,
+        widget=BooleanField._properties['widget'](
+            description="AnnexAdviceToPrintDefault",
+            description_msgid="annex_advice_to_print_default_descr",
+            label='Anneadvicetoprintdefault',
+            label_msgid='PloneMeeting_label_annexAdviceToPrintDefault',
             i18n_domain='PloneMeeting',
         ),
     ),
@@ -2589,7 +2600,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res).sortedByValue()
 
     security.declarePublic('getFileTypes')
-    def getFileTypes(self, decisionRelated=False, typesIds=[], onlyActive=True):
+    def getFileTypes(self, relatedTo='item', typesIds=[], onlyActive=True):
         '''Gets the item- or decision-related active meeting file types. If
            p_typesIds is not empty, it returns only file types whose ids are
            in this param.'''
@@ -2599,7 +2610,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             isActive = True
             if onlyActive:
                 isActive = bool(wfTool.getInfoFor(ft, 'review_state') == 'active')
-            if (ft.getDecisionRelated() == decisionRelated) and isActive:
+            if isActive and ft.getRelatedTo() == relatedTo:
                 if not typesIds or (typesIds and (ft.id in typesIds)):
                     res.append(ft)
         return res

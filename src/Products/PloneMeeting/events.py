@@ -142,7 +142,7 @@ def onAdviceAdded(obj, event):
     # redirect to referer after add if it is not the edit form
     http_referer = item.REQUEST['HTTP_REFERER']
     if not http_referer.endswith('/edit'):
-        obj.REQUEST.RESPONSE.redirect(http_referer)
+        obj.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
 
 def onAdviceModified(obj, event):
@@ -166,7 +166,7 @@ def onAdviceEditFinished(obj, event):
     item.updateAdvices()
     http_referer = item.REQUEST['HTTP_REFERER']
     if not http_referer.endswith('/edit'):
-        obj.REQUEST.RESPONSE.redirect(http_referer)
+        obj.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
 
 def onAdviceRemoved(obj, event):

@@ -2167,7 +2167,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
             raise Unauthorized
+        # update items
         for b in self.portal_catalog(meta_type='MeetingItem'):
+            b.getObject().restrictedTraverse('@@annexes').updateAnnexIndex()
+        # update advices
+        for b in self.portal_catalog(portal_type='meetingadvice'):
             b.getObject().restrictedTraverse('@@annexes').updateAnnexIndex()
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()

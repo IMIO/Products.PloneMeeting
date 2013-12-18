@@ -253,7 +253,7 @@
         name="annexes-macros"
         for="*"
         class=".annexes.AnnexesMacros"
-        template="templates/annexesmacros.pt"
+        template="templates/annexes_macros.pt"
         permission="zope2.View"/>
     <browser:page
         name="annexes"

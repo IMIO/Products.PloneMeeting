@@ -466,7 +466,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues()))
         # Especially test that references are ok about the MeetingFileTypes
         existingMeetingFileTypeUids = [ft.UID() for ft in self.meetingConfig.getFileTypes()]
-        existingMeetingFileTypeDecisionUids = [ft.UID() for ft in self.meetingConfig.getFileTypes(decisionRelated=True)]
+        existingMeetingFileTypeDecisionUids = [ft.UID() for ft in
+                                               self.meetingConfig.getFileTypes(relatedTo='item_decision')]
         self.failUnless(annex1.getMeetingFileType().UID() in existingMeetingFileTypeUids)
         self.failUnless(annex2.getMeetingFileType().UID() in existingMeetingFileTypeUids)
         self.failUnless(decisionAnnex1.getMeetingFileType().UID() in existingMeetingFileTypeDecisionUids)
@@ -488,7 +489,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # annexDecision2 was of annexType "marketing-annex" that does NOT exist in the new MeetingConfig
         # so the MeetingFileType of the annexDecision2 will be the default one, the first available
         self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType().UID(),
-                          self.meetingConfig2.getFileTypes(decisionRelated=True)[0].UID())
+                          self.meetingConfig2.getFileTypes(relatedTo='item_decision')[0].UID())
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on

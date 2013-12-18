@@ -98,12 +98,12 @@ class CategoryDescriptor(Descriptor):
 
 class MeetingFileTypeDescriptor(Descriptor):
     def __init__(self, id, title, theIcon, predefinedTitle,
-                 decisionRelated=False, active=True):
+                 relatedTo='item', active=True):
         self.id = id
         self.setBilingual('title', title)
         self.theIcon = theIcon
         self.setBilingual('predefinedTitle', predefinedTitle)
-        self.decisionRelated = decisionRelated
+        self.relatedTo = relatedTo
         self.active = active
 
 
@@ -282,6 +282,9 @@ class MeetingConfigDescriptor(Descriptor):
         self.enableAnnexToPrint = False
 
         # Data-related parameters ----------------------------------------------
+        self.annexToPrintDefault = False
+        self.annexDecisionToPrintDefault = False
+        self.annexAdviceToPrintDefault = False
         # Some attributes on an item are optional. In the field
         # "usedItemAttributes", you specify which of those optional attributes
         # you will use in your meeting configuration.

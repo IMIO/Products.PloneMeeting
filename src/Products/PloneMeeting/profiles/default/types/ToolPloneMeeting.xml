@@ -10,7 +10,7 @@
  <property name="content_meta_type">ToolPloneMeeting</property>
  <property name="product">PloneMeeting</property>
  <property name="factory">addToolPloneMeeting</property>
- <property name="immediate_view">folder_listing</property>
+ <property name="immediate_view">toolplonemeeting_view</property>
  <property name="global_allow">False</property>
  <property name="filter_content_types">True</property>
  <property name="allowed_content_types">
@@ -19,13 +19,9 @@
    <element value="ExternalApplication"/>
  </property>
  <property name="allow_discussion">False</property>
- <property name="default_view">base_view</property>
+ <property name="default_view">toolplonemeeting_view</property>
  <property name="view_methods">
-  <element value="folder_summary_view"/>
-  <element value="folder_tabular_view"/>
-  <element value="atct_album_view"/>
-  <element value="folder_listing"/>
-  <element value="base_view"/>
+  <element value="toolplonemeeting_view"/>
  </property>
  <property name="default_view_fallback">False</property>
  <alias from="(Default)" to="(dynamic view)"/>

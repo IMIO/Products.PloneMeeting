@@ -5,7 +5,7 @@
 ##bind script=script
 ##bind state=state
 ##bind subpath=traverse_subpath
-##parameters=annex_type, annex_title, annex_file, decisionRelated
+##parameters=annex_type, annex_title, annex_file, relatedTo
 ##title=Creates a new annex and appends it to the current item
 
 from DateTime import DateTime
@@ -52,7 +52,7 @@ while not idMayBeUsed:
         # Ok idCandidate is good!
         idMayBeUsed = True
 
-annexes_view.addAnnex(idCandidate, annex_title, annex_file, decisionRelated, meetingFileType)
+annexes_view.addAnnex(idCandidate, annex_title, annex_file, relatedTo, meetingFileType)
 
 state.set(status='success')
 context.plone_utils.addPortalMessage('Annex correctly added.')

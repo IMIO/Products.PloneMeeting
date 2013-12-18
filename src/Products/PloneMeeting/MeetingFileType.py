@@ -25,6 +25,7 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 from App.class_init import InitializeClass
 from OFS.ObjectManager import BeforeDeleteException
+from zope.i18n import translate
 from Products.PloneMeeting.utils import getCustomAdapter, HubSessionsMarshaller, getFieldContent
 
 
@@ -60,14 +61,18 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    BooleanField(
-        name='decisionRelated',
-        default=False,
-        widget=BooleanField._properties['widget'](
-            label='Decisionrelated',
-            label_msgid='PloneMeeting_label_decisionRelated',
+    StringField(
+        name='relatedTo',
+        default='item',
+        widget=SelectionWidget(
+            description_msgid="related_to_descr",
+            description="RelatedTo",
+            label='Relatedto',
+            label_msgid='PloneMeeting_label_relatedTo',
             i18n_domain='PloneMeeting',
         ),
+        enforceVocabulary=True,
+        vocabulary='listRelatedTo',
     ),
 
 ),
@@ -120,6 +125,23 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
     def getBestIcon(self):
         '''Calculates the icon for the AT default view'''
         self.getIcon()
+
+    security.declarePrivate('listRelatedTo')
+    def listRelatedTo(self):
+        res = []
+        res.append(('item',
+                    translate('meetingfiletype_related_to_item',
+                              domain='PloneMeeting',
+                              context=self.REQUEST)))
+        res.append(('item_decision',
+                    translate('meetingfiletype_related_to_item_decision',
+                              domain='PloneMeeting',
+                              context=self.REQUEST)))
+        res.append(('advice',
+                    translate('meetingfiletype_related_to_advice',
+                              domain='PloneMeeting',
+                              context=self.REQUEST)))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
@@ -186,4 +208,3 @@ registerType(MeetingFileType, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

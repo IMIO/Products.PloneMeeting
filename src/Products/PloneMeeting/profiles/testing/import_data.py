@@ -45,15 +45,20 @@ budgetAnalysis = MeetingFileTypeDescriptor(
 itemAnnex = MeetingFileTypeDescriptor(
     'item-annex', 'Other annex(es)', 'itemAnnex.png', '')
 decision = MeetingFileTypeDescriptor(
-    'decision', 'Decision', 'decision.png', '', True)  # Could be used once we
+    'decision', 'Decision', 'decision.png', '', 'item_decision')  # Could be used once we
     # will digitally sign decisions ? Indeed, once signed, we will need to
     # store them (together with the signature) as separate files.
 decisionAnnex = MeetingFileTypeDescriptor(
-    'decision-annex', 'Decision annex(es)', 'decisionAnnex.png', '', True)
+    'decision-annex', 'Decision annex(es)', 'decisionAnnex.png', '', 'item_decision')
 # A vintage file type
 marketingAnalysis = MeetingFileTypeDescriptor(
-    'marketing-annex', 'Marketing annex(es)', 'legalAnalysis.png', '', True,
+    'marketing-annex', 'Marketing annex(es)', 'legalAnalysis.png', '', 'item_decision',
     active=False)
+# Advice file types
+adviceAnnex = MeetingFileTypeDescriptor(
+    'advice-annex', 'Advice annex(es)', 'itemAnnex.png', '', 'advice')
+adviceLegalAnalysis = MeetingFileTypeDescriptor(
+    'advice-legal-analysis', 'Advice legal analysis', 'legalAnalysis.png', '', 'advice')
 
 # Pod templates
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
@@ -206,7 +211,7 @@ meetingPga.categories = [deployment, maintenance, development, events,
                          research, projects, marketing, subproducts]
 meetingPga.meetingFileTypes = [
     financialAnalysis, legalAnalysis, budgetAnalysis, itemAnnex,
-    decisionAnnex]
+    decisionAnnex, adviceAnnex, adviceLegalAnalysis]
 meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
 meetingPga.sortingMethodOnAddItem = 'on_categories'
 meetingPga.useGroupsAsCategories = False

@@ -7,7 +7,7 @@
       metal:use-macro="here/main_template/macros/master"
       i18n:domain="PloneMeeting">
 
-  <body >
+  <body>
   <metal:title fill-slot="content-title"
                tal:define="itemNumber python: context.getItemNumber(relativeTo='meeting')">
    <metal:header use-macro="here/@@pm-macros/itemHeader"/>
@@ -17,7 +17,7 @@
   </metal:description>
 
   <metal:fill fill-slot="content-core">
-    <metal:main_macro define-macro="body"
+    <metal:body_macro define-macro="body"
                       tal:define="tool python: context.portal_plonemeeting;
                                   member tool/getUser;
                                   dummy context/checkPrivacyViewable;
@@ -289,14 +289,18 @@
         <legend i18n:translate="existing_annexes">Annexes</legend>
         <table class="no-style-table" cellpadding="0" cellspacing="0">
          <tr tal:define="obj python: context">
-           <td><metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/></td>
-           <td tal:define="decisionRelated python:True"
+           <td tal:define="relatedTo string:item">
+            <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
+           </td>
+           <td tal:define="relatedTo string:item_decision"
                tal:condition="python: member.has_permission('PloneMeeting: Read decision annex', context) and hasAnnexesDecision">
              <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
            </td>
          </tr>
         </table>
        </fieldset>
+       <span tal:content="hasAnnexes" />***
+       <span tal:content="hasAnnexesDecision" />
       </td>
       <td class="itemAdvicesAloneCell" width="50%" tal:condition="python: not (hasAnnexes or hasAnnexesDecision) and hasAdvices">
        <tal:comment replace="nothing">
@@ -354,7 +358,7 @@
     <span tal:define="dummy python: tool.rememberAccess(context.UID())"></span>
 
 
-       </metal:main_macro>
+       </metal:body_macro>
     </metal:fill>
   </body>
 </html>

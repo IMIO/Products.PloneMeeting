@@ -6,7 +6,7 @@
       metal:use-macro="here/main_template/macros/master"
       i18n:domain="PloneMeeting">
 
-<body metal:fill-slot="main" tal:define="decisionRelated python:True">
+<body metal:fill-slot="main" tal:define="relatedTo python:'item_decision'">
   <div metal:use-macro="here/@@annexes-macros/annexesMacro">
   </div>
 </body>

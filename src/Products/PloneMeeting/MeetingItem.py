@@ -1760,7 +1760,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isTemporary():
             return False
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        if meetingConfig.getFileTypes(decisionRelated):
+        if meetingConfig.getFileTypes(relatedTo=(decisionRelated and 'item_decision' or 'item')):
             return True
         return False
 
@@ -2302,10 +2302,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if group.id not in self.adviceIndex:
                 continue
             adviceType = self.adviceIndex[group.id]['type']
-            if (adviceType == 'not_given') and \
+            if (adviceType == NOT_GIVEN_ADVICE_VALUE) and \
                (itemState in group.getItemAdviceStates(cfg)):
                 toAdd.append((group.id, self.adviceIndex[group.id]['name']))
-            if (adviceType != 'not_given') and \
+            if (adviceType != NOT_GIVEN_ADVICE_VALUE) and \
                (itemState in group.getItemAdviceEditStates(cfg)):
                 toEdit.append(group.id)
         return (toAdd, toEdit)
@@ -2352,7 +2352,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def hasAdvices(self):
         '''Is there at least one given advice on this item?'''
         for advice in self.adviceIndex.itervalues():
-            if advice['type'] != 'not_given':
+            if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
                 return True
         return False
 
@@ -2361,7 +2361,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns True if someone from p_groupId has given an advice on this
            item.'''
         if (groupId in self.adviceIndex) and \
-           (self.adviceIndex[groupId]['type'] != 'not_given'):
+           (self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE):
             return True
 
     security.declarePublic('willInvalidateAdvices')
@@ -2431,7 +2431,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             ids.append(advice.getId())
         self.manage_delObjects(ids=ids)
 
-
     security.declareProtected('Modify portal content', 'updateAdvices')
     def updateAdvices(self, invalidate=False):
         '''Every time an item is created or updated, this method updates the
@@ -2491,7 +2490,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # We create an empty dictionary that will store advice info
                 # once the advice will have been created.
                 self.adviceIndex[groupId] = d = PersistentMapping()
-                d['type'] = 'not_given'
+                d['type'] = NOT_GIVEN_ADVICE_VALUE
                 d['optional'] = optional
                 d['id'] = groupId
                 d['name'] = getattr(tool, groupId).getName().decode('utf-8')
@@ -2544,7 +2543,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # give access to the item in any case
             self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
             # check if user must be able to add an advice, if not already given
-            if itemState in mGroup.getItemAdviceStates(cfg) and not groupId in self.adviceIndex:
+            if itemState in mGroup.getItemAdviceStates(cfg) and \
+               self.adviceIndex[groupId]['type'] == NOT_GIVEN_ADVICE_VALUE:
                 # advisers must be able to add a 'meetingadvice', give
                 # relevant permissions to 'Contributor' role
                 # we need to give 'Add portal content' and 'PloneMeeting: Add advice' to
@@ -2570,7 +2570,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if itemState in mGroup.getItemAdviceViewStates(cfg):
                 pass
             # now index advice annexes
-            if self.adviceIndex[groupId]['type'] != 'not_given':
+            if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
                 self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
@@ -2583,7 +2583,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for groupId, advice in self.adviceIndex.iteritems():
             suffix = '0'  # Has not been given yet
-            if advice['type'] != 'not_given':
+            if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
                 suffix = '1'  # Has been given
             res.append(groupId + suffix)
         return res

@@ -17,14 +17,15 @@ class AnnexesView(BrowserView):
     """
 
     def addAnnex(self, idCandidate, annex_title, annex_file,
-                 decisionRelated, meetingFileType, **kwargs):
+                 relatedTo, meetingFileType, **kwargs):
         '''Create an annex (MeetingFile) with given parameters and adds it to
            this item.'''
         # first of all, check if we can actually add the annex
-        if decisionRelated == 'True':
+        if relatedTo == 'item_decision':
             if not checkPermission("PloneMeeting: Write decision annex", self.context):
                 raise Unauthorized
         else:
+            # we use the "PloneMeeting: Add annex" permission for item normal annexes and advice annexes
             if not checkPermission("PloneMeeting: Add annex", self.context):
                 raise Unauthorized
 
@@ -58,26 +59,32 @@ class AnnexesView(BrowserView):
         newAnnex.setFile(annex_file, **kwargs)
         newAnnex.setTitle(annex_title)
         newAnnex.setMeetingFileType(meetingFileType)
-        if decisionRelated == 'True':
-            annexes = self.context.getAnnexesDecision()
-            annexes.append(newAnnex)
-            self.context.setAnnexesDecision(annexes)
-        else:
-            annexes = self.context.getAnnexes()
-            annexes.append(newAnnex)
-            self.context.setAnnexes(annexes)
-            if self.context.wfConditions().meetingIsPublished():
-                # Potentially I must notify MeetingManagers through email.
-                self.context.sendMailIfRelevant(
-                    'annexAdded', 'MeetingManager', isRole=True)
 
-        # Add the annex creation to item history
-        self.context.updateHistory('add',
-                                   newAnnex,
-                                   decisionRelated=(decisionRelated == 'True'))
-        # Invalidate advices if needed
-        if self.context.willInvalidateAdvices():
-            self.context.updateAdvices(invalidate=True)
+        # do some specific stuffs if we are adding an annex on an item, not on an advice
+        if self.context.meta_type == 'MeetingItem':
+            if relatedTo == 'item_decision':
+                annexes = self.context.getAnnexesDecision()
+                annexes.append(newAnnex)
+                self.context.setAnnexesDecision(annexes)
+            elif relatedTo == 'item':
+                annexes = self.context.getAnnexes()
+                annexes.append(newAnnex)
+                self.context.setAnnexes(annexes)
+                if self.context.wfConditions().meetingIsPublished():
+                    # Potentially I must notify MeetingManagers through email.
+                    self.context.sendMailIfRelevant(
+                        'annexAdded', 'MeetingManager', isRole=True)
+            else:
+                # relatedTo == 'advice'
+                pass
+
+            # Add the annex creation to item history
+            self.context.updateHistory('add',
+                                       newAnnex,
+                                       decisionRelated=(relatedTo == 'item_decision'))
+            # Invalidate advices if needed
+            if self.context.willInvalidateAdvices():
+                self.context.updateAdvices(invalidate=True)
         # After processForm that itself calls at_post_create_script,
         # current user may loose permission to edit
         # the object because we copy item permissions.
@@ -94,7 +101,7 @@ class AnnexesView(BrowserView):
             res = False
         return res
 
-    def getAnnexesToPrint(self, decisionRelated=False):
+    def getAnnexesToPrint(self, relatedTo='item'):
         """
           Creates a list of annexes to print for document generation
           The result is a list containing dicts where first key is the annex title
@@ -115,11 +122,11 @@ class AnnexesView(BrowserView):
                         'image_path': '/path/to/image21.png',},
                       ]},
           ]
-
+          Returned annexes depend on the p_relatedTo value.
         """
         portal = getToolByName(self.context, 'portal_url').getPortalObject()
         global_settings = GlobalSettings(portal)
-        annexes = self.getAnnexesInOrder(decisionRelated)
+        annexes = self.getAnnexesInOrder(relatedTo)
         res = []
         i = 1
         for annex in annexes:
@@ -191,8 +198,8 @@ class AnnexesView(BrowserView):
             del self.context.annexIndex[:]
             sortableList = []
             annexes = self.context.objectValues('MeetingFile')
-            normalAnnexes = [mfile for mfile in annexes if (mfile and not mfile.isDecisionRelated())]
-            decisionAnnexes = [mfile for mfile in annexes if (mfile and mfile.isDecisionRelated())]
+            normalAnnexes = [mfile for mfile in annexes if (mfile and not mfile.findRelatedTo() == 'item_decision')]
+            decisionAnnexes = [mfile for mfile in annexes if (mfile and mfile.findRelatedTo() == 'item_decision')]
             for annex in normalAnnexes:
                 sortableList.append(annex.getAnnexInfo())
             for annex in decisionAnnexes:
@@ -201,17 +208,13 @@ class AnnexesView(BrowserView):
             for a in sortableList:
                 self.context.annexIndex.append(a)
 
-    def getAnnexesInOrder(self, decisionRelated=False):
+    def getAnnexesInOrder(self, relatedTo='item'):
         '''Returns contained annexes respecting order (container is oerdered).
            XXX first step to remove annexes/annexesDeicision fields as ReferenceFields
            as taking contained annexes should be sufficient...
-           If p_decisionRelated is False, it returns item-related annexes
-           only; if True, it returns decision-related annexes.'''
+           It returns item-related annexes depending on p_relatedTo.'''
         annexes = self.context.objectValues('MeetingFile')
-        if not decisionRelated:
-            return [annex for annex in annexes if not annex.isDecisionRelated()]
-        else:
-            return [annex for annex in annexes if annex.isDecisionRelated()]
+        return [annex for annex in annexes if annex.findRelatedTo() == relatedTo]
 
     def getLastInsertedAnnex(self):
         '''Gets the last inserted annex on this item, be it decision-related
@@ -222,12 +225,11 @@ class AnnexesView(BrowserView):
             res = self.context.uid_catalog(UID=annexUid)[0].getObject()
         return res
 
-    def getAnnexesByType(self, decisionRelated=False, makeSubLists=True,
+    def getAnnexesByType(self, relatedTo, makeSubLists=True,
                          typesIds=[], realAnnexes=False):
         '''Returns an annexInfo dict (or real annex objects if p_realAnnexes is
            True) for every annex linked to me:
-           - if p_decisionRelated is False, it returns item-related annexes
-             only; if True, it returns decision-related annexes.
+           - p_relatedTo will filter annexes depending on MeetingFileType.relatedTo value.
            - if p_makeSubLists is True, the result (a list) contains a
              subList containing all annexes of a given type; if False,
              the result is a single list containing all requested annexes,
@@ -237,14 +239,14 @@ class AnnexesView(BrowserView):
            In all cases, within each annex type annexes are sorted by
            creation date (more recent last).'''
         meetingFileTypes = self.context.portal_plonemeeting.getMeetingConfig(self.context). \
-            getFileTypes(decisionRelated, typesIds=typesIds, onlyActive=False)
+            getFileTypes(relatedTo, typesIds=typesIds, onlyActive=False)
         res = []
         if not hasattr(self.context, 'annexIndex'):
             self.updateAnnexIndex()
         for fileType in meetingFileTypes:
             annexes = []
             for annexInfo in self.context.annexIndex:
-                if (annexInfo['decisionRelated'] == decisionRelated) and \
+                if (annexInfo['relatedTo'] == relatedTo) and \
                    (annexInfo['fileTypeId'] == fileType.id):
                     if not realAnnexes:
                         annexes.append(annexInfo)
