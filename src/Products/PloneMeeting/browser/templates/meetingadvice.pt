@@ -39,17 +39,7 @@
 
     <div class="visualClear"></div>
 
-    <tal:comment replace="nothing">In case we are using a popup, add a button 'Close' at the
-    bottom so the user can use it to close current popup as well as the cross up right.
-    The name is form.button.cancel because it correspond to the overlay close selector.</tal:comment>
-    <div align="center">
-        <br />
-        <input type="button"
-               name="form.buttons.cancel"
-               value="Close"
-               i18n:attributes="value"
-               class="apButton" />
-    </div>
+    <metal:closeButton use-macro="here/@@pm-macros/closeButtonMacro" />
 
   </metal:content-core>
 </metal:main>

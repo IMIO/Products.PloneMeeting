@@ -14,14 +14,14 @@
   <metal:description fill-slot="content-description">
    <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>
   </metal:description>
-  
+
   <metal:fill fill-slot="content-core">
      <metal:main_macro define-macro="body" tal:define="defaultMeetingConfig view/defaultMeetingConfig;
                                                        member context/@@plone_portal_state/member;">
        <tal:block condition="python: member.getId() and defaultMeetingConfig and context.portal_plonemeeting.getPloneMeetingFolder(defaultMeetingConfig.getId()).portal_type != 'Plone Site'">
-         <span metal:use-macro="here/hs_macros/macros/hsRedirect"/>
+         <span metal:use-macro="here/@@pm-macros/hsRedirect"/>
        </tal:block>
-       <span metal:use-macro="here/hs_macros/macros/hsWelcome"/>
+       <span metal:use-macro="here/@@pm-macros/hsWelcome"/>
 
      </metal:main_macro>
   </metal:fill>

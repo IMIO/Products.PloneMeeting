@@ -455,7 +455,7 @@ function askAjaxChunk(hook, mode, url, page, macro, params, beforeSend, onGet) {
        if (res) paramsFull = paramsFull + res;
     }
     // Construct the URL to call
-    var urlFull = url + '/ajax';
+    var urlFull = url + '/@@ajax';
     if (mode == 'GET') {
       urlFull = urlFull + '?' + paramsFull;
     }
@@ -490,24 +490,24 @@ function saveItemPeopleInfos(itemUrl, allVotesYes) {
       params[widget.name] = widget.value;
     }
   }
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, 'hs_macros', 'itemPeople', params);
+  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', params);
 }
 
 // Refresh the vote values
 function refreshVotes(itemUrl) {
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, 'hs_macros', 'itemPeople');
+  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople');
 }
 // Switch votes mode (secret / not secret)
 function switchVotes(itemUrl, secret) {
   var params = {'action': 'SwitchVotes', 'secret': secret};
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, 'hs_macros', 'itemPeople', params);
+  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', params);
 }
 
 // Welcome a user in a meeting at some point.
 function welcomeUser(itemUrl, userId, action){
   if (confirm(are_you_sure)) {
     var params = {'action': 'WelcomePerson', 'userId': userId, 'actionType': action};
-    askAjaxChunk('meeting_users_', 'POST', itemUrl, 'hs_macros', 'itemPeople', params);
+    askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', params);
   }
 }
 
@@ -517,7 +517,7 @@ function confirmByebyeUser(itemUrl, userId, actionType, byeType){
   if (actionType == "delete") {
     if (confirm(are_you_sure)) {
       delete dialogData['itemUrl'];
-      askAjaxChunk('meeting_users_', 'POST', itemUrl, 'hs_macros', 'itemPeople', dialogData);
+      askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', dialogData);
     }
   }
   else openDialog('confirmByebyeUser');
@@ -532,7 +532,7 @@ function byebyeUser(widget) {
   if (leavesAfter.checked) byeType = 'leaves_after';
   else byeType = 'leaves_now';
   dialogData['byeType'] = byeType
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, 'hs_macros', 'itemPeople', dialogData);
+  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', dialogData);
   closeDialog('confirmByebyeUser');
 }
 
@@ -545,7 +545,7 @@ function setByeByeButton(userId, visibility) {
 function askObjectHistory(hookId, objectUrl, maxPerPage, startNumber) {
   // Sends an Ajax request for getting the history of an object
   var params = {'maxPerPage': maxPerPage, 'startNumber': startNumber};
-  askAjaxChunk(hookId, 'GET', objectUrl, 'hs_macros', 'history', params);
+  askAjaxChunk(hookId, 'GET', objectUrl, '@@pm-macros', 'history', params);
 }
 
 // subfunction called by asyncToggleIcon

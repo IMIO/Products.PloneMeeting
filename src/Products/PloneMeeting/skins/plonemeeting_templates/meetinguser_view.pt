@@ -20,14 +20,14 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td width="70%" tal:define="fieldName python:'duty'">
-            <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+            <metal:f use-macro="context/@@pm-macros/viewContentField"/>
           </td>
         <tr valign="top">
           <td tal:define="field python:here.getField('usages')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="fieldName python:'replacementDuty'">
-            <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+            <metal:f use-macro="context/@@pm-macros/viewContentField"/>
           </td>
         </tr>
         <tr valign="top">
@@ -82,7 +82,7 @@
   <div metal:define-macro="folderlisting">
     <tal:transitions define="member context/portal_plonemeeting/getUser"
                      condition="python: member.has_role('Manager')">
-      <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
+      <div metal:use-macro="here/@@pm-macros/showTransitions"></div>
     </tal:transitions>
   </div>
 </body>

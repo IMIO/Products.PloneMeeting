@@ -11,7 +11,7 @@ p {
 }
 
 .ploneMeetingRef{
-    vertical-align: sub;
+    vertical-align: top;
 }
 
 /* PloneMeeting implementation of a selection box whose elements are icons + texts */

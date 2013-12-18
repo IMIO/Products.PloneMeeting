@@ -159,7 +159,7 @@
     var params = {"whichItems": whichItems, "showColors": showColors,
                  "startNumber": startNumber,
                  "showDescriptions": readCookie('pmShowDescriptions')};
-    askAjaxChunk(whichItems, 'GET', meetingUrl, 'meetingitems_list', 'items',
+    askAjaxChunk(whichItems, 'GET', meetingUrl, '@@meetingitemslist-macros', 'items',
                  params, showOrHideLateItems, updateItemsList);
   }
   function askInitialItemsLists(showColors, showLateItems, showAvailableItems,
@@ -425,20 +425,20 @@
 
   <tal:comment replace="nothing">Action on selected items</tal:comment>
   <div tal:condition="python: tool.isManager() and context.adapted().isDecided() and not context.queryState() in context.meetingClosedStates" id="showItemsDecidedTransitions" >
-    <div metal:use-macro="here/hs_macros/macros/showItemsDecidedTransitions"></div>
+    <div metal:use-macro="here/@@pm-macros/showItemsDecidedTransitions"></div>
   </div>
   <div class="visualClear"></div>
 
   <tal:comment replace="nothing">Observations</tal:comment>
   <tal:field define="fieldName python: 'observations'; ajaxEdit python:True"
              condition="python: context.showObs('observations')">
-    <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
   <tal:comment replace="nothing">Pre-observations</tal:comment>
   <tal:field define="fieldName python: 'preObservations'; ajaxEdit python:True"
              condition="python: context.showObs('preObservations')">
-    <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
   <tal:comment replace="nothing">For the admin only</tal:comment>

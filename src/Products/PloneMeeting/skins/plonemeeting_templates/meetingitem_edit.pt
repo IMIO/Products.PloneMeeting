@@ -26,14 +26,14 @@
 
         <tal:comment replace="nothing">Title and description(s), mono- or bilingual</tal:comment>
         <tal:field define="fieldName python: 'title'">
-          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <tal:field define="fieldName python: 'description'">
-          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <tal:field define="fieldName python: 'detailedDescription';"
                    condition="python: 'detailedDescription' in usedAttrs">
-          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <tal:comment replace="nothing">Proposing group, category, classifier, toDiscuss</tal:comment>
         <table cellpadding="0" cellspacing="0">
@@ -124,14 +124,14 @@
         <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
 
         <tal:field define="fieldName python: 'motivation'">
-          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <tal:field define="fieldName python: 'decision'">
-          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <tal:field define="fieldName python: 'observations'"
                    condition="python: 'observations' in usedAttrs" >
-          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <metal:field use-macro="python:here.widget('itemTags', mode='edit')"/>
         <table cellpadding="0" cellspacing="0" width="100%">

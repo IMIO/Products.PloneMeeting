@@ -21,7 +21,7 @@
   </script>
   <tal:comment replace="nothing">Item header (title, reference, etc)</tal:comment>
   <tal:itemHeader condition="python: context.meta_type == 'MeetingItem'">
-    <metal:header use-macro="here/hs_macros/macros/itemHeader"/>
+    <metal:header use-macro="here/@@pm-macros/itemHeader"/>
   </tal:itemHeader>
   <tal:adviceHeader condition="python: context.meta_type != 'MeetingItem'">
     <h1 class="documentFirstHeading" tal:content="context/Title"></h1>

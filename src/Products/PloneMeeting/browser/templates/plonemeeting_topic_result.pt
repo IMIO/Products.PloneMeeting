@@ -28,7 +28,7 @@
     <div metal:use-macro="context/hs_navigate/macros/search"/>
     <tal:comment replace="nothing">The table containing the result</tal:comment>
     <table class="listing nosort" cellpadding="0" cellspacing="0" width="100%"
-      tal:define="descrsStyle         python: test((tool.readCookie('pmShowDescriptions') == 'false'), 'none', 'inline');
+      tal:define="descrsStyle         python: tool.readCookie('pmShowDescriptions') == 'false' and 'none' or 'inline';
                   visibleColumns      python: meetingConfig.getQueryColumns(resultMetaType);
                   sortKey             request/sortKey | nothing;
                   sortOrder           request/sortOrder | python:'asc';
@@ -138,7 +138,7 @@
       <tal:comment replace="nothing">The table content</tal:comment>
       <tal:results tal:repeat="brain searchResults">
       <tr tal:define="oddrow repeat/brain/odd;" valign="top"
-          tal:attributes="class python:test(oddrow, 'even', 'odd')">
+          tal:attributes="class python: oddrow and 'even' or 'odd'">
 
         <tal:comment replace="nothing">Title</tal:comment>
         <td class="pmLinks">
@@ -260,7 +260,7 @@
         <tal:comment replace="nothing">Advices</tal:comment>
         <td tal:condition="showAdvices" align="center" style="padding-left: 0; padding-right: 0;" tal:define="meetingItem python: obj">
           <tal:show condition="obj/isPrivacyViewable">
-            <div metal:use-macro="here/advices_macros/macros/advicesIcons"></div>
+            <div metal:use-macro="here/@@advices-macros/advicesIcons"></div>
           </tal:show>
         </td>
 
@@ -295,7 +295,7 @@
         <tal:defines define="contextType obj/meta_type;
                              meetingItem python: obj;
                              ajaxEdit showActions">
-         <metal:itemisSigned use-macro="here/hs_macros/macros/itemIsSigned" />
+         <metal:itemisSigned use-macro="here/@@pm-macros/itemIsSigned" />
         </tal:defines>
         </td>
 

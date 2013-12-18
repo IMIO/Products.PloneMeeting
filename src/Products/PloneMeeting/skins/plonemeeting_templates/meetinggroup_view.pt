@@ -8,7 +8,7 @@
 <body>
 
   <div metal:define-macro="folderlisting">
-    <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
+    <div metal:use-macro="here/@@pm-macros/showTransitions"></div>
   </div>
 
 </body>

@@ -17,13 +17,13 @@
        i18n:attributes="title fastedit_save_changes"
        title="Save changes."
        tal:attributes="src string:$portal_url/save.gif;
-                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'hs_macros\', \'saveField\', {\'lang\':\'%s\'}, getRichTextContent)' % (fieldName, context.absolute_url(), lang)"/>
+                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'saveField\', {\'lang\':\'%s\'}, getRichTextContent)' % (fieldName, context.absolute_url(), lang)"/>
   &nbsp;
   <img style="cursor: pointer;"
        i18n:attributes="title fastedit_cancel"
        title="Cancel edit."
        tal:attributes="src string:$portal_url/cancel_edit.png;
-                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'hs_macros\', \'simplyViewField\', {\'lang\':\'%s\'}, getRichTextContent)' % (fieldName, context.absolute_url(), lang)" />
+                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'simplyViewField\', {\'lang\':\'%s\'}, getRichTextContent)' % (fieldName, context.absolute_url(), lang)" />
 
   <form tal:attributes="id string:ajax_edit_$fieldName;" class="">
 
@@ -55,7 +55,7 @@
    tal:define="field python: context.getField(fieldName);
                isRich python: field.widget.getName() == 'RichWidget';
                isOptional field/optional|python:False;
-               isUsed python: test(isOptional, fieldName in usedAttrs, True);"
+               isUsed python: isOptional and fieldName in usedAttrs or True;"
    tal:condition="python: isUsed and field.widget.visible and member.has_permission(field.read_permission, context)">
   <tal:monolanguage condition="not: bilingual">
     <metal:field use-macro="python:context.widget(fieldName, mode='edit')"/>
@@ -91,7 +91,7 @@
              needToRefreshPage python: context.meta_type=='MeetingItem' and context.willInvalidateAdvices();
              dummy python: context.setFieldFromAjax(fieldName, request.get('fieldContent'));
              mayEdit python: member.has_permission(field.write_permission, context);">
- <metal:view use-macro="context/hs_macros/macros/viewField"/>
+ <metal:view use-macro="context/@@pm-macros/viewField"/>
 </metal:save>
 
 <tal:comment replace="nothing">Displays changes performed on a field.</tal:comment>
@@ -101,7 +101,7 @@
              lang python: request.get('lang', '');
              changes python: request.get('changes', 'False') == 'True';
              mayEdit python: member.has_permission(field.write_permission, context)">
- <metal:view use-macro="context/hs_macros/macros/viewField"/>
+ <metal:view use-macro="context/@@pm-macros/viewField"/>
 </metal:field>
 <tal:comment replace="nothing">Displays the field, nothing else.</tal:comment>
 <metal:field define-macro="simplyViewField" i18n:domain="PloneMeeting"
@@ -109,7 +109,7 @@
              field python: context.getField(fieldName);
              lang python: request.get('lang', '');
              mayEdit python: member.has_permission(field.write_permission, context)">
- <metal:view use-macro="context/hs_macros/macros/viewField"/>
+ <metal:view use-macro="context/@@pm-macros/viewField"/>
 </metal:field>
 
 
@@ -122,7 +122,7 @@
                  changes changes|python: False;
                  jsUrl context/absolute_url;
                  jsParams python: '\'fieldName\':\'%s\',\'lang\':\'%s\'' % (fieldName, lang);
-                 jsCall python:'askAjaxChunk(\'%s\', \'GET\', \'%s\', \'hs_macros\'' % (hookId, jsUrl);
+                 jsCall python:'askAjaxChunk(\'%s\', \'GET\', \'%s\', \'@@pm-macros\'' % (hookId, jsUrl);
                  jsEdit python: '%s,\'editField\',{%s},null,initRichTextField)' % (jsCall, jsParams);
                  jsChanges python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'True\'})' % (jsCall, jsParams);
                  jsView python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'False\'})' % (jsCall, jsParams);
@@ -167,13 +167,13 @@ document.location.reload(true);
      tal:define="field python: context.getField(fieldName);
                  isRich python: field.widget.getName() == 'RichWidget';
                  isOptional field/optional|python:False;
-                 isUsed python: test(isOptional, fieldName in usedAttrs, True);
+                 isUsed python: isOptional and fieldName in usedAttrs or True;
                  ajaxEdit ajaxEdit|nothing;
                  mayEdit python: ajaxEdit and member.has_permission(field.write_permission, context)"
      tal:condition="python: isUsed and field.widget.visible and member.has_permission(field.read_permission, context)">
   <tal:comment replace="nothing">Mono-language, rich</tal:comment>
   <tal:mono define="lang python:''" condition="python: not bilingual and isRich">
-    <metal:view use-macro="context/hs_macros/macros/viewField"/>
+    <metal:view use-macro="context/@@pm-macros/viewField"/>
   </tal:mono>
   <tal:comment replace="nothing">Mono-language, other</tal:comment>
   <tal:mono2 condition="python: not bilingual and not isRich">
@@ -186,14 +186,14 @@ document.location.reload(true);
          tal:condition="python: mayEdit or not isEmpty">
     <tr valign="top">
       <td width="50%" tal:define="lang python: langs[0]">
-       <metal:view use-macro="context/hs_macros/macros/viewField"/>
+       <metal:view use-macro="context/@@pm-macros/viewField"/>
       </td>
       <td>&nbsp;&nbsp;</td>
       <td width="50%"
         tal:define="fieldName python: fieldName+'2';
                     field python: context.getField(fieldName);
                     lang python: langs[1]">
-       <metal:view use-macro="context/hs_macros/macros/viewField"/>
+       <metal:view use-macro="context/@@pm-macros/viewField"/>
       </td>
     </tr>
   </table>
@@ -365,7 +365,7 @@ document.location.reload(true);
           <tal:comment replace="nothing">Display an editable number of votes</tal:comment>
           <input tal:condition="mayEditVotes" type="text" size="2"
                  tal:attributes="name widgetName;
-                                 value python: test(error, request.get(widgetName,0), voteCount)"/>
+                                 value python: error and request.get(widgetName,0) or voteCount"/>
 
           <tal:comment replace="nothing">Display the number of votes</tal:comment>
           <span tal:condition="python: mayConsultVotes and not mayEditVotes" tal:content="voteCount"></span>
@@ -471,8 +471,8 @@ document.location.reload(true);
                        mayEditVote python: attendee.adapted().mayEditVote(member, context);
                        voterId attendee/getId;
                        voteValue python: context.getVoteValue(voterId);
-                       global showSave python: test(mayEditVote, True, showSave);
-                       global showRefresh python: test(mayEditVote, False, test(mayConsultVote, True, showRefresh))">
+                       global showSave python: mayEditVote and True or showSave;
+                       global showRefresh python: not mayEditVote and (mayConsultVote and True or showRefresh) or False">
 
       <tal:comment replace="nothing">For users that can't consult neither edit the vote value</tal:comment>
       <span id="vote-not_consultable" tal:condition="python: not mayConsultVote and not mayEditVote"
@@ -697,3 +697,18 @@ Needs moveUrl, firstId, lastId, obj</tal:comment>
       </span>
     </form>
 </metal:decideSeveralItems>
+
+<tal:comment replace="nothing">In case we are using a popup, add a button 'Close' at the
+bottom so the user can use it to close current popup as well as the cross up right.
+The name is form.button.cancel because it correspond to the overlay close selector.</tal:comment>
+<metal:closeButton define-macro="closeButtonMacro" i18n:domain="PloneMeeting">
+    <div align="center"
+         tal:condition="python: 'ajax_load' in context.REQUEST">
+        <br />
+        <input type="button"
+               name="form.buttons.cancel"
+               value="Close"
+               i18n:attributes="value"
+               class="apButton" />
+    </div>
+</metal:closeButton>

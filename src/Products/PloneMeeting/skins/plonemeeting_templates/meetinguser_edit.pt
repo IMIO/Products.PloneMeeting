@@ -23,7 +23,7 @@
           </td>
           <td width="70%">
            <tal:field define="fieldName python: 'duty'">
-             <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+             <metal:f use-macro="context/@@pm-macros/editContentField"/>
            </tal:field>
           </td>
         </tr>
@@ -31,7 +31,7 @@
           <td><metal:edit use-macro="python:here.widget('usages', mode='edit', use_label=1)" /></td>
           <td>
            <tal:field define="fieldName python: 'replacementDuty'">
-             <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+             <metal:f use-macro="context/@@pm-macros/editContentField"/>
            </tal:field>
           </td>
         </tr>

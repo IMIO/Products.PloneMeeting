@@ -281,7 +281,7 @@
                   <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete_icon.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                  <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
+                  <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
             </tr>
@@ -348,7 +348,7 @@
                     <img title="label_remove" i18n:attributes="title"
                          tal:attributes="src string:$portal_url/delete_icon.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                  <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
+                  <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
             </tr>
@@ -417,7 +417,7 @@
                     <img title="label_remove" i18n:attributes="title"
                          tal:attributes="src string:$portal_url/delete_icon.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                    <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
+                    <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
             </tr>
@@ -484,7 +484,7 @@
                     <img title="label_remove" i18n:attributes="title"
                          tal:attributes="src string:$portal_url/delete_icon.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                    <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
+                    <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
             </tr>
@@ -683,7 +683,7 @@
                   <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete_icon.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                  <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
+                  <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
             </tr>
@@ -885,7 +885,7 @@
               <img title="label_remove" i18n:attributes="title"
                    tal:attributes="src string:$portal_url/delete_icon.png"
                    onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-              <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
+              <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
           </form>
         </td>
       </tr>
@@ -961,7 +961,7 @@
                   <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete_icon.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                  <metal:moves use-macro="context/hs_macros/macros/moveUpDown"/>
+                  <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
             </tr>
@@ -978,7 +978,7 @@
     </div>
 
     <br/>
-    <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
+    <div metal:use-macro="here/@@pm-macros/showTransitions"></div>
        </metal:main_macro>
     </metal:fill>
   </body>

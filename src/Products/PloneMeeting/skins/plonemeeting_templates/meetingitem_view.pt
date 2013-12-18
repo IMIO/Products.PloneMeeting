@@ -10,7 +10,7 @@
   <body >
   <metal:title fill-slot="content-title"
                tal:define="itemNumber python: context.getItemNumber(relativeTo='meeting')">
-   <metal:header use-macro="here/hs_macros/macros/itemHeader"/>
+   <metal:header use-macro="here/@@pm-macros/itemHeader"/>
   </metal:title>
   <metal:description fill-slot="content-description">
    <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>
@@ -151,7 +151,7 @@
           <i><span i18n:translate="PloneMeeting_label_itemIsSigned"></span></i>:&nbsp;&nbsp;
           <tal:defines define="meetingItem python: context;
                                ajaxEdit python: True;">
-           <metal:itemIsSigned use-macro="here/hs_macros/macros/itemIsSigned" />
+           <metal:itemIsSigned use-macro="here/@@pm-macros/itemIsSigned" />
           </tal:defines>
         </div>
         </td>
@@ -250,30 +250,30 @@
     </table>
 
     <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
-    <metal:people use-macro="here/hs_macros/macros/itemPeople"/>
+    <metal:people use-macro="here/@@pm-macros/itemPeople"/>
 
     <tal:comment replace="nothing">Description</tal:comment>
     <tal:field define="fieldName python: 'description'; ajaxEdit python:True">
-       <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
     <tal:comment replace="nothing">Detailed description</tal:comment>
     <tal:field define="fieldName python: 'detailedDescription'; ajaxEdit python:True">
-       <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Budgetary informations</tal:comment>
     <tal:field define="fieldName python: 'budgetInfos'; ajaxEdit python:True">
-       <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Motivation</tal:comment>
     <tal:field define="fieldName python: 'motivation'; ajaxEdit python:True">
-       <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Decision</tal:comment>
     <tal:field define="fieldName python: 'decision'; ajaxEdit python:True">
-       <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
@@ -312,7 +312,7 @@
       <td class="itemAdvicesCell" width="50%" tal:condition="hasAdvices">
        <fieldset style="margin: 0;" >
         <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
-        <metal:advices use-macro="here/advices_macros/macros/advicesIcons"/>
+        <metal:advices use-macro="here/@@advices-macros/advicesIcons"/>
        </fieldset>
       </td>
      </tr>
@@ -320,7 +320,7 @@
 
     <tal:comment replace="nothing">Observations</tal:comment>
     <tal:field define="fieldName python: 'observations'; ajaxEdit python:True">
-       <metal:f use-macro="context/hs_macros/macros/viewContentField"/>
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>

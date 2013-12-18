@@ -4,10 +4,10 @@
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       xmlns:i18n="http://xml.zope.org/namespaces/i18n"
       i18n:domain="PloneMeeting">
-      
+
 <body>
   <div metal:define-macro="folderlisting">
-    <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
+    <div metal:use-macro="here/@@pm-macros/showTransitions"></div>
   </div>
 </body>
 </html>

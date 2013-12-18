@@ -290,7 +290,7 @@
      <p align="center" class="portalMessage" tal:condition="request/davsync_users|nothing"
         tal:content="structure context/importUsers"/>
    </tal:action>
-   <div metal:use-macro="here/hs_macros/macros/showTransitions"></div>
+   <div metal:use-macro="here/@@pm-macros/showTransitions"></div>
   </div>
  </body>
 </html>

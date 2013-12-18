@@ -31,9 +31,9 @@
       (depend of meetingconfig : itemsListVisibleColumns and getUsedItemAttributes)</tal:comment>
   <tal:meetingItems condition="meetingItems">
    <tal:items
-     define="itemsNumbering python: test(whichItems=='availableItems', False, True);
-             showArrows python: test(whichItems=='availableItems', False, True);
-             descrsStyle python: test((request['showDescriptions'] == 'false'), 'none', 'inline');
+     define="itemsNumbering python: not whichItems=='availableItems' and True or False;
+             showArrows python: not whichItems=='availableItems' and True or False;
+             descrsStyle python: request['showDescriptions'] == 'false' and 'none' or 'inline';
              visibleColumns python: meetingConfig.getUserParam('itemsListVisibleColumns');
              global itemNumber python:startNumber-1;
              global shownItems python:0;
@@ -313,7 +313,7 @@
         <tal:comment replace="nothing">Advices</tal:comment>
         <td tal:condition="showAdvices" align="center" style="padding-left: 0; padding-right: 0;">
           <tal:show condition="isPrivacyViewable">
-            <div metal:use-macro="here/advices_macros/macros/advicesIcons"></div>
+            <div metal:use-macro="here/@@advices-macros/advicesIcons"></div>
           </tal:show>
         </td>
 
@@ -321,7 +321,7 @@
         <td align="center" class="ItemIsSigned" tal:condition="showItemIsSigned" i18n:domain="PloneMeeting">
         <tal:defines define="contextType context/meta_type;
                              ajaxEdit showActions">
-         <metal:itemisSigned use-macro="here/hs_macros/macros/itemIsSigned" />
+         <metal:itemisSigned use-macro="here/@@pm-macros/itemIsSigned" />
         </tal:defines>
         </td>
 

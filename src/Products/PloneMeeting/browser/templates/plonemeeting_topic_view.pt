@@ -50,7 +50,7 @@
         params['filterValue'] = filterWidget.value;
       }
     }
-    askAjaxChunk(hookId, 'GET', configUrl, 'plonemeeting_topic_result',
+    askAjaxChunk(hookId, 'GET', configUrl, '@@plonemeeting-topic-result-macros',
                  'topicResult', params, null, enableAnnexesMenus);
   }
   -->

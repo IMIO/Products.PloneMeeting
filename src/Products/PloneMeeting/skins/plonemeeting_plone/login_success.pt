@@ -3,7 +3,7 @@
   <body>
     <div metal:fill-slot="main">
       <span tal:condition="not: request/came_from">
-        <span metal:use-macro="here/hs_macros/macros/hsRedirect"></span>
+        <span metal:use-macro="here/@@pm-macros/hsRedirect"></span>
       </span>
     </div>
   </body>

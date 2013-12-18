@@ -132,17 +132,26 @@
         for="Products.PloneMeeting.interfaces.IMeeting"
         permission="zope2.View" />
 
+    <!-- The ajax view -->
+    <browser:page
+        name="ajax"
+        for="*"
+        class=".ajax.PloneMeetingAjaxView"
+        template="templates/ajax.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the plonemeeting_topic_view used to display list of items (my items, all items, ...) -->
     <browser:page
-        for="Products.ATContentTypes.interfaces.folder.IATFolder"
         name="plonemeeting_topic_view"
+        for="Products.ATContentTypes.interfaces.folder.IATFolder"
         class=".views.PloneMeetingTopicView"
         template="templates/plonemeeting_topic_view.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
     <browser:page
-        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
         name="plonemeeting_topic_view"
+        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
         class=".views.PloneMeetingTopicView"
         template="templates/plonemeeting_topic_view.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
@@ -213,6 +222,32 @@
         for="Products.PloneMeeting.interfaces.IMeeting"
         permission="zope2.View"
         allowed_attributes="isAsynchToggleEnabled"/>
+    <!-- Macros -->
+    <browser:page
+        name="pm-macros"
+        for="*"
+        class=".macros.PloneMeetingMacros"
+        template="templates/macros.pt"
+        permission="zope2.View"
+        allowed_attributes="callMacro"/>
+    <browser:page
+        name="meetingitemslist-macros"
+        for="*"
+        class=".macros.MeetingItemsListMacros"
+        template="templates/meetingitems_list.pt"
+        permission="zope2.View"/>
+    <browser:page
+        name="plonemeeting-topic-result-macros"
+        for="*"
+        class=".macros.PloneMeetingTopicResultMacros"
+        template="templates/plonemeeting_topic_result.pt"
+        permission="zope2.View"/>
+    <browser:page
+        name="advices-macros"
+        for="*"
+        class=".macros.AdvicesMacros"
+        template="templates/advices_macros.pt"
+        permission="zope2.View"/>
     <!-- Annexes -->
     <browser:page
         name="annexes-macros"

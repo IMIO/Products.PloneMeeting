@@ -132,7 +132,7 @@
                 <option tal:repeat="place allPlaces" tal:content="place"
                         tal:attributes = "value place;
                                           selected python: (request.get('place') == place) or (placeValue  == place)"></option>
-                <option value="other" i18n:translate="hs_other" i18n:domain="PloneMeeting"
+                <option value="other" i18n:translate="other_place" i18n:domain="PloneMeeting"
                         tal:attributes="selected python: (request.get('place') == 'other') or (placeValue  == 'other')"></option>
               </select>
               <input type="text" size="30" id="place_other" name="place_other" style="display: none;"
@@ -273,11 +273,11 @@
         </fieldset>
         <tal:field define="fieldName python: 'observations'"
                    condition="python: context.showObs('observations')">
-          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <tal:field define="fieldName python: 'preObservations'"
                    condition="python: context.showObs('preObservations')">
-          <metal:f use-macro="context/hs_macros/macros/editContentField"/>
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <metal:field use-macro="python:here.widget('allItemsAtOnce', mode='edit')"/>
 
