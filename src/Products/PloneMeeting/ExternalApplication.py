@@ -601,16 +601,6 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
             meetingFileType=(fileType,))
         annex = getattr(item, masterAnnex.id)
         annex.setCreators(masterAnnex.creators)
-        # Link the annex to the item
-        if decisionRelated:
-            annexes = item.getAnnexesDecision()
-        else:
-            annexes = item.getAnnexes()
-        annexes.append(annex)
-        if decisionRelated:
-            item.setAnnexesDecision(annexes)
-        else:
-            item.setAnnexes(annexes)
         annex.creation_date = masterAnnex.creation_date
         annex.modification_date = masterAnnex.modification_date
         annex.pm_modification_date = masterAnnex.pm_modification_date
@@ -1257,8 +1247,9 @@ class ExternalApplication(BaseContent, BrowserDefaultMixin):
         for item in meeting.getAllItems(ordered=True):
             itemFolder = self.exportFolder(meetingFolder, item, type)
             for annexType in (False, True):
-                annexes = item.getAnnexesByType(decisionRelated=annexType,
-                                           makeSubLists=False, realAnnexes=True)
+                annexes = IAnnexable(item).getAnnexesByType(decisionRelated=annexType,
+                                                            makeSubLists=False,
+                                                            realAnnexes=True)
                 for annex in annexes:
                     self.exportFile(itemFolder, annex, type)
             if type == 'dav':

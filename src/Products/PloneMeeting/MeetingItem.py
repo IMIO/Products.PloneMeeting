@@ -810,33 +810,6 @@ schema = Schema((
         optional=True,
         write_permission="PloneMeeting: Write item observations",
     ),
-    ReferenceField(
-        name='annexes',
-        keepReferencesOnCopy=False,
-        widget=ReferenceBrowserWidget(
-            visible=False,
-            label='Annexes',
-            label_msgid='PloneMeeting_label_annexes',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=True,
-        relationship="ItemAnnexes",
-        write_permission="PloneMeeting: Add annex",
-    ),
-    ReferenceField(
-        name='annexesDecision',
-        keepReferencesOnCopy=False,
-        widget=ReferenceBrowserWidget(
-            visible=False,
-            label='Annexesdecision',
-            label_msgid='PloneMeeting_label_annexesDecision',
-            i18n_domain='PloneMeeting',
-        ),
-        read_permission="PloneMeeting: Read decision annex",
-        relationship="DecisionAnnexes",
-        write_permission="PloneMeeting: Write decision annex",
-        multiValued=True,
-    ),
     BooleanField(
         name='toDiscuss',
         widget=BooleanField._properties['widget'](

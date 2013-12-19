@@ -17,12 +17,12 @@ __docformat__ = 'plaintext'
 import logging
 from persistent.list import PersistentList
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.utils import \
-    sendMailIfRelevant, addRecurringItemsIfRelevant, sendAdviceToGiveMailIfRelevant
-from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
+from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.ExternalApplication import sendNotificationsIfRelevant
 from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
+from Products.PloneMeeting.utils import sendMailIfRelevant, addRecurringItemsIfRelevant, sendAdviceToGiveMailIfRelevant
 
 podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 
@@ -116,7 +116,7 @@ def onMeetingGroupTransition(obj, event):
 
 def onItemMoved(obj, event):
     '''Called when an item is pasted cut/pasted, we need to update annexIndex.'''
-    obj.restrictedTraverse('@@annexes').updateAnnexIndex()
+    IAnnexable(obj).updateAnnexIndex()
 
 
 def onAdviceAdded(obj, event):

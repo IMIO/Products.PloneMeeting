@@ -57,6 +57,7 @@ from Products.DCWorkflow.Expression import StateChangeInfo, createExprContext
 from Products.ATContentTypes import permission as ATCTPermissions
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
     HubSessionsMarshaller, monthsIds, weekdaysIds, getCustomSchemaFields, \
@@ -1556,15 +1557,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # on copy because it would be references to original annexes
                 # and we need references to freshly created annexes
                 # moreover set a correct value for annex.toPrint
-                for annexType in ('Annexes', 'AnnexesDecision'):
-                    if annexType == 'Annexes':
+                for annexTypeRelatedTo in ('item', 'item_decision'):
+                    if annexTypeRelatedTo == 'item':
                         toPrintDefault = meetingConfig.getAnnexToPrintDefault()
                     else:
                         toPrintDefault = meetingConfig.getAnnexDecisionToPrintDefault()
-                    exec 'oldAnnexes = copiedItem.get%s()' % annexType
-                    newAnnexes = []
-                    for annex in oldAnnexes:
-                        newAnnex = getattr(newItem, annex.id)
+                    decisionRelated = annexTypeRelatedTo == 'item_decision' and True or False
+                    oldAnnexes = IAnnexable(copiedItem).getAnnexes(decisionRelated=decisionRelated)
+                    for oldAnnex in oldAnnexes:
+                        newAnnex = getattr(newItem, oldAnnex.id)
                         # In case the item is copied from another MeetingConfig, we need
                         # to update every annex.meetingFileType because it still refers
                         # the meetingFileType in the old MeetingConfig the item is copied from
@@ -1574,8 +1575,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         newAnnex.setToPrint(toPrintDefault)
                         # call processForm on the newAnnex so it is fully initialized
                         newAnnex.processForm()
-                        newAnnexes.append(newAnnex)
-                    exec 'newItem.set%s(newAnnexes)' % annexType
             # The copy/paste has transferred history. We must clean the history
             # of the cloned object.
             wfName = wftool.getWorkflowsFor(newItem)[0].id
@@ -1602,7 +1601,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # 'Manager' that we've set above) by calling MeetingItem.updateLocalRoles,
             # and also gives role "Owner" to the logged user.
             newItem.processForm()
-            newItem.restrictedTraverse('@@annexes').updateAnnexIndex()
+            IAnnexable(newItem).updateAnnexIndex()
             if newOwnerId != loggedUserId:
                 self.plone_utils.changeOwnershipOf(newItem, newOwnerId)
             # Append the new item to the result.
@@ -2169,10 +2168,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         # update items
         for b in self.portal_catalog(meta_type='MeetingItem'):
-            b.getObject().restrictedTraverse('@@annexes').updateAnnexIndex()
+            IAnnexable(b.getObject()).updateAnnexIndex()
         # update advices
         for b in self.portal_catalog(portal_type='meetingadvice'):
-            b.getObject().restrictedTraverse('@@annexes').updateAnnexIndex()
+            IAnnexable(b.getObject()).updateAnnexIndex()
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
@@ -2189,8 +2188,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.plone_utils.addPortalMessage(msg, 'warning')
         else:
             from Products.PloneMeeting.MeetingFile import convertToImages
-            for b in self.portal_catalog(meta_type='MeetingItem'):
-                annexes = b.getObject().getAnnexes()
+            catalog = getToolByName(self, 'portal_catalog')
+            # update annexes in items and advices
+            for brain in catalog(meta_type='MeetingItem') + catalog(portal_type='meetingadvice'):
+                obj = brain.getObject()
+                annexes = IAnnexable(obj).getAnnexes()
+                annexes = annexes + IAnnexable(obj).getAnnexes(decisionRelated=True)
                 for annex in annexes:
                     convertToImages(annex, None, force=True)
             self.plone_utils.addPortalMessage('Done.')

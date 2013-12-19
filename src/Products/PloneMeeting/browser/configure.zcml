@@ -255,15 +255,13 @@
         class=".annexes.AnnexesMacros"
         template="templates/annexes_macros.pt"
         permission="zope2.View"/>
-    <browser:page
+    <browser:view
         name="annexes"
         class=".annexes.AnnexesView"
         for="*"
         permission="zope.Public"
         allowed_attributes="addAnnex
-                            isValidAnnexId
-                            getAnnexesToPrint
-                            updateAnnexIndex"/>
+                            isValidAnnexId"/>
     <!-- Form that manage item assembly -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

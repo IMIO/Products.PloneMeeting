@@ -20,6 +20,93 @@ class IPloneMeetingLayer(IBrowserRequest):
       Define a layer so some elements are only added for it
     """
     pass
+
+
+class IAnnexable(Interface):
+    """
+      Adapter interface that manage elements than contains annexes.
+    """
+
+    def addAnnex(context):
+        """
+          Create an annex (MeetingFile) with given parameters and adds it to this item.
+        """
+
+    def isValidAnnexId(context, idCandidate):
+        """
+          May p_idCandidate be used for a new annex that will be linked to this item?
+        """
+
+    def getAnnexesToPrint(context, relatedTo='item'):
+        """
+          Creates a list of annexes to print for document generation
+          The result is a list containing dicts where first key is the annex title
+          and second key is a tuple of path where to find relevant images to print :
+          [
+           {'title': 'My annex title',
+            'UID': 'annex_UID',
+            'number_of_images': 2,
+            'images': [{'image_number': 1,
+                        'image_path': '/path/to/image1.png',},
+                       {'image_number': 2,
+                        'image_path': '/path/to/image2.png',},
+                      ]},
+           {'title': 'My annex2 title',
+            'UID': 'annex2_UID',
+            'number_of_images': 1,
+            'images': [{'image_number': 1,
+                        'image_path': '/path/to/image21.png',},
+                      ]},
+          ]
+          Returned annexes depend on the p_relatedTo value.
+        """
+
+    def updateAnnexIndex(context, annex=None, removeAnnex=False):
+        """
+          This method updates self.annexIndex (see doc in
+          MeetingItem.__init__). If p_annex is None, this method recomputes the
+          whole annexIndex. If p_annex is not None:
+          - if p_remove is False, info about the newly created p_annex is added
+            to self.annexIndex;
+          - if p_remove is True, info about the deleted p_annex is removed from
+            self.annexIndex.
+        """
+
+    def getAnnexesInOrder(context, relatedTo='item'):
+        """
+          Returns contained annexes respecting order (container is oerdered).
+          XXX first step to remove annexes/annexesDeicision fields as ReferenceFields
+          as taking contained annexes should be sufficient...
+          It returns item-related annexes depending on p_relatedTo.
+        """
+
+    def getLastInsertedAnnex(context):
+        """
+          Gets the last inserted annex on this item, be it decision-related or not.
+        """
+
+    def getAnnexesByType(context, relatedTo, makeSubLists=True,
+                         typesIds=[], realAnnexes=False):
+        """
+          Returns an annexInfo dict (or real annex objects if p_realAnnexes is
+          True) for every annex linked to me:
+          - p_relatedTo will filter annexes depending on MeetingFileType.relatedTo value.
+          - if p_makeSubLists is True, the result (a list) contains a
+            subList containing all annexes of a given type; if False,
+            the result is a single list containing all requested annexes,
+            sorted by annex type.
+          If p_typesIds in not empty, only annexes of types having ids
+          listed in this param will be returned.
+          In all cases, within each annex type annexes are sorted by
+          creation date (more recent last).
+        """
+
+    def getAnnexes(context, decisionRelated=False):
+        """
+          Return every annexes, if p_decisionRelated is True, return annexes
+          relatedTo 'item_decision', if it is False, return annexes relatedTo 'item'.
+        """
+
 ##/code-section HEAD
 
 

@@ -32,8 +32,8 @@ from collective.documentviewer.settings import GlobalSettings
 
 from Products.statusmessages.interfaces import IStatusMessage
 from Products.PloneMeeting.MeetingFile import CONVERSION_ERROR
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testConversionWithDocumentViewer(PloneMeetingTestCase):
@@ -165,7 +165,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
 
     def test_pm_getAnnexesToPrintUsingBlob(self):
         """
-          Test the @@annexes.getAnnexesToPrint method.  It is a helper method that
+          Test the IAnnexable.getAnnexesToPrint method.  It is a helper method that
           returns a dict containing usefull informations about annexes to print in a POD template.
           This test when the global settings storage_type is 'Blob'.
         """
@@ -188,11 +188,11 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
                      'number': 1,
                      'UID': annex.UID(),
                      'title': annex.Title()}]
-        self.assertEquals(item.restrictedTraverse('@@annexes').getAnnexesToPrint(), expected)
+        self.assertEquals(IAnnexable(item).getAnnexesToPrint(), expected)
 
     def test_pm_getAnnexesToPrintUsingFile(self):
         """
-          Test the @@annexes.getAnnexesToPrint method.  It is a helper method that
+          Test the IAnnexable.getAnnexesToPrint method.  It is a helper method that
           returns a dict containing usefull informations about annexes to print in a POD template.
           This test when the global settings storage_type is 'File'.
         """
@@ -218,7 +218,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
                      'number': 1,
                      'UID': annex.UID(),
                      'title': annex.Title()}]
-        self.assertEquals(item.restrictedTraverse('@@annexes').getAnnexesToPrint(), expected)
+        self.assertEquals(IAnnexable(item).getAnnexesToPrint(), expected)
 
     def tearDown(self):
         """

@@ -88,7 +88,7 @@ class Migrate_To_3_1_1(Migrator):
            to 'relatedTo' that is now a list of values in wich available values are 'item', 'item_decision' or 'advice'.
            If MeetingFileType.decisionRelated was False, set MeetingFileType.relatedTo to 'item', if it was True,
            set MeetingFileType.relatedTo to 'item_decision'.'''
-        logger.info('Updating MeetingFileTypes relatedTo value')
+        logger.info('Updating MeetingFileTypes relatedTo value...')
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             for mft in cfg.meetingfiletypes.objectValues('MeetingFileType'):
                 if not hasattr(aq_base(mft), 'decisionRelated'):
@@ -108,6 +108,21 @@ class Migrate_To_3_1_1(Migrator):
         self.tool.reindexAnnexes()
         logger.info('Done.')
 
+    def _cleanReferencesOnItems(self):
+        '''As ReferenceFields 'annexes' and 'annexesDecision' were removed from MeetingItem,
+           we need to clean up the at_references folder on every items.'''
+        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
+        logger.info('Cleaning references for %d MeetingItem objects...' % len(brains))
+        for brain in brains:
+            item = brain.getObject()
+            item.deleteReferences(relationship="ItemAnnexes")
+            item.deleteReferences(relationship="DecisionAnnexes")
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            for item in cfg.recurringitems.objectValues('MeetingItem'):
+                item.deleteReferences(relationship="ItemAnnexes")
+                item.deleteReferences(relationship="DecisionAnnexes")
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.1.1...')
         self._configureCatalogIndexesAndMetadata()
@@ -116,8 +131,13 @@ class Migrate_To_3_1_1(Migrator):
         self._finalizeAnnexesCreationProcess()
         self._updateMeetingFileTypes()
         self._updateAnnexIndex()
+        self._cleanReferencesOnItems()
         # reinstall so 'getDeliberation' index is added and computed
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
+        # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
+        self.refreshDatabase(catalogs=True,
+                             catalogsToRebuild=['reference_catalog', ],
+                             workflows=False)
         self.finish()
 
 
@@ -131,7 +151,8 @@ def migrate(context):
        4) Make sure every existing annexes creation process is correctly finished;
        5) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
        6) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
-       6) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
+       7) Clean ItemAnnexes and DecisionAnnexes references on items;
+       8) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
     '''
     Migrate_To_3_1_1(context).run()
 # ------------------------------------------------------------------------------

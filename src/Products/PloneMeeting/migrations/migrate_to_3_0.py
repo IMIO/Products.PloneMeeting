@@ -3,6 +3,7 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.interfaces import IAnnexable
 
 
 # The migration class ----------------------------------------------------------
@@ -106,7 +107,7 @@ class Migrate_To_3_0(Migrator):
             for brain in brains:
                 changed = False
                 item = brain.getObject()
-                for annex in (item.getAnnexes() + item.getAnnexesDecision()):
+                for annex in (IAnnexable(item).getAnnexes() + IAnnexable(item).getAnnexes(decisionRelated=True)):
                     if not annex:
                         continue
                     annexUpdated = annex._updateMeetingFileType(cfg)

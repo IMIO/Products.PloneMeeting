@@ -346,7 +346,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                                     context=obj.REQUEST)
         translationMapping['lastAnnexTitle'] = ''
         translationMapping['lastAnnexTypeTitle'] = ''
-        lastAnnex = obj.restrictedTraverse('@@annexes').getLastInsertedAnnex()
+        lastAnnex = IAnnexable(obj).getLastInsertedAnnex()
         if lastAnnex:
             translationMapping['lastAnnexTitle'] = lastAnnex.Title().decode(enc)
             translationMapping['lastAnnexTypeTitle'] = \

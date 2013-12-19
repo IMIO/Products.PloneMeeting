@@ -8,6 +8,7 @@ from zope.i18n import translate
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.tests.base.security import OmnipotentUser
+from Products.PloneMeeting.interfaces import IAnnexable
 
 from plone.memoize.view import memoize
 
@@ -75,12 +76,14 @@ class DeleteGivenUidView(BrowserView):
                 if obj.hasMeeting():
                     obj.getMeeting().removeItem(obj)
             elif obj.meta_type == 'MeetingFile':
-                if item:
-                    item.restrictedTraverse('@@annexes').updateAnnexIndex(obj, removeAnnex=True)
-                    item.updateHistory(
-                        'delete', obj, decisionRelated=obj.findRelatedTo() == 'item_decision' and True or False)
-                    if item.willInvalidateAdvices():
-                        item.updateAdvices(invalidate=True)
+                parent = obj.getParent()
+                if parent:
+                    IAnnexable(parent).updateAnnexIndex(obj, removeAnnex=True)
+                    if parent.meta_type == 'MeetingItem':
+                        parent.updateHistory(
+                            'delete', obj, decisionRelated=obj.findRelatedTo() == 'item_decision' and True or False)
+                        if parent.willInvalidateAdvices():
+                            parent.updateAdvices(invalidate=True)
             elif obj.meta_type == 'Meeting':
                 if rq.get('wholeMeeting', None):
                     # Delete all items and late items in the meeting

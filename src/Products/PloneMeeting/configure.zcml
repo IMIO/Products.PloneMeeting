@@ -32,7 +32,9 @@
   <adapter for=".interfaces.IMeeting"
            factory=".Meeting.MeetingWorkflowActions"
            provides=".interfaces.IMeetingWorkflowActions" />
-
+  <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.AnnexableAdapter"
+           provides=".interfaces.IAnnexable" />
   <!-- Indexes -->
   <adapter name="Description" factory=".indexes.Description" />
   <adapter name="getDeliberation" factory=".indexes.getDeliberation" />

@@ -41,6 +41,7 @@ import Products.PloneMeeting
 #from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 
@@ -281,16 +282,15 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             annexTitle = fileType.getPredefinedTitle() or 'Annex title'
         # Create the annex
         idCandidate = None
-        annexes_view = item.restrictedTraverse('@@annexes')
-        annexes_view.addAnnex(idCandidate,
-                              annexTitle,
-                              annexFile,
-                              decisionRelated and 'item_decision' or 'item',
-                              meetingFileType=fileType)
+        IAnnexable(item).addAnnex(idCandidate,
+                                  annexTitle,
+                                  annexFile,
+                                  decisionRelated and 'item_decision' or 'item',
+                                  meetingFileType=fileType)
         # Find the last created annex
-        annexUid = annexes_view.getAnnexesByType(decisionRelated and 'item_decision' or 'item',
-                                                 makeSubLists=False,
-                                                 typesIds=[annexType])[-1]['UID']
+        annexUid = IAnnexable(item).getAnnexesByType(decisionRelated and 'item_decision' or 'item',
+                                                     makeSubLists=False,
+                                                     typesIds=[annexType])[-1]['UID']
         theAnnex = item.uid_catalog(UID=annexUid)[0].getObject()
         self.assertNotEquals(theAnnex.size(), 0)
         return theAnnex

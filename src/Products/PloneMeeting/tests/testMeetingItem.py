@@ -33,6 +33,7 @@ from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.utils import getToolByName
 
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX, READER_USECASES
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -460,8 +461,8 @@ class testMeetingItem(PloneMeetingTestCase):
         newUID = annotations[annotationKey]
         newItem = self.portal.uid_catalog(UID=newUID)[0].getObject()
         # Check that annexes are actually correctly sent too
-        self.failUnless(len(newItem.getAnnexes()) == 2)
-        self.failUnless(len(newItem.getAnnexesDecision()) == 2)
+        self.failUnless(len(IAnnexable(newItem).getAnnexes()) == 2)
+        self.failUnless(len(IAnnexable(newItem).getAnnexes(decisionRelated=True)) == 2)
         # As annexes are references from the item, check that these are not
         self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues()))
         # Especially test that references are ok about the MeetingFileTypes

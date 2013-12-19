@@ -38,6 +38,7 @@ from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collective.documentviewer.async import asyncInstalled
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, HubSessionsMarshaller, sendMailIfRelevant
 
 import logging
@@ -197,7 +198,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     def getParent(self):
         '''Returns the parent, aka the element managing MeetingFiles.
            Annexes are located in an item or in an advice...'''
-        return self.ParentNode()
+        return self.getParentNode()
 
     security.declareProtected(View, 'index_html')
     def index_html(self, REQUEST=None, RESPONSE=None):
@@ -225,7 +226,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             # by the conversion process for example
             annexIndexUids = [annex['UID'] for annex in parent.annexIndex]
             if not self.UID() in annexIndexUids:
-                parent.restrictedTraverse('@@annexes').updateAnnexIndex()
+                IAnnexable(parent).updateAnnexIndex()
             parent.alreadyUsedAnnexNames.append(self.id)
         # at the end of creation, we know now self.relatedTo
         # and we can manage the self.toPrint default value
@@ -639,7 +640,7 @@ def checkAfterConversion(obj, event):
     # this is tested in testConversionWithDocumentViewer.testConvert
     if not hasattr(aq_base(obj), 'pm_modification_date'):
         obj.pm_modification_date = obj.modification_date
-    parent.restrictedTraverse('@@annexes').updateAnnexIndex()
+    IAnnexable(parent).updateAnnexIndex()
 
     # remove saved_request on annex
     try:

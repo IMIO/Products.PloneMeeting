@@ -170,6 +170,7 @@ def initialize(context):
     from App.class_init import InitializeClass
     FakeBrain.security = ClassSecurityInfo()
     for elem in dir(FakeBrain):
-        if not elem.startswith('__'): FakeBrain.security.declarePublic(elem)
+        if not elem.startswith('__'):
+            FakeBrain.security.declarePublic(elem)
     InitializeClass(FakeBrain)
     ##/code-section custom-init-bottom
