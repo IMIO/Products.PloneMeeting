@@ -32,7 +32,15 @@ class DeleteGivenUidView(BrowserView):
         user = self.context.portal_membership.getAuthenticatedMember()
 
         # Get the object to delete
-        obj = self.context.portal_catalog(UID=selected_uid)[0].getObject()
+        # try to get it from the portal_catalog
+        catalog_brains = self.context.portal_catalog(UID=selected_uid)
+        # if not found, try to get it from the uid_catalog
+        if not catalog_brains:
+            catalog_brains = self.context.uid_catalog(UID=selected_uid)
+        # if nto found at all, raise
+        if not catalog_brains:
+            raise KeyError('The given uid could not be found!')
+        obj = catalog_brains[0].getObject()
         objectUrl = obj.absolute_url()
         parent = obj.aq_inner.aq_parent
 
