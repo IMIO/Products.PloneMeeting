@@ -1765,14 +1765,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('hasAnnexesWhere')
-    def hasAnnexesWhere(self, decisionRelated='whatever'):
-        '''Have I at least one item- or decision-related annex ?'''
-        if decisionRelated == 'whatever':
+    def hasAnnexesWhere(self, relatedTo='whatever'):
+        '''Have I some annexes?  If p_relatedTo is whatever, consider every annexes
+           no matter their 'relatedTo', either, only consider relevant relatedTo annexes.'''
+        if relatedTo == 'whatever':
             return bool(self.annexIndex)
-        if decisionRelated:
-            return bool(self.getRawAnnexesDecision())
         else:
-            return bool(self.getRawAnnexes())
+            return bool([annex for annex in self.annexIndex if annex['relatedTo'] == relatedTo])
 
     security.declarePublic('queryState')
     def queryState(self):
