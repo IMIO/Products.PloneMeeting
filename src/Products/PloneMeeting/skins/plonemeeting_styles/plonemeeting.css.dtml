@@ -684,6 +684,14 @@ dl.searchResults cite {
     width: 97%;
 }
 
+/* style for the 'Back' link displayed in the elements of the configuration next to the 'de/activate' button
+   We use same height as .apButton height */
+.pm_back_to_tool_link {
+    height: 2em;
+    position: relative;
+    top: 0.5em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
