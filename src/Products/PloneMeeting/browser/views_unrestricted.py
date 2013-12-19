@@ -52,10 +52,10 @@ class DeleteGivenUidView(BrowserView):
 
         # Determine if the object can be deleted or not
         if obj.meta_type == 'MeetingFile':
-            item = obj.getItem()
+            parent = obj.getParent()
             mayDelete = True
-            if item:
-                mayDelete = item.wfConditions().mayDeleteAnnex(obj)
+            if parent.meta_type == 'MeetingItem':
+                mayDelete = parent.wfConditions().mayDeleteAnnex(obj)
         else:
             try:
                 mayDelete = obj.wfConditions().mayDelete()
