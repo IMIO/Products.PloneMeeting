@@ -58,7 +58,7 @@
       params['search_site'] = searchSite;
     }
     if (hookId == 'searchedItems') enableMenus = enableAnnexesMenus;
-    askAjaxChunk(hookId, 'GET', configUrl, 'plonemeeting_topic_result',
+    askAjaxChunk(hookId, 'GET', configUrl, 'plonemeeting-topic-result-macros',
                  'topicResult', params, null, enableMenus);
   }
   function switchSite(selectWidget){
