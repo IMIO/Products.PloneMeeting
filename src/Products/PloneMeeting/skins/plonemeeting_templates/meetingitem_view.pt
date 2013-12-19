@@ -279,8 +279,8 @@
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
     <table width="100%" cellpadding="1" cellspacing="1"
-           tal:define="hasAnnexes python: context.hasAnnexesWhere(decisionRelated=False);
-                       hasAnnexesDecision python: context.hasAnnexesWhere(decisionRelated=True);
+           tal:define="hasAnnexes python: context.hasAnnexesWhere(relatedTo='item');
+                       hasAnnexesDecision python: context.hasAnnexesWhere(relatedTo='item_decision');
                        hasAdvices python: meetingConfig.getUseAdvices() and context.needsAdvices()"
            tal:condition="python: hasAnnexes or hasAnnexesDecision or hasAdvices">
      <tr style="vertical-align: top;">
@@ -299,8 +299,6 @@
          </tr>
         </table>
        </fieldset>
-       <span tal:content="hasAnnexes" />***
-       <span tal:content="hasAnnexesDecision" />
       </td>
       <td class="itemAdvicesAloneCell" width="50%" tal:condition="python: not (hasAnnexes or hasAnnexesDecision) and hasAdvices">
        <tal:comment replace="nothing">
