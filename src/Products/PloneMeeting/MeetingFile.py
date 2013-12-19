@@ -193,17 +193,19 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             return mft.getRelatedTo()
         return ''
 
-    security.declarePublic('getItem')
-    def getItem(self):
-        '''Returns the linked item.  Annexes are located in the item...'''
-        return self.aq_inner.aq_parent
+    security.declarePublic('getParent')
+    def getParent(self):
+        '''Returns the parent, aka the element managing MeetingFiles.
+           Annexes are located in an item or in an advice...'''
+        return self.ParentNode()
 
     security.declareProtected(View, 'index_html')
     def index_html(self, REQUEST=None, RESPONSE=None):
         '''Download the file'''
-        # Prevent downloading the annex if the related item is not # privacy-viewable.
-        item = self.getItem()
-        if not item.adapted().isPrivacyViewable():
+        # Prevent downloading the annex if the parent is an item
+        # and this item is not privacy-viewable.
+        parent = self.getParent()
+        if parent.meta_type == 'MeetingItem' and not parent.adapted().isPrivacyViewable():
             raise Unauthorized
         self.portal_plonemeeting.rememberAccess(self.UID())
         return ATBlob.index_html(self, REQUEST, RESPONSE)
@@ -212,19 +214,19 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     def at_post_create_script(self):
         # We define here a PloneMeeting-specific modification date for this
         # annex. Indeed, we can't use the standard Plone modification_date for
-        # the PloneMeeting color system because some events like item state
+        # the PloneMeeting color system because some events like parent state
         # changes update security settings on annexes and modification_date is
         # updated.
         self.pm_modification_date = self.modification_date
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
-        item = self.getItem()
-        if item:
-            # update item.annexIndex if it was not already set
+        parent = self.getParent()
+        if parent:
+            # update parent.annexIndex if it was not already set
             # by the conversion process for example
-            annexIndexUids = [annex['UID'] for annex in item.annexIndex]
+            annexIndexUids = [annex['UID'] for annex in parent.annexIndex]
             if not self.UID() in annexIndexUids:
-                item.restrictedTraverse('@@annexes').updateAnnexIndex()
-            item.alreadyUsedAnnexNames.append(self.id)
+                parent.restrictedTraverse('@@annexes').updateAnnexIndex()
+            parent.alreadyUsedAnnexNames.append(self.id)
         # at the end of creation, we know now self.relatedTo
         # and we can manage the self.toPrint default value
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
@@ -261,7 +263,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'UID': self.UID(),
                'fileTypeId': fileType.id,
                'iconUrl': self.getIcon(),
-               # the item (parent) also has a pm_modification_date,
+               # if the parent also has a pm_modification_date,
                # make sure we use the real MeetingFile's one
                'modification_date': aq_base(self).pm_modification_date,
                'relatedTo': self.findRelatedTo(),
@@ -446,7 +448,8 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             # check if we need to generate relevant images using collective.documentviewer converter
             qi = getToolByName(self, 'portal_quickinstaller')
             if not qi.isProductInstalled('collective.documentviewer'):
-               raise Exception, 'The collective.documentviewer product is not installed!  Please contact system administrator!'
+                raise Exception('The collective.documentviewer product is not installed! '
+                                'Please contact system administrator!')
             # if we want the annex to be printable, force the conversion to images (not 'redone' if already done...)
             convertToImages(self, None, force=True)
         # finally set the given value
@@ -572,7 +575,7 @@ def convertToImages(object, event, force=False):
     queueJob(object)
 
 
-def prepareClonedAnnexForConversion(object, event):
+def prepareClonedAnnexForConversion(obj, event):
     """
       While cloning a MeetingFile (it is the case when the item is duplicated),
       we eventually want to convert it but we need to prepare it to
@@ -582,65 +585,65 @@ def prepareClonedAnnexForConversion(object, event):
     # this way, 'collective.documentviewer' will be able to convert
     # the annex because it checks if the object has already been converted
     # and if we keep existing annotations, I think it is, but is is not...
-    annotations = IAnnotations(object)
+    annotations = IAnnotations(obj)
     if 'collective.documentviewer' in annotations:
         del annotations['collective.documentviewer']
     # now call convertToImages because IObjectInitializedEvent is not called
     # while copy/pasting an object (case in the duplication process)
     # but check if a copyAnnexes is not set to False in the REQUEST meaning
     # that we are duplicating an item but that we do not copyAnnexes
-    if object.REQUEST.get('copyAnnexes', True):
-        convertToImages(object, event)
+    if obj.REQUEST.get('copyAnnexes', True):
+        convertToImages(obj, event)
 
 
-def checkAfterConversion(object, event):
+def checkAfterConversion(obj, event):
     """
       After conversion, check that there was no error, if an error occured,
       make sure the annex is set to not toPrint and send an email if relevant.
     """
-    item = object.getItem()
+    parent = obj.getParent()
     if event.status == 'failure':
         # make sure the annex is not printed in documents
-        object.setToPrint(False)
+        obj.setToPrint(False)
         # special behavior for real Managers
-        isRealManager = object.portal_plonemeeting.isManager(realManagers=True)
+        isRealManager = obj.portal_plonemeeting.isManager(realManagers=True)
         # send an email to relevant users to warn them if relevant
         # plone.app.async does not have a REQUEST... so make one...
         if asyncInstalled():
             from Testing.makerequest import makerequest
-            item = makerequest(object.getItem())
+            parent = makerequest(parent)
             import ast
             # initialize the REQUEST with saved values on the annex...
-            saved_request = ast.literal_eval(object.saved_request)
+            saved_request = ast.literal_eval(obj.saved_request)
             for key in saved_request:
-                item.REQUEST[key] = saved_request[key]
+                parent.REQUEST[key] = saved_request[key]
         else:
             # if we are not using plone.app.async, add a portal_message
-            msg = isRealManager and (CONVERSION_ERROR_MANAGER % object.absolute_url_path()) or \
+            msg = isRealManager and (CONVERSION_ERROR_MANAGER % obj.absolute_url_path()) or \
                 CONVERSION_ERROR
-            object.plone_utils.addPortalMessage(
+            obj.plone_utils.addPortalMessage(
                 translate(msgid=msg,
                           domain='PloneMeeting',
-                          context=object.REQUEST),
+                          context=obj.REQUEST),
                 'error')
 
         # email notification, check if the Manager is not 'playing' with conversion
         if isRealManager:
-            sendMailIfRelevant(item, 'annexConversionError', 'Manager', isRole=True)
+            sendMailIfRelevant(parent, 'annexConversionError', 'Manager', isRole=True)
         else:
-            sendMailIfRelevant(item, 'annexConversionError', 'PloneMeeting: Add annex', isRole=False)
+            sendMailIfRelevant(parent, 'annexConversionError', 'PloneMeeting: Add annex', isRole=False)
 
     # update the conversionStatus value in the annexIndex
     # if this is triggered before at_post_create_script,
     # a pm_modification_date is not available
     # this is tested in testConversionWithDocumentViewer.testConvert
-    if not hasattr(aq_base(object), 'pm_modification_date'):
-        object.pm_modification_date = object.modification_date
-    item.restrictedTraverse('@@annexes').updateAnnexIndex()
+    if not hasattr(aq_base(obj), 'pm_modification_date'):
+        obj.pm_modification_date = obj.modification_date
+    parent.restrictedTraverse('@@annexes').updateAnnexIndex()
 
     # remove saved_request on annex
     try:
-        del object.saved_request
+        del obj.saved_request
     except:
         pass
 ##/code-section module-footer
