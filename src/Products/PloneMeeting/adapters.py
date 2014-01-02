@@ -78,13 +78,13 @@ class AnnexableAdapter(object):
             # Potentially I must notify MeetingManagers through email.
             self.context.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
 
-        # Add the annex creation to item history
-        self.context.updateHistory('add',
-                                   newAnnex,
-                                   decisionRelated=(relatedTo == 'item_decision'))
-        # Invalidate advices if needed
-        if self.context.willInvalidateAdvices():
-            self.context.updateAdvices(invalidate=True)
+            # Add the annex creation to item history
+            self.context.updateHistory('add',
+                                       newAnnex,
+                                       decisionRelated=(relatedTo == 'item_decision'))
+            # Invalidate advices if needed
+            if self.context.willInvalidateAdvices():
+                self.context.updateAdvices(invalidate=True)
         # After processForm that itself calls at_post_create_script,
         # current user may loose permission to edit
         # the object because we copy item permissions.
