@@ -72,19 +72,19 @@ class AnnexableAdapter(object):
         newAnnex.setMeetingFileType(meetingFileType)
 
         # do some specific stuffs if we are adding an annex on an item, not on an advice
-        if self.context.meta_type == 'MeetingItem' and \
-           relatedTo == 'item' and \
-           self.context.wfConditions().meetingIsPublished():
-            # Potentially I must notify MeetingManagers through email.
-            self.context.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
-
+        if self.context.meta_type == 'MeetingItem':
             # Add the annex creation to item history
             self.context.updateHistory('add',
                                        newAnnex,
                                        decisionRelated=(relatedTo == 'item_decision'))
-            # Invalidate advices if needed
-            if self.context.willInvalidateAdvices():
+            # Invalidate advices if needed and adding a normal annex
+            if relatedTo == 'item' and self.context.willInvalidateAdvices():
                 self.context.updateAdvices(invalidate=True)
+
+            # Potentially I must notify MeetingManagers through email.
+            if self.context.wfConditions().meetingIsPublished():
+                self.context.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
+
         # After processForm that itself calls at_post_create_script,
         # current user may loose permission to edit
         # the object because we copy item permissions.
