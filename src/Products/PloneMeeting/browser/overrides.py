@@ -2,7 +2,8 @@ from zope.component import getMultiAdapter
 
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
-from plone.memoize.instance import memoize
+from plone.memoize.view import memoize
+from plone.memoize.view import memoize_contextless
 
 from imio.actionspanel.browser.views import ActionsPanelView
 
@@ -118,6 +119,10 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
 
 class BaseActionsPanelView(ActionsPanelView):
     """
+      Base mechanism for managing displayed actions.
+      As we display several elements in dashboards (list of items for example),
+      we memoize_contextless some methods that will always return the same result to
+      avoid recomputing them uselessly.
     """
     def __init__(self, context, request):
         super(BaseActionsPanelView, self).__init__(context, request)
@@ -152,6 +157,7 @@ class BaseActionsPanelView(ActionsPanelView):
             self.useIcons and not \
             self.context.meta_type == 'MeetingFile'
 
+    @memoize_contextless
     def _transitionsToConfirm(self):
         """
           Return the list of transitions the user will have to confirm, aka
@@ -165,6 +171,7 @@ class BaseActionsPanelView(ActionsPanelView):
             toConfirm = cfg.getTransitionsToConfirm()
         return toConfirm
 
+    @memoize_contextless
     def _redirectToUrl(self):
         """
           Return the url the user must be redirected to.
@@ -180,6 +187,7 @@ class BaseActionsPanelView(ActionsPanelView):
             redirectToUrl = http_referer
         return redirectToUrl
 
+    @memoize_contextless
     def _goToReferer(self):
         """
           Override _goToReferer to take some specific PloneMeeting case into account.
@@ -190,6 +198,7 @@ class BaseActionsPanelView(ActionsPanelView):
 
 class MeetingItemActionsPanelView(BaseActionsPanelView):
     """
+      Specific actions displayed on an item.
     """
     def __init__(self, context, request):
         super(MeetingItemActionsPanelView, self).__init__(context, request)
@@ -208,6 +217,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             return ViewPageTemplateFile("templates/actions_panel_arrows.pt")(self)
         return ''
 
+    @memoize_contextless
     def mayChangeOrder(self):
         """
           Check if current user can change elements order in case arrows are shown.
@@ -218,6 +228,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
 
 class MeetingActionsPanelView(BaseActionsPanelView):
     """
+      Specific actions displayed on a meeting.
     """
     def __init__(self, context, request):
         super(MeetingActionsPanelView, self).__init__(context, request)

@@ -15,7 +15,12 @@ class AnnexesView(BrowserView):
     def addAnnex(self, idCandidate, annex_title, annex_file,
                  relatedTo, meetingFileType, **kwargs):
         '''Call IAnnexable.addAnnex.'''
-        return IAnnexable(self.context).addAnnex(idCandidate, annex_title, annex_file, relatedTo, meetingFileType, **kwargs)
+        return IAnnexable(self.context).addAnnex(idCandidate,
+                                                 annex_title,
+                                                 annex_file,
+                                                 relatedTo,
+                                                 meetingFileType,
+                                                 **kwargs)
 
     def isValidAnnexId(self, idCandidate):
         '''Call IAnnexable.isValidAnnexId.'''
