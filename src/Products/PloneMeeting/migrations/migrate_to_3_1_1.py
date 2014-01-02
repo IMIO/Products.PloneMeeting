@@ -2,6 +2,8 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 from Acquisition import aq_base
+from persistent.mapping import PersistentMapping
+
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.PloneMeeting.migrations import Migrator
@@ -40,8 +42,13 @@ class Migrate_To_3_1_1(Migrator):
         for brain in brains:
             item = brain.getObject()
             if hasattr(aq_base(item), 'advices'):
+                item.adviceIndex = PersistentMapping()
+                # in case there were advices asked but not given, we will have to update advice
+                needToUpdateAdvices = True
                 for groupId, advice in aq_base(item).advices.iteritems():
                     if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
+                        # advices are updated upon each meetingadvice add
+                        needToUpdateAdvices = False
                         advice_comment = advice['comment']
                         if not isinstance(advice['comment'], unicode):
                             advice_comment = unicode(advice_comment, 'utf-8')
@@ -50,8 +57,11 @@ class Migrate_To_3_1_1(Migrator):
                                                                  **{'advice_group': groupId,
                                                                  'advice_type': advice['type'],
                                                                  'advice_comment': RichTextValue(advice_comment)})
-                        meetingadvice.setCreators((advice['actor'], ))
-                        meetingadvice.setCreationDate(advice['date'])
+                        meetingadvice.creators = ((advice['actor'], ))
+                        meetingadvice.creation_date = advice['date']
+                        meetingadvice.modification_date = advice['date']
+                if needToUpdateAdvices:
+                    item.updateAdvices()
                 delattr(item, 'advices')
                 # Update security as local_roles are set by updateAdvices
                 item.reindexObject()
@@ -125,6 +135,8 @@ class Migrate_To_3_1_1(Migrator):
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.1.1...')
+        # reinstall so 'getDeliberation' index is added and computed, new 'meetingafvice' type is installed, ...
+        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self._configureCatalogIndexesAndMetadata()
         self._initDefaultBudgetHTML()
         self._updateAdvices()
@@ -132,8 +144,6 @@ class Migrate_To_3_1_1(Migrator):
         self._updateMeetingFileTypes()
         self._updateAnnexIndex()
         self._cleanReferencesOnItems()
-        # reinstall so 'getDeliberation' index is added and computed
-        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['reference_catalog', ],
