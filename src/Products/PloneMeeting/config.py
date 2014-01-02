@@ -2,7 +2,7 @@
 #
 # File: PloneMeeting.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -51,7 +51,6 @@ ADD_CONTENT_PERMISSIONS = {
     'MeetingFileType': 'PloneMeeting: Manage configuration',
     'MeetingFile': 'PloneMeeting: Add MeetingFile',
     'MeetingGroup': 'PloneMeeting: Manage configuration',
-    'ExternalApplication': 'PloneMeeting: Manage configuration',
     'PodTemplate': 'PloneMeeting: Manage configuration',
     'MeetingUser': 'PloneMeeting: Add MeetingUser',
 }

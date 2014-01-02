@@ -2,7 +2,7 @@
 #
 # File: Meeting.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -38,8 +38,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions, IMeetingWorkflowActions
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, kupuFieldIsEmpty, \
-    fieldIsEmpty, KUPU_EMPTY_VALUES, checkPermission, \
-    HubSessionsMarshaller, addRecurringItemsIfRelevant, getLastEvent, \
+    fieldIsEmpty, KUPU_EMPTY_VALUES, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
     kupuEquals, getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields
@@ -52,28 +51,6 @@ BEFOREDELETE_ERROR = 'A BeforeDeleteException was raised by "%s" while ' \
 NO_SECOND_LANGUAGE_ERROR = 'Unable to find the second supported language in ' \
     'portal_languages, either only one language is supported, or more than 2 languages' \
     'are supported.  Please contact system administrator.'
-
-
-# Marshaller -------------------------------------------------------------------
-class MeetingMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall a meeting into a XML file that one may get through
-       WebDAV.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all_with_metadata'
-    fieldsToExclude = ['allItemsAtOnce', 'allowDiscussion']
-    rootElementName = 'meeting'
-
-    def marshallSpecificElements(self, meeting, res):
-        HubSessionsMarshaller.marshallSpecificElements(self, meeting, res)
-        # Dump non-archetypes dictionaries "entrances" and "departures".
-        for name in ('entrances', 'departures'):
-            if not hasattr(meeting, name):
-                continue
-            self.dumpField(res, name, getattr(meeting, name))
-
-InitializeClass(MeetingMarshaller)
 
 
 # Adapters ---------------------------------------------------------------------
@@ -866,8 +843,6 @@ Meeting_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-Meeting_schema.registerLayer('marshall', MeetingMarshaller())
 ##/code-section after-schema
 
 class Meeting(BaseContent, BrowserDefaultMixin):
@@ -1738,11 +1713,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
-        '''See doc in interfaces.py.'''
-        pass
-
-    security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
         pass
 

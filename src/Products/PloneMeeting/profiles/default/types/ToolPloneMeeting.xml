@@ -16,7 +16,6 @@
  <property name="allowed_content_types">
    <element value="MeetingConfig"/>
    <element value="MeetingGroup"/>
-   <element value="ExternalApplication"/>
  </property>
  <property name="allow_discussion">False</property>
  <property name="default_view">toolplonemeeting_view</property>

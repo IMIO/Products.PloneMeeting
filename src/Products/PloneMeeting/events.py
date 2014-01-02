@@ -19,7 +19,6 @@ from persistent.list import PersistentList
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable
-from Products.PloneMeeting.ExternalApplication import sendNotificationsIfRelevant
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
 from Products.PloneMeeting.utils import sendMailIfRelevant, addRecurringItemsIfRelevant, sendAdviceToGiveMailIfRelevant
@@ -55,9 +54,6 @@ def do(action, event):
     podTransition = '%s_%s' % (podTransitionPrefixes[objectType],
                                event.transition.id)
     freezePodDocumentsIfRelevant(event.object, podTransition)
-    # Send notifications to external applications if needed
-    eventName = '%s.%s' % (objectType, event.transition.id)
-    sendNotificationsIfRelevant(event.object, eventName)
 
 
 def onItemTransition(obj, event):

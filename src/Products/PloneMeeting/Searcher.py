@@ -129,15 +129,7 @@ class Searcher:
 
     def queryCatalog(self, params):
         '''Performs a single query catalog.'''
-        # Then, perform the query
-        # Is it a local query or a query to a distant site?
-        if self.searchParams.get('search_site', '_local') != '_local':
-            # Get the external application for sending him the request
-            extApp = self.tool.get(self.searchParams.get('search_site'))
-            # Perform the distant search
-            return extApp.search(params)
-        else:
-            return self.portalCatalog(**params)[:params['sort_limit']]
+        return self.portalCatalog(**params)[:params['sort_limit']]
 
     def getValueFromIndex(self, brain, indexName):
         '''Gets the value of index named p_indexName on a b_brain.'''

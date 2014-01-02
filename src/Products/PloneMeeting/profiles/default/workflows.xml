@@ -13,9 +13,6 @@
      <bound-workflow workflow_id="plonemeeting_activity_workflow" />
      <bound-workflow workflow_id="meetingadvice_workflow" />
   </type>
-  <type type_id="ExternalApplication">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
-  </type>
   <type type_id="Meeting">
      <bound-workflow workflow_id="meeting_workflow" />
   </type>

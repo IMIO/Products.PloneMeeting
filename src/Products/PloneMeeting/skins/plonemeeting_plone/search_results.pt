@@ -22,10 +22,8 @@
 
   <metal:main fill-slot="content-core"
      tal:define="tool python: context.portal_plonemeeting;
-                 extApps python: tool.getActiveExternalApplications(usage='search');
                  dummy python: tool.storeSearchParams(request.form);
                  searchParams request/SESSION/searchParams;
-                 searchSite searchParams/search_site|string:_local;
                  searchTypes searchParams/search_types|python:[];
                  meetingConfig python: tool.get(searchParams['search_config'])">
 
@@ -51,12 +49,6 @@
         params['filterValue'] = filterWidget.value;
       }
     }
-    if (searchSite) {
-      /* Normally this param is already in the session. But the user may want
-         to switch from one site to the other. So this param may override the
-         one from the session. */
-      params['search_site'] = searchSite;
-    }
     if (hookId == 'searchedItems') enableMenus = enableAnnexesMenus;
     askAjaxChunk(hookId, 'GET', configUrl, 'plonemeeting-topic-result-macros',
                  'topicResult', params, null, enableMenus);
@@ -78,18 +70,6 @@
   <h1 class="documentFirstHeading">
     <span i18n:translate="heading_search_results" i18n:domain="plone"></span>
   </h1>
-
-  <tal:comment replace="nothing">Switch external applications</tal:comment>
-  <div align="right" tal:condition="python: len(extApps) &gt; 0">
-    <select name="newSite" onChange="javascript:switchSite(this);">
-      <option i18n:translate="search_site_local" value="_local"
-              tal:attributes="selected python:searchSite=='_local'"></option>
-      <option tal:repeat="extApp extApps" tal:content="extApp/Title"
-              tal:attributes="value extApp/getId;
-                              selected python:searchSite==extApp.getId()">
-      </option>
-    </select>
-  </div>
 
   <p class="discreet"><a tal:attributes="href python:context.absolute_url() + '/search_form'"
                          i18n:translate="search_again"></a></p>

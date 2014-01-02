@@ -620,7 +620,6 @@ additions = {
   "MeetingFileType":     (cf('title'), cf('predefinedTitle')),
   "PodTemplate":         (cf('title'), cf('description', type='text')),
   "MeetingGroup":        (cf('title'), cf('description', type='text')),
-  "ExternalApplication": (cf('title'),),
   "MeetingConfig":       (cf('title'),),
   "MeetingUser":
     (cf('duty', condition="python: here.isManager()"),

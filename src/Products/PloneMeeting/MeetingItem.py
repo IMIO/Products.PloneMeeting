@@ -2,7 +2,7 @@
 #
 # File: MeetingItem.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -49,7 +49,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions, \
 from Products.PloneMeeting.utils import \
     getWorkflowAdapter, getCustomAdapter, fieldIsEmpty, \
     getCurrentMeetingObject, checkPermission, sendMail, sendMailIfRelevant, \
-    HubSessionsMarshaller, getMeetingUsers, getFieldContent, getFieldVersion, \
+    getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone
 import logging
@@ -77,88 +77,6 @@ BEFOREDELETE_ERROR = 'A BeforeDeleteException was raised by "%s" while ' \
 WRONG_ADVICE_TYPE_ERROR = 'The given adviceType "%s" does not exist!'
 INSERT_ITEM_ERROR = 'There was an error when inserting the item, ' \
                     'please contact system administrator!'
-
-
-# Marshaller ------------------------------------------------------------------
-class MeetingItemMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall a meeting item into a XML file that one may get
-       through WebDAV.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all_with_metadata'
-    fieldsToExclude = ['proposingGroup', 'associatedGroups', 'category',
-                       'classifier', 'allowDiscussion']
-    rootElementName = 'meetingItem'
-
-    def getGroupTitle(self, item, groupId):
-        tool = item.portal_plonemeeting
-        group = getattr(tool, groupId, None)
-        if group:
-            res = group.Title()
-        else:
-            res = groupId
-        return res
-
-    def marshallSpecificElements(self, item, res):
-        w = res.write
-        HubSessionsMarshaller.marshallSpecificElements(self, item, res)
-        self.dumpField(res, 'reference', item.adapted().getItemReference())
-        # Dump groups. We add group title among tag attributes (so we do not
-        # use standard field dump). This way, some external applications do not
-        # need to retrieve separately MeetingGroup objects.
-        groupTitle = self.getGroupTitle(item, item.getProposingGroup())
-        w('<proposingGroup title="')
-        w(groupTitle)
-        w('">')
-        w(item.getProposingGroup())
-        w('</proposingGroup>')
-        groupIds = item.getAssociatedGroups()
-        w('<associatedGroups type="list" count="%d">' % len(groupIds))
-        for groupId in groupIds:
-            groupTitle = self.getGroupTitle(item, groupId)
-            w('<associatedGroup title="')
-            w(groupTitle)
-            w('">')
-            w(groupId)
-            w('</associatedGroup>')
-        w('</associatedGroups>')
-        # For the same reason, dump the categories in a specific way
-        cat = item.getCategory(True)
-        w('<category')
-        if cat:
-            w(' title="')
-            w(cat.Title())
-            w('">')
-            w(cat.id)
-        else:
-            w('>')
-        w('</category>')
-        # Classifier is a reference field. Dump its id only.
-        w('<classifier>')
-        classifier = item.getClassifier()
-        if classifier:
-            w(classifier.id)
-        w('</classifier>')
-        # Dump advices
-        w('<advices type="list" count="%d">' % len(item.adviceIndex))
-        for groupId, advice in item.adviceIndex.iteritems():
-            w('<advice type="object">')
-            for key, value in advice.iteritems():
-                self.dumpField(res, key, value)
-            w('</advice>')
-        w('</advices>')
-        # Dump votes
-        w('<votes type="list">')
-        for voter, voteValue in item.votes.iteritems():
-            w('<vote type="object">')
-            self.dumpField(res, 'voter', voter)
-            self.dumpField(res, 'voteValue', voteValue)
-            w('</vote>')
-        w('</votes>')
-        self.dumpField(res, 'pm_modification_date', item.pm_modification_date)
-
-InitializeClass(MeetingItemMarshaller)
 
 
 class MeetingItemWorkflowConditions:
@@ -1025,8 +943,6 @@ MeetingItem_schema = OrderedBaseFolderSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-MeetingItem_schema.registerLayer('marshall', MeetingItemMarshaller())
 # Make title longer
 MeetingItem_schema['title'].widget.maxlength = '500'
 # Define a specific msgid for title
@@ -1051,11 +967,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                  'decide')
     beforePublicationStates = ('itemcreated', 'proposed', 'prevalidated',
                                'validated')
-    __dav_marshall__ = True  # MeetingItem is folderish so normally it can't be
-    # marshalled through WebDAV.
-    # When 'present' action is triggered on an item, depending on the meeting
-    # state, other transitions may be triggered automatically (itempublish,
-    # itemfreeze)
     ##/code-section class-header
 
     # Methods
@@ -1091,7 +1002,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         res = self.getField('decision').get(self, **kwargs)
         if keepWithNext:
-            res = self.signatureNotAlone(res)
+            res = signatureNotAlone(res)
         cfg = item.portal_plonemeeting.getMeetingConfig(item)
         adaptations = cfg.getWorkflowAdaptations()
         tool = getToolByName(item, 'portal_plonemeeting')
@@ -3106,11 +3017,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp):
-        '''See doc in interfaces.py.'''
-        pass
-
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
         '''This is a workaround to avoid a Plone design problem where it is
@@ -3560,6 +3466,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                       context=self.REQUEST).encode(enc),
             self.getMeeting().getSignatures().replace('\n', '<br />'))
         return value + collapsibleMeetingSignatures
+
 
 
 registerType(MeetingItem, PROJECTNAME)

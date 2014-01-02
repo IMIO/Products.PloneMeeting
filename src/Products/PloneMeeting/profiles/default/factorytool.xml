@@ -8,7 +8,6 @@
   <type portal_type="MeetingFileType"/>
   <type portal_type="MeetingFile"/>
   <type portal_type="MeetingGroup"/>
-  <type portal_type="ExternalApplication"/>
   <type portal_type="PodTemplate"/>
   <type portal_type="MeetingUser"/>
  </factorytypes>

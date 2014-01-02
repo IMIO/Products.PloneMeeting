@@ -2,7 +2,7 @@
 #
 # File: PodTemplate.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -28,11 +28,10 @@ import time
 import appy.pod
 from appy.pod.renderer import Renderer
 from appy.shared.utils import normalizeString
-from App.class_init import InitializeClass
 from StringIO import StringIO
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.utils import clonePermissions, getCustomAdapter, \
-    getOsTempFolder, HubSessionsMarshaller, sendMail, getFieldContent
+    getOsTempFolder, sendMail, getFieldContent
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.PageTemplates.Expressions import getEngine
 from Products.CMFCore.utils import getToolByName
@@ -46,17 +45,6 @@ MAILINGLIST_CONDITION_ERROR = 'There was an error in the TAL expression ' \
 UNABLE_TO_DETECT_MIMETYPE_ERROR = 'There was an error while trying to detect ' \
                                   'the mimetype of the document to generate. ' \
                                   'Please contact system administrator.'
-
-
-# Marshaller -------------------------------------------------------------------
-class PodTemplateMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall a POD template into a XML file.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all'
-    rootElementName = 'podTemplate'
-InitializeClass(PodTemplateMarshaller)
 ##/code-section module-header
 
 schema = Schema((
@@ -179,8 +167,6 @@ PodTemplate_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-PodTemplate_schema.registerLayer('marshall', PodTemplateMarshaller())
 ##/code-section after-schema
 
 class PodTemplate(BaseContent, BrowserDefaultMixin):
@@ -411,11 +397,6 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp):
-        '''See doc in interfaces.py.'''
-        pass
-
     security.declarePrivate('validate_mailingLists')
     def validate_mailingLists(self, value):
         '''Validates the content of field "mailingList".'''
@@ -494,4 +475,3 @@ def freezePodDocumentsIfRelevant(obj, transition):
                     logger.warn(CANT_WRITE_DOC % (
                         user.id, fileId, folder.absolute_url(), podTemplate.id))
 ##/code-section module-footer
-

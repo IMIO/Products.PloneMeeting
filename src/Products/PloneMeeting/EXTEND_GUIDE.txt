@@ -11,20 +11,19 @@ MeetingCategory:        category
 MeetingFile:            file
 MeetingFileType':       filetype
 ToolPloneMeeting':      tool
-ExternalApplication:    extapp
 MeetingGroup:           group
 PodTemplate:            pod
 MeetingUser:            muser
 
 >>> from Products.PloneMeeting.Meeting import Meeting
->>> 
+>>>
 >>> def update_meeting_schema(baseSchema):
->>>    
+>>>
 >>>     specificSchema = Schema((
 >>>     ),)
->>> 
+>>>
 >>>     baseSchema['assembly'].widget.description_msgid = "assembly_meeting_descr"
->>> 
+>>>
 >>>     completeSchema = baseSchema + specificSchema.copy()
 >>>     return completeSchema
 >>> Meeting.schema = update_meeting_schema(Meeting.schema)

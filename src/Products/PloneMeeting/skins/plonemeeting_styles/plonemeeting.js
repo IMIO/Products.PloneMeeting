@@ -56,9 +56,6 @@ function confirmDeleteObject(theElement, objectType){
     if (objectType == 'wholeMeeting') {
       msg = window.plonemeeting_delete_meeting_confirm_message;
     }
-    else if (objectType == 'archivedMeetings') {
-      msg = window.confirm_delete_archived_meetings;
-    }
     if (confirm(msg)) { getEnclosingForm(theElement).submit(); }
 }
 

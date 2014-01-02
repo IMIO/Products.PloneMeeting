@@ -2,7 +2,7 @@
 #
 # File: MeetingFile.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -29,7 +29,6 @@ import os
 import os.path
 import time
 import unicodedata
-from App.class_init import InitializeClass
 from Acquisition import aq_base
 from zope.annotation import IAnnotations
 from zope.i18n import translate
@@ -39,28 +38,10 @@ from Products.CMFCore.utils import getToolByName
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collective.documentviewer.async import asyncInstalled
 from Products.PloneMeeting.interfaces import IAnnexable
-from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, HubSessionsMarshaller, sendMailIfRelevant
+from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, sendMailIfRelevant
 
 import logging
 logger = logging.getLogger('PloneMeeting')
-
-
-# Marshaller -------------------------------------------------------------------
-class MeetingFileMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall a meetin file into a XML file.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all_with_metadata'
-    rootElementName = 'meetingFile'
-
-    def marshallSpecificElements(self, mf, res):
-        HubSessionsMarshaller.marshallSpecificElements(self, mf, res)
-        self.dumpField(res, 'pm_modification_date', mf.pm_modification_date)
-        self.dumpField(res, 'needsOcr', mf.needsOcr)
-        self.dumpField(res, 'ocrLanguage', mf.ocrLanguage)
-
-InitializeClass(MeetingFileMarshaller)
 
 # Error-related constants ------------------------------------------------------
 UNSUPPORTED_FORMAT_FOR_OCR = 'File "%s" could not be OCR-ized because mime ' \
@@ -126,8 +107,6 @@ MeetingFile_schema = ATBlobSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-MeetingFile_schema.registerLayer('marshall', MeetingFileMarshaller())
 ##/code-section after-schema
 
 class MeetingFile(ATBlob, BrowserDefaultMixin):
@@ -289,11 +268,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
 
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
-        '''See doc in interfaces.py.'''
-        pass
-
-    security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
         pass
 

@@ -551,29 +551,6 @@ document.location.reload(true);
 </div>
 
 <tal:comment replace="nothing">
-  This macro displays, on the tool view, a control panel for consulting and
-  managing night works.
-</tal:comment>
-<table metal:define-macro="nightWork" i18n:domain="PloneMeeting" align="right"
-       cellpadding="0" cellspacing="0"
-       tal:define="nightInfo context/getNightInfo"
-       tal:condition="nightInfo/count">
- <tr>
-  <td style="font-size: 70%; padding: 0 0.1em 0 1em;"
-      tal:content="nightInfo/count">
-  </td>
-  <td><img src="night.gif" tal:attributes="title nightInfo/msg"/></td>
-  <td>
-   <form name="deleteUidForm" action="onDeleteNightWorks">
-    <img style="cursor:pointer" src="delete_many.gif"
-         i18n:attributes="title" title="Delete" i18n:domain="plone"
-         onClick="javascript:confirmDeleteObject(this)"/>
-   </form>
-  </td>
- </tr>
-</table>
-
-<tal:comment replace="nothing">
   This Ajax-called macro displays an object's history.
   XXX WARNING this is no more use and will be totaly removed while removing the PM content historisation functionnality.
   XXX WARNING For now, this is adapted in browser/templates/content_history.pt

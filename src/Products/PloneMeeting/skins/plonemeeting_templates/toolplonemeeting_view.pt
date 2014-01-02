@@ -10,7 +10,6 @@
   <metal:title fill-slot="content-title">
     <h1 class="documentFirstHeading">
       <span i18n:translate="pm_configuration"/>
-      <metal:night use-macro="context/@@pm-macros/nightWork"/>
     </h1>
   </metal:title>
   <metal:fill fill-slot="content-core">
@@ -193,70 +192,6 @@
         </table>
       </fieldset>
 
-      <!-- External applications -->
-      <a name="ExternalApplication"></a>
-      <fieldset>
-        <legend>
-         <span i18n:translate="external_applications"></span>
-         <input type="image" style="cursor:pointer" class="imageInput"
-                tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=ExternalApplication\'' % context.absolute_url();
-                                src string: $portal_url/plus.png"
-                title="add_object" i18n:attributes="title"/>
-        </legend>
-        <table width="100%">
-          <tr valign="top">
-            <td><p class="discreet" i18n:translate="external_applications_descr"></p><br /></td>
-          </tr>
-          <tr>
-            <td>
-            <table class="vertical listing" width="100%">
-              <thead>
-              <tr>
-                <th class="nosort" width="50%" i18n:translate="listingheader_title"></th>
-                <th class="nosort" i18n:translate="PloneMeeting_label_usages"></th>
-                <th class="nosort" width="10%" i18n:translate="pod_template_is_active"></th>
-                <th class="nosort" width="10%" i18n:translate="heading_actions"></th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr tal:condition="python: not context.objectValues('ExternalApplication')">
-                <td colspan="4" align="center" i18n:translate="">no_external_application</td>
-              </tr>
-              <tal:loop repeat="extApp python:context.objectValues('ExternalApplication')">
-              <tr valign="top"
-                  tal:define="isActive python: here.portal_workflow.getInfoFor(extApp, 'review_state') == 'active'"
-                  tal:attributes="class python: not isActive and 'state-inactive' or ''">
-                <td><a tal:attributes="href extApp/absolute_url" tal:content="extApp/getName"></a></td>
-                <td>
-                  <ul>
-                    <li tal:repeat="usageId extApp/getUsages"
-                        tal:content="python: context.translate('extapp_usage_%s' % usageId, domain='PloneMeeting')"></li>
-                  </ul>
-                </td>
-                <td i18n:domain="plone">
-                  <span tal:condition="isActive" i18n:translate="">Yes</span>
-                  <span tal:condition="not: isActive" i18n:translate="">No</span>
-                </td>
-                <td align="right">
-                  <tal:actions condition="isManager">
-                    <a tal:attributes="href python: extApp.absolute_url() + '/edit'">
-                    <img src="edit.gif" title="label_edit" i18n:attributes="title" />
-                    </a>
-                    <a tal:attributes="href python: extApp.absolute_url() + '/delete_confirmation'">
-                    <img title="label_remove" i18n:attributes="title"
-                         tal:attributes="src string:$portal_url/delete_icon.png"/>
-                    </a>
-                  </tal:actions>
-                </td>
-              </tr>
-              </tal:loop>
-              </tbody>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-
       <!-- Advanced search -->
       <a name="advancedSearch"></a>
       <fieldset>
@@ -403,20 +338,6 @@
                    value="pm_update_copygroups" i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
           </td>
-        </tr>
-        <tr>
-          <td tal:define="field python:here.getField('siteStartDate')">
-            <span metal:use-macro="here/widgets/field/macros/view" /></td>
-          <td tal:condition="context/getSiteStartDate">
-            <form name="deleteMeetingsForm" action="deleteArchivedMeetings">
-            <input class="standalone" type="button" name="deleteArchivedMeetings"
-                   value="delete_archived_meetings" i18n:attributes="value"
-                   onClick="confirmDeleteObject(this, 'archivedMeetings')"/>
-            </form>
-          </td>
-          <td></td>
-          <td></td>
-          <td></td>
         </tr>
       </table>
     </fieldset>

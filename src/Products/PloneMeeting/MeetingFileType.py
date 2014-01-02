@@ -2,7 +2,7 @@
 #
 # File: MeetingFileType.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -23,21 +23,9 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-from App.class_init import InitializeClass
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
-from Products.PloneMeeting.utils import getCustomAdapter, HubSessionsMarshaller, getFieldContent
-
-
-# Marshaller -------------------------------------------------------------------
-class FileTypeMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall a file type into a XML file.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all'
-    rootElementName = 'fileType'
-InitializeClass(FileTypeMarshaller)
+from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
 ##/code-section module-header
 
 schema = Schema((
@@ -85,8 +73,6 @@ MeetingFileType_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-MeetingFileType_schema.registerLayer('marshall', FileTypeMarshaller())
 ##/code-section after-schema
 
 class MeetingFileType(BaseContent, BrowserDefaultMixin):
@@ -163,11 +149,6 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
 
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):
-        '''See doc in interfaces.py.'''
-        pass
-
-    security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp):
         '''See doc in interfaces.py.'''
         pass
 

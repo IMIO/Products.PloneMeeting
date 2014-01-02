@@ -201,34 +201,6 @@ class GroupDescriptor(Descriptor):
         return '%s_%s' % (self.id, suffix)
 
 
-class ExternalApplicationDescriptor(Descriptor):
-    multiSelectFields = ('usages', 'notifyEvents')
-    # Get a prototypical instances used for getting default values.
-    instance = None
-
-    def get(klass):
-        if not klass.instance:
-            klass.instance = ExternalApplicationDescriptor(None, None)
-        return klass.instance
-    get = classmethod(get)
-
-    def __init__(self, id, title, usages=['import'], notifyUrl='',
-                 notifyEmail=''):
-        self.id = id
-        self.setBilingual('title', title)
-        self.usages = usages
-        self.notifyUrl = notifyUrl
-        self.notifyEmail = notifyEmail
-        self.notifyProxy = ''
-        self.notifyLogin = ''
-        self.notifyPassword = ''
-        self.notifyProtocol = 'httpGet'
-        self.notifyEvents = []
-        self.notifyCondition = ''
-        self.secondUrl = ''
-        self.deferredMeetingImport = False
-
-
 class MeetingConfigDescriptor(Descriptor):
     multiSelectFields = ('usedItemAttributes', 'historizedItemAttributes',
                          'recordItemHistoryStates', 'usedMeetingAttributes',
@@ -372,7 +344,7 @@ class MeetingConfigDescriptor(Descriptor):
                                        'IMeetingWorkflowActions'
         self.itemDecidedStates = []
         # Workflow adaptations are sets of changes that can be applied to
-        # default HubSessions workflows.
+        # default PloneMeeting workflows.
         self.workflowAdaptations = []
         # "Transitions to confirm" are Meeting or Item-related transitions for
         # which, in the user interface, a click on the corresponding icon or
@@ -524,7 +496,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.deferredNotificationsHandling = False
         self.enableUserPreferences = True
         self.enableAnnexPreview = False
-        self.siteStartDate = None
         self.maxSearchResults = 50
         self.maxShownFoundItems = 20
         self.maxShownFoundMeetings = 20
@@ -537,5 +508,4 @@ class PloneMeetingConfiguration(Descriptor):
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.groups = groups  # ~[GroupDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~
-        self.externalApplications = []  # ~[ExternalApplicationDescriptor]~
 # ------------------------------------------------------------------------------

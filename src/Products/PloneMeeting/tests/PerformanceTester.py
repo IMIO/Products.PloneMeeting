@@ -2,13 +2,20 @@
 # GNU General Public License (GPL)
 
 # ------------------------------------------------------------------------------
-import sys, re, urlparse, os, os.path, random, time, socket
+import sys
+import re
+import urlparse
+import os
+import os.path
+import random
+import time
+import socket
 from appy.shared.dav import Resource
 from appy.shared.utils import FolderDeleter
 
-# ------------------------------------------------------------------------------
+
 class PerformanceTester:
-    '''This class allows to connect to a Zope/Plone HubSessions server in HTTP
+    '''This class allows to connect to a Zope/Plone PloneMeeting server in HTTP
        and send him HTTP requests for testing its response times.'''
 
     def __init__(self, url, login=None, password=None):

@@ -150,11 +150,6 @@ class IMeetingGroup(Interface):
     """
 
 
-class IExternalApplication(Interface):
-    """Marker interface for .ExternalApplication.ExternalApplication
-    """
-
-
 class IPodTemplate(Interface):
     """Marker interface for .PodTemplate.PodTemplate
     """
@@ -317,11 +312,6 @@ class IMeetingItemDocumentation:
            (p_usage=='as_recurring_item') or a template item
            (p_usage=='as_template_item'). The default implementation of this
            method does nothing. p_self is the duplicated item.'''
-
-    def onTransferred(extApp):
-        '''Called just after this object was created from a distant one via
-           external application p_extApp. No need to reindex the object: the
-           framework will do it subsequently.'''
 
     def isPrivacyViewable():
         '''Privacy acts as a simple filter in front of workflow-based security.
@@ -487,10 +477,6 @@ class IMeetingDocumentation:
            meeting.'''
     def onEdit(isCreated):
         '''This method is called every time a meeting is created or updated.'''
-    def onTransferred(extApp):
-        '''Called just after this object was created from a distant one via
-           external application p_extApp. No need to reindex the object: the
-           framework will do it subsequently.'''
 
 
 class IMeetingWorkflowConditions(Interface):
@@ -579,10 +565,6 @@ class IMeetingCategoryDocumentation:
            within Archetypes methods at_post_create_script and
            at_post_edit_script. You do not need to reindex the category. The
            default PloneMeeting implementation for this method does nothing.'''
-    def onTransferred(extApp):
-        '''Called just after this object was created from a distant one via
-           external application p_extApp. No need to reindex the object: the
-           framework will do it subsequently.'''
     def isSelectable(item):
         '''When creating or updating a meeting item, the user may choose a
            category (or a classifier if you use field "classifier" in the
@@ -599,26 +581,11 @@ class IMeetingCategoryCustom(IMeetingCategory):
     pass
 
 
-# Interfaces used for customizing the behaviour of external applications -------
-# See docstring of previous classes for understanding this section.
-class IExternalApplicationDocumentation:
-    def onEdit(isCreated):
-        '''Called when an object p_isCreated or edited.'''
-
-
-class IExternalApplicationCustom(IExternalApplication):
-    pass
-
-
 # Interfaces used for customizing the behaviour of meeting configs -------------
 # See docstring of previous classes for understanding this section.
 class IMeetingConfigDocumentation:
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def onTransferred(extApp):
-        '''Called just after this object was created from a distant one via
-           external application p_extApp. No need to reindex the object: the
-           framework will do it subsequently.'''
 
 
 class IMeetingConfigCustom(IMeetingConfig):
@@ -630,10 +597,6 @@ class IMeetingConfigCustom(IMeetingConfig):
 class IMeetingFileDocumentation:
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def onTransferred(extApp):
-        '''Called just after this object was created from a distant one via
-           external application p_extApp. No need to reindex the object: the
-           framework will do it subsequently.'''
 
 
 class IMeetingFileCustom(IMeetingFile):
@@ -645,10 +608,6 @@ class IMeetingFileCustom(IMeetingFile):
 class IMeetingFileTypeDocumentation:
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def onTransferred(extApp):
-        '''Called just after this object was created from a distant one via
-           external application p_extApp. No need to reindex the object: the
-           framework will do it subsequently.'''
     def isSelectable():
         '''When adding an annex to an item, the user may choose a file type for
            this annex, among all file types defined in the corresponding meeting
@@ -666,10 +625,6 @@ class IMeetingFileTypeCustom(IMeetingFileType):
 class IMeetingGroupDocumentation:
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def onTransferred(extApp):
-        '''Called just after this object was created from a distant one via
-           external application p_extApp. No need to reindex the object: the
-           framework will do it subsequently.'''
 
 
 class IMeetingGroupCustom(IMeetingGroup):
@@ -683,10 +638,6 @@ class IMeetingGroupCustom(IMeetingGroup):
 class IPodTemplateDocumentation:
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def onTransferred(extApp):
-        '''Called just after this object was created from a distant one via
-           external application p_extApp. No need to reindex the object: the
-           framework will do it subsequently.'''
 
 
 class IPodTemplateCustom(IPodTemplate):
@@ -698,10 +649,6 @@ class IPodTemplateCustom(IPodTemplate):
 class IToolPloneMeetingDocumentation:
     def onEdit(isCreated):
         '''Called when the tool p_isCreated or edited.'''
-    def onNotify(objectUrl, event):
-        '''Called when an external system sends to this one a notification
-           related to the occurrence of some p_event on some object whose
-           p_objectUrl is given.'''
     def getSpecificMailContext(event, translationMapping):
         '''See doc in methods with similar names above.'''
 
@@ -732,10 +679,6 @@ class IMeetingUserDocumentation:
            meeting configuration) or if the logged user is a meeting manager
            (provided meeting managers encode votes according to the meeting
            configuration) or if the logged user is a Manager.'''
-    def onTransferred(extApp):
-        '''Called just after this object was created from a distant one via
-           external application p_extApp. No need to reindex the object: the
-           framework will do it subsequently.'''
 
 
 class IMeetingUserCustom(IMeetingUser):

@@ -2,7 +2,7 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -24,7 +24,6 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import mimetypes
-from App.class_init import InitializeClass
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
 from zope.annotation import IAnnotations
@@ -34,10 +33,9 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.utils import getToolByName
-from Products.CMFPlone import PloneMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
-    getCustomSchemaFields, HubSessionsMarshaller, getFieldContent, prepareSearchValue
+    getCustomSchemaFields, getFieldContent, prepareSearchValue
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -50,44 +48,6 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting ' \
                        'configuration. Please choose another one.'
-
-
-# Marshaller -------------------------------------------------------------------
-class ConfigMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall a meeting config into a XML file that another
-       PloneMeeting site may get through WebDAV.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all'
-    rootElementName = 'meetingConfig'
-
-    def marshallSpecificElements(self, mc, res):
-        HubSessionsMarshaller.marshallSpecificElements(self, mc, res)
-        # Add the object state
-        configState = mc.portal_workflow.getInfoFor(mc, 'review_state')
-        self.dumpField(res, 'active', configState == 'active')
-        # Add the URLs of the archived meetings in this meeting config
-        meetingType = mc.getMeetingTypeName()
-        brains = mc.portal_catalog(
-            portal_type=meetingType, review_state='archived', sort_on='getDate')
-        res.write('<availableMeetings type="list" count="%d">' % len(brains))
-        for brain in brains:
-            res.write('<meeting type="object">')
-            self.dumpField(res, 'id', brain.id)
-            self.dumpField(res, 'title', brain.Title)
-            self.dumpField(res, 'url', brain.getURL())
-            res.write('</meeting>')
-        res.write('</availableMeetings>')
-        # Adds links to sub-objects
-        for folderName, folderInfo in mc.subFoldersInfo.iteritems():
-            folder = getattr(mc, folderName)
-            res.write('<%s type="list" count="%d">' % (folderName, len(folder.objectIds())))
-            for subObject in folder.objectValues():
-                self.dumpField(res, 'url', subObject.absolute_url())
-            res.write('</%s>' % folderName)
-
-InitializeClass(ConfigMarshaller)
 
 # Helper class for validating workflow interfaces ------------------------------
 WRONG_INTERFACE = 'You must specify here interface "%s" or a subclass of it.'
@@ -317,7 +277,7 @@ schema = Schema((
         widget=BooleanField._properties['widget'](
             description="AnnexAdviceToPrintDefault",
             description_msgid="annex_advice_to_print_default_descr",
-            label='Anneadvicetoprintdefault',
+            label='Annexadvicetoprintdefault',
             label_msgid='PloneMeeting_label_annexAdviceToPrintDefault',
             i18n_domain='PloneMeeting',
         ),
@@ -1339,10 +1299,6 @@ MeetingConfig_schema = OrderedBaseFolderSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-MeetingConfig_schema.registerLayer('marshall', ConfigMarshaller())
-
-
 ##/code-section after-schema
 
 class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
@@ -1484,9 +1440,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # List of topics related to Meetings that take care
     # of the states defined in a meetingConfig
     meetingTopicsUsingMeetingConfigStates = ('searchallmeetings', 'searchalldecisions', )
-    # MeetingConfig is folderish so normally it can't be marshalled through
-    # WebDAV.
-    __dav_marshall__ = True
     # Names of workflow adaptations.
     wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
                      'only_creator_may_delete', 'pre_validation',
@@ -1867,9 +1820,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portalType.title = portalTypeName
                 # Associate a workflow for this new portal type.
                 exec 'workflowName = self.get%sWorkflow()' % self.metaNames[i]
-                #because of reinstallation problems, we MUST trust given workflow name and use
-                #it.  For example, while reinstalling an external profile, the workflow
-                #could not exist at this time but we need to set it nevertheless
+                # because of reinstallation problems, we MUST trust given workflow name and use
+                # it.  For example, while reinstalling an external profile, the workflow
+                # could not exist at this time but we need to set it nevertheless
                 self.portal_workflow.setChainForPortalTypes([portalTypeName],
                                                             workflowName)
                 # If type is MeetingItem-based, associate him with a different
@@ -2773,11 +2726,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp):
-        '''See doc in interfaces.py.'''
-        pass
-
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
         '''Checks if the current meetingConfig can be deleted :
@@ -2895,18 +2843,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def addFileType(self, ft, source):
         '''Adds a file type from a FileTypeDescriptor p_ft.'''
         folder = getattr(self, TOOL_FOLDER_FILE_TYPES)
-        if isinstance(source, basestring):
-            # The image must be retrieved on disk from a profile
-            iconPath = '%s/images/%s' % (source, ft.theIcon)
-            f = file(iconPath, 'rb')
-            iconContent = f.read()
-        else:
-            # The image is already here, as a file wrapper unmarshalled from an
-            # external application.
-            iconContent = File('dummyId',
-                               ft.theIcon.name,
-                               ft.theIcon.content,
-                               content_type=ft.theIcon.mimeType)
+        # The image must be retrieved on disk from a profile
+        iconPath = '%s/images/%s' % (source, ft.theIcon)
+        f = file(iconPath, 'rb')
+        iconContent = f.read()
         data = ft.getData(theIcon=iconContent)
         folder.invokeFactory('MeetingFileType',
                              **data)
@@ -2923,25 +2863,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def addPodTemplate(self, pt, source):
         '''Adds a POD template from p_pt (a PodTemplateDescriptor instance).'''
         folder = getattr(self, TOOL_FOLDER_POD_TEMPLATES)
-        if isinstance(source, basestring):
-            # The template must be retrieved on disk from a profile
-            filePath = '%s/templates/%s' % (source, pt.podTemplate)
-            f = file(filePath, 'rb')
-            mimeType = mimetypes.guess_type(pt.podTemplate)[0]
-            fileObject = File('dummyId', pt.podTemplate, f.read(),
-                              content_type=mimeType)
-            fileObject.filename = pt.podTemplate
-            fileObject.content_type = mimeType
-            f.close()
-        else:
-            # The image is already here, as a file wrapper unmarshalled from an
-            # external application.
-            fileObject = File('dummyId',
-                              pt.podTemplate.name,
-                              pt.podTemplate.content,
-                              content_type=pt.podTemplate.mimeType)
-            fileObject.filename = pt.podTemplate.name
-            fileObject.content_type = pt.podTemplate.mimeType
+        # The template must be retrieved on disk from a profile
+        filePath = '%s/templates/%s' % (source, pt.podTemplate)
+        f = file(filePath, 'rb')
+        mimeType = mimetypes.guess_type(pt.podTemplate)[0]
+        fileObject = File('dummyId', pt.podTemplate, f.read(),
+                          content_type=mimeType)
+        fileObject.filename = pt.podTemplate
+        fileObject.content_type = mimeType
+        f.close()
         data = pt.getData(podTemplate=fileObject)
         folder.invokeFactory('PodTemplate', **data)
         podTemplate = getattr(folder, pt.id)

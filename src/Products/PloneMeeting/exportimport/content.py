@@ -75,7 +75,6 @@ class ToolInitializer:
             logger.warn("Unable to import %s" % module_path)
 
     def run(self):
-        # Import external applications
         d = self.profileData
         if not d:
             return self.noDataMessage
@@ -83,7 +82,6 @@ class ToolInitializer:
         # Register classes again, after model adaptations have been performed
         # (see comment in __init__.py)
         registerClasses()
-        self.tool.addExternalApplications(d.externalApplications)
         self.tool.addUsersAndGroups(d.groups, d.usersOutsideGroups)
         meetingConfigsToCloneTo = {}
         for mConfig in d.meetingConfigs:
@@ -128,7 +126,7 @@ def initializeTool(context):
     # This method is called by several profiles: testing, archive. Because of a bug
     # in portal_setup, the method can be wrongly called by the default profile.
     if not isTestOrArchiveProfile(context): return
-    # Installs HubSessions/PloneMeeting if not already done
+    # Installs PloneMeeting if not already done
     pqi = context.getSite().portal_quickinstaller
     # Now that we do not run this profile from elsewhere than portal_setup
     # We had to install PloneMeeting first...

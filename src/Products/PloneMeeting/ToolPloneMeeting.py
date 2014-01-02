@@ -2,7 +2,7 @@
 #
 # File: ToolPloneMeeting.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -40,8 +40,6 @@ from BTrees.OOBTree import OOBTree
 from zExceptions import NotFound
 from Acquisition import aq_base
 from AccessControl import getSecurityManager
-from App.class_init import InitializeClass
-from persistent.list import PersistentList
 from DateTime import DateTime
 import transaction
 import OFS.Moniker
@@ -60,8 +58,7 @@ from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
-    HubSessionsMarshaller, monthsIds, weekdaysIds, getCustomSchemaFields, \
-    NightWork
+    monthsIds, weekdaysIds, getCustomSchemaFields
 from Products.PloneMeeting.model.adaptations import performModelAdaptations, performWorkflowAdaptations
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -74,40 +71,6 @@ defValues = PloneMeetingConfiguration.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
 # for importing profiles.
-
-
-# Marshaller -------------------------------------------------------------------
-class ToolMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall the tool into a XML file that another PloneMeeting
-       site may get through WebDAV.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all'
-    rootElementName = 'tool'
-
-    def marshallSpecificElements(self, tool, res):
-        HubSessionsMarshaller.marshallSpecificElements(self, tool, res)
-        # Add the URLs of the meeting configs defined in the tool
-        meetingConfigs = tool.objectValues('MeetingConfig')
-        res.write('<meetingConfigs type="list" count="%d">' % len(meetingConfigs))
-        for mc in meetingConfigs:
-            self.dumpField(res, 'meetingConfig', mc.absolute_url())
-        res.write('</meetingConfigs>')
-        meetingGroups = tool.objectValues('MeetingGroup')
-        res.write('<meetingGroups type="list" count="%d">' % len(meetingGroups))
-        for mg in meetingGroups:
-            res.write('<group type="object">')
-            self.dumpField(res, 'id', mg.id)
-            self.dumpField(res, 'title', mg.Title())
-            self.dumpField(res, 'acronym', mg.getAcronym())
-            self.dumpField(res, 'url', mg.absolute_url())
-            self.dumpField(res, 'active', mg.portal_workflow.getInfoFor(
-                mg, 'review_state') == 'active')
-            res.write('</group>')
-        res.write('</meetingGroups>')
-
-InitializeClass(ToolMarshaller)
 ##/code-section module-header
 
 schema = Schema((
@@ -343,17 +306,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    DateTimeField(
-        name='siteStartDate',
-        default=defValues.siteStartDate,
-        widget=DateTimeField._properties['widget'](
-            description="SiteStartDate",
-            description_msgid="site_start_date_descr",
-            label='Sitestartdate',
-            label_msgid='PloneMeeting_label_siteStartDate',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
     IntegerField(
         name='maxSearchResults',
         default=defValues.maxSearchResults,
@@ -440,8 +392,6 @@ ToolPloneMeeting_schema = OrderedBaseFolderSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-ToolPloneMeeting_schema.registerLayer('marshall', ToolMarshaller())
 ##/code-section after-schema
 
 class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
@@ -461,8 +411,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     schema["title"].widget.visible = False
 
     ploneMeetingTypes = ('MeetingItem', 'MeetingFile')
-    __dav_marshall__ = True  # Tool is folderish so normally it can't be
-    # marshalled through WebDAV.
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
     backPages = {'categories': 'data', 'classifiers': 'data',
                  'meetingfiletypes': 'data', 'meetingusers': 'users',
@@ -565,17 +513,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(meetingConfig)
         return res
 
-    security.declarePublic('getActiveExternalApplications')
-    def getActiveExternalApplications(self, usage='notify'):
-        '''Gets the active external applications.'''
-        res = []
-        wfTool = self.portal_workflow
-        for extApp in self.objectValues('ExternalApplication'):
-            if (wfTool.getInfoFor(extApp, 'review_state') == 'active') and \
-               (usage in extApp.getUsages()):
-                res.append(extApp)
-        return res
-
     security.declarePublic('getGroups')
     def getGroups(self, userId=None, active=True, suffix=None, zope=False):
         '''Gets the groups p_userId belongs to. If p_userId is None, we use the
@@ -673,14 +610,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('createMeetingConfig')
     def createMeetingConfig(self, configData, source):
         '''Creates a new meeting configuration from p_configData which is a
-           MeetingConfigDescriptor instance. If p_source is a string, it
+           MeetingConfigDescriptor instance. p_source is a string that
            corresponds to the absolute path of a profile; additional (binary)
            data like images or templates that need to be attached to some
-           sub-objects of the meeting config will be searched there. If not, it
-           corresponds to an ExternalApplication instance; additional data has
-           been already gathered (in memory, as FileWrapper instances) from
-           another Plone site which is was used as base for copying a meeting
-           configuration in this site.'''
+           sub-objects of the meeting config will be searched there.'''
         cData = configData.getData()
         self.invokeFactory('MeetingConfig', **cData)
         cfg = getattr(self, configData.id)
@@ -1667,13 +1600,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res = res[:sepIndex]
         return res
 
-    security.declarePublic('addExternalApplications')
-    def addExternalApplications(self, extApps):
-        '''Adds external applications to the tool from p_textApps which is a
-           list of ExternalApplicationDescriptor instances.'''
-        for extApp in extApps:
-            self.invokeFactory('ExternalApplication', **extApp.getData())
-
     security.declarePublic('addUser')
     def addUser(self, userData):
         '''Adds a new Plone user from p_userData which is a UserDescriptor
@@ -2020,7 +1946,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = ''
         for msg in ('plonemeeting_delete_confirm_message',
                     'plonemeeting_delete_meeting_confirm_message',
-                    'confirm_delete_archived_meetings',
                     'no_selected_items', 'are_you_sure'):
             res += 'var %s = "%s";\n' % (msg, translate(msg, **args))
         # escape_for_js from portal_skins/plone_scripts/translate.py does the .replace() here above
@@ -2044,95 +1969,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if '-' in res:
             res = res[:res.find('-')]
         return res
-
-    security.declareProtected('Manage portal', 'notify')
-    def notify(self):
-        '''Called when an external HubSessions system notifies me.'''
-        rq = self.REQUEST
-        objUrl = rq['object']
-        event = rq['event']
-        logger.info('Notified of event "%s" for object "%s".' % (event, objUrl))
-        if self.getDeferredNotificationsHandling():
-            # We do not handle the event now: we add a nightwork.
-            self.addNightWork(event, 'notification',
-                              {'objectUrl': objUrl,
-                               'event': event})
-            logger.info('Added night work for it. Will be handled  this night.')
-        else:
-            # Handle it now.
-            self.adapted().onNotify(objUrl, event)
-
-    security.declarePrivate('onNotify')
-    def onNotify(self, objectUrl, event):
-        '''See doc in interfaces.py.'''
-        pass
-
-    security.declarePrivate('addNightWork')
-    def addNightWork(self, action, type, params):
-        '''Adds a new nightwork. See class NightWork in utils.py for a
-           description of what a nightwork is.'''
-        # Create the list of nightworks if it does not exist yet.
-        if not hasattr(self, 'nightWorks'):
-            self.nightWorks = PersistentList()
-        self.nightWorks.append(NightWork(action, type, params))
-
-    security.declareProtected('Modify portal content', 'getNightInfo')
-    def getNightInfo(self):
-        '''Gets information about the nightworks registered for next night.'''
-        res = {'count': 0, 'msg': ''}
-        if not hasattr(self, 'nightWorks') or not self.nightWorks:
-            return res
-        res['count'] = len(self.nightWorks)
-        res['msg'] = translate('night_works', mapping={'nb': res['count']},
-                               domain='PloneMeeting', context=self.REQUEST)
-        return res
-
-    security.declareProtected('Modify portal content', 'hasNightWork')
-    def hasNightWork(self, **kw):
-        '''Returns True if a nightwork matching search criteria in p_kw is
-           found. A search criteria is a (key, value), where key is the name of
-           a NightWork attribute or, if not found, the name of a param in
-           NightWork.params. Query is performed with a logical AND between
-           keywords.
-        '''
-        if not hasattr(self, 'nightWorks') or not self.nightWorks:
-            return
-        for nightWork in self.nightWorks:
-            if nightWork.matches(kw):
-                return True
-
-    security.declareProtected('Modify portal content', 'onDeleteNightWorks')
-    def onDeleteNightWorks(self):
-        '''Deletes all the nightworks.'''
-        while self.nightWorks:
-            self.nightWorks.remove(self.nightWorks[0])
-        return self.gotoReferer()
-
-    security.declarePrivate('nightlife')
-    def nightlife(self):
-        '''This method is executed every night and executes the nighworks
-           defined in self.nightWorks. For info about nightWorks, check class
-           NightWork in utils.py.'''
-        w = logger.warn
-        # Do nothing if no night work is found.
-        w('*** HubSessions nightlife ***')
-        if not hasattr(self, 'nightWorks') or not self.nightWorks:
-            w('Nothing to do tonight.')
-            return
-        w('%d night work(s) to perform.' % len(self.nightWorks))
-        performed = []
-        i = -1
-        for nightWork in self.nightWorks:
-            i += 1
-            try:
-                nightWork.perform(self)
-                performed.insert(0, i)
-            except Exception, e:
-                w('Night work failed. %s: %s' % (e.__class__.__name__, str(e)))
-        for i in performed:
-            del self.nightWorks[i]
-        if self.nightWorks:
-            w('%d nighwork(s) failed. HS will try to execute them again next night.' % len(self.nightWorks))
 
     security.declarePublic('isArchiveSite')
     def isArchiveSite(self):
@@ -2240,29 +2076,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Update security
             obj.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
-
-    security.declarePublic('deleteArchivedMeetings')
-    def deleteArchivedMeetings(self):
-        '''Deletes all archived meetings, including items and annexes, whose
-           date is earlier than siteStartDate.'''
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'):
-            raise Unauthorized
-        if not self.getSiteStartDate():
-            return
-        # Get all archived meetings
-        dateQuery = {'query': self.getSiteStartDate(), 'range': 'max'}
-        brains = self.portal_catalog(meta_type='Meeting', sort_on='getDate',
-                                     review_state='archived', getDate=dateQuery)
-        if not brains:
-            self.plone_utils.addPortalMessage('No meeting to delete.')
-        else:
-            # Tell the delete script that we perform complete meeting deletions
-            self.REQUEST.set('wholeMeeting', True)
-            for brain in brains:
-                self.delete_givenuid(brain.UID)
-            logger.info('Done.')
         self.gotoReferer()
 
     security.declarePublic('storeSearchParams')

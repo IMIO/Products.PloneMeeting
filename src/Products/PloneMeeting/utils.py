@@ -25,19 +25,16 @@ import os.path
 import re
 import urlparse
 import socket
-import cgi
 from appy.shared.diff import HtmlDiff
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEBase import MIMEBase
 from email.MIMEText import MIMEText
 from email import Encoders
-from appy.shared.xml_parser import XmlMarshaller
 from DateTime import DateTime
-from AccessControl import getSecurityManager, Unauthorized
+from AccessControl import getSecurityManager
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from Products.MailHost.MailHost import MailHostError
-from Products.Archetypes.Marshall import Marshaller
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
 import Products.PloneMeeting
 from Products.PloneMeeting import PloneMeetingError
@@ -67,7 +64,6 @@ adaptables = {
     # No (condition or action) workflow-related adapters are defined for the
     # following content types; only a Custom adapter.
     'MeetingCategory': {'method': None, 'interface': IMeetingCategoryCustom},
-    'ExternalApplication': {'method': None, 'interface': IExternalApplicationCustom},
     'MeetingConfig': {'method': None, 'interface': IMeetingConfigCustom},
     'MeetingFile': {'method': None, 'interface': IMeetingFileCustom},
     'MeetingFileType': {'method': None, 'interface': IMeetingFileTypeCustom},
@@ -547,122 +543,6 @@ def sendAdviceToGiveMailIfRelevant(event):
                          mapping={'type': translated_type})
 
 
-# ------------------------------------------------------------------------------
-def marshallBrain(res, value):
-    '''Custom function for producing the XML version of a brain.'''
-    w = res.write
-    # Dump a brain.
-    w('<Title>')
-    w(cgi.escape(value.Title))
-    w('</Title>')
-    w('<url>')
-    w(value.getURL())
-    w('</url>')
-    w('<uid>')
-    w(value.UID)
-    w('</uid>')
-    w('<path>')
-    w(value.getPath())
-    w('</path>')
-    w('<Creator>')
-    w(value.Creator)
-    w('</Creator>')
-    w('<review_state>')
-    w(value.review_state)
-    w('</review_state>')
-    w('<created type="DateTime">')
-    w(value.created)
-    w('</created>')
-    w('<modified type="DateTime">')
-    w(value.modified)
-    w('</modified>')
-    if value.meta_type == 'Meeting':
-        # We must also include the meeting date
-        dateIndex = value.portal_catalog.Indexes['getDate']
-        meetingDate = dateIndex.getEntryForObject(value.getRID())
-        w('<Date type="DateTime">')
-        w(meetingDate)
-        w('</Date>')
-    elif value.meta_type == 'MeetingItem':
-        w('<Title2>')
-        w(value.getTitle2)
-        w('</Title2>')
-
-marshallParams = {'conversionFunctions': {'mybrains': marshallBrain},
-                  'objectType': 'archetype'}
-
-
-class HubSessionsMarshaller(Marshaller, XmlMarshaller):
-    '''Abstract marshaller used as base class for marshalling PloneMeeting
-       objects (meetings, items, configs,...).'''
-    marshallContentType = 'text/xml; charset="utf-8"'
-    frozableTypes = ('Meeting', 'MeetingItem')
-    workflowableTypes = ('Meeting', 'MeetingItem')
-
-    def demarshall(self, instance, data, **kwargs):
-        raise 'Unmarshalling is not implemented yet!'
-
-    def marshall(self, instance, **kwargs):
-        '''Produces a XML version of p_instance.'''
-        action = instance.REQUEST.get('do', None)
-        if action:
-            # In this case, we are not requested to produce the XML version of
-            # p_instance; we need to call a method named "action" and return the
-            # XML version of the method result.
-            try:
-                instance.restrictedTraverse(action)
-                methodRes = getattr(instance, action)()
-                res = XmlMarshaller.marshall(self, methodRes, **marshallParams)
-            except Unauthorized, u:
-                res = XmlMarshaller.marshall(self, str(u))
-            except AttributeError, ae:
-                res = XmlMarshaller.marshall(self, 'Attribute error: '+str(ae))
-        else:
-            res = XmlMarshaller.marshall(self, instance, **marshallParams)
-        return (self.marshallContentType, len(res), res)
-
-    def marshallSpecificElements(self, instance, res):
-        '''Marshalls URLs of documents that were generated in the DB from
-           p_instance and a given POD template.'''
-        if instance.meta_type in self.frozableTypes:
-            mConfig = instance.portal_plonemeeting.getMeetingConfig(instance)
-            podTemplatesFolder = getattr(mConfig, TOOL_FOLDER_POD_TEMPLATES)
-            res.write('<frozenDocuments type="list">')
-            for podTemplate in podTemplatesFolder.objectValues():
-                objectFolder = instance.getParentNode()
-                docId = podTemplate.getDocumentId(instance)
-                if hasattr(objectFolder.aq_base, docId) and \
-                   podTemplate.isApplicable(instance):
-                    docObject = getattr(objectFolder, docId)
-                    res.write('<doc type="object">')
-                    self.dumpField(res, 'id', docId)
-                    self.dumpField(res, 'title', docObject.Title())
-                    self.dumpField(res, 'templateId', podTemplate.id)
-                    self.dumpField(
-                        res, 'templateFormat', podTemplate.getPodFormat())
-                    self.dumpField(res, 'data', docObject, fieldType='file')
-                    res.write('</doc>')
-            res.write('</frozenDocuments>')
-        wft = instance.portal_workflow
-        workflows = wft.getWorkflowsFor(instance)
-        if instance.meta_type in self.workflowableTypes:
-            # Dump workflow history
-            res.write('<workflowHistory type="list">')
-            if workflows:
-                history = instance.workflow_history[workflows[0].id]
-                for event in history:
-                    res.write('<event type="object">')
-                    for k, v in event.iteritems():
-                        self.dumpField(res, k, v)
-                    res.write('</event>')
-            res.write('</workflowHistory>')
-        if workflows and (workflows[0].id == 'plonemeeting_activity_workflow'):
-            # Add the object state
-            objectState = wft.getInfoFor(instance, 'review_state')
-            self.dumpField(res, 'active', objectState == 'active')
-
-
-# ------------------------------------------------------------------------------
 def addRecurringItemsIfRelevant(meeting, transition):
     '''Sees in the meeting config linked to p_meeting if the triggering of
        p_transition must lead to the insertion of some recurring items in
@@ -675,9 +555,7 @@ def addRecurringItemsIfRelevant(meeting, transition):
     if recItems:
         meeting.addRecurringItems(recItems)
 
-# ------------------------------------------------------------------------------
-defaultPermissions = (View, AccessContentsInformation, ModifyPortalContent,
-                      DeleteObjects)
+
 # I wanted to put permission "ReviewPortalContent" among defaultPermissions,
 # but if I do this, it generates an error when calling "manage_permission" in
 # method "clonePermissions" (see below). I've noticed that in several
@@ -688,7 +566,10 @@ defaultPermissions = (View, AccessContentsInformation, ModifyPortalContent,
 # permission "Review portal content" does not appear in the list at all.
 
 
-def clonePermissions(srcObj, destObj, permissions=defaultPermissions):
+def clonePermissions(srcObj, destObj, permissions=(View,
+                                                   AccessContentsInformation,
+                                                   ModifyPortalContent,
+                                                   DeleteObjects)):
     '''This method applies on p_destObj the same values for p_permissions
        than those that apply for p_srcObj, according to workflow on
        p_srcObj. p_srcObj may be an item or a meeting.'''
@@ -709,15 +590,13 @@ def clonePermissions(srcObj, destObj, permissions=defaultPermissions):
     # Reindex object because permissions are catalogued.
     destObj.reindexObject(idxs=['allowedRolesAndUsers'])
 
-# ------------------------------------------------------------------------------
-coreFieldNames = ('id', 'title', 'description')
-
 
 def getCustomSchemaFields(baseSchema, completedSchema, cols):
     '''The Archetypes schema of any PloneMeeting content type can be extended
        through the "pm_updates.py mechanism". This function returns the list of
        fields that have been added by a sub-product by checking differences
        between the p_baseSchema and the p_completedSchema.'''
+    coreFieldNames = ('id', 'title', 'description')
     baseFieldNames = baseSchema._fields
     res = []
     for field in completedSchema.fields():
@@ -917,54 +796,6 @@ def getMeetingUsers(obj, fieldName, theObjects=False, includeDeleted=True,
             else:
                 newRes.append(mUser.getForUseIn(meetingForRepls))
     return newRes
-
-
-# ------------------------------------------------------------------------------
-class NightWork:
-    '''This class represents a task to perform by night, executed by method
-       tool.nightlife.'''
-    def __init__(self, action, type, params={}):
-        # If p_type is 'notification', this night work represents some task to
-        # achieve after a notification has been received by an external system.
-        # In this case, p_action is the name of the received event; method
-        # "tool.adapted().onNotify" will be called (see interfaces.py). If
-        # p_type is 'method', the night work consists in calling a method whose
-        # "path" in Zope is given in p_action, relative to the Plone site.
-        # For example, if p_action is "tool_plonemeeting.someextapp.sayHello",
-        # method "sayHello" will be called on the external application whose id
-        # is "someextapp" in the HS tool.
-        self.action = action
-        # As explained above, 2 types of nightworks can exist: events and
-        # method calls.
-        self.type = type
-        # One can specify, as a dict, parameters to give to the called method
-        # or onNotify.
-        self.params = params
-
-    def perform(self, tool):
-        '''Performs the nightwork.'''
-        p = self.params
-        w = logger.warn
-        w('Executing nightwork...')
-        if self.type == 'notification':
-            w('=> tool.onNotify("%s", "%s")...' % (p['objectUrl'], p['event']))
-            tool.adapted().onNotify(p['objectUrl'], p['event'])
-        elif self.type == 'method':
-            w('=> %s... Params: %s' % (self.action, self.params))
-            exec 'tool.getParentNode().%s(**p)' % self.action
-        w('Nightwork done.')
-
-    def matches(self, kw):
-        '''Returns True if this nightWork matches criteria in dict p_kw.'''
-        res = True
-        for name, value in kw.iteritems():
-            if name in self.__dict__:
-                res = res and (getattr(self, name) == value)
-            elif self.params and (name in self.params):
-                res = res and (self.params.get(name) == value)
-            else:
-                return
-        return res
 
 # ------------------------------------------------------------------------------
 mainTypes = ('MeetingItem', 'Meeting', 'MeetingFile')

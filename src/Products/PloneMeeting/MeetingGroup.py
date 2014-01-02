@@ -2,7 +2,7 @@
 #
 # File: MeetingGroup.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -23,26 +23,14 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-from App.class_init import InitializeClass
 from zope.i18n import translate
-from Products.PloneMeeting.utils import getCustomAdapter, HubSessionsMarshaller, getFieldContent
+from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
 from Products.PloneMeeting import PloneMeetingError
 import logging
 logger = logging.getLogger('PloneMeeting')
 from OFS.ObjectManager import BeforeDeleteException
 from Products.PloneMeeting.profiles import GroupDescriptor
 defValues = GroupDescriptor.get()
-
-
-# Marshaller -------------------------------------------------------------------
-class GroupMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall a group into a XML file.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all'
-    rootElementName = 'meetingGroup'
-InitializeClass(GroupMarshaller)
 ##/code-section module-header
 
 schema = Schema((
@@ -141,8 +129,6 @@ MeetingGroup_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-MeetingGroup_schema.registerLayer('marshall', GroupMarshaller())
 ##/code-section after-schema
 
 class MeetingGroup(BaseContent, BrowserDefaultMixin):
@@ -354,11 +340,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp):
-        '''See doc in interfaces.py.'''
-        pass
-
     security.declarePublic('getItemAdviceStates')
     def getItemAdviceStates(self, cfg=None, **kwargs):
         '''This is an overridden version of the Archetypes accessor for field
@@ -395,4 +376,3 @@ registerType(MeetingGroup, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

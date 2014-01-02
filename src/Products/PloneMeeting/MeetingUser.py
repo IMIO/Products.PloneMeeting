@@ -2,7 +2,7 @@
 #
 # File: MeetingUser.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -23,20 +23,8 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-from App.class_init import InitializeClass
 from zope.i18n import translate
-from Products.PloneMeeting.utils import getCustomAdapter, HubSessionsMarshaller, FakeMeetingUser, getFieldContent
-
-
-# Marshaller -------------------------------------------------------------------
-class MeetingUserMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall a meeting user into a XML file.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all'
-    rootElementName = 'meetingUser'
-InitializeClass(MeetingUserMarshaller)
+from Products.PloneMeeting.utils import getCustomAdapter, FakeMeetingUser, getFieldContent
 ##/code-section module-header
 
 schema = Schema((
@@ -272,10 +260,6 @@ MeetingUser_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-MeetingUser_schema.registerLayer('marshall', MeetingUserMarshaller())
-
-
 ##/code-section after-schema
 
 class MeetingUser(BaseContent, BrowserDefaultMixin):
@@ -396,11 +380,6 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
                ('aMeetingManager' in votesEncoder):
                 return True
         return False
-
-    security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp):
-        '''See doc in interfaces.py.'''
-        pass
 
     security.declarePublic('isManager')
     def isManager(self):
@@ -557,4 +536,3 @@ registerType(MeetingUser, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

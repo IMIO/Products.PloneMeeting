@@ -15,7 +15,7 @@
       description="Extension profile for PloneMeeting."
       provides="Products.GenericSetup.interfaces.EXTENSION"
       />
-  
+
   <!-- ##code-section profiles.zcml-bottom #fill in your manual code here -->
   <genericsetup:registerProfile
       name="testing"
@@ -66,11 +66,11 @@
       profile="Products.PloneMeeting:default" />
 
   <genericsetup:upgradeStep
-      title="Go to PloneMeeting 3.1.1"
+      title="Go to PloneMeeting 3.2.0"
       description=""
       source="3.1.0"
-      destination="3.1.1"
-      handler="Products.PloneMeeting.migrations.migrate_to_3_1_1.migrate"
+      destination="3.2.0"
+      handler="Products.PloneMeeting.migrations.migrate_to_3_2_0.migrate"
       profile="Products.PloneMeeting:default" />
 
   <!-- ##/code-section profiles.zcml-bottom -->

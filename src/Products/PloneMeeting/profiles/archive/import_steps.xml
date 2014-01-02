@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<import-steps>
- <import-step id="initialize-PloneMeeting-archive-site" version="20090729-01"
-              handler="Products.PloneMeeting.exportimport.content.initializeTool"
-              title="Initialize portal_plonemeeting folders.">
-  Initializes a PloneMeeting site specifically for archiving purposes.
- </import-step>
-</import-steps>

@@ -29,7 +29,6 @@
 
   <metal:main fill-slot="main"
      tal:define="tool python: context.portal_plonemeeting;
-                 extApps python: tool.getActiveExternalApplications(usage='search');
                  currentMeetingConfig python: tool.getMeetingConfig(context);
                  associatedGroupsUsed python: tool.attributeIsUsed('item', 'associatedGroups');
                  categoryUsed python: tool.attributeIsUsed('item', 'category');
@@ -38,17 +37,6 @@
 
   <script language="javascript">
   <!--
-  function askAllConfigData(configUrl, categoryUsed, classifierUsed) {
-    if (categoryUsed == 'True') {
-      askAjaxChunk('hook_categories', 'GET', configUrl, 'search_macros',
-                   'categories');
-    }
-    if (classifierUsed == 'True') {
-      askAjaxChunk('hook_classifiers', 'GET', configUrl, 'search_macros',
-                   'classifiers');
-    }
-  }
-
   var cbChecked = new Array();
   cbChecked['item_keywords_target'] = true;
   cbChecked['search_types'] = true;
@@ -99,10 +87,9 @@
         </td>
         <tal:comment replace="nothing">Time interval for the search</tal:comment>
         <td width="30%" tal:define="now python:DateTime()+1;
-                                    siteStart tool/getSiteStartDate;
-                                    yearMin python: siteStart and (siteStart.year()-20) or (now.year()-20);
+                                    yearMin python: now.year()-20;
                                     yearMax python: now.year()+1;
-                                    startDate python:siteStart and siteStart or (now-732)">
+                                    startDate python: now-732;">
           <label i18n:translate="search_time_period_label"></label><br class="discreet"/><br/>
           <table style="no-style-table" cellpadding="0" cellspacing="0">
             <tal:comment replace="nothing">"From" date</tal:comment>
@@ -211,14 +198,6 @@
         <td width="25%">
               <input type="hidden" class="noborder" name="search_config"
                      tal:attributes="value currentMeetingConfig/id;"/>
-          <tal:chooseSite condition="python: len(extApps) > 0">
-            <label i18n:translate="search_site_label"></label><br class="discreet"/>
-            <select name="search_site">
-              <option i18n:translate="search_site_local" value="_local"></option>
-              <option tal:repeat="extApp extApps" tal:attributes="value extApp/getId" tal:content="extApp/Title">
-              </option>
-            </select>
-          </tal:chooseSite>
         </td>
       </tr>
       <tr name="item_criteria">
@@ -297,12 +276,27 @@
               <td tal:condition="categoryUsed">
                <tal:comment replace="nothing">Categories</tal:comment>
                <br/><label for="categories" i18n:translate="PloneMeeting_label_category"></label><br/>
-               <span id="hook_categories"></span>&nbsp;&nbsp;&nbsp;&nbsp;
+                <select name="categories" multiple="multiple" size="7">
+                  <tal:options repeat="category currentMeetingConfig/getCategories">
+                    <option tal:define="name category/getName"
+                            tal:attributes="value category/id; title name"
+                            tal:content="python: tool.truncate(name, 45)">
+                    </option>
+                  </tal:options>
+                </select>
               </td>
               <td tal:condition="classifierUsed">
                 <tal:comment replace="nothing">Classifiers</tal:comment>
                 <br/><label for="classifiers" i18n:translate="PloneMeeting_label_classifier"></label><br/>
-                <span id="hook_classifiers"></span>&nbsp;&nbsp;&nbsp;&nbsp;
+                <select name="classifiers" multiple="multiple" size="7"
+                        tal:condition="classifierUsed">
+                  <tal:options repeat="classifier python: currentMeetingConfig.getCategories(classifiers=True)">
+                  <option tal:define="name classifier/getName"
+                          tal:attributes="value classifier/UID; title name"
+                          tal:content="python: tool.truncate(name, 45)">
+                  </option>
+                  </tal:options>
+                </select>
               </td>
             </tr>
           </table>
@@ -316,9 +310,6 @@
       </tr>
     </table>
   </form>
-  <script language="javascript"
-          tal:content="python: 'askAllConfigData(\'%s\',\'%s\',\'%s\')' % (currentMeetingConfig.absolute_url(), categoryUsed, classifierUsed)">
-  </script>
 
   </metal:main>
 </body>

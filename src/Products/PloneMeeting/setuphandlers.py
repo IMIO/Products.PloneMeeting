@@ -2,7 +2,7 @@
 #
 # File: setuphandlers.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -98,7 +98,7 @@ def setupCatalogMultiplex(context):
     if isNotPloneMeetingProfile(context): return
     site = context.getSite()
     #dd#
-    muliplexed = ['ToolPloneMeeting', 'MeetingCategory', 'MeetingConfig', 'MeetingFileType', 'MeetingGroup', 'ExternalApplication', 'PodTemplate', 'MeetingUser']
+    muliplexed = ['ToolPloneMeeting', 'MeetingCategory', 'MeetingConfig', 'MeetingFileType', 'MeetingGroup', 'PodTemplate', 'MeetingUser']
 
     atool = getToolByName(site, 'archetype_tool')
     catalogmap = {}
@@ -112,8 +112,6 @@ def setupCatalogMultiplex(context):
     catalogmap['MeetingFileType']['black'] = ['portal_catalog']
     catalogmap['MeetingGroup'] = {}
     catalogmap['MeetingGroup']['black'] = ['portal_catalog']
-    catalogmap['ExternalApplication'] = {}
-    catalogmap['ExternalApplication']['black'] = ['portal_catalog']
     catalogmap['PodTemplate'] = {}
     catalogmap['PodTemplate']['black'] = ['portal_catalog']
     catalogmap['MeetingUser'] = {}
@@ -181,7 +179,6 @@ def postInstall(context):
     pol = ppw.portal_plonemeeting_policy
     pol.setTitle('PloneMeeting tool policy')
     pol.setChain('Topic', ('plonemeeting_activity_workflow',))
-    pol.setChain('ExternalApplication', ('plonemeeting_activity_workflow',))
     pol.setChainForPortalTypes(
         ('MeetingGroup', 'MeetingConfig', 'MeetingFileType',
          'MeetingCategory', 'Folder'), ('plonemeeting_activity_workflow',))
@@ -314,6 +311,7 @@ def postInstall(context):
     if not 'meetingadvice' in blacklisted:
         blacklisted.append('meetingadvice')
         site_properties.manage_changeProperties(types_not_searched=blacklisted)
+
 
 
 ##code-section FOOT

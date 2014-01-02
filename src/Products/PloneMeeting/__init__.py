@@ -2,7 +2,7 @@
 #
 # File: PloneMeeting.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -129,7 +129,6 @@ def initialize(context):
     import MeetingFileType
     import MeetingFile
     import MeetingGroup
-    import ExternalApplication
     import PodTemplate
     import MeetingUser
 
@@ -174,3 +173,4 @@ def initialize(context):
             FakeBrain.security.declarePublic(elem)
     InitializeClass(FakeBrain)
     ##/code-section custom-init-bottom
+

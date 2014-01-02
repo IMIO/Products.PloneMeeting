@@ -11,7 +11,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 
 
 # The migration class ----------------------------------------------------------
-class Migrate_To_3_1_1(Migrator):
+class Migrate_To_3_2_0(Migrator):
 
     def _configureCatalogIndexesAndMetadata(self):
         '''Remove the 'getDecision' index, as it is replaced by 'getDeliberation',
@@ -133,8 +133,21 @@ class Migrate_To_3_1_1(Migrator):
                 item.deleteReferences(relationship="DecisionAnnexes")
         logger.info('Done.')
 
+    def _finishExternalApplicationRemoval(self):
+        '''As we removed the class 'ExternalApplication', we need to update some parts
+           that were related :
+           - the attribute 'siteStardDate' on portal_plonemeeting;
+           - the portal_type 'ExternalApplication';
+           - '''
+        logger.info('Finishing \'ExternalApplication\' removal...')
+        if hasattr(aq_base(self.tool), 'siteStartDate'):
+            delattr(aq_base(self.tool), 'siteStartDate')
+        if 'ExternalApplication' in self.portal.portal_types.objectIds():
+            self.portal.portal_types.manage_delObjects(ids=['ExternalApplication', ])
+        logger.info('Done.')
+
     def run(self):
-        logger.info('Migrating to PloneMeeting 3.1.1...')
+        logger.info('Migrating to PloneMeeting 3.2.0...')
         # reinstall so 'getDeliberation' index is added and computed, new 'meetingafvice' type is installed, ...
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self._configureCatalogIndexesAndMetadata()
@@ -144,6 +157,7 @@ class Migrate_To_3_1_1(Migrator):
         self._updateMeetingFileTypes()
         self._updateAnnexIndex()
         self._cleanReferencesOnItems()
+        self._finishExternalApplicationRemoval()
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['reference_catalog', ],
@@ -162,7 +176,8 @@ def migrate(context):
        5) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
        6) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
        7) Clean ItemAnnexes and DecisionAnnexes references on items;
-       8) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
+       8) Finish 'ExternalApplication' removal;
+       9) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
     '''
-    Migrate_To_3_1_1(context).run()
+    Migrate_To_3_2_0(context).run()
 # ------------------------------------------------------------------------------

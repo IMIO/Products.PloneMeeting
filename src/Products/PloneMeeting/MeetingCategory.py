@@ -2,7 +2,7 @@
 #
 # File: MeetingCategory.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2014 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -23,23 +23,9 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-from App.class_init import InitializeClass
 from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.utils import getCustomAdapter, \
-    HubSessionsMarshaller, getFieldContent
-
-
-# Marshaller -------------------------------------------------------------------
-class CategoryMarshaller(HubSessionsMarshaller):
-    '''Allows to marshall a category into a XML file.'''
-    security = ClassSecurityInfo()
-    security.declareObjectPrivate()
-    security.setDefaultAccess('deny')
-    fieldsToMarshall = 'all'
-    rootElementName = 'category'
-InitializeClass(CategoryMarshaller)
-
+from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
 ##/code-section module-header
 
 schema = Schema((
@@ -102,10 +88,6 @@ MeetingCategory_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# Register the marshaller for DAV/XML export.
-MeetingCategory_schema.registerLayer('marshall', CategoryMarshaller())
-
-
 ##/code-section after-schema
 
 class MeetingCategory(BaseContent, BrowserDefaultMixin):
@@ -197,11 +179,6 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declareProtected('Modify portal content', 'onTransferred')
-    def onTransferred(self, extApp):
-        '''See doc in interfaces.py.'''
-        pass
-
     security.declarePublic('isSelectable')
     def isSelectable(self, userId):
         '''See documentation in interfaces.py.'''
@@ -253,4 +230,3 @@ registerType(MeetingCategory, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-
