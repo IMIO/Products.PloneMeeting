@@ -1533,7 +1533,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # at_post_create_script that updates the local roles (so removes role
             # 'Manager' that we've set above) by calling MeetingItem.updateLocalRoles,
             # and also gives role "Owner" to the logged user.
-            newItem.processForm()
+            # we pass some values so processForm does not mess existing ones by trying
+            # to get data in the REQUEST as this method could be called from a place where
+            # the REQUEST does not contains relevant data
+            newItem.processForm(values={'dummy': None})
             IAnnexable(newItem).updateAnnexIndex()
             if newOwnerId != loggedUserId:
                 self.plone_utils.changeOwnershipOf(newItem, newOwnerId)
@@ -1576,7 +1579,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 obj = traverse(path)
                 # Check here that we have 'Delete objects' on the object.
                 if not self.portal_membership.checkPermission(DeleteObjects, obj):
-                    raise Exception, "can_not_delete_object"
+                    raise Exception("can_not_delete_object")
                 res = portal.delete_givenuid(obj.UID())
                 if not "object_deleted" in res:
                     # Take the last part of the url+portalMessage wich is the
