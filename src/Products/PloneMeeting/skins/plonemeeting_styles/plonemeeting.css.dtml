@@ -686,6 +686,11 @@ dl.searchResults cite {
     top: 0.5em;
 }
 
+/* make sure column containing 'Group' is wide enough */
+#datagridwidget-table-customAdvisers .datagridwidget-column-1.discreet {
+    width: 300px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
