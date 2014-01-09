@@ -1157,8 +1157,10 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="CustomAdvisers",
             description_msgid="custom_advisers_descr",
-            columns={'group': SelectColumn("Group", vocabulary="listCustomAdvisersGroups"),
-                     'gives_auto_advice_on': Column("Gives automatic advice on"), },
+            columns={'group': SelectColumn("Custom adviser group",
+                                           vocabulary="listCustomAdvisersGroups"),
+                     'gives_auto_advice_on': Column("Custom adviser gives automatic advice on",
+                                                    col_description="gives_auto_advice_on_col_description"), },
             label='Customadvisers',
             label_msgid='PloneMeeting_label_customAdvisers',
             i18n_domain='PloneMeeting',
