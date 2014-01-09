@@ -59,8 +59,8 @@ logger = logging.getLogger('PloneMeeting')
 ITEM_REF_ERROR = 'There was an error in the TAL expression for defining the ' \
     'format of an item reference. Please check this in your meeting config. ' \
     'Original exception: %s'
-GROUP_MANDATORY_CONDITION_ERROR = 'There was an error in the TAL expression ' \
-    'defining if the group must be considered as a mandatory adviser. ' \
+AUTOMATIC_ADVICE_CONDITION_ERROR = 'There was an error in the TAL expression ' \
+    'defining if the advice of the group must be automatically asked. ' \
     'Please check this in your meeting config. %s'
 AS_COPYGROUP_CONDITION_ERROR = 'There was an error in the TAL expression ' \
     'defining if the group must be set as copyGroup. ' \
@@ -160,7 +160,7 @@ class MeetingItemWorkflowConditions:
         if checkPermission(ReviewPortalContent, self.context) and \
            self._publishedObjectIsMeeting():
             res = True  # Until now
-            # Verify if all mandatory advices have been given on this item.
+            # Verify if all automatic advices have been given on this item.
             if self.context.enforceAdviceMandatoriness() and \
                not self.context.mandatoryAdvicesAreOk():
                 res = No(translate('mandatory_advice_ko',
@@ -2027,18 +2027,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return sendMailIfRelevant(self, event, permissionOrRole, isRole,
                                   customEvent, mapping)
 
-    security.declarePublic('getMandatoryAdvisers')
-    def getMandatoryAdvisers(self):
-        '''Who are the mandatory advisers for this item? We get it by
-           evaluating the TAL expression on every active MeetingGroup containing
-           at least one adviser. The method returns a list of MeetingGroup
+    security.declarePublic('getAutomaticAdvisers')
+    def getAutomaticAdvisers(self):
+        '''Who are the automatic advisers for this item? We get it by
+           evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
+           corresponding group contains at least one adviser. The method returns a list of MeetingGroup
            ids.'''
         tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         portal = getToolByName(self, 'portal_url').getPortalObject()
         res = []
-        for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers'):
+        notEmptyAdvisersGroupIds = [mGroup.id for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers')]
+        for customAdviser in cfg.getCustomAdvisers():
+            # first check that corresponding group containing advisers is not empty
+            if not customAdviser['group'] in notEmptyAdvisersGroupIds:
+                continue
             # check if there is something to evaluate...
-            strippedExprToEvaluate = mGroup.getGivesMandatoryAdviceOn().replace(' ', '')
+            strippedExprToEvaluate = customAdviser['gives_auto_advice_on'].replace(' ', '')
             if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
                 continue
             # Check that the TAL expression on the group returns True
@@ -2046,11 +2051,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             ctx.setGlobal('item', self)
             eRes = False
             try:
-                eRes = Expression(mGroup.getGivesMandatoryAdviceOn())(ctx)
+                eRes = Expression(customAdviser['gives_auto_advice_on'])(ctx)
             except Exception, e:
-                logger.warning(GROUP_MANDATORY_CONDITION_ERROR % str(e))
+                logger.warning(AUTOMATIC_ADVICE_CONDITION_ERROR % str(e))
             if eRes:
-                res.append(mGroup.id)
+                res.append(customAdviser['group'])
         return res
 
     security.declarePublic('addAutoCopyGroups')
@@ -2102,11 +2107,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Optional advisers for this item are MeetingGroups that are not among
            mandatory advisers and that have at least one adviser.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        mandatoryAdvisers = self.getMandatoryAdvisers()
         res = []
+        # only let select groups for which there is at least one user in
         for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers'):
-            if mGroup.id not in mandatoryAdvisers:
-                res.append((mGroup.id, mGroup.getName()))
+            res.append((mGroup.getId(), mGroup.getName()))
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it
@@ -2352,23 +2356,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # clean adviceIndex and recompute it
         self.adviceIndex = PersistentMapping()
 
-        # Compute mandatory and get optional advisers
-        mandatoryAdvisers = self.getMandatoryAdvisers()
+        # Compute automatic and get optional advisers
+        automaticAdvisers = self.getAutomaticAdvisers()
         optAdvisers = self.getOptionalAdvisers()
         # Remove from optional advisers people that would already have been
         # computed as mandatory advisers.
         optionalAdvisers = []
         for adviser in optAdvisers:
-            if adviser not in mandatoryAdvisers:
+            if adviser not in automaticAdvisers:
                 optionalAdvisers.append(adviser)
         self.setOptionalAdvisers(optionalAdvisers)
         # Update the dictionary self.adviceIndex with every advices to give
         i = -1
-        # we keep the mandatory and optional advisers separated because we need
+        # we keep the optional and automatic advisers separated because we need
         # to know what advices are optional or not
-        for group in (mandatoryAdvisers, optionalAdvisers):
+        # if an automatic advice was asked in optional advices, it will override the asked optional advice
+        for group in (optionalAdvisers, automaticAdvisers):
             i += 1
-            optional = (i == 1)
+            optional = (i == 0)
             for groupId in group:
                 # We create an empty dictionary that will store advice info
                 # once the advice will have been created.

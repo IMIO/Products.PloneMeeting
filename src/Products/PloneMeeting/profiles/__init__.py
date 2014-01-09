@@ -172,14 +172,12 @@ class GroupDescriptor(Descriptor):
         return klass.instance
     get = classmethod(get)
 
-    def __init__(self, id, title, acronym, description='', active=True,
-                 givesMandatoryAdviceOn='python:False',
-                 asCopyGroupOn='python:False', ):
+    def __init__(self, id, title, acronym, description='',
+                 active=True, asCopyGroupOn='python:False', ):
         self.id = id
         self.setBilingual('title', title)
         self.acronym = acronym
         self.setBilingual('description', description)
-        self.givesMandatoryAdviceOn = givesMandatoryAdviceOn
         self.itemAdviceStates = []
         self.itemAdviceEditStates = []
         self.itemAdviceViewStates = []
@@ -210,7 +208,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates', 'itemPowerObserversStates',
                          'meetingPowerObserversStates', 'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
-                         'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates',
+                         'customAdvisers', 'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates',
                          'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues'
                          )
 
@@ -452,6 +450,7 @@ class MeetingConfigDescriptor(Descriptor):
         # Items where advice invalidation should be enabled.
         self.itemAdviceInvalidateStates = ['proposed', 'validated', 'presented']
         self.adviceStyle = 'standard'
+        self.customAdvisers = []
 
         # Votes parameters -----------------------------------------------------
         self.useVotes = False

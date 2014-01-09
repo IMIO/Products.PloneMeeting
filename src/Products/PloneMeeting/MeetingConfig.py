@@ -20,6 +20,11 @@ import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
+from Products.DataGridField import DataGridField, DataGridWidget
+from Products.DataGridField.Column import Column
+from Products.DataGridField.SelectColumn import SelectColumn
+from Products.DataGridField.CheckboxColumn import CheckboxColumn
+
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
@@ -1145,6 +1150,22 @@ schema = Schema((
         schemata="advices",
         vocabulary='listAdviceStyles',
     ),
+    DataGridField(
+        name='customAdvisers',
+        default=defValues.customAdvisers,
+        schemata="advices",
+        widget=DataGridField._properties['widget'](
+            description="CustomAdvisers",
+            description_msgid="custom_advisers_descr",
+            columns={'group': SelectColumn("Group", vocabulary="listCustomAdvisersGroups"),
+                     'gives_auto_advice_on': Column("Gives automatic advice on"), },
+            label='Customadvisers',
+            label_msgid='PloneMeeting_label_customAdvisers',
+            i18n_domain='PloneMeeting',
+        ),
+        allow_oddeven=True,
+        columns=('group', 'gives_auto_advice_on'),
+    ),
     LinesField(
         name='itemPowerObserversStates',
         widget=MultiSelectionWidget(
@@ -1608,7 +1629,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST,
                              default='Values defined in the \'itemEditStates\' field must contains at least '
                                      'every values selected in the \'itemAdvicesStates\' field!')
-
     security.declarePrivate('listWorkflowAdaptations')
     def listWorkflowAdaptations(self):
         '''Lists the available workflow changes.'''
@@ -1720,6 +1740,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("hands", translate('advices_hands', domain=d, context=self.REQUEST)),
         ))
         return res
+
+    security.declarePrivate('listCustomAdvisersGroups')
+    def listCustomAdvisersGroups(self):
+        """
+          Vocabulary for the customAdvisers.group DatagridField attribute.
+          It returns every active MeetingGroups.
+        """
+        res = []
+        tool = getToolByName(self, 'portal_plonemeeting')
+        for mGroup in tool.getMeetingGroups():
+            res.append((mGroup.getId(), mGroup.getName()))
+        return DisplayList(res)
 
     security.declarePrivate('listAllVoteValues')
     def listAllVoteValues(self):

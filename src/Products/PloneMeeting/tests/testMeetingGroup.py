@@ -81,8 +81,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # checks on the item are made around :
         # item.getProposingGroup
         # item.getAssociatedGroups
-        # item.getOptionalAdvisers
-        # item.getMandatoryAdvisers
+        # item.adviceIndex
         # item.getCopyGroups
         # so check the 5 possible "states"
 
@@ -90,7 +89,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # for item, make sure other conditions are False
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(())
-        self.assertTrue('developers_advisers' not in item.getMandatoryAdvisers())
+        self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setCopyGroups(())
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -101,7 +100,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setProposingGroup('vendors')
         item.setAssociatedGroups(('developers', ))
         item.setOptionalAdvisers(())
-        self.assertTrue('developers_advisers' not in item.getMandatoryAdvisers())
+        self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setCopyGroups(())
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -112,7 +111,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setProposingGroup('vendors')
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(('developers', ))
-        self.assertTrue('developers_advisers' not in item.getMandatoryAdvisers())
+        self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setCopyGroups(())
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -123,7 +122,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setProposingGroup('vendors')
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(())
-        self.assertTrue('developers_advisers' not in item.getMandatoryAdvisers())
+        self.assertTrue('developers_advisers' not in item.adviceIndex)
         self.meetingConfig.setUseCopies(True)
         item.setCopyGroups(('developers_reviewers', ))
         item.at_post_edit_script()

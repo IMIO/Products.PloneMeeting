@@ -6,6 +6,7 @@
     <dependency>profile-Products.CMFPlacefulWorkflow:CMFPlacefulWorkflow</dependency>
     <dependency>profile-imio.actionspanel:default</dependency>
     <dependency>profile-collective.documentviewer:default</dependency>
+    <dependency>profile-Products.DataGridField:default</dependency>
   </dependencies>
   <!-- ##/code-section METADATA -->
 </metadata>

@@ -146,6 +146,30 @@ class Migrate_To_3_2_0(Migrator):
             self.portal.portal_types.manage_delObjects(ids=['ExternalApplication', ])
         logger.info('Done.')
 
+    def _migrateMandatoryAdvisers(self):
+        '''
+          The MeetingGroup.givesMandatoryAdviceOn attribute disappeared and is replaced
+          by the MeetingConfig.customAdvisers management, so migrate givesMandatoryAdviceOn
+          attributes.
+        '''
+        logger.info('Migrating mandatory advisers...')
+        # just migrate active MeetingGroups givesMandatoryAdviceOn attribute
+        # but remove existing givesMandatoryAdviceOn attribute on every groups
+        newMCCustomAdvisersValue = []
+        for mGroup in self.tool.getMeetingGroups():
+            if not hasattr(aq_base(mGroup), 'givesMandatoryAdviceOn'):
+                # already migrated
+                return
+            givesMandatoryAdviceOn = mGroup.givesMandatoryAdviceOn.replace(' ', '')
+            if givesMandatoryAdviceOn and givesMandatoryAdviceOn not in ('python:False', 'python:False;', 'False'):
+                newMCCustomAdvisersValue.append({'group': mGroup.getId(),
+                                                 'gives_auto_advice_on': givesMandatoryAdviceOn,
+                                                 })
+            delattr(aq_base(mGroup), 'givesMandatoryAdviceOn')
+        for cfg in self.tool.getActiveConfigs():
+            cfg.setCustomAdvisers(newMCCustomAdvisersValue)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.0...')
         # reinstall so 'getDeliberation' index is added and computed, new 'meetingafvice' type is installed, ...
@@ -158,6 +182,7 @@ class Migrate_To_3_2_0(Migrator):
         self._updateAnnexIndex()
         self._cleanReferencesOnItems()
         self._finishExternalApplicationRemoval()
+        self._migrateMandatoryAdvisers()
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['reference_catalog', ],

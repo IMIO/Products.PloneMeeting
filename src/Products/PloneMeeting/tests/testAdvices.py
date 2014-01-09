@@ -445,6 +445,51 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
 
+    def test_pm_AutomaticAdvices(self):
+        '''Test the automatic advices mechanism, some advices can be
+           automatically asked under specific conditions.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('developers', ))
+        item.at_post_edit_script()
+        self.assertTrue('developers' in item.adviceIndex)
+        self.assertFalse('vendors' in item.adviceIndex)
+        # now make 'vendors' advice automatically asked
+        # it will be asked if item.budgetRelated is True
+        self.meetingConfig.setCustomAdvisers([{'group': 'vendors',
+                                               'gives_auto_advice_on': 'item/getBudgetRelated'}, ])
+        # if the item is not budgetRelated, nothing happens
+        item.at_post_edit_script()
+        self.assertFalse('vendors' in item.adviceIndex)
+        # but if the condition is True, then the advice is automatically asked
+        item.setBudgetRelated(True)
+        item.at_post_edit_script()
+        self.assertTrue('vendors' in item.adviceIndex)
+        # moreover, this automatic advice is not considered as optional
+        self.assertFalse(item.adviceIndex['vendors']['optional'])
+        # the advice asked using optionalAdvisers is marked as optional
+        self.assertTrue(item.adviceIndex['developers']['optional'])
+        # if an automatic advice is asked and it was also asked as optional
+        # the advice is only asked once and considered as automatic, aka not optional
+        # but before, 'developers' advice is still considered as optional
+        self.assertTrue('developers' in item.getOptionalAdvisers())
+        self.meetingConfig.setCustomAdvisers([{'group': 'vendors',
+                                               'gives_auto_advice_on': 'item/getBudgetRelated'},
+                                              {'group': 'developers',
+                                               'gives_auto_advice_on': 'item/getBudgetRelated'}, ])
+        item.at_post_edit_script()
+        self.assertFalse(item.adviceIndex['vendors']['optional'])
+        # 'developers' asked advice is no more considered as optional even if in optionalAdvisers
+        self.assertFalse(item.adviceIndex['developers']['optional'])
+        # 'developers' asked advice has been removed from item.optionalAdvisers
+        self.assertFalse('developers' in item.getOptionalAdvisers())
+        # if the TAL expression defined in 'gives_auto_advice_on' is wrong, it is not considered
+        self.meetingConfig.setCustomAdvisers(
+            [{'group': 'vendors', 'gives_auto_advice_on': 'item/wrongMethod'},
+             {'group': 'developers', 'gives_auto_advice_on': 'item/getBudgetRelated'}, ])
+        item.at_post_edit_script()
+        self.assertFalse('vendors' in item.adviceIndex)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

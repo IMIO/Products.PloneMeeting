@@ -55,18 +55,6 @@ schema = Schema((
         default_content_type='text/plain',
         accessor="Description",
     ),
-    StringField(
-        name='givesMandatoryAdviceOn',
-        default=defValues.givesMandatoryAdviceOn,
-        widget=StringField._properties['widget'](
-            size=100,
-            description="GivesMandatoryAdviceOn",
-            description_msgid="gives_mandatory_advice_on_descr",
-            label='Givesmandatoryadviceon',
-            label_msgid='PloneMeeting_label_givesMandatoryAdviceOn',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
     LinesField(
         name='itemAdviceStates',
         default=defValues.itemAdviceStates,
@@ -310,8 +298,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 obj = brain.getObject()
                 if (obj.getProposingGroup() == mgId) or \
                    (mgId in obj.getAssociatedGroups()) or \
-                   (mgId in obj.getOptionalAdvisers()) or \
-                   (mgId in obj.getMandatoryAdvisers()) or \
+                   (mgId in obj.adviceIndex) or \
                    set(obj.getCopyGroups()).intersection(suffixedGroups):
                     # The meetingGroup is linked to an existing item, we can not
                     # delete it.

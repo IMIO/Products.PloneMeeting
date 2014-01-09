@@ -99,8 +99,7 @@ powerobserver2 = UserDescriptor('powerobserver2',
                                 email="powerobserver2@plonemeeting.org",
                                 fullname='M. Power Observer2')
 
-developers = GroupDescriptor('developers', 'Developers', 'Devel',
-                             givesMandatoryAdviceOn='python:False')
+developers = GroupDescriptor('developers', 'Developers', 'Devel')
 developers.creators.append(pmCreator1)
 developers.creators.append(pmCreator1b)
 developers.creators.append(pmManager)

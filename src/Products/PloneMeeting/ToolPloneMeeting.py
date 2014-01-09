@@ -474,7 +474,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getMeetingGroup')
     def getMeetingGroup(self, ploneGroupId):
-        '''Returns the meeting group containing the plone group with id
+        '''Returns the MeetingGroup linked to the Plone group with id
             p_ploneGroupId.'''
         ploneGroup = self.portal_groups.getGroupById(ploneGroupId)
         props = ploneGroup.getProperties()
