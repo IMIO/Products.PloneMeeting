@@ -1461,7 +1461,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 oldHistory = newItem.workflow_history
                 tmpDict = {newWFName: oldHistory[oldWFName]}
                 newItem.workflow_history = tmpDict
-                import ipdb; ipdb.set_trace()
                 # make sure current review_state is right, in case initial_state
                 # of newPortalType wf is not the same as original portal_type wf, correct this
                 if not newItem.portal_workflow.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem):
