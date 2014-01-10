@@ -240,7 +240,7 @@ class UnrestrictedMethodsView(BrowserView):
 
 class ItemSign(BrowserView):
     """
-      Item is signed after it as been closed and so, user has no more "Modify portal content" permission.
+      Item is signed after it has been closed and so, user has no more "Modify portal content" permission.
       We use maySignItem to check if the current user can actually sign/unsignItem.
     """
     IMG_TEMPLATE = u'<img class="%s" src="%s" title="%s" name="%s" %s />'

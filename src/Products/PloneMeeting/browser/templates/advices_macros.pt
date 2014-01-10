@@ -34,7 +34,11 @@
           <dd class="actionMenuContentAX actionMenuContentAdvice">
             <ul style="cursor:default"> <tal:comment replace="nothing">List of group names</tal:comment>
               <li tal:repeat="advice python:advicesByType[adviceType]">
-                <fieldset><legend><span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span></legend>
+                <fieldset>
+                    <legend>
+                         <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span>
+                         <acronym tal:attributes="title python: advice['optional'] and 'This optional advice was asked by the item creators' or 'This automatic advice has been asked by the application'">&nbsp;?&nbsp;</acronym>
+                    </legend>
                 <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%"
                        tal:define="mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given')">
                   <tr tal:condition="mayEdit">

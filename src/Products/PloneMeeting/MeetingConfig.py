@@ -23,7 +23,6 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.DataGridField import DataGridField, DataGridWidget
 from Products.DataGridField.Column import Column
 from Products.DataGridField.SelectColumn import SelectColumn
-from Products.DataGridField.CheckboxColumn import CheckboxColumn
 
 from Products.PloneMeeting.config import *
 
@@ -1160,13 +1159,24 @@ schema = Schema((
             columns={'group': SelectColumn("Custom adviser group",
                                            vocabulary="listCustomAdvisersGroups"),
                      'gives_auto_advice_on': Column("Custom adviser gives automatic advice on",
-                                                    col_description="gives_auto_advice_on_col_description"), },
+                                                    col_description="gives_auto_advice_on_col_description"),
+                     'gives_auto_advice_on_help_message':
+                        Column("Custom adviser gives automatic advice on help message",
+                        col_description="gives_auto_advice_on_help_message_col_description"),
+                     'delay': Column("Custom adviser delay (in days)",
+                                     col_description="delay_col_description"),
+                     'delay_help_message': Column("Custom adviser delay help message",
+                                                  col_description="delay_help_message_col_description"),
+                     },
             label='Customadvisers',
             label_msgid='PloneMeeting_label_customAdvisers',
             i18n_domain='PloneMeeting',
         ),
         allow_oddeven=True,
-        columns=('group', 'gives_auto_advice_on'),
+        columns=('group', 'gives_auto_advice_on',
+                 'gives_auto_advice_on_help_message',
+                 'delay',
+                 'delay_help_message', ),
     ),
     LinesField(
         name='itemPowerObserversStates',
