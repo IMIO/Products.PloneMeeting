@@ -1980,7 +1980,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if not item.meta_type in ('Plone Site', 'Meeting'):
             user = self.portal_membership.getAuthenticatedMember()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
-            raise BeforeDeleteException, "can_not_delete_meeting_container"
+            raise BeforeDeleteException("can_not_delete_meeting_container")
         BaseContent.manage_beforeDelete(self, item, container)
 
     security.declarePublic('showVotes')
