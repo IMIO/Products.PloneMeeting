@@ -2,6 +2,10 @@
 /* <dtml-with base_properties> */
 /* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
 
+acronym {
+    cursor: help;
+}
+
 fieldset {line-height: 1em; margin: 0.5em 0; }
 p {
     line-height: 1em;
@@ -203,7 +207,7 @@ tr.even table.advices td {
     display: block;
     background-color: white;
     border: 1px solid #CCCCCC;
-    margin: -1px 0 0 0;
+    margin-top: -1px;
     padding-top: 0;
     padding-bottom: 0;
     padding-left: 0.5em;
@@ -216,13 +220,6 @@ tr.even table.advices td {
 /* add some padding at the bottom of the advice menuAx panel */
 #content .actionMenuContentAX.actionMenuContentAdvice > ul {
     padding-bottom: 0.5em;
-}
-
-/* add a pading-bottom under the AX panel */
-#content dd.actionMenuContentAX {
-    padding: 0;
-    padding-bottom: 5em;
-    margin: 0;
 }
 
 /* specifically do not use a padding-bottom at the AX panel displaying annexes of advices */
@@ -308,7 +305,9 @@ li.pmLinks div.annexTitleNotPrintable {
 }
 
 /* place an icon before the annex title if there was an error during conversion */
-.erroredConversion, dd li span.erroredConversion {
+.erroredConversion,
+dd li span.erroredConversion,
+dd ul a.erroredConversion {
     background-image: url(<dtml-var portal_url>/errored_conversion.png);
     background-repeat: no-repeat;
     background-position: 0px 0px;
@@ -686,8 +685,12 @@ dl.searchResults cite {
     top: 0.5em;
 }
 
-/* make sure column containing 'Group' is wide enough */
-#datagridwidget-table-customAdvisers .datagridwidget-column-1.discreet {
+/* make column displayed for MeetingConfig.customAdvisers equals */
+#datagridwidget-table-customAdvisers .datagridwidget-column-1,
+#datagridwidget-table-customAdvisers .datagridwidget-column-2,
+#datagridwidget-table-customAdvisers .datagridwidget-column-3,
+#datagridwidget-table-customAdvisers .datagridwidget-column-4,
+#datagridwidget-table-customAdvisers .datagridwidget-column-5 {
     width: 300px;
 }
 
