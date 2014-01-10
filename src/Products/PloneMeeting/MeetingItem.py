@@ -51,7 +51,8 @@ from Products.PloneMeeting.utils import \
     getCurrentMeetingObject, checkPermission, sendMail, sendMailIfRelevant, \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
-    setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone
+    setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
+    kupuFieldIsEmpty
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -1137,7 +1138,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return True
 
     security.declareProtected('Modify portal content', 'setItemIsSigned')
-    def setItemIsSigned(self, value):
+    def setItemIsSigned(self, value, **kwargs):
         '''Overrides the field 'itemIsSigned' mutator to check if the field is
            actually editable.'''
         member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
@@ -1145,7 +1146,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         #and if the user can not sign the item, we raise an Unauthorized
         if not self._at_creation_flag and not self.adapted().maySignItem(member):
             raise Unauthorized
-        self.getField('itemIsSigned').set(self, value)
+        self.getField('itemIsSigned').set(self, value, **kwargs)
+
+    security.declareProtected('Modify portal content', 'setBudgetInfos')
+    def setBudgetInfos(self, value, **kwargs):
+        '''Overrides the field 'budgetInfos' to keep
+           MeetingItem.budgetRelated behaviour consistent.
+           This could be the case if 'budgetInfos' is ajax edited
+           thru the item view.'''
+        # we are setting an empty value, turn budgetRelated to False
+        if kupuFieldIsEmpty(value):
+            self.setBudgetRelated(False)
+        else:
+            self.setBudgetRelated(True)
+        self.getField('budgetInfos').set(self, value, **kwargs)
 
     security.declarePublic('onDiscussChanged')
     def onDiscussChanged(self, toDiscuss):
@@ -2813,11 +2827,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return True
 
     security.declareProtected('Modify portal content', 'setClassifier')
-    def setClassifier(self, value):
+    def setClassifier(self, value, **kwargs):
         if not value:
             return
         oldValue = self.getClassifier()
-        self.getField('classifier').set(self, value)
+        self.getField('classifier').set(self, value, **kwargs)
         newValue = self.getClassifier()
         if not oldValue or (oldValue.id != newValue.id):
             # We must update the item count of the new classifier. We do NOT
@@ -2825,11 +2839,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             newValue.incrementItemsCount()
 
     security.declareProtected('Modify portal content', 'setCategory')
-    def setCategory(self, newValue):
+    def setCategory(self, newValue, **kwargs):
         if not newValue:
             return
         oldValue = self.getCategory()
-        self.getField('category').set(self, newValue)
+        self.getField('category').set(self, newValue, **kwargs)
         if not oldValue or (oldValue != newValue):
             # We must update the item count of the new category. We do NOT
             # decrement the item count of the old category if it existed.
@@ -3136,6 +3150,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 coloredLink = spanifyLink(coloredLink)
             res.append(coloredLink)
         return res
+
+    security.declarePublic('showBudgetInfosEvenIfNotBudgetRelated')
+    def showBudgetInfosEvenIfNotBudgetRelated(self):
+        '''See doc in interfaces.py.'''
+        return False
 
     security.declarePublic('showVotes')
     def showVotes(self):
