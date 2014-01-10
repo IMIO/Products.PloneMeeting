@@ -1461,6 +1461,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 oldHistory = newItem.workflow_history
                 tmpDict = {newWFName: oldHistory[oldWFName]}
                 newItem.workflow_history = tmpDict
+                import ipdb; ipdb.set_trace()
+                # make sure current review_state is right, in case initial_state
+                # of newPortalType wf is not the same as original portal_type wf, correct this
+                if not newItem.portal_workflow.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem):
+                    # in this case, the current wf state is wrong, we will correct it
+                    newItem.workflow_history = {}
+                    # this will initialize wf initial state if workflow_history is empty
+                    initial_state = newItem.portal_workflow.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem)
+                    tmpDict[newWFName][0]['review_state'] = initial_state.id
+                    newItem.workflow_history = tmpDict
 
             # remove contained meetingadvices
             newItem._removeEveryContainedAdvices()
