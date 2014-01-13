@@ -56,7 +56,6 @@ class testWFAdaptations(PloneMeetingTestCase):
                                'no_global_observation',
                                'no_proposal',
                                'no_publication',
-                               'only_creator_may_delete',
                                'pre_validation',
                                'return_to_proposing_group',
                                )))
@@ -233,60 +232,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         # even for the admin (Manager)
         login(self.portal, 'admin')
         self.failIf(self.transitions(i1))
-
-    def test_pm_WFA_only_creator_may_delete(self):
-        '''Test the workflowAdaptation 'archiving'.'''
-        # check while the wfAdaptation is not activated
-        self._only_creator_may_delete_inactive()
-        # activate the wfAdaptation and check
-        self.meetingConfig.setWorkflowAdaptations('only_creator_may_delete')
-        logger = logging.getLogger('PloneMeeting: testing')
-        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
-        self._only_creator_may_delete_active()
-
-    def _only_creator_may_delete_inactive(self):
-        '''Tests while 'only_creator_may_delete' wfAdaptation is inactive.'''
-        login(self.portal, 'pmCreator2')
-        i1 = self.create('MeetingItem')
-        self.assertEquals(i1.queryState(), 'itemcreated')
-        # we have transitions
-        self.failUnless(self.hasPermission('Delete objects', i1))
-        self.do(i1, 'propose')
-        self.failIf(self.hasPermission('Delete objects', i1))
-        login(self.portal, 'pmReviewer2')
-        # the Reviewer can delete
-        self.failUnless(self.hasPermission('Delete objects', i1))
-        self.do(i1, 'validate')
-        self.failIf(self.hasPermission('Delete objects', i1))
-        login(self.portal, 'pmManager')
-        # the MeetingManager can delete
-        self.failUnless(self.hasPermission('Delete objects', i1))
-        # God can delete too...
-        login(self.portal, 'admin')
-        self.failUnless(self.hasPermission('Delete objects', i1))
-
-    def _only_creator_may_delete_active(self):
-        '''Tests while 'only_creator_may_delete' wfAdaptation is active.'''
-        login(self.portal, 'pmCreator2')
-        i1 = self.create('MeetingItem')
-        self.assertEquals(i1.queryState(), 'itemcreated')
-        # we have transitions
-        self.failUnless(self.hasPermission('Delete objects', i1))
-        self.do(i1, 'propose')
-        self.failUnless(self.hasPermission('Delete objects', i1))
-        login(self.portal, 'pmReviewer2')
-        # the Reviewer can NOT delete
-        self.failIf(self.hasPermission('Delete objects', i1))
-        self.do(i1, 'validate')
-        self.failIf(self.hasPermission('Delete objects', i1))
-        login(self.portal, 'pmCreator2')
-        self.failUnless(self.hasPermission('Delete objects', i1))
-        login(self.portal, 'pmManager')
-        # the MeetingManager can NOT delete
-        self.failIf(self.hasPermission('Delete objects', i1))
-        # God can delete too...
-        login(self.portal, 'admin')
-        self.failUnless(self.hasPermission('Delete objects', i1))
 
     def test_pm_WFA_no_global_observation(self):
         '''Test the workflowAdaptation 'no_global_observation'.'''

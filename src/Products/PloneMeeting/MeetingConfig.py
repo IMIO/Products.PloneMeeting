@@ -1411,7 +1411,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
          'created',
          'searchItemsToPrevalidate',
-         "python: 'pre_validation' in here.wfAdaptations() and here.portal_plonemeeting.userIsAmong('prereviewers')",
+         "python: 'pre_validation' in here.getWorkflowAdaptations() and here.portal_plonemeeting.userIsAmong('prereviewers')",
          ),
         # Items to validate : need a script to do this search
         ('searchitemstovalidate',
@@ -1482,8 +1482,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     meetingTopicsUsingMeetingConfigStates = ('searchallmeetings', 'searchalldecisions', )
     # Names of workflow adaptations.
     wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
-                     'only_creator_may_delete', 'pre_validation',
-                     'items_come_validated', 'archiving', 'no_publication',
+                     'pre_validation', 'items_come_validated',
+                     'archiving', 'no_publication',
                      'no_proposal', 'everyone_reads_all',
                      'creator_edits_unless_closed', 'local_meeting_managers',
                      'return_to_proposing_group', 'hide_decisions_when_under_writing', )

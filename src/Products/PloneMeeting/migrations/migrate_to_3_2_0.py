@@ -15,6 +15,18 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_2_0(Migrator):
 
+    def _removeOnlyCreatorMayDeleteWFAdaptation(self):
+        '''
+          We completly removed the 'only_creator_may_delete' WFAdaptation, make sure it is not used anymore.
+        '''
+        logger.info('Removing only_creator_may_delete WFAdaptation...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            if 'only_creator_may_delete' in cfg.getWorkflowAdaptations():
+                wfAdaptations = list(cfg.getWorkflowAdaptations())
+                wfAdaptations.remove('only_creator_may_delete')
+                cfg.setWorkflowAdaptations(wfAdaptations)
+        logger.info('Done.')
+
     def _configureCatalogIndexesAndMetadata(self):
         '''Remove the 'getDecision' index, as it is replaced by 'getDeliberation',
            reindex the 'Description' index as we index the 'text/plain' version now.'''
@@ -175,7 +187,9 @@ class Migrate_To_3_2_0(Migrator):
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.0...')
-        # reinstall so 'getDeliberation' index is added and computed, new 'meetingafvice' type is installed, ...
+        # do this before reinstalling...
+        self._removeOnlyCreatorMayDeleteWFAdaptation()
+        # reinstall so 'getDeliberation' index is added and computed, new 'meetingadvice' type is installed, ...
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self._configureCatalogIndexesAndMetadata()
         self._initDefaultBudgetHTML()
@@ -186,6 +200,7 @@ class Migrate_To_3_2_0(Migrator):
         self._cleanReferencesOnItems()
         self._finishExternalApplicationRemoval()
         self._migrateMandatoryAdvisers()
+
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['reference_catalog', ],
@@ -197,15 +212,17 @@ class Migrate_To_3_2_0(Migrator):
 def migrate(context):
     '''This migration function:
 
-       1) Removed the 'getDecision' index;
-       2) Initialize field MeetingConfig.defaultBudget so it behaves correctly has RichText;
-       3) Update advices as we moved from MeetingItem.advices to MeetingItem.adviceIndex;
-       4) Make sure every existing annexes creation process is correctly finished;
-       5) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
-       6) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
-       7) Clean ItemAnnexes and DecisionAnnexes references on items;
-       8) Finish 'ExternalApplication' removal;
-       9) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
+       1) Make sure the 'only_creator_may_delete' WFAdaptation is not used anymore in any meetingConfig;
+       2) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
+       3) Removed the 'getDecision' index;
+       4) Initialize field MeetingConfig.defaultBudget so it behaves correctly has RichText;
+       5) Update advices as we moved from MeetingItem.advices to MeetingItem.adviceIndex;
+       6) Make sure every existing annexes creation process is correctly finished;
+       7) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
+       8) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
+       9) Clean ItemAnnexes and DecisionAnnexes references on items;
+       10) Finish 'ExternalApplication' removal;
+       11) Migrate mandatory advisers;
     '''
     Migrate_To_3_2_0(context).run()
 # ------------------------------------------------------------------------------
