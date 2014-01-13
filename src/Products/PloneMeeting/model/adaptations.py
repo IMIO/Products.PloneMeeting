@@ -319,6 +319,21 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             wf.states.deleteStates(names)
         logger.info(WF_APPLIED % ("archiving", meetingConfig.getId()))
 
+    # "only_creator_may_delete" grants the permission to delete items to
+    # creators only (=role MeetingMember)(and also to God=Manager).
+    # (De-)activation of adaptation "pre_validation" impacts this one.
+    # We will check states in wich MeetingMember could delete and let only him
+    # have the delete permission.  In states where MeetingMember could not delete,
+    # nobody will be able to delete at all (except God Itself obviously)
+    if 'only_creator_may_delete' in wfAdaptations:
+        wf = itemWorkflow
+        for state in wf.states.values():
+            if 'MeetingMember' in state.permission_roles['Delete objects']:
+                state.setPermission('Delete objects', 0, ['MeetingMember', 'Manager'])
+            else:
+                state.setPermission('Delete objects', 0, ['Manager', ])
+        logger.info(WF_APPLIED % ("only_creator_may_delete", meetingConfig.getId()))
+
     # "no_global_observation" means that during the whole decision process,
     # every proposing group will only be able to consult items and decisions
     # related to their group, never those from other groups. So there is no
