@@ -1462,8 +1462,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 tmpDict = {newWFName: oldHistory[oldWFName]}
                 newItem.workflow_history = tmpDict
                 # make sure current review_state is right, in case initial_state
-                # of newPortalType wf is not the same as original portal_type wf, correct this
-                if not newItem.portal_workflow.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem):
+                # of newPortalType WF is not the same as original portal_type WF, correct this
+                newItemWF = wftool.getWorkflowsFor(newItem)[0]
+                if not newItemWF._getWorkflowStateOf(newItem) or not \
+                   wftool.getInfoFor(newItem, 'review_state') == newItemWF.initial_state:
                     # in this case, the current wf state is wrong, we will correct it
                     newItem.workflow_history = {}
                     # this will initialize wf initial state if workflow_history is empty
