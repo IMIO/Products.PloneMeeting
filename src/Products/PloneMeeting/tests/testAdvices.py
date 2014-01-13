@@ -457,7 +457,8 @@ class testAdvices(PloneMeetingTestCase):
         # now make 'vendors' advice automatically asked
         # it will be asked if item.budgetRelated is True
         self.meetingConfig.setCustomAdvisers([{'group': 'vendors',
-                                               'gives_auto_advice_on': 'item/getBudgetRelated'}, ])
+                                               'gives_auto_advice_on': 'item/getBudgetRelated',
+                                               'gives_auto_advice_for_item_created_from': '2012/01/01', }, ])
         # if the item is not budgetRelated, nothing happens
         item.at_post_edit_script()
         self.assertFalse('vendors' in item.adviceIndex)
@@ -474,21 +475,78 @@ class testAdvices(PloneMeetingTestCase):
         # but before, 'developers' advice is still considered as optional
         self.assertTrue('developers' in item.getOptionalAdvisers())
         self.meetingConfig.setCustomAdvisers([{'group': 'vendors',
-                                               'gives_auto_advice_on': 'item/getBudgetRelated'},
+                                               'gives_auto_advice_on': 'item/getBudgetRelated',
+                                               'gives_auto_advice_for_item_created_from': '2012/01/01', },
                                               {'group': 'developers',
-                                               'gives_auto_advice_on': 'item/getBudgetRelated'}, ])
+                                               'gives_auto_advice_on': 'item/getBudgetRelated',
+                                               'gives_auto_advice_for_item_created_from': '2012/01/01', }, ])
         item.at_post_edit_script()
         self.assertFalse(item.adviceIndex['vendors']['optional'])
         # 'developers' asked advice is no more considered as optional even if in optionalAdvisers
         self.assertFalse(item.adviceIndex['developers']['optional'])
         # 'developers' asked advice has been removed from item.optionalAdvisers
         self.assertFalse('developers' in item.getOptionalAdvisers())
-        # if the TAL expression defined in 'gives_auto_advice_on' is wrong, it is not considered
+        # if the TAL expression defined in 'gives_auto_advice_on' is wrong or changed, it is not considered
+        # BUT when an automatic advice has been asked, it will still be asked, no matter the configuration changed
         self.meetingConfig.setCustomAdvisers(
-            [{'group': 'vendors', 'gives_auto_advice_on': 'item/wrongMethod'},
-             {'group': 'developers', 'gives_auto_advice_on': 'item/getBudgetRelated'}, ])
+            [{'group': 'vendors',
+              'gives_auto_advice_on': 'item/wrongMethod',
+              'gives_auto_advice_for_item_created_from': '2012/01/01', },
+             {'group': 'developers',
+              'gives_auto_advice_on': 'item/getBudgetRelated',
+              'gives_auto_advice_for_item_created_from': '2012/01/01', }, ])
+        item.at_post_edit_script()
+        # the automatic advice is still asked
+        self.assertFalse(item.adviceIndex['vendors']['optional'])
+        # asking an optional advice when an automatic advice is still in the indexAdvisers
+        # will let the priority to the automatic advice that is currently stored
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
+        self.assertFalse(item.adviceIndex['vendors']['optional'])
+        # moreover, the item optionalAdvisers stored have been cleaned
+        # from existing automatic advices
+        self.failIf(item.getOptionalAdvisers())
+        # if we remove it manually then update again, it will show that a wrong TAL expression
+        # will make the automatic advice not considered
+        del item.adviceIndex['vendors']
         item.at_post_edit_script()
         self.assertFalse('vendors' in item.adviceIndex)
+
+    def test_pm_getAutomaticAdvisers(self):
+        """
+          Test the getAutomaticAdvisers method that compute
+        """
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.meetingConfig.setCustomAdvisers([])
+        # if nothing defined, getAutomaticAdvisers returns nothing...
+        self.failIf(item.getAutomaticAdvisers())
+        # define some customAdvisers
+        self.meetingConfig.setCustomAdvisers([])
+        self.meetingConfig.setCustomAdvisers(
+            [{'group': 'vendors',
+              'gives_auto_advice_on': 'item/wrongMethod',
+              'gives_auto_advice_for_item_created_from': '2012/01/01'},
+             {'group': 'developers',
+              'gives_auto_advice_on': 'item/getBudgetRelated',
+              'gives_auto_advice_for_item_created_from': '2012/01/01'}, ])
+        # one wrong condition (raising an error when evaluated) and one returning False
+        self.failIf(item.getAutomaticAdvisers())
+        # now define a real one
+        self.meetingConfig.setCustomAdvisers(
+            [{'group': 'developers',
+              'gives_auto_advice_on': 'not:item/getBudgetRelated',
+              'gives_auto_advice_for_item_created_from': '2012/01/01'}, ])
+        self.assertEquals(item.getAutomaticAdvisers(), ['developers', ])
+        # define one condition for wich the date is > than current item CreationDate
+        futureDate = DateTime() + 1
+        self.meetingConfig.setCustomAdvisers(
+            [{'group': 'developers',
+              'gives_auto_advice_on': 'not:item/getBudgetRelated',
+              'gives_auto_advice_for_item_created_from': futureDate.strftime('%Y/%m/%d')}, ])
+        # nothing should be returned as defined date is bigger than current item's date
+        self.assertTrue(futureDate > item.created())
+        self.failIf(item.getAutomaticAdvisers())
 
 
 def test_suite():

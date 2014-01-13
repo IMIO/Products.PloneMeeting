@@ -1,6 +1,8 @@
 # ------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('PloneMeeting')
+
+from DateTime import DateTime
 from Acquisition import aq_base
 from persistent.mapping import PersistentMapping
 
@@ -162,9 +164,10 @@ class Migrate_To_3_2_0(Migrator):
                 return
             givesMandatoryAdviceOn = mGroup.givesMandatoryAdviceOn.replace(' ', '')
             if givesMandatoryAdviceOn and givesMandatoryAdviceOn not in ('python:False', 'python:False;', 'False'):
-                newMCCustomAdvisersValue.append({'group': mGroup.getId(),
-                                                 'gives_auto_advice_on': givesMandatoryAdviceOn,
-                                                 })
+                newMCCustomAdvisersValue.append(
+                    {'group': mGroup.getId(),
+                     'gives_auto_advice_on': givesMandatoryAdviceOn,
+                     'gives_auto_advice_for_item_created_from': DateTime().strftime('%Y/%m/%d'), })
             delattr(aq_base(mGroup), 'givesMandatoryAdviceOn')
         for cfg in self.tool.getActiveConfigs():
             cfg.setCustomAdvisers(newMCCustomAdvisersValue)

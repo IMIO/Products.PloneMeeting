@@ -28,6 +28,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import mimetypes
+from DateTime import DateTime
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
 from zope.annotation import IAnnotations
@@ -1160,6 +1161,10 @@ schema = Schema((
                                            vocabulary="listCustomAdvisersGroups"),
                      'gives_auto_advice_on': Column("Custom adviser gives automatic advice on",
                                                     col_description="gives_auto_advice_on_col_description"),
+                     'gives_auto_advice_for_item_created_from':
+                        Column("Gives automatic advice for item created from",
+                               col_description="gives_auto_advice_for_item_created_from_col_description",
+                               default=DateTime().strftime('%Y/%m/%d')),
                      'gives_auto_advice_on_help_message':
                         Column("Custom adviser gives automatic advice on help message",
                         col_description="gives_auto_advice_on_help_message_col_description"),
@@ -1173,7 +1178,9 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         allow_oddeven=True,
-        columns=('group', 'gives_auto_advice_on',
+        columns=('group',
+                 'gives_auto_advice_on',
+                 'gives_auto_advice_for_item_created_from',
                  'gives_auto_advice_on_help_message',
                  'delay',
                  'delay_help_message', ),
@@ -1539,6 +1546,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for cfg in tool.objectValues('MeetingConfig'):
             if (cfg != self) and (cfg.getShortName() == value):
                 return DUPLICATE_SHORT_NAME % value
+
+    security.declarePrivate('validate_customAdvisers')
+    def validate_customAdvisers(self, value):
+        '''We use a common string column to store a date,
+           we need to check that given date is a real one in right format (YYYY/MM/DD).'''
+        for customAdviser in value:
+            created_from = customAdviser['gives_auto_advice_for_item_created_from']
+            if created_from:
+                try:
+                    # try to DateTime(created_from)
+                    date = DateTime(created_from)
+                    # and check if given format respect wished one
+                    if not date.strftime('%Y/%m/%d') == created_from:
+                        raise Exception
+                except:
+                    return translate('custom_adviser_wrong_date_format',
+                                     domain='PloneMeeting',
+                                     mapping={'groupName': customAdviser['group']},
+                                     context=self.REQUEST)
 
     security.declarePrivate('validate_usedMeetingAttributes')
     def validate_usedMeetingAttributes(self, newValue):

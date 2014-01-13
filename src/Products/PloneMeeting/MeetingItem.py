@@ -2060,6 +2060,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             strippedExprToEvaluate = customAdviser['gives_auto_advice_on'].replace(' ', '')
             if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
                 continue
+            # if a 'gives_auto_advice_for_item_created_from' is defined
+            # check that current item creation date is > defined date
+            createdFrom = customAdviser['gives_auto_advice_for_item_created_from']
+            if not createdFrom or DateTime(createdFrom) > self.created():
+                continue
+
             # Check that the TAL expression on the group returns True
             ctx = createExprContext(self.getParentNode(), portal, self)
             ctx.setGlobal('item', self)
@@ -2368,23 +2374,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._removeEveryContainedAdvices()
 
         # clean adviceIndex and recompute it
-        self.adviceIndex = PersistentMapping()
+        # we only remove 'optionalAdvisers' and keep 'automatic' ones to
+        # be sure that automatic advice still not given are still asked
+        # because the configuration could have changed meanwhile
+        keys_to_remove = []
+        for advice in self.adviceIndex.items():
+            if advice[1]['optional']:
+                keys_to_remove.append(advice[0])
+        for key_to_remove in keys_to_remove:
+            del self.adviceIndex[key_to_remove]
 
         # Compute automatic and get optional advisers
         automaticAdvisers = self.getAutomaticAdvisers()
-        optAdvisers = self.getOptionalAdvisers()
+        storedOptionalAdvisers = self.getOptionalAdvisers()
         # Remove from optional advisers people that would already have been
         # computed as mandatory advisers.
         optionalAdvisers = []
-        for adviser in optAdvisers:
-            if adviser not in automaticAdvisers:
+        for adviser in storedOptionalAdvisers:
+            # if an automatic adviser overrides this optional adviser
+            # or if there is still a key for this adviser in self.adviceIndex, we do not take it
+            if adviser not in automaticAdvisers and adviser not in self.adviceIndex.keys():
                 optionalAdvisers.append(adviser)
         self.setOptionalAdvisers(optionalAdvisers)
+
         # Update the dictionary self.adviceIndex with every advices to give
         i = -1
         # we keep the optional and automatic advisers separated because we need
         # to know what advices are optional or not
-        # if an automatic advice was asked in optional advices, it will override the asked optional advice
         for group in (optionalAdvisers, automaticAdvisers):
             i += 1
             optional = (i == 0)

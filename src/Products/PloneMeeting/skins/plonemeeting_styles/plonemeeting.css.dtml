@@ -690,9 +690,15 @@ dl.searchResults cite {
 #datagridwidget-table-customAdvisers .datagridwidget-column-2,
 #datagridwidget-table-customAdvisers .datagridwidget-column-3,
 #datagridwidget-table-customAdvisers .datagridwidget-column-4,
-#datagridwidget-table-customAdvisers .datagridwidget-column-5 {
-    width: 300px;
+#datagridwidget-table-customAdvisers .datagridwidget-column-5,
+div[id^="archetypes-fieldname-customAdvisers-"] TH {
+    width: 16%;
 }
+/* hide the title of the customAdvisers DataGridField in view mode */
+div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
+    display: none;
+}
+
 
 /* </dtml-with> */
 

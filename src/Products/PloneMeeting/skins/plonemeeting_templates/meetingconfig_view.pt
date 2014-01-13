@@ -778,8 +778,19 @@
           </td>
         </tr>
         <tr valign="top">
-          <td colspan="2" tal:define="field python:here.getField('customAdvisers')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
+          <td colspan="3">
+            <fieldset tal:define="field python:here.getField('customAdvisers')">
+              <legend>
+                <span i18n:translate="PloneMeeting_label_customAdvisers"></span>
+                <img tal:attributes="src string: $portal_url/questionMark.png;
+                                     onClick python:'toggleDoc(\'customAdvisersDoc\')'"
+                     style="cursor:pointer"/>
+              </legend>
+                  <div id="customAdvisersDoc" style="display:none">
+                        <p class="discreet" i18n:translate="custom_advisers_full_descr" />
+                      </div>
+                  <span metal:use-macro="here/widgets/field/macros/view" />
+            </fieldset>
           </td>
           <td>
           </td>
