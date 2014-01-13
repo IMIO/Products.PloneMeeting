@@ -41,6 +41,7 @@ setup(name='Products.PloneMeeting',
           'imio.pm.locales',
           'imio.migrator',
           'imio.actionspanel',
-          'plone.directives.form', ],
+          'plone.directives.form',
+          'Products.DataGridField', ],
       entry_points={},
       )
