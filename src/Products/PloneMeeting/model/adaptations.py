@@ -12,9 +12,6 @@ noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',
                      'delayed', 'confirmed', 'itemarchived')
 groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
                            'itempublished', 'itemfrozen')
-NO_DELETE_STATES = ('proposed', 'prevalidated', 'validated', 'presented',
-                    'itempublished', 'itemfrozen', 'accepted', 'refused',
-                    'delayed', 'confirmed')
 
 # for the 'return_to_proposing_group' wfAdaptation, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
 # is the state to clone regarding permissions that will have the state 'returned_to_proposing_group',
@@ -325,13 +322,16 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
     # "only_creator_may_delete" grants the permission to delete items to
     # creators only (=role MeetingMember)(and also to God=Manager).
     # (De-)activation of adaptation "pre_validation" impacts this one.
+    # We will check states in wich MeetingMember could delete and let only him
+    # have the delete permission.  In states where MeetingMember could not delete,
+    # nobody will be able to delete at all (except God Itself obviously)
     if 'only_creator_may_delete' in wfAdaptations:
         wf = itemWorkflow
-        for stateName in NO_DELETE_STATES:
-            if stateName not in wf.states:
-                continue
-            state = wf.states[stateName]
-            state.setPermission('Delete objects', 0, ['MeetingMember', 'Manager'])
+        for state in wf.states.values():
+            if 'MeetingMember' in state.permission_roles['Delete objects']:
+                state.setPermission('Delete objects', 0, ['MeetingMember', 'Manager'])
+            else:
+                state.setPermission('Delete objects', 0, ['Manager', ])
         logger.info(WF_APPLIED % ("only_creator_may_delete", meetingConfig.getId()))
 
     # "no_global_observation" means that during the whole decision process,
