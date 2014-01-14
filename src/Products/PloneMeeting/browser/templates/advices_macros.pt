@@ -8,7 +8,10 @@
                  advicesToEdit python: advisableGroups[1];
                  portal_url context/@@plone_portal_state/portal_url;
                  plone_view context/@@plone;
-                 isRealManager python: tool.isManager(realManagers=True);">
+                 plone_context_state context/@@plone_context_state;
+                 isRealManager python: tool.isManager(realManagers=True);
+                 item_review_state plone_context_state/workflow_state;
+                 advicesMayBeAdded python: item_review_state in meetingConfig.getItemAdviceStates();">
 
   <table width="#"
          class="contentActionsAX no-style-table" cellpadding="0" cellspacing="0"
@@ -36,6 +39,9 @@
               <li tal:repeat="advice python:advicesByType[adviceType]">
                 <fieldset>
                     <legend>
+                         <span tal:condition="advice/delay">
+                              <img src="advice_with_delay_big.png" tal:attributes="src string:${portal_url}/advice_with_delay_big.png"/>
+                         </span>
                          <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span>
                          <acronym tal:attributes="title python: advice['optional'] and 'This optional advice was asked by the item creators' or 'This automatic advice has been asked by the application'">&nbsp;?&nbsp;</acronym>
                     </legend>
@@ -104,8 +110,15 @@
                   </tr>
                 </table>
                 <span class="discreet"
-                   tal:condition="python: adviceType == 'not_given'"
+                   tal:condition="python: adviceType == 'not_given' and advicesMayBeAdded"
                    i18n:translate="">This advice has not been given yet.</span>
+                <span class="discreet"
+                   tal:condition="python: adviceType == 'not_given' and not advicesMayBeAdded"
+                   i18n:translate="">This advice can not be given in the current item state (<span i18n:name="item_review_state"
+                                                                                                   i18n:translate=""
+                                                                                                   i18n:domain="plone"
+                                                                                                   tal:content="item_review_state"
+                                                                                                   tal:attributes="class string:label-state-${item_review_state}"></span>).</span>
                 </fieldset>
               </li>
             </ul>

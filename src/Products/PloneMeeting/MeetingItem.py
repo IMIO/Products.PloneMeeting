@@ -1924,8 +1924,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                 break
                         if not stateHasChanged:
                             #avoid infinite loop
-                            raise WorkflowException, \
-                                'Infinite loop while adding a recurring item'
+                            raise WorkflowException("Infinite loop while adding a recurring item")
                 else:
                     # we will use hardcoded way to insert an item defined in
                     # self.transitionsForPresentingAnItem.  In some case this is usefull
@@ -2070,6 +2069,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(customAdviser['group'])
         return res
 
+    security.declarePublic('getDelayAwareAdvisers')
+    def getDelayAwareAdvisers(self):
+        '''Returns the 'delay-aware' advisers.
+           This will return a list of dict where dict contains :
+           'meetingGroupId', 'delay' and 'delay_help_message'.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        res = []
+        notEmptyAdvisersGroupIds = [mGroup.getId() for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers')]
+        for customAdviser in cfg.getCustomAdvisers():
+            # first check if it is a delay-aware advice
+            if not customAdviser['delay']:
+                continue
+            # then check if corresponding MeetingGroup is not empty
+            if not customAdviser['group'] in notEmptyAdvisersGroupIds:
+                continue
+            # ok, proceed, one single delay or several
+            for delay in customAdviser['delay'].split(';'):
+                res.append({'meetingGroupId': customAdviser['group'],
+                            'meetingGroupName': getattr(tool, customAdviser['group']).getName(),
+                            'delay': delay,
+                            'delay_help_message': customAdviser['delay_help_message']})
+        return res
+
     security.declarePublic('addAutoCopyGroups')
     def addAutoCopyGroups(self):
         '''What group should be automatically set as copyGroups for this item?
@@ -2117,23 +2140,62 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listOptionalAdvisers')
     def listOptionalAdvisers(self):
         '''Optional advisers for this item are MeetingGroups that are not among
-           mandatory advisers and that have at least one adviser.'''
+           automatic advisers and that have at least one adviser.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        res = []
+
+        resDelayAwareAdvisers = []
+        # add delay-aware optionalAdvisers
+        delayAwareAdvisers = self.getDelayAwareAdvisers()
+        if delayAwareAdvisers:
+            # we add a special value at the beginning of the vocabulary
+            # that will be simply an information message than will not be selectable
+            delay_aware_optional_advisers_msg = '--- Gniiiiiiiiiiiiii ---'
+            resDelayAwareAdvisers.append(('not_selectable_value_delay_aware_optional_advisers',
+                                          delay_aware_optional_advisers_msg))
+            # then add the delay-aware advisers
+            # a delay-aware adviser has a special id so we can handle it specifically after
+            for delayAwareAdviser in delayAwareAdvisers:
+                adviserId = "%s__delay__%s" % (delayAwareAdviser['meetingGroupId'],
+                                               delayAwareAdviser['delay'])
+                resDelayAwareAdvisers.append((adviserId, "%s - delay of %s clear days (%s)" %
+                                              (delayAwareAdviser['meetingGroupName'],
+                                               delayAwareAdviser['delay'],
+                                               delayAwareAdviser['delay_help_message'])
+                                              ))
+
+        resNonDelayAwareAdvisers = []
         # only let select groups for which there is at least one user in
-        for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers'):
-            res.append((mGroup.getId(), mGroup.getName()))
+        nonEmptyMeetingGroups = tool.getMeetingGroups(notEmptySuffix='advisers')
+        if nonEmptyMeetingGroups:
+            if delayAwareAdvisers:
+                # add a special message specifying that selectable advisers
+                # now are 'normal' optional advisers
+                non_delay_aware_optional_advisers_msg = '--- Gnoooooooooooooo ---'
+                resNonDelayAwareAdvisers.append(('not_selectable_value_non_delay_aware_optional_advisers',
+                                                 non_delay_aware_optional_advisers_msg))
+            for mGroup in nonEmptyMeetingGroups:
+                resNonDelayAwareAdvisers.append((mGroup.getId(), mGroup.getName()))
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it
         optionalAdvisers = self.getOptionalAdvisers()
         if optionalAdvisers:
-            optionalAdvisersInVocab = [group[0] for group in res]
+            optionalAdvisersInVocab = [group[0] for group in resNonDelayAwareAdvisers] + \
+                                      [group[0] for group in resDelayAwareAdvisers]
             for groupId in optionalAdvisers:
                 if not groupId in optionalAdvisersInVocab:
-                    res.append((groupId, getattr(tool, groupId).getName()))
+                    if '__delay__' in groupId:
+                        meetingGroupId, delay = groupId.split('__delay__')
+                        resDelayAwareAdvisers.append((groupId, "%s - delay of %s clear days (%s)" %
+                                                      (getattr(tool, meetingGroupId).getName(),
+                                                       delay,
+                                                       self.adviceIndex[meetingGroupId]['delay_help_message'])))
+                    else:
+                        resNonDelayAwareAdvisers.append((groupId, getattr(tool, groupId).getName()))
 
-        return DisplayList(tuple(res)).sortedByValue()
+        resDelayAwareAdvisers = DisplayList(tuple(resDelayAwareAdvisers)).sortedByValue()
+        resNonDelayAwareAdvisers = DisplayList(tuple(resNonDelayAwareAdvisers)).sortedByValue()
+        return resDelayAwareAdvisers + resNonDelayAwareAdvisers
 
     security.declarePublic('listItemInitiators')
     def listItemInitiators(self):
@@ -2365,28 +2427,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # every meetingadvice to the role 'Authenticated', a role that current user has
             self._removeEveryContainedAdvices()
 
+        # Compute automatic and get optional advisers
+        automaticAdvisers = self.getAutomaticAdvisers()
+        storedOptionalAdvisers = self.getOptionalAdvisers()
         # clean adviceIndex and recompute it
-        # we only remove 'optionalAdvisers' and keep 'automatic' ones to
+        # we only remove ne more selected 'optionalAdvisers' and keep 'automatic' ones to
         # be sure that automatic advice still not given are still asked
         # because the configuration could have changed meanwhile
         keys_to_remove = []
         for advice in self.adviceIndex.items():
-            if advice[1]['optional']:
+            # remove optional advisers that are not in the storedOptionalAdvisers anymore
+            # compute a groupKey because key stored in storedOptionalAdvisers is delay-aware
+            groupKey = advice[1]['delay'] is not None and "%s__delay__%s" % (advice[0], advice[1]['delay']) or advice[0]
+            if advice[1]['optional'] and not groupKey in storedOptionalAdvisers:
                 keys_to_remove.append(advice[0])
         for key_to_remove in keys_to_remove:
             del self.adviceIndex[key_to_remove]
 
-        # Compute automatic and get optional advisers
-        automaticAdvisers = self.getAutomaticAdvisers()
-        storedOptionalAdvisers = self.getOptionalAdvisers()
         # Remove from optional advisers people that would already have been
         # computed as mandatory advisers.
         optionalAdvisers = []
         for adviser in storedOptionalAdvisers:
             # if an automatic adviser overrides this optional adviser
-            # or if there is still a key for this adviser in self.adviceIndex, we do not take it
-            if adviser not in automaticAdvisers and adviser not in self.adviceIndex.keys():
-                optionalAdvisers.append(adviser)
+            # or if there is still a key for this adviser in self.adviceIndex, meaning
+            # an automatic adviser that is left in the adviceIndex, we do not take it
+            if adviser in automaticAdvisers or \
+               (adviser in self.adviceIndex.keys() and not self.adviceIndex[adviser]['optional']):
+                continue
+            optionalAdvisers.append(adviser)
         self.setOptionalAdvisers(optionalAdvisers)
 
         # Update the dictionary self.adviceIndex with every advices to give
@@ -2397,6 +2465,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             i += 1
             optional = (i == 0)
             for groupId in group:
+                delay = delay_help_message = None
+                if '__delay__' in groupId:
+                    # here we are managing a delay-aware adviser
+                    # find the real groupId as we have something like 'realGroupId__delay__10'
+                    groupId, delay = groupId.split('__delay__')
+                    # get the delay help message from the dict in getAutomaticAdvisers
+                    for delayAwareAdviser in self.getDelayAwareAdvisers():
+                        if delayAwareAdviser['meetingGroupId'] == groupId and \
+                           delayAwareAdviser['delay'] == delay:
+                            delay_help_message = delayAwareAdviser['delay_help_message']
+                    if not delay_help_message:
+                        # the rule in MeetingConfig.customAdvisers has changed or disappeared
+                        # find the delay_help_message in the current self.adviceIndex
+                        delay_help_message = self.adviceIndex[groupId]['delay_help_message']
+
                 # We create an empty dictionary that will store advice info
                 # once the advice will have been created.
                 self.adviceIndex[groupId] = d = PersistentMapping()
@@ -2404,6 +2487,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['optional'] = optional
                 d['id'] = groupId
                 d['name'] = getattr(tool, groupId).getName().decode('utf-8')
+                d['delay'] = delay
+                d['delay_help_message'] = delay_help_message
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():
             # in case an already given advice does not need to be given anymore
@@ -3244,8 +3329,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Check that the current user can update the vote of this user
             meetingUser = meetingConfig.getMeetingUserFromPloneUser(userId)
             if not newVoteValues[userId] in usedVoteValues:
-                raise ValueError, 'Trying to set vote with another value than ' \
-                                  'ones defined in meetingConfig.usedVoteValues!'
+                raise ValueError('Trying to set vote with another value than '
+                                 'ones defined in meetingConfig.usedVoteValues!')
             elif meetingUser.adapted().mayEditVote(user, self):
                 self.votes[userId] = newVoteValues[userId]
             else:
@@ -3282,7 +3367,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if key.startswith('vote_value_') and not secret:
                 voterId = key[11:]
                 if not voterId in voterIds:
-                    raise KeyError, "Trying to set vote for unexisting voter!"
+                    raise KeyError("Trying to set vote for unexisting voter!")
                 requestVotes[voterId] = allYes and 'yes' or rq[key]
                 secret = False
             elif key.startswith('vote_count_') and secret:
