@@ -1172,14 +1172,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            items.'''
         return ('portal_plonemeeting' in self.absolute_url())
 
-    security.declarePublic('isDefinedInToolOrTemp')
-    def isDefinedInToolOrTemp(self):
-        '''Returns True if this item is defined in tool or is being created
-           in portal_factory. This method is used as a condition for showing
-           or not some item-related actions.'''
-        res = self.isTemporary() or self.isDefinedInTool()
-        return res
-
+    security.declarePublic('isClonableToOtherMeetingConfigs')
     def isClonableToOtherMeetingConfigs(self):
         '''Returns True is the current item can be cloned to another
            meetingConfig. This method is used as a condition for showing
