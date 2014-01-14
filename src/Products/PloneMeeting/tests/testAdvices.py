@@ -513,9 +513,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse('vendors' in item.adviceIndex)
 
     def test_pm_getAutomaticAdvisers(self):
-        """
-          Test the getAutomaticAdvisers method that compute
-        """
+        '''Test the getAutomaticAdvisers method that compute automatic advisers.'''
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.meetingConfig.setCustomAdvisers([])
