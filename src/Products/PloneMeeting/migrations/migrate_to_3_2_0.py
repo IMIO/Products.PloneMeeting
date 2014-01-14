@@ -173,6 +173,43 @@ class Migrate_To_3_2_0(Migrator):
             cfg.setCustomAdvisers(newMCCustomAdvisersValue)
         logger.info('Done.')
 
+    def _addMissingTopics(self):
+        '''Make sure the 2 topics 'searchcorrecteditems' and 'searchitemstocorrect'
+           exist in each MeetingConfigs.'''
+        logger.info('Adding new topics to every MeetingConfigs...')
+        # change MeetingConfig.topics info so we can use the MeetingConfig.createTopics
+        # method, we will come back to previous value at the end of this method
+        from Products.PloneMeeting.MeetingConfig import MeetingConfig
+        newTopicsInfo = (
+            # Items to correct : search items in state 'returned_to_proposing_group'
+            ('searchitemstocorrect',
+            (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+             ('review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
+             ),
+             'created',
+             '',
+             "python: here.portal_plonemeeting.userIsAmong('creators') and "
+             "'return_to_proposing_group' in here.getWorkflowAdaptations()",
+             ),
+            # Corrected items : search items for wich previous_review_state was 'returned_to_proposing_group'
+            ('searchcorrecteditems',
+            (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+             ('previous_review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
+             ),
+             'created',
+             '',
+             "python: here.portal_plonemeeting.isManager() and "
+             "'return_to_proposing_group' in here.getWorkflowAdaptations()",
+             ),
+        )
+        originalTopicsInfos = MeetingConfig.topicsInfo
+        MeetingConfig.topicsInfo = newTopicsInfo
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # createTopics manage the fact that the topic already exists
+            cfg.createTopics()
+        MeetingConfig.topicsInfo = originalTopicsInfos
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.0...')
         # reinstall so 'getDeliberation' index is added and computed, new 'meetingadvice' type is installed, ...
@@ -186,6 +223,7 @@ class Migrate_To_3_2_0(Migrator):
         self._cleanReferencesOnItems()
         self._finishExternalApplicationRemoval()
         self._migrateMandatoryAdvisers()
+        self._addMissingTopics()
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['reference_catalog', ],
@@ -197,15 +235,18 @@ class Migrate_To_3_2_0(Migrator):
 def migrate(context):
     '''This migration function:
 
-       1) Removed the 'getDecision' index;
-       2) Initialize field MeetingConfig.defaultBudget so it behaves correctly has RichText;
-       3) Update advices as we moved from MeetingItem.advices to MeetingItem.adviceIndex;
-       4) Make sure every existing annexes creation process is correctly finished;
-       5) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
-       6) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
-       7) Clean ItemAnnexes and DecisionAnnexes references on items;
-       8) Finish 'ExternalApplication' removal;
-       9) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
+       1) Reinstall PloneMeeting before migration because we need some stuff configured at install time;
+       2) Removed the 'getDecision' index;
+       3) Initialize field MeetingConfig.defaultBudget so it behaves correctly has RichText;
+       4) Update advices as we moved from MeetingItem.advices to MeetingItem.adviceIndex;
+       5) Make sure every existing annexes creation process is correctly finished;
+       6) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
+       7) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
+       8) Clean ItemAnnexes and DecisionAnnexes references on items;
+       9) Finish 'ExternalApplication' removal;
+       10) Migrate mandatory advisers infos from MeetingGroups to MeetingConfig.customAdvisers;
+       11) Add missing topics regarding the 'send back to proposing group' WFAdaptation;
+       12) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
     '''
     Migrate_To_3_2_0(context).run()
 # ------------------------------------------------------------------------------
