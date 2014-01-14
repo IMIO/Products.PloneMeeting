@@ -1153,11 +1153,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides the field 'budgetInfos' to keep
            MeetingItem.budgetRelated behaviour consistent.
            This could be the case if 'budgetInfos' is ajax edited
-           thru the item view.'''
+           thru the item view.  If p_value is not empty, make sure
+           MeetingItem.budgetRelated is set to True.'''
         # we are setting an empty value, turn budgetRelated to False
-        if kupuFieldIsEmpty(value):
-            self.setBudgetRelated(False)
-        else:
+        if not kupuFieldIsEmpty(value):
             self.setBudgetRelated(True)
         self.getField('budgetInfos').set(self, value, **kwargs)
 
