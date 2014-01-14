@@ -1168,7 +1168,7 @@ schema = Schema((
                      'gives_auto_advice_on_help_message':
                         Column("Custom adviser gives automatic advice on help message",
                         col_description="gives_auto_advice_on_help_message_col_description"),
-                     'delay': Column("Custom adviser delay (in days)",
+                     'delay': Column("Delay for giving advice",
                                      col_description="delay_col_description"),
                      'delay_help_message': Column("Custom adviser delay help message",
                                                   col_description="delay_help_message_col_description"),
@@ -1552,6 +1552,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''We use a common string column to store a date,
            we need to check that given date is a real one in right format (YYYY/MM/DD).'''
         for customAdviser in value:
+            # validate the date in the 'gives_auto_advice_for_item_created_from' column
             created_from = customAdviser['gives_auto_advice_for_item_created_from']
             if created_from:
                 try:
@@ -1561,9 +1562,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     if not date.strftime('%Y/%m/%d') == created_from:
                         raise Exception
                 except:
+                    tool = getToolByName(self, 'portal_plonemeeting')
+                    group = getattr(tool, customAdviser['group'])
                     return translate('custom_adviser_wrong_date_format',
                                      domain='PloneMeeting',
-                                     mapping={'groupName': customAdviser['group']},
+                                     mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                     context=self.REQUEST)
+            delay = customAdviser['delay']
+            # validate the delays in the 'delay' column
+            if delay:
+                try:
+                    values = delay.split(';')
+                    for value in values:
+                        if not value.isdigit():
+                            raise Exception
+                except:
+                    tool = getToolByName(self, 'portal_plonemeeting')
+                    group = getattr(tool, customAdviser['group'])
+                    return translate('custom_adviser_wrong_delay_format',
+                                     domain='PloneMeeting',
+                                     mapping={'groupName': unicode(group.Title(), 'utf-8'), },
                                      context=self.REQUEST)
 
     security.declarePrivate('validate_usedMeetingAttributes')

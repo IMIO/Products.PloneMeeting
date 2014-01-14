@@ -24,6 +24,8 @@
 
 import logging
 
+from zope.i18n import translate
+
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
@@ -246,6 +248,78 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.validateItem(developers_item)
         developers_item.reindexObject()
         self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 2)
+
+    def test_pm_validate_customAdvisersDateColumn(self):
+        '''Test the MeetingConfig.customAdvisers validate method.
+           This validates dates of the 'gives_auto_advice_for_item_created_from' column :
+           dates are strings that need to respect following format 'YYYY/MM/DD'.'''
+        mc = self.meetingConfig
+        # the validate method returns a translated message if the validation failed
+        # wrong date format, should be YYYY/MM/DD
+        customAdvisers = [{'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'gives_auto_advice_for_item_created_from': '2012/31/12',
+                           'gives_auto_advice_on_help_message': '',
+                           'delay': '',
+                           'delay_help_message': '', }, ]
+        wrong_date_msg = translate('custom_adviser_wrong_date_format',
+                                   domain='PloneMeeting',
+                                   mapping={'groupName': customAdvisers[0]['group']},
+                                   context=self.portal.REQUEST)
+        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        # if wrong syntax, it fails
+        customAdvisers[0]['gives_auto_advice_for_item_created_from'] = 'wrong'
+        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        # if wrong format, it fails
+        customAdvisers[0]['gives_auto_advice_for_item_created_from'] = '2013/20/05 '
+        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        # if extra blank, it fails
+        customAdvisers[0]['gives_auto_advice_for_item_created_from'] = '2013/01/01 '
+        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        # with a valid date, then it works
+        customAdvisers[0]['gives_auto_advice_for_item_created_from'] = '2013/12/31'
+        # validate returns nothing if validation was successful
+        self.failIf(mc.validate_customAdvisers(customAdvisers))
+
+    def test_pm_validate_customAdvisersDelayColumn(self):
+        '''Test the MeetingConfig.customAdvisers validate method.
+           This validates delays of the 'delay' column :
+           delays are integers that can be separated by commas if several delays for the same advice.'''
+        mc = self.meetingConfig
+        # the validate method returns a translated message if the validation failed
+        # wrong format, should be an integer or integers separated by commas : 10 or 10,5,2
+        customAdvisers = [{'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'gives_auto_advice_for_item_created_from': '',
+                           'gives_auto_advice_on_help_message': '',
+                           'delay': 'a',
+                           'delay_help_message': '', }, ]
+        wrong_delay_msg = translate('custom_adviser_wrong_delay_format',
+                                    domain='PloneMeeting',
+                                    mapping={'groupName': customAdvisers[0]['group']},
+                                    context=self.portal.REQUEST)
+        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        # if wrong syntax, it fails
+        customAdvisers[0]['delay'] = '10,5'
+        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        # if extra blank, it fails
+        customAdvisers[0]['delay'] = '10,5 '
+        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        # if not integer, it fails
+        customAdvisers[0]['delay'] = '10.5'
+        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        # if not complete format, it fails
+        customAdvisers[0]['delay'] = '10;5;'
+        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        # with a valid date, then it works
+        # with a single delay value
+        customAdvisers[0]['delay'] = '10'
+        # validate returns nothing if validation was successful
+        self.failIf(mc.validate_customAdvisers(customAdvisers))
+        # with a multiple delays value
+        customAdvisers[0]['delay'] = '10;5;2'
+        # validate returns nothing if validation was successful
+        self.failIf(mc.validate_customAdvisers(customAdvisers))
 
 
 def test_suite():
