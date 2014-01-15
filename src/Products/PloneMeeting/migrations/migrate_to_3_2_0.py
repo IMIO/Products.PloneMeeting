@@ -2,7 +2,6 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 
-from DateTime import DateTime
 from Acquisition import aq_base
 from persistent.mapping import PersistentMapping
 
@@ -43,7 +42,33 @@ class Migrate_To_3_2_0(Migrator):
         logger.info('Updating advices for %d MeetingItem objects...' % len(brains))
         for brain in brains:
             item = brain.getObject()
+            cfg = self.tool.getMeetingConfig(item)
             if hasattr(aq_base(item), 'advices'):
+                # first make sure given advices are still selected in the optionalAdvisers
+                # or in the automaticAdvisers.  If given advice was optional and is no more
+                # in optionalAdvisers, we can add it if it was a mandatory that is no more in
+                # automaticAdvisers, we have to Raise...
+                storedOptionalAdvisers = list(item.getOptionalAdvisers())
+                # store here nasty things we will have to do if we can not find an automatic adviser
+                specialAutomaticAdviceHandling = {}
+                for key, value in item.advices.items():
+                    if value['type'] != NOT_GIVEN_ADVICE_VALUE:
+                        if value['optional']:
+                            if not key in storedOptionalAdvisers:
+                                storedOptionalAdvisers.append(key)
+                                item.setOptionalAdvisers(storedOptionalAdvisers)
+                        else:
+                            # it is supposed to be an automatic adviser...
+                            automaticAdvisersIds = [auto['meetingGroupId'] for auto in item.getAutomaticAdvisers()]
+                            if not key in automaticAdvisersIds:
+                                # find a row in cfg.customAdvisers that could be used...
+                                for customAdviser in cfg.getCustomAdvisers():
+                                    # if we find a row regarding this group and that is an automatic adviser, use it...
+                                    if customAdviser['group'] == key and customAdviser['gives_auto_advice_on']:
+                                        specialAutomaticAdviceHandling[key] = customAdviser['row_id']
+                                    else:
+                                        raise Exception("An automatic adviser lost his configuration...")
+
                 item.adviceIndex = PersistentMapping()
                 # in case there were advices asked but not given, we will have to update advice
                 needToUpdateAdvices = True
@@ -54,11 +79,21 @@ class Migrate_To_3_2_0(Migrator):
                         advice_comment = advice['comment']
                         if not isinstance(advice['comment'], unicode):
                             advice_comment = unicode(advice_comment, 'utf-8')
+                        # find the row_id if it is an automatic advice
+                        if not advice['optional']:
+                            if groupId in specialAutomaticAdviceHandling:
+                                row_id = specialAutomaticAdviceHandling[groupId]
+                            else:
+                                automaticAdvisers = item.getAutomaticAdvisers()
+                                for automaticAdviser in automaticAdvisers:
+                                    if automaticAdviser['meetingGroupId'] == groupId:
+                                        row_id = automaticAdviser['row_id']
                         meetingadvice = createContentInContainer(item,
                                                                  'meetingadvice',
                                                                  **{'advice_group': groupId,
-                                                                 'advice_type': advice['type'],
-                                                                 'advice_comment': RichTextValue(advice_comment)})
+                                                                    'advice_type': advice['type'],
+                                                                    'advice_comment': RichTextValue(advice_comment),
+                                                                    'advice_row_id': row_id, })
                         meetingadvice.creators = ((advice['actor'], ))
                         meetingadvice.creation_date = advice['date']
                         meetingadvice.modification_date = advice['date']
@@ -166,8 +201,10 @@ class Migrate_To_3_2_0(Migrator):
             if givesMandatoryAdviceOn and givesMandatoryAdviceOn not in ('python:False', 'python:False;', 'False'):
                 newMCCustomAdvisersValue.append(
                     {'group': mGroup.getId(),
+                     # we can not do anything else but activate it from the beginning...
+                     'for_item_created_from': self.portal.created().strftime('%Y/%m/%d'),
                      'gives_auto_advice_on': givesMandatoryAdviceOn,
-                     'gives_auto_advice_for_item_created_from': DateTime().strftime('%Y/%m/%d'), })
+                     'row_id': self.portal.generateUniqueId(), })
             delattr(aq_base(mGroup), 'givesMandatoryAdviceOn')
         for cfg in self.tool.getActiveConfigs():
             cfg.setCustomAdvisers(newMCCustomAdvisersValue)
@@ -216,13 +253,13 @@ class Migrate_To_3_2_0(Migrator):
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self._configureCatalogIndexesAndMetadata()
         self._initDefaultBudgetHTML()
+        self._migrateMandatoryAdvisers()
         self._updateAdvices()
         self._finalizeAnnexesCreationProcess()
         self._updateMeetingFileTypes()
         self._updateAnnexIndex()
         self._cleanReferencesOnItems()
         self._finishExternalApplicationRemoval()
-        self._migrateMandatoryAdvisers()
         self._addMissingTopics()
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
@@ -238,13 +275,13 @@ def migrate(context):
        1) Reinstall PloneMeeting before migration because we need some stuff configured at install time;
        2) Removed the 'getDecision' index;
        3) Initialize field MeetingConfig.defaultBudget so it behaves correctly has RichText;
-       4) Update advices as we moved from MeetingItem.advices to MeetingItem.adviceIndex;
-       5) Make sure every existing annexes creation process is correctly finished;
-       6) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
-       7) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
-       8) Clean ItemAnnexes and DecisionAnnexes references on items;
-       9) Finish 'ExternalApplication' removal;
-       10) Migrate mandatory advisers infos from MeetingGroups to MeetingConfig.customAdvisers;
+       4) Migrate mandatory advisers infos from MeetingGroups to MeetingConfig.customAdvisers;
+       5) Update advices as we moved from MeetingItem.advices to MeetingItem.adviceIndex;
+       6) Make sure every existing annexes creation process is correctly finished;
+       7) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
+       8) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
+       9) Clean ItemAnnexes and DecisionAnnexes references on items;
+       10) Finish 'ExternalApplication' removal;
        11) Add missing topics regarding the 'send back to proposing group' WFAdaptation;
        12) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
     '''

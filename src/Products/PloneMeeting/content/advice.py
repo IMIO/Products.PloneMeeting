@@ -39,6 +39,11 @@ class IMeetingAdvice(Interface):
         output_mime_type='text/html',
         allowed_mime_types=('text/html',),
     )
+    advice_row_id = schema.TextLine(
+        title=_(u"Advice row id"),
+        description=_("Linked advice row id, this is managed programmatically."),
+        required=False,
+    )
 
 
 @form.default_value(field=IMeetingAdvice['advice_type'])
@@ -69,6 +74,13 @@ class MeetingAdvice(Container):
         '''Return the number of viewable annexes.'''
         catalog = getToolByName(self, 'portal_catalog')
         return len(catalog(Type='MeetingFile', path='/'.join(self.getPhysicalPath())))
+
+    def _updateAdviceRowId(self):
+        '''Make sure advice_row_id is correct.'''
+        # the row_id is stored in parent (item)
+        item = self.getParentNode()
+        adviceInfo = item.adviceIndex[self.advice_group]
+        self.advice_row_id = adviceInfo['row_id']
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):

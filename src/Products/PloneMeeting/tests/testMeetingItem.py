@@ -26,6 +26,7 @@ from AccessControl import Unauthorized
 from DateTime import DateTime
 
 from zope.annotation.interfaces import IAnnotations
+from zope.i18n import translate
 
 from plone.app.testing import login
 
@@ -1289,6 +1290,36 @@ class testMeetingItem(PloneMeetingTestCase):
         # unselect 'developers' on the item, it will not appear anymore in the vocabulary
         item.setOptionalAdvisers(())
         self.assertEquals(item.listOptionalAdvisers().keys(), ['vendors', ])
+
+    def test_pm_validate_optionalAdvisers(self):
+        """
+          This test the 'optionalAdvisers' field validate method.
+          Make sure we can not select more than one optional advice concerning
+          the same group.  In case we use 'delay-aware' advisers, we could select
+          a 'delay-aware' adviser and the same group 'normal non-delay-aware' adviser.
+          We could also select 2 'delay-aware' advisers for the same group as we can
+          define several delays for the same group.
+        """
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        # check with the 'non-delay-aware' and the 'delay-aware' advisers selected
+        optionalAdvisers = ('developers', 'developers__delay__5', )
+        several_select_error_msg = translate('can_not_select_several_optional_advisers_same_group',
+                                             domain='PloneMeeting',
+                                             context=self.portal.REQUEST)
+        self.assertTrue(item.validate_optionalAdvisers(optionalAdvisers), several_select_error_msg)
+        # check with 2 'delay-aware' advisers selected
+        optionalAdvisers = ('developers__delay__10', 'developers__delay__5', )
+        self.assertTrue(item.validate_optionalAdvisers(optionalAdvisers), several_select_error_msg)
+        # now make it pass
+        optionalAdvisers = ('developers', 'vendors', )
+        # validate returns nothing if validation was successful
+        self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
+        optionalAdvisers = ('developers__delay__5', 'vendors', )
+        self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
+        optionalAdvisers = ('developers__delay__5', )
+        self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
 
 
 def test_suite():

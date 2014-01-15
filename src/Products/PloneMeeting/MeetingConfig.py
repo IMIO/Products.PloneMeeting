@@ -1157,17 +1157,23 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="CustomAdvisers",
             description_msgid="custom_advisers_descr",
-            columns={'group': SelectColumn("Custom adviser group",
+            columns={'row_id': Column("Custom adviser row id",
+                                      visible=False),
+                     'group': SelectColumn("Custom adviser group",
                                            vocabulary="listCustomAdvisersGroups"),
                      'gives_auto_advice_on': Column("Custom adviser gives automatic advice on",
                                                     col_description="gives_auto_advice_on_col_description"),
-                     'gives_auto_advice_for_item_created_from':
-                        Column("Gives automatic advice for item created from",
-                               col_description="gives_auto_advice_for_item_created_from_col_description",
-                               default=DateTime().strftime('%Y/%m/%d')),
                      'gives_auto_advice_on_help_message':
                         Column("Custom adviser gives automatic advice on help message",
                         col_description="gives_auto_advice_on_help_message_col_description"),
+                     'for_item_created_from':
+                        Column("Rule activated for item created from",
+                               col_description="for_item_created_from_col_description",
+                               default=DateTime().strftime('%Y/%m/%d'),
+                               required=True),
+                     'for_item_created_until':
+                        Column("Rule activated for item created until",
+                               col_description="for_item_created_until_col_description"),
                      'delay': Column("Delay for giving advice",
                                      col_description="delay_col_description"),
                      'delay_help_message': Column("Custom adviser delay help message",
@@ -1177,11 +1183,14 @@ schema = Schema((
             label_msgid='PloneMeeting_label_customAdvisers',
             i18n_domain='PloneMeeting',
         ),
+        allow_empty_rows=False,
         allow_oddeven=True,
-        columns=('group',
+        columns=('row_id',
+                 'group',
                  'gives_auto_advice_on',
-                 'gives_auto_advice_for_item_created_from',
                  'gives_auto_advice_on_help_message',
+                 'for_item_created_from',
+                 'for_item_created_until',
                  'delay',
                  'delay_help_message', ),
     ),
@@ -1506,6 +1515,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             tags.sort()
         self.setAllItemTags('\n'.join(tags))
 
+    security.declareProtected('Modify portal content', 'setCustomAdvisers')
+    def setCustomAdvisers(self, value, **kwargs):
+        '''Overrides the field 'customAdvisers' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v.row_id = self.generateUniqueId()
+        self.getField('customAdvisers').set(self, value, **kwargs)
+
     security.declarePrivate('listAttributes')
     def listAttributes(self, schema, optionalOnly=False):
         res = []
@@ -1549,40 +1573,94 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('validate_customAdvisers')
     def validate_customAdvisers(self, value):
-        '''We use a common string column to store a date,
-           we need to check that given date is a real one in right format (YYYY/MM/DD).'''
+        '''We have several things to check, do lighter checks first :
+           - check column contents respect required format :
+               * columns 'for_item_created_from' and 'for_item_created_until',
+                 we use a common string column to store a date, check that the given date
+                 is a real using right format (YYYY/MM/DD);
+               * column 'delay', it must be empty or contain only one singe digit.
+           - check that if a row changed, it was not already in use in the application.  We
+             can not change a row configuration that is already in use in the application, except the
+             'for_item_created_until' that we can only set if not already set to deactivate a used row
+             and 'help_message' fields.
+            '''
         for customAdviser in value:
-            # validate the date in the 'gives_auto_advice_for_item_created_from' column
-            created_from = customAdviser['gives_auto_advice_for_item_created_from']
-            if created_from:
-                try:
-                    # try to DateTime(created_from)
-                    date = DateTime(created_from)
-                    # and check if given format respect wished one
-                    if not date.strftime('%Y/%m/%d') == created_from:
+            # validate the date in the 'for_item_created_from' and
+            # 'for_item_created_until' columns
+            created_from = customAdviser['for_item_created_from']
+            created_until = customAdviser['for_item_created_until']
+            try:
+                # 'for_item_created_from' is required
+                date_from = DateTime(created_from)
+                # and check if given format respect wished one
+                if not date_from.strftime('%Y/%m/%d') == created_from:
+                    raise Exception
+                # 'for_item_created_until' is not required, but if it is mentionned,
+                # it can not be a past date because the rule could already have been
+                # applied for items created today
+                if created_until:
+                    date_until = DateTime(created_until)
+                    # check if given format respect wished one
+                    if not date_until.strftime('%Y/%m/%d') == created_until:
                         raise Exception
-                except:
-                    tool = getToolByName(self, 'portal_plonemeeting')
-                    group = getattr(tool, customAdviser['group'])
-                    return translate('custom_adviser_wrong_date_format',
-                                     domain='PloneMeeting',
-                                     mapping={'groupName': unicode(group.Title(), 'utf-8'), },
-                                     context=self.REQUEST)
-            delay = customAdviser['delay']
+                    # and check if encoded date is not in the past, it has to be in the future
+                    if date_until.isPast():
+                        raise Exception
+            except:
+                tool = getToolByName(self, 'portal_plonemeeting')
+                group = getattr(tool, customAdviser['group'])
+                return translate('custom_adviser_wrong_date_format',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 context=self.REQUEST)
+
             # validate the delays in the 'delay' column
-            if delay:
-                try:
-                    values = delay.split(';')
-                    for value in values:
-                        if not value.isdigit():
-                            raise Exception
-                except:
-                    tool = getToolByName(self, 'portal_plonemeeting')
-                    group = getattr(tool, customAdviser['group'])
-                    return translate('custom_adviser_wrong_delay_format',
-                                     domain='PloneMeeting',
-                                     mapping={'groupName': unicode(group.Title(), 'utf-8'), },
-                                     context=self.REQUEST)
+            delay = customAdviser['delay']
+            if delay and not delay.isdigit():
+                tool = getToolByName(self, 'portal_plonemeeting')
+                group = getattr(tool, customAdviser['group'])
+                return translate('custom_adviser_wrong_delay_format',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 context=self.REQUEST)
+
+        # check that if a row changed, it is not already in use
+        # we can not change any value but the 'for_item_created_until' and only if it was empty before
+        catalog = getToolByName(self, 'portal_catalog')
+        for customAdviser in value:
+            # if we still have no value in the 'row_id', it means that it is a new row
+            row_id = customAdviser['row_id']
+            if not row_id:
+                continue
+            for storedCustomAdviser in self.getCustomAdvisers():
+                # find the stored value with same 'row_id'
+                if storedCustomAdviser['row_id'] == row_id:
+                    # we found the corresponding row, check if it was modified
+                    for k, v in storedCustomAdviser.items():
+                        if not customAdviser[k] == v:
+                            # we found a value that changed, check if we could
+                            # first check if it is not the 'for_item_created_until' value
+                            # for wich we are setting a value for the first time (aka is empty in the stored value)
+                            # or a 'help_message', those fields we can change the value
+                            if not (k == 'for_item_created_until' and not v) and \
+                               not k in ['gives_auto_advice_on_help_message', 'delay_help_message']:
+                                # we are setting another field, it is not permitted if
+                                # the rule is in use, check every items if the rule is used
+                                brains = catalog(Type=self.getItemTypeName())
+                                for brain in brains:
+                                    item = brain.getObject()
+                                    for adviser in item.adviceIndex.values():
+                                        if adviser['row_id'] == row_id:
+                                            return translate('custom_adviser_can_not_edit_used_row',
+                                                             domain='PloneMeeting',
+                                                             mapping={'item_url': item.absolute_url(), },
+                                                             context=self.REQUEST)
+
+    def _dataForCustomAdviserRowId(self, row_id):
+        '''Return the data for the given p_row_id from the field 'customAdvisers'.'''
+        for adviser in self.getCustomAdvisers():
+            if adviser['row_id'] == row_id:
+                return adviser
 
     security.declarePrivate('validate_usedMeetingAttributes')
     def validate_usedMeetingAttributes(self, newValue):
@@ -1807,7 +1885,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         for mGroup in tool.getMeetingGroups():
             res.append((mGroup.getId(), mGroup.getName()))
-        return DisplayList(res)
+        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listAllVoteValues')
     def listAllVoteValues(self):

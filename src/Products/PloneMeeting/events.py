@@ -117,6 +117,9 @@ def onItemMoved(obj, event):
 
 def onAdviceAdded(obj, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
+    # update advice_row_id
+    obj._updateAdviceRowId()
+
     # Add a place to store annexIndex
     obj.annexIndex = PersistentList()
     # Create a "black list" of annex names. Every time an annex will be
@@ -130,6 +133,7 @@ def onAdviceAdded(obj, event):
     item.updateAdvices()
     # make the entire _advisers group able to edit the meetingadvice
     obj.manage_addLocalRoles('%s_advisers' % obj.advice_group, ('Editor', ))
+
     # log
     userId = obj.portal_membership.getAuthenticatedMember().getId()
     logger = logging.getLogger('PloneMeeting')
@@ -143,6 +147,9 @@ def onAdviceAdded(obj, event):
 
 def onAdviceModified(obj, event):
     '''Called when a meetingadvice is modified so we can warn parent item.'''
+    # update advice_row_id
+    obj._updateAdviceRowId()
+
     item = obj.getParentNode()
     item.updateAdvices()
     # log

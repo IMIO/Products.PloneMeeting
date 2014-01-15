@@ -448,6 +448,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # give the "PloneMeeting: Add MeetingUser" permission to MeetingObserverGlobal role
         self.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingUser'], ('Manager', 'MeetingObserverGlobal'))
 
+    security.declarePrivate('validate_unoEnabledPython')
     def validate_unoEnabledPython(self, value):
         '''Checks if the given Python interpreter exists and is uno-enabled.'''
         if not value:
@@ -2057,10 +2058,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not user.has_role('Manager'):
             raise Unauthorized
         for b in self.portal_catalog(meta_type='MeetingItem'):
-            obj = b.getObject()
-            obj.updateAdvices()
+            item = b.getObject()
+            item.updateAdvices()
             # Update security as local_roles are set by updateAdvices
-            obj.reindexObject(idxs=['allowedRolesAndUsers', ])
+            item.reindexObject(idxs=['allowedRolesAndUsers', ])
+            logger.info('adviceIndex of item at %s updated' % '/'.join(item.getPhysicalPath()))
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
