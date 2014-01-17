@@ -17,6 +17,7 @@ __docformat__ = 'plaintext'
 import logging
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
+from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -113,6 +114,8 @@ def onMeetingGroupTransition(obj, event):
 
 def onItemMoved(obj, event):
     '''Called when an item is pasted cut/pasted, we need to update annexIndex.'''
+    if not hasattr(aq_base(obj), 'annexIndex'):
+        obj.annexIndex = PersistentList()
     IAnnexable(obj).updateAnnexIndex()
 
 
