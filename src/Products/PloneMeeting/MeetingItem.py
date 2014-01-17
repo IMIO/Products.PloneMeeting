@@ -2192,14 +2192,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # add delay-aware optionalAdvisers
         delayAwareAdvisers = self.getDelayAwareAdvisers()
         if delayAwareAdvisers:
-            # we add a special value at the beginning of the vocabulary
-            # that will be simply an information message than will not be selectable
-            delay_aware_optional_advisers_msg = translate('delay_aware_optional_advisers_term',
-                                                          domain='PloneMeeting',
-                                                          context=self.REQUEST)
-            resDelayAwareAdvisers.append(('not_selectable_value_delay_aware_optional_advisers',
-                                          delay_aware_optional_advisers_msg))
-            # then add the delay-aware advisers
             # a delay-aware adviser has a special id so we can handle it specifically after
             for delayAwareAdviser in delayAwareAdvisers:
                 adviserId = "%s__delay__%s__rowid__%s" % \
@@ -2216,14 +2208,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # only let select groups for which there is at least one user in
         nonEmptyMeetingGroups = tool.getMeetingGroups(notEmptySuffix='advisers')
         if nonEmptyMeetingGroups:
-            if delayAwareAdvisers:
-                # add a special message specifying that selectable advisers
-                # now are 'normal' optional advisers
-                non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
-                                                                  domain='PloneMeeting',
-                                                                  context=self.REQUEST)
-                resNonDelayAwareAdvisers.append(('not_selectable_value_non_delay_aware_optional_advisers',
-                                                 non_delay_aware_optional_advisers_msg))
             for mGroup in nonEmptyMeetingGroups:
                 resNonDelayAwareAdvisers.append((mGroup.getId(), mGroup.getName()))
 
@@ -2244,8 +2228,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     else:
                         resNonDelayAwareAdvisers.append((groupId, getattr(tool, groupId).getName()))
 
-        resDelayAwareAdvisers = DisplayList(tuple(resDelayAwareAdvisers)).sortedByValue()
-        resNonDelayAwareAdvisers = DisplayList(tuple(resNonDelayAwareAdvisers)).sortedByValue()
+        # now create the listing
+        # sort elements by value before potentially prepending a special value here under
+        # for delay-aware advisers, the order is defined in the configuration, so we do not .sortedByValue()
+        resDelayAwareAdvisers = DisplayList(resDelayAwareAdvisers)
+        resNonDelayAwareAdvisers = DisplayList(resNonDelayAwareAdvisers).sortedByValue()
+        # we add a special value at the beginning of the vocabulary
+        # if we have delay-aware advisers
+        if delayAwareAdvisers:
+            delay_aware_optional_advisers_msg = translate('delay_aware_optional_advisers_term',
+                                                          domain='PloneMeeting',
+                                                          context=self.REQUEST)
+            resDelayAwareAdvisers = DisplayList([('not_selectable_value_delay_aware_optional_advisers',
+                                                  delay_aware_optional_advisers_msg)]) + resDelayAwareAdvisers
+
+            # if we have delay-aware advisers, we add another special value
+            # that explain that under are 'normal' optional advisers
+            if nonEmptyMeetingGroups:
+                non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
+                                                                  domain='PloneMeeting',
+                                                                  context=self.REQUEST)
+                resNonDelayAwareAdvisers = DisplayList([('not_selectable_value_non_delay_aware_optional_advisers',
+                                                         non_delay_aware_optional_advisers_msg)]) + resNonDelayAwareAdvisers
+
         return resDelayAwareAdvisers + resNonDelayAwareAdvisers
 
     def _decodeDelayAwareId(self, delayAwareId):

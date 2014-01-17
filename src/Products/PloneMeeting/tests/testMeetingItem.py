@@ -1298,6 +1298,34 @@ class testMeetingItem(PloneMeetingTestCase):
           Test how the optionalAdvisers vocabulary behaves while
           managing delay-aware advisers.
         """
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        # by default, nothing is defined as delay-aware adviser in the configuration
+        cfg = self.meetingConfig
+        self.failIf(cfg.getCustomAdvisers())
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        # now define some delay-aware advisers in MeetingConfig.customAdvisers
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'developers',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'delay': '5'},
+             {'row_id': 'unique_id_456',
+              'group': 'developers',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'delay': '10'}, ])
+        # a special key is prepended that will be disabled in the UI
+        # at the beginning of 'both' list (delay-aware and non delay-aware advisers)
+        self.assertEquals(item.listOptionalAdvisers().keys(),
+                          ['not_selectable_value_delay_aware_optional_advisers',
+                           'developers__delay__5__rowid__unique_id_123',
+                           'developers__delay__10__rowid__unique_id_456',
+                           'not_selectable_value_non_delay_aware_optional_advisers',
+                           'developers',
+                           'vendors'])
 
     def test_pm_validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         """
