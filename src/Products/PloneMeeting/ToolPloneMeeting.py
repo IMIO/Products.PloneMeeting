@@ -627,9 +627,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # Validates meeting config (validation seems not to be triggered
         # automatically when an object is created from code).
-        errors = cfg.schema.validate(cfg)
+        errors = []
+        for field in cfg.Schema().fields():
+            error = field.validate(cfg.getField(field.getName()).get(cfg), cfg)
+            if error:
+                errors.append("'%s': %s" % (field.getName(), error))
         if errors:
-            raise PloneMeetingError(MEETING_CONFIG_ERROR % cfg.getId(), errors)
+            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), '\n'.join(errors)))
         # call processForm passing dummy values so existing values are not touched
         cfg.processForm(values={'dummy': None})
         # when the object is created through-the-web.

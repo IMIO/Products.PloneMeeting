@@ -429,10 +429,9 @@ class MeetingConfigDescriptor(Descriptor):
         # Enable / disable advices
         self.useAdvices = False
         # List of item states when it is possible to define an advice
-        self.itemAdviceStates = ['proposed', 'validated', 'presented',
-                                 'itempublished']
-        self.itemAdviceEditStates = ['proposed', 'validated']
-        self.itemAdviceViewStates = ['proposed', 'validated', 'presented', 'itempublished']
+        self.itemAdviceStates = []
+        self.itemAdviceEditStates = []
+        self.itemAdviceViewStates = []
         # List of item and meeting states the users in the MeetingConfig
         # corresponding powerObservers group will see the item/meeting
         self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'refused', 'delayed']
