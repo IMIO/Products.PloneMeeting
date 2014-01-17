@@ -2121,16 +2121,4 @@ registerType(Meeting, PROJECTNAME)
 # end of class Meeting
 
 ##code-section module-footer #fill in your manual code here
-
-
-def onAddMeeting(meeting, event):
-    '''This method is called every time a Meeting is created, even in
-       portal_factory. Local roles defined on a meeting define who may view
-       or edit it. But at the time the meeting is created in portal_factory,
-       local roles are not defined yet. This can be a problem when some
-       workflow adaptations are enabled (ie, 'local_meeting_managers'). So here
-       we grant role 'Owner' to the currently logged user that allows him,
-       in every case, to create the meeting.'''
-    user = meeting.portal_membership.getAuthenticatedMember()
-    meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 ##/code-section module-footer

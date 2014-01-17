@@ -6,11 +6,11 @@
 
   <subscriber for=".interfaces.IMeetingItem
                    zope.container.interfaces.IObjectAddedEvent"
-              handler=".MeetingItem.onAddMeetingItem"/>
+              handler=".events.onItemAdded"/>
 
   <subscriber for=".interfaces.IMeeting
                    zope.container.interfaces.IObjectAddedEvent"
-              handler=".Meeting.onAddMeeting"/>
+              handler=".events.onMeetingAdded"/>
 
   <subscriber for=".interfaces.IMeetingItem
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"

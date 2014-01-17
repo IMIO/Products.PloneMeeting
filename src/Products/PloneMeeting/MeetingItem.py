@@ -979,17 +979,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
-    def __init__(self, *args, **kwargs):
-        '''self.annexIndex stores info about annexes, such that it is not needed
-           to access real annexes objects for doing things like displaying the
-           "annexes icons" macro, for example.'''
-        OrderedBaseFolder.__init__(self, *args, **kwargs)
-        self.annexIndex = PersistentList()
-        # Create the dictionary for storing advices. Every key is the id of a
-        # MeetingGroup that must give an advice; every value is a dict with some
-        # information about the advice (creator, comment, date, etc)
-        self.adviceIndex = PersistentMapping()
-
     security.declarePublic('getDecision')
     def getDecision(self, keepWithNext=False, **kwargs):
         '''Overridden version of 'decision' field accessor. It allows to specify
@@ -2702,8 +2691,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.forceHTMLContentTypeForEmptyRichFields()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
-        # Items that are created in the tool for creating recurring items
-        # must not appear in searches.
         self.reindexObject()
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Item at %s created by "%s".' % (self.absolute_url_path(), userId))
@@ -3662,14 +3649,4 @@ registerType(MeetingItem, PROJECTNAME)
 # end of class MeetingItem
 
 ##code-section module-footer #fill in your manual code here
-def onAddMeetingItem(item, event):
-    '''This method is called every time a MeetingItem is created, even in
-       portal_factory. Local roles defined on an item define who may view
-       or edit it. But at the time the item is created in portal_factory,
-       local roles are not defined yet. So here we add a temporary local
-       role to the currently logged user that allows him to create the
-       item. In item.at_post_create_script we will remove this temp local
-       role.'''
-    user = item.portal_membership.getAuthenticatedMember()
-    item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
 ##/code-section module-footer

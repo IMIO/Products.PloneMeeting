@@ -16,6 +16,7 @@ __docformat__ = 'plaintext'
 
 import logging
 from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -113,6 +114,34 @@ def onMeetingGroupTransition(obj, event):
 def onItemMoved(obj, event):
     '''Called when an item is pasted cut/pasted, we need to update annexIndex.'''
     IAnnexable(obj).updateAnnexIndex()
+
+
+def onItemAdded(item, event):
+    '''This method is called every time a MeetingItem is created, even in
+       portal_factory. Local roles defined on an item define who may view
+       or edit it. But at the time the item is created in portal_factory,
+       local roles are not defined yet. So here we add a temporary local
+       role to the currently logged user that allows him to create the
+       item. In item.at_post_create_script we will remove this temp local
+       role.'''
+    user = item.portal_membership.getAuthenticatedMember()
+    item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
+    # Add a place to store annexIndex
+    item.annexIndex = PersistentList()
+    # Add a place to store adviceIndex
+    item.adviceIndex = PersistentMapping()
+
+
+def onMeetingAdded(meeting, event):
+    '''This method is called every time a Meeting is created, even in
+       portal_factory. Local roles defined on a meeting define who may view
+       or edit it. But at the time the meeting is created in portal_factory,
+       local roles are not defined yet. This can be a problem when some
+       workflow adaptations are enabled (ie, 'local_meeting_managers'). So here
+       we grant role 'Owner' to the currently logged user that allows him,
+       in every case, to create the meeting.'''
+    user = meeting.portal_membership.getAuthenticatedMember()
+    meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 
 
 def onAdviceAdded(obj, event):
