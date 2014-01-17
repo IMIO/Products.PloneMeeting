@@ -144,6 +144,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_PasteItems(self):
         '''Paste objects (previously copied) in destFolder.'''
+        self.setMeetingConfig(self.meetingConfig2.getId())
         login(self.portal, 'pmCreator1')
         item1 = self.create('MeetingItem')
         # Add annexes to item1
@@ -154,7 +155,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.addAnnex(item2)
         # Add advices to item2
         item2.setOptionalAdvisers(('vendors', ))
-        self.validateItem(item2)
+        # propose the item so the advice can be given
+        self.proposeItem(item2)
         login(self.portal, 'pmReviewer2')
         createContentInContainer(item2,
                                  'meetingadvice',
