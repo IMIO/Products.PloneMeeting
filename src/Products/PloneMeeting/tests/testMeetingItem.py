@@ -28,7 +28,9 @@ from DateTime import DateTime
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
 
+from plone.app.textfield.value import RichTextValue
 from plone.app.testing import login
+from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.utils import getToolByName
@@ -1267,7 +1269,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setAssociatedGroups(())
         self.assertEquals(item.listAssociatedGroups().keys(), ['vendors', ])
 
-    def test_pm_listOptionalAdvisers(self):
+    def test_pm_listOptionalAdvisersVocabulary(self):
         """
           This is the vocabulary for the field "optionalAdvisers".
           Check that we still have the stored value in the vocabulary, aka if the stored value
@@ -1291,7 +1293,13 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         self.assertEquals(item.listOptionalAdvisers().keys(), ['vendors', ])
 
-    def test_pm_validate_optionalAdvisers(self):
+    def test_pm_listOptionalAdvisersDelayAwareAdvisers(self):
+        """
+          Test how the optionalAdvisers vocabulary behaves while
+          managing delay-aware advisers.
+        """
+
+    def test_pm_validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         """
           This test the 'optionalAdvisers' field validate method.
           Make sure we can not select more than one optional advice concerning
@@ -1299,6 +1307,7 @@ class testMeetingItem(PloneMeetingTestCase):
           a 'delay-aware' adviser and the same group 'normal non-delay-aware' adviser.
           We could also select 2 'delay-aware' advisers for the same group as we can
           define several delays for the same group.
+          Check also
         """
         self.changeUser('pmManager')
         # create an item to test the vocabulary
@@ -1320,6 +1329,62 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
         optionalAdvisers = ('developers__delay__5', )
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
+
+    def test_pm_validate_optionalAdvisersCanNotUnselectAlreadyGivenAdvice(self):
+        """
+          This test the 'optionalAdvisers' field validate method.
+          Make sure that if we unselect an adviser, it is not an already given advice.
+        """
+        # make advice givable when item is 'itemcreated'
+        self.meetingConfig.setItemAdviceStates(('itemcreated', ))
+        self.meetingConfig.setItemAdviceEditStates(('itemcreated', ))
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        # check with the 'non-delay-aware' and the 'delay-aware' advisers selected
+        item.setOptionalAdvisers(('developers', ))
+        item.at_post_edit_script()
+        can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
+                                         domain='PloneMeeting',
+                                         context=self.portal.REQUEST)
+        # for now as developers advice is not given, we can unselect it
+        # validate returns nothing if validation was successful
+        self.failIf(item.validate_optionalAdvisers(()))
+        # now give the advice
+        developers_advice = createContentInContainer(item,
+                                                     'meetingadvice',
+                                                     **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                                        'advice_type': u'positive',
+                                                        'advice_comment': RichTextValue(u'My comment')})
+        # now we can not unselect the 'developers' anymore as advice was given
+        self.assertTrue(item.validate_optionalAdvisers(()), can_not_unselect_msg)
+        # we can unselect an optional advice if the given advice is an automatic one
+        # remove the given one and make what necessary for an automatic advice
+        # equivalent to the selected optional advice to be given
+        self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
+        self.changeUser('admin')
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'developers',
+                           'gives_auto_advice_on': 'item/getBudgetRelated',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': 'Auto help message',
+                           'delay': '10',
+                           'delay_help_message': 'Delay help message', }, ]
+        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        self.changeUser('pmManager')
+        # make item able to receive the automatic advice
+        item.setBudgetRelated(True)
+        item.at_post_create_script()
+        # now optionalAdvisers validation pass even if advice of the 'developers' group is given
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # the given advice is not considered as an optional advice
+        self.assertEquals(item.adviceIndex['developers']['optional'], False)
+        self.failIf(item.validate_optionalAdvisers(()))
 
 
 def test_suite():

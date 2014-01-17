@@ -23,6 +23,7 @@
 #
 
 import logging
+from DateTime import DateTime
 
 from zope.i18n import translate
 
@@ -249,16 +250,18 @@ class testMeetingConfig(PloneMeetingTestCase):
         developers_item.reindexObject()
         self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 2)
 
-    def test_pm_validate_customAdvisersDateColumn(self):
+    def test_pm_validate_customAdvisersDateColumns(self):
         '''Test the MeetingConfig.customAdvisers validate method.
-           This validates dates of the 'gives_auto_advice_for_item_created_from' column :
+           This validates dates of the 'for_item_created_from' and ''for_item_created_until' columns :
            dates are strings that need to respect following format 'YYYY/MM/DD'.'''
-        mc = self.meetingConfig
+        cfg = self.meetingConfig
         # the validate method returns a translated message if the validation failed
         # wrong date format, should be YYYY/MM/DD
-        customAdvisers = [{'group': 'vendors',
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'vendors',
                            'gives_auto_advice_on': '',
-                           'gives_auto_advice_for_item_created_from': '2012/31/12',
+                           'for_item_created_from': '2012/31/12',
+                           'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
                            'delay': '',
                            'delay_help_message': '', }, ]
@@ -266,60 +269,162 @@ class testMeetingConfig(PloneMeetingTestCase):
                                    domain='PloneMeeting',
                                    mapping={'groupName': customAdvisers[0]['group']},
                                    context=self.portal.REQUEST)
-        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        # not a date, wrong format (YYYY/MM/DD) or extra blank are not valid dates
+        wrong_dates = ['wrong', '2013/20/05', '2013/02/05 ', ]
         # if wrong syntax, it fails
-        customAdvisers[0]['gives_auto_advice_for_item_created_from'] = 'wrong'
-        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_date_msg)
-        # if wrong format, it fails
-        customAdvisers[0]['gives_auto_advice_for_item_created_from'] = '2013/20/05 '
-        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_date_msg)
-        # if extra blank, it fails
-        customAdvisers[0]['gives_auto_advice_for_item_created_from'] = '2013/01/01 '
-        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_date_msg)
-        # with a valid date, then it works
-        customAdvisers[0]['gives_auto_advice_for_item_created_from'] = '2013/12/31'
+        for wrong_date in wrong_dates:
+            customAdvisers[0]['for_item_created_from'] = wrong_date
+            self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_date_msg)
+            customAdvisers[0]['for_item_created_until'] = wrong_date
+            self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        # with a valid date, then it works, set back 'for_item_created_until' to ''
+        # his special behaviour will be tested later in this test
+        customAdvisers[0]['for_item_created_until'] = ''
+        customAdvisers[0]['for_item_created_from'] = '2013/12/31'
         # validate returns nothing if validation was successful
-        self.failIf(mc.validate_customAdvisers(customAdvisers))
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        # 'for_item_create_until' date must be in the future
+        customAdvisers[0]['for_item_created_until'] = '2010/12/31'
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        # with a future date, it validates ONLY if it is the first time the date
+        # is defined, aka we can not change an already encoded 'for_item_created_until' date
+        future_date = (DateTime() + 1).strftime('%Y/%m/%d')
+        customAdvisers[0]['for_item_created_until'] = future_date
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        # as long as the rule is not used, we can still change it...
+        # like another date in the past or back to ''
+        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        other_future_date = (DateTime() + 2).strftime('%Y/%m/%d')
+        customAdvisers[0]['for_item_created_until'] = other_future_date
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        customAdvisers[0]['for_item_created_until'] = ''
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
 
     def test_pm_validate_customAdvisersDelayColumn(self):
         '''Test the MeetingConfig.customAdvisers validate method.
-           This validates delays of the 'delay' column :
-           delays are integers that can be separated by commas if several delays for the same advice.'''
-        mc = self.meetingConfig
+           This validates delays of the 'delay' column : either field is empty or
+           a delay is defined as a single digit value.'''
+        cfg = self.meetingConfig
         # the validate method returns a translated message if the validation failed
-        # wrong format, should be an integer or integers separated by commas : 10 or 10,5,2
-        customAdvisers = [{'group': 'vendors',
+        # wrong format, should be empty or a digit
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'vendors',
                            'gives_auto_advice_on': '',
-                           'gives_auto_advice_for_item_created_from': '',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
+                           # wrong value
                            'delay': 'a',
                            'delay_help_message': '', }, ]
         wrong_delay_msg = translate('custom_adviser_wrong_delay_format',
                                     domain='PloneMeeting',
                                     mapping={'groupName': customAdvisers[0]['group']},
                                     context=self.portal.REQUEST)
-        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_delay_msg)
         # if wrong syntax, it fails
         customAdvisers[0]['delay'] = '10,5'
-        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_delay_msg)
         # if extra blank, it fails
-        customAdvisers[0]['delay'] = '10,5 '
-        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        customAdvisers[0]['delay'] = '10 '
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_delay_msg)
         # if not integer, it fails
         customAdvisers[0]['delay'] = '10.5'
-        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
-        # if not complete format, it fails
-        customAdvisers[0]['delay'] = '10;5;'
-        self.assertTrue(mc.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_delay_msg)
         # with a valid date, then it works
         # with a single delay value
         customAdvisers[0]['delay'] = '10'
         # validate returns nothing if validation was successful
-        self.failIf(mc.validate_customAdvisers(customAdvisers))
-        # with a multiple delays value
-        customAdvisers[0]['delay'] = '10;5;2'
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+
+    def test_pm_validate_customAdvisersCanNotChangeUsedConfig(self):
+        '''Test the MeetingConfig.customAdvisers validate method.
+           This validates that if a configuration is already in use, logical data can
+           not be changed anymore, only basic data can be changed (.'''
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # first check that we can edit an unused configuration
+        self.changeUser('admin')
+        cfg = self.meetingConfig
+        originalCustomAdvisers = {'row_id': 'unique_id_123',
+                                  'group': 'developers',
+                                  'gives_auto_advice_on': 'item/getBudgetRelated',
+                                  'for_item_created_from': '2012/01/01',
+                                  'for_item_created_until': '',
+                                  'gives_auto_advice_on_help_message': 'Auto help message',
+                                  'delay': '10',
+                                  'delay_help_message': 'Delay help message', }
+        can_not_edit_msg = translate('custom_adviser_can_not_edit_used_row',
+                                     domain='PloneMeeting',
+                                     mapping={'item_url': originalCustomAdvisers['group']},
+                                     context=self.portal.REQUEST)
         # validate returns nothing if validation was successful
-        self.failIf(mc.validate_customAdvisers(customAdvisers))
+        self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
+        # change everything including logical data
+        changedCustomAdvisers = {'row_id': 'unique_id_123',
+                                 'group': 'vendors',
+                                 'gives_auto_advice_on': 'not:item/getBudgetRelated',
+                                 'for_item_created_from': '2013/01/01',
+                                 'for_item_created_until': '2025/01/01',
+                                 'gives_auto_advice_on_help_message': 'Auto help message changed',
+                                 'delay': '20',
+                                 'delay_help_message': 'Delay help message changed', }
+        # validate returns nothing if validation was successful
+        self.failIf(cfg.validate_customAdvisers([changedCustomAdvisers, ]))
+        # now use the config
+        # make advice givable when item is 'itemcreated'
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setCustomAdvisers([originalCustomAdvisers, ])
+        item.setBudgetRelated(True)
+        item.at_post_edit_script()
+        # the automatic advice has been asked
+        self.assertEquals(item.adviceIndex['developers']['row_id'], 'unique_id_123')
+        # current config is still valid
+        self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
+        # now we can not change a logical field, aka
+        # 'group', 'gives_auto_advice_on', 'for_item_created_from' and 'delay'
+        logical_fields_wrong_values_mapping = {
+            'group': 'vendors',
+            'gives_auto_advice_on': 'not:item/getBudgetRelated',
+            'for_item_created_from': '2000/01/01',
+            'delay': '55', }
+        savedOriginalCustomAdvisers = dict(originalCustomAdvisers)
+        for field in logical_fields_wrong_values_mapping:
+            originalCustomAdvisers[field] = logical_fields_wrong_values_mapping[field]
+            # it does not validate
+            self.assertEquals(cfg.validate_customAdvisers([originalCustomAdvisers, ]), can_not_edit_msg)
+            originalCustomAdvisers = dict(savedOriginalCustomAdvisers)
+        # now change a non logical field, then it still validated
+        non_logical_fields_wrong_values_mapping = {
+            'gives_auto_advice_on_help_message': 'New help message gives auto',
+            'delay_help_message': 'New help message delay', }
+        savedOriginalCustomAdvisers = dict(originalCustomAdvisers)
+        for field in non_logical_fields_wrong_values_mapping:
+            originalCustomAdvisers[field] = non_logical_fields_wrong_values_mapping[field]
+            # it does validate
+            self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
+            originalCustomAdvisers = dict(savedOriginalCustomAdvisers)
+
+        # special behaviour for field 'for_item_created_until' that can be set once
+        # if it was empty, if a date was encoded and the rule is used, it can not be changed anymore
+        # set a future date and try to change it
+        future_date = (DateTime() + 1).strftime('%Y/%m/%d')
+        originalCustomAdvisers['for_item_created_until'] = future_date
+        self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
+        cfg.setCustomAdvisers([originalCustomAdvisers, ])
+        # now changing the encoded date would fail
+        other_future_date = (DateTime() + 2).strftime('%Y/%m/%d')
+        originalCustomAdvisers['for_item_created_until'] = other_future_date
+        self.assertEquals(cfg.validate_customAdvisers([originalCustomAdvisers, ]), can_not_edit_msg)
+        # it can not neither be set back to ''
+        originalCustomAdvisers['for_item_created_until'] = ''
+        self.assertEquals(cfg.validate_customAdvisers([originalCustomAdvisers, ]), can_not_edit_msg)
+
+        # we can not remove a used row
+        self.assertEquals(cfg.validate_customAdvisers([]), can_not_edit_msg)
 
 
 def test_suite():

@@ -39,6 +39,7 @@ class IMeetingAdvice(Interface):
         output_mime_type='text/html',
         allowed_mime_types=('text/html',),
     )
+    form.mode(advice_row_id='hidden')
     advice_row_id = schema.TextLine(
         title=_(u"Advice row id"),
         description=_("Linked advice row id, this is managed programmatically."),

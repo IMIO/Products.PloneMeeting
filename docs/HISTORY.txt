@@ -11,6 +11,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 ------------------
 - Not backward compatible with older versions if ExternalApplications were used as the class was dropped now
 - Moved advices from saved dict to real objects so we can add annexes into it
+- Added custom advisers management on a per MeetingConfig basis : this manage automatic advisers and delay-aware advisers
+- Added delay-aware advisers making it possible to define delay for giving an advice
 
 3.1.0 (2013-11-04)
 ------------------

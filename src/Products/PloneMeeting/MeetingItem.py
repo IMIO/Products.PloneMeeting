@@ -1089,7 +1089,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if removedAdvisers:
             givenAdvices = self.getGivenAdvices()
             for removedAdviser in removedAdvisers:
-                if removedAdviser in givenAdvices:
+                if removedAdviser in givenAdvices and givenAdvices[removedAdviser]['optional'] is True:
                     return translate('can_not_unselect_already_given_advice',
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
@@ -2194,7 +2194,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if delayAwareAdvisers:
             # we add a special value at the beginning of the vocabulary
             # that will be simply an information message than will not be selectable
-            delay_aware_optional_advisers_msg = '--- Gniiiiiiiiiiiiii ---'
+            delay_aware_optional_advisers_msg = translate('delay_aware_optional_advisers_term',
+                                                          domain='PloneMeeting',
+                                                          context=self.REQUEST)
             resDelayAwareAdvisers.append(('not_selectable_value_delay_aware_optional_advisers',
                                           delay_aware_optional_advisers_msg))
             # then add the delay-aware advisers
@@ -2217,7 +2219,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if delayAwareAdvisers:
                 # add a special message specifying that selectable advisers
                 # now are 'normal' optional advisers
-                non_delay_aware_optional_advisers_msg = '--- Gnoooooooooooooo ---'
+                non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
+                                                                  domain='PloneMeeting',
+                                                                  context=self.REQUEST)
                 resNonDelayAwareAdvisers.append(('not_selectable_value_non_delay_aware_optional_advisers',
                                                  non_delay_aware_optional_advisers_msg))
             for mGroup in nonEmptyMeetingGroups:
@@ -2341,11 +2345,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getGivenAdvices')
-    def getGivenAdvices(self, automaticAdvisers, delayAwareAdvisers):
+    def getGivenAdvices(self):
         '''Returns the list of advices that has already been given by
-           computing a data dict from contained meetingadvices.
-           p_automaticAdviserIds and p_delayAwareAdvisers contains informations
-           that we will need to build the result.'''
+           computing a data dict from contained meetingadvices.'''
         # for now, only contained elements in a MeetingItem of
         # meta_type 'Dexterity Container' are meetingadvices...
         res = {}
@@ -2511,7 +2513,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # we keep the optional and automatic advisers separated because we need
         # to know what advices are optional or not
         # if an advice is in both optional and automatic advisers, the automatic is kept
-        alreadyGivenAdvices = self.getGivenAdvices(automaticAdvisers, delayAwareAdvisers)
+        alreadyGivenAdvices = self.getGivenAdvices()
         for adviceType in (optionalAdvisers, automaticAdvisers):
             i += 1
             optional = (i == 0)
@@ -2554,7 +2556,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['row_id'] = row_id
 
         # now update self.adviceIndex with given advices
-        for groupId, adviceInfo in self.getGivenAdvices(automaticAdvisers, delayAwareAdvisers).iteritems():
+        for groupId, adviceInfo in self.getGivenAdvices().iteritems():
             # in case an already given advice does not need to be given anymore
             # the groupId is in givenAdvice but not in self.adviceIndex for now
             # that contains advices to give

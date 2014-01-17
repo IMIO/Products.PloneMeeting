@@ -163,8 +163,11 @@ class testAdvices(PloneMeetingTestCase):
         form.request.set('form.widgets.advice_group', u'vendors')
         # the 3 fields 'advice_group', 'advice_type' and 'advice_comment' are handled correctly
         data = form.extractData()[0]
-        self.assertTrue('advice_group' in data and 'advice_type' in data and 'advice_comment' in data)
-        self.assertTrue(len(data) == 3)
+        self.assertTrue('advice_group' in data and
+                        'advice_type' in data and
+                        'advice_comment' in data and
+                        'advice_row_id' in data)
+        self.assertTrue(len(data) == 4)
         form.request.form['advice_group'] = u'vendors'
         form.request.form['advice_type'] = u'positive'
         form.request.form['advice_comment'] = RichTextValue(u'My comment')
@@ -221,7 +224,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         developers_advice = createContentInContainer(item,
                                                      'meetingadvice',
-                                                     **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                                     **{'advice_group': 'developers',
                                                      'advice_type': u'positive',
                                                      'advice_comment': RichTextValue(u'My comment')})
         # can view/edit/delete is own advice
@@ -236,7 +239,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission('Delete objects', developers_advice))
         vendors_advice = createContentInContainer(item,
                                                   'meetingadvice',
-                                                  **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                                  **{'advice_group': 'vendors',
                                                   'advice_type': u'positive',
                                                   'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmAdviser1')
@@ -313,7 +316,7 @@ class testAdvices(PloneMeetingTestCase):
         # give an advice
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                 **{'advice_group': 'vendors',
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # login as an user that can actually edit the item
@@ -344,7 +347,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                 **{'advice_group': 'vendors',
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmManager')
@@ -361,7 +364,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                 **{'advice_group': 'vendors',
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmManager')
@@ -379,7 +382,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                 **{'advice_group': 'vendors',
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmManager')
@@ -417,7 +420,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(brains[0].UID, itemUID)
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                 **{'advice_group': 'developers',
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # now that an advice has been given for the developers group, the indexAdvisers has been updated
@@ -545,6 +548,65 @@ class testAdvices(PloneMeetingTestCase):
         # nothing should be returned as defined date is bigger than current item's date
         self.assertTrue(futureDate > item.created())
         self.failIf(item.getAutomaticAdvisers())
+
+    def test_pm_RowIdSetOnAdvices(self):
+        '''Test that if we are adding an automatic and/or delay-aware advice,
+           the 'advice_row_id' field is correctly initialized on the meetingadvice object.'''
+        # for now, make sure no custom adviser is defined
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers([])
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('developers', ))
+        item.at_post_edit_script()
+
+        # add the optional advice
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'developers',
+                                             'advice_type': u'positive',
+                                             'advice_comment': RichTextValue(u'My comment')})
+        self.assertEquals(advice.advice_row_id, None)
+        self.assertEquals(item.adviceIndex[advice.advice_group]['row_id'], None)
+
+        # now remove it and make it a 'delay-aware' advice
+        item.restrictedTraverse('@@delete_givenuid')(advice.UID())
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'developers',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'delay': '10'}, ])
+        item.setOptionalAdvisers(('developers__delay__10__rowid__unique_id_123', ))
+        item.at_post_edit_script()
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'developers',
+                                             'advice_type': u'positive',
+                                             'advice_comment': RichTextValue(u'My comment')})
+        self.assertEquals(advice.advice_row_id, 'unique_id_123')
+        self.assertEquals(item.adviceIndex[advice.advice_group]['row_id'], 'unique_id_123')
+
+        # same behaviour for an automatic advice
+        cfg.setCustomAdvisers(
+            list(cfg.getCustomAdvisers()) +
+            [{'row_id': 'unique_id_456',
+              'group': 'vendors',
+              'gives_auto_advice_on': 'not:item/getBudgetRelated',
+              'for_item_created_from': '2012/01/01',
+              'delay': ''}, ])
+        item.at_post_edit_script()
+        # the automatic advice was asked, now add it
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'negative',
+                                             'advice_comment': RichTextValue(u'My comment')})
+        self.assertEquals(item.adviceIndex['vendors']['row_id'], 'unique_id_456')
+        automatic_advice_obj = getattr(item, item.adviceIndex['vendors']['advice_id'])
+        self.assertEquals(automatic_advice_obj.advice_row_id, 'unique_id_456')
 
 
 def test_suite():
