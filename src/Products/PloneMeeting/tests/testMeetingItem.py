@@ -941,7 +941,7 @@ class testMeetingItem(PloneMeetingTestCase):
         """
           This tests the form that manage itemAssembly and that can apply it on several items.
           The behaviour of itemAssembly and itemSignatures is the same that is why we test it
-          in the same time...
+          together...
         """
         self.changeUser('admin')
         # make items inserted in a meeting inserted in this order
@@ -1068,7 +1068,36 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('View', item2))
         item2.restrictedTraverse('@@manage_item_assembly_form')
         item2.restrictedTraverse('@@manage_item_signatures_form')
-        # if the linked meeting is considered as closed, the item can be quickEdited
+        # it works also with lateItems
+        self.freezeMeeting(meeting)
+        lateItem1 = self.create('MeetingItem')
+        lateItem1.setDecision('<p>A decision</p>')
+        lateItem1.setPreferredMeeting(meeting.UID())
+        lateItem2 = self.create('MeetingItem')
+        lateItem2.setDecision('<p>A decision</p>')
+        lateItem2.setPreferredMeeting(meeting.UID())
+        lateItem3 = self.create('MeetingItem')
+        lateItem3.setDecision('<p>A decision</p>')
+        lateItem3.setPreferredMeeting(meeting.UID())
+        for elt in (lateItem1, lateItem2, lateItem3):
+            self.presentItem(elt)
+            # check that late items use meeting value
+            self.assertEquals(elt.getItemAssembly(), '<p>Meeting assembly</p>')
+            self.assertEquals(elt.getItemSignatures(), 'Meeting signatures')
+        # now update including first lateItem
+        self.request.form['form.widgets.item_assembly'] = u'Item assembly 3'
+        self.request.form['form.widgets.item_signatures'] = u'Item signatures 3'
+        self.request.form['form.widgets.apply_until_item_number'] = u'7'
+        # Apply
+        formAssembly.handleApplyItemAssembly(formAssembly, None)
+        formSignatures.handleApplyItemSignatures(formSignatures, None)
+        self.assertEquals(lateItem1.getItemAssembly(), '<p>Item assembly 3</p>')
+        self.assertEquals(lateItem2.getItemAssembly(), '<p>Meeting assembly</p>')
+        self.assertEquals(lateItem3.getItemAssembly(), '<p>Meeting assembly</p>')
+        self.assertEquals(lateItem1.getItemSignatures(), 'Item signatures 3')
+        self.assertEquals(lateItem2.getItemSignatures(), 'Meeting signatures')
+        self.assertEquals(lateItem3.getItemSignatures(), 'Meeting signatures')
+        # if the linked meeting is considered as closed, the items are not editable anymore
         self.closeMeeting(meeting)
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formSignatures.update)
