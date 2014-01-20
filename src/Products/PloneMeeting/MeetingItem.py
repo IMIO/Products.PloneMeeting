@@ -2540,22 +2540,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Update the dictionary self.adviceIndex with every advices to give
         i = -1
         # we will recompute the entire adviceIndex
+        # just save the 'delay_started_on' as it is the only value stored
+        # in the adviceIndex that is not stored anywhere else
+        delay_started_on_save = {}
+        for groupId, adviceInfo in self.getGivenAdvices().iteritems():
+            delay_started_on_save[groupId] = None
+            if 'delay_started_on' in adviceInfo:
+                delay_started_on_save[groupId] = adviceInfo['delay_started_on']
+
         self.adviceIndex = PersistentMapping()
         # we keep the optional and automatic advisers separated because we need
         # to know what advices are optional or not
         # if an advice is in both optional and automatic advisers, the automatic is kept
-        alreadyGivenAdvices = self.getGivenAdvices()
         for adviceType in (optionalAdvisers, automaticAdvisers):
             i += 1
             optional = (i == 0)
             for adviceInfo in adviceType:
                 # manage only not given advices
-                if adviceInfo['meetingGroupId'] in alreadyGivenAdvices:
-                    continue
+                groupId = adviceInfo['meetingGroupId']
                 # We create an empty dictionary that will store advice info
                 # once the advice will have been created.  But for now, we already
                 # store known infos coming from the configuration and from selected otpional advisers
-                groupId = adviceInfo['meetingGroupId']
                 self.adviceIndex[groupId] = d = PersistentMapping()
                 d['type'] = NOT_GIVEN_ADVICE_VALUE
                 d['optional'] = optional
@@ -2565,7 +2570,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['delay_label'] = adviceInfo['delay_label']
                 d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
-                d['delay_started_on'] = None
+                # manage the 'delay_started_on' data that was saved prior
+                if groupId in delay_started_on_save:
+                    d['delay_started_on'] = delay_started_on_save[groupId]
+                else:
+                    d['delay_started_on'] = None
 
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():

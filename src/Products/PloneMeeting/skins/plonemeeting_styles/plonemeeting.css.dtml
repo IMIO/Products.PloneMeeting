@@ -718,7 +718,7 @@ select#optionalAdvisers option[disabled] {
 .advice_delay_still_time {
     color: green;
 }
-.advice_delay_timeout_out {
+.advice_delay_timed_out {
     color: red;
 }
 
