@@ -699,6 +699,11 @@ div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
     display: none;
 }
 
+/* skin disabled options in the select showing optionalAdvisers */
+select#optionalAdvisers option[disabled] {
+    color: grey;
+    font-style: italic;
+}
 
 /* </dtml-with> */
 
