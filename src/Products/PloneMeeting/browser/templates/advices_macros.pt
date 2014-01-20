@@ -41,9 +41,15 @@
                     <legend>
                          <span tal:condition="advice/delay">
                               <img src="advice_with_delay_big.png" tal:attributes="src string:${portal_url}/advice_with_delay_big.png"/>
+                              <span class="advice_delay"
+                                    tal:define="delayInfos python: meetingItem.getLeftDelayInfosForAdvice(advice['id']);
+                                                leftDelay python: delayInfos[0];
+                                                delayState python: delayInfos[1];"
+                                    tal:content="leftDelay"
+                                    tal:attributes="class string:advice_delay advice_delay_${delayState};" />
                          </span>
                          <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b><span tal:condition="advice/optional">)</span>
-                         <acronym tal:attributes="title python: advice['optional'] and 'This optional advice was asked by the item creators' or 'This automatic advice has been asked by the application'">&nbsp;?&nbsp;</acronym>
+                         <acronym tal:attributes="title python: meetingItem.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
                     </legend>
                 <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%"
                        tal:define="mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given')">

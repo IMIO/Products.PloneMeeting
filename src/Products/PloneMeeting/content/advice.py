@@ -78,7 +78,7 @@ class MeetingAdvice(Container):
 
     def _updateAdviceRowId(self):
         '''Make sure advice_row_id is correct.'''
-        # the row_id is stored in parent (item)
+        # the row_id is stored in parent (item) adviceIndex
         item = self.getParentNode()
         adviceInfo = item.adviceIndex[self.advice_group]
         self.advice_row_id = adviceInfo['row_id']

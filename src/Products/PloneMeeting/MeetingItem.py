@@ -24,6 +24,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import re
+from datetime import datetime
 from collections import OrderedDict
 from appy.gen import No
 from persistent.list import PersistentList
@@ -1057,16 +1058,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # if it is a delay-aware advice, check that the same 'normal'
             # optional adviser has not be selected and that another delay-aware adviser
             # for the same group is not selected too
-            if '__delay__' in adviser:
+            # we know that it is a delay-aware adviser because we have '__rowid__' in it's key
+            if '__rowid__' in adviser:
                 #check that the same 'non-delay-aware' adviser has not be selected
-                nonDelayAwareAdviserPossibleId = adviser.split('__delay__')[0]
+                nonDelayAwareAdviserPossibleId = adviser.split('__rowid__')[0]
                 if nonDelayAwareAdviserPossibleId in value:
                     return translate('can_not_select_several_optional_advisers_same_group',
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
                 # check that another delay-aware adviser of the same group
                 # is not selected at the same time, we could have 2 (or even more) delays for the same group
-                delayAdviserStartsWith = adviser.split('__delay__')[0] + '__delay__'
+                delayAdviserStartsWith = adviser.split('__rowid__')[0] + '__rowid__'
                 for v in value:
                     if v.startswith(delayAdviserStartsWith) and not v == adviser:
                         return translate('can_not_select_several_optional_advisers_same_group',
@@ -1080,6 +1082,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for removedAdviser in removedAdvisers:
                 if removedAdviser in givenAdvices and givenAdvices[removedAdviser]['optional'] is True:
                     return translate('can_not_unselect_already_given_advice',
+                                     mapping={'removedAdviser': self.displayValue(self.listOptionalAdvisers(),
+                                                                                  removedAdviser)},
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
 
@@ -2060,6 +2064,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return sendMailIfRelevant(self, event, permissionOrRole, isRole,
                                   customEvent, mapping)
 
+    security.declarePublic('getOptionalAdvisersData')
+    def getOptionalAdvisersData(self):
+        '''Get optional advisers but with same format as getAutomaticAdvisers
+           so it can be handled easily by the updateAdvices method.
+           We need to return a list of dict with relevant informations.'''
+
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        res = []
+        for adviser in self.getOptionalAdvisers():
+            # if this is a delay-aware adviser, we have the data in the adviser id
+            if '__rowid__' in adviser:
+                meetingGroupId, row_id = self._decodeDelayAwareId(adviser)
+                customAdviserInfos = cfg._dataForCustomAdviserRowId(row_id)
+                delay = customAdviserInfos['delay']
+                delay_label = customAdviserInfos['delay_label']
+            else:
+                meetingGroupId = adviser
+                delay = row_id = delay_label = ''
+            res.append({'meetingGroupId': meetingGroupId,
+                        'meetingGroupName': getattr(tool, meetingGroupId).getName(),
+                        'gives_auto_advice_on_help_message': '',
+                        'row_id': row_id,
+                        'delay': delay,
+                        'delay_label': delay_label, })
+        return res
+
     security.declarePublic('getAutomaticAdvisers')
     def getAutomaticAdvisers(self):
         '''Who are the automatic advisers for this item? We get it by
@@ -2099,32 +2130,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append({'meetingGroupId': customAdviser['group'],
                             'meetingGroupName': getattr(tool, customAdviser['group']).getName(),
                             'gives_auto_advice_on_help_message': customAdviser['gives_auto_advice_on_help_message'],
-                            'row_id': customAdviser['row_id'], })
+                            'row_id': customAdviser['row_id'],
+                            'delay': customAdviser['delay'],
+                            'delay_label': customAdviser['delay_label'], })
         return res
 
-    security.declarePublic('getDelayAwareAdvisers')
-    def getDelayAwareAdvisers(self):
+    def _optionalDelayAwareAdvisers(self):
         '''Returns the 'delay-aware' advisers.
            This will return a list of dict where dict contains :
-           'meetingGroupId', 'delay' and 'delay_help_message'.'''
+           'meetingGroupId', 'delay' and 'delay_label'.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
         notEmptyAdvisersGroupIds = [mGroup.getId() for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers')]
-        for customAdviser in cfg.getCustomAdvisers():
+        for customAdviserConfig in cfg.getCustomAdvisers():
+            # first check that the customAdviser is actually optional
+            if customAdviserConfig['gives_auto_advice_on']:
+                continue
             # first check if it is a delay-aware advice
-            if not customAdviser['delay']:
+            if not customAdviserConfig['delay']:
                 continue
             # then check if corresponding MeetingGroup is not empty
-            if not customAdviser['group'] in notEmptyAdvisersGroupIds:
+            if not customAdviserConfig['group'] in notEmptyAdvisersGroupIds:
                 continue
             # ok, proceed, one single delay or several
-            for delay in customAdviser['delay'].split(';'):
-                res.append({'meetingGroupId': customAdviser['group'],
-                            'meetingGroupName': getattr(tool, customAdviser['group']).getName(),
+            for delay in customAdviserConfig['delay'].split(';'):
+                res.append({'meetingGroupId': customAdviserConfig['group'],
+                            'meetingGroupName': getattr(tool, customAdviserConfig['group']).getName(),
                             'delay': delay,
-                            'delay_help_message': customAdviser['delay_help_message'],
-                            'row_id': customAdviser['row_id']})
+                            'delay_label': customAdviserConfig['delay_label'],
+                            'row_id': customAdviserConfig['row_id']})
         return res
 
     security.declarePublic('addAutoCopyGroups')
@@ -2176,22 +2211,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Optional advisers for this item are MeetingGroups that are not among
            automatic advisers and that have at least one adviser.'''
         tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
 
         resDelayAwareAdvisers = []
         # add delay-aware optionalAdvisers
-        delayAwareAdvisers = self.getDelayAwareAdvisers()
+        delayAwareAdvisers = self._optionalDelayAwareAdvisers()
         if delayAwareAdvisers:
             # a delay-aware adviser has a special id so we can handle it specifically after
             for delayAwareAdviser in delayAwareAdvisers:
-                adviserId = "%s__delay__%s__rowid__%s" % \
+                adviserId = "%s__rowid__%s" % \
                             (delayAwareAdviser['meetingGroupId'],
-                             delayAwareAdviser['delay'],
                              delayAwareAdviser['row_id'])
-                resDelayAwareAdvisers.append((adviserId, "%s - delay of %s clear days (%s)" %
-                                              (delayAwareAdviser['meetingGroupName'],
-                                               delayAwareAdviser['delay'],
-                                               delayAwareAdviser['delay_help_message'])
-                                              ))
+                value_to_display = "%s - %s" % (delayAwareAdviser['meetingGroupName'],
+                                                translate('delay_of_x_days',
+                                                          domain='PloneMeeting',
+                                                          mapping={'delay': delayAwareAdviser['delay']},
+                                                          default='Delay of ${delay} days',
+                                                          context=self.REQUEST).encode('utf-8'),)
+                if delayAwareAdviser['delay_label']:
+                    value_to_display = "%s (%s)" % (value_to_display, delayAwareAdviser['delay_label'])
+                resDelayAwareAdvisers.append((adviserId, value_to_display))
 
         resNonDelayAwareAdvisers = []
         # only let select groups for which there is at least one user in
@@ -2208,12 +2247,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                       [group[0] for group in resDelayAwareAdvisers]
             for groupId in optionalAdvisers:
                 if not groupId in optionalAdvisersInVocab:
-                    if '__delay__' in groupId:
-                        meetingGroupId, delay, row_id = self._decodeDelayAwareId(groupId)
+                    if '__rowid__' in groupId:
+                        meetingGroupId, row_id = self._decodeDelayAwareId(groupId)
+                        delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
                         resDelayAwareAdvisers.append((groupId, "%s - delay of %s clear days (%s)" %
                                                       (getattr(tool, meetingGroupId).getName(),
                                                        delay,
-                                                       self.adviceIndex[meetingGroupId]['delay_help_message'])))
+                                                       self.adviceIndex[meetingGroupId]['delay_label'])))
                     else:
                         resNonDelayAwareAdvisers.append((groupId, getattr(tool, groupId).getName()))
 
@@ -2244,12 +2284,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _decodeDelayAwareId(self, delayAwareId):
         '''
-          Decode a 'delay-aware' id, we receive something like 'groupname__delay__20__rowid__myuniquerowid.20141215'.
+          Decode a 'delay-aware' id, we receive something like 'groupname__rowid__myuniquerowid.20141215'.
+          We return the groupId and the row_id.
         '''
-        meetingGroupId = delayAwareId.split('__delay__')[0]
-        delay = delayAwareId.split('__delay__')[1].split('__rowid__')[0]
-        row_id = delayAwareId.split('__rowid__')[1]
-        return meetingGroupId, delay, row_id
+        infos = delayAwareId.split('__rowid__')
+        return infos[0], infos[1]
 
     security.declarePublic('listItemInitiators')
     def listItemInitiators(self):
@@ -2348,14 +2387,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         for advice in self.getAdvices():
             optional = True
-            delay = delay_help_message = None
+            delay = delay_label = None
             # find the relevant row in customAdvisers if advice has a row_id
             if advice.advice_row_id:
                 cfg = tool.getMeetingConfig(self)
                 customAdviserConfig = cfg._dataForCustomAdviserRowId(advice.advice_row_id)
                 optional = not customAdviserConfig['gives_auto_advice_on'] and True or False
                 delay = customAdviserConfig['delay'] or None
-                delay_help_message = customAdviserConfig['delay_help_message'] or None
+                delay_label = customAdviserConfig['delay_label'] or None
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': optional,
                                         'id': advice.advice_group,
@@ -2365,7 +2404,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'comment': advice.advice_comment and advice.advice_comment.raw,
                                         'row_id': advice.advice_row_id,
                                         'delay': delay,
-                                        'delay_help_message': delay_help_message,
+                                        'delay_label': delay_label,
                                         }
         return res
 
@@ -2495,10 +2534,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # Compute automatic and get optional advisers
         automaticAdvisers = self.getAutomaticAdvisers()
-        # format optionalAdvisers to be coherent with automaticAdvisers data format
-        # make a list of dict
-        optionalAdvisers = [{'meetingGroupId': groupId} for groupId in self.getOptionalAdvisers()]
-        delayAwareAdvisers = self.getDelayAwareAdvisers()
+        # get formatted optionalAdvisers to be coherent with automaticAdvisers data format
+        optionalAdvisers = self.getOptionalAdvisersData()
 
         # Update the dictionary self.adviceIndex with every advices to give
         i = -1
@@ -2516,38 +2553,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if adviceInfo['meetingGroupId'] in alreadyGivenAdvices:
                     continue
                 # We create an empty dictionary that will store advice info
-                # once the advice will have been created.
+                # once the advice will have been created.  But for now, we already
+                # store known infos coming from the configuration and from selected otpional advisers
                 groupId = adviceInfo['meetingGroupId']
-                # define some value that will be filled for some adviser usecase
-                delay = delay_help_message = gives_auto_advice_on_help_message = row_id = None
-
-                # manage delay-aware advisers
-                if '__delay__' in groupId:
-                    # here we are managing a delay-aware adviser
-                    # find the real groupId as we have something like 'mGroupId__delay__10__rowid__unique_id.20131212'
-                    groupId, delay, row_id = self._decodeDelayAwareId(groupId)
-                    # get the delay help message from the dict in getAutomaticAdvisers
-                    for delayAwareAdviser in delayAwareAdvisers:
-                        # delayAwareAdvisers are unique regarding couple meetingGroupId/delay
-                        if delayAwareAdviser['meetingGroupId'] == groupId and \
-                           delayAwareAdviser['delay'] == delay:
-                            delay_help_message = delayAwareAdviser['delay_help_message']
-
-                # manage automatic advisers if it was not a delay-aware one, in this case
-                # we already found the row_id.  An automatic advice can also be a delay-aware one
-                if not optional and not row_id:
-                    row_id = adviceInfo['row_id']
-                    gives_auto_advice_on_help_message = adviceInfo['gives_auto_advice_on_help_message']
-
                 self.adviceIndex[groupId] = d = PersistentMapping()
                 d['type'] = NOT_GIVEN_ADVICE_VALUE
                 d['optional'] = optional
                 d['id'] = groupId
                 d['name'] = getattr(tool, groupId).getName().decode('utf-8')
-                d['delay'] = delay
-                d['delay_help_message'] = delay_help_message
-                d['gives_auto_advice_on_help_message'] = gives_auto_advice_on_help_message
-                d['row_id'] = row_id
+                d['delay'] = adviceInfo['delay']
+                d['delay_label'] = adviceInfo['delay_label']
+                d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
+                d['row_id'] = adviceInfo['row_id']
+                d['delay_started_on'] = None
 
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():
@@ -2589,17 +2607,31 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             adviceObj = None
             if 'advice_id' in self.adviceIndex[groupId]:
                 adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-            if (itemState not in mGroup.getItemAdviceStates(cfg)) and \
-               (itemState not in mGroup.getItemAdviceEditStates(cfg))and \
-               (itemState not in mGroup.getItemAdviceViewStates(cfg)):
+            itemAdviceStates = mGroup.getItemAdviceStates(cfg)
+            itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
+            itemAdviceViewStates = mGroup.getItemAdviceViewStates(cfg)
+            if (itemState not in itemAdviceStates) and \
+               (itemState not in itemAdviceEditStates)and \
+               (itemState not in itemAdviceViewStates):
                 # make sure the advice given by groupId is no more editable
                 if adviceObj and adviceObj.queryState() == 'advice_under_edit':
                         wfTool.doActionFor(adviceObj, 'giveAdvice')
+                # make sure the delay is reinitialized
+                if self.adviceIndex[groupId]['delay']:
+                    self.adviceIndex[groupId]['delay_started_on'] = None
                 continue
+
             # give access to the item in any case
             self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
+
+            # manage delay-aware adviser, we start the delay if not already started
+            if itemState in itemAdviceStates and \
+               self.adviceIndex[groupId]['delay'] and not \
+               self.adviceIndex[groupId]['delay_started_on']:
+                self.adviceIndex[groupId]['delay_started_on'] = datetime.now()
+
             # check if user must be able to add an advice, if not already given
-            if itemState in mGroup.getItemAdviceStates(cfg) and \
+            if itemState in itemAdviceStates and \
                self.adviceIndex[groupId]['type'] == NOT_GIVEN_ADVICE_VALUE:
                 # advisers must be able to add a 'meetingadvice', give
                 # relevant permissions to 'Contributor' role
@@ -2613,7 +2645,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                             role_to_give='Contributor',
                                             obj=self)
 
-            if itemState in mGroup.getItemAdviceEditStates(cfg):
+            if itemState in itemAdviceEditStates:
                 # make sure the advice given by groupId is in state 'advice_under_edit'
                 if adviceObj and not adviceObj.queryState() == 'advice_under_edit':
                         wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
@@ -2623,12 +2655,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         wfTool.doActionFor(adviceObj, 'giveAdvice')
             # if item needs to be accessible by advisers, it is already
             # done by self.manage_addLocalRoles here above because it is necessary in any case
-            if itemState in mGroup.getItemAdviceViewStates(cfg):
+            if itemState in itemAdviceViewStates:
                 pass
             # now index advice annexes
             if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
                 self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
+
+    def getLeftDelayInfosForAdvice(self, advice_id):
+        '''Compute left delay in number of days for given p_advice_id.
+           Returns real left delay and a status information aka :
+           - not yet giveable;
+           - still in delays;
+           - delays timeout.'''
+        adviceInfos = self.adviceIndex[advice_id]
+        delay = adviceInfos['delay']
+        delay_started_on = adviceInfos['delay_started_on']
+        if not delay and not delay_started_on:
+            return None
+        # if delay still not started, we return complete delay
+        if not delay_started_on:
+            return int(delay), 'not_yet_giveable'
+        left_delay = int(delay) - (datetime.now() - delay_started_on).days
+        if left_delay > 0:
+            return left_delay, 'still_time'
+        else:
+            return left_delay, 'timed_out'
 
     security.declarePublic('indexAdvisers')
     def indexAdvisers(self):
@@ -2648,6 +2700,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def isAdvicesEnabled(self):
         '''Is the "advices" functionality enabled for this meeting config?'''
         return self.portal_plonemeeting.getMeetingConfig(self).getUseAdvices()
+
+    security.declarePublic('getAdviceHelpMessageFor')
+    def getAdviceHelpMessageFor(self, **adviceInfos):
+        '''Build a specific help message for the given advice_id.  We will compute
+           a message based on the fact that the advice is optional or not and that there
+           are defined 'Help message' in the MeetingConfig.customAdvisers configuration (for performance,
+           the 'Help message' infos from the configuration are stored in the adviceIndex).'''
+        # base help message is based on the fact that advice is optional or not
+        help_msg = ''
+        if adviceInfos['optional']:
+            help_msg = translate('This optional advice was asked by the item creators '
+                                 '(shown by his title being between brackets)',
+                                 domain="PloneMeeting",
+                                 context=self.REQUEST)
+        else:
+            help_msg = translate('This automatic advice has been asked by the application '
+                                 '(shown by his title not being between brackets)',
+                                 domain="PloneMeeting",
+                                 context=self.REQUEST)
+            # an additional help message can be provided for automatically asked advices
+            if adviceInfos['gives_auto_advice_on_help_message']:
+                help_msg = "%s (%s)" % (help_msg, unicode(adviceInfos['gives_auto_advice_on_help_message'], 'utf-8'))
+
+        if adviceInfos['delay']:
+            help_msg = "%s\n%s" % (help_msg, unicode(adviceInfos['delay_label'], 'utf-8'))
+        return help_msg
 
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):

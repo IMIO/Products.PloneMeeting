@@ -1176,8 +1176,8 @@ schema = Schema((
                                col_description="for_item_created_until_col_description"),
                      'delay': Column("Delay for giving advice",
                                      col_description="delay_col_description"),
-                     'delay_help_message': Column("Custom adviser delay help message",
-                                                  col_description="delay_help_message_col_description"),
+                     'delay_label': Column("Custom adviser delay label",
+                                           col_description="delay_label_col_description"),
                      },
             label='Customadvisers',
             label_msgid='PloneMeeting_label_customAdvisers',
@@ -1192,7 +1192,7 @@ schema = Schema((
                  'for_item_created_from',
                  'for_item_created_until',
                  'delay',
-                 'delay_help_message', ),
+                 'delay_label', ),
     ),
     LinesField(
         name='itemPowerObserversStates',
@@ -1584,21 +1584,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              'for_item_created_until' that we can only set if not already set to deactivate a used row
              and 'help_message' fields.
             '''
-        def _checkIfConfigIsUsed(row_id):
-            '''Check if the rule we want to edit logical data for
-               or that we removed was in use.'''
-            # we are setting another field, it is not permitted if
-            # the rule is in use, check every items if the rule is used
-            brains = catalog(Type=self.getItemTypeName())
-            for brain in brains:
-                item = brain.getObject()
-                for adviser in item.adviceIndex.values():
-                    if adviser['row_id'] == row_id:
-                        return translate('custom_adviser_can_not_edit_used_row',
-                                         domain='PloneMeeting',
-                                         mapping={'item_url': item.absolute_url(), },
-                                         context=self.REQUEST)
-
         for customAdviser in value:
             # validate the date in the 'for_item_created_from' and
             # 'for_item_created_until' columns
@@ -1639,9 +1624,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  mapping={'groupName': unicode(group.Title(), 'utf-8'), },
                                  context=self.REQUEST)
 
+        def _checkIfConfigIsUsed(row_id):
+            '''Check if the rule we want to edit logical data for
+               or that we removed was in use.  This returns True if the
+               configuration is already in use.'''
+            # we are setting another field, it is not permitted if
+            # the rule is in use, check every items if the rule is used
+            catalog = getToolByName(self, 'portal_catalog')
+            brains = catalog(Type=self.getItemTypeName())
+            for brain in brains:
+                item = brain.getObject()
+                for adviser in item.adviceIndex.values():
+                    if adviser['row_id'] == row_id:
+                        return item.absolute_url()
+
         # check that if a row changed, it is not already in use
         # we can not change any value but the 'for_item_created_until' and only if it was empty before
-        catalog = getToolByName(self, 'portal_catalog')
         for customAdviser in value:
             # if we still have no value in the 'row_id', it means that it is a new row
             row_id = customAdviser['row_id']
@@ -1658,12 +1656,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             # for wich we are setting a value for the first time (aka is empty in the stored value)
                             # or a 'help_message', those fields we can change the value
                             if not (k == 'for_item_created_until' and not v) and \
-                               not k in ['gives_auto_advice_on_help_message', 'delay_help_message']:
+                               not k in ['gives_auto_advice_on_help_message', 'delay_label']:
                                 # we are setting another field, it is not permitted if
                                 # the rule is in use, check every items if the rule is used
-                                res = _checkIfConfigIsUsed(row_id)
-                                if res:
-                                    return res
+                                # _checkIfConfigIsUsed will return an item absolute_url using this configuration if any
+                                an_item_url = _checkIfConfigIsUsed(row_id)
+                                if an_item_url:
+                                    tool = getToolByName(self, 'portal_plonemeeting')
+                                    return translate('custom_adviser_can_not_edit_used_row',
+                                                     domain='PloneMeeting',
+                                                     mapping={'item_url': an_item_url,
+                                                              'adviser_group': getattr(tool, customAdviser['group']).getName(),
+                                                              'column_name': translate(self.Schema()['customAdvisers'].widget.columns[k].label,
+                                                                                       domain='datagridfield',
+                                                                                       context=self.REQUEST),
+                                                              'column_old_data': v, },
+                                                     context=self.REQUEST)
 
         # check also that if we removed some row_id, it was not in use neither
         row_ids_to_save = set([v['row_id'] for v in value if v['row_id']])
@@ -1671,9 +1679,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         removed_row_ids = stored_row_ids.difference(row_ids_to_save)
         for row_id in removed_row_ids:
-            res = _checkIfConfigIsUsed(row_id)
-            if res:
-                return res
+            an_item_url = _checkIfConfigIsUsed(row_id)
+            if an_item_url:
+                tool = getToolByName(self, 'portal_plonemeeting')
+                group = getattr(tool, self._dataForCustomAdviserRowId(row_id)['group']).getName()
+                return translate('custom_adviser_can_not_remove_used_row',
+                                 domain='PloneMeeting',
+                                 mapping={'item_url': an_item_url,
+                                          'adviser_group': group, },
+                                 context=self.REQUEST)
 
     def _dataForCustomAdviserRowId(self, row_id):
         '''Return the data for the given p_row_id from the field 'customAdvisers'.'''

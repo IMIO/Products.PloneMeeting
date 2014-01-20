@@ -685,14 +685,16 @@ dl.searchResults cite {
     top: 0.5em;
 }
 
-/* make column displayed for MeetingConfig.customAdvisers equals */
-#datagridwidget-table-customAdvisers .datagridwidget-column-1,
+/* make column displayed for MeetingConfig.customAdvisers equals
+   ...-column-1 is a hidden column (row_id) */
 #datagridwidget-table-customAdvisers .datagridwidget-column-2,
 #datagridwidget-table-customAdvisers .datagridwidget-column-3,
 #datagridwidget-table-customAdvisers .datagridwidget-column-4,
 #datagridwidget-table-customAdvisers .datagridwidget-column-5,
+#datagridwidget-table-customAdvisers .datagridwidget-column-6,
+#datagridwidget-table-customAdvisers .datagridwidget-column-7,
 div[id^="archetypes-fieldname-customAdvisers-"] TH {
-    width: 16%;
+    width: 14%;
 }
 /* hide the title of the customAdvisers DataGridField in view mode */
 div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
@@ -703,6 +705,21 @@ div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
 select#optionalAdvisers option[disabled] {
     color: grey;
     font-style: italic;
+}
+
+/* skin the way number of days left for delay-aware advice is displayed (colors, ...) */
+.advice_delay {
+    position: relative;
+    left: -8px;
+}
+.advice_delay_not_giveable {
+    color: grey;
+}
+.advice_delay_still_time {
+    color: green;
+}
+.advice_delay_timeout_out {
+    color: red;
 }
 
 /* </dtml-with> */

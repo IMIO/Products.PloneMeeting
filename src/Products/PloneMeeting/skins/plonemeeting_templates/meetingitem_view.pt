@@ -314,7 +314,7 @@
       <td class="itemAdvicesCell" width="50%" tal:condition="hasAdvices">
        <fieldset style="margin: 0;" tal:define="meetingItem python: context">
         <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
-        <metal:advices use-macro="here/@@advices-macros/advicesIcons"/>
+        <metal:advices use-macro="context/@@advices-macros/macros/advicesIcons"/>
        </fieldset>
       </td>
      </tr>

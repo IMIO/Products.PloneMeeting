@@ -1350,8 +1350,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # at the beginning of 'both' list (delay-aware and non delay-aware advisers)
         self.assertEquals(item.listOptionalAdvisers().keys(),
                           ['not_selectable_value_delay_aware_optional_advisers',
-                           'developers__delay__5__rowid__unique_id_123',
-                           'developers__delay__10__rowid__unique_id_456',
+                           'developers__rowid__unique_id_123',
+                           'developers__rowid__unique_id_456',
                            'not_selectable_value_non_delay_aware_optional_advisers',
                            'developers',
                            'vendors'])
@@ -1370,21 +1370,21 @@ class testMeetingItem(PloneMeetingTestCase):
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
         # check with the 'non-delay-aware' and the 'delay-aware' advisers selected
-        optionalAdvisers = ('developers', 'developers__delay__5', )
+        optionalAdvisers = ('developers', 'developers__rowid__unique_id_123', )
         several_select_error_msg = translate('can_not_select_several_optional_advisers_same_group',
                                              domain='PloneMeeting',
                                              context=self.portal.REQUEST)
         self.assertTrue(item.validate_optionalAdvisers(optionalAdvisers), several_select_error_msg)
         # check with 2 'delay-aware' advisers selected
-        optionalAdvisers = ('developers__delay__10', 'developers__delay__5', )
+        optionalAdvisers = ('developers__rowid__unique_id_123', 'developers__rowid__unique_id_456', )
         self.assertTrue(item.validate_optionalAdvisers(optionalAdvisers), several_select_error_msg)
         # now make it pass
         optionalAdvisers = ('developers', 'vendors', )
         # validate returns nothing if validation was successful
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
-        optionalAdvisers = ('developers__delay__5', 'vendors', )
+        optionalAdvisers = ('developers__rowid__unique_id_123', 'vendors', )
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
-        optionalAdvisers = ('developers__delay__5', )
+        optionalAdvisers = ('developers__rowid__unique_id_123', )
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
 
     def test_pm_validate_optionalAdvisersCanNotUnselectAlreadyGivenAdvice(self):
@@ -1427,7 +1427,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': 'Auto help message',
                            'delay': '10',
-                           'delay_help_message': 'Delay help message', }, ]
+                           'delay_label': 'Delay label', }, ]
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         self.changeUser('pmManager')
         # make item able to receive the automatic advice

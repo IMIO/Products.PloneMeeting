@@ -507,11 +507,15 @@ class testAdvices(PloneMeetingTestCase):
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
               'gives_auto_advice_on': 'item/wrongMethod',
-              'for_item_created_from': '2012/01/01'},
+              'for_item_created_from': '2012/01/01',
+              'delay': '',
+              'delay_label': ''},
              {'row_id': 'unique_id_456',
               'group': 'developers',
               'gives_auto_advice_on': 'item/getBudgetRelated',
-              'for_item_created_from': '2012/01/01'}, ])
+              'for_item_created_from': '2012/01/01',
+              'delay': '',
+              'delay_label': ''}, ])
         # one wrong condition (raising an error when evaluated) and one returning False
         self.failIf(item.getAutomaticAdvisers())
         # now make the second row expression return True, set item.budgetRelated
@@ -520,14 +524,18 @@ class testAdvices(PloneMeetingTestCase):
                           [{'gives_auto_advice_on_help_message': '',
                             'meetingGroupId': 'developers',
                             'meetingGroupName': 'Developers',
-                            'row_id': 'unique_id_456'}])
+                            'row_id': 'unique_id_456',
+                            'delay': '',
+                            'delay_label': ''}])
         # define one condition for wich the date is > than current item CreationDate
         futureDate = DateTime() + 1
         self.meetingConfig.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'developers',
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
-              'for_item_created_from': futureDate.strftime('%Y/%m/%d')}, ])
+              'for_item_created_from': futureDate.strftime('%Y/%m/%d'),
+              'delay': '',
+              'delay_label': ''}, ])
         # nothing should be returned as defined date is bigger than current item's date
         self.assertTrue(futureDate > item.created())
         self.failIf(item.getAutomaticAdvisers())
@@ -538,12 +546,16 @@ class testAdvices(PloneMeetingTestCase):
               'group': 'developers',
               'gives_auto_advice_on': 'item/getBudgetRelated',
               'for_item_created_from': '2012/01/01',
-              'for_item_created_until': futureDate.strftime('%Y/%m/%d')}, ])
+              'for_item_created_until': futureDate.strftime('%Y/%m/%d'),
+              'delay': '',
+              'delay_label': ''}, ])
         self.assertEquals(item.getAutomaticAdvisers(),
                           [{'gives_auto_advice_on_help_message': '',
                             'meetingGroupId': 'developers',
                             'meetingGroupName': 'Developers',
-                            'row_id': 'unique_id_123'}])
+                            'row_id': 'unique_id_123',
+                            'delay': '',
+                            'delay_label': ''}])
         # now define a 'for_item_created_until' that is in the past
         # relative to the item created date
         self.meetingConfig.setCustomAdvisers(
@@ -551,7 +563,9 @@ class testAdvices(PloneMeetingTestCase):
               'group': 'developers',
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
               'for_item_created_from': '2012/01/01',
-              'for_item_created_until': '2013/01/01'}, ])
+              'for_item_created_until': '2013/01/01',
+              'delay': '',
+              'delay_label': ''}, ])
         self.failIf(item.getAutomaticAdvisers())
 
     def test_pm_RowIdSetOnAdvices(self):
@@ -573,8 +587,8 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': 'developers',
                                              'advice_type': u'positive',
                                              'advice_comment': RichTextValue(u'My comment')})
-        self.assertEquals(advice.advice_row_id, None)
-        self.assertEquals(item.adviceIndex[advice.advice_group]['row_id'], None)
+        self.assertEquals(advice.advice_row_id, '')
+        self.assertEquals(item.adviceIndex[advice.advice_group]['row_id'], '')
 
         # now remove it and make it a 'delay-aware' advice
         item.restrictedTraverse('@@delete_givenuid')(advice.UID())
@@ -584,7 +598,7 @@ class testAdvices(PloneMeetingTestCase):
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
               'delay': '10'}, ])
-        item.setOptionalAdvisers(('developers__delay__10__rowid__unique_id_123', ))
+        item.setOptionalAdvisers(('developers__rowid__unique_id_123', ))
         item.at_post_edit_script()
         advice = createContentInContainer(item,
                                           'meetingadvice',

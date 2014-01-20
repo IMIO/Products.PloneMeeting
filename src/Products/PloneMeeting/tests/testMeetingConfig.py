@@ -264,7 +264,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
                            'delay': '',
-                           'delay_help_message': '', }, ]
+                           'delay_label': '', }, ]
         wrong_date_msg = translate('custom_adviser_wrong_date_format',
                                    domain='PloneMeeting',
                                    mapping={'groupName': customAdvisers[0]['group']},
@@ -317,7 +317,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'gives_auto_advice_on_help_message': '',
                            # wrong value
                            'delay': 'a',
-                           'delay_help_message': '', }, ]
+                           'delay_label': '', }, ]
         wrong_delay_msg = translate('custom_adviser_wrong_delay_format',
                                     domain='PloneMeeting',
                                     mapping={'groupName': customAdvisers[0]['group']},
@@ -355,11 +355,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                   'for_item_created_until': '',
                                   'gives_auto_advice_on_help_message': 'Auto help message',
                                   'delay': '10',
-                                  'delay_help_message': 'Delay help message', }
-        can_not_edit_msg = translate('custom_adviser_can_not_edit_used_row',
-                                     domain='PloneMeeting',
-                                     mapping={'item_url': originalCustomAdvisers['group']},
-                                     context=self.portal.REQUEST)
+                                  'delay_label': 'Delay label', }
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
         # change everything including logical data
@@ -370,7 +366,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                  'for_item_created_until': '2025/01/01',
                                  'gives_auto_advice_on_help_message': 'Auto help message changed',
                                  'delay': '20',
-                                 'delay_help_message': 'Delay help message changed', }
+                                 'delay_label': 'Delay label changed', }
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers([changedCustomAdvisers, ]))
         # now use the config
@@ -394,13 +390,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         savedOriginalCustomAdvisers = dict(originalCustomAdvisers)
         for field in logical_fields_wrong_values_mapping:
             originalCustomAdvisers[field] = logical_fields_wrong_values_mapping[field]
-            # it does not validate
-            self.assertEquals(cfg.validate_customAdvisers([originalCustomAdvisers, ]), can_not_edit_msg)
+            # it does not validate, aka the validate method returns something
+            self.failUnless(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
             originalCustomAdvisers = dict(savedOriginalCustomAdvisers)
-        # now change a non logical field, then it still validated
+        # now change a non logical field, then it still validates
         non_logical_fields_wrong_values_mapping = {
             'gives_auto_advice_on_help_message': 'New help message gives auto',
-            'delay_help_message': 'New help message delay', }
+            'delay_label': 'New delay label', }
         savedOriginalCustomAdvisers = dict(originalCustomAdvisers)
         for field in non_logical_fields_wrong_values_mapping:
             originalCustomAdvisers[field] = non_logical_fields_wrong_values_mapping[field]
@@ -418,13 +414,18 @@ class testMeetingConfig(PloneMeetingTestCase):
         # now changing the encoded date would fail
         other_future_date = (DateTime() + 2).strftime('%Y/%m/%d')
         originalCustomAdvisers['for_item_created_until'] = other_future_date
-        self.assertEquals(cfg.validate_customAdvisers([originalCustomAdvisers, ]), can_not_edit_msg)
+        self.failUnless(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
         # it can not neither be set back to ''
         originalCustomAdvisers['for_item_created_until'] = ''
-        self.assertEquals(cfg.validate_customAdvisers([originalCustomAdvisers, ]), can_not_edit_msg)
+        self.failUnless(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
 
         # we can not remove a used row
-        self.assertEquals(cfg.validate_customAdvisers([]), can_not_edit_msg)
+        can_not_remove_msg = translate('custom_adviser_can_not_remove_used_row',
+                                       domain='PloneMeeting',
+                                       mapping={'item_url': item.absolute_url(),
+                                                'adviser_group': 'Developers', },
+                                       context=self.portal.REQUEST)
+        self.assertEquals(cfg.validate_customAdvisers([]), can_not_remove_msg)
 
 
 def test_suite():
