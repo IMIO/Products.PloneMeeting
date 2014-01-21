@@ -18,6 +18,7 @@ import logging
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from Acquisition import aq_base
+from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -114,6 +115,9 @@ def onMeetingGroupTransition(obj, event):
 
 def onItemMoved(obj, event):
     '''Called when an item is pasted cut/pasted, we need to update annexIndex.'''
+    # this is also called when removing an item, in this case, we do nothing
+    if IObjectRemovedEvent.providedBy(event):
+        return
     if not hasattr(aq_base(obj), 'annexIndex'):
         obj.annexIndex = PersistentList()
     IAnnexable(obj).updateAnnexIndex()
