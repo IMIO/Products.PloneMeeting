@@ -2063,10 +2063,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         for b in self.portal_catalog(meta_type='MeetingItem'):
             item = b.getObject()
+            logger.info('Updating adviceIndex of item at %s' % '/'.join(item.getPhysicalPath()))
             item.updateAdvices()
             # Update security as local_roles are set by updateAdvices
             item.reindexObject(idxs=['allowedRolesAndUsers', ])
-            logger.info('adviceIndex of item at %s updated' % '/'.join(item.getPhysicalPath()))
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
