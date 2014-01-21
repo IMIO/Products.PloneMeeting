@@ -218,6 +218,7 @@ meetingPga.useAdvices = True
 meetingPga.itemAdviceStates = ['proposed', ]
 meetingPga.itemAdviceEditStates = ['proposed', 'validated', ]
 meetingPga.itemAdviceViewStates = ['presented', ]
+meetingPga.transitionReinitializingDelays = 'backToItemCreated'
 meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
 meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
 meetingPga.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')

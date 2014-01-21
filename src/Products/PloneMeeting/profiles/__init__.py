@@ -449,6 +449,7 @@ class MeetingConfigDescriptor(Descriptor):
         # Items where advice invalidation should be enabled.
         self.itemAdviceInvalidateStates = ['proposed', 'validated', 'presented']
         self.adviceStyle = 'standard'
+        self.transitionReinitializingDelays = ''
         self.customAdvisers = []
 
         # Votes parameters -----------------------------------------------------

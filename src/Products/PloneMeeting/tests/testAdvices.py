@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from datetime import datetime
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from zope.event import notify
@@ -196,7 +197,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, item1.restrictedTraverse('@@delete_givenuid'), item1.meetingadvice.UID())
         # put the item back in a state where 'pmReviewer2' can remove the advice
         login(self.portal, 'pmManager')
-        self.backToState(item1, 'proposed')
+        self.backToState(item1, self.WF_STATE_NAME_MAPPINGS['proposed'])
         login(self.portal, 'pmReviewer2')
         # remove the advice
         item1.restrictedTraverse('@@delete_givenuid')(item1.meetingadvice.UID())
@@ -298,7 +299,7 @@ class testAdvices(PloneMeetingTestCase):
         # advisers can give an advice when item is 'proposed' or 'validated'
         # activate advice invalidation in state 'validated'
         self.meetingConfig.setEnableAdviceInvalidation(True)
-        self.meetingConfig.setItemAdviceInvalidateStates(('validated',))
+        self.meetingConfig.setItemAdviceInvalidateStates((self.WF_STATE_NAME_MAPPINGS['validated'],))
         login(self.portal, 'pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -343,7 +344,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
-        self.backToState(item, 'proposed')
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
@@ -360,7 +361,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
-        self.backToState(item, 'proposed')
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
@@ -378,7 +379,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
-        self.backToState(item, 'proposed')
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
@@ -626,6 +627,71 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(item.adviceIndex['vendors']['row_id'], 'unique_id_456')
         automatic_advice_obj = getattr(item, item.adviceIndex['vendors']['advice_id'])
         self.assertEquals(automatic_advice_obj.advice_row_id, 'unique_id_456')
+
+    def test_pm_delayStartedStoppedOn(self):
+        '''Test the 'advice_started_on' and 'advice_stopped_on' date initialization.
+           The 'advice_started_on' is set when advice are turning to 'giveable', aka when
+           they turn from not being in itemAdviceStates to being in it.
+           The 'advice_stopped_on' date is initialized when the advice is no more giveable,
+           so when the item state is no more in itemAdviceStates.
+           The 2 dates are only reinitialized to None if the user
+           triggers the MeetingConfig.transitionReinitializingDelays.
+        '''
+        self.changeUser('pmManager')
+        # configure one automatic adviser with delay
+        # and ask one non-delay-aware optional adviser
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'developers',
+              'gives_auto_advice_on': 'not:item/getBudgetRelated',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '5',
+              'delay_label': ''}, ])
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
+        # advice are correctly asked
+        self.assertEquals(item.adviceIndex.keys(), ['vendors', 'developers'])
+        # for now, dates are not defined
+        self.assertEquals([advice['delay_started_on'] for advice in item.adviceIndex.values()],
+                          [None, None])
+        self.assertEquals([advice['delay_stopped_on'] for advice in item.adviceIndex.values()],
+                          [None, None])
+        # now do delays start
+        # delay will start when the item advices will be giveable
+        # advices are giveable when item is proposed, so propose the item
+        # this will initialize the 'delay_started_on' date
+        self.proposeItem(item)
+        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['proposed'])
+        # we have datetime now in 'delay_started_on' and still nothing in 'delay_stopped_on'
+        self.assertTrue(isinstance(item.adviceIndex['developers']['delay_started_on'], datetime))
+        self.assertTrue(item.adviceIndex['developers']['delay_stopped_on'] is None)
+        # vendors optional advice is not delay-aware
+        self.assertTrue(item.adviceIndex['vendors']['delay_started_on'] is None)
+        self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
+        # if we go on, the 'delay_started_on' date does not change anymore, even in a state where
+        # advice are not giveable anymore, but at this point, the 'delay_stopped_date' will be set.
+        # We set the item in 'validated'
+        saved_developers_start_date = item.adviceIndex['developers']['delay_started_on']
+        saved_vendors_start_date = item.adviceIndex['vendors']['delay_started_on']
+        self.validateItem(item)
+        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['validated'])
+        self.assertEquals(item.adviceIndex['developers']['delay_started_on'], saved_developers_start_date)
+        self.assertEquals(item.adviceIndex['vendors']['delay_started_on'], saved_vendors_start_date)
+        # the 'delay_stopped_on' is now set on the delay-aware advice
+        self.assertTrue(isinstance(item.adviceIndex['developers']['delay_stopped_on'], datetime))
+        self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
+        # if we excute the transition that will reinitialize dates, it is 'backToItemCreated'
+        self.assertEquals(self.meetingConfig.getTransitionReinitializingDelays(),
+                          self.WF_TRANSITION_NAME_MAPPINGS['backToItemCreated'])
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        # the delays have been reinitialized to None
+        self.assertEquals([advice['delay_started_on'] for advice in item.adviceIndex.values()],
+                          [None, None])
+        self.assertEquals([advice['delay_stopped_on'] for advice in item.adviceIndex.values()],
+                          [None, None])
 
 
 def test_suite():

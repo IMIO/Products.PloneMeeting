@@ -25,6 +25,7 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 import re
 from datetime import datetime
+from datetime import timedelta
 from collections import OrderedDict
 from appy.gen import No
 from persistent.list import PersistentList
@@ -2329,12 +2330,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(obj)
         return res
 
+    def _doClearDayFrom(self, date):
+        '''Change the given p_date (that is a datetime instance)
+           into a clear date, aka change the hours/minutes/seconds to 23:59:59.'''
+        return datetime(date.year, date.month, date.day, 23, 59, 59)
+
     security.declarePublic('getAdvicesGroupsInfosForUser')
     def getAdvicesGroupsInfosForUser(self):
         '''This method returns 2 lists of groups in the name of which the
            currently logged user may, on this item:
            - add an advice;
            - edit or delete an advice.'''
+        def _isStillInDelayToBeGiven(adviceInfo):
+            '''Check if advice for wich we received p_adviceInfo may still be given...'''
+            if not adviceInfo['delay']:
+                return True
+            if (self._doClearDayFrom(adviceInfo['delay_started_on']) +
+               timedelta(int(adviceInfo['delay']))) > datetime.now():
+                return True
+            return False
+
         tool = self.portal_plonemeeting
         cfg = tool.getMeetingConfig(self)
         # Advices must be enabled
@@ -2357,7 +2372,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             adviceType = self.adviceIndex[group.id]['type']
             if (adviceType == NOT_GIVEN_ADVICE_VALUE) and \
-               (itemState in group.getItemAdviceStates(cfg)):
+               (itemState in group.getItemAdviceStates(cfg)) and _isStillInDelayToBeGiven(self.adviceIndex[group.id]):
                 toAdd.append((group.id, self.adviceIndex[group.id]['name']))
             if (adviceType != NOT_GIVEN_ADVICE_VALUE) and \
                (itemState in group.getItemAdviceEditStates(cfg)):
@@ -2405,6 +2420,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'row_id': advice.advice_row_id,
                                         'delay': delay,
                                         'delay_label': delay_label,
+                                        'advice_given_on': advice.created(),
                                         }
         return res
 
@@ -2498,18 +2514,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delObjects(ids=ids)
 
     security.declareProtected('Modify portal content', 'updateAdvices')
-    def updateAdvices(self, invalidate=False):
+    def updateAdvices(self, invalidate=False, triggered_by_transition=None):
         '''Every time an item is created or updated, this method updates the
            dictionary self.adviceIndex: a key is added for every advice that needs
            to be given, a key is removed for every advice that does not need to
            be given anymore. If p_invalidate = True, it means that advice
            invalidation is enabled and someone has modified the item: it means
-           that all advices must be "not_given" again.'''
+           that all advices must be "not_given" again.
+           If p_triggered_by_transition is given, we know that the advices are
+           updated because of a workflow transition, we receive the transition name.'''
         # no sense to compute advice on items defined in the configuration
         if self.isDefinedInTool():
             return
 
         tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+
+        # check if the given p_triggered_by_transition transition name
+        # is the transition that will restart delays
+        isTransitionReinitializingDelays = cfg.getTransitionReinitializingDelays() == triggered_by_transition and True or False
+
         # Invalidate advices if needed
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
@@ -2540,13 +2564,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Update the dictionary self.adviceIndex with every advices to give
         i = -1
         # we will recompute the entire adviceIndex
-        # just save the 'delay_started_on' as it is the only value stored
+        # just save the 'delay_started_on' and 'delay_stopped_on' as it is the only values stored
         # in the adviceIndex that is not stored anywhere else
-        delay_started_on_save = {}
-        for groupId, adviceInfo in self.getGivenAdvices().iteritems():
-            delay_started_on_save[groupId] = None
-            if 'delay_started_on' in adviceInfo:
-                delay_started_on_save[groupId] = adviceInfo['delay_started_on']
+        delay_started_stoppped_on_save = {}
+        for groupId, adviceInfo in self.adviceIndex.iteritems():
+            delay_started_stoppped_on_save[groupId] = {}
+            if isTransitionReinitializingDelays:
+                delay_started_stoppped_on_save[groupId]['delay_started_on'] = None
+                delay_started_stoppped_on_save[groupId]['delay_stopped_on'] = None
+            else:
+                delay_started_stoppped_on_save[groupId]['delay_started_on'] = 'delay_started_on' in adviceInfo and adviceInfo['delay_started_on'] or None
+                delay_started_stoppped_on_save[groupId]['delay_stopped_on'] = 'delay_stopped_on' in adviceInfo and adviceInfo['delay_stopped_on'] or None
 
         self.adviceIndex = PersistentMapping()
         # we keep the optional and automatic advisers separated because we need
@@ -2571,10 +2599,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
                 # manage the 'delay_started_on' data that was saved prior
-                if groupId in delay_started_on_save:
-                    d['delay_started_on'] = delay_started_on_save[groupId]
+                if adviceInfo['delay'] and groupId in delay_started_stoppped_on_save:
+                    d['delay_started_on'] = delay_started_stoppped_on_save[groupId]['delay_started_on']
                 else:
                     d['delay_started_on'] = None
+                # advice_given_on will be filled by already given advices
+                d['advice_given_on'] = None
+
+                # manage stopped delay
+                if groupId in delay_started_stoppped_on_save:
+                    d['delay_stopped_on'] = delay_started_stoppped_on_save[groupId]['delay_stopped_on']
+                else:
+                    d['delay_stopped_on'] = None
 
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():
@@ -2607,18 +2643,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                      role_to_remove='Contributor',
                                      obj=self)
         # Then, add local roles for advisers.
-        itemState = self.queryState()
-        cfg = tool.getMeetingConfig(self)
         wfTool = getToolByName(self, 'portal_workflow')
         for groupId in self.adviceIndex.iterkeys():
             mGroup = getattr(tool, groupId)
+            itemAdviceStates = mGroup.getItemAdviceStates(cfg)
+            itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
+            itemAdviceViewStates = mGroup.getItemAdviceViewStates(cfg)
+            itemState = self.queryState()
             ploneGroup = '%s_advisers' % groupId
             adviceObj = None
             if 'advice_id' in self.adviceIndex[groupId]:
                 adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-            itemAdviceStates = mGroup.getItemAdviceStates(cfg)
-            itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
-            itemAdviceViewStates = mGroup.getItemAdviceViewStates(cfg)
+
             if (itemState not in itemAdviceStates) and \
                (itemState not in itemAdviceEditStates)and \
                (itemState not in itemAdviceViewStates):
@@ -2666,30 +2702,87 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # done by self.manage_addLocalRoles here above because it is necessary in any case
             if itemState in itemAdviceViewStates:
                 pass
+
+            # make sure there is no 'delay_stopped_on' date if advice still giveable
+            if itemState in itemAdviceStates:
+                self.adviceIndex[groupId]['delay_stopped_on'] = None
+            # the delay is stopped for advices
+            # when the advice can not be given anymore due to a workflow transition
+            # we only do that if not already done (a stopped date is already defined)
+            # and if we are not on the transition that reinitialize delays
+            if not itemState in itemAdviceStates and \
+               self.adviceIndex[groupId]['delay'] and not \
+               isTransitionReinitializingDelays and not \
+               (groupId in delay_started_stoppped_on_save and delay_started_stoppped_on_save[groupId]['delay_stopped_on'] or False):
+                self.adviceIndex[groupId]['delay_stopped_on'] = datetime.now()
             # now index advice annexes
             if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
                 self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
-    def getLeftDelayInfosForAdvice(self, advice_id):
+    security.declarePublic('getDelayInfosForAdvice')
+    def getDelayInfosForAdvice(self, advice_id):
         '''Compute left delay in number of days for given p_advice_id.
-           Returns real left delay and a status information aka :
+           Returns real left delay, a status information aka :
            - not yet giveable;
            - still in delays;
-           - delays timeout.'''
+           - delays timeout.
+           Returns also the real limit date and the initial delay.
+           This call is only relevant for a delay-aware advice.'''
+        data = {'left_delay': None,
+                'delay_status': None,
+                'limit_date': None,
+                'delay': None,
+                'delay_started_on': None,
+                'delay_stopped_on': None,
+                'delay_when_stopped': None,
+                'delay_status_when_stopped': None, }
         adviceInfos = self.adviceIndex[advice_id]
-        delay = adviceInfos['delay']
+        # if it is not a delay-aware advice, return
+        if not adviceInfos['delay']:
+            return {}
+        delay = int(adviceInfos['delay'])
+
+        data['delay'] = delay
         delay_started_on = adviceInfos['delay_started_on']
-        if not delay and not delay_started_on:
-            return None
+        if adviceInfos['delay_started_on']:
+            data['delay_started_on'] = self.toLocalizedTime(adviceInfos['delay_started_on'], True)
+        delay_stopped_on = adviceInfos['delay_stopped_on']
+        if adviceInfos['delay_stopped_on']:
+            data['delay_stopped_on'] = self.toLocalizedTime(adviceInfos['delay_stopped_on'], True)
+
         # if delay still not started, we return complete delay
         if not delay_started_on:
-            return int(delay), 'not_yet_giveable'
-        left_delay = int(delay) - (datetime.now() - delay_started_on).days
+            data['left_delay'] = delay
+            data['delay_status'] = 'not_yet_giveable'
+            return data
+
+        # if delay is stopped, it means that we can no more give the advice
+        if delay_stopped_on:
+            data['left_delay'] = delay
+            # compute how many days left/exceeded when the delay was stopped
+            # find number of days between delay_started_on and delay_stopped_on
+            gap = (delay_stopped_on - delay_started_on).days
+            # now we can remove the found gap from delay that had the user to give his advice
+            data['delay_when_stopped'] = delay - gap
+            if data['delay_when_stopped'] > 0:
+                data['delay_status_when_stopped'] = 'stopped_still_time'
+            else:
+                data['delay_status_when_stopped'] = 'stopped_timed_out'
+
+            data['delay_status'] = 'no_more_giveable'
+            return data
+
+        left_delay = delay - (datetime.now() - delay_started_on).days
         if left_delay > 0:
-            return left_delay, 'still_time'
+            data['left_delay'] = left_delay
+            data['delay_status'] = 'still_time'
+            data['limit_date'] = self.toLocalizedTime(delay_started_on + timedelta(delay))
         else:
-            return left_delay, 'timed_out'
+            data['left_delay'] = left_delay
+            data['delay_status'] = 'timed_out'
+            data['limit_date'] = self.toLocalizedTime(delay_started_on + timedelta(delay))
+        return data
 
     security.declarePublic('indexAdvisers')
     def indexAdvisers(self):

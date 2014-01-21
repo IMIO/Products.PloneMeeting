@@ -43,7 +43,7 @@ def do(action, event):
     event.object.updatePowerObserversLocalRoles()
     if objectType == 'MeetingItem':
         # Update the local roles linked to advices if relevant
-        event.object.updateAdvices()
+        event.object.updateAdvices(triggered_by_transition=event.transition.id)
         # Send mail regarding advices to give if relevant
         sendAdviceToGiveMailIfRelevant(event)
         # Send mail if relevant

@@ -778,6 +778,15 @@
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('transitionReinitializingDelays')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
+          </td>
+          <td>
+          </td>
+        </tr>
+        <tr valign="top">
           <td colspan="3">
             <fieldset tal:define="field python:here.getField('customAdvisers')">
               <legend>

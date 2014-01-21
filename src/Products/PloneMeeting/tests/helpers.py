@@ -58,8 +58,13 @@ class PloneMeetingTestingHelpers:
                       'backToPresented',
                       'backToValidated', )}
 
-    WF_STATE_NAME_MAPPINGS = {'proposed': 'proposed',
+    WF_STATE_NAME_MAPPINGS = {'itemcreated': 'itemcreated',
+                              'proposed': 'proposed',
                               'validated': 'validated'}
+
+    WF_TRANSITION_NAME_MAPPINGS = {
+        'backToItemCreated': 'backToItemCreated',
+        'backToProposed': 'backToProposed', }
 
     # in which state an item must be after an particular meeting transition?
     ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'confirmed',

@@ -1150,6 +1150,20 @@ schema = Schema((
         schemata="advices",
         vocabulary='listAdviceStyles',
     ),
+    StringField(
+        name='transitionReinitializingDelays',
+        default=defValues.transitionReinitializingDelays,
+        widget=SelectionWidget(
+            description="TransitionReinitializingDelays",
+            description_msgid="transition_reinitializing_delays_descr",
+            label='Transitionreinitializingdelays',
+            label_msgid='PloneMeeting_label_transitionReinitializingDelays',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=True,
+        schemata="advices",
+        vocabulary='listTransitionsReinitializingDelays',
+    ),
     DataGridField(
         name='customAdvisers',
         default=defValues.customAdvisers,
@@ -1907,6 +1921,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("hands", translate('advices_hands', domain=d, context=self.REQUEST)),
         ))
         return res
+
+    security.declarePrivate('listAdviceStyles')
+    def listTransitionsReinitializingDelays(self):
+        '''Vocabulary for the MeetingConfig.transitionsReinitializingDelays field.'''
+        # we only consider back transitions
+        backTransitions = [(tr[0], tr[1]) for tr in self.listTransitions('Item') if tr[0].startswith('back')]
+        res = []
+        for transition in backTransitions:
+            res.append((transition[0], transition[1]))
+        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listCustomAdvisersGroups')
     def listCustomAdvisersGroups(self):
