@@ -2,10 +2,6 @@
 /* <dtml-with base_properties> */
 /* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
 
-acronym {
-    cursor: help;
-}
-
 fieldset {line-height: 1em; margin: 0.5em 0; }
 p {
     line-height: 1em;
@@ -560,7 +556,7 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
 .annexToPrintEditable,
 .itemAssemblyEditable i,
 .itemSignaturesEditable i {
-    border-bottom: 2px dotted;
+    border-bottom: 1px dotted;
     padding-bottom: 2px;
     cursor:pointer;
 }
