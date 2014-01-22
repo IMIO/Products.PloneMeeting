@@ -52,9 +52,10 @@ def getDeliberation(obj):
 def indexAdvisers(obj):
     """
       Build the index specifying advices to give.
-      The index will contains values like 'mygroup_0' where
-      'mygroup' is the name of the group than needs to give the adviec
-      and '0' specifies that the advice was still not given.
+      The index will contains values like 'mygroup0' where
+      'mygroup' is the name of the group than needs to give the advice
+      and '0' specifies that the advice was still not given (will be
+      '1' if advice has been given).
     """
     if not hasattr(obj, 'adviceIndex'):
         return ''
