@@ -34,6 +34,7 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneMeeting.config import AddAdvice
+from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -411,7 +412,7 @@ class testAdvices(PloneMeetingTestCase):
         item.reindexObject()
         # no advice to give as item is 'itemcreated'
         self.changeUser('pmAdviser1')
-        self.assertEquals(set(item.indexAdvisers()), set(['developers0', 'vendors0', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'vendors0', ]))
         itemUID = item.UID()
         brains = self.portal.portal_catalog(indexAdvisers='developers0')
         self.assertEquals(len(brains), 1)
@@ -425,7 +426,7 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # now that an advice has been given for the developers group, the indexAdvisers has been updated
-        self.assertEquals(set(item.indexAdvisers()), set(['developers1', 'vendors0', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers1', 'vendors0', ]))
         brains = self.portal.portal_catalog(indexAdvisers='developers1')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
@@ -433,14 +434,14 @@ class testAdvices(PloneMeetingTestCase):
         item.meetingadvice.advice_group = self.portal.portal_plonemeeting.vendors.getId()
         # notify modified
         notify(ObjectModifiedEvent(item.meetingadvice))
-        self.assertEquals(set(item.indexAdvisers()), set(['developers0', 'vendors1', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'vendors1', ]))
         # the index in the portal_catalog is updated too
         brains = self.portal.portal_catalog(indexAdvisers='vendors1')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         # delete the advice
         item.restrictedTraverse('@@delete_givenuid')(item.meetingadvice.UID())
-        self.assertEquals(set(item.indexAdvisers()), set(['developers0', 'vendors0', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'vendors0', ]))
         # the index in the portal_catalog is updated too
         brains = self.portal.portal_catalog(indexAdvisers='vendors0')
         self.assertEquals(len(brains), 1)
