@@ -2661,8 +2661,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # make sure the advice given by groupId is no more editable
                 if adviceObj and adviceObj.queryState() == 'advice_under_edit':
                         wfTool.doActionFor(adviceObj, 'giveAdvice')
-                # make sure the delay is reinitialized
-                if self.adviceIndex[groupId]['delay']:
+                # make sure the delay is reinitialized if advice not already given
+                if self.adviceIndex[groupId]['delay'] and self.adviceIndex[groupId]['type'] == 'not_given':
                     self.adviceIndex[groupId]['delay_started_on'] = None
                 continue
 
@@ -2693,11 +2693,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if itemState in itemAdviceEditStates:
                 # make sure the advice given by groupId is in state 'advice_under_edit'
                 if adviceObj and not adviceObj.queryState() == 'advice_under_edit':
-                        wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
+                    wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
             else:
                 # make sure it is no more editable
                 if adviceObj and not adviceObj.queryState() == 'advice_given':
-                        wfTool.doActionFor(adviceObj, 'giveAdvice')
+                    wfTool.doActionFor(adviceObj, 'giveAdvice')
             # if item needs to be accessible by advisers, it is already
             # done by self.manage_addLocalRoles here above because it is necessary in any case
             if itemState in itemAdviceViewStates:
@@ -2737,6 +2737,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 'delay_stopped_on': None,
                 'delay_when_stopped': None,
                 'delay_status_when_stopped': None, }
+        delay_started_on = delay_stopped_on = None
         adviceInfos = self.adviceIndex[advice_id]
         # if it is not a delay-aware advice, return
         if not adviceInfos['delay']:
@@ -2744,12 +2745,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         delay = int(adviceInfos['delay'])
 
         data['delay'] = delay
-        delay_started_on = adviceInfos['delay_started_on']
         if adviceInfos['delay_started_on']:
             data['delay_started_on'] = self.toLocalizedTime(adviceInfos['delay_started_on'], True)
-        delay_stopped_on = adviceInfos['delay_stopped_on']
+            delay_started_on = self._doClearDayFrom(adviceInfos['delay_started_on'])
+
         if adviceInfos['delay_stopped_on']:
             data['delay_stopped_on'] = self.toLocalizedTime(adviceInfos['delay_stopped_on'], True)
+            delay_stopped_on = self._doClearDayFrom(adviceInfos['delay_stopped_on'])
 
         # if delay still not started, we return complete delay
         if not delay_started_on:
@@ -2772,8 +2774,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             data['delay_status'] = 'no_more_giveable'
             return data
-
-        left_delay = delay - (datetime.now() - delay_started_on).days
+        left_delay = delay - ((datetime.now() - delay_started_on).days + 1)
         if left_delay > 0:
             data['left_delay'] = left_delay
             data['delay_status'] = 'still_time'
@@ -2783,20 +2784,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data['delay_status'] = 'timed_out'
             data['limit_date'] = self.toLocalizedTime(delay_started_on + timedelta(delay))
         return data
-
-    security.declarePublic('indexAdvisers')
-    def indexAdvisers(self):
-        '''Return the list of adviser (MeetingGroup) ids. This is used to
-           index info from self.advisers in portal_catalog.'''
-        if not hasattr(self, 'adviceIndex'):
-            return ''
-        res = []
-        for groupId, advice in self.adviceIndex.iteritems():
-            suffix = '0'  # Has not been given yet
-            if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
-                suffix = '1'  # Has been given
-            res.append(groupId + suffix)
-        return res
 
     security.declarePublic('isAdvicesEnabled')
     def isAdvicesEnabled(self):

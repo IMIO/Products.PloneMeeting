@@ -40,6 +40,7 @@
   <adapter name="Description" factory=".indexes.Description" />
   <adapter name="getDeliberation" factory=".indexes.getDeliberation" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
+  <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
 
   <!-- add the blob field to MeetingFile -->
   <adapter

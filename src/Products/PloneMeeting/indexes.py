@@ -9,6 +9,7 @@
 
 from plone.indexer import indexer
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 
 
 @indexer(IMeetingItem)
@@ -45,3 +46,22 @@ def getDeliberation(obj):
       Make sure to use 'text/plain' version of getDeliberation field
     """
     return obj.getDeliberation(mimetype='text/plain')
+
+
+@indexer(IMeetingItem)
+def indexAdvisers(obj):
+    """
+      Build the index specifying advices to give.
+      The index will contains values like 'mygroup_0' where
+      'mygroup' is the name of the group than needs to give the adviec
+      and '0' specifies that the advice was still not given.
+    """
+    if not hasattr(obj, 'adviceIndex'):
+        return ''
+    res = []
+    for groupId, advice in obj.adviceIndex.iteritems():
+        suffix = '0'  # Has not been given yet
+        if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
+            suffix = '1'  # Has been given
+        res.append(groupId + suffix)
+    return res
