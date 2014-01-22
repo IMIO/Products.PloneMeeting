@@ -33,6 +33,7 @@ from plone.app.testing import login
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -693,6 +694,59 @@ class testAdvices(PloneMeetingTestCase):
                           [None, None])
         self.assertEquals([advice['delay_stopped_on'] for advice in item.adviceIndex.values()],
                           [None, None])
+
+    def test_pm_mayNotAddAdviceEditIfDelayExceeded(self):
+        '''Test that if the delay to give an advice is exceeded, the advice is no more giveable.'''
+        # configure one delay-aware optional adviser
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '5',
+              'delay_label': ''}, ])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
+        item.at_post_edit_script()
+        self.changeUser('pmReviewer2')
+        # the advice is asked but not giveable
+        self.assertTrue('vendors' in item.adviceIndex)
+        # check 'PloneMeeting: add advice' permission
+        self.assertTrue(not self.hasPermission(AddAdvice, item))
+        # put the item in a state where we can add an advice
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        self.changeUser('pmReviewer2')
+        # now we can add the item and the delay is not exceeded
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] > 0)
+        self.assertTrue(self.hasPermission(AddAdvice, item))
+        # now make the delay exceeded and check again
+        item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
+        item.updateAdvices()
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] < 0)
+        self.assertTrue(not self.hasPermission(AddAdvice, item))
+        # recover delay, add the advice and check the 'edit' behaviour
+        item.adviceIndex['vendors']['delay_started_on'] = datetime.now()
+        item.updateAdvices()
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] > 0)
+        self.assertTrue(self.hasPermission(AddAdvice, item))
+        # add the advice
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'negative',
+                                             'advice_comment': RichTextValue(u'My comment')})
+        self.assertEquals(item.adviceIndex['vendors']['row_id'], 'unique_id_123')
+        # advice is editable as delay is not exceeded
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] > 0)
+        self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
+        # now make sure the advice is no more editable when delay is exceeded
+        item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
+        item.updateAdvices()
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] < 0)
+        self.assertTrue(not self.hasPermission(ModifyPortalContent, advice))
 
 
 def test_suite():

@@ -2676,8 +2676,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.adviceIndex[groupId]['delay_started_on'] = datetime.now()
 
             # check if user must be able to add an advice, if not already given
+            # check also if the delay is not exceeded, in this case the advice can not be given anymore
+            delayIsNotExceeded = not self.adviceIndex[groupId]['delay'] or \
+                self.getDelayInfosForAdvice(groupId)['left_delay'] > 0
             if itemState in itemAdviceStates and \
-               self.adviceIndex[groupId]['type'] == NOT_GIVEN_ADVICE_VALUE:
+               self.adviceIndex[groupId]['type'] == NOT_GIVEN_ADVICE_VALUE and delayIsNotExceeded:
                 # advisers must be able to add a 'meetingadvice', give
                 # relevant permissions to 'Contributor' role
                 # we need to give 'Add portal content' and 'PloneMeeting: Add advice' to
@@ -2690,7 +2693,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                             role_to_give='Contributor',
                                             obj=self)
 
-            if itemState in itemAdviceEditStates:
+            if itemState in itemAdviceEditStates and delayIsNotExceeded:
                 # make sure the advice given by groupId is in state 'advice_under_edit'
                 if adviceObj and not adviceObj.queryState() == 'advice_under_edit':
                     wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
