@@ -748,6 +748,49 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] < 0)
         self.assertTrue(not self.hasPermission(ModifyPortalContent, advice))
 
+    def test_pm_UpdateDelayAwareAdvicesView(self):
+        '''Test the maintenance task view that will update delay-aware advisers at midnight (0:00)
+           at the end of a clear day to keep everything consistent.'''
+        # configure one delay-aware optional adviser
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '5',
+              'delay_label': ''}, ])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
+        item.at_post_edit_script()
+        self.proposeItem(item)
+        self.changeUser('pmReviewer2')
+        # by default, advice is giveable as delay is not exceeded
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] > 0)
+        self.assertTrue(self.hasPermission(AddAdvice, item))
+        # so make delay exceeded, until advices are not updated
+        # the state is still somewhat inconsistent as the user as still the AddAdvice permission
+        item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
+        # the state is not consistent as advices have not been updated
+        # delay is exceeded...
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] < 0)
+        # ... but user has still the permission to add it?! ;-)
+        self.assertTrue(self.hasPermission(AddAdvice, item))
+        # make things consistent by calling the @@update-delay-aware-advices view
+        # this view is automatically called by cron4plone every days at 0:00
+        # the view is only accessible to Managers
+        self.assertRaises(Unauthorized, self.portal.restrictedTraverse, '@@update-delay-aware-advices')
+        self.changeUser('admin')
+        # call the view as admin
+        self.portal.restrictedTraverse('@@update-delay-aware-advices')()
+        # now that advices have been updated, the state is coherent
+        self.changeUser('pmReviewer2')
+        # delay is still exceeded...
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] < 0)
+        # ... but now the user does not have the permission to add the advice anymore
+        self.assertTrue(not self.hasPermission(AddAdvice, item))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

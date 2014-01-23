@@ -1317,7 +1317,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''This method allows to go back to the referer URL after a script has
            been executed. There are some special cases to manage in the referer
            URL (like managing parameters *StartNumber when we must come back to
-           meeting_view which includes paginated lists.'''
+           meeting_view which includes paginated lists).'''
         rq = self.REQUEST
         urlBack = rq['HTTP_REFERER']
         if rq.get('iStartNumber', None):
@@ -2054,21 +2054,26 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
-    security.declarePublic('updateAllAdvices')
-    def updateAllAdvices(self):
-        '''Update all advices to take change in the advices
-           configuration into account if necessary.'''
-        user = self.portal_membership.getAuthenticatedMember()
+    security.declarePublic('updateAllAdvicesAction')
+    def updateAllAdvicesAction(self):
+        '''UI action that calls _updateAllAdvices.'''
+        membershipTool = getToolByName(self, 'portal_membership')
+        user = membershipTool.getAuthenticatedMember()
         if not user.has_role('Manager'):
             raise Unauthorized
-        for b in self.portal_catalog(meta_type='MeetingItem'):
+        self._updateAllAdvices()
+        self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
+
+    def _updateAllAdvices(self):
+        '''Update adviceIndex for every items.'''
+        catalog = getToolByName(self, 'portal_catalog')
+        for b in catalog(meta_type='MeetingItem'):
             item = b.getObject()
             logger.info('Updating adviceIndex of item at %s' % '/'.join(item.getPhysicalPath()))
             item.updateAdvices()
             # Update security as local_roles are set by updateAdvices
             item.reindexObject(idxs=['allowedRolesAndUsers', ])
-        self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
 
     security.declarePublic('updatePowerObservers')
     def updatePowerObservers(self):
@@ -2189,7 +2194,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         """
         return content.replace('[[', '<strike>').replace(']]', '</strike>'). \
             replace('<p>', '<p class="mltAssembly">')
-
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

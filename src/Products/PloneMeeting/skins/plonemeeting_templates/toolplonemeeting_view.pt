@@ -321,7 +321,7 @@
             </form>
           </td>
           <td>
-            <form name="updateAllAdvicesForm" action="updateAllAdvices">
+            <form name="updateAllAdvicesForm" action="updateAllAdvicesAction">
             <input class="context" type="submit" name="updateAllAdvices"
                    value="pm_update_all_advices" i18n:attributes="value"/>&nbsp;&nbsp;
             </form>

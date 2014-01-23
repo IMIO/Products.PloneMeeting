@@ -17,6 +17,7 @@
   <include package="plone.directives.form" file="meta.zcml" />
   <include package="plone.directives.form" />
   <include package="Products.DataGridField" />
+  <include package="Products.cron4plone" />
 
   <permission id="PloneMeeting.AddAdvice"
               title="PloneMeeting: Add advice"/>

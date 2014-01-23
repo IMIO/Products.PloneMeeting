@@ -23,13 +23,14 @@ from Products.CMFCore.utils import getToolByName
 import transaction
 ##code-section HEAD
 from BTrees.OOBTree import OOBTree
+from zope.component import queryUtility
 from zope.i18n import translate
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import \
     WorkflowPolicyConfig_id
+from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.utils import updateIndexes
-
 
 folderViews = ('meetingfolder_redirect_view', 'meetingfolder_view')
 pmGroupProperties = ('meetingRole', 'meetingGroupId')
@@ -312,6 +313,14 @@ def postInstall(context):
         blacklisted.append('meetingadvice')
         site_properties.manage_changeProperties(types_not_searched=blacklisted)
 
+    # configure Products.cron4plone
+    # add a call to @@update-delay-aware-advices that will update
+    # data regarding the delay-aware advices : call updateAdvices on every items
+    # and update the indexAdvisers index in portal_catalog
+    cron_configlet = queryUtility(ICronConfiguration, 'cron4plone_config')
+    if not cron_configlet.cronjobs:
+        # add a cron job that will be launched at 00:00
+        cron_configlet.cronjobs = [u'0 0 * * portal/portal_plonemeeting/_updateDelayAwareAdvisers']
 
 
 ##code-section FOOT
