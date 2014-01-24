@@ -1613,7 +1613,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                * columns 'for_item_created_from' and 'for_item_created_until',
                  we use a common string column to store a date, check that the given date
                  is a real using right format (YYYY/MM/DD);
-               * column 'delay', it must be empty or contain only one singe digit.
+               * columns 'delay' and 'delay_left_alert' must be empty or contain only one single digit.
            - check that if a row changed, it was not already in use in the application.  We
              can not change a row configuration that is already in use in the application, except the
              'for_item_created_until' that we can only set if not already set to deactivate a used row
@@ -1649,9 +1649,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  mapping={'groupName': unicode(group.Title(), 'utf-8'), },
                                  context=self.REQUEST)
 
-            # validate the delays in the 'delay' column
+            # validate the delays in the 'delay' and 'delay_left_alert' columns
             delay = customAdviser['delay']
-            if delay and not delay.isdigit():
+            delay_left_alert = customAdviser['delay_left_alert']
+            if (delay and not delay.isdigit()) or (delay_left_alert and not delay_left_alert.isdigit()):
                 tool = getToolByName(self, 'portal_plonemeeting')
                 group = getattr(tool, customAdviser['group'])
                 return translate('custom_adviser_wrong_delay_format',
@@ -1691,7 +1692,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             # for wich we are setting a value for the first time (aka is empty in the stored value)
                             # or a 'help_message', those fields we can change the value
                             if not (k == 'for_item_created_until' and not v) and \
-                               not k in ['gives_auto_advice_on_help_message', 'delay_label']:
+                               not k in ['gives_auto_advice_on_help_message', 'delay_left_alert', 'delay_label']:
                                 # we are setting another field, it is not permitted if
                                 # the rule is in use, check every items if the rule is used
                                 # _checkIfConfigIsUsed will return an item absolute_url using this configuration if any

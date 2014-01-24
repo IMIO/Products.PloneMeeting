@@ -284,6 +284,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
                            'delay': '',
+                           'delay_left_alert': '',
                            'delay_label': '', }, ]
         wrong_date_msg = translate('custom_adviser_wrong_date_format',
                                    domain='PloneMeeting',
@@ -337,6 +338,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'gives_auto_advice_on_help_message': '',
                            # wrong value
                            'delay': 'a',
+                           'delay_left_alert': '',
                            'delay_label': '', }, ]
         wrong_delay_msg = translate('custom_adviser_wrong_delay_format',
                                     domain='PloneMeeting',
@@ -375,6 +377,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                   'for_item_created_until': '',
                                   'gives_auto_advice_on_help_message': 'Auto help message',
                                   'delay': '10',
+                                  'delay_left_alert': '',
                                   'delay_label': 'Delay label', }
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
@@ -386,6 +389,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                  'for_item_created_until': '2025/01/01',
                                  'gives_auto_advice_on_help_message': 'Auto help message changed',
                                  'delay': '20',
+                                 'delay_left_alert': '',
                                  'delay_label': 'Delay label changed', }
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers([changedCustomAdvisers, ]))
@@ -416,6 +420,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # now change a non logical field, then it still validates
         non_logical_fields_wrong_values_mapping = {
             'gives_auto_advice_on_help_message': 'New help message gives auto',
+            'delay_left_alert': '5',
             'delay_label': 'New delay label', }
         savedOriginalCustomAdvisers = dict(originalCustomAdvisers)
         for field in non_logical_fields_wrong_values_mapping:
