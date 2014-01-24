@@ -400,25 +400,30 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.willInvalidateAdvices())
 
     def test_pm_IndexAdvisers(self):
-        '''Test the indexAdvisers index and check that it is always consistent.'''
+        '''Test the indexAdvisers index and check that it is always consistent.
+           Ask a delay and a non delay-aware advice.'''
         # advices are activated for meetingConfig2
         self.setMeetingConfig(self.meetingConfig2.getId())
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'delay': '5', }, ])
         # an advice can be given when an item is 'proposed' or 'validated'
         self.assertEquals(self.meetingConfig.getItemAdviceStates(), (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('developers', 'vendors', ))
+        item.setOptionalAdvisers(('developers', 'vendors__rowid__unique_id_123', ))
         self.proposeItem(item)
         item.reindexObject()
         # no advice to give as item is 'itemcreated'
         self.changeUser('pmAdviser1')
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'vendors0', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'delay__vendors0', ]))
         itemUID = item.UID()
         brains = self.portal.portal_catalog(indexAdvisers='developers0')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
-        brains = self.portal.portal_catalog(indexAdvisers='vendors0')
+        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors0')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         createContentInContainer(item,
@@ -427,7 +432,7 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # now that an advice has been given for the developers group, the indexAdvisers has been updated
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers1', 'vendors0', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers1', 'delay__vendors0', ]))
         brains = self.portal.portal_catalog(indexAdvisers='developers1')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
@@ -435,21 +440,24 @@ class testAdvices(PloneMeetingTestCase):
         item.meetingadvice.advice_group = self.portal.portal_plonemeeting.vendors.getId()
         # notify modified
         notify(ObjectModifiedEvent(item.meetingadvice))
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'vendors1', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'delay__vendors1', ]))
         # the index in the portal_catalog is updated too
-        brains = self.portal.portal_catalog(indexAdvisers='vendors1')
+        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors1')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         # delete the advice
         item.restrictedTraverse('@@delete_givenuid')(item.meetingadvice.UID())
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'vendors0', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'delay__vendors0', ]))
         # the index in the portal_catalog is updated too
-        brains = self.portal.portal_catalog(indexAdvisers='vendors0')
+        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors0')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         brains = self.portal.portal_catalog(indexAdvisers='developers0')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
+        # if a delay-aware advice delay is exceeded, it is indexed with an ending '2'
+        item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 01, 01)
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'delay__vendors2', ]))
 
     def test_pm_AutomaticAdvices(self):
         '''Test the automatic advices mechanism, some advices can be

@@ -52,17 +52,29 @@ def getDeliberation(obj):
 def indexAdvisers(obj):
     """
       Build the index specifying advices to give.
-      The index will contains values like 'mygroup0' where
-      'mygroup' is the name of the group than needs to give the advice
-      and '0' specifies that the advice was still not given (will be
-      '1' if advice has been given).
+      Values are different if it is a delay-aware or not advice :
+      Delay-aware advice is like "delay__developers0" :
+      - delay__ specifies that it is a delay-aware advice
+      - developers is the name of the group the advice is asked to
+      - '0' for advice not given, '1' for advice given
+         and '2' for advice no given but no more giveable (delay exceeded)
+       Non delay-aware advice is like "developers0" :
+      - developers is the name of the group the advice is asked to
+      - '0' for advice not given, '1' for advice given
     """
     if not hasattr(obj, 'adviceIndex'):
         return ''
     res = []
     for groupId, advice in obj.adviceIndex.iteritems():
-        suffix = '0'  # Has not been given yet
-        if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
-            suffix = '1'  # Has been given
-        res.append(groupId + suffix)
+        suffix = '1'  # Has been given (for now...)
+        isDelayAware = obj.adviceIndex[groupId]['delay'] and True or False
+        if advice['type'] == NOT_GIVEN_ADVICE_VALUE:
+            suffix = '0'  # Has not been given
+            delayIsExceeded = isDelayAware and obj.getDelayInfosForAdvice(groupId)['left_delay'] < 0
+            if delayIsExceeded:
+                suffix = '2'  # delay is exceeded, advice was not given
+        if isDelayAware:
+            res.append('delay__' + groupId + suffix)
+        else:
+            res.append(groupId + suffix)
     return res

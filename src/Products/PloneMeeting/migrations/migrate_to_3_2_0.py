@@ -218,6 +218,24 @@ class Migrate_To_3_2_0(Migrator):
         # method, we will come back to previous value at the end of this method
         from Products.PloneMeeting.MeetingConfig import MeetingConfig
         newTopicsInfo = (
+            # Items to advice with delay : need a script to do this search
+            ('searchitemstoadvicewithdelay',
+            (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+             ),
+             'created',
+             'searchItemsToAdviceWithDelay',
+             "python: here.portal_plonemeeting.getMeetingConfig(here)."
+             "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+             ),
+            # Items to advice with exceeded delay : need a script to do this search
+            ('searchitemstoadvicewithdexceededelay',
+            (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+             ),
+             'created',
+             'searchItemsToAdviceWithExceededDelay',
+             "python: here.portal_plonemeeting.getMeetingConfig(here)."
+             "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+             ),
             # Items to correct : search items in state 'returned_to_proposing_group'
             ('searchitemstocorrect',
             (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
@@ -245,6 +263,8 @@ class Migrate_To_3_2_0(Migrator):
             # createTopics manage the fact that the topic already exists
             cfg.createTopics()
         MeetingConfig.topicsInfo = originalTopicsInfos
+        # now reorder so advice related topics are all together
+        # XXX todo
         logger.info('Done.')
 
     def run(self):

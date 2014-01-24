@@ -42,6 +42,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         '''Test the searchItemsToAdvice method.  This should return a list of items
            a user has to give an advice for.'''
         self.setMeetingConfig(self.meetingConfig2.getId())
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'delay': '5', }, ])
         # by default, no item to advice...
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
@@ -51,14 +55,18 @@ class testMeetingConfig(PloneMeetingTestCase):
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('developers',))
+        item.setOptionalAdvisers(('developers', 'vendors__rowid__unique_id_123'))
         # as the item is "itemcreated", advices are not givable
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
         # now propose the item
+        self.changeUser('pmCreator1')
         self.proposeItem(item)
         item.reindexObject()
         # only advisers can give an advice, so a creator for example will not see it
+        self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 0)
+        # now test as advisers
+        self.changeUser('pmAdviser1')
         self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 1)
         self.assertEquals(self.meetingConfig.searchItemsToAdvice('', '', '', '')[0].UID, item.UID())
         # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
@@ -67,6 +75,18 @@ class testMeetingConfig(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
                                     'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
+        # pmReviewer2 is adviser for 'vendors', delay-aware advices are also returned
+        self.changeUser('pmReviewer2')
+        self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 1)
+        self.assertEquals(self.meetingConfig.searchItemsToAdvice('', '', '', '')[0].UID, item.UID())
+        # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
+        # so pmReviewer2 gives his advice
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                    'advice_type': u'negative',
                                     'advice_comment': RichTextValue(u'My comment')})
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
 

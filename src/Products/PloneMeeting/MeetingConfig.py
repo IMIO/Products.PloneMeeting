@@ -1190,6 +1190,8 @@ schema = Schema((
                                col_description="for_item_created_until_col_description"),
                      'delay': Column("Delay for giving advice",
                                      col_description="delay_col_description"),
+                     'delay_left_alert': Column("Delay left alert",
+                                                col_description="delay_left_alert_col_description"),
                      'delay_label': Column("Custom adviser delay label",
                                            col_description="delay_label_col_description"),
                      },
@@ -1206,6 +1208,7 @@ schema = Schema((
                  'for_item_created_from',
                  'for_item_created_until',
                  'delay',
+                 'delay_left_alert',
                  'delay_label', ),
     ),
     LinesField(
@@ -1450,6 +1453,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
          'created',
          'searchItemsToAdvice',
+         "python: here.portal_plonemeeting.getMeetingConfig(here)."
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+         ),
+        # Items to advice with delay : need a script to do this search
+        ('searchitemstoadvicewithdelay',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsToAdviceWithDelay',
+         "python: here.portal_plonemeeting.getMeetingConfig(here)."
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+         ),
+        # Items to advice with exceeded delay : need a script to do this search
+        ('searchitemstoadvicewithdexceededelay',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsToAdviceWithExceededDelay',
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
          ),
@@ -2412,7 +2433,63 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries all items for which the current user must give an advice.'''
         groups = self.getParentNode().getGroups(suffix='advisers')
         # Add a '0' at the end of every group id: we want "not given" advices.
-        groupIds = [g.id + '0' for g in groups]
+        # this search will also return 'delay-aware' advices
+        groupIds = [g.getId() + '0' for g in groups] + ['delay__' + g.getId() + '0' for g in groups]
+        # Compute the list of states relevant for giving an advice.
+        itemStates = set()
+        for group in groups:
+            for state in group.getItemAdviceStates(self):
+                itemStates.add(state)
+        # Create query parameters
+        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+                  # KeywordIndex 'indexAdvisers' use 'OR' by default
+                  'indexAdvisers': groupIds,
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder,
+                  'review_state': list(itemStates), }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(filterValue)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
+
+    security.declarePublic('searchItemsToAdviceWithDelay')
+    def searchItemsToAdviceWithDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Queries items for which the current user must give a delay-aware advice.'''
+        groups = self.getParentNode().getGroups(suffix='advisers')
+        # Add a '0' at the end of every group id: we want "not given" advices.
+        # this search will only return 'delay-aware' advices
+        groupIds = ['delay__' + g.getId() + '0' for g in groups]
+        # Compute the list of states relevant for giving an advice.
+        itemStates = set()
+        for group in groups:
+            for state in group.getItemAdviceStates(self):
+                itemStates.add(state)
+        # Create query parameters
+        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+                  # KeywordIndex 'indexAdvisers' use 'OR' by default
+                  'indexAdvisers': groupIds,
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder,
+                  'review_state': list(itemStates), }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(filterValue)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
+
+    security.declarePublic('searchItemsToAdviceWithExceededDelay')
+    def searchItemsToAdviceWithExceededDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Queries items for which the current user had to give a
+           delay-aware advice for but did not give it in the deadline.'''
+        groups = self.getParentNode().getGroups(suffix='advisers')
+        # Add a '2' at the end of every group id: we want "not given" advices.
+        # this search will only return 'delay-aware' advices for wich delay is exceeded
+        groupIds = ['delay__' + g.getId() + '2' for g in groups]
         # Compute the list of states relevant for giving an advice.
         itemStates = set()
         for group in groups:

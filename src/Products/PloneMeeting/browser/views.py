@@ -264,6 +264,3 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         # now go on, update every items adviceIndex
         tool = getToolByName(self.context, 'portal_plonemeeting')
         tool._updateAllAdvices()
-        # update the indexAdvisers index
-        catalog = getToolByName(self.context, 'portal_catalog')
-        catalog.reindexIndex('indexAdvisers', None)
