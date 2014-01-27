@@ -2813,10 +2813,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST)
             # an additional help message can be provided for automatically asked advices
             if adviceInfos['gives_auto_advice_on_help_message']:
-                help_msg = "%s (%s)" % (help_msg, unicode(adviceInfos['gives_auto_advice_on_help_message'], 'utf-8'))
+                help_msg = "%s \n%s: %s" % (help_msg,
+                                            translate('Advice asked automatically because',
+                                                      domain="PloneMeeting",
+                                                      context=self.REQUEST),
+                                            unicode(adviceInfos['gives_auto_advice_on_help_message'], 'utf-8'))
 
-        if adviceInfos['delay']:
-            help_msg = "%s\n%s" % (help_msg, unicode(adviceInfos['delay_label'], 'utf-8'))
         return help_msg
 
     security.declarePrivate('at_post_create_script')
