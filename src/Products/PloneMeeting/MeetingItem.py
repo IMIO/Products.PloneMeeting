@@ -2402,14 +2402,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         for advice in self.getAdvices():
             optional = True
-            delay = delay_label = None
+            delay = delay_label = ''
             # find the relevant row in customAdvisers if advice has a row_id
             if advice.advice_row_id:
                 cfg = tool.getMeetingConfig(self)
                 customAdviserConfig = cfg._dataForCustomAdviserRowId(advice.advice_row_id)
                 optional = not customAdviserConfig['gives_auto_advice_on'] and True or False
-                delay = customAdviserConfig['delay'] or None
-                delay_label = customAdviserConfig['delay_label'] or None
+                delay = customAdviserConfig['delay'] or ''
+                delay_label = customAdviserConfig['delay_label'] or ''
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': optional,
                                         'id': advice.advice_group,
