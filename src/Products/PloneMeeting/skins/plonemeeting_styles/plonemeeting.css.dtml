@@ -707,14 +707,17 @@ select#optionalAdvisers option[disabled] {
 .advice_delay {
     position: relative;
     left: -8px;
+    margin-right: -6px;
 }
 .advice_delay_not_giveable {
     color: grey;
 }
-.advice_delay_still_time, .advice_delay_stopped_still_time {
+#content span.advice_delay_still_time,
+#content span.advice_delay_stopped_still_time {
     color: green;
 }
-.advice_delay_timed_out, .advice_delay_stopped_timed_out {
+#content span.advice_delay_timed_out,
+#content span.advice_delay_stopped_timed_out {
     color: red;
 }
 
