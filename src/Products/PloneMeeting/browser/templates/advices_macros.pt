@@ -135,8 +135,8 @@
                 </span>
                 <tal:adviceGiveableWithDelay condition="python: adviceType == 'not_given' and advicesMayBeAdded and delayInfos">
                     <span class="discreet"
-                          tal:condition="python: delayInfos['delay_status'] == 'still_time'"
-                          i18n:translate="">This advice has not been given yet, it can still be given until the <span class="advice_delay_still_time"
+                          tal:condition="python: delayInfos['delay_status'] in ['still_time', 'still_time_but_alert']"
+                          i18n:translate="">This advice has not been given yet, it can still be given until the <span tal:attributes="class string:advice_delay_${delayInfos/delay_status}"
                                                                                                                       i18n:name="advice_delay_limit_date"
                                                                                                                       tal:content="delayInfos/limit_date"></span>.
                     </span>

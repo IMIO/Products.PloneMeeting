@@ -2080,15 +2080,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 meetingGroupId, row_id = self._decodeDelayAwareId(adviser)
                 customAdviserInfos = cfg._dataForCustomAdviserRowId(row_id)
                 delay = customAdviserInfos['delay']
+                delay_left_alert = customAdviserInfos['delay_left_alert']
                 delay_label = customAdviserInfos['delay_label']
             else:
                 meetingGroupId = adviser
-                delay = row_id = delay_label = ''
+                row_id = delay = delay_left_alert = delay_label = ''
             res.append({'meetingGroupId': meetingGroupId,
                         'meetingGroupName': getattr(tool, meetingGroupId).getName(),
                         'gives_auto_advice_on_help_message': '',
                         'row_id': row_id,
                         'delay': delay,
+                        'delay_left_alert': delay_left_alert,
                         'delay_label': delay_label, })
         return res
 
@@ -2133,6 +2135,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             'gives_auto_advice_on_help_message': customAdviser['gives_auto_advice_on_help_message'],
                             'row_id': customAdviser['row_id'],
                             'delay': customAdviser['delay'],
+                            'delay_left_alert': customAdviser['delay_left_alert'],
                             'delay_label': customAdviser['delay_label'], })
         return res
 
@@ -2402,13 +2405,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         for advice in self.getAdvices():
             optional = True
-            delay = delay_label = ''
+            gives_auto_advice_on_help_message = delay = delay_left_alert = delay_label = ''
             # find the relevant row in customAdvisers if advice has a row_id
             if advice.advice_row_id:
                 cfg = tool.getMeetingConfig(self)
                 customAdviserConfig = cfg._dataForCustomAdviserRowId(advice.advice_row_id)
                 optional = not customAdviserConfig['gives_auto_advice_on'] and True or False
+                gives_auto_advice_on_help_message = customAdviserConfig['gives_auto_advice_on_help_message'] or ''
                 delay = customAdviserConfig['delay'] or ''
+                delay_left_alert = customAdviserConfig['delay_left_alert'] or ''
                 delay_label = customAdviserConfig['delay_label'] or ''
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': optional,
@@ -2418,7 +2423,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'advice_uid': advice.UID(),
                                         'comment': advice.advice_comment and advice.advice_comment.raw,
                                         'row_id': advice.advice_row_id,
+                                        'gives_auto_advice_on_help_message': gives_auto_advice_on_help_message,
                                         'delay': delay,
+                                        'delay_left_alert': delay_left_alert,
                                         'delay_label': delay_label,
                                         'advice_given_on': advice.created(),
                                         }
@@ -2595,6 +2602,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['id'] = groupId
                 d['name'] = getattr(tool, groupId).getName().decode('utf-8')
                 d['delay'] = adviceInfo['delay']
+                d['delay_left_alert'] = adviceInfo['delay_left_alert']
                 d['delay_label'] = adviceInfo['delay_label']
                 d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
@@ -2780,7 +2788,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         left_delay = delay - ((datetime.now() - delay_started_on).days + 1)
         if left_delay > 0:
             data['left_delay'] = left_delay
-            data['delay_status'] = 'still_time'
+            # delay status is either 'we have time' or 'please hurry up' depending
+            # on value defined in 'delay_left_alert'
+            if not adviceInfos['delay_left_alert'] or int(adviceInfos['delay_left_alert']) < left_delay:
+                data['delay_status'] = 'still_time'
+            else:
+                data['delay_status'] = 'still_time_but_alert'
             data['limit_date'] = self.toLocalizedTime(delay_started_on + timedelta(delay))
         else:
             data['left_delay'] = left_delay

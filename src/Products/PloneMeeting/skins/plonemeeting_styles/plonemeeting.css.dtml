@@ -120,7 +120,7 @@ tr.even table.advices td {
 .state-active {}
 .state-inactive, .state-inactive a, .label-state-inactive {color: red !important; }
 .state-created, .state-itemcreated, .label-state-itemcreated { color: red !important; }
-.state-proposed, .label-state-proposed { color: #ff6c00 !important; }
+.state-proposed, .label-state-proposed { color: DarkOrange !important; }
 .state-validated, .label-state-validated { color: blue !important; }
 .state-presented, .label-state-presented { color: brown !important; }
 .state-itemfrozen, .label-state-itemfrozen,
@@ -715,6 +715,10 @@ select#optionalAdvisers option[disabled] {
 #content span.advice_delay_still_time,
 #content span.advice_delay_stopped_still_time {
     color: green;
+}
+#content span.advice_delay_still_time_but_alert,
+#content span.advice_delay_stopped_still_time_but_alert {
+    color: DarkOrange;
 }
 #content span.advice_delay_timed_out,
 #content span.advice_delay_stopped_timed_out {
