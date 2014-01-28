@@ -534,10 +534,12 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
+        read_permission="PloneMeeting: Read budget infos",
         allowable_content_types=('text/html',),
         default_method="getDefaultBudgetInfo",
         default_output_type="text/x-html-safe",
         optional=True,
+        write_permission="PloneMeeting: Write budget infos",
     ),
     StringField(
         name='category',
@@ -2691,8 +2693,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                self.adviceIndex[groupId]['type'] == NOT_GIVEN_ADVICE_VALUE and delayIsNotExceeded:
                 # advisers must be able to add a 'meetingadvice', give
                 # relevant permissions to 'Contributor' role
-                # we need to give 'Add portal content' and 'PloneMeeting: Add advice' to
-                # the 'Contributor' role
+                # the 'Add portal content' permission is given by default to 'Contributor', so
+                # we need to give 'PloneMeeting: Add advice' permission too
                 self.manage_addLocalRoles(ploneGroup, ('Contributor', ))
                 self._grantPermissionToRole(permission=AddPortalContent,
                                             role_to_give='Contributor',
@@ -2863,10 +2865,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([user.getId()])
         self.manage_addLocalRoles(user.getId(), ('Owner',))
         self.updateLocalRoles()
-        # Update 'power observers' local roles given to the
-        # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
-        # is selected as viewable by 'powerobservers'
+        # Update 'power observers' and 'budget impact reviewers' local roles given to the
+        # corresponding MeetingConfig powerobsevers/budgetimpactreviewers group in case the 'initial_wf_state'
+        # is selected in MeetingConfig.itemPowerObserversStates or MeetingConfig.itemBudgetInfosStates
         self.updatePowerObserversLocalRoles()
+        self.updateBudgetImpactReviewersLocalRoles()
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
@@ -3033,6 +3036,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return
         powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
         self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['power_observers'],))
+
+    security.declarePublic('updateBudgetImpactReviewersLocalRoles')
+    def updateBudgetImpactReviewersLocalRoles(self):
+        '''Configure local role for use case 'budget_impact_reviewers' to the corresponding
+           MeetingConfig 'budgetimpactreviewers' group.'''
+        # First, remove 'MeetingBudgetImpactReviewer' local roles granted to budgetimpactreviewers.
+        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
+                                                          role_to_remove='MeetingBudgetImpactReviewer',
+                                                          suffixes=[BUDGETIMPACTREVIEWERS_GROUP_SUFFIX, ])
+        # Then, add local roles for bugetimpactreviewers.
+        itemState = self.queryState()
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        if not itemState in cfg.getItemBudgetInfosStates():
+            return
+        budgetImpactReviewersGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTREVIEWERS_GROUP_SUFFIX)
+        self.manage_addLocalRoles(budgetImpactReviewersGroupId, ('MeetingBudgetImpactReviewer',))
 
     security.declareProtected(ModifyPortalContent, 'processForm')
     def processForm(self, *args, **kwargs):
@@ -3490,6 +3509,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showBudgetInfosEvenIfNotBudgetRelated')
     def showBudgetInfosEvenIfNotBudgetRelated(self):
         '''See doc in interfaces.py.'''
+        # show the budgetInfos field to users having the 'PloneMeeting: Write budget infos' permission
+        # so they are able to define budgetInfos even if not provided by default
+        item = self.getSelf()
+        if checkPermission(WriteBudgetInfos, item):
+            return True
         return False
 
     security.declarePublic('showVotes')

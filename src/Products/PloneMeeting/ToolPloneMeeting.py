@@ -2057,9 +2057,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('updateAllAdvicesAction')
     def updateAllAdvicesAction(self):
         '''UI action that calls _updateAllAdvices.'''
-        membershipTool = getToolByName(self, 'portal_membership')
-        user = membershipTool.getAuthenticatedMember()
-        if not user.has_role('Manager'):
+        if not self.isManager(realManagers=True):
             raise Unauthorized
         self._updateAllAdvices()
         self.plone_utils.addPortalMessage('Done.')
@@ -2078,8 +2076,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('updatePowerObservers')
     def updatePowerObservers(self):
         '''Update local_roles regarging the PowerObservers for every meetings and items.'''
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'):
+        if not self.isManager(realManagers=True):
             raise Unauthorized
         for b in self.portal_catalog(meta_type=('Meeting', 'MeetingItem')):
             obj = b.getObject()
@@ -2089,11 +2086,21 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
+    security.declarePublic('updateBudgetImpactReviewers')
+    def updateBudgetImpactReviewers(self):
+        '''Update local_roles regarging the BudgetImpactReviewers for every items.'''
+        if not self.isManager(realManagers=True):
+            raise Unauthorized
+        for b in self.portal_catalog(meta_type=('MeetingItem')):
+            obj = b.getObject()
+            obj.updateBudgetImpactReviewersLocalRoles()
+        self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
+
     security.declarePublic('updateCopyGroups')
     def updateCopyGroups(self):
         '''Update local_roles regarging the copyGroups for every items.'''
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'):
+        if not self.isManager(realManagers=True):
             raise Unauthorized
         for b in self.portal_catalog(meta_type=('MeetingItem', )):
             obj = b.getObject()

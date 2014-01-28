@@ -116,6 +116,15 @@ class Migrate_To_3_2_0(Migrator):
                     item.updateAdvices()
         logger.info('Done.')
 
+    def _addBudgetImpactReviewerGroupsByMeetingConfig(self):
+        '''Now that we can define some specifig users that will be able to edit budgetInfos related
+           informations on an item, we have a group for each MeetingConfig where we will store these
+           budgetimpactreviewer users.'''
+        logger.info('Adding \'budgetimpactreviewer\' groups for each meetingConfig')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            cfg.createBudgetImpactReviewersGroup()
+        logger.info('Done.')
+
     def _finalizeAnnexesCreationProcess(self):
         '''Before, when an item was duplicated with annexes, contained annexes where not fully
            initialized, now it is the case.  Check older annexes and initialize it if necessary.'''
@@ -287,6 +296,7 @@ class Migrate_To_3_2_0(Migrator):
         self._initDefaultBudgetHTML()
         self._migrateMandatoryAdvisers()
         self._updateAdvices()
+        self._addBudgetImpactReviewerGroupsByMeetingConfig()
         self._finalizeAnnexesCreationProcess()
         self._updateMeetingFileTypes()
         self._updateAnnexIndex()
@@ -309,13 +319,14 @@ def migrate(context):
        3) Initialize field MeetingConfig.defaultBudget so it behaves correctly has RichText;
        4) Migrate mandatory advisers infos from MeetingGroups to MeetingConfig.customAdvisers;
        5) Update advices as we moved from MeetingItem.advices to MeetingItem.adviceIndex;
-       6) Make sure every existing annexes creation process is correctly finished;
-       7) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
-       8) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
-       9) Clean ItemAnnexes and DecisionAnnexes references on items;
-       10) Finish 'ExternalApplication' removal;
-       11) Add missing topics regarding the 'send back to proposing group' WFAdaptation;
-       12) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
+       6) Add a 'budgetimpactreviewers' group by MeetingConfig;
+       7) Make sure every existing annexes creation process is correctly finished;
+       8) Update MeetingFileTypes as we moved from Boolean:decisionRelated to List:relatedTo;
+       9) Update annexIndex as key 'decisionRelated' was replaced by 'relatedTo';
+       10) Clean ItemAnnexes and DecisionAnnexes references on items;
+       11) Finish 'ExternalApplication' removal;
+       12) Add missing topics regarding the 'send back to proposing group' WFAdaptation;
+       13) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
     '''
     Migrate_To_3_2_0(context).run()
 # ------------------------------------------------------------------------------

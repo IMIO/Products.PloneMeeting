@@ -2,6 +2,7 @@
 <rolemap>
   <roles>
     <role name="MeetingArchiveObserver"/>
+    <role name="MeetingBudgetImpactReviewer"/>
     <role name="MeetingManager"/>
     <role name="MeetingMember"/>
     <role name="MeetingObserverGlobal"/>

@@ -206,10 +206,11 @@ class MeetingConfigDescriptor(Descriptor):
                          'itemsListVisibleColumns', 'itemColumns', 'meetingColumns',
                          'workflowAdaptations', 'transitionsToConfirm', 'mailItemEvents',
                          'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
-                         'itemAdviceEditStates', 'itemAdviceViewStates', 'itemPowerObserversStates',
-                         'meetingPowerObserversStates', 'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
-                         'customAdvisers', 'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates',
-                         'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues'
+                         'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
+                         'itemPowerObserversStates', 'meetingPowerObserversStates', 'meetingConfigsToCloneTo',
+                         'itemAdviceInvalidateStates', 'customAdvisers', 'selectableCopyGroups', 'votesEncoder',
+                         'meetingTopicStates', 'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes',
+                         'usedVoteValues'
                          )
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -432,6 +433,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemAdviceStates = []
         self.itemAdviceEditStates = []
         self.itemAdviceViewStates = []
+        self.itemBudgetInfosStates = []
         # List of item and meeting states the users in the MeetingConfig
         # corresponding powerObservers group will see the item/meeting
         self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'refused', 'delayed']

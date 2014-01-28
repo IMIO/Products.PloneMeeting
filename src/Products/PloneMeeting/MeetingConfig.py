@@ -1166,50 +1166,19 @@ schema = Schema((
     ),
     DataGridField(
         name='customAdvisers',
-        default=defValues.customAdvisers,
-        schemata="advices",
         widget=DataGridField._properties['widget'](
             description="CustomAdvisers",
             description_msgid="custom_advisers_descr",
-            columns={'row_id': Column("Custom adviser row id",
-                                      visible=False),
-                     'group': SelectColumn("Custom adviser group",
-                                           vocabulary="listCustomAdvisersGroups"),
-                     'gives_auto_advice_on': Column("Custom adviser gives automatic advice on",
-                                                    col_description="gives_auto_advice_on_col_description"),
-                     'gives_auto_advice_on_help_message':
-                        Column("Custom adviser gives automatic advice on help message",
-                        col_description="gives_auto_advice_on_help_message_col_description"),
-                     'for_item_created_from':
-                        Column("Rule activated for item created from",
-                               col_description="for_item_created_from_col_description",
-                               default=DateTime().strftime('%Y/%m/%d'),
-                               required=True),
-                     'for_item_created_until':
-                        Column("Rule activated for item created until",
-                               col_description="for_item_created_until_col_description"),
-                     'delay': Column("Delay for giving advice",
-                                     col_description="delay_col_description"),
-                     'delay_left_alert': Column("Delay left alert",
-                                                col_description="delay_left_alert_col_description"),
-                     'delay_label': Column("Custom adviser delay label",
-                                           col_description="delay_label_col_description"),
-                     },
+            columns={'row_id': Column("Custom adviser row id", visible=False), 'group': SelectColumn("Custom adviser group", vocabulary="listCustomAdvisersGroups"), 'gives_auto_advice_on': Column("Custom adviser gives automatic advice on", col_description="gives_auto_advice_on_col_description"), 'gives_auto_advice_on_help_message': Column("Custom adviser gives automatic advice on help message", col_description="gives_auto_advice_on_help_message_col_description"), 'for_item_created_from': Column("Rule activated for item created from", col_description="for_item_created_from_col_description", default=DateTime().strftime('%Y/%m/%d'), required=True), 'for_item_created_until': Column("Rule activated for item created until", col_description="for_item_created_until_col_description"), 'delay': Column("Delay for giving advice", col_description="delay_col_description"), 'delay_left_alert': Column("Delay left alert", col_description="delay_left_alert_col_description"), 'delay_label': Column("Custom adviser delay label", col_description="delay_label_col_description")},
             label='Customadvisers',
             label_msgid='PloneMeeting_label_customAdvisers',
             i18n_domain='PloneMeeting',
         ),
-        allow_empty_rows=False,
+        schemata="advices",
+        default=defValues.customAdvisers,
         allow_oddeven=True,
-        columns=('row_id',
-                 'group',
-                 'gives_auto_advice_on',
-                 'gives_auto_advice_on_help_message',
-                 'for_item_created_from',
-                 'for_item_created_until',
-                 'delay',
-                 'delay_left_alert',
-                 'delay_label', ),
+        columns=('row_id', 'group', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message', 'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert', 'delay_label', ),
+        allow_empty_rows=False,
     ),
     LinesField(
         name='itemPowerObserversStates',
@@ -1239,6 +1208,21 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingStates',
         default=defValues.meetingPowerObserversStates,
+        enforceVocabulary=False,
+    ),
+    LinesField(
+        name='itemBudgetInfosStates',
+        widget=MultiSelectionWidget(
+            description="ItemBudgetInfosStates",
+            description_msgid="item_budget_infos_states_descr",
+            label='Itembudgetinfosstates',
+            label_msgid='PloneMeeting_label_itemBudgetInfosStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemBudgetInfosStates,
         enforceVocabulary=False,
     ),
     BooleanField(
@@ -1944,7 +1928,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
-    security.declarePrivate('listAdviceStyles')
+    security.declarePrivate('listTransitions')
+    def listTransitions(self, objectType):
+        '''Lists the possible transitions for the p_objectType ("Item" or
+           "Meeting") used in this meeting config.'''
+        res = []
+        exec 'workflowName = self.get%sWorkflow()' % objectType
+        workflow = getattr(self.portal_workflow, workflowName)
+        for t in workflow.transitions.objectValues():
+            name = translate(t.title, domain="plone", context=self.REQUEST) + ' (' + t.id + ')'
+            # Indeed several transitions can have the same translation
+            # (ie "correct")
+            res.append((t.id, name))
+        return res
+
+    security.declarePrivate('listTransitionsReinitializingDelays')
     def listTransitionsReinitializingDelays(self):
         '''Vocabulary for the MeetingConfig.transitionsReinitializingDelays field.'''
         # we only consider back transitions
@@ -2288,6 +2286,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.__ac_local_roles_block__ = True
         self.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
 
+    security.declarePrivate('createBudgetImpactReviewersGroup')
+    def createBudgetImpactReviewersGroup(self):
+        '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactReviewer'
+           local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
+        groupId = "%s_%s" % (self.getId(), BUDGETIMPACTREVIEWERS_GROUP_SUFFIX)
+        if not groupId in self.portal_groups.listGroupIds():
+            enc = self.portal_properties.site_properties.getProperty(
+                'default_charset')
+            groupTitle = '%s (%s)' % (
+                self.Title().decode(enc),
+                translate(BUDGETIMPACTREVIEWERS_GROUP_SUFFIX, domain='PloneMeeting', context=self.REQUEST))
+            # a default Plone group title is NOT unicode.  If a Plone group title is
+            # edited TTW, his title is no more unicode if it was previously...
+            # make sure we behave like Plone...
+            groupTitle = groupTitle.encode(enc)
+            self.portal_groups.addGroup(groupId, title=groupTitle)
+        # now define local_roles on the tool so it is accessible by this group
+        tool = getToolByName(self, 'portal_plonemeeting')
+        tool.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
+        # but we do not want this group to access every MeetingConfigs so
+        # remove inheritance on self and define these local_roles for self too
+        self.__ac_local_roles_block__ = True
+        self.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
+
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
         '''Create the sub-folders of a meeting config, that will contain
@@ -2322,6 +2344,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self._manageEnableAnnexToPrint()
         # Create the corresponding group that will contain MeetingPowerObservers
         self.createPowerObserversGroup()
+        # Create the corresponding group that will contain MeetingBudgetImpactReviewers
+        self.createBudgetImpactReviewersGroup()
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
 
     def at_post_edit_script(self):
@@ -2694,20 +2718,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if excepted and (state.id == excepted):
                 continue
             res.append((state.id, translate(state.title, domain="plone", context=self.REQUEST)))
-        return res
-
-    security.declarePublic('listTransitions')
-    def listTransitions(self, objectType):
-        '''Lists the possible transitions for the p_objectType ("Item" or
-           "Meeting") used in this meeting config.'''
-        res = []
-        exec 'workflowName = self.get%sWorkflow()' % objectType
-        workflow = getattr(self.portal_workflow, workflowName)
-        for t in workflow.transitions.objectValues():
-            name = translate(t.title, domain="plone", context=self.REQUEST) + ' (' + t.id + ')'
-            # Indeed several transitions can have the same translation
-            # (ie "correct")
-            res.append((t.id, name))
         return res
 
     def listAllTransitions(self):
@@ -3313,3 +3323,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+

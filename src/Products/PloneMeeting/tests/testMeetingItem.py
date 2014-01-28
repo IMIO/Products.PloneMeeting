@@ -34,8 +34,13 @@ from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.utils import getToolByName
+from Products.CMFCore.permissions import View
+from Products.CMFCore.permissions import ModifyPortalContent
 
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX, READER_USECASES
+from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import BUDGETIMPACTREVIEWERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -673,17 +678,17 @@ class testMeetingItem(PloneMeetingTestCase):
         i1 = self.create('MeetingItem')
         # by default 'pmCreator2' and 'pmReviewer2' can not see the item until it is validated
         login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
         login(self.portal, 'pmReviewer2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
         # validate the item
         login(self.portal, 'pmManager')
         self.validateItem(i1)
         # not viewable because no copyGroups defined...
         login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
         login(self.portal, 'pmReviewer2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
         login(self.portal, 'pmManager')
         i1.setCopyGroups(('vendors_reviewers',))
         i1.processForm()
@@ -693,33 +698,33 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(len(self.portal.portal_catalog(getCopyGroups=('vendors_creators', 'vendors_reviewers',))), 1)
         # Vendors reviewers can see the item now
         login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
         login(self.portal, 'pmReviewer2')
-        self.failUnless(self.hasPermission('View', i1))
+        self.failUnless(self.hasPermission(View, i1))
         # item only viewable by copy groups when in state 'validated'
         # put it back to 'itemcreated', then test
         login(self.portal, 'pmManager')
         self.backToState(i1, 'itemcreated')
         login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
         login(self.portal, 'pmReviewer2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
         # put it to validated again then remove copy groups
         login(self.portal, 'pmManager')
         self.validateItem(i1)
         login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
         login(self.portal, 'pmReviewer2')
-        self.failUnless(self.hasPermission('View', i1))
+        self.failUnless(self.hasPermission(View, i1))
         # remove copyGroups
         i1.setCopyGroups(())
         i1.processForm()
         self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_reviewers')), 0)
         # Vendors can not see the item anymore
         login(self.portal, 'pmCreator2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
         login(self.portal, 'pmReviewer2')
-        self.failIf(self.hasPermission('View', i1))
+        self.failIf(self.hasPermission(View, i1))
 
     def test_pm_PowerObserversGroups(self):
         '''Test the management of MeetingConfig linked 'powerobservers' Plone group.'''
@@ -757,11 +762,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(createdItem.queryState(), 'itemcreated')
         self.assertEquals(validatedItem.queryState(), 'validated')
         self.assertEquals(presentedItem.queryState(), 'presented')
-        self.failUnless(self.hasPermission('View', (createdItem, presentedItem)))
-        self.failIf(self.hasPermission('View', validatedItem))
+        self.failUnless(self.hasPermission(View, (createdItem, presentedItem)))
+        self.failIf(self.hasPermission(View, validatedItem))
         # powerobserver2 can not see anything in meetingConfig
         self.changeUser(userThatCanNotSee)
-        self.failIf(self.hasPermission('View', (createdItem, presentedItem, validatedItem)))
+        self.failIf(self.hasPermission(View, (createdItem, presentedItem, validatedItem)))
         # MeetingItem.updateLocalRoles does not break the functionnality...
         self.changeUser('pmManager')
         # check that the relevant powerobservers group is or not in the local_roles of the item
@@ -771,17 +776,51 @@ class testMeetingItem(PloneMeetingTestCase):
         validatedItem.updateLocalRoles()
         self.failUnless(powerObserversGroupId in presentedItem.__ac_local_roles__)
         self.changeUser(userThatCanSee)
-        self.failIf(self.hasPermission('View', validatedItem))
-        self.failUnless(self.hasPermission('View', presentedItem))
+        self.failIf(self.hasPermission(View, validatedItem))
+        self.failUnless(self.hasPermission(View, presentedItem))
         # access to the Meeting is also managed by the same local_role given on the meeting
-        self.failIf(self.hasPermission('View', presentedItem.getMeeting()))
+        self.failIf(self.hasPermission(View, presentedItem.getMeeting()))
         # powerobserver2 can not see anything in meetingConfig
         self.changeUser(userThatCanNotSee)
-        self.failIf(self.hasPermission('View', (presentedItem.getMeeting(), validatedItem, presentedItem)))
+        self.failIf(self.hasPermission(View, (presentedItem.getMeeting(), validatedItem, presentedItem)))
         # powerobservers do not have the MeetingObserverGlobal role
         self.failIf('MeetingObserverGlobal' in self.portal.portal_membership.getAuthenticatedMember().getRoles())
         self.changeUser(userThatCanNotSee)
         self.failIf('MeetingObserverGlobal' in self.portal.portal_membership.getAuthenticatedMember().getRoles())
+
+    def test_pm_BudgetImpactReviewersGroups(self):
+        '''Test the management of MeetingConfig linked 'budgetimpactreviewers' Plone group.'''
+        # specify that budgetImpactReviewers will be able to edit the budgetInfos of self.meetingConfig items
+        # when the item is in state 'validated'.  For example here, a 'validated' item will not be fully editable
+        # but the MeetingItem.budgetInfos field will be editable
+        self.portal.portal_groups.addPrincipalToGroup('pmReviewer2', '%s_%s' %
+                                                      (self.meetingConfig.getId(), BUDGETIMPACTREVIEWERS_GROUP_SUFFIX))
+        # we will let copyGroups view items when in state 'validated'
+        self.meetingConfig.setUseCopies(True)
+        self.meetingConfig.setItemCopyGroupsStates(('proposed', 'validated', ))
+        self.meetingConfig.setItemBudgetInfosStates(('validated', ))
+        # first make sure the permission associated with MeetingItem.budgetInfos.write_permission is the right one
+        self.assertTrue(MeetingItem.schema['budgetInfos'].write_permission == WriteBudgetInfos)
+        # now create an item for 'developers', let vendors access it setting them as copyGroups
+        # and check that 'pmReviewer2' can edit the budgetInfos when the item is in a relevant state (validated)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setCopyGroups(('vendors_reviewers', ))
+        self.proposeItem(item)
+        item.at_post_create_script()
+        # for now, 'pmReviewer2' can not edit the field, even if item viewable
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(WriteBudgetInfos, item))
+        # validate the item
+        self.changeUser('pmReviewer1')
+        self.validateItem(item)
+        item.at_post_create_script()
+        # now 'pmReviewer2' can see the item, not edit it fully but edit the budgetInfos
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
 
     def test_pm_ItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
@@ -1063,8 +1102,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item5.getItemSignatures(), 'Item signatures 3')
         self.assertEquals(item6.getItemSignatures(), 'Item signatures 3')
         # the form is callable on an item even when decided (not editable anymore)
-        item2.manage_permission('Modify portal content', ['Manager', ])
-        self.failIf(self.hasPermission('Modify portal content', item2))
+        item2.manage_permission(ModifyPortalContent, ['Manager', ])
+        self.failIf(self.hasPermission(ModifyPortalContent, item2))
         self.failUnless(self.hasPermission('View', item2))
         item2.restrictedTraverse('@@manage_item_assembly_form')
         item2.restrictedTraverse('@@manage_item_signatures_form')

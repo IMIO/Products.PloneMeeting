@@ -84,9 +84,11 @@ setDefaultRoles(AddAnnex, ('Manager', 'Owner'))
 ReadDecision = 'PloneMeeting: Read decision'
 WriteDecision = 'PloneMeeting: Write decision'
 ReadObservations = 'PloneMeeting: Read item observations'
-ReadDecisionAnnex = 'PloneMeeting: Read decision annex'
 WriteObservations = 'PloneMeeting: Write item observations'
+ReadDecisionAnnex = 'PloneMeeting: Read decision annex'
 WriteDecisionAnnex = 'PloneMeeting: Write decision annex'
+ReadBudgetInfos = 'PloneMeeting: Read budget infos'
+WriteBudgetInfos = 'PloneMeeting: Write budget infos'
 AddAdvice = 'PloneMeeting: Add advice'
 CopyOrMove = 'Copy or Move'
 setDefaultRoles(ReadDecision, ('Manager',))
@@ -102,6 +104,10 @@ MEETING_GROUP_SUFFIXES = MEETINGROLES.keys()
 # This is the group created for each MeetingConfig where we store
 # users that will be able to see the items in state corresponding to MeetingConfig.itemPowerObserverStates
 POWEROBSERVERS_GROUP_SUFFIX = 'powerobservers'
+# This is the group created for each MeetingConfig where we store
+# users that will be able to edit the budgetInfos field for items in state
+# corresponding to MeetingConfig.itemBudgetInfosStates
+BUDGETIMPACTREVIEWERS_GROUP_SUFFIX = 'budgetimpactreviewers'
 
 # This is a mapping between usecases around the role Reader, so users that can see
 # By default, the same role is used for different usecases, so it will give the same view permission by the wf
