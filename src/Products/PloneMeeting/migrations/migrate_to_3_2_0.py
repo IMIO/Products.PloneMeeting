@@ -262,9 +262,21 @@ class Migrate_To_3_2_0(Migrator):
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             # createTopics manage the fact that the topic already exists
             cfg.createTopics()
+            # now reorder so advice related topics are all together
+            for adviceRelatedTopicId in ['searchitemstoadvicewithdexceededelay', 'searchitemstoadvicewithdelay']:
+                # find delta, we need to insert into after the 'searchallitemstoadvice' topic
+                if not hasattr(cfg.topics, 'searchallitemstoadvice'):
+                    logger.error('Unable to find topic \'searchallitemstoadvice\' !!!  '
+                                 'New advice related topics will be left at the bottom of available topics!')
+                    return
+                baseTopic = cfg.topics.searchallitemstoadvice
+                everyTopicIds = cfg.topics.objectIds()
+                baseTopicPosition = everyTopicIds.index(baseTopic.getId())
+                adviceRelatedTopicPosition = everyTopicIds.index(adviceRelatedTopicId)
+                delta = adviceRelatedTopicPosition - baseTopicPosition - 1
+                cfg.topics.moveObjectsUp(adviceRelatedTopicId, delta=delta)
+
         MeetingConfig.topicsInfo = originalTopicsInfos
-        # now reorder so advice related topics are all together
-        # XXX todo
         logger.info('Done.')
 
     def run(self):

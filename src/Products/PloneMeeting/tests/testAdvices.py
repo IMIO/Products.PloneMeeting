@@ -537,6 +537,7 @@ class testAdvices(PloneMeetingTestCase):
                             'meetingGroupName': 'Developers',
                             'row_id': 'unique_id_456',
                             'delay': '',
+                            'delay_left_alert': '',
                             'delay_label': ''}])
         # define one condition for wich the date is > than current item CreationDate
         futureDate = DateTime() + 1
@@ -546,6 +547,7 @@ class testAdvices(PloneMeetingTestCase):
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
               'for_item_created_from': futureDate.strftime('%Y/%m/%d'),
               'delay': '',
+              'delay_left_alert': '',
               'delay_label': ''}, ])
         # nothing should be returned as defined date is bigger than current item's date
         self.assertTrue(futureDate > item.created())
@@ -559,6 +561,7 @@ class testAdvices(PloneMeetingTestCase):
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': futureDate.strftime('%Y/%m/%d'),
               'delay': '',
+              'delay_left_alert': '',
               'delay_label': ''}, ])
         self.assertEquals(item.getAutomaticAdvisers(),
                           [{'gives_auto_advice_on_help_message': '',
@@ -566,6 +569,7 @@ class testAdvices(PloneMeetingTestCase):
                             'meetingGroupName': 'Developers',
                             'row_id': 'unique_id_123',
                             'delay': '',
+                            'delay_left_alert': '',
                             'delay_label': ''}])
         # now define a 'for_item_created_until' that is in the past
         # relative to the item created date
@@ -576,6 +580,7 @@ class testAdvices(PloneMeetingTestCase):
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '2013/01/01',
               'delay': '',
+              'delay_left_alert': '',
               'delay_label': ''}, ])
         self.failIf(item.getAutomaticAdvisers())
 
