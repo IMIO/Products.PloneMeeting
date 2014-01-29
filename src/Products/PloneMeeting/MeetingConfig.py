@@ -1814,7 +1814,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                                             context=self.REQUEST) for state in
                                                                  itemAdviceStates_set.difference(v_set)])},
                              context=self.REQUEST,
-                             default='Values defined in the \'itemEditStates\' field must contains at least '
+                             default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
                                      'every values selected in the \'itemAdvicesStates\' field!')
     security.declarePrivate('listWorkflowAdaptations')
     def listWorkflowAdaptations(self):
