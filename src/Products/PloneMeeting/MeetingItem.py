@@ -2534,6 +2534,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            updated because of a workflow transition, we receive the transition name.'''
         # no sense to compute advice on items defined in the configuration
         if self.isDefinedInTool():
+            self.adviceIndex = PersistentMapping()
             return
 
         tool = getToolByName(self, 'portal_plonemeeting')
