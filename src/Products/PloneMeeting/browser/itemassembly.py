@@ -53,7 +53,8 @@ def item_assembly_default():
 class IManageItemAssembly(interface.Interface):
     item_assembly = schema.Text(title=_(u"Item assembly to apply"),
                                 description=_(u"Enter the item assembly to be applied.  The value displayed "
-                                              u"by default is the value of the current item."),
+                                              u"by default is the value of the current item.  Add [[ ]] around absent "
+                                              u"people (like [[Mister Sample Peter]])."),
                                 defaultFactory=item_assembly_default,
                                 required=False,)
     apply_until_item_number = schema.Int(title=_(u"Apply until item number"),
