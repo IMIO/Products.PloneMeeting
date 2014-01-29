@@ -2489,6 +2489,71 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     return False
         return True
 
+    security.declarePublic('printAdvicesInfos')
+    def printAdvicesInfos(self, withDelay=False, withDelayLabel=True, withAuthor=True):
+        '''Helper method to have a printable version of advices.'''
+        # bbb compatible fix, as printAdvicesInfos was defined in a profile before...
+        self = self.getSelf()
+        membershipTool = getToolByName(self, 'portal_membership')
+        itemAdvicesByType = self.getAdvicesByType()
+        res = "<p><u><b>%s :</b></u></p>" % translate('PloneMeeting_label_advices',
+                                                      domain='PloneMeeting',
+                                                      context=self.REQUEST)
+        for adviceType in itemAdvicesByType:
+            for advice in itemAdvicesByType[adviceType]:
+                # if we have a delay and delay_label, we display it
+                delayAwareMsg = u''
+                if withDelay and advice['delay']:
+                        delayAwareMsg = u"%s" % (translate('delay_of_x_days',
+                                                 domain='PloneMeeting',
+                                                 mapping={'delay': advice['delay']},
+                                                 context=self.REQUEST))
+                if withDelayLabel and advice['delay'] and advice['delay_label']:
+                        if delayAwareMsg:
+                            delayAwareMsg = "%s - %s" % (delayAwareMsg,
+                                                         unicode(advice['delay_label'], 'utf-8'))
+                        else:
+                            delayAwareMsg = "%s" % unicode(advice['delay_label'], 'utf-8')
+                if delayAwareMsg:
+                    delayAwareMsg = u" <i>(%s)</i>" % delayAwareMsg
+                    res = res + u"<u>%s %s:</u>" % (advice['name'],
+                                                          delayAwareMsg, )
+                else:
+                    res = res + u"<u>%s:</u>" % advice['name']
+
+                # add advice type
+                res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice type',
+                                                                  domain='PloneMeeting',
+                                                                  context=self.REQUEST),
+                                                        translate([advice['type']][0],
+                                                                  domain='PloneMeeting',
+                                                                  context=self.REQUEST))
+
+                # display the author if advice was given
+                if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
+                    adviceObj = getattr(self, advice['advice_id'])
+                    author = membershipTool.getMemberInfo(adviceObj.Creator())
+                    res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice given by',
+                                                                      domain='PloneMeeting',
+                                                                      context=self.REQUEST),
+                                                            unicode(author['fullname'], 'utf-8')
+                                                            )
+
+                adviceComment = 'comment' in advice and advice['comment'] or '-'
+                comment = adviceComment and adviceComment.replace('\r', '').replace('\n', '').replace('\t', '') or '-'
+                res = res + (u"<br /><u>%s :</u> %s<p></p>" % (translate('Advice comment',
+                                                                         domain='PloneMeeting',
+                                                                         context=self.REQUEST),
+                                                               comment))
+
+        if not itemAdvicesByType:
+            return u"<p><u><b>%s : -</b></u></p>" % \
+                translate('PloneMeeting_label_advices',
+                          domain='PloneMeeting',
+                          context=self.REQUEST).encode('utf-8')
+
+        return res.encode('utf-8')
+
     def _grantPermissionToRole(self, permission, role_to_give, obj):
         """
           Grant given p_permission to given p_role_to_give on given p_obj.
