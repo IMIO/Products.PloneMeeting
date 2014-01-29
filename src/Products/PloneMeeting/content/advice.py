@@ -26,8 +26,8 @@ class IMeetingAdvice(Interface):
         required=True,
     )
     advice_type = schema.Choice(
-        title=_(u'Type'),
-        description=_(u"Choose a type."),
+        title=_(u'Advice type'),
+        description=_(u"Choose an advice type."),
         vocabulary=u'Products.PloneMeeting.content.advice.advice_type_vocabulary',
         required=True,
     )
