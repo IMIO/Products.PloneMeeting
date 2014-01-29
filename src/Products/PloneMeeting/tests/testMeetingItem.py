@@ -1447,11 +1447,12 @@ class testMeetingItem(PloneMeetingTestCase):
         # validate returns nothing if validation was successful
         self.failIf(item.validate_optionalAdvisers(()))
         # now give the advice
-        developers_advice = createContentInContainer(item,
-                                                     'meetingadvice',
-                                                     **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
-                                                        'advice_type': u'positive',
-                                                        'advice_comment': RichTextValue(u'My comment')})
+        developers_advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+            'advice_type': u'positive',
+            'advice_comment': RichTextValue(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
         self.assertTrue(item.validate_optionalAdvisers(()), can_not_unselect_msg)
         # we can unselect an optional advice if the given advice is an automatic one
