@@ -2517,27 +2517,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if delayAwareMsg:
                     delayAwareMsg = u" <i>(%s)</i>" % delayAwareMsg
                     res = res + u"<u>%s %s:</u>" % (advice['name'],
-                                                          delayAwareMsg, )
+                                                    delayAwareMsg, )
                 else:
                     res = res + u"<u>%s:</u>" % advice['name']
 
                 # add advice type
                 res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice type',
-                                                                  domain='PloneMeeting',
-                                                                  context=self.REQUEST),
-                                                        translate([advice['type']][0],
-                                                                  domain='PloneMeeting',
-                                                                  context=self.REQUEST))
+                                                              domain='PloneMeeting',
+                                                              context=self.REQUEST),
+                                                              translate([advice['type']][0],
+                                                                        domain='PloneMeeting',
+                                                                        context=self.REQUEST), )
 
                 # display the author if advice was given
                 if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
                     adviceObj = getattr(self, advice['advice_id'])
                     author = membershipTool.getMemberInfo(adviceObj.Creator())
                     res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice given by',
-                                                                      domain='PloneMeeting',
-                                                                      context=self.REQUEST),
-                                                            unicode(author['fullname'], 'utf-8')
-                                                            )
+                                                                  domain='PloneMeeting',
+                                                                  context=self.REQUEST),
+                                                                  unicode(author['fullname'], 'utf-8'), )
 
                 adviceComment = 'comment' in advice and advice['comment'] or '-'
                 comment = adviceComment and adviceComment.replace('\r', '').replace('\n', '').replace('\t', '') or '-'
