@@ -333,11 +333,11 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.failUnless(self.hasPermission('View', (item3, annexItem3)))
 
-    def test_pm_RecurringItems(self):
-        '''Tests the recurring items system.'''
+    def _setupRecurringItems(self):
+        '''Setup some recurring items.'''
         # First, define recurring items in the meeting config
         self.changeUser('admin')
-        # One recurring item 'Rec item 1' already exist in the configuration
+        # 2 recurring items already exist in the configuration
         self.create('RecurringMeetingItem', title='Rec item 1a',
                     proposingGroup='vendors',
                     meetingTransitionInsertingMe='_init_')
@@ -355,6 +355,10 @@ class testWorkflows(PloneMeetingTestCase):
         self.create('RecurringMeetingItem', title='Rec item 5',
                     proposingGroup='developers',
                     meetingTransitionInsertingMe='decide')
+
+    def test_pm_RecurringItems(self):
+        '''Tests the recurring items system.'''
+        self._setupRecurringItems()
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
         # The recurring items must have as owner the meeting creator
@@ -392,22 +396,48 @@ class testWorkflows(PloneMeetingTestCase):
         # a recurring item is added during the 'decide' transition
         self.failIf(len(meeting.getItems()) != 4)
         self.failIf(len(meeting.getLateItems()) != 3)
+
+    def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
+        '''Tests the recurring items system when items are inserted
+           in the meeting are respecting the 'privacy' attribute.'''
+        self._setupRecurringItems()
+        self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_proposing_groups')
+        # set the first recurring item that will be inserted as 'secret'
+        # when every recurring items are inserted, this will be at the very end
+        # of the meeting presented items
+        # the first recurring item of the config is inserted on '_init_'
+        firstRecurringItem = self.meetingConfig.getItems(usage='as_recurring_item')[0]
+        self.assertTrue(firstRecurringItem.getMeetingTransitionInsertingMe() == '_init_')
+        firstRecurringItem.setPrivacy('secret')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date='2007/12/11 09:00:00')
+        # after every recurring items have been inserted, the last is the 'secret' one
+        self.assertTrue(len(meeting.getItems()) == 3)
+        self.assertTrue(meeting.getItemsInOrder()[-1].getPrivacy() == 'secret')
+
+    def test_pm_RecurringItemsWithHardcodedTransitions(self):
+        '''Tests the recurring items system when using useHardcodedTransitionsForPresentingAnItem=True.'''
+        self._setupRecurringItems()
+        self.changeUser('pmManager')
         # now test with hardcoded transitions
         from Products.PloneMeeting.MeetingItem import MeetingItemWorkflowConditions
         oldValue1 = MeetingItemWorkflowConditions.useHardcodedTransitionsForPresentingAnItem
         oldValue2 = MeetingItemWorkflowConditions.transitionsForPresentingAnItem
         MeetingItemWorkflowConditions.useHardcodedTransitionsForPresentingAnItem = True
-        meeting2 = self.create('Meeting', date='2008/12/11 09:00:00')
+        meeting = self.create('Meeting', date='2008/12/11 09:00:00')
         # this meeting should contains the 3 usual recurring items
-        self.failIf(len(meeting2.getItems()) != 3)
+        self.failIf(len(meeting.getItems()) != 3)
         # if transitions for presenting an item are not correct
         # the item will no be inserted in the meeting
         MeetingItemWorkflowConditions.transitionsForPresentingAnItem = ('propose', 'validate',)
-        meeting3 = self.create('Meeting', date='2009/12/11 09:00:00')
-        self.failIf(len(meeting3.getItems()) != 0)
+        meeting2 = self.create('Meeting', date='2009/12/11 09:00:00')
+        self.failIf(len(meeting2.getItems()) != 0)
+        # check that recurring items respect privacy, secretRecurringItem is at the end of the meeting
         # tearDown
         MeetingItemWorkflowConditions.useHardcodedTransitionsForPresentingAnItem = oldValue1
         MeetingItemWorkflowConditions.transitionsForPresentingAnItem = oldValue2
+
+
 
     def test_pm_DeactivateMeetingGroup(self):
         '''Deactivating a MeetingGroup will remove every Plone groups from

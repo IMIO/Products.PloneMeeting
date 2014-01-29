@@ -408,7 +408,7 @@ class testMeetingItem(PloneMeetingTestCase):
             self.failUnless(otherMeetingConfigId in item._getOtherMeetingConfigsImAmClonedIn())
             newUID = annotations[annotationKey]
 
-    def test_pm_sendItemToOtherMCActions(self):
+    def test_pm_SendItemToOtherMCActions(self):
         """
           Test how actions are managed in portal_actions when sendItemToOtherMC functionnality is activated.
         """
@@ -976,7 +976,7 @@ class testMeetingItem(PloneMeetingTestCase):
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
 
-    def test_pm_manageItemAssemblyAndSignatures(self):
+    def test_pm_ManageItemAssemblyAndSignatures(self):
         """
           This tests the form that manage itemAssembly and that can apply it on several items.
           The behaviour of itemAssembly and itemSignatures is the same that is why we test it
@@ -1141,7 +1141,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formSignatures.update)
 
-    def test_pm_getItemNumber(self):
+    def test_pm_GetItemNumber(self):
         """Test the MeetingItem.getItemNumber method.
            This only apply when the item is in a meeting.
            Check docstring of MeetingItem.getItemNumber.
@@ -1248,7 +1248,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
         self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
 
-    def test_pm_listMeetingsAcceptingItems(self):
+    def test_pm_ListMeetingsAcceptingItems(self):
         """
           This is the vocabulary for the field "preferredMeeting".
           Check that we still have the stored value in the vocabulary, aka if the stored value
@@ -1291,7 +1291,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 2)
         self.assertTrue(m2UID not in item.listMeetingsAcceptingItems().keys())
 
-    def test_pm_listCopyGroups(self):
+    def test_pm_ListCopyGroups(self):
         """
           This is the vocabulary for the field "copyGroups".
           Check that we still have the stored value in the vocabulary, aka if the stored value
@@ -1313,7 +1313,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setCopyGroups(())
         self.assertEquals(item.listCopyGroups().keys(), ['vendors_reviewers', ])
 
-    def test_pm_listAssociatedGroups(self):
+    def test_pm_ListAssociatedGroups(self):
         """
           This is the vocabulary for the field "associatedGroups".
           Check that we still have the stored value in the vocabulary, aka if the stored value
@@ -1337,7 +1337,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setAssociatedGroups(())
         self.assertEquals(item.listAssociatedGroups().keys(), ['vendors', ])
 
-    def test_pm_listOptionalAdvisersVocabulary(self):
+    def test_pm_ListOptionalAdvisersVocabulary(self):
         """
           This is the vocabulary for the field "optionalAdvisers".
           Check that we still have the stored value in the vocabulary, aka if the stored value
@@ -1361,7 +1361,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         self.assertEquals(item.listOptionalAdvisers().keys(), ['vendors', ])
 
-    def test_pm_listOptionalAdvisersDelayAwareAdvisers(self):
+    def test_pm_ListOptionalAdvisersDelayAwareAdvisers(self):
         """
           Test how the optionalAdvisers vocabulary behaves while
           managing delay-aware advisers.
@@ -1395,7 +1395,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            'developers',
                            'vendors'])
 
-    def test_pm_validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
+    def test_pm_Validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         """
           This test the 'optionalAdvisers' field validate method.
           Make sure we can not select more than one optional advice concerning
@@ -1426,7 +1426,7 @@ class testMeetingItem(PloneMeetingTestCase):
         optionalAdvisers = ('developers__rowid__unique_id_123', )
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
 
-    def test_pm_validate_optionalAdvisersCanNotUnselectAlreadyGivenAdvice(self):
+    def test_pm_Validate_optionalAdvisersCanNotUnselectAlreadyGivenAdvice(self):
         """
           This test the 'optionalAdvisers' field validate method.
           Make sure that if we unselect an adviser, it is not an already given advice.

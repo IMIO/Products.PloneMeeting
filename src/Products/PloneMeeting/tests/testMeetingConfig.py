@@ -38,7 +38,7 @@ from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 class testMeetingConfig(PloneMeetingTestCase):
     '''Tests the MeetingConfig class methods.'''
 
-    def test_pm_searchItemsToAdvice(self):
+    def test_pm_SearchItemsToAdvice(self):
         '''Test the searchItemsToAdvice method.  This should return a list of items
            a user has to give an advice for.'''
         self.setMeetingConfig(self.meetingConfig2.getId())
@@ -90,7 +90,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
 
-    def test_pm_searchAdvisedItems(self):
+    def test_pm_SearchAdvisedItems(self):
         '''Test the searchAdvisedItems method.  This should return a list of items
            a user has already give an advice for.'''
         self.setMeetingConfig(self.meetingConfig2.getId())
@@ -140,7 +140,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 0)
 
-    def test_pm_searchItemsInCopy(self):
+    def test_pm_SearchItemsInCopy(self):
         '''Test the searchItemsInCopy method.  This should return a list of items
            a user is in copy of.'''
         # specify that copyGroups can see the item when it is proposed
@@ -162,7 +162,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         item.reindexObject()
         self.failUnless(self.meetingConfig.searchItemsInCopy('', '', '', ''))
 
-    def test_pm_searchItemsToValidate(self):
+    def test_pm_SearchItemsToValidate(self):
         '''Test the searchItemsToValidate method.  This should return a list of items
            a user ***really*** has to validate.
            Items to validate are items in state 'proposed' or 'prevalidated' if wfAdaptation
@@ -192,7 +192,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.validateItem(item)
         self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
 
-    def test_pm_searchItemsToPrevalidate(self):
+    def test_pm_SearchItemsToPrevalidate(self):
         '''Test the searchItemsToPrevalidate method.  This should return a list of items
            a user ***really*** has to prevalidate.
            Items to prevalidate are items in state 'proposed' when wfAdaptation
@@ -232,7 +232,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.prevalidateItem(item)
         self.failIf(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
 
-    def test_pm_searchItemsWithFilters(self):
+    def test_pm_SearchItemsWithFilters(self):
         '''Test the searchItemsWithFilters method.  This should return a list of items
            depending on the 'topic_search_script' property defined values.'''
         # while a 'topic_search_filters' if defined on the relevant topic, it is passed
@@ -270,7 +270,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         developers_item.reindexObject()
         self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 2)
 
-    def test_pm_validate_customAdvisersDateColumns(self):
+    def test_pm_Validate_customAdvisersDateColumns(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates dates of the 'for_item_created_from' and ''for_item_created_until' columns :
            dates are strings that need to respect following format 'YYYY/MM/DD'.'''
@@ -323,7 +323,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         customAdvisers[0]['for_item_created_until'] = ''
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
 
-    def test_pm_validate_customAdvisersDelayColumn(self):
+    def test_pm_Validate_customAdvisersDelayColumn(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates delays of the 'delay' column : either field is empty or
            a delay is defined as a single digit value.'''
@@ -360,7 +360,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
 
-    def test_pm_validate_customAdvisersCanNotChangeUsedConfig(self):
+    def test_pm_Validate_customAdvisersCanNotChangeUsedConfig(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates that if a configuration is already in use, logical data can
            not be changed anymore, only basic data can be changed (.'''

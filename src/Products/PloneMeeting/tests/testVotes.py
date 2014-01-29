@@ -240,7 +240,7 @@ class testVotes(PloneMeetingTestCase):
                     self.do(m1, tr)
                     break
             if m1.queryState() == lastState:
-                raise Exception, "Infinite loop...  Not able to find a 'closed' state for the Meeting 'm1'."
+                raise Exception("Infinite loop...  Not able to find a 'closed' state for the Meeting 'm1'.")
             else:
                 lastState = m1.queryState()
         # a MeetingManager can not change vote values

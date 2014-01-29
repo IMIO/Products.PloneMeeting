@@ -505,7 +505,7 @@ class testAdvices(PloneMeetingTestCase):
         # 'developers' asked advice is still in item.optionalAdvisers
         self.assertTrue('developers' in item.getOptionalAdvisers())
 
-    def test_pm_getAutomaticAdvisers(self):
+    def test_pm_GetAutomaticAdvisers(self):
         '''Test the getAutomaticAdvisers method that compute automatic advices to ask.'''
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -643,7 +643,7 @@ class testAdvices(PloneMeetingTestCase):
         automatic_advice_obj = getattr(item, item.adviceIndex['vendors']['advice_id'])
         self.assertEquals(automatic_advice_obj.advice_row_id, 'unique_id_456')
 
-    def test_pm_delayStartedStoppedOn(self):
+    def test_pm_DelayStartedStoppedOn(self):
         '''Test the 'advice_started_on' and 'advice_stopped_on' date initialization.
            The 'advice_started_on' is set when advice are turning to 'giveable', aka when
            they turn from not being in itemAdviceStates to being in it.
@@ -708,7 +708,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals([advice['delay_stopped_on'] for advice in item.adviceIndex.values()],
                           [None, None])
 
-    def test_pm_mayNotAddAdviceEditIfDelayExceeded(self):
+    def test_pm_MayNotAddAdviceEditIfDelayExceeded(self):
         '''Test that if the delay to give an advice is exceeded, the advice is no more giveable.'''
         # configure one delay-aware optional adviser
         self.meetingConfig.setCustomAdvisers(

@@ -103,7 +103,7 @@ class testPerformances(PloneMeetingTestCase):
         '''Helper method that actually delays the items.'''
         meeting.decideSeveralItems(uids=uids, transition='delay')
 
-    def test_pm_computeItemNumberWithSeveralNotClosedMeetings(self):
+    def test_pm_ComputeItemNumberWithSeveralNotClosedMeetings(self):
         '''Check performances while looking for the current item number using
            MeetingItem.getItemNumber(relativeTo='meetingConfig') that will query previous
            existing meetings to get the item number.'''

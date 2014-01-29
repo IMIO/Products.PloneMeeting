@@ -166,7 +166,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(hasattr(self.tool, 'vendors'))
 
-    def test_pm_deactivatedGroupCanNoMoreBeUsed(self):
+    def test_pm_DeactivatedGroupCanNoMoreBeUsed(self):
         """
           Check that when a MeetingGroup has been deactivated, it is no more useable in any
           functionnality of the application...

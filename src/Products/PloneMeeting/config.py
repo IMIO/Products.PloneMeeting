@@ -167,7 +167,7 @@ ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
                          'decision', 'classifier', 'category', 'budgetInfos',
-                         'budgetRelated']
+                         'budgetRelated', 'privacy']
 
 # There are various ways to insert items into meetings
 itemSortMethods = (  # Items are inserted:

@@ -398,7 +398,7 @@ class testMeeting(PloneMeetingTestCase):
             self.assertEquals(item.queryState(), 'accepted')
         self.assertEquals(allItems[-1].queryState(), 'itemfrozen')
 
-    def test_pm_validate_date(self):
+    def test_pm_Validate_date(self):
         """
           Test the Meeting.date validator "validate_date" : validates that 2 meetings can
           not occur the same day at the same hour.

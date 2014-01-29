@@ -163,7 +163,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         clonedAnnexAnnotations = IAnnotations(clonedAnnex)['collective.documentviewer']
         self.failUnless(annexAnnotations['last_updated'] != clonedAnnexAnnotations['last_updated'])
 
-    def test_pm_getAnnexesToPrintUsingBlob(self):
+    def test_pm_GetAnnexesToPrintUsingBlob(self):
         """
           Test the IAnnexable.getAnnexesToPrint method.  It is a helper method that
           returns a dict containing usefull informations about annexes to print in a POD template.
@@ -190,7 +190,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
                      'title': annex.Title()}]
         self.assertEquals(IAnnexable(item).getAnnexesToPrint(), expected)
 
-    def test_pm_getAnnexesToPrintUsingFile(self):
+    def test_pm_GetAnnexesToPrintUsingFile(self):
         """
           Test the IAnnexable.getAnnexesToPrint method.  It is a helper method that
           returns a dict containing usefull informations about annexes to print in a POD template.
