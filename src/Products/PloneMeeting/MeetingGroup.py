@@ -273,8 +273,8 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                         raise BeforeDeleteException("can_not_delete_meetinggroup_meetingconfig")
             # Then check that every linked Plone group is empty because we are
             # going to delete them.
-            for role in MEETING_GROUP_SUFFIXES:
-                ploneGroupId = self.getPloneGroupId(role)
+            for suffix in MEETING_GROUP_SUFFIXES:
+                ploneGroupId = self.getPloneGroupId(suffix)
                 # using acl_users.source_groups.listAssignedPrincipals will
                 # show us 'not found' members
                 groupMembers = self.acl_users.source_groups.listAssignedPrincipals(ploneGroupId)
@@ -313,8 +313,8 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                     raise BeforeDeleteException("can_not_delete_meetinggroup_meetingitem")
             # If everything passed correctly, we delete every linked (and empty)
             # Plone groups.
-            for role in MEETING_GROUP_SUFFIXES:
-                ploneGroupId = self.getPloneGroupId(role)
+            for suffix in MEETING_GROUP_SUFFIXES:
+                ploneGroupId = self.getPloneGroupId(suffix)
                 group = self.portal_groups.getGroupById(ploneGroupId)
                 if group:
                     self.portal_groups.removeGroup(ploneGroupId)

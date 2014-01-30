@@ -1169,7 +1169,7 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="CustomAdvisers",
             description_msgid="custom_advisers_descr",
-            columns={'row_id': Column("Custom adviser row id", visible=False), 'group': SelectColumn("Custom adviser group", vocabulary="listCustomAdvisersGroups"), 'gives_auto_advice_on': Column("Custom adviser gives automatic advice on", col_description="gives_auto_advice_on_col_description"), 'gives_auto_advice_on_help_message': Column("Custom adviser gives automatic advice on help message", col_description="gives_auto_advice_on_help_message_col_description"), 'for_item_created_from': Column("Rule activated for item created from", col_description="for_item_created_from_col_description", default=DateTime().strftime('%Y/%m/%d'), required=True), 'for_item_created_until': Column("Rule activated for item created until", col_description="for_item_created_until_col_description"), 'delay': Column("Delay for giving advice", col_description="delay_col_description"), 'delay_left_alert': Column("Delay left alert", col_description="delay_left_alert_col_description"), 'delay_label': Column("Custom adviser delay label", col_description="delay_label_col_description")},
+            columns={'row_id': Column("Custom adviser row id", visible=False), 'group': SelectColumn("Custom adviser group", vocabulary="listActiveMeetingGroups"), 'gives_auto_advice_on': Column("Custom adviser gives automatic advice on", col_description="gives_auto_advice_on_col_description"), 'gives_auto_advice_on_help_message': Column("Custom adviser gives automatic advice on help message", col_description="gives_auto_advice_on_help_message_col_description"), 'for_item_created_from': Column("Rule activated for item created from", col_description="for_item_created_from_col_description", default=DateTime().strftime('%Y/%m/%d'), required=True), 'for_item_created_until': Column("Rule activated for item created until", col_description="for_item_created_until_col_description"), 'delay': Column("Delay for giving advice", col_description="delay_col_description"), 'delay_left_alert': Column("Delay left alert", col_description="delay_left_alert_col_description"), 'delay_label': Column("Custom adviser delay label", col_description="delay_label_col_description")},
             label='Customadvisers',
             label_msgid='PloneMeeting_label_customAdvisers',
             i18n_domain='PloneMeeting',
@@ -1224,6 +1224,21 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemBudgetInfosStates,
         enforceVocabulary=False,
+    ),
+    LinesField(
+        name='powerAdvisersGroups',
+        default=defValues.powerAdvisersGroups,
+        widget=MultiSelectionWidget(
+            description="PowerAdvisersGroups",
+            description_msgid="power_advisers_groups_descr",
+            size=10,
+            label='Poweradvisersgroups',
+            label_msgid='PloneMeeting_label_powerAdvisersGroups',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listActiveMeetingGroups',
     ),
     BooleanField(
         name='useCopies',
@@ -1603,11 +1618,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              'for_item_created_until' that we can only set if not already set to deactivate a used row
              and 'help_message' fields.
             '''
+        tool = getToolByName(self, 'portal_plonemeeting')
         for customAdviser in value:
             # validate the date in the 'for_item_created_from' and
             # 'for_item_created_until' columns
             created_from = customAdviser['for_item_created_from']
             created_until = customAdviser['for_item_created_until']
+            group = getattr(tool, customAdviser['group'])
             try:
                 # 'for_item_created_from' is required
                 date_from = DateTime(created_from)
@@ -1626,8 +1643,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     if date_until.isPast():
                         raise Exception
             except:
-                tool = getToolByName(self, 'portal_plonemeeting')
-                group = getattr(tool, customAdviser['group'])
                 return translate('custom_adviser_wrong_date_format',
                                  domain='PloneMeeting',
                                  mapping={'groupName': unicode(group.Title(), 'utf-8'), },
@@ -1643,6 +1658,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  mapping={'groupName': unicode(group.Title(), 'utf-8'), },
                                  context=self.REQUEST)
+            # a delay_left_alert is only coherent if a delay is defined
+            if delay_left_alert and not delay:
+                return translate('custom_adviser_no_delay_left_if_no_delay',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 context=self.REQUEST)
+            # if a delay_left_alert is defined, it must be <= to the defined delay...
+            if delay_left_alert and delay:
+                if not int(delay_left_alert) <= int(delay):
+                    return translate('custom_adviser_delay_left_must_be_inferior_to_delay',
+                                     domain='PloneMeeting',
+                                     mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                     context=self.REQUEST)
 
         def _checkIfConfigIsUsed(row_id):
             '''Check if the rule we want to edit logical data for
@@ -1683,15 +1711,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 an_item_url = _checkIfConfigIsUsed(row_id)
                                 if an_item_url:
                                     tool = getToolByName(self, 'portal_plonemeeting')
-                                    return translate('custom_adviser_can_not_edit_used_row',
-                                                     domain='PloneMeeting',
-                                                     mapping={'item_url': an_item_url,
-                                                              'adviser_group': getattr(tool, customAdviser['group']).getName(),
-                                                              'column_name': translate(self.Schema()['customAdvisers'].widget.columns[k].label,
-                                                                                       domain='datagridfield',
-                                                                                       context=self.REQUEST),
-                                                              'column_old_data': v, },
-                                                     context=self.REQUEST)
+                                    groupName = unicode(getattr(tool, customAdviser['group']).getName(), 'utf-8')
+                                    columnName = self.Schema()['customAdvisers'].widget.columns[k].label
+                                    return translate(
+                                        'custom_adviser_can_not_edit_used_row',
+                                        domain='PloneMeeting',
+                                        mapping={'item_url': an_item_url,
+                                                 'adviser_group': groupName,
+                                                 'column_name': translate(columnName,
+                                                                          domain='datagridfield',
+                                                                          context=self.REQUEST),
+                                                 'column_old_data': v, },
+                                        context=self.REQUEST)
 
         # check also that if we removed some row_id, it was not in use neither
         row_ids_to_save = set([v['row_id'] for v in value if v['row_id']])
@@ -1952,8 +1983,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((transition[0], transition[1]))
         return DisplayList(res).sortedByValue()
 
-    security.declarePrivate('listCustomAdvisersGroups')
-    def listCustomAdvisersGroups(self):
+    security.declarePrivate('listActiveMeetingGroups')
+    def listActiveMeetingGroups(self):
         """
           Vocabulary for the customAdvisers.group DatagridField attribute.
           It returns every active MeetingGroups.
@@ -2185,7 +2216,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
           Gets topics related to type p_topicType ("MeetingItem",
            "Meeting").
-          This is called to much times on the same page, we add some cache here...
+          This is called to much times on the same page, we add some caching here...
         '''
         key = "meeting-config-gettopics-%s" % topicType.lower() + self.UID()
         cache = IAnnotations(self.REQUEST)
@@ -2206,7 +2237,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 tal_expr = topic.getProperty(TOPIC_TAL_EXPRESSION)
                 tal_res = True
                 if tal_expr:
-                    ctx = createExprContext(topic.getParentNode(),
+                    ctx = createExprContext(self.topics,
                                             self.portal_url.getPortalObject(),
                                             topic)
                     try:
@@ -2222,7 +2253,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def updateIsDefaultFields(self):
         '''If this config becomes the default one, all the others must not be
            default meetings.'''
-        otherConfigs = self.getParentNode().objectValues('MeetingConfig')
+        tool = getToolByName(self, 'portal_plonemeeting')
+        otherConfigs = tool.objectValues('MeetingConfig')
         if self.getIsDefault():
             # All the others must not be default meeting configs.
             for mConfig in otherConfigs:
@@ -2456,7 +2488,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('searchItemsToAdvice')
     def searchItemsToAdvice(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Queries all items for which the current user must give an advice.'''
-        groups = self.getParentNode().getGroups(suffix='advisers')
+        tool = getToolByName(self, 'portal_plonemeeting')
+        groups = tool.getGroupsForUser(suffix='advisers')
         # Add a '0' at the end of every group id: we want "not given" advices.
         # this search will also return 'delay-aware' advices
         groupIds = [g.getId() + '0' for g in groups] + ['delay__' + g.getId() + '0' for g in groups]
@@ -2483,7 +2516,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('searchItemsToAdviceWithDelay')
     def searchItemsToAdviceWithDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Queries items for which the current user must give a delay-aware advice.'''
-        groups = self.getParentNode().getGroups(suffix='advisers')
+        tool = getToolByName(self, 'portal_plonemeeting')
+        groups = tool.getGroupsForUser(suffix='advisers')
         # Add a '0' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
         groupIds = ['delay__' + g.getId() + '0' for g in groups]
@@ -2511,7 +2545,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def searchItemsToAdviceWithExceededDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Queries items for which the current user had to give a
            delay-aware advice for but did not give it in the deadline.'''
-        groups = self.getParentNode().getGroups(suffix='advisers')
+        tool = getToolByName(self, 'portal_plonemeeting')
+        groups = tool.getGroupsForUser(suffix='advisers')
         # Add a '2' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices for wich delay is exceeded
         groupIds = ['delay__' + g.getId() + '2' for g in groups]
@@ -2538,7 +2573,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('searchAdvisedItems')
     def searchAdvisedItems(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Queries all items for which the current user has given an advice.'''
-        groups = self.getParentNode().getGroups(suffix='advisers')
+        tool = getToolByName(self, 'portal_plonemeeting')
+        groups = tool.getGroupsForUser(suffix='advisers')
         # Add a '1' at the end of every group id: we want "given" advices.
         groupIds = [g.id + '1' for g in groups]
         # Create query parameters
@@ -2638,6 +2674,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         filterValue = rq.get('filterValue', '').decode('utf-8')
 
         if not isFake:
+            tool = getToolByName(self, 'portal_plonemeeting')
             # Execute the query corresponding to the topic.
             if not sortKey:
                 sortCriterion = topic.getSortCriterion()
@@ -2648,7 +2685,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             methodId = topic.getProperty(TOPIC_SEARCH_SCRIPT, None)
             objectType = topic.getProperty(TOPIC_TYPE, 'Unknown')
             batchSize = self.REQUEST.get('MaxShownFound') or \
-                self.getParentNode().getMaxShownFound(objectType)
+                tool.getMaxShownFound(objectType)
             if methodId:
                 # Topic params are not sufficient, use a specific method.
                 # keep topics defined paramaters
@@ -2676,7 +2713,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 if filterKey:
                     params[filterKey] = prepareSearchValue(filterValue)
                 brains = self.portal_catalog(**params)
-            res = self.getParentNode().batchAdvancedSearch(
+            res = tool.batchAdvancedSearch(
                 brains, topic, rq, batch_size=batchSize)
         else:
             # This is an advanced search. Use the Searcher.
@@ -2922,7 +2959,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            We add a 'folder_' or a 'topic_' suffix to precise the kind of view.
         '''
         res = []
-        if self.getParentNode().getPloneDiskAware():
+        tool = getToolByName(self, 'portal_plonemeeting')
+        if tool.getPloneDiskAware():
             # Add the folder views available in portal_type.Folder
             type_info = self.portal_types.getTypeInfo('Folder')
             available_views = type_info.getAvailableViewMethods(type_info)

@@ -307,7 +307,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if userInfo.getProperty('fullname'):
         userName = userInfo.getProperty('fullname').decode(enc)
     # Compute list of MeetingGroups for this user
-    userGroups = ', '.join([g.Title() for g in tool.getGroups()])
+    userGroups = ', '.join([g.Title() for g in tool.getGroupsForUser()])
     # Create the message parts
     d = 'PloneMeeting'
     portal = obj.portal_url.getPortalObject()

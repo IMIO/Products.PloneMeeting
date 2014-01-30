@@ -326,7 +326,10 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_Validate_customAdvisersDelayColumn(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates delays of the 'delay' column : either field is empty or
-           a delay is defined as a single digit value.'''
+           a delay is defined as a single digit value.
+           If both 'delay' and 'delay_left_alert' are defined, make sure the value in 'delay'
+           is higher or equals the value in 'delay_left_alert' and if a value is defined in 'delay_left_alert',
+           then a value in the 'delay' column is required.'''
         cfg = self.meetingConfig
         # the validate method returns a translated message if the validation failed
         # wrong format, should be empty or a digit
@@ -359,6 +362,25 @@ class testMeetingConfig(PloneMeetingTestCase):
         customAdvisers[0]['delay'] = '10'
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        # 'delay' must be higher or equals 'delay_left_alert'
+        delay_higher_msg = translate('custom_adviser_delay_left_must_be_inferior_to_delay',
+                                     domain='PloneMeeting',
+                                     mapping={'groupName': customAdvisers[0]['group']},
+                                     context=self.portal.REQUEST)
+        customAdvisers[0]['delay_left_alert'] = '12'
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), delay_higher_msg)
+        # equals or higher is ok
+        customAdvisers[0]['delay'] = '12'
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        customAdvisers[0]['delay'] = '15'
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        # if 'delay_alert_left' is defined, 'delay' must be as well
+        delay_required_msg = translate('custom_adviser_no_delay_left_if_no_delay',
+                                       domain='PloneMeeting',
+                                       mapping={'groupName': customAdvisers[0]['group']},
+                                       context=self.portal.REQUEST)
+        customAdvisers[0]['delay'] = ''
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), delay_required_msg)
 
     def test_pm_Validate_customAdvisersCanNotChangeUsedConfig(self):
         '''Test the MeetingConfig.customAdvisers validate method.

@@ -14,6 +14,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added delay-aware advisers to be able to define delay for giving an advice
 - Added custom advisers management on a per MeetingConfig basis : this manage automatic advisers and delay-aware advisers
 - Refactored advice popups and dropdown to display more informations
+- Added 'Power advisers' functionnality making it possible for some groups to give an advice even if not asked
 - Rely on Products.cron4plone to launch maintenance task regarding delay-aware advices
   (update each item adviceIndex and update portal_catalog indexAdvisers index)
 - Added 'Budget impact reviewers' functionnality making it possible for some defined users to

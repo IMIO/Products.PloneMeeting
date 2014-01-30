@@ -206,7 +206,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'itemsListVisibleColumns', 'itemColumns', 'meetingColumns',
                          'workflowAdaptations', 'transitionsToConfirm', 'mailItemEvents',
                          'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
-                         'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
+                         'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates', 'powerAdvisersGroups',
                          'itemPowerObserversStates', 'meetingPowerObserversStates', 'meetingConfigsToCloneTo',
                          'itemAdviceInvalidateStates', 'customAdvisers', 'selectableCopyGroups', 'votesEncoder',
                          'meetingTopicStates', 'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes',
@@ -433,7 +433,10 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemAdviceStates = []
         self.itemAdviceEditStates = []
         self.itemAdviceViewStates = []
+        # List of item states when it is possible for 'Budget impact reviewers' to edit the budgetInfos
         self.itemBudgetInfosStates = []
+        # List of MeetingGroup ids to consider as Power advisers
+        self.powerAdvisersGroups = []
         # List of item and meeting states the users in the MeetingConfig
         # corresponding powerObservers group will see the item/meeting
         self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'refused', 'delayed']

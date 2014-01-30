@@ -69,7 +69,7 @@ class ItemTemplateView(BrowserView):
                 tool = self.getPloneMeetingTool()
                 membershipTool = getToolByName(self.portal, 'portal_membership')
                 member = membershipTool.getAuthenticatedMember()
-                memberGroups = tool.getGroups(member.getId())
+                memberGroups = tool.getGroupsForUser(member.getId())
                 memberGroupIds = [group.id for group in memberGroups]
                 for template in templates:
                     templateRestrictedGroups = template.getTemplateUsingGroups()

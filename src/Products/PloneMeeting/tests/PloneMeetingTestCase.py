@@ -201,7 +201,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
             if not 'proposingGroup' in attrs.keys():
-                proposingGroup = self.tool.getGroups(suffix="creators")
+                proposingGroup = self.tool.getGroupsForUser(suffix="creators")
                 if len(proposingGroup):
                     attrs.update({'proposingGroup': proposingGroup[0].id})
         obj = getattr(folder, folder.invokeFactory(contentType, **attrs))

@@ -514,8 +514,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(meetingConfig)
         return res
 
-    security.declarePublic('getGroups')
-    def getGroups(self, userId=None, active=True, suffix=None, zope=False):
+    security.declarePublic('getGroupsForUser')
+    def getGroupsForUser(self, userId=None, active=True, suffix=None, zope=False):
         '''Gets the groups p_userId belongs to. If p_userId is None, we use the
            authenticated user. If active is True, we select only active
            MeetingGroups. If p_suffix is not None, we select only groups having
@@ -552,7 +552,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         """
         res = []
         if not isDefinedInTool:
-            userMeetingGroups = self.getGroups(userId=userId, suffix="creators")
+            userMeetingGroups = self.getGroupsForUser(userId=userId, suffix="creators")
             for group in userMeetingGroups:
                 res.append((group.id, group.getName()))
             if existingGroupId:
@@ -1540,7 +1540,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
             # Change the proposing group if the item owner does not belong to
             # the defined proposing group.
-            userGroups = self.getGroups(userId=newOwnerId, suffix="creators")
+            userGroups = self.getGroupsForUser(userId=newOwnerId, suffix="creators")
             if newItem.getProposingGroup(True) not in userGroups:
                 if userGroups:
                     newItem.setProposingGroup(userGroups[0].id)

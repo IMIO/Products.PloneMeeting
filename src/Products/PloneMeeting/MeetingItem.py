@@ -42,7 +42,7 @@ from zope.i18n import translate
 from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View, AddPortalContent
+from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.Meeting import Meeting
@@ -2363,8 +2363,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Item state must be within the states allowing to add/edit an advice
         itemState = self.queryState()
         # Logged user must be an adviser
-        # tool.getGroups consider currently authenticated member groups
-        meetingGroups = tool.getGroups(suffix='advisers')
+        meetingGroups = tool.getGroupsForUser(suffix='advisers')
         if not meetingGroups:
             return (None, None)
         # Produce the lists of groups to which the user belongs and for which,
@@ -2372,16 +2371,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # - an advice has already been given (list of advices to edit/delete).
         toAdd = []
         toEdit = []
+        powerAdvisers = cfg.getPowerAdvisersGroups()
         for group in meetingGroups:
-            if group.id not in self.adviceIndex:
-                continue
-            adviceType = self.adviceIndex[group.id]['type']
-            if (adviceType == NOT_GIVEN_ADVICE_VALUE) and \
-               (itemState in group.getItemAdviceStates(cfg)) and _isStillInDelayToBeGiven(self.adviceIndex[group.id]):
-                toAdd.append((group.id, self.adviceIndex[group.id]['name']))
-            if (adviceType != NOT_GIVEN_ADVICE_VALUE) and \
-               (itemState in group.getItemAdviceEditStates(cfg)):
-                toEdit.append(group.id)
+            groupId = group.getId()
+            if groupId in self.adviceIndex:
+                adviceType = self.adviceIndex[groupId]['type']
+                if (adviceType == NOT_GIVEN_ADVICE_VALUE) and \
+                   (itemState in group.getItemAdviceStates(cfg)) and _isStillInDelayToBeGiven(self.adviceIndex[groupId]):
+                    toAdd.append((groupId, group.getName()))
+                if (adviceType != NOT_GIVEN_ADVICE_VALUE) and \
+                   (itemState in group.getItemAdviceEditStates(cfg)):
+                    toEdit.append(groupId)
+            elif groupId in powerAdvisers:
+                # if not in self.adviceIndex, aka not already given
+                # check if group is a power adviser
+                if itemState in group.getItemAdviceStates(cfg):
+                    toAdd.append((groupId, group.getName()))
         return (toAdd, toEdit)
 
     security.declarePublic('getAdvicesByType')
@@ -2652,6 +2657,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 delay_started_stoppped_on_save[groupId]['delay_stopped_on'] = 'delay_stopped_on' in adviceInfo and \
                                                                               adviceInfo['delay_stopped_on'] or None
 
+        itemState = self.queryState()
         self.adviceIndex = PersistentMapping()
         # we keep the optional and automatic advisers separated because we need
         # to know what advices are optional or not
@@ -2713,20 +2719,31 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # and remove specific permissions given to add advices
         # make sure 'Add portal content' and 'PloneMeeting: Add advice' are not
         # given to the 'Contributor' role
-        self._removePermissionToRole(permission=AddPortalContent,
-                                     role_to_remove='Contributor',
-                                     obj=self)
         self._removePermissionToRole(permission=AddAdvice,
                                      role_to_remove='Contributor',
                                      obj=self)
-        # Then, add local roles for advisers.
+        # manage PowerAdvisers
+        # we will give those groups the ability to give an advice on this item
+        # even if the advice was not asked...
+        for mGroupId in cfg.getPowerAdvisersGroups():
+            # if group already gave advice, we continue
+            if mGroupId in self.adviceIndex:
+                continue
+            # we even consider groups having their _advisers Plone group
+            # empty because this does not change anything in the UI and adding a
+            # user after in the _advisers suffixed group will do things work as expected
+            mGroup = getattr(tool, mGroupId)
+            if itemState in mGroup.getItemAdviceStates(cfg):
+                advisersGroup = mGroup.getPloneGroupId(suffix='advisers')
+                self.manage_addLocalRoles(advisersGroup, (READER_USECASES['advices'], 'Contributor', ))
+
+        # Then, add local roles regarding asked advices
         wfTool = getToolByName(self, 'portal_workflow')
         for groupId in self.adviceIndex.iterkeys():
             mGroup = getattr(tool, groupId)
             itemAdviceStates = mGroup.getItemAdviceStates(cfg)
             itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
             itemAdviceViewStates = mGroup.getItemAdviceViewStates(cfg)
-            itemState = self.queryState()
             ploneGroup = '%s_advisers' % groupId
             adviceObj = None
             if 'advice_id' in self.adviceIndex[groupId]:
@@ -2763,9 +2780,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # the 'Add portal content' permission is given by default to 'Contributor', so
                 # we need to give 'PloneMeeting: Add advice' permission too
                 self.manage_addLocalRoles(ploneGroup, ('Contributor', ))
-                self._grantPermissionToRole(permission=AddPortalContent,
-                                            role_to_give='Contributor',
-                                            obj=self)
                 self._grantPermissionToRole(permission=AddAdvice,
                                             role_to_give='Contributor',
                                             obj=self)
@@ -3244,7 +3258,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = self.portal_plonemeeting
         if not tool.getPloneDiskAware():
             return False
-        for meetingGroup in tool.getGroups(suffix="creators"):
+        for meetingGroup in tool.getGroupsForUser(suffix="creators"):
             # Check if the user is creator for the proposing group
             if self.getProposingGroup() == meetingGroup.id:
                 return True

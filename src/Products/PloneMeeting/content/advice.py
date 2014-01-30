@@ -80,8 +80,20 @@ class MeetingAdvice(Container):
         '''Make sure advice_row_id is correct.'''
         # the row_id is stored in parent (item) adviceIndex
         item = self.getParentNode()
-        adviceInfo = item.adviceIndex[self.advice_group]
-        self.advice_row_id = adviceInfo['row_id']
+        # if a powerAdviser is adding an advice, the advice_group is not
+        # in the item.adviceIndex, so if not found, check that
+        if self.advice_group in item.adviceIndex:
+            adviceInfo = item.adviceIndex[self.advice_group]
+            row_id = adviceInfo['row_id']
+        else:
+            # check if it is actually a power adviser adding an unasked advice
+            tool = getToolByName(item, 'portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            if self.advice_group in cfg.getPowerAdvisersGroups():
+                row_id = ''
+            else:
+                raise KeyError('Not able to find a value to set for advice row_id!')
+        self.advice_row_id = row_id
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):

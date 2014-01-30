@@ -1619,7 +1619,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            creator (including the meeting creator itself).'''
         # Identify all local managers
         localManagers = []
-        for zopeGroup in self.portal_plonemeeting.getGroups(zope=True):
+        for zopeGroup in self.portal_plonemeeting.getGroupsForUser(zope=True):
             zGroup = zopeGroup._getGroup()
             for userId in zGroup.getMemberIds():
                 user = self.acl_users.getUserById(userId)

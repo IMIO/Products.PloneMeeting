@@ -817,7 +817,9 @@
           <td tal:define="field python:here.getField('itemBudgetInfosStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('powerAdvisersGroups')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td></td>
         </tr>
         <tr valign="top">
