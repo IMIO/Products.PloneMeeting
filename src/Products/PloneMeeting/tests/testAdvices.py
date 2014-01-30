@@ -804,6 +804,42 @@ class testAdvices(PloneMeetingTestCase):
         # ... but now the user does not have the permission to add the advice anymore
         self.assertTrue(not self.hasPermission(AddAdvice, item))
 
+    def test_pm_MeetingGroupDefinedItemAdviceStatesValuesOverridesMeetingConfigValues(self):
+        '''Advices are giveable/editable/viewable depending on defined item states on the MeetingConfig,
+           these states can be overrided locally for a particular MeetingGroup so this particluar MeetingGroup
+           will be able to add an advice in different states than one defined globally on the MeetingConfig.'''
+        # by default, nothing defined on the MeetingGroup, the MeetingConfig states are used
+        vendors = self.tool.vendors
+        self.assertTrue(not vendors.getItemAdviceStates())
+        # make advice giveable when item is proposed
+        self.meetingConfig.setItemAdviceStates(('proposed', ))
+        self.meetingConfig.setItemAdviceEditStates(('proposed', ))
+        self.meetingConfig.setItemAdviceViewStates(('proposed', ))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # ask 'vendors' advice
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_create_script()
+        self.proposeItem(item)
+        self.assertTrue(item.queryState(), 'proposed')
+        # the advice is giveable by the vendors
+        self.changeUser('pmReviewer2')
+        self.assertTrue('vendors' in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
+        # now if we define on the 'vendors' MeetingGroup.itemAdviceStates
+        # that advice is giveable when item is 'validated', it will not be anymore
+        # in 'proposed' state, but well in 'validated' state
+        self.changeUser('admin')
+        vendors.setItemAdviceStates(("%s__state__%s" % (self.meetingConfig.getId(), 'validated')))
+        item.at_post_create_script()
+        self.changeUser('pmReviewer2')
+        self.assertTrue(not 'vendors' in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
+        # now validate the item and the advice is giveable
+        self.changeUser('pmManager')
+        self.validateItem(item)
+        self.changeUser('pmReviewer2')
+        self.assertTrue(item.queryState(), 'validated')
+        self.assertTrue('vendors' in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

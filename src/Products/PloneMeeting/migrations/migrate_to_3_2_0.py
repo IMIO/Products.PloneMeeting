@@ -288,6 +288,32 @@ class Migrate_To_3_2_0(Migrator):
         MeetingConfig.topicsInfo = originalTopicsInfos
         logger.info('Done.')
 
+    def _adaptMeetingGroupsAdviceStates(self):
+        '''The vocabulary of MeetingGroups itemAdviceStates fields changed to take
+           into account every active MeetingConfigs and not only the default one, so
+           adapt existing values...'''
+        logger.info('Migrating MeetingGroups itemAdviceStates attributes...')
+        # migrate every existing MeetingGroups
+        defaultCfg = self.tool.getDefaultMeetingConfig()
+        if not defaultCfg:
+            logger.error('Unable to find the default MeetingConfig, \'itemAdviceStates\' '
+                         'attributes of MeetingGroups were not migrated !!!')
+        defaultCfgId = defaultCfg.getId()
+        mappings = {}
+        for key, value in defaultCfg.listStates('Item'):
+            mappings[key] = '%s__state__%s' % (defaultCfgId, key)
+        for mGroup in self.tool.getMeetingGroups():
+            if mGroup.getItemAdviceStates():
+                newValue = [mappings[state] for state in mGroup.getItemAdviceStates()]
+                mGroup.setItemAdviceStates(newValue)
+            if mGroup.getItemAdviceEditStates():
+                newValue = [mappings[state] for state in mGroup.getItemAdviceEditStates()]
+                mGroup.setItemAdviceEditStates(newValue)
+            if mGroup.getItemAdviceViewStates():
+                newValue = [mappings[state] for state in mGroup.getItemAdviceViewStates()]
+                mGroup.setItemAdviceViewStates(newValue)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.0...')
         # reinstall so 'getDeliberation' index is added and computed, new 'meetingadvice' type is installed, ...
@@ -303,6 +329,7 @@ class Migrate_To_3_2_0(Migrator):
         self._cleanReferencesOnItems()
         self._finishExternalApplicationRemoval()
         self._addMissingTopics()
+        self._adaptMeetingGroupsAdviceStates()
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['reference_catalog', ],

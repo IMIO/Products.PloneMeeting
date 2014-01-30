@@ -11,10 +11,19 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 ------------------
 - Not backward compatible with older versions if ExternalApplications were used as the class was dropped now
 - Moved advices from saved dict to real objects so we can add annexes into it
+- Added delay-aware advisers to be able to define delay for giving an advice
 - Added custom advisers management on a per MeetingConfig basis : this manage automatic advisers and delay-aware advisers
-- Added delay-aware advisers making it possible to define delay for giving an advice
+- Refactored advice popups and dropdown to display more informations
 - Rely on Products.cron4plone to launch maintenance task regarding delay-aware advices
   (update each item adviceIndex and update portal_catalog indexAdvisers index)
+- Added 'Budget impact reviewers' functionnality making it possible for some defined users to
+  edit the MeetingItem.budgetInfos in defined item wf states
+- Keep 'privacy' attribute when cloning an item so it is kept in functionnalities
+  around (recurring items, item templates, item sent to another config, ...)
+- Added method MeetingItem.printAdvicesInfos to generate a HTML version of advices infos useable in POD templates
+- MeetingGroups can now override every MeetingConfig itemAdviceStates values, not only the default one
+- Corrected bug in itemassembly/itemsignatures mass redifinition functionnality
+  where late items were not taken into account
 
 3.1.0 (2013-11-04)
 ------------------

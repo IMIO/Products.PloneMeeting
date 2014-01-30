@@ -23,12 +23,13 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-from zope.i18n import translate
-from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
-from Products.PloneMeeting import PloneMeetingError
 import logging
 logger = logging.getLogger('PloneMeeting')
 from OFS.ObjectManager import BeforeDeleteException
+from zope.i18n import translate
+from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
+from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.profiles import GroupDescriptor
 defValues = GroupDescriptor.get()
 ##/code-section module-header
@@ -149,11 +150,18 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     security.declarePublic('listItemStates')
     def listItemStates(self):
-        '''Lists the states of the item workflow ("itemcreated" excepted).'''
-        cfg = self.portal_plonemeeting.getDefaultMeetingConfig()
-        if not cfg:
-            return DisplayList()
-        return cfg.listItemStates()
+        '''Lists the states of the item workflow for each MeetingConfig.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        res = []
+        for cfg in tool.getActiveConfigs():
+            cfgItemStates = cfg.listStates('Item')
+            cfgId = cfg.getId()
+            # cfgItemStates is a list of tuple, ready to move to a DisplayList
+            for key, value in cfgItemStates:
+                # build a strong id
+                res.append(("%s__state__%s" % (cfgId, key),
+                            "%s - %s" % (unicode(cfg.Title(), 'utf-8'), value)))
+        return DisplayList(tuple(res)).sortedByValue()
 
     def getPloneGroupId(self, suffix):
         '''Returns the id of the Plone group that corresponds to me and
@@ -332,28 +340,51 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         '''This is an overridden version of the Archetypes accessor for field
            "itemAdviceStates". When called by Archetypes (with no arg), it
            simply returns the content of field MeetingGroup.itemAdviceStates.
-           When called with a meeting p_cfg, if MeetingGroup.itemAdviceStates
-           is not empty it returns it; else, it returns the global, default list
-           in cfg.itemAdviceStates.'''
+           When called with a p_cfg (MeetingConfig), if MeetingGroup.itemAdviceStates
+           is not empty it returns it, but manipulates returned value as stored value is
+           something like 'meeting-config-if__state__itemcreate' and we want 'itemcreated';
+           else, it returns the global, default list in cfg.itemAdviceStates that correctly contains
+           state values.'''
         res = self.getField('itemAdviceStates').get(self, **kwargs)
-        if not res and cfg:
-            res = cfg.getItemAdviceStates()
+        if cfg:
+            if not res:
+                res = cfg.getItemAdviceStates()
+            else:
+                tmpres = []
+                for elt in res:
+                    cfgId, state = elt.split('__state__')
+                    tmpres.append(state)
+                res = tmpres
         return res
 
     security.declarePublic('getItemAdviceEditStates')
     def getItemAdviceEditStates(self, cfg=None, **kwargs):
         '''See docstring of previous method.'''
         res = self.getField('itemAdviceEditStates').get(self, **kwargs)
-        if not res and cfg:
-            res = cfg.getItemAdviceEditStates()
+        if cfg:
+            if not res:
+                res = cfg.getItemAdviceEditStates()
+            else:
+                tmpres = []
+                for elt in res:
+                    cfgId, state = elt.split('__state__')
+                    tmpres.append(state)
+                res = tmpres
         return res
 
     security.declarePublic('getItemAdviceViewStates')
     def getItemAdviceViewStates(self, cfg=None, **kwargs):
         '''See docstring of previous method.'''
         res = self.getField('itemAdviceViewStates').get(self, **kwargs)
-        if not res and cfg:
-            res = cfg.getItemAdviceViewStates()
+        if cfg:
+            if not res:
+                res = cfg.getItemAdviceViewStates()
+            else:
+                tmpres = []
+                for elt in res:
+                    cfgId, state = elt.split('__state__')
+                    tmpres.append(state)
+                res = tmpres
         return res
 
 

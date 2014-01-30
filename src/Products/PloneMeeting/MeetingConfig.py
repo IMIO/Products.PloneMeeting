@@ -2720,6 +2720,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((state.id, translate(state.title, domain="plone", context=self.REQUEST)))
         return res
 
+    security.declarePublic('listAllTransitions')
     def listAllTransitions(self):
         '''Lists the possible transitions for items as well as for meetings.'''
         res = []
@@ -3323,4 +3324,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-

@@ -2606,12 +2606,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # check if the given p_triggered_by_transition transition name
         # is the transition that will restart delays
-        isTransitionReinitializingDelays = cfg.getTransitionReinitializingDelays() == triggered_by_transition and True or False
+        isTransitionReinitializingDelays = bool(cfg.getTransitionReinitializingDelays() == triggered_by_transition)
 
         # Invalidate advices if needed
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
-            userId = self.portal_membership.getAuthenticatedMember().id
+            userId = self.portal_membership.getAuthenticatedMember().getId()
             for advice in self.adviceIndex.itervalues():
                 if 'actor' in advice and (advice['actor'] != userId):
                     # Send a mail to the guy that gave the advice.
@@ -2647,8 +2647,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 delay_started_stoppped_on_save[groupId]['delay_started_on'] = None
                 delay_started_stoppped_on_save[groupId]['delay_stopped_on'] = None
             else:
-                delay_started_stoppped_on_save[groupId]['delay_started_on'] = 'delay_started_on' in adviceInfo and adviceInfo['delay_started_on'] or None
-                delay_started_stoppped_on_save[groupId]['delay_stopped_on'] = 'delay_stopped_on' in adviceInfo and adviceInfo['delay_stopped_on'] or None
+                delay_started_stoppped_on_save[groupId]['delay_started_on'] = 'delay_started_on' in adviceInfo and \
+                                                                              adviceInfo['delay_started_on'] or None
+                delay_started_stoppped_on_save[groupId]['delay_stopped_on'] = 'delay_stopped_on' in adviceInfo and \
+                                                                              adviceInfo['delay_stopped_on'] or None
 
         self.adviceIndex = PersistentMapping()
         # we keep the optional and automatic advisers separated because we need
@@ -2791,7 +2793,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not itemState in itemAdviceStates and \
                self.adviceIndex[groupId]['delay'] and not \
                isTransitionReinitializingDelays and not \
-               (groupId in delay_started_stoppped_on_save and delay_started_stoppped_on_save[groupId]['delay_stopped_on'] or False):
+               bool(groupId in delay_started_stoppped_on_save and
+                    delay_started_stoppped_on_save[groupId]['delay_stopped_on']):
                 self.adviceIndex[groupId]['delay_stopped_on'] = datetime.now()
             # now index advice annexes
             if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
