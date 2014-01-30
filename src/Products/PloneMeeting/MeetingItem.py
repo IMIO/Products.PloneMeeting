@@ -2744,7 +2744,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # give access to the item in any case
             self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
 
-            # manage delay-aware adviser, we start the delay if not already started
+            # manage delay-aware advice, we start the delay if not already started
             if itemState in itemAdviceStates and \
                self.adviceIndex[groupId]['delay'] and not \
                self.adviceIndex[groupId]['delay_started_on']:
