@@ -2424,6 +2424,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 delay_label = customAdviserConfig['delay_label'] or ''
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': optional,
+                                        'not_asked': False,
                                         'id': advice.advice_group,
                                         'name': getattr(tool, advice.advice_group).getName().decode('utf-8'),
                                         'advice_id': advice.getId(),
@@ -2438,11 +2439,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         }
         return res
 
-    security.declarePublic('needsAdvices')
-    def needsAdvices(self):
+    security.declarePublic('displayAdvices')
+    def displayAdvices(self):
         '''Is there at least one advice that needs to be (or has already been)
            given on this item?'''
-        return bool(self.adviceIndex)
+        if bool(self.adviceIndex):
+            return True
+        # in case current user is a PowerAdviser, we need
+        # to display advices on the item view
+        tool = getToolByName(self, 'portal_plonemeeting')
+        userAdviserGroupIds = set([group.getId() for group in tool.getGroupsForUser(suffix='advisers')])
+        cfg = tool.getMeetingConfig(self)
+        powerAdviserGroupIds = set(cfg.getPowerAdvisersGroups())
+        return bool(userAdviserGroupIds.intersection(powerAdviserGroupIds))
 
     security.declarePublic('hasAdvices')
     def hasAdvices(self):
@@ -2605,7 +2614,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool():
             self.adviceIndex = PersistentMapping()
             return
-
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
 
@@ -2674,6 +2682,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.adviceIndex[groupId] = d = PersistentMapping()
                 d['type'] = NOT_GIVEN_ADVICE_VALUE
                 d['optional'] = optional
+                d['not_asked'] = False
                 d['id'] = groupId
                 d['name'] = getattr(tool, groupId).getName().decode('utf-8')
                 d['delay'] = adviceInfo['delay']
@@ -2697,11 +2706,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():
-            # in case an already given advice does not need to be given anymore
-            # the groupId is in givenAdvice but not in self.adviceIndex for now
-            # that contains advices to give
+            # first check that groupId is in self.adviceIndex, there could be 2 cases :
+            # - in case an advice was asked automatically and condition that was True at the time
+            #   is not True anymore (item/getBudgetRelated for example) but the advice was given in between
+            #   However, in this case we have a 'row_id' stored in the given advice
+            # - in case we have a not asked advice given by a PowerAdviser, in thus case, we have no 'row_id'
             if not groupId in self.adviceIndex:
                 self.adviceIndex[groupId] = PersistentMapping()
+                if not adviceInfo['row_id']:
+                    # this is a given advice that was not asked (given by a PowerAdviser)
+                    adviceInfo['not_asked'] = True
             self.adviceIndex[groupId].update(adviceInfo)
 
         # Clean-up advice-related local roles and granted permissions.
@@ -2736,6 +2750,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if itemState in mGroup.getItemAdviceStates(cfg):
                 advisersGroup = mGroup.getPloneGroupId(suffix='advisers')
                 self.manage_addLocalRoles(advisersGroup, (READER_USECASES['advices'], 'Contributor', ))
+                # make sure 'Contributor' has the 'AddAdvice' permission
+                self._grantPermissionToRole(permission=AddAdvice,
+                                            role_to_give='Contributor',
+                                            obj=self)
 
         # Then, add local roles regarding asked advices
         wfTool = getToolByName(self, 'portal_workflow')
@@ -3077,22 +3095,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('updateCopyGroupsLocalRoles')
     def updateCopyGroupsLocalRoles(self):
-        '''Give the 'power observers' local role to the copy groups
+        '''Give the 'Reader' local role to the copy groups
            depending on what is defined in the corresponding meetingConfig.'''
         if not self.isCopiesEnabled():
             return
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = self.portal_plonemeeting.getMeetingConfig(self)
         # First, remove 'power observers' local roles granted to
         # MEETING_GROUP_SUFFIXES suffixed groups.  As this is the case also for
         # advisers, we do not remove this role for advisers
-        advisers = self.adviceIndex.keys()
+        advisers = tuple(self.adviceIndex.keys()) + cfg.getPowerAdvisersGroups()
         adviserGroups = ['%s_advisers' % adviser for adviser in advisers]
-        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove=READER_USECASES['copy_groups'],
-                                                          suffixes=MEETING_GROUP_SUFFIXES,
-                                                          notForGroups=adviserGroups)
+        tool.removeGivenLocalRolesFor(self,
+                                      role_to_remove=READER_USECASES['copy_groups'],
+                                      suffixes=MEETING_GROUP_SUFFIXES,
+                                      notForGroups=adviserGroups)
         # check if copyGroups should have access to this item for current review state
         itemState = self.queryState()
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
         if not itemState in cfg.getItemCopyGroupsStates():
             return
         # Add the local roles corresponding to the selected copyGroups.

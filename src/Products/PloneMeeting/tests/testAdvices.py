@@ -25,9 +25,11 @@
 from datetime import datetime
 from DateTime import DateTime
 from AccessControl import Unauthorized
+from zope.component import queryUtility
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.schema.interfaces import RequiredMissing
+from zope.schema.interfaces import IVocabularyFactory
 
 from plone.app.testing import login
 from plone.app.textfield.value import RichTextValue
@@ -120,10 +122,10 @@ class testAdvices(PloneMeetingTestCase):
             'category': 'maintenance'
         }
         item1 = self.create('MeetingItem', **data)
-        self.assertEquals(item1.needsAdvices(), False)
+        self.assertEquals(item1.displayAdvices(), False)
         item1.setOptionalAdvisers(('vendors',))
         item1.at_post_edit_script()
-        self.assertEquals(item1.needsAdvices(), True)
+        self.assertEquals(item1.displayAdvices(), True)
         # 'pmCreator1' has no addable nor editable advice to give
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), (None, None))
         login(self.portal, 'pmReviewer2')
@@ -290,7 +292,7 @@ class testAdvices(PloneMeetingTestCase):
             'optionalAdvisers': ('vendors',)
         }
         item1 = self.create('MeetingItem', **data)
-        self.assertEquals(item1.needsAdvices(), True)
+        self.assertEquals(item1.displayAdvices(), True)
         # check than the adviser can see the item
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
@@ -311,7 +313,7 @@ class testAdvices(PloneMeetingTestCase):
             'optionalAdvisers': ('vendors',)
         }
         item = self.create('MeetingItem', **data)
-        self.assertEquals(item.needsAdvices(), True)
+        self.assertEquals(item.displayAdvices(), True)
         self.failIf(item.willInvalidateAdvices())
         self.proposeItem(item)
         # login as adviser and add an advice
@@ -848,8 +850,6 @@ class testAdvices(PloneMeetingTestCase):
         self.meetingConfig.setPowerAdvisersGroups(('developers', ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        # ask 'vendors' advice
-        item.setOptionalAdvisers(('vendors', ))
         self.proposeItem(item)
         item.at_post_edit_script()
         # pmAdviser1 can give advice for developers even if
@@ -864,10 +864,30 @@ class testAdvices(PloneMeetingTestCase):
                                  **{'advice_group': 'developers',
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
-        # once given, he can not give an advice any more as already given
+        # he can give advice for every groups he is adviser for
+        # here as only adviser for 'developers', he can not give an advice anymore
+        # after having given the advice for 'developers'
         self.failIf(self.hasPermission(AddAdvice, item))
         # but he can still see the item obviously
         self.failUnless(self.hasPermission(View, item))
+        # but if he is also adviser for 'vendors', he can give it also
+        self.changeUser('admin')
+        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'vendors_advisers')
+        self.meetingConfig.setPowerAdvisersGroups(('developers', 'vendors', ))
+        item.updateAdvices()
+        # now as pmAdviser1 is adviser for vendors and vendors is a PowerAdviser,
+        # he can add an advice for vendors
+        self.changeUser('pmAdviser1')
+        self.assertTrue(not 'vendors' in item.adviceIndex)
+        self.failUnless(self.hasPermission(AddAdvice, item))
+        self.failUnless(self.hasPermission(View, item))
+        # make sure he can not add an advice for an other group he is adviser for
+        # but he already gave the advice for.  So check that 'developers' is not in the
+        # meetingadvice.advice_group vocabulary
+        factory = queryUtility(IVocabularyFactory, u'Products.PloneMeeting.content.advice.advice_group_vocabulary')
+        vocab = factory(item)
+        self.assertTrue(len(vocab) == 1)
+        self.assertTrue('vendors' in vocab)
 
 
 def test_suite():

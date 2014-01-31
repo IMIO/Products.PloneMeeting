@@ -17,9 +17,9 @@
 
   <table width="#"
          class="contentActionsAX no-style-table" cellpadding="0" cellspacing="0"
-         tal:attributes="width python: 10 + (advicesToAdd and 1 or 0) * 15 + len(advicesByType) * 26"
-         tal:condition="advicesByType">
+         tal:attributes="width python: 10 + (advicesToAdd and 1 or 0) * 15 + len(advicesByType) * 26">
     <tr>
+      <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
       <td tal:condition="advicesToAdd" class="noPadding">
         <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
@@ -205,7 +205,9 @@
         </dl>
       </td>
       </tal:menu>
+      </tal:advicesToAddOrExisting>
+      <td tal:condition="not: advicesByType">-</td>
     </tr>
   </table>
-  <span tal:condition="not: advicesByType">-</span>
+
 </metal:icons>

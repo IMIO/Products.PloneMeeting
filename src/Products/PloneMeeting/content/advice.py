@@ -80,13 +80,14 @@ class MeetingAdvice(Container):
         '''Make sure advice_row_id is correct.'''
         # the row_id is stored in parent (item) adviceIndex
         item = self.getParentNode()
+
         # if a powerAdviser is adding an advice, the advice_group is not
         # in the item.adviceIndex, so if not found, check that
         if self.advice_group in item.adviceIndex:
             adviceInfo = item.adviceIndex[self.advice_group]
             row_id = adviceInfo['row_id']
         else:
-            # check if it is actually a power adviser adding an unasked advice
+            # check if it is actually a power adviser adding a not asked advice
             tool = getToolByName(item, 'portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             if self.advice_group in cfg.getPowerAdvisersGroups():

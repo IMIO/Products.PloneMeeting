@@ -9,6 +9,7 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.content.advice import MeetingAdvice
 
 
 # The migration class ----------------------------------------------------------
@@ -40,6 +41,15 @@ class Migrate_To_3_2_0(Migrator):
            and meetingadvice objects.'''
         brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
         logger.info('Updating advices for %d MeetingItem objects...' % len(brains))
+        original_updateAdviceRowId = MeetingAdvice._updateAdviceRowId
+
+        def _fakeUpdateAdviceRowId(self):
+            '''This does almost nothing...'''
+            return
+        # we override MeetingAdvice._updateAdviceRowId to do nothing
+        # because this method expect the MeetingItem.indexAdviser and we do not still have it here
+        # this method set the row_id on the created meetingadvice but we do it manually here under
+        MeetingAdvice._updateAdviceRowId = _fakeUpdateAdviceRowId
         for brain in brains:
             item = brain.getObject()
             cfg = self.tool.getMeetingConfig(item)
@@ -71,11 +81,9 @@ class Migrate_To_3_2_0(Migrator):
 
                 item.adviceIndex = PersistentMapping()
                 # in case there were advices asked but not given, we will have to update advice
-                needToUpdateAdvices = True
                 for groupId, advice in aq_base(item).advices.iteritems():
                     if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
                         # advices are updated upon each meetingadvice add
-                        needToUpdateAdvices = False
                         advice_comment = advice['comment']
                         if not isinstance(advice['comment'], unicode):
                             advice_comment = unicode(advice_comment, 'utf-8')
@@ -97,9 +105,8 @@ class Migrate_To_3_2_0(Migrator):
                         meetingadvice.creators = ((advice['actor'], ))
                         meetingadvice.creation_date = advice['date']
                         meetingadvice.modification_date = advice['date']
-                if needToUpdateAdvices:
-                    item.updateAdvices()
                 delattr(item, 'advices')
+                item.updateAdvices()
                 # Update security as local_roles are set by updateAdvices
                 item.reindexObject()
         logger.info('Updating advices for items of MeetingConfigs...')
@@ -114,6 +121,7 @@ class Migrate_To_3_2_0(Migrator):
                                                     'advice_comment': RichTextValue(advice['comment'])})
                     delattr(item, 'advices')
                     item.updateAdvices()
+        MeetingAdvice._updateAdviceRowId = original_updateAdviceRowId
         logger.info('Done.')
 
     def _addBudgetImpactReviewerGroupsByMeetingConfig(self):
