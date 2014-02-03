@@ -320,7 +320,7 @@ def postInstall(context):
     cron_configlet = queryUtility(ICronConfiguration, 'cron4plone_config')
     if not cron_configlet.cronjobs:
         # add a cron job that will be launched at 00:00
-        cron_configlet.cronjobs = [u'0 0 * * portal/portal_plonemeeting/_updateDelayAwareAdvisers']
+        cron_configlet.cronjobs = [u'0 0 * * portal/@@update-delay-aware-advices']
 
 
 ##code-section FOOT
