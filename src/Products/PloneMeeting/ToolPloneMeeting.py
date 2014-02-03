@@ -25,7 +25,7 @@ from Products.PloneMeeting.config import *
 
 from Products.CMFCore.utils import UniqueObject
 
-    
+
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
@@ -488,20 +488,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            suffixes passed as argument are not empty. If it is the case, we do
            not return the group neither.  If p_onlyActive is True, we also check
            the MeetingGroup current review_state.'''
-        res = []
-        for group in self.objectValues('MeetingGroup'):
-            if onlyActive and not group.queryState() == 'active':
-                continue
-            # Check that there is at least one user in the notEmptySuffix
-            # of the Plone group
-            if notEmptySuffix:
-                ploneGroupId = group.getPloneGroupId(suffix=notEmptySuffix)
-                zopeGroup = self.acl_users.getGroup(ploneGroupId)
-                if len(zopeGroup.getMemberIds()):
-                    res.append(group)
-            else:
-                res.append(group)
-        return res
+
+        key = "tool-getmeetinggroups-%s-%s" % ((notEmptySuffix and notEmptySuffix.lower() or ''),
+                                               str(onlyActive))
+        cache = IAnnotations(self.REQUEST)
+        data = cache.get(key, None)
+        if data is None:
+            data = []
+            for group in self.objectValues('MeetingGroup'):
+                if onlyActive and not group.queryState() == 'active':
+                    continue
+                # Check that there is at least one user in the notEmptySuffix
+                # of the Plone group
+                if notEmptySuffix:
+                    ploneGroupId = group.getPloneGroupId(suffix=notEmptySuffix)
+                    zopeGroup = self.acl_users.getGroup(ploneGroupId)
+                    if len(zopeGroup.getMemberIds()):
+                        data.append(group)
+                else:
+                    data.append(group)
+            cache[key] = data
+        return data
 
     security.declarePublic('getActiveConfigs')
     def getActiveConfigs(self):
@@ -2209,4 +2216,3 @@ registerType(ToolPloneMeeting, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

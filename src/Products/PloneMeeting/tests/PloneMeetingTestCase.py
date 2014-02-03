@@ -307,6 +307,8 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         for annotation in annotations.keys():
             if annotation.startswith('borg.localrole.workspace.checkLocalRolesAllowed'):
                 annotations_to_delete.append(annotation)
+            if annotation.startswith('tool-getmeetinggroups-'):
+                annotations_to_delete.append(annotation)
 
         for annotation_to_delete in annotations_to_delete:
             del annotations[annotation_to_delete]

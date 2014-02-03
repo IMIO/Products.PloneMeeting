@@ -149,6 +149,69 @@ class testPerformances(PloneMeetingTestCase):
         for item in meeting.getAllItems():
             item.getItemNumber(relativeTo='meetingConfig')
 
+    def _setupForMeetingGroups(self, number_of_groups):
+        self.changeUser('admin')
+        # remove existing groups and add our own
+        # make what necessary for groups to be removable...
+        self.meetingConfig.setSelectableCopyGroups(())
+        self.meetingConfig2.setSelectableCopyGroups(())
+        for mGroup in self.tool.objectValues('MeetingGroup'):
+            for ploneGroup in mGroup.getPloneGroups():
+                for memberId in ploneGroup.getGroupMemberIds():
+                    ploneGroup.removeMember(memberId)
+        ids_to_remove = []
+        for item in self.meetingConfig.recurringitems.objectValues():
+            ids_to_remove.append(item.getId())
+        self.meetingConfig.recurringitems.manage_delObjects(ids=ids_to_remove)
+
+        ids_to_remove = []
+        for group in self.tool.objectValues('MeetingGroup'):
+            ids_to_remove.append(group.getId())
+        self.tool.manage_delObjects(ids=ids_to_remove)
+        # create groups
+        for i in range(number_of_groups):
+            groupId = self.tool.invokeFactory('MeetingGroup', id=i, title='Group %d' % i)
+            group = getattr(self.tool, groupId)
+            group._at_creation_flag = False
+            group.at_post_create_script()
+
+    def test_pm_GetMeetingGroupsCaching(self):
+        '''Test ToolPloneMeeting.getMeetingGroups caching.'''
+        # first test with 10 groups
+        self._setupForMeetingGroups(10)
+        pm_logger.info('getMeetingGroups with %d activated groups.' % 10)
+        # first time, not cached
+        self._getMeetingGroupsOnTool()
+        # second time, cached
+        self._getMeetingGroupsOnTool()
+        # remove cache
+        self.cleanMemoize()
+
+        # test with 100 groups
+        self._setupForMeetingGroups(100)
+        pm_logger.info('getMeetingGroups with %d activated groups.' % 100)
+        # first time, not cached
+        self._getMeetingGroupsOnTool()
+        # second time, cached
+        self._getMeetingGroupsOnTool()
+        # remove cache
+        self.cleanMemoize()
+
+        # test with 250 groups
+        self._setupForMeetingGroups(250)
+        pm_logger.info('getMeetingGroups with %d activated groups.' % 250)
+        # first time, not cached
+        self._getMeetingGroupsOnTool()
+        # second time, cached
+        self._getMeetingGroupsOnTool()
+        # remove cache
+        self.cleanMemoize()
+
+    @timecall
+    def _getMeetingGroupsOnTool(self):
+        ''' '''
+        self.tool.getMeetingGroups(notEmptySuffix='advisers')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
