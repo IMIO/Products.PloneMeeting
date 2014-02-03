@@ -253,6 +253,15 @@ class Migrate_To_3_2_0(Migrator):
              "python: here.portal_plonemeeting.getMeetingConfig(here)."
              "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
              ),
+            # Advised items with delay : need a script to do this search
+            ('searchalladviseditemswithdelay',
+            (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+             ),
+             'created',
+             'searchAdvisedItemsWithDelay',
+             "python: here.portal_plonemeeting.getMeetingConfig(here)."
+             "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+             ),
             # Items to correct : search items in state 'returned_to_proposing_group'
             ('searchitemstocorrect',
             (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
@@ -287,6 +296,18 @@ class Migrate_To_3_2_0(Migrator):
                                  'New advice related topics will be left at the bottom of available topics!')
                     return
                 baseTopic = cfg.topics.searchallitemstoadvice
+                everyTopicIds = cfg.topics.objectIds()
+                baseTopicPosition = everyTopicIds.index(baseTopic.getId())
+                adviceRelatedTopicPosition = everyTopicIds.index(adviceRelatedTopicId)
+                delta = adviceRelatedTopicPosition - baseTopicPosition - 1
+                cfg.topics.moveObjectsUp(adviceRelatedTopicId, delta=delta)
+            for adviceRelatedTopicId in ['searchalladviseditemswithdelay', ]:
+                # find delta, we need to insert into after the 'searchalladviseditems' topic
+                if not hasattr(cfg.topics, 'searchalladviseditems'):
+                    logger.error('Unable to find topic \'searchalladviseditems\' !!!  '
+                                 'New advice related topics will be left at the bottom of available topics!')
+                    return
+                baseTopic = cfg.topics.searchalladviseditems
                 everyTopicIds = cfg.topics.objectIds()
                 baseTopicPosition = everyTopicIds.index(baseTopic.getId())
                 adviceRelatedTopicPosition = everyTopicIds.index(adviceRelatedTopicId)

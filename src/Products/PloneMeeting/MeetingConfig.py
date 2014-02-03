@@ -1482,6 +1482,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
          ),
+        # Advised items with delay : need a script to do this search
+        ('searchalladviseditemswithdelay',
+        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchAdvisedItemsWithDelay',
+         "python: here.portal_plonemeeting.getMeetingConfig(here)."
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+         ),
         # Items to correct : search items in state 'returned_to_proposing_group'
         ('searchitemstocorrect',
         (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
@@ -2584,6 +2593,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Perform the query in portal_catalog
         return self.portal_catalog(**params)
 
+    security.declarePublic('searchAdvisedItemsWithDelay')
+    def searchAdvisedItemsWithDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Queries all items for which the current user has given an advice that was delay-aware.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        groups = tool.getGroupsForUser(suffix='advisers')
+        # Add a '1' at the end of every group id: we want "given" advices.
+        # this search will only return 'delay-aware' advices
+        groupIds = ['delay__' + g.getId() + '1' for g in groups]
+        # Create query parameters
+        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+                  # KeywordIndex 'indexAdvisers' use 'OR' by default
+                  'indexAdvisers': groupIds,
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder, }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(value)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
+
     security.declarePublic('searchItemsInCopy')
     def searchItemsInCopy(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Queries all items for which the current user is in copyGroups.'''
@@ -3355,4 +3386,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-
