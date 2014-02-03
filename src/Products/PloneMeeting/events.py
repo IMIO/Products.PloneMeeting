@@ -44,8 +44,8 @@ def do(action, event):
     if objectType == 'MeetingItem':
         # Update the local roles linked to advices if relevant
         event.object.updateAdvices(triggered_by_transition=event.transition.id)
-        # Update local roles given to budget impact reviewers
-        event.object.updateBudgetImpactReviewersLocalRoles()
+        # Update local roles given to budget impact editors
+        event.object.updateBudgetImpactEditorsLocalRoles()
         # Send mail regarding advices to give if relevant
         sendAdviceToGiveMailIfRelevant(event)
         # Send mail if relevant

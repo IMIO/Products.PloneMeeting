@@ -38,7 +38,7 @@ from Products.CMFCore.permissions import View
 from Products.CMFCore.permissions import ModifyPortalContent
 
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import BUDGETIMPACTREVIEWERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -788,13 +788,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser(userThatCanNotSee)
         self.failIf('MeetingObserverGlobal' in self.portal.portal_membership.getAuthenticatedMember().getRoles())
 
-    def test_pm_BudgetImpactReviewersGroups(self):
-        '''Test the management of MeetingConfig linked 'budgetimpactreviewers' Plone group.'''
-        # specify that budgetImpactReviewers will be able to edit the budgetInfos of self.meetingConfig items
+    def test_pm_BudgetImpactEditorsGroups(self):
+        '''Test the management of MeetingConfig linked 'budgetimpacteditors' Plone group.'''
+        # specify that budgetImpactEditors will be able to edit the budgetInfos of self.meetingConfig items
         # when the item is in state 'validated'.  For example here, a 'validated' item will not be fully editable
         # but the MeetingItem.budgetInfos field will be editable
         self.portal.portal_groups.addPrincipalToGroup('pmReviewer2', '%s_%s' %
-                                                      (self.meetingConfig.getId(), BUDGETIMPACTREVIEWERS_GROUP_SUFFIX))
+                                                      (self.meetingConfig.getId(),
+                                                       BUDGETIMPACTEDITORS_GROUP_SUFFIX))
         # we will let copyGroups view items when in state 'validated'
         self.meetingConfig.setUseCopies(True)
         self.meetingConfig.setItemCopyGroupsStates(('proposed', 'validated', ))

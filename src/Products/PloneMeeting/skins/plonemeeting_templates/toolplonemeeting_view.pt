@@ -338,9 +338,9 @@
             </form>
           </td>
           <td>
-            <form name="updateBudgetImpactReviewersForm" action="updateBudgetImpactReviewers">
-            <input class="context" type="submit" name="updateBudgetImpactReviewers"
-                   value="pm_update_budgetimpactreviewerss" i18n:attributes="value"/>&nbsp;&nbsp;
+            <form name="updateBudgetImpactEditorsForm" action="updateBudgetImpactEditors">
+            <input class="context" type="submit" name="updateBudgetImpactEditors"
+                   value="pm_update_budgetimpacteditors" i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
           </td>
           <td>

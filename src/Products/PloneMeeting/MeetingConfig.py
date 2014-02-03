@@ -2318,29 +2318,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.__ac_local_roles_block__ = True
         self.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
 
-    security.declarePrivate('createBudgetImpactReviewersGroup')
-    def createBudgetImpactReviewersGroup(self):
-        '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactReviewer'
+    security.declarePrivate('createBudgetImpactEditorsGroup')
+    def createBudgetImpactEditorsGroup(self):
+        '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
            local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
-        groupId = "%s_%s" % (self.getId(), BUDGETIMPACTREVIEWERS_GROUP_SUFFIX)
+        groupId = "%s_%s" % (self.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
         if not groupId in self.portal_groups.listGroupIds():
             enc = self.portal_properties.site_properties.getProperty(
                 'default_charset')
             groupTitle = '%s (%s)' % (
                 self.Title().decode(enc),
-                translate(BUDGETIMPACTREVIEWERS_GROUP_SUFFIX, domain='PloneMeeting', context=self.REQUEST))
+                translate(BUDGETIMPACTEDITORS_GROUP_SUFFIX, domain='PloneMeeting', context=self.REQUEST))
             # a default Plone group title is NOT unicode.  If a Plone group title is
             # edited TTW, his title is no more unicode if it was previously...
             # make sure we behave like Plone...
             groupTitle = groupTitle.encode(enc)
             self.portal_groups.addGroup(groupId, title=groupTitle)
-        # now define local_roles on the tool so it is accessible by this group
-        tool = getToolByName(self, 'portal_plonemeeting')
-        tool.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
-        # but we do not want this group to access every MeetingConfigs so
-        # remove inheritance on self and define these local_roles for self too
-        self.__ac_local_roles_block__ = True
-        self.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
 
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
@@ -2376,8 +2369,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self._manageEnableAnnexToPrint()
         # Create the corresponding group that will contain MeetingPowerObservers
         self.createPowerObserversGroup()
-        # Create the corresponding group that will contain MeetingBudgetImpactReviewers
-        self.createBudgetImpactReviewersGroup()
+        # Create the corresponding group that will contain MeetingBudgetImpactEditors
+        self.createBudgetImpactEditorsGroup()
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
 
     def at_post_edit_script(self):
@@ -3362,3 +3355,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+

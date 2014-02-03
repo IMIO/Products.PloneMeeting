@@ -107,7 +107,7 @@ POWEROBSERVERS_GROUP_SUFFIX = 'powerobservers'
 # This is the group created for each MeetingConfig where we store
 # users that will be able to edit the budgetInfos field for items in state
 # corresponding to MeetingConfig.itemBudgetInfosStates
-BUDGETIMPACTREVIEWERS_GROUP_SUFFIX = 'budgetimpactreviewers'
+BUDGETIMPACTEDITORS_GROUP_SUFFIX = 'budgetimpacteditors'
 
 # This is a mapping between usecases around the role Reader, so users that can see
 # By default, the same role is used for different usecases, so it will give the same view permission by the wf

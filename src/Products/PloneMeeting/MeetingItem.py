@@ -2966,10 +2966,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(user.getId(), ('Owner',))
         self.updateLocalRoles()
         # Update 'power observers' and 'budget impact reviewers' local roles given to the
-        # corresponding MeetingConfig powerobsevers/budgetimpactreviewers group in case the 'initial_wf_state'
+        # corresponding MeetingConfig powerobsevers/budgetimpacteditors group in case the 'initial_wf_state'
         # is selected in MeetingConfig.itemPowerObserversStates or MeetingConfig.itemBudgetInfosStates
         self.updatePowerObserversLocalRoles()
-        self.updateBudgetImpactReviewersLocalRoles()
+        self.updateBudgetImpactEditorsLocalRoles()
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
@@ -3138,21 +3138,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
         self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['power_observers'],))
 
-    security.declarePublic('updateBudgetImpactReviewersLocalRoles')
-    def updateBudgetImpactReviewersLocalRoles(self):
+    def updateBudgetImpactEditorsLocalRoles(self):
         '''Configure local role for use case 'budget_impact_reviewers' to the corresponding
-           MeetingConfig 'budgetimpactreviewers' group.'''
-        # First, remove 'MeetingBudgetImpactReviewer' local roles granted to budgetimpactreviewers.
+           MeetingConfig 'budgetimpacteditors' group.'''
+        # First, remove 'MeetingBudgetImpactEditors' local roles granted to budgetimpacteditors.
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove='MeetingBudgetImpactReviewer',
-                                                          suffixes=[BUDGETIMPACTREVIEWERS_GROUP_SUFFIX, ])
-        # Then, add local roles for bugetimpactreviewers.
+                                                          role_to_remove='MeetingBudgetImpactEditor',
+                                                          suffixes=[BUDGETIMPACTEDITORS_GROUP_SUFFIX, ])
+        # Then, add local roles for bugetimpacteditors.
         itemState = self.queryState()
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
         if not itemState in cfg.getItemBudgetInfosStates():
             return
-        budgetImpactReviewersGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTREVIEWERS_GROUP_SUFFIX)
-        self.manage_addLocalRoles(budgetImpactReviewersGroupId, ('MeetingBudgetImpactReviewer',))
+        budgetImpactEditorsGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
+        self.manage_addLocalRoles(budgetImpactEditorsGroupId, ('MeetingBudgetImpactEditor',))
 
     security.declareProtected(ModifyPortalContent, 'processForm')
     def processForm(self, *args, **kwargs):

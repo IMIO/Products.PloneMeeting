@@ -25,7 +25,7 @@ from Products.PloneMeeting.config import *
 
 from Products.CMFCore.utils import UniqueObject
 
-
+    
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
@@ -2086,14 +2086,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
-    security.declarePublic('updateBudgetImpactReviewers')
-    def updateBudgetImpactReviewers(self):
-        '''Update local_roles regarging the BudgetImpactReviewers for every items.'''
+    security.declarePublic('updateBudgetImpactEditors')
+    def updateBudgetImpactEditors(self):
+        '''Update local_roles regarging the BudgetImpactEditors for every items.'''
         if not self.isManager(realManagers=True):
             raise Unauthorized
         for b in self.portal_catalog(meta_type=('MeetingItem')):
             obj = b.getObject()
-            obj.updateBudgetImpactReviewersLocalRoles()
+            obj.updateBudgetImpactEditorsLocalRoles()
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
@@ -2203,8 +2203,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             replace('<p>', '<p class="mltAssembly">')
 
 
+
 registerType(ToolPloneMeeting, PROJECTNAME)
 # end of class ToolPloneMeeting
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+
