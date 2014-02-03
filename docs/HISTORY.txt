@@ -22,7 +22,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Keep 'privacy' attribute when cloning an item so it is kept in functionnalities
   around (recurring items, item templates, item sent to another config, ...)
 - Added method MeetingItem.printAdvicesInfos to generate a HTML version of advices infos useable in POD templates
-- MeetingGroups can now override every MeetingConfig itemAdviceStates values, not only the default one
+- MeetingGroups can now override every MeetingConfig itemAdviceStates values, not only the default MeetingConfig
 - Corrected bug in itemassembly/itemsignatures mass redifinition functionnality
   where late items were not taken into account
 
