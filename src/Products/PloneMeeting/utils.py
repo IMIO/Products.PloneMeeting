@@ -1158,6 +1158,17 @@ def spanifyLink(htmltag):
 
 
 # ------------------------------------------------------------------------------
+def forceHTMLContentTypeForEmptyRichFields(obj):
+    '''
+      Will saving a empty Rich field ('text/html'), the contentType is set back to 'text/plain'...
+      Force it to 'text/html' if the field is empty
+    '''
+    for field in obj.Schema().filterFields(default_content_type='text/html'):
+        if not field.getRaw(obj):
+            field.setContentType(obj, 'text/html')
+
+
+# ------------------------------------------------------------------------------
 def prepareSearchValue(value):
     '''Prepare given p_value to execute a query in the portal_catalog
        with a ZCTextIndex by adding a '*' at the end of each word.'''

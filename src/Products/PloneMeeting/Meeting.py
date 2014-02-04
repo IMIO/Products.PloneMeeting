@@ -41,7 +41,7 @@ from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, ku
     fieldIsEmpty, KUPU_EMPTY_VALUES, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
     kupuEquals, getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
-    setFieldFromAjax, transformAllRichTextFields
+    setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -1649,7 +1649,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
-        self.forceHTMLContentTypeForEmptyRichFields()
+        forceHTMLContentTypeForEmptyRichFields(self)
         # Update 'power observers' local roles given to the
         # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
         # is selected as viewable by 'powerobservers'
@@ -1672,22 +1672,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
-        self.forceHTMLContentTypeForEmptyRichFields()
+        forceHTMLContentTypeForEmptyRichFields(self)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         self.reindexObject()
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Meeting at %s edited by "%s".' % (self.absolute_url_path(), userId))
-
-    security.declarePublic('forceHTMLContentTypeForEmptyRichFields')
-    def forceHTMLContentTypeForEmptyRichFields(self):
-        '''
-          Will saving a empty Rich field ('text/html'), the contentType is set back to 'text/plain'...
-          Force it to 'text/html' if the field is empty
-        '''
-        for field in self.Schema().filterFields(default_content_type='text/html'):
-            if not field.getRaw(self):
-                field.setContentType(self, 'text/html')
 
     security.declarePublic('updatePowerObserversLocalRoles')
     def updatePowerObserversLocalRoles(self):

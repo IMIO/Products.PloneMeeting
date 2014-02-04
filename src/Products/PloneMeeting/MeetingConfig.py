@@ -40,7 +40,7 @@ from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
-    getCustomSchemaFields, getFieldContent, prepareSearchValue
+    getCustomSchemaFields, getFieldContent, prepareSearchValue, forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -2380,6 +2380,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Sort the item tags if needed
         self.setAllItemTagsField()
         self.updateIsDefaultFields()
+        # Make sure we have 'text/html' for every Rich fields
+        forceHTMLContentTypeForEmptyRichFields(self)
         # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
         # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
         self._manageEnableAnnexToPrint()
@@ -2404,6 +2406,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Update item tags order if I must sort them
         self.setAllItemTagsField()
         self.updateIsDefaultFields()
+        # Make sure we have 'text/html' for every Rich fields
+        forceHTMLContentTypeForEmptyRichFields(self)
         # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
         # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
         self._manageEnableAnnexToPrint()

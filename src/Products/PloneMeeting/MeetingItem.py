@@ -54,7 +54,7 @@ from Products.PloneMeeting.utils import \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
-    kupuFieldIsEmpty
+    kupuFieldIsEmpty, forceHTMLContentTypeForEmptyRichFields
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -2985,7 +2985,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
-        self.forceHTMLContentTypeForEmptyRichFields()
+        forceHTMLContentTypeForEmptyRichFields(self)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -3006,7 +3006,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Add a line in history if historized fields have changed
         addDataChange(self)
         # Make sure we have 'text/html' for every Rich fields
-        self.forceHTMLContentTypeForEmptyRichFields()
+        forceHTMLContentTypeForEmptyRichFields(self)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         self.reindexObject()
@@ -3031,16 +3031,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool():
             return
         CatalogMultiplex.reindexObject(self, idxs)
-
-    security.declarePublic('forceHTMLContentTypeForEmptyRichFields')
-    def forceHTMLContentTypeForEmptyRichFields(self):
-        '''
-          Will saving a empty Rich field ('text/html'), the contentType is set back to 'text/plain'...
-          Force it to 'text/html' if the field is empty
-        '''
-        for field in self.Schema().filterFields(default_content_type='text/html'):
-            if not field.getRaw(self):
-                field.setContentType(self, 'text/html')
 
     security.declarePublic('updateHistory')
     def updateHistory(self, action, subObj, **kwargs):
