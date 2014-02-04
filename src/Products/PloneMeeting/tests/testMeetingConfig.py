@@ -140,6 +140,59 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 0)
 
+    def test_pm_SearchAdvisedItemsWithDelay(self):
+        '''Test the searchAdvisedItemsWithDelay method.  This should return a list
+           of items a user has already give a delay-aware advice for.'''
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        # by default, no advices item...
+        self.changeUser('pmAdviser1')
+        self.failIf(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', ''))
+        # an advice can be given when an item is 'proposed'
+        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
+                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        # create an item to advice
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item1.setOptionalAdvisers(('developers',))
+        self.proposeItem(item1)
+        item1.reindexObject()
+        # give a non delay-aware advice
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item1,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # non delay-aware advices are not found
+        self.failIf(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', ''))
+        # now create a second item and ask a delay-aware advice
+        self.changeUser('admin')
+        originalCustomAdvisers = {'row_id': 'unique_id_123',
+                                  'group': 'developers',
+                                  'gives_auto_advice_on': '',
+                                  'for_item_created_from': '2012/01/01',
+                                  'for_item_created_until': '',
+                                  'gives_auto_advice_on_help_message': '',
+                                  'delay': '10',
+                                  'delay_left_alert': '',
+                                  'delay_label': 'Delay label', }
+        self.meetingConfig.setCustomAdvisers([originalCustomAdvisers, ])
+        self.changeUser('pmCreator1')
+        item2 = self.create('MeetingItem')
+        item2.setOptionalAdvisers(('developers__rowid__unique_id_123',))
+        self.proposeItem(item2)
+        item2.reindexObject()
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item2,
+                                 'meetingadvice',
+                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
+        self.failUnless(len(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', '')) == 1)
+        self.changeUser('pmCreator1')
+        self.failUnless(len(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', '')) == 0)
+
     def test_pm_SearchItemsInCopy(self):
         '''Test the searchItemsInCopy method.  This should return a list of items
            a user is in copy of.'''
