@@ -213,6 +213,12 @@ def onAdviceEditFinished(obj, event):
 def onAdviceRemoved(obj, event):
     '''Called when a meetingadvice is removed so we can warn parent item.'''
     item = obj.getParentNode()
-    item.updateAdvices()
-
+    try:
+        item.updateAdvices()
+    except TypeError:
+        # while removing an advice, if it was not anymore in the advice index
+        # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
+        # the newItem has an empty adviceIndex but can contains advices that will be removed
+        logger = logging.getLogger('PloneMeeting')
+        logger.info('Removal of advice at %s raised TypeError.' % obj.absolute_url_path())
 ##/code-section FOOT

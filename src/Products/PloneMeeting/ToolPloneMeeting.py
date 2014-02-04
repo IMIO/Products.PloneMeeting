@@ -1607,7 +1607,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if not "object_deleted" in res:
                     # Take the last part of the url+portalMessage wich is the
                     # untranslated i18n msgid.
-                    raise Exception, res.split('=')[-1]
+                    raise Exception(res.split('=')[-1])
                 success.append('%s (%s)' % (obj.title_or_id(), path))
         except Exception, e:
             failure = e

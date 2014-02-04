@@ -436,11 +436,12 @@ class testMeetingItem(PloneMeetingTestCase):
         # but we do not use portal_actionicons
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
 
-    def _setupSendItemToOtherMC(self, with_annexes=False):
+    def _setupSendItemToOtherMC(self, with_annexes=False, with_advices=False):
         """
           This will do the setup of testing the send item to other MC functionnality.
           This will create an item, present it in a meeting and send it to another meeting.
           If p_with_annexes is True, it will create 2 annexes and 2 decision annexes.
+          If p_with_advices is True, it will create 2 advices, one normal and one delay-aware.
           It returns a dict with several informations.
         """
         # Activate the functionnality
@@ -463,9 +464,37 @@ class testMeetingItem(PloneMeetingTestCase):
             annex2 = self.addAnnex(item, annexType='overhead-analysis')
         # Propose the item
         self.do(item, item.wfConditions().transitionsForPresentingAnItem[0])
+        if with_advices:
+            # add a normal and a delay-aware advice
+            self.changeUser('admin')
+            self.meetingConfig.setUseAdvices(True)
+            self.meetingConfig.setItemAdviceStates(['proposed', ])
+            self.meetingConfig.setItemAdviceEditStates(['proposed', 'validated', ])
+            self.meetingConfig.setItemAdviceViewStates(['presented', ])
+            self.meetingConfig.setCustomAdvisers(
+                [{'row_id': 'unique_id_123',
+                  'group': 'developers',
+                  'gives_auto_advice_on': '',
+                  'for_item_created_from': '2012/01/01',
+                  'delay': '5'}, ])
+            self.changeUser('pmManager')
+            item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123'))
+            item.at_post_edit_script()
+            developers_advice = createContentInContainer(
+                item,
+                'meetingadvice',
+                **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                'advice_type': u'positive',
+                'advice_comment': RichTextValue(u'My comment')})
+            vendors_advice = createContentInContainer(
+                item,
+                'meetingadvice',
+                **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                'advice_type': u'negative',
+                'advice_comment': RichTextValue(u'My comment')})
         login(self.portal, 'pmReviewer1')
         self.validateItem(item)
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         self.presentItem(item)
         # Do necessary transitions on the meeting before being able to accept an item
         necessaryMeetingTransitionsToAcceptItem = self._getNecessaryMeetingTransitionsToAcceptItem()
@@ -489,6 +518,9 @@ class testMeetingItem(PloneMeetingTestCase):
             data['annex2'] = annex2
             data['decisionAnnex1'] = decisionAnnex1
             data['decisionAnnex2'] = decisionAnnex2
+        if with_advices:
+            data['developers_advices'] = developers_advice
+            data['vendors_advices'] = vendors_advice
         return data
 
     def test_pm_SendItemToOtherMCWithAnnexes(self):
@@ -532,6 +564,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # so the MeetingFileType of the annexDecision2 will be the default one, the first available
         self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType().UID(),
                           self.meetingConfig2.getFileTypes(relatedTo='item_decision')[0].UID())
+
+    def test_pm_SendItemToOtherMCWithAdvices(self):
+        '''Test that sending an item to another MeetingConfig behaves normaly with advices.
+           New item must not contains advices anymore and adviceIndex must be empty.'''
+        self.assertTrue(self._setupSendItemToOtherMC(with_advices=True))
 
     def test_pm_SendItemToOtherMCRespectWFInitialState(self):
         '''Check that when an item is cloned to another MC, the new item
