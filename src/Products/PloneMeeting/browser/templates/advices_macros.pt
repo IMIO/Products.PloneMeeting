@@ -191,11 +191,14 @@
                     </span>
                     <span tal:attributes="class string:discreet advice_delay_${delayInfos/delay_status_when_stopped};"
                           i18n:translate="delay_exceeded_when_stopped"
-                          tal:condition="python: delayInfos['delay_when_stopped'] <= 0"> at this moment, the delay exceeded
+                          tal:condition="python: delayInfos['delay_when_stopped'] <= 0 and advice['delay_started_on']"> at this moment, the delay exceeded
                          <span i18n:name="delay_when_stopped"
                                tal:content="python: -(delayInfos['delay_when_stopped'])">
                               10
                          </span> day(s).
+                    </span>
+                    <span tal:attributes="class string:discreet advice_delay_${delayInfos/delay_status_when_stopped};"
+                          tal:condition="python: advice['delay_stopped_on'] and not advice['delay_started_on']">the advice was asked after this date.
                     </span>
                 </tal:itemViewableButNoMoreAdviseableWithDelay>
                 </fieldset>
