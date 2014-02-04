@@ -1629,6 +1629,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             '''
         tool = getToolByName(self, 'portal_plonemeeting')
         for customAdviser in value:
+            # a row_id, even empty is required
+            if not 'row_id' in customAdviser:
+                raise Exception('A row_id is required!')
             # validate the date in the 'for_item_created_from' and
             # 'for_item_created_until' columns
             created_from = customAdviser['for_item_created_from']
@@ -1988,6 +1991,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # we only consider back transitions
         backTransitions = [(tr[0], tr[1]) for tr in self.listTransitions('Item') if tr[0].startswith('back')]
         res = []
+        res.append(("",
+                    translate('none_started_once_for_all',
+                              domain="PloneMeeting",
+                              context=self.REQUEST)))
         for transition in backTransitions:
             res.append((transition[0], transition[1]))
         return DisplayList(res).sortedByValue()
