@@ -167,7 +167,7 @@ document.location.reload(true);
      tal:define="field python: context.getField(fieldName);
                  isRich python: field.widget.getName() == 'RichWidget';
                  isOptional field/optional|python:False;
-                 isUsed python: isOptional and fieldName in usedAttrs or True;
+                 isUsed python: not isOptional or (isOptional and fieldName in usedAttrs);
                  ajaxEdit ajaxEdit|nothing;
                  mayEdit python: ajaxEdit and member.has_permission(field.write_permission, context)"
      tal:condition="python: isUsed and field.widget.visible and member.has_permission(field.read_permission, context)">
