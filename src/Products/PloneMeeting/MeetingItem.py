@@ -2592,7 +2592,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _removeEveryContainedAdvices(self):
         """
-          Remove given p_permission to given p_role_to_remove on given p_obj.
+          Remove every contained advices.
         """
         ids = []
         for advice in self.getAdvices():
@@ -2842,6 +2842,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - delays timeout.
            Returns also the real limit date and the initial delay.
            This call is only relevant for a delay-aware advice.'''
+        toLocalizedTime = self.restrictedTraverse('@@plone').toLocalizedTime
         data = {'left_delay': None,
                 'delay_status': None,
                 'limit_date': None,
@@ -2859,18 +2860,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         data['delay'] = delay
         if adviceInfos['delay_started_on']:
-            data['delay_started_on'] = self.toLocalizedTime(adviceInfos['delay_started_on'], True)
+            data['delay_started_on'] = toLocalizedTime(adviceInfos['delay_started_on'])
             delay_started_on = self._doClearDayFrom(adviceInfos['delay_started_on'])
 
         if adviceInfos['delay_stopped_on']:
-            data['delay_stopped_on'] = self.toLocalizedTime(adviceInfos['delay_stopped_on'], True)
+            data['delay_stopped_on'] = toLocalizedTime(adviceInfos['delay_stopped_on'])
             delay_stopped_on = self._doClearDayFrom(adviceInfos['delay_stopped_on'])
 
         # if delay still not started, we return complete delay
+        # except special case where we asked an advice when
+        # advice are not giveable anymore
         if not delay_started_on:
-            data['left_delay'] = delay
-            data['delay_status'] = 'not_yet_giveable'
-            return data
+            if not delay_stopped_on:
+                data['left_delay'] = delay
+                data['delay_status'] = 'not_yet_giveable'
+                return data
+            else:
+                # here finally the delay is stopped
+                # but it never started for current advice
+                data['left_delay'] = delay
+                data['delay_status'] = 'never_giveable'
+                return data
 
         # if delay is stopped, it means that we can no more give the advice
         if delay_stopped_on:
@@ -2896,11 +2906,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 data['delay_status'] = 'still_time'
             else:
                 data['delay_status'] = 'still_time_but_alert'
-            data['limit_date'] = self.toLocalizedTime(delay_started_on + timedelta(delay))
+            data['limit_date'] = toLocalizedTime(delay_started_on + timedelta(delay))
         else:
             data['left_delay'] = left_delay
             data['delay_status'] = 'timed_out'
-            data['limit_date'] = self.toLocalizedTime(delay_started_on + timedelta(delay))
+            data['limit_date'] = toLocalizedTime(delay_started_on + timedelta(delay))
         return data
 
     security.declarePublic('isAdvicesEnabled')
