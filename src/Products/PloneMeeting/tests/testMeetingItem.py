@@ -568,7 +568,16 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_SendItemToOtherMCWithAdvices(self):
         '''Test that sending an item to another MeetingConfig behaves normaly with advices.
            New item must not contains advices anymore and adviceIndex must be empty.'''
-        self.assertTrue(self._setupSendItemToOtherMC(with_advices=True))
+        data = self._setupSendItemToOtherMC(with_advices=True)
+        originalItem = data['originalItem']
+        # original item had 2 advices, one delay aware and one normal
+        self.assertTrue(len(originalItem.adviceIndex) == 2)
+        self.assertTrue(originalItem.adviceIndex['developers']['row_id'] == 'unique_id_123')
+        self.assertTrue(len(originalItem.getGivenAdvices()) == 2)
+        # new item does not have any advice left
+        newItem = data['newItem']
+        self.assertTrue(len(newItem.adviceIndex) == 0)
+        self.assertTrue(len(newItem.getGivenAdvices()) == 0)
 
     def test_pm_SendItemToOtherMCRespectWFInitialState(self):
         '''Check that when an item is cloned to another MC, the new item
