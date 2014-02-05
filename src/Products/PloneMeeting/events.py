@@ -212,6 +212,10 @@ def onAdviceEditFinished(obj, event):
 
 def onAdviceRemoved(obj, event):
     '''Called when a meetingadvice is removed so we can warn parent item.'''
+    # bypass this if we are actually removing the 'Plone Site'
+    if event.object.meta_type == 'Plone Site':
+        return
+
     item = obj.getParentNode()
     try:
         item.updateAdvices()
