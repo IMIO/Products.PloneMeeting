@@ -31,6 +31,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Rely on Products.DataGridField to manage MeetingConfig.customAdvisers
 - Rely on Products.cron4plone to launch maintenance task regarding delay-aware advices
   (update each item adviceIndex and update portal_catalog indexAdvisers index)
+- Moved to collective.ckeditor 4.0.0
 
 3.1.0 (2013-11-04)
 ------------------
