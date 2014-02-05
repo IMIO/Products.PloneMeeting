@@ -342,6 +342,8 @@ def _configureCKeditor(site):
                         "attributes : { 'class' : 'highlight-red' } },\n]\n" %
                         (CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg),
                         enc)
+        # activate SCAYT auto-start
+        cke_props.enableScaytOnStartup = True
     except AttributeError:
         logger.warning("Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "
                        "installed and that the cputils_configure_ckeditor method is available")
