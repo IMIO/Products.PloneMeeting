@@ -179,38 +179,69 @@ class testPerformances(PloneMeetingTestCase):
         '''Test ToolPloneMeeting.getMeetingGroups caching.'''
         # first test with 10 groups
         self._setupForMeetingGroups(10)
-        pm_logger.info('getMeetingGroups with %d activated groups.' % 10)
-        # first time, not cached
-        self._getMeetingGroupsOnTool()
+        pm_logger.info('getMeetingGroups called 1 time with %d activated groups.' % 10)
+        # first call, even when asking caching, it is not as never computed but it is cached
+        pm_logger.info('No caching.')
+        self._getMeetingGroupsOnTool(times=1, caching=True)
         # second time, cached
-        self._getMeetingGroupsOnTool()
+        pm_logger.info('Caching.')
+        self._getMeetingGroupsOnTool(times=1, caching=True)
+        # remove cache
+        self.cleanMemoize()
+        pm_logger.info('getMeetingGroups called 100 times with %d activated groups.' % 10)
+        pm_logger.info('No caching.')
+        self._getMeetingGroupsOnTool(times=100, caching=False)
+        # second time, cached
+        pm_logger.info('Caching.')
+        self._getMeetingGroupsOnTool(times=100, caching=True)
         # remove cache
         self.cleanMemoize()
 
         # test with 100 groups
         self._setupForMeetingGroups(100)
-        pm_logger.info('getMeetingGroups with %d activated groups.' % 100)
-        # first time, not cached
-        self._getMeetingGroupsOnTool()
+        pm_logger.info('getMeetingGroups called 1 time with %d activated groups.' % 100)
+        # first call, even when asking caching, it is not as never computed but it is cached
+        pm_logger.info('No caching.')
+        self._getMeetingGroupsOnTool(times=1, caching=True)
         # second time, cached
-        self._getMeetingGroupsOnTool()
+        pm_logger.info('Caching.')
+        self._getMeetingGroupsOnTool(times=1, caching=True)
+        # remove cache
+        self.cleanMemoize()
+        pm_logger.info('getMeetingGroups called 100 times with %d activated groups.' % 100)
+        pm_logger.info('No caching.')
+        self._getMeetingGroupsOnTool(times=100, caching=False)
+        # second time, cached
+        pm_logger.info('Caching.')
+        self._getMeetingGroupsOnTool(times=100, caching=True)
         # remove cache
         self.cleanMemoize()
 
         # test with 250 groups
         self._setupForMeetingGroups(250)
-        pm_logger.info('getMeetingGroups with %d activated groups.' % 250)
-        # first time, not cached
-        self._getMeetingGroupsOnTool()
+        pm_logger.info('getMeetingGroups called 1 time with %d activated groups.' % 250)
+        # first call, even when asking caching, it is not as never computed but it is cached
+        pm_logger.info('No caching.')
+        self._getMeetingGroupsOnTool(times=1, caching=True)
         # second time, cached
-        self._getMeetingGroupsOnTool()
+        pm_logger.info('Caching.')
+        self._getMeetingGroupsOnTool(times=1, caching=True)
+        # remove cache
+        self.cleanMemoize()
+        pm_logger.info('getMeetingGroups called 100 times with %d activated groups.' % 250)
+        pm_logger.info('No caching.')
+        self._getMeetingGroupsOnTool(times=100, caching=False)
+        # second time, cached
+        pm_logger.info('Caching.')
+        self._getMeetingGroupsOnTool(times=100, caching=True)
         # remove cache
         self.cleanMemoize()
 
     @timecall
-    def _getMeetingGroupsOnTool(self):
+    def _getMeetingGroupsOnTool(self, times=1, caching=True):
         ''' '''
-        self.tool.getMeetingGroups(notEmptySuffix='advisers')
+        for time in range(times):
+            self.tool.getMeetingGroups(notEmptySuffix='advisers', caching=caching)
 
 
 def test_suite():

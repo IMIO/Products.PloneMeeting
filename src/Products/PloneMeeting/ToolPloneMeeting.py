@@ -483,16 +483,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return getattr(self.aq_base, props['meetingGroupId'], None)
 
     security.declarePublic('getMeetingGroups')
-    def getMeetingGroups(self, notEmptySuffix=None, onlyActive=True):
+    def getMeetingGroups(self, notEmptySuffix=None, onlyActive=True, caching=True):
         '''Gets the MeetingGroups, if p_notEmptySuffix is True, we check that group
            suffixes passed as argument are not empty. If it is the case, we do
            not return the group neither.  If p_onlyActive is True, we also check
-           the MeetingGroup current review_state.'''
-
-        key = "tool-getmeetinggroups-%s-%s" % ((notEmptySuffix and notEmptySuffix.lower() or ''),
-                                               str(onlyActive))
-        cache = IAnnotations(self.REQUEST)
-        data = cache.get(key, None)
+           the MeetingGroup current review_state.
+           If p_caching is True (by default), the method call will be cached in the REQUEST.'''
+        data = None
+        if caching:
+            key = "tool-getmeetinggroups-%s-%s" % ((notEmptySuffix and notEmptySuffix.lower() or ''),
+                                                   str(onlyActive))
+            cache = IAnnotations(self.REQUEST)
+            data = cache.get(key, None)
         if data is None:
             data = []
             for group in self.objectValues('MeetingGroup'):
@@ -507,7 +509,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         data.append(group)
                 else:
                     data.append(group)
-            cache[key] = data
+            if caching:
+                cache[key] = data
         return data
 
     security.declarePublic('getActiveConfigs')
