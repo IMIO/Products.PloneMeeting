@@ -1555,14 +1555,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if userGroups:
                     newItem.setProposingGroup(userGroups[0].id)
 
-            # processForm manage every necessary creation steps and calls
-            # at_post_create_script that updates the local roles (so removes role
+            # call at_post_create_script again that updates the local roles (so removes role
             # 'Manager' that we've set above) by calling MeetingItem.updateLocalRoles,
             # and also gives role "Owner" to the logged user.
-            # we pass some values so processForm does not mess existing ones by trying
-            # to get data in the REQUEST as this method could be called from a place where
-            # the REQUEST does not contains relevant data
-            newItem.processForm(values={'dummy': None})
+            newItem.at_post_create_script()
             IAnnexable(newItem).updateAnnexIndex()
             if newOwnerId != loggedUserId:
                 self.plone_utils.changeOwnershipOf(newItem, newOwnerId)

@@ -26,6 +26,8 @@ from plone.app.testing import login
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
+from Products.CMFCore.permissions import ManagePortal
+
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -89,6 +91,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # The item is cloned in the pmCreator1 personnal folder.
         self.assertEquals(
             set([clonedItem]), set(clonedItem.getParentNode().objectValues()))
+        # during the cloning process, the 'Manager' role is given on the new item
+        # so every things that need to be done on it are done, make sure at the end
+        # the role is no more given...
+        self.assertTrue(not self.hasPermission(ManagePortal, clonedItem))
 
     def test_pm_CloneItemWithContent(self):
         '''Clones a given item containing annexes in parent item folder.'''
