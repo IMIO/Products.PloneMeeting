@@ -2359,13 +2359,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         # Advices must be enabled
         if not cfg.getUseAdvices():
-            return (None, None)
+            return ([], [])
         # Item state must be within the states allowing to add/edit an advice
         itemState = self.queryState()
         # Logged user must be an adviser
         meetingGroups = tool.getGroupsForUser(suffix='advisers')
         if not meetingGroups:
-            return (None, None)
+            return ([], [])
         # Produce the lists of groups to which the user belongs and for which,
         # - no advice has been given yet (list of advices to add)
         # - an advice has already been given (list of advices to edit/delete).

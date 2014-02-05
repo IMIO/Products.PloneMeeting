@@ -127,7 +127,7 @@ class testAdvices(PloneMeetingTestCase):
         item1.at_post_edit_script()
         self.assertEquals(item1.displayAdvices(), True)
         # 'pmCreator1' has no addable nor editable advice to give
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), (None, None))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
         login(self.portal, 'pmReviewer2')
         self.failIf(self.hasPermission(View, item1))
         login(self.portal, 'pmCreator1')
@@ -137,7 +137,7 @@ class testAdvices(PloneMeetingTestCase):
                           createContentInContainer,
                           item1,
                           'meetingadvice')
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), (None, None))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
         login(self.portal, 'pmReviewer2')
         # 'pmReviewer2' has one advice to give for 'vendors' and no advice to edit
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
