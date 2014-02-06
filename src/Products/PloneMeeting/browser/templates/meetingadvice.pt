@@ -24,10 +24,12 @@
         <dt i18n:translate="">Advice</dt>
         <dd>
             <table class="no-style-table" width="100%">
-                <tr tal:repeat="widget view/widgets/values">
+                <tal:loop repeat="widget view/widgets/values">
+                <tr tal:condition="python: widget.mode != 'hidden'">
                     <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
                     <td class="table_widget_value" tal:content="structure widget/render">Value</td>
                 </tr>
+                </tal:loop>
             </table>
         </dd>
         <dt><span i18n:translate="">Annexes</span>&nbsp;(<span tal:replace="context/numberOfAnnexes" />)</dt>
