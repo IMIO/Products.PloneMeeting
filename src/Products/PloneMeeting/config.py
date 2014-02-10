@@ -30,11 +30,9 @@ try:
     import appy
     if not hasattr(appy, 'versionIsGreaterThanOrEquals') or \
        not appy.versionIsGreaterThanOrEquals(appyRequired):
-        raise Exception, 'Appy framework >= %s is required. Download it at ' \
-            'http://launchpad.net/appy' % appyRequired
+        raise Exception('Appy framework >= %s is required. Download it at http://launchpad.net/appy' % appyRequired)
 except ImportError:
-    raise Exception, 'Appy framework not found. You can download it at ' \
-        'http://launchpad.net/appy.'
+    raise Exception('Appy framework not found. You can download it at http://launchpad.net/appy.')
 ##/code-section config-head
 
 
