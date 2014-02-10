@@ -265,9 +265,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.historizedItemAttributes = []
         # Some attributes on a meeting are optional, too.
         # Item states into which item events will be stored in item's history.
-        self.recordItemHistoryStates = ('itempublished', 'itemfrozen',
-                                        'accepted', 'refused', 'confirmed',
-                                        'delayed', 'itemarchived')
+        self.recordItemHistoryStates = ()
         self.usedMeetingAttributes = ['assembly', 'signatures']
         # In the next field, you specify meeting fields for which you want to
         # keep track of changes.
@@ -498,7 +496,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.modelAdaptations = []
         self.publicUrl = ''
         self.deferredNotificationsHandling = False
-        self.enableUserPreferences = True
+        self.enableUserPreferences = False
         self.enableAnnexPreview = False
         self.maxSearchResults = 50
         self.maxShownFoundItems = 20
