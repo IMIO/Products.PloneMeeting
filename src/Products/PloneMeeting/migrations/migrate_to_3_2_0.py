@@ -72,12 +72,15 @@ class Migrate_To_3_2_0(Migrator):
                             automaticAdvisersIds = [auto['meetingGroupId'] for auto in item.getAutomaticAdvisers()]
                             if not key in automaticAdvisersIds:
                                 # find a row in cfg.customAdvisers that could be used...
+                                found = False
                                 for customAdviser in cfg.getCustomAdvisers():
                                     # if we find a row regarding this group and that is an automatic adviser, use it...
                                     if customAdviser['group'] == key and customAdviser['gives_auto_advice_on']:
+                                        found = True
                                         specialAutomaticAdviceHandling[key] = customAdviser['row_id']
-                                    else:
-                                        raise Exception("An automatic adviser lost his configuration...")
+                                        break
+                                if not found:
+                                    raise Exception("An automatic adviser lost his configuration...")
 
                 item.adviceIndex = PersistentMapping()
                 # in case there were advices asked but not given, we will have to update advice
@@ -88,6 +91,7 @@ class Migrate_To_3_2_0(Migrator):
                         if not isinstance(advice['comment'], unicode):
                             advice_comment = unicode(advice_comment, 'utf-8')
                         # find the row_id if it is an automatic advice
+                        row_id = ''
                         if not advice['optional']:
                             if groupId in specialAutomaticAdviceHandling:
                                 row_id = specialAutomaticAdviceHandling[groupId]
