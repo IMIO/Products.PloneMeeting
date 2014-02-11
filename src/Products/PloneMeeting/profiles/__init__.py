@@ -362,11 +362,11 @@ class MeetingConfigDescriptor(Descriptor):
         # Maximum number of meetings or decisions shown in the meeting and
         # decision portlets. If overflow, a combo box is shown instead of a
         # list of links.
-        self.maxShownMeetings = 10
+        self.maxShownMeetings = 5
         # If a decision if maxDaysDecisions old (or older), it is not shown
         # anymore in the "decisions" portlet. This decision may still be
         # consulted by clicking on "all decisions" in the same portlet.
-        self.maxDaysDecisions = 14
+        self.maxDaysDecisions = 60
         # Which view do you want to select when entering a PloneMeeting folder ?
         self.meetingAppDefaultView = 'topic_searchallmeetings'
         # In the meetingitems_list.pt, you can choose which columns are shown
@@ -375,7 +375,7 @@ class MeetingConfigDescriptor(Descriptor):
 
         # In item-related topic results, what columns are shown?
         self.itemColumns = ['creationDate', 'creator', 'state', 'annexes',
-                            'advices', 'actions']
+                            'annexesDecision', 'advices', 'actions', 'meeting']
         # In meeting-related topic results, what columns are shown?
         self.meetingColumns = ['creationDate', 'creator', 'state', 'actions']
         # Lists of available, meeting and late-items are paginated. What are
@@ -428,7 +428,7 @@ class MeetingConfigDescriptor(Descriptor):
         # corresponding powerObservers group will see the item/meeting
         self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'refused', 'delayed']
         self.meetingPowerObserversStates = ['frozen', 'decided', 'closed']
-        self.usedAdviceTypes = ['positive', 'negative']
+        self.usedAdviceTypes = ('positive', 'positive_with_remarks', 'negative', 'nil')
         self.defaultAdviceType = 'positive'
         # When advice mandatoriness is enabled, it is not possible to put an
         # item in a meeting while madatory advices are not all positive.
@@ -437,9 +437,9 @@ class MeetingConfigDescriptor(Descriptor):
         # after at least one advice has been given, the advice comes back to
         # 'not_given'. By "an advice is updated", we mean: button "OK" is
         # pressed on meetingitem_edit or an annex is added or deleted on it.
-        self.enableAdviceInvalidation = True
+        self.enableAdviceInvalidation = False
         # Items where advice invalidation should be enabled.
-        self.itemAdviceInvalidateStates = ['proposed', 'validated', 'presented']
+        self.itemAdviceInvalidateStates = []
         self.adviceStyle = 'standard'
         self.transitionReinitializingDelays = ''
         self.customAdvisers = []
