@@ -1900,7 +1900,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("associated_groups_acronyms", domain=d, context=self.REQUEST)),
             ("annexes", translate("annexes", domain=d, context=self.REQUEST)),
             ("annexesDecision", translate("AnnexesDecision", domain=d, context=self.REQUEST)),
-            ("advices", translate("advices_config", domain=d, context=self.REQUEST)),
+            ("advices", translate("PloneMeeting_label_advices", domain=d, context=self.REQUEST)),
             ("privacy", translate("PloneMeeting_label_privacy", domain=d, context=self.REQUEST)),
             ("budgetInfos", translate("PloneMeeting_label_budgetInfos", domain=d, context=self.REQUEST)),
             ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
