@@ -271,8 +271,7 @@ class MeetingConfigDescriptor(Descriptor):
         # keep track of changes.
         self.historizedMeetingAttributes = []
         # Meeting states into which item events will be stored in item's history
-        self.recordMeetingHistoryStates = ('published', 'decided', 'closed',
-                                           'archived')
+        self.recordMeetingHistoryStates = ()
         # Do you want to use MeetingGroups as categories ? In this case, you
         # do not need to define categories anymore.
         self.useGroupsAsCategories = True
