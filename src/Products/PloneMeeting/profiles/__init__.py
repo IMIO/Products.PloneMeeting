@@ -346,17 +346,7 @@ class MeetingConfigDescriptor(Descriptor):
         # which, in the user interface, a click on the corresponding icon or
         # button will show a confirmation popup. In this popup, the user will
         # also be able to enter the workflow comment.
-        self.transitionsToConfirm = [
-            # All Meeting transitions, "forward" as well as "backward".
-            'Meeting.publish', 'Meeting.freeze', 'Meeting.decide',
-            'Meeting.close', 'Meeting.archive',
-            'Meeting.backToClosed', 'Meeting.backToDecided',
-            'Meeting.backToFrozen', 'Meeting.backToPublished',
-            'Meeting.republish', 'Meeting.backToCreated',
-            # Some important MeetingItem transitions
-            'MeetingItem.backToProposed', 'MeetingItem.backToItemCreated',
-            'MeetingItem.accept', 'MeetingItem.refuse', 'MeetingItem.delay',
-        ]
+        self.transitionsToConfirm = []
         self.useCopies = False
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
