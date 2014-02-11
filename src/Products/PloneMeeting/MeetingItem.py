@@ -88,7 +88,7 @@ class MeetingItemWorkflowConditions:
     security = ClassSecurityInfo()
 
     # In those states, the meeting is not closed.
-    meetingNotClosedStates = ('published', 'frozen', 'decided')
+    meetingNotClosedStates = ('published', 'frozen', 'decided', 'decisions_published')
 
     # Here above are defined transitions an item must trigger to be presented
     # in a meeting.  Either we use this hardcoded list, or if we do not, relevant
