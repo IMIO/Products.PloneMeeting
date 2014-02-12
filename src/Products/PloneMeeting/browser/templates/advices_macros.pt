@@ -197,7 +197,8 @@
                               10
                          </span> day(s).
                     </span>
-                    <span tal:attributes="class string:discreet advice_delay_${delayInfos/delay_status_when_stopped};"
+                    <span i18n:translate=""
+                          tal:attributes="class string:discreet advice_delay_${delayInfos/delay_status_when_stopped};"
                           tal:condition="python: advice['delay_stopped_on'] and not advice['delay_started_on']">the advice was asked after this date.
                     </span>
                 </tal:itemViewableButNoMoreAdviseableWithDelay>
