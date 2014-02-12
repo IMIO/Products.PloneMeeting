@@ -2589,7 +2589,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         groups = tool.getGroupsForUser(suffix='advisers')
         # Add a '1' at the end of every group id: we want "given" advices.
+        # this search will return every advices
         groupIds = [g.id + '1' for g in groups]
+        groupIds = groupIds + ['delay__' + groupId for groupId in groupIds]
         # Create query parameters
         params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
