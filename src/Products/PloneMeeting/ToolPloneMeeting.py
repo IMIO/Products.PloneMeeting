@@ -706,7 +706,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # * The "write_permission" on field "MeetingItem.annexes" is set on
         #   "PloneMeeting: Add annex". It means that people having this
         #   permission may also disassociate annexes from items.
-        mc_folder.manage_permission('Add portal content', ('Owner', 'Manager', ), acquire=0)
         mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'], ('Owner', 'Manager', ), acquire=0)
         mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'], ('MeetingManager', 'Manager', ), acquire=0)
         # The following permission is needed for storing pod-generated documents

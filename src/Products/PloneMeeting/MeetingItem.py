@@ -2731,7 +2731,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                       role_to_remove='Contributor',
                                       suffixes=['advisers', ])
         # and remove specific permissions given to add advices
-        # make sure 'Add portal content' and 'PloneMeeting: Add advice' are not
+        # make sure the 'PloneMeeting: Add advice' permission is not
         # given to the 'Contributor' role
         self._removePermissionToRole(permission=AddAdvice,
                                      role_to_remove='Contributor',

@@ -7,6 +7,9 @@ from persistent.mapping import PersistentMapping
 
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+
+from Products.CMFCore.permissions import AddPortalContent
+
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.content.advice import MeetingAdvice
@@ -205,11 +208,9 @@ class Migrate_To_3_2_0(Migrator):
         logger.info('Done.')
 
     def _migrateMandatoryAdvisers(self):
-        '''
-          The MeetingGroup.givesMandatoryAdviceOn attribute disappeared and is replaced
-          by the MeetingConfig.customAdvisers management, so migrate givesMandatoryAdviceOn
-          attributes.
-        '''
+        '''The MeetingGroup.givesMandatoryAdviceOn attribute disappeared and is replaced
+           by the MeetingConfig.customAdvisers management, so migrate givesMandatoryAdviceOn
+           attributes.'''
         logger.info('Migrating mandatory advisers...')
         # just migrate active MeetingGroups givesMandatoryAdviceOn attribute
         # but remove existing givesMandatoryAdviceOn attribute on every groups
@@ -347,6 +348,19 @@ class Migrate_To_3_2_0(Migrator):
                 mGroup.setItemAdviceViewStates(newValue)
         logger.info('Done.')
 
+    def _updateAddPortalContentOnMeetingConfigFolder(self):
+        '''The 'Add portal content' permission was managed on every meetingConfig folder
+           added in the user 'mymeetings' folder, we do not manage it anymore now, so we will
+           make it 'Acquire' parent permission definition.'''
+        logger.info('Updating the \'Add portal content\' permission for every meetingConfig folders...')
+        for userFolder in self.portal.Members.objectValues():
+            # if something else than a userFolder, pass
+            if not hasattr(aq_base(userFolder), 'mymeetings'):
+                continue
+            for mConfigFolder in userFolder.mymeetings.objectValues():
+                mConfigFolder.manage_permission(AddPortalContent, acquire=True)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.0...')
         # reinstall so 'getDeliberation' index is added and computed, new 'meetingadvice' type is installed, ...
@@ -363,6 +377,7 @@ class Migrate_To_3_2_0(Migrator):
         self._finishExternalApplicationRemoval()
         self._addMissingTopics()
         self._adaptMeetingGroupsAdviceStates()
+        self._updateAddPortalContentOnMeetingConfigFolder()
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['reference_catalog', ],
@@ -386,7 +401,8 @@ def migrate(context):
        10) Clean ItemAnnexes and DecisionAnnexes references on items;
        11) Finish 'ExternalApplication' removal;
        12) Add missing topics regarding the 'send back to proposing group' WFAdaptation;
-       13) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
+       13) Update AddPortalContent permission on every meetingConfig user folder;
+       14) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
     '''
     Migrate_To_3_2_0(context).run()
 # ------------------------------------------------------------------------------
