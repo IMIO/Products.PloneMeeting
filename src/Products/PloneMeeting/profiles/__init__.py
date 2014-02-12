@@ -432,7 +432,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.defaultAdviceType = 'positive'
         # When advice mandatoriness is enabled, it is not possible to put an
         # item in a meeting while madatory advices are not all positive.
-        self.enforceAdviceMandatoriness = True
+        self.enforceAdviceMandatoriness = False
         # When advice invalidation is enabled, every time an item is updated
         # after at least one advice has been given, the advice comes back to
         # 'not_given'. By "an advice is updated", we mean: button "OK" is
