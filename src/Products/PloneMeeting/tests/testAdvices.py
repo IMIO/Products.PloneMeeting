@@ -35,6 +35,7 @@ from plone.app.testing import login
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
+from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAdvice
@@ -99,6 +100,9 @@ class testAdvices(PloneMeetingTestCase):
         self.create('Meeting', date=meetingDate)
         for item in (item1, item2, item3):
             self.presentItem(item)
+        self.assertEquals(item1.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
+        self.assertEquals(item2.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
+        self.assertEquals(item3.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
         # item1 still viewable because the item an advice is asked for is still viewable in the 'presented' state...
         login(self.portal, 'pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
@@ -655,6 +659,9 @@ class testAdvices(PloneMeetingTestCase):
            The 2 dates are only reinitialized to None if the user
            triggers the MeetingConfig.transitionReinitializingDelays.
         '''
+        # make advice giveable when item is 'validated'
+        self.meetingConfig.setItemAdviceStates(('validated', ))
+        self.meetingConfig.setItemAdviceEditStates(('validated', ))
         self.changeUser('pmManager')
         # configure one automatic adviser with delay
         # and ask one non-delay-aware optional adviser
@@ -666,7 +673,11 @@ class testAdvices(PloneMeetingTestCase):
               'for_item_created_until': '',
               'delay': '5',
               'delay_label': ''}, ])
-        item = self.create('MeetingItem')
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance'
+        }
+        item = self.create('MeetingItem', **data)
         item.setOptionalAdvisers(('vendors', ))
         item.at_post_edit_script()
         # advice are correctly asked
@@ -676,12 +687,19 @@ class testAdvices(PloneMeetingTestCase):
                           [None, None])
         self.assertEquals([advice['delay_stopped_on'] for advice in item.adviceIndex.values()],
                           [None, None])
+        # propose the item, nothing should have changed
+        self.proposeItem(item)
+        self.assertEquals(item.adviceIndex.keys(), ['vendors', 'developers'])
+        self.assertEquals([advice['delay_started_on'] for advice in item.adviceIndex.values()],
+                          [None, None])
+        self.assertEquals([advice['delay_stopped_on'] for advice in item.adviceIndex.values()],
+                          [None, None])
         # now do delays start
         # delay will start when the item advices will be giveable
-        # advices are giveable when item is proposed, so propose the item
+        # advices are giveable when item is validated, so validate the item
         # this will initialize the 'delay_started_on' date
-        self.proposeItem(item)
-        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.validateItem(item)
+        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['validated'])
         # we have datetime now in 'delay_started_on' and still nothing in 'delay_stopped_on'
         self.assertTrue(isinstance(item.adviceIndex['developers']['delay_started_on'], datetime))
         self.assertTrue(item.adviceIndex['developers']['delay_stopped_on'] is None)
@@ -690,11 +708,12 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
         # if we go on, the 'delay_started_on' date does not change anymore, even in a state where
         # advice are not giveable anymore, but at this point, the 'delay_stopped_date' will be set.
-        # We set the item in 'validated'
+        # We present the item
+        self.create('Meeting', date=DateTime('2012/01/01'))
         saved_developers_start_date = item.adviceIndex['developers']['delay_started_on']
         saved_vendors_start_date = item.adviceIndex['vendors']['delay_started_on']
-        self.validateItem(item)
-        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['validated'])
+        self.presentItem(item)
+        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
         self.assertEquals(item.adviceIndex['developers']['delay_started_on'], saved_developers_start_date)
         self.assertEquals(item.adviceIndex['vendors']['delay_started_on'], saved_vendors_start_date)
         # the 'delay_stopped_on' is now set on the delay-aware advice
@@ -856,6 +875,7 @@ class testAdvices(PloneMeetingTestCase):
         # not asked, aka not in item.adviceIndex
         self.changeUser('pmAdviser1')
         self.assertTrue(not 'developers' in item.adviceIndex)
+        self.failUnless(self.hasPermission(AddPortalContent, item))
         self.failUnless(self.hasPermission(AddAdvice, item))
         self.failUnless(self.hasPermission(View, item))
         # he can actually give it

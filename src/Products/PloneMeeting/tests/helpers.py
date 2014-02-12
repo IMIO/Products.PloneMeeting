@@ -60,7 +60,8 @@ class PloneMeetingTestingHelpers:
 
     WF_STATE_NAME_MAPPINGS = {'itemcreated': 'itemcreated',
                               'proposed': 'proposed',
-                              'validated': 'validated'}
+                              'validated': 'validated',
+                              'presented': 'presented'}
 
     WF_TRANSITION_NAME_MAPPINGS = {
         'backToItemCreated': 'backToItemCreated',
