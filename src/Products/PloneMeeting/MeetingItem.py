@@ -2932,10 +2932,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # base help message is based on the fact that advice is optional or not
         help_msg = ''
         if adviceInfos['optional']:
-            help_msg = translate('This optional advice was asked by the item creators '
-                                 '(shown by his title being between brackets)',
-                                 domain="PloneMeeting",
-                                 context=self.REQUEST)
+            # the advice was not asked but given by a super adviser
+            if adviceInfos['not_asked']:
+                help_msg = translate('This optional advice was given of initiative by a power adviser',
+                                     domain="PloneMeeting",
+                                     context=self.REQUEST)
+            else:
+                help_msg = translate('This optional advice was asked by the item creators '
+                                     '(shown by his title being between brackets)',
+                                     domain="PloneMeeting",
+                                     context=self.REQUEST)
         else:
             help_msg = translate('This automatic advice has been asked by the application '
                                  '(shown by his title not being between brackets)',
