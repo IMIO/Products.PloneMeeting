@@ -9,6 +9,16 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.2.1 (unreleased)
 ------------------
+
+- Added imio.actionspanel package in buildout "base.cfg" file.
+  [lcaballero, macagua]
+- Added more versions pinned in "versions-dev.cfg" file.
+  [lcaballero, macagua]
+- Added more support for internationalization in workflows.
+  [lcaballero, macagua]
+- Added more strings classifiers and metadata items for this package
+  [lcaballero, macagua]
+
 - Nothing yet
 
 3.2.0 (2014-02-12)
