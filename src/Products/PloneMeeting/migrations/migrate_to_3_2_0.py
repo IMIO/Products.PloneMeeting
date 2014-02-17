@@ -367,6 +367,7 @@ class Migrate_To_3_2_0(Migrator):
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self._configureCatalogIndexesAndMetadata()
         self._initDefaultBudgetHTML()
+        self._adaptMeetingGroupsAdviceStates()
         self._migrateMandatoryAdvisers()
         self._updateAdvices()
         self._addBudgetImpactEditorsGroupsByMeetingConfig()
@@ -376,7 +377,6 @@ class Migrate_To_3_2_0(Migrator):
         self._cleanReferencesOnItems()
         self._finishExternalApplicationRemoval()
         self._addMissingTopics()
-        self._adaptMeetingGroupsAdviceStates()
         self._updateAddPortalContentOnMeetingConfigFolder()
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
