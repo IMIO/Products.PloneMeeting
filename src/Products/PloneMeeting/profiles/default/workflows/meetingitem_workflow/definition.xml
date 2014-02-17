@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
-<dc-workflow workflow_id="meetingitem_workflow"
-             title="meetingitem_workflow"
+<dc-workflow xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+             i18n:domain="plone"
+             workflow_id="meetingitem_workflow"
+             title="Meeting Item Workflow"
+             description="Workflow for every meeting items of tool PloneMeeting."
              state_variable="review_state"
-             initial_state="itemcreated"
-             xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-             i18n:domain="plone">
+             initial_state="itemcreated">
  <permission>View</permission>
  <permission>Access contents information</permission>
  <permission>Review portal content</permission>

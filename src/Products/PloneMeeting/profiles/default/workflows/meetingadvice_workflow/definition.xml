@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
-<dc-workflow workflow_id="meetingadvice_workflow"
-             title="meetingadvice_workflow"
+<dc-workflow xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+             i18n:domain="plone"
+             workflow_id="meetingadvice_workflow"
+             title="Meeting Advice Workflow"
+             description="Workflow for advices into a meeting."
              state_variable="review_state"
-             initial_state="advice_under_edit"
-             xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-             i18n:domain="plone">
+             initial_state="advice_under_edit">
  <permission>View</permission>
  <permission>Access contents information</permission>
  <permission>Modify portal content</permission>

@@ -149,7 +149,8 @@ class MeetingItemWorkflowConditions:
     def mayValidate(self):
         # We check if the current user is MeetingManager to allow transitions
         # for recurring items added in a meeting
-        user = self.context.portal_membership.getAuthenticatedMember()
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        user = membershipTool.getAuthenticatedMember()
         if (checkPermission(ReviewPortalContent, self.context) or
             user.has_role('MeetingManager')) and \
            (not self.context.isDefinedInTool()):
@@ -208,7 +209,8 @@ class MeetingItemWorkflowConditions:
         # workflow transition, we also check if the current user is
         # MeetingManager, to allow transitions for recurring items added in a
         # meeting.
-        user = self.context.portal_membership.getAuthenticatedMember()
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        user = membershipTool.getAuthenticatedMember()
         if not checkPermission(ReviewPortalContent, self.context) and not \
            user.has_role('MeetingManager'):
             return
@@ -260,7 +262,8 @@ class MeetingItemWorkflowConditions:
         """Specific guard for the 'return_to_proposing_group' wfAdaptation.
            As we have only one guard_expr for potentially several transitions departing
            from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
-        user = self.context.portal_membership.getAuthenticatedMember()
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        user = membershipTool.getAuthenticatedMember()
         if not checkPermission(ReviewPortalContent, self.context) and not \
            user.has_role('MeetingManager'):
             return
@@ -383,7 +386,8 @@ class MeetingItemWorkflowActions:
         preferredMeeting = self.context.getPreferredMeeting()
         if preferredMeeting != 'whatever':
             # Get the meeting from its UID
-            brains = self.context.uid_catalog.searchResults(UID=preferredMeeting)
+            uid_catalog = getToolByName(self.context, 'uid_catalog')
+            brains = uid_catalog.searchResults(UID=preferredMeeting)
             if brains:
                 meeting = brains[0].getObject()
                 if self.context.wfConditions().isLateFor(meeting):
@@ -997,9 +1001,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('decision').get(self, **kwargs)
         if keepWithNext:
             res = signatureNotAlone(res)
-        cfg = item.portal_plonemeeting.getMeetingConfig(item)
-        adaptations = cfg.getWorkflowAdaptations()
         tool = getToolByName(item, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        adaptations = cfg.getWorkflowAdaptations()
         if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
            item.getMeeting().queryState() == 'decided' and not tool.isManager():
             return translate('decision_under_edit',
@@ -1015,9 +1019,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the motivation/decision for non-managers if meeting state is 'decided.'''
         item = self.getSelf()
-        cfg = item.portal_plonemeeting.getMeetingConfig(item)
-        adaptations = cfg.getWorkflowAdaptations()
         tool = getToolByName(item, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        adaptations = cfg.getWorkflowAdaptations()
         if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
            item.getMeeting().queryState() == 'decided' and not tool.isManager():
             return translate('decision_under_edit',
@@ -1036,7 +1040,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def validate_category(self, value):
         '''Checks that, if we do not use groups as categories, a category is
            specified.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
         # Value could be '_none_' if it was displayed as listbox or None if
         # it was displayed as radio buttons...  Category use 'flex' format
         if (not self.isDefinedInTool()) and \
@@ -2927,10 +2932,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # base help message is based on the fact that advice is optional or not
         help_msg = ''
         if adviceInfos['optional']:
-            help_msg = translate('This optional advice was asked by the item creators '
-                                 '(shown by his title being between brackets)',
-                                 domain="PloneMeeting",
-                                 context=self.REQUEST)
+            # the advice was not asked but given by a super adviser
+            if adviceInfos['not_asked']:
+                help_msg = translate('This optional advice was given of initiative by a power adviser',
+                                     domain="PloneMeeting",
+                                     context=self.REQUEST)
+            else:
+                help_msg = translate('This optional advice was asked by the item creators '
+                                     '(shown by his title being between brackets)',
+                                     domain="PloneMeeting",
+                                     context=self.REQUEST)
         else:
             help_msg = translate('This automatic advice has been asked by the application '
                                  '(shown by his title not being between brackets)',

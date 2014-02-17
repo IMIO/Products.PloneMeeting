@@ -548,11 +548,11 @@ function askObjectHistory(hookId, objectUrl, maxPerPage, startNumber) {
 // subfunction called by asyncToggleIcon
 function toggleIcon(UID, img_tag, baseUrl, viewName, baseSelector) {
   var selector = baseSelector + UID;
-  var $span = jq(selector);
+  var $span = $(selector);
   if ($span.length == 1) {
-    var $old = jq('img', $span);
+    var $old = $('img', $span);
     $span.empty();
-    var $img = jq(img_tag).appendTo($span);
+    var $img = $(img_tag).appendTo($span);
     // only redefine a onclick if not already defined in the HTML
     // this way, if a specific onclick is defined by the called view, we keep it
     if ($img.attr('onclick') == null) {
@@ -565,7 +565,7 @@ function toggleIcon(UID, img_tag, baseUrl, viewName, baseSelector) {
 
 // function that toggle an icon by calling the p_viewName view
 function asyncToggleIcon(UID, baseUrl, viewName, baseSelector) {
-  jq.ajax({
+  $.ajax({
     url: baseUrl + "/" + viewName,
     dataType: 'html',
     data: {UID:UID},
