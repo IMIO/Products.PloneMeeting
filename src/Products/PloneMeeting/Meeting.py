@@ -1412,7 +1412,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
           having this duty...  This is only relevant if MeetingUsers are enabled.
         '''
         meeting = self.getSelf()
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = getToolByName(meeting, 'portal_plonemeeting')
         # either we use free textarea to define assembly...
         if meeting.getAssembly():
             return tool.toHTMLStrikedContent(meeting.getAssembly())
