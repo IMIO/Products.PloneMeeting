@@ -843,7 +843,7 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers(('vendors', ))
         item.at_post_create_script()
         self.proposeItem(item)
-        self.assertTrue(item.queryState(), 'proposed')
+        self.assertTrue(item.queryState() == 'proposed')
         # the advice is giveable by the vendors
         self.changeUser('pmReviewer2')
         self.assertTrue('vendors' in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
@@ -859,7 +859,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.validateItem(item)
         self.changeUser('pmReviewer2')
-        self.assertTrue(item.queryState(), 'validated')
+        self.assertTrue(item.queryState() == 'validated')
         self.assertTrue('vendors' in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
 
     def test_pm_PowerAdvisers(self):

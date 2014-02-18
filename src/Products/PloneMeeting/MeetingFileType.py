@@ -112,6 +112,32 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         '''Calculates the icon for the AT default view'''
         self.getIcon()
 
+    security.declarePrivate('validate_relatedTo')
+    def validate_relatedTo(self, value):
+        '''We can not change the relatedTo if it is in use by an existing MeetingFile.'''
+        # if value was not changed, no problem
+        if value == self.getRelatedTo():
+            return
+        # the link between a MeetingFile and a MeetingFileType is a reference
+        # so we will check if the current MFT has back references
+        if self.getBRefs():
+            if self.getRelatedTo() == 'advice':
+                # display msg specifying that an advice annex is using this mft
+                # and add a link to the item the advice is given on
+                item = self.getBRefs()[0].getParentNode().getParentNode()
+                return translate('cannot_change_inuse_advice_relatedto',
+                                 domain='PloneMeeting',
+                                 mapping={'item_url': item.absolute_url()},
+                                 context=self.REQUEST)
+            else:
+                # display msg specifying that an item annex is using this mft
+                # and add a link to the item the annex is added in
+                item = self.getBRefs()[0].getParentNode()
+                return translate('cannot_change_inuse_item_relatedto',
+                                 domain='PloneMeeting',
+                                 mapping={'item_url': item.absolute_url()},
+                                 context=self.REQUEST)
+
     security.declarePrivate('listRelatedTo')
     def listRelatedTo(self):
         res = []

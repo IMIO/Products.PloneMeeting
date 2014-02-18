@@ -440,9 +440,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
           - conversion_error : there was an error during MeetingFile conversion.  Manager have access in the UI to more infos
           - successfully_converted : the MeetingFile is converted correctly
         """
-        tool = getToolByName(self, 'portal_plonemeeting')
-        if not tool.getEnableAnnexPreview():
-            return ''
         annotations = IAnnotations(self)
         # not_convertable or awaiting conversion?
         if not 'collective.documentviewer' in annotations.keys() or not self.isConvertable():

@@ -9,7 +9,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.2.1 (unreleased)
 ------------------
-
+- Make sure a MeetingGroup is not used in MeetingConfig.customAdvisers
+  and MeetingConfig.powerAdvisersGroups before deleting it
+- Make sure the MeetingFileType.relatedTo can not be changed if
+  it is used in the application by a MeetingFile
+- Display relatedTo information in the table showing defined MeetingFileTypes
 - Added imio.actionspanel package in buildout "base.cfg" file.
   [lcaballero, macagua]
 - Added more versions pinned in "versions-dev.cfg" file.
@@ -18,8 +22,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   [lcaballero, macagua]
 - Added more strings classifiers and metadata items for this package
   [lcaballero, macagua]
-
-- Nothing yet
 
 3.2.0 (2014-02-12)
 ------------------

@@ -42,7 +42,7 @@
     <tr>
       <tal:comment replace="nothing">Title</tal:comment>
       <th class="pm_listing_th_title" tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
-        <span i18n:translate="listingheader_title"></span>
+        <span i18n:translate="listingheader_item_title"></span>
         <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
       </th>
 

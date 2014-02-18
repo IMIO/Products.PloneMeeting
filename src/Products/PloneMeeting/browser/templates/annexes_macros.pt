@@ -192,13 +192,13 @@
           tal:condition="annexes"
           width="100%" i18n:domain="plone">
      <thead>
-     <tr>
-       <th class="nosort" i18n:translate="">listingheader_title</th>
-       <th class="nosort" i18n:translate="pm_creator" i18n:domain="PloneMeeting"></th>
-       <th class="nosort" i18n:translate="pm_creation_date" i18n:domain="PloneMeeting"></th>
-       <th class="nosort" i18n:translate="PloneMeeting_label_toPrint" i18n:domain="PloneMeeting" tal:condition="meetingConfig/getEnableAnnexToPrint">To print?</th>
-       <th class="nosort" i18n:translate="">listingheader_size</th>
-       <th class="nosort" i18n:translate="" tal:condition="python:member.has_permission('Delete objects', here)">heading_actions</th>
+     <tr i18n:domain="PloneMeeting">
+       <th class="nosort" i18n:translate="listingheader_title">Title</th>
+       <th class="nosort" i18n:translate="pm_creator">Creator</th>
+       <th class="nosort" i18n:translate="pm_creation_date">Creation date</th>
+       <th class="nosort" i18n:translate="PloneMeeting_label_toPrint" tal:condition="meetingConfig/getEnableAnnexToPrint">To print?</th>
+       <th class="nosort" i18n:translate="listingheader_size" i18n:domain="plone">Size</th>
+       <th class="nosort" i18n:translate="heading_actions" i18n:domain="plone" tal:condition="python:member.has_permission('Delete objects', here)">Actions</th>
      </tr>
      </thead>
      <tbody>

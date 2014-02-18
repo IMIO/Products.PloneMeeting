@@ -209,7 +209,7 @@
           <label i18n:translate="search_keywords"></label><br class="discreet"/>&nbsp;&nbsp;
 
           <input type="radio" name="item_keywords_target" value="Title" id="item_Title"/>
-          <label for="item_Title" i18n:translate="PloneMeeting_label_title" class="noborder"></label>&nbsp;
+          <label for="item_Title" i18n:translate="PloneMeeting_label_itemTitle" class="noborder"></label>&nbsp;
 
           <input type="radio" name="item_keywords_target" value="Description" id="item_Description"/>
           <label for="item_Description" i18n:translate="PloneMeeting_label_description" class="noborder"></label>&nbsp;
