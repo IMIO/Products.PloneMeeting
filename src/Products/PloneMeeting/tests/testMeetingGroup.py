@@ -31,7 +31,7 @@ class testMeetingGroup(PloneMeetingTestCase):
     '''Tests the MeetingCategory class methods.'''
 
     def test_pm_CanNotRemoveUsedMeetingGroup(self):
-        '''While removing a MeetingGroup, it should raise if it is used on an item...'''
+        '''While removing a MeetingGroup, it should raise if it is used somewhere...'''
         self.changeUser('pmManager')
         # create an item
         item = self.create('MeetingItem')
@@ -40,14 +40,34 @@ class testMeetingGroup(PloneMeetingTestCase):
         # now try to remove corresponding group
         self.changeUser('admin')
 
-        # 1) fails because used in the configuration, in selectableCopyGroups
+        # 1) fails because used in the configuration, in
+        # selectableCopyGroups, customAdvisers or powerAdvisersGroups
+        self.failIf(self.meetingConfig.getCustomAdvisers())
+        self.failIf(self.meetingConfig.getPowerAdvisersGroups())
         self.failUnless('developers_reviewers' in self.meetingConfig.getSelectableCopyGroups())
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
         self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingconfig')
-        # so removes selectableCopyGroups from the meetingConfigs
+        # so remove selectableCopyGroups from the meetingConfigs
         self.meetingConfig.setSelectableCopyGroups(())
         self.meetingConfig2.setSelectableCopyGroups(())
+        # define customAdvisers, the exception is also raised
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'developers',
+              'delay': '5', }, ])
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingconfig')
+        # so remove customAdvisers
+        self.meetingConfig.setCustomAdvisers([])
+        # define powerAdvisersGroups, the exception is also raised
+        self.meetingConfig.setPowerAdvisersGroups(['developers', ])
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingconfig')
+        # so remove powerAdvisersGroups
+        self.meetingConfig.setPowerAdvisersGroups([])
 
         # 2) fails because the corresponding Plone groups are not empty
         with self.assertRaises(BeforeDeleteException) as cm:

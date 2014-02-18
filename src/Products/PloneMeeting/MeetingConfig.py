@@ -3125,15 +3125,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             brains = self.portal_catalog(portal_type=self.getMeetingTypeName())
             if brains:
                 # We found at least one Meeting.
-                raise BeforeDeleteException, \
-                    "can_not_delete_meetingconfig_meeting"
+                raise BeforeDeleteException("can_not_delete_meetingconfig_meeting")
             brains = self.portal_catalog(portal_type=self.getItemTypeName())
             if brains:
                 # We found at least one MeetingItem.
-                raise BeforeDeleteException, \
-                    "can_not_delete_meetingconfig_meetingitem"
+                raise BeforeDeleteException("can_not_delete_meetingconfig_meetingitem")
             # Check that every meetingConfig folder of Members is empty.
-            members = self.portal_membership.getMembersFolder()
+            membershipTool = getToolByName(self, 'portal_membership')
+            members = membershipTool.getMembersFolder()
             meetingFolderId = self.getId()
             for member in members.objectValues():
                 # Get the right meetingConfigFolder
@@ -3143,8 +3142,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         # We found the right folder, check if it is empty
                         configFolder = getattr(root_folder, meetingFolderId)
                         if configFolder.objectValues():
-                            raise BeforeDeleteException, \
-                                "can_not_delete_meetingconfig_meetingfolder"
+                            raise BeforeDeleteException("can_not_delete_meetingconfig_meetingfolder")
             # If everything is OK, we can remove every meetingFolder
             for member in members.objectValues():
                 # Get the right meetingConfigFolder
