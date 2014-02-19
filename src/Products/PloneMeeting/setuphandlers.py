@@ -28,6 +28,7 @@ from zope.i18n import translate
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import \
     WorkflowPolicyConfig_id
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.utils import updateIndexes
@@ -178,7 +179,7 @@ def postInstall(context):
             'CMFPlacefulWorkflow'].manage_addWorkflowPolicyConfig()
 
     pol = ppw.portal_plonemeeting_policy
-    pol.setTitle('PloneMeeting tool policy')
+    pol.setTitle(_(u'PloneMeeting tool policy'))
     pol.setChain('Topic', ('plonemeeting_activity_workflow',))
     pol.setChainForPortalTypes(
         ('MeetingGroup', 'MeetingConfig', 'MeetingFileType',
