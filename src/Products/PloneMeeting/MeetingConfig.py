@@ -1843,8 +1843,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if '' in values:
             values.remove('')
         v_set = set(values)
-        # try to get itemAdvicesStates from REQUEST in case we just changed the value
-        # of itemAdvicesStates, we must consider this new value and not the value stored in self.getItemAdviceStates
+        # try to get itemAdviceStates from REQUEST in case we just changed the value
+        # of itemAdviceStates, we must consider this new value and not the value stored in self.getItemAdviceStates
         itemAdvicesStatesFromRequest = self.REQUEST.get('itemAdviceStates', ())
         if '' in itemAdvicesStatesFromRequest:
             itemAdvicesStatesFromRequest.remove('')
