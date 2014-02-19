@@ -22,7 +22,7 @@
               tal:attributes="onClick python: 'href: window.location=\'%s\'' % meetingFolder.absolute_url();
                               src string:$portal_url/pm_home.png;
                               title meetingConfig/getName"/>
-         <img style="cursor:pointer" title="hs_configuration" i18n:attributes="title"
+         <img style="cursor:pointer" title="pm_configuration" i18n:attributes="title"
               tal:condition="python: member.has_role('Manager')"
               tal:attributes="onClick python: 'href: window.location=\'%s\'' % meetingConfig.absolute_url();
                               src string:$portal_url/pm_config.png"/>
