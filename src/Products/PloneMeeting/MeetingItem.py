@@ -2509,15 +2509,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return True
 
     security.declarePublic('printAdvicesInfos')
-    def printAdvicesInfos(self, withDelay=False, withDelayLabel=True, withAuthor=True):
+    def printAdvicesInfos(self,
+                          withAdvicesTitle=True,
+                          withDelay=False,
+                          withDelayLabel=True,
+                          withAuthor=True):
         '''Helper method to have a printable version of advices.'''
         # bbb compatible fix, as printAdvicesInfos was defined in a profile before...
         self = self.getSelf()
         membershipTool = getToolByName(self, 'portal_membership')
         itemAdvicesByType = self.getAdvicesByType()
-        res = "<p><u><b>%s :</b></u></p>" % translate('PloneMeeting_label_advices',
-                                                      domain='PloneMeeting',
-                                                      context=self.REQUEST)
+        res = "<p class='pmAdvices'>"
+        if withAdvicesTitle:
+            res += "<u><b>%s :</b></u><br />" % translate('PloneMeeting_label_advices',
+                                                          domain='PloneMeeting',
+                                                          context=self.REQUEST)
         for adviceType in itemAdvicesByType:
             for advice in itemAdvicesByType[adviceType]:
                 # if we have a delay and delay_label, we display it
@@ -2563,7 +2569,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                          domain='PloneMeeting',
                                                                          context=self.REQUEST),
                                                                comment))
-
+        res += u"</p>"
         if not itemAdvicesByType:
             return u"<p><u><b>%s : -</b></u></p>" % \
                 translate('PloneMeeting_label_advices',
