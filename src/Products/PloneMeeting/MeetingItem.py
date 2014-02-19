@@ -23,6 +23,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
+import cgi
 import re
 from datetime import datetime
 from datetime import timedelta
@@ -2533,11 +2534,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         else:
                             delayAwareMsg = "%s" % unicode(advice['delay_label'], 'utf-8')
                 if delayAwareMsg:
-                    delayAwareMsg = u" <i>(%s)</i>" % delayAwareMsg
-                    res = res + u"<u>%s %s:</u>" % (advice['name'],
+                    delayAwareMsg = u" <i>(%s)</i>" % cgi.escape(delayAwareMsg)
+                    res = res + u"<u>%s %s:</u>" % (cgi.escape(advice['name']),
                                                     delayAwareMsg, )
                 else:
-                    res = res + u"<u>%s:</u>" % advice['name']
+                    res = res + u"<u>%s:</u>" % cgi.escape(advice['name'])
 
                 # add advice type
                 res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice type',
@@ -2554,10 +2555,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice given by',
                                                                   domain='PloneMeeting',
                                                                   context=self.REQUEST),
-                                                                  unicode(author['fullname'], 'utf-8'), )
+                                                                  cgi.escape(unicode(author['fullname'], 'utf-8')), )
 
                 adviceComment = 'comment' in advice and advice['comment'] or '-'
-                comment = adviceComment and adviceComment.replace('\r', '').replace('\n', '').replace('\t', '') or '-'
+                comment = adviceComment and cgi.escape(adviceComment.replace('\r', '').replace('\n', '').replace('\t', '')) or '-'
                 res = res + (u"<br /><u>%s :</u> %s<p></p>" % (translate('Advice comment',
                                                                          domain='PloneMeeting',
                                                                          context=self.REQUEST),
