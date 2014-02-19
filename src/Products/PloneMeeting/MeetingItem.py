@@ -2569,12 +2569,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                          domain='PloneMeeting',
                                                                          context=self.REQUEST),
                                                                comment))
-        res += u"</p>"
         if not itemAdvicesByType:
-            return u"<p><u><b>%s : -</b></u></p>" % \
-                translate('PloneMeeting_label_advices',
-                          domain='PloneMeeting',
-                          context=self.REQUEST).encode('utf-8')
+            res += '-'
+        res += u"</p>"
 
         return res.encode('utf-8')
 
