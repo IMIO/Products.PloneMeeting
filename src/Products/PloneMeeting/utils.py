@@ -418,7 +418,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         return
     # Determine mail format (plain text or HTML)
     mailFormat = 'plain'
-    if cfg.getUserParam('mailFormat') == 'html':
+    if cfg.getUserParam('mailFormat', obj.REQUEST) == 'html':
         mailFormat = 'html'
     # Send the mail(s)
     try:
@@ -497,8 +497,8 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
         if not adap.includeMailRecipient(event, userId):
             continue
         # Has the user unsubscribed to this event in his preferences ?
-        itemEvents = cfg.getUserParam('mailItemEvents', userId=userId)
-        meetingEvents = cfg.getUserParam('mailMeetingEvents', userId=userId)
+        itemEvents = cfg.getUserParam('mailItemEvents', request=obj.REQUEST, userId=userId)
+        meetingEvents = cfg.getUserParam('mailMeetingEvents', request=obj.REQUEST, userId=userId)
         if (event not in itemEvents) and (event not in meetingEvents):
             continue
         # After all, we will add this guy to the list of recipients.
@@ -530,6 +530,7 @@ def sendAdviceToGiveMailIfRelevant(event):
         ploneGroup = event.object.acl_users.getGroup('%s_advisers' % groupId)
         for memberId in ploneGroup.getMemberIds():
             if 'adviceToGive' not in cfg.getUserParam('mailItemEvents',
+                                                      request=event.object.REQUEST,
                                                       userId=memberId):
                 continue
             # Send a mail to this guy

@@ -2638,8 +2638,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for advice in self.adviceIndex.itervalues():
                 if 'actor' in advice and (advice['actor'] != userId):
                     # Send a mail to the guy that gave the advice.
-                    if 'adviceInvalidated' in cfg.getUserParam(
-                       'mailItemEvents', userId=advice['actor']):
+                    if 'adviceInvalidated' in cfg.getUserParam('mailItemEvents',
+                                                               request=self.REQUEST,
+                                                               userId=advice['actor']):
                         recipient = tool.getMailRecipient(advice['actor'])
                         if recipient:
                             sendMail([recipient], self, 'adviceInvalidated')

@@ -229,7 +229,7 @@
 <metal:withOrWithoutPreview define-macro="withOrWithoutPreview"
                             tal:define="conversionStatus annex/conversionStatus;
                                         previewEnabled tool/getEnableAnnexPreview;
-                                        target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows') and '_blank' or '';">
+                                        target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows', context.REQUEST) and '_blank' or '';">
     <tal:withPreview define="isRealManager python: tool.isManager(realManagers=True);"
                      condition="previewEnabled">
        <a href="#"
@@ -284,20 +284,20 @@
                This makes it possible to display a actionMenuAX in a actionMenuAX and getting it working...</tal:comment>
 <metal:icons define-macro="annexesIcons"
      i18n:domain="PloneMeeting"
-     tal:define="annexesByType python: obj.restrictedTraverse('@@annexes').getAnnexesByType(relatedTo);
-                 DateTime python: modules['DateTime'];
-                 now python: DateTime.DateTime();
-                 target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows') and '_blank' or '';
-                 tool python: context.portal_plonemeeting;
-                 cssClasses python: 'contentActionsAX no-style-table';
-                 global count python:0;
-                 portal_url context/@@plone_portal_state/portal_url;
-                 previewEnabled tool/getEnableAnnexPreview;
-                 extra_css_class extra_css_class|nothing;">
+     tal:define="annexesByType python: obj.restrictedTraverse('@@annexes').getAnnexesByType(relatedTo);">
 
   <table tal:condition="annexesByType" cellpadding="0" cellspacing="0"
          class="contentActionsAX no-style-table">
-    <tr valign="top">
+    <tr valign="top"
+        tal:define="DateTime python: modules['DateTime'];
+                    now python: DateTime.DateTime();
+                    target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows', context.REQUEST) and '_blank' or '';
+                    tool python: context.portal_plonemeeting;
+                    cssClasses python: 'contentActionsAX no-style-table';
+                    global count python:0;
+                    portal_url context/@@plone_portal_state/portal_url;
+                    previewEnabled tool/getEnableAnnexPreview;
+                    extra_css_class extra_css_class|nothing;">
       <td tal:condition="python: relatedTo == 'item_decision'">
         <span class="discreet" style="padding-left: 0.7em;"
               i18n:translate="AnnexesDecisionShort"></span>

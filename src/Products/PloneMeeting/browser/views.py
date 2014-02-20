@@ -90,7 +90,7 @@ class PloneMeetingFolderView(BrowserView):
           Either redirect to a folder_view or to the plonemeeting_topic_view with a given topicId.
         """
         tool = self.context.portal_plonemeeting
-        default_view = tool.getMeetingConfig(self.context).getUserParam('meetingAppDefaultView')
+        default_view = tool.getMeetingConfig(self.context).getUserParam('meetingAppDefaultView', self.request)
         if default_view.startswith('folder_'):
             # a folder view will be used
             # as this kind of view is identified adding a 'folder_' at the beginning, we retrieve the

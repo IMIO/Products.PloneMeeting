@@ -50,7 +50,7 @@
   <tal:comment replace="nothing">Form submitted when a meeting/item needs to be generated as a document.</tal:comment>
   <form name="podTemplateForm" method="post"
         tal:attributes="action python: tool.absolute_url() + '/generateDocument';
-                        target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows') and '_blank' or ''">
+                        target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows', context.REQUEST) and '_blank' or ''">
     <input type="hidden" name="objectUid"/>
     <input type="hidden" name="templateId"/>
     <input type="hidden" name="itemUids" value=""/>
