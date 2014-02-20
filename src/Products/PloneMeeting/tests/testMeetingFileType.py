@@ -60,7 +60,7 @@ class testMeetingFileType(PloneMeetingTestCase):
         # try to change the value to 'advice' or 'item_decision', it fails...
         error_msg = translate('cannot_change_inuse_item_relatedto',
                               domain='PloneMeeting',
-                              mapping={'an_annex_using_mft_url': item.absolute_url()},
+                              mapping={'item_url': item.absolute_url()},
                               context=item.REQUEST)
         self.assertTrue(mft.validate_relatedTo('advice') == error_msg)
         self.assertTrue(mft.validate_relatedTo('item_decision') == error_msg)

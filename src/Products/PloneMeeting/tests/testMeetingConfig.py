@@ -339,9 +339,10 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '',
                            'delay_left_alert': '',
                            'delay_label': '', }, ]
+        groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
         wrong_date_msg = translate('custom_adviser_wrong_date_format',
                                    domain='PloneMeeting',
-                                   mapping={'groupName': customAdvisers[0]['group']},
+                                   mapping={'groupName': groupName},
                                    context=self.portal.REQUEST)
         self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_date_msg)
         # not a date, wrong format (YYYY/MM/DD) or extra blank are not valid dates
