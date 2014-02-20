@@ -1654,7 +1654,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # and check if encoded date is not in the past, it has to be in the future
                     # except if it was already set before
                     storedData = self._dataForCustomAdviserRowId(customAdviser['row_id'])
-                    if date_until.isPast() and not storedData['for_item_created_until'] == created_until:
+                    if date_until.isPast() and (not storedData or not storedData['for_item_created_until'] == created_until):
                         raise Exception
             except:
                 return translate('custom_adviser_wrong_date_format',
