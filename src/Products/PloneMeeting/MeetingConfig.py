@@ -1652,7 +1652,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     if not date_until.strftime('%Y/%m/%d') == created_until:
                         raise Exception
                     # and check if encoded date is not in the past, it has to be in the future
-                    if date_until.isPast():
+                    # except if it was already set before
+                    storedData = self._dataForCustomAdviserRowId(customAdviser['row_id'])
+                    if date_until.isPast() and not storedData['for_item_created_until'] == created_until:
                         raise Exception
             except:
                 return translate('custom_adviser_wrong_date_format',
@@ -1699,7 +1701,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         return item.absolute_url()
 
         # check that if a row changed, it is not already in use
-        # we can not change any value but the 'for_item_created_until' and only if it was empty before
+        # we can not change any logical value but the 'for_item_created_until'
+        # and only if it was empty before
         for customAdviser in value:
             # if we still have no value in the 'row_id', it means that it is a new row
             row_id = customAdviser['row_id']

@@ -528,6 +528,21 @@ class testMeetingConfig(PloneMeetingTestCase):
                                        context=self.portal.REQUEST)
         self.assertEquals(cfg.validate_customAdvisers([]), can_not_remove_msg)
 
+        # if the 'for_item_created_until' date was set, it validates if not changed
+        # even if the 'for_item_created_until' is now past
+        customAdvisersCreatedUntilSetAndPast = \
+            {'row_id': 'unique_id_123',
+             'group': 'vendors',
+             'gives_auto_advice_on': 'not:item/getBudgetRelated',
+             'for_item_created_from': '2013/01/01',
+             'for_item_created_until': '2013/01/15',
+             'gives_auto_advice_on_help_message': 'Auto help message changed',
+             'delay': '20',
+             'delay_left_alert': '',
+             'delay_label': 'Delay label changed', }
+        cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
+        self.failIf(cfg.validate_customAdvisers([customAdvisersCreatedUntilSetAndPast, ]))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
