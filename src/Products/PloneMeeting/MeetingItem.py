@@ -1350,6 +1350,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(('refused.png', 'icon_help_refused'))
             elif itemState == 'returned_to_proposing_group':
                 res.append(('return_to_proposing_group.png', 'icon_help_returned_to_proposing_group'))
+            elif itemState == 'prevalidated':
+                res.append(('prevalidate.png', 'icon_help_prevalidated'))
             # Display icons about sent/cloned to other meetingConfigs
             clonedToOtherMCIds = item._getOtherMeetingConfigsImAmClonedIn()
             for clonedToOtherMCId in clonedToOtherMCIds:
