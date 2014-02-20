@@ -488,7 +488,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            suffixes passed as argument are not empty. If it is the case, we do
            not return the group neither.  If p_onlyActive is True, we also check
            the MeetingGroup current review_state.
-           If p_caching is True (by default), the method call will be cached in the REQUEST.'''
+           If p_caching is True (by default), the method call will be cached in the REQUEST.
+           WARNING, we can not use ram.cache here because it can not be used when returning
+           persistent objects (single, list, dict, ... of persistent objects), so we need to manage
+           caching manually...'''
         data = None
         if caching:
             key = "tool-getmeetinggroups-%s-%s" % ((notEmptySuffix and notEmptySuffix.lower() or ''),
