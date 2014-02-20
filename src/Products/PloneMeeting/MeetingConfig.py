@@ -1654,7 +1654,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # and check if encoded date is not in the past, it has to be in the future
                     # except if it was already set before
                     storedData = self._dataForCustomAdviserRowId(customAdviser['row_id'])
-                    if date_until.isPast() and (not storedData or not storedData['for_item_created_until'] == created_until):
+                    if date_until.isPast() and (not storedData or
+                                                not storedData['for_item_created_until'] == created_until):
                         raise Exception
             except:
                 return translate('custom_adviser_wrong_date_format',
@@ -3365,22 +3366,32 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             rq.RESPONSE.redirect(editUrl)
 
     security.declarePublic('getUserParam')
-    def getUserParam(self, param, userId=None):
+    def getUserParam(self, param, userId=None, caching=True):
         '''Gets the value of the user-specific p_param, for p_userId if given,
            for the currently logged user if not. If user preferences are not
            enabled or if no MeetingUser instance is defined for the currently
-           logged user, this method returns the MeetingConfig-wide value.'''
-        obj = self
-        methodName = 'get%s%s' % (param[0].upper(), param[1:])
-        tool = getToolByName(self, 'portal_plonemeeting')
-        if tool.getEnableUserPreferences():
-            if not userId:
-                user = self.portal_membership.getAuthenticatedMember()
-            else:
-                user = self.portal_membership.getMemberById(userId)
-            if hasattr(self.meetingusers.aq_base, user.id):
-                obj = getattr(self.meetingusers, user.id)
-        return getattr(obj, methodName)()
+           logged user, this method returns the MeetingConfig-wide value.
+           If p_caching is True, the result will be cached.'''
+        data = None
+        if caching:
+            key = "meetingconfig-getuserparam-%s-%s" % (param, userId)
+            cache = IAnnotations(self.REQUEST)
+            data = cache.get(key, None)
+        if data is None:
+            obj = self
+            methodName = 'get%s%s' % (param[0].upper(), param[1:])
+            tool = getToolByName(self, 'portal_plonemeeting')
+            if tool.getEnableUserPreferences():
+                if not userId:
+                    user = self.portal_membership.getAuthenticatedMember()
+                else:
+                    user = self.portal_membership.getMemberById(userId)
+                if hasattr(self.meetingusers.aq_base, user.id):
+                    obj = getattr(self.meetingusers, user.id)
+            data = getattr(obj, methodName)()
+            if caching:
+                cache[key] = data
+        return data
 
     security.declarePublic('updateSearchParams')
     def updateSearchParams(self):
