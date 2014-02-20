@@ -136,12 +136,12 @@
                 </table>
                 <span class="discreet"
                    tal:condition="python: adviceType == 'not_given' and adviceMayBeAdded and not delayInfos"
-                   i18n:translate="">This advice has not been given yet.
+                   i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet.
                 </span>
                 <tal:adviceGiveableWithDelay condition="python: adviceType == 'not_given' and adviceMayBeAdded and delayInfos">
                     <span class="discreet"
                           tal:condition="python: delayInfos['delay_status'] in ['still_time', 'still_time_but_alert']"
-                          i18n:translate="">This advice has not been given yet, it can still be given until the <span tal:attributes="class string:advice_delay_${delayInfos/delay_status}"
+                          i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet, it can still be given until the <span tal:attributes="class string:advice_delay_${delayInfos/delay_status}"
                                                                                                                       i18n:name="advice_delay_limit_date"
                                                                                                                       tal:content="delayInfos/limit_date"></span>.
                     </span>
@@ -155,7 +155,7 @@
 
                 <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not itemIsViewableByGroup">
                     <span class="discreet"
-                       i18n:translate="">This advice is not viewable by the advisers of the group in the current item state (<span i18n:name="item_review_state"
+                       i18n:translate="">This advice is not viewable by the advisers of this group in the current item state (<span i18n:name="item_review_state"
                                                                                                                                    i18n:translate=""
                                                                                                                                    i18n:domain="plone"
                                                                                                                                    tal:content="item_review_state"
