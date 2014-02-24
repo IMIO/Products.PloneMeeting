@@ -9,6 +9,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.2.1 (unreleased)
 ------------------
+- Added caching for some methods called several times (ToolPloneMeeting.getMeetingGroups,
+  ToolPloneMeeting.getMeetingConfig, MeetingConfig.getUserParam)
 - Added improvement about internationalization in PloneMeeting tool workflow policy.
   [lcaballero, macagua]
 - Make sure a MeetingGroup is not used in MeetingConfig.customAdvisers

@@ -723,10 +723,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Based on p_context's portal type, we get the corresponding meeting
            config.'''
         data = None
-        if caching:
+        # we only do caching when we are sure that context portal_type
+        # is linked to only one MeetingConfig, it is the case for Meeting and MeetingItem
+        # portal_types, but if we have a 'Topic' or a 'Folder', we can not determinate
+        # in wich MeetingConfig it is, we can not do caching...
+        if caching and context.meta_type in ('Meeting', 'MeetingItem', ):
             key = "tool-getmeetingconfig-%s" % context.portal_type
             cache = IAnnotations(self.REQUEST)
             data = cache.get(key, None)
+        else:
+            caching = False
         if data is None:
             portalTypeName = context.getPortalTypeName()
             if portalTypeName in ('MeetingItem', 'Meeting'):
