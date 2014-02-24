@@ -3582,7 +3582,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getPredecessors(self):
         '''Returns the list of dict that contains infos about a predecessor.
            This method can be adapted.'''
-        pmtool = getToolByName(self.context, "portal_plonemeeting")
+        tool = getToolByName(self.context, "portal_plonemeeting")
         predecessor = self.context.getPredecessor()
         predecessors = []
         #retrieve every predecessors
@@ -3598,8 +3598,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             brefs = brefs[0].getBRefs('ItemPredecessor')
         res = []
         for predecessor in predecessors:
-            showColors = pmtool.showColorsForUser()
-            coloredLink = pmtool.getColoredLink(predecessor, showColors=showColors)
+            showColors = tool.showColorsForUser()
+            coloredLink = tool.getColoredLink(predecessor, showColors=showColors)
             #extract title from coloredLink that is HTML and complete it
             originalTitle = re.sub('<[^>]*>', '', coloredLink).strip()
             #remove '&nbsp;' left at the beginning of the string
@@ -3608,7 +3608,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting = predecessor.getMeeting()
             #display the meeting date if the item is linked to a meeting
             if meeting:
-                title = "%s (%s)" % (title, pmtool.formatDate(meeting.getDate()).encode('utf-8'))
+                title = "%s (%s)" % (title, tool.formatDate(meeting.getDate()).encode('utf-8'))
             #show that the linked item is not of the same portal_type
             if not predecessor.portal_type == self.context.portal_type:
                 title = title + '*'
