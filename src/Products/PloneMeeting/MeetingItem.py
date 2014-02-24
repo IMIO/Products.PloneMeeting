@@ -3436,7 +3436,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         newItem.sendMailIfRelevant('itemClonedToThisMC', 'Modify portal content',
                                    isRole=False, mapping=mapping)
         msg = 'sendto_%s_success' % destMeetingConfigId
-        plone_utils.addPortalMessage(translate(msg, domain="PloneMeeting", context=self.REQUEST), type='info')
+        plone_utils.addPortalMessage(translate(msg,
+                                               domain="PloneMeeting",
+                                               context=self.REQUEST),
+                                     type='info')
         backUrl = self.REQUEST['HTTP_REFERER'] or self.absolute_url()
         return self.REQUEST.RESPONSE.redirect(backUrl)
 
