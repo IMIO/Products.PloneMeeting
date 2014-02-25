@@ -338,20 +338,30 @@ class Migrate_To_3_2_0(Migrator):
             mappings[key] = '%s__state__%s' % (defaultCfgId, key)
         for mGroup in self.tool.getMeetingGroups():
             if mGroup.getItemAdviceStates():
+                # if migration already executed, break
+                if '__state__' in mGroup.getItemAdviceStates()[0]:
+                    break
                 newValue = [mappings[state] for state in mGroup.getItemAdviceStates()]
                 mGroup.setItemAdviceStates(newValue)
             if mGroup.getItemAdviceEditStates():
+                # if migration already executed, break
+                if '__state__' in mGroup.getItemAdviceEditStates()[0]:
+                    break
                 newValue = [mappings[state] for state in mGroup.getItemAdviceEditStates()]
                 mGroup.setItemAdviceEditStates(newValue)
             if mGroup.getItemAdviceViewStates():
+                # if migration already executed, break
+                if '__state__' in mGroup.getItemAdviceViewStates()[0]:
+                    break
                 newValue = [mappings[state] for state in mGroup.getItemAdviceViewStates()]
                 mGroup.setItemAdviceViewStates(newValue)
         logger.info('Done.')
 
-    def _updateAddPortalContentOnMeetingConfigFolder(self):
+    def _updateAddPortalContentPermission(self):
         '''The 'Add portal content' permission was managed on every meetingConfig folder
            added in the user 'mymeetings' folder, we do not manage it anymore now, so we will
-           make it 'Acquire' parent permission definition.'''
+           make it 'Acquire' parent permission definition.
+           It was also managed in the item workflow, but not anymore so update every items too...'''
         logger.info('Updating the \'Add portal content\' permission for every meetingConfig folders...')
         for userFolder in self.portal.Members.objectValues():
             # if something else than a userFolder, pass
@@ -359,6 +369,10 @@ class Migrate_To_3_2_0(Migrator):
                 continue
             for mConfigFolder in userFolder.mymeetings.objectValues():
                 mConfigFolder.manage_permission(AddPortalContent, acquire=True)
+        brains = self.portal.portal_catalog(meta_type='MeetingItem')
+        for brain in brains:
+            item = brain.getObject()
+            item.manage_permission(AddPortalContent, acquire=True)
         logger.info('Done.')
 
     def run(self):
@@ -377,7 +391,7 @@ class Migrate_To_3_2_0(Migrator):
         self._cleanReferencesOnItems()
         self._finishExternalApplicationRemoval()
         self._addMissingTopics()
-        self._updateAddPortalContentOnMeetingConfigFolder()
+        self._updateAddPortalContentPermission()
         # refresh reference_catalog as 2 ReferenceFields were removed on MeetingItem (annexes and annexesDecision)
         self.refreshDatabase(catalogs=True,
                              catalogsToRebuild=['reference_catalog', ],
@@ -401,7 +415,7 @@ def migrate(context):
        10) Clean ItemAnnexes and DecisionAnnexes references on items;
        11) Finish 'ExternalApplication' removal;
        12) Add missing topics regarding the 'send back to proposing group' WFAdaptation;
-       13) Update AddPortalContent permission on every meetingConfig user folder;
+       13) Update AddPortalContent permission on every meetingConfig user folder and items;
        14) Reinstall PloneMeeting so new index 'getDeliberation' is added and computed.
     '''
     Migrate_To_3_2_0(context).run()
