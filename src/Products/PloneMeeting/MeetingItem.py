@@ -96,7 +96,7 @@ class MeetingItemWorkflowConditions:
     # methods will try to do without...
     # the 2 values here above are linked
     useHardcodedTransitionsForPresentingAnItem = False
-    transitionsForPresentingAnItem = ('propose', 'validate', 'present')
+    transitionsForPresentingAnItem = ('propose', 'prevalidate', 'validate', 'present')
 
     def __init__(self, item):
         self.context = item
@@ -1971,7 +1971,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # self.transitionsForPresentingAnItem.  In some case this is usefull
                     # because the workflow is too complicated
                     for tr in item.wfConditions().transitionsForPresentingAnItem:
-                        wfTool.doActionFor(item, tr)
+                        try:
+                            wfTool.doActionFor(item, tr)
+                        except WorkflowException:
+                            # if a transition is not available, pass and try to execute following
+                            pass
                 del item.isRecurringItem
             except WorkflowException, wfe:
                 logger.warn(REC_ITEM_ERROR % (item.id, str(wfe)))
