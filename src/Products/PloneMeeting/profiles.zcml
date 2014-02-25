@@ -34,43 +34,19 @@
       for="Products.CMFPlone.interfaces.IPloneSiteRoot" />
 
   <genericsetup:upgradeStep
-      title="Go to PloneMeeting 3.0"
-      description=""
-      source="*"
-      destination="3.0"
-      handler="Products.PloneMeeting.migrations.migrate_to_3_0.migrate"
-      profile="Products.PloneMeeting:default" />
-
-  <genericsetup:upgradeStep
-      title="Go to PloneMeeting 3.0.2"
-      description=""
-      source="3.0"
-      destination="3.0.2"
-      handler="Products.PloneMeeting.migrations.migrate_to_3_0_2.migrate"
-      profile="Products.PloneMeeting:default" />
-
-  <genericsetup:upgradeStep
-      title="Go to PloneMeeting 3.0.3"
-      description=""
-      source="3.0.2"
-      destination="3.0.3"
-      handler="Products.PloneMeeting.migrations.migrate_to_3_0_3.migrate"
-      profile="Products.PloneMeeting:default" />
-
-  <genericsetup:upgradeStep
-      title="Go to PloneMeeting 3.1.0"
-      description=""
-      source="3.0.3"
-      destination="3.1.0"
-      handler="Products.PloneMeeting.migrations.migrate_to_3_1_0.migrate"
-      profile="Products.PloneMeeting:default" />
-
-  <genericsetup:upgradeStep
       title="Go to PloneMeeting 3.2.0"
       description=""
       source="3.1.0"
       destination="3.2.0"
       handler="Products.PloneMeeting.migrations.migrate_to_3_2_0.migrate"
+      profile="Products.PloneMeeting:default" />
+
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 3.2.1"
+      description=""
+      source="3.2.0"
+      destination="3.2.1"
+      handler="Products.PloneMeeting.migrations.migrate_to_3_2_1.migrate"
       profile="Products.PloneMeeting:default" />
 
   <!-- ##/code-section profiles.zcml-bottom -->
