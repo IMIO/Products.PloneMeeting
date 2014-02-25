@@ -61,9 +61,9 @@ def do(action, event):
     freezePodDocumentsIfRelevant(event.object, podTransition)
 
 
-def onItemTransition(obj, event):
+def onItemTransition(item, event):
     '''Called whenever a transition has been fired on an item.'''
-    if not event.transition or (obj != event.object):
+    if not event.transition or (item != event.object):
         return
     transitionId = event.transition.id
     if transitionId.startswith('backTo'):
@@ -73,56 +73,56 @@ def onItemTransition(obj, event):
     else:
         action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     # check if we need to send the item to another meetingConfig
-    if obj.queryState() in MeetingItem.itemPositiveDecidedStates:
-        otherMCs = obj.getOtherMeetingConfigsClonableTo()
+    if item.queryState() in MeetingItem.itemPositiveDecidedStates:
+        otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
             # if already cloned to another MC, pass.  This could be the case
             # if the item is accepted, corrected then accepted again
-            if not obj._checkAlreadyClonedToOtherMC(otherMC):
-                obj.cloneToOtherMeetingConfig(otherMC)
+            if not item._checkAlreadyClonedToOtherMC(otherMC):
+                item.cloneToOtherMeetingConfig(otherMC)
     do(action, event)
     # update local roles regarding copyGroups when changing item's state
-    obj.updateCopyGroupsLocalRoles()
+    item.updateCopyGroupsLocalRoles()
     # update the 'previous_review_state' index
-    obj.reindexObject(idxs=['previous_review_state', ])
+    item.reindexObject(idxs=['previous_review_state', ])
 
 
-def onMeetingTransition(obj, event):
+def onMeetingTransition(meeting, event):
     '''Called whenever a transition has been fired on a meeting.'''
-    if not event.transition or (obj != event.object):
+    if not event.transition or (meeting != event.object):
         return
     transitionId = event.transition.id
     action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
 
 
-def onMeetingGroupTransition(obj, event):
+def onMeetingGroupTransition(mGroup, event):
     '''Called whenever a transition has been fired on a MeetingGroup.'''
-    if not event.transition or (obj != event.object):
+    if not event.transition or (mGroup != event.object):
         return
     transitionId = event.transition.id
 
     if transitionId == 'deactivate':
         # Remove the group from every meetingConfigs.selectableCopyGroups
-        for mc in obj.portal_plonemeeting.objectValues('MeetingConfig'):
-            for ploneGroupId in obj.getPloneGroups(idsOnly=True):
+        for mc in mGroup.portal_plonemeeting.objectValues('MeetingConfig'):
+            for ploneGroupId in mGroup.getPloneGroups(idsOnly=True):
                 selectableCopyGroups = list(mc.getSelectableCopyGroups())
                 if ploneGroupId in selectableCopyGroups:
                     selectableCopyGroups.remove(ploneGroupId)
                 mc.setSelectableCopyGroups(selectableCopyGroups)
         # add a portal_message explaining what has been done to the user
-        plone_utils = getToolByName(obj, 'plone_utils')
+        plone_utils = getToolByName(mGroup, 'plone_utils')
         plone_utils.addPortalMessage(_('meetinggroup_removed_from_meetingconfigs_selectablecopygroups'), 'info')
 
 
-def onItemMoved(obj, event):
+def onItemMoved(item, event):
     '''Called when an item is pasted cut/pasted, we need to update annexIndex.'''
     # this is also called when removing an item, in this case, we do nothing
     if IObjectRemovedEvent.providedBy(event):
         return
-    if not hasattr(aq_base(obj), 'annexIndex'):
-        obj.annexIndex = PersistentList()
-    IAnnexable(obj).updateAnnexIndex()
+    if not hasattr(aq_base(item), 'annexIndex'):
+        item.annexIndex = PersistentList()
+    IAnnexable(item).updateAnnexIndex()
 
 
 def onItemAdded(item, event):
@@ -153,70 +153,70 @@ def onMeetingAdded(meeting, event):
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
 
 
-def onAdviceAdded(obj, event):
+def onAdviceAdded(advice, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
     # update advice_row_id
-    obj._updateAdviceRowId()
+    advice._updateAdviceRowId()
 
     # Add a place to store annexIndex
-    obj.annexIndex = PersistentList()
+    advice.annexIndex = PersistentList()
     # Create a "black list" of annex names. Every time an annex will be
     # created for this item, the name used for it (=id) will be stored here
     # and will not be removed even if the annex is removed. This way, two
     # annexes (or two versions of it) will always have different URLs, so
     # we avoid problems due to browser caches.
-    obj.alreadyUsedAnnexNames = PersistentList()
+    advice.alreadyUsedAnnexNames = PersistentList()
 
-    item = obj.getParentNode()
+    item = advice.getParentNode()
     item.updateAdvices()
     # make the entire _advisers group able to edit the meetingadvice
-    obj.manage_addLocalRoles('%s_advisers' % obj.advice_group, ('Editor', ))
+    advice.manage_addLocalRoles('%s_advisers' % advice.advice_group, ('Editor', ))
 
     # log
-    userId = obj.portal_membership.getAuthenticatedMember().getId()
+    userId = advice.portal_membership.getAuthenticatedMember().getId()
     logger = logging.getLogger('PloneMeeting')
     logger.info('Advice at %s created by "%s".' %
-                (obj.absolute_url_path(), userId))
+                (advice.absolute_url_path(), userId))
     # redirect to referer after add if it is not the edit form
     http_referer = item.REQUEST['HTTP_REFERER']
     if not http_referer.endswith('/edit'):
-        obj.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
+        advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
 
-def onAdviceModified(obj, event):
+def onAdviceModified(advice, event):
     '''Called when a meetingadvice is modified so we can warn parent item.'''
     # update advice_row_id
-    obj._updateAdviceRowId()
+    advice._updateAdviceRowId()
 
-    item = obj.getParentNode()
+    item = advice.getParentNode()
     item.updateAdvices()
     # log
-    userId = obj.portal_membership.getAuthenticatedMember().getId()
+    userId = advice.portal_membership.getAuthenticatedMember().getId()
     logger = logging.getLogger('PloneMeeting')
     logger.info('Advice at %s edited by "%s".' %
-                (obj.absolute_url_path(), userId))
+                (advice.absolute_url_path(), userId))
 
 
-def onAdviceEditFinished(obj, event):
+def onAdviceEditFinished(advice, event):
     '''Called when a meetingadvice is edited and we are at the end of the editing process.'''
     # redirect to referer after edit if it is not the edit form
     # this can not be done on zope.lifecycleevent.IObjectModifiedEvent because
     # it is too early and the redirect is not done, but in the plone.dexterity.events.EditFinishedEvent
     # it works as expected ;-)
-    item = obj.getParentNode()
+    item = advice.getParentNode()
     item.updateAdvices()
     http_referer = item.REQUEST['HTTP_REFERER']
     if not http_referer.endswith('/edit'):
-        obj.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
+        advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
 
-def onAdviceRemoved(obj, event):
+def onAdviceRemoved(advice, event):
     '''Called when a meetingadvice is removed so we can warn parent item.'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
 
-    item = obj.getParentNode()
+    item = advice.getParentNode()
     try:
         item.updateAdvices()
     except TypeError:
@@ -224,5 +224,5 @@ def onAdviceRemoved(obj, event):
         # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
         # the newItem has an empty adviceIndex but can contains advices that will be removed
         logger = logging.getLogger('PloneMeeting')
-        logger.info('Removal of advice at %s raised TypeError.' % obj.absolute_url_path())
+        logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 ##/code-section FOOT
