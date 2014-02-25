@@ -78,13 +78,6 @@ class MeetingWorkflowConditions:
             if item.queryState() not in self.notDecidedStatesPlusDelayed:
                 return True
 
-    def _decisionsAreTakenForEveryItem(self):
-        '''Returns True if a decision is taken for every item.'''
-        for item in self.context.getAllItems(ordered=True):
-            if item.queryState() in self.notDecidedStates:
-                return False
-        return True
-
     def _decisionsAreArchivable(self):
         '''Returns True all the decisions may be archived.'''
         for item in self.context.getAllItems(ordered=True):
@@ -174,8 +167,7 @@ class MeetingWorkflowConditions:
 
     security.declarePublic('mayClose')
     def mayClose(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
-           self._decisionsAreTakenForEveryItem():
+        if checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayArchive')
@@ -274,19 +266,33 @@ class MeetingWorkflowActions:
 
     security.declarePrivate('doDecide')
     def doDecide(self, stateChange):
-        # All items for which a decision was not taken yet are automatically
-        # set to "accepted".
-        for item in self.context.getAllItems(ordered=True):
-            if item.queryState() == 'itemfrozen':
-                self.context.portal_workflow.doActionFor(item, 'accept')
+        '''
+          Make sure every items are at 'itemfrozen' or 'itempublished', anyway the 'last' of
+          these 2 states.  This manage the fact that 'itemfrozen' or 'itempublished' can be in different
+          position in the workflow flow.
+          For convenience, this method will take care of workflows having 'itempublish'
+          and 'itemfreeze' transitions and this, in both ways ('itempublish' then 'itemfreeze' and
+          'itemfreeze' then 'itempublish').
+        '''
+        wfTool = getToolByName(self.context, 'portal_workflow')
+        for item in self.context.getAllItems(ordered=False):
+            itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
+                intersection(set(('itemfreeze', 'itempublish')))
+            while itemAvailableTransitions:
+                wfTool.doActionFor(item, itemAvailableTransitions[0])
+                itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
+                    intersection(set('itemfreeze', 'itempublish'))
 
     def _adaptEveryItemsOnMeetingClosure(self):
         """
           Helper method for correctly settings items when the meeting is closed.
         """
-        for item in self.context.getAllItems(ordered=True):
+        wfTool = getToolByName(self.context, 'portal_workflow')
+        for item in self.context.getAllItems(ordered=False):
+            if item.queryState() == 'itemfrozen':
+                wfTool.doActionFor(item, 'accept')
             if item.queryState() == 'accepted':
-                self.context.portal_workflow.doActionFor(item, 'confirm')
+                wfTool.doActionFor(item, 'confirm')
 
     security.declarePrivate('doClose')
     def doClose(self, stateChange):

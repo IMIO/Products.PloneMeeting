@@ -180,8 +180,7 @@ class MeetingItemWorkflowConditions:
         if checkPermission(ReviewPortalContent, self.context) and \
            self.context.hasMeeting():
             meeting = self.context.getMeeting()
-            if (meeting.queryState() in self.meetingNotClosedStates) and \
-               meeting.getDate().isPast():
+            if meeting.getDate().isPast():
                 if not self.context.fieldIsEmpty('decision') or not \
                    self.context.fieldIsEmpty('motivation'):
                     res = True
