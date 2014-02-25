@@ -338,12 +338,21 @@ class Migrate_To_3_2_0(Migrator):
             mappings[key] = '%s__state__%s' % (defaultCfgId, key)
         for mGroup in self.tool.getMeetingGroups():
             if mGroup.getItemAdviceStates():
+                # if migration already executed, break
+                if '__state__' in mGroup.getItemAdviceStates()[0]:
+                    break
                 newValue = [mappings[state] for state in mGroup.getItemAdviceStates()]
                 mGroup.setItemAdviceStates(newValue)
             if mGroup.getItemAdviceEditStates():
+                # if migration already executed, break
+                if '__state__' in mGroup.getItemAdviceEditStates()[0]:
+                    break
                 newValue = [mappings[state] for state in mGroup.getItemAdviceEditStates()]
                 mGroup.setItemAdviceEditStates(newValue)
             if mGroup.getItemAdviceViewStates():
+                # if migration already executed, break
+                if '__state__' in mGroup.getItemAdviceViewStates()[0]:
+                    break
                 newValue = [mappings[state] for state in mGroup.getItemAdviceViewStates()]
                 mGroup.setItemAdviceViewStates(newValue)
         logger.info('Done.')
