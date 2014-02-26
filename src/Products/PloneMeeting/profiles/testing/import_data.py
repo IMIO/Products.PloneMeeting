@@ -184,6 +184,7 @@ meetingPma.meetingFileTypes = [
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
+meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.sortingMethodOnAddItem = 'on_proposing_groups'
 meetingPma.useGroupsAsCategories = True
 meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism', 'User interface'))
@@ -213,6 +214,7 @@ meetingPga.meetingFileTypes = [
     financialAnalysis, legalAnalysis, budgetAnalysis, itemAnnex,
     decisionAnnex, adviceAnnex, adviceLegalAnalysis]
 meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
+meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPga.sortingMethodOnAddItem = 'on_categories'
 meetingPga.useGroupsAsCategories = False
 meetingPga.useAdvices = True

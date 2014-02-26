@@ -204,8 +204,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'recordItemHistoryStates', 'usedMeetingAttributes',
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'itemsListVisibleColumns', 'itemColumns', 'meetingColumns',
-                         'workflowAdaptations', 'transitionsToConfirm', 'mailItemEvents',
-                         'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
+                         'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
+                         'mailItemEvents', 'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates', 'powerAdvisersGroups',
                          'itemPowerObserversStates', 'meetingPowerObserversStates', 'meetingConfigsToCloneTo',
                          'itemAdviceInvalidateStates', 'customAdvisers', 'selectableCopyGroups', 'votesEncoder',
@@ -347,6 +347,7 @@ class MeetingConfigDescriptor(Descriptor):
         # button will show a confirmation popup. In this popup, the user will
         # also be able to enter the workflow comment.
         self.transitionsToConfirm = []
+        self.transitionsForPresentingAnItem = []
         self.useCopies = False
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]

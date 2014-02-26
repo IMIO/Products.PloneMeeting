@@ -83,14 +83,14 @@ class ToolInitializer:
         # (see comment in __init__.py)
         registerClasses()
         self.tool.addUsersAndGroups(d.groups, d.usersOutsideGroups)
-        meetingConfigsToCloneTo = {}
+        savedMeetingConfigsToCloneTo = {}
         for mConfig in d.meetingConfigs:
             # XXX we need to defer the management of the 'meetingConfigsToCloneTo'
             # defined on the mConfig after the creation of every mConfigs because
             # if we defined in mConfig1.meetingConfigsToCloneTo the mConfig2 id,
             # it will try to getattr this meetingConfig2 id that does not exist yet...
             # so save defined values, removed them from mConfig and manage that after
-            meetingConfigsToCloneTo[mConfig.id] = mConfig.meetingConfigsToCloneTo
+            savedMeetingConfigsToCloneTo[mConfig.id] = mConfig.meetingConfigsToCloneTo
             mConfig.meetingConfigsToCloneTo = []
             try:
                 self.tool.createMeetingConfig(mConfig, source=self.profilePath)
@@ -98,12 +98,12 @@ class ToolInitializer:
                 # If we raise a BadRequest, it is that the id is already in use.
                 logger.warn(MEETING_ID_EXISTS % mConfig.id)
         # now that every meetingConfigs have been created, we can manage the meetingConfigsToCloneTo
-        for mConfigId in meetingConfigsToCloneTo:
-            if not meetingConfigsToCloneTo[mConfigId]:
+        for mConfigId in savedMeetingConfigsToCloneTo:
+            if not savedMeetingConfigsToCloneTo[mConfigId]:
                 continue
             # initialize the attribute on the meetingConfig and call _updateCloneToOtherMCActions
             cfg = getattr(self.tool, mConfigId)
-            cfg.setMeetingConfigsToCloneTo(meetingConfigsToCloneTo[mConfigId])
+            cfg.setMeetingConfigsToCloneTo(savedMeetingConfigsToCloneTo[mConfigId])
             cfg._updateCloneToOtherMCActions()
         # finally, create the current user (admin) member area
         self.site.portal_membership.createMemberArea()

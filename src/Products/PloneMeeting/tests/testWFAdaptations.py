@@ -299,7 +299,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         i1.setDecision('<p>My decision</p>')
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
             login(self.portal, 'pmManager')
             try:
                 self.do(i1, tr)
@@ -339,7 +339,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         i1.setDecision('<p>My decision</p>')
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
             self.changeUser('pmManager')
             try:
                 self.do(i1, tr)
@@ -407,7 +407,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         i1.setDecision('<p>My decision</p>')
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
             login(self.portal, 'pmManager')
             try:
                 self.do(i1, tr)
@@ -452,7 +452,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         i1.setDecision('<p>My decision</p>')
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
             login(self.portal, 'pmManager')
             try:
                 self.do(i1, tr)
@@ -500,7 +500,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('Modify portal content', i1))
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
             login(self.portal, 'pmManager')
             try:
                 self.do(i1, tr)
@@ -527,7 +527,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('Modify portal content', i1))
         login(self.portal, 'pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        for tr in i1.wfConditions().transitionsForPresentingAnItem:
+        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
             login(self.portal, 'pmManager')
             try:
                 self.do(i1, tr)

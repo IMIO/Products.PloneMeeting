@@ -281,18 +281,23 @@ class MeetingWorkflowActions:
             while itemAvailableTransitions:
                 wfTool.doActionFor(item, itemAvailableTransitions[0])
                 itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
-                    intersection(set('itemfreeze', 'itempublish'))
+                    intersection(set(('itemfreeze', 'itempublish')))
 
     def _adaptEveryItemsOnMeetingClosure(self):
         """
           Helper method for correctly settings items when the meeting is closed.
         """
         wfTool = getToolByName(self.context, 'portal_workflow')
+        # do this method a bit taking care of various behaviour
+        # so it does not need to be systematically overrided by an extension profile...
+        transitionsToTrigger = ('itemfreeze', 'itempublish', 'accept', 'confirm')
         for item in self.context.getAllItems(ordered=False):
-            if item.queryState() == 'itemfrozen':
-                wfTool.doActionFor(item, 'accept')
-            if item.queryState() == 'accepted':
-                wfTool.doActionFor(item, 'confirm')
+            itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
+                intersection(set(transitionsToTrigger))
+            while itemAvailableTransitions:
+                wfTool.doActionFor(item, itemAvailableTransitions.pop())
+                itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
+                    intersection(set(transitionsToTrigger))
 
     security.declarePrivate('doClose')
     def doClose(self, stateChange):

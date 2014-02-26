@@ -465,7 +465,7 @@ class testMeetingItem(PloneMeetingTestCase):
             annex1 = self.addAnnex(item, annexType=self.annexFileType)
             annex2 = self.addAnnex(item, annexType='overhead-analysis')
         # Propose the item
-        self.do(item, item.wfConditions().transitionsForPresentingAnItem[0])
+        self.do(item, self.meetingConfig.getTransitionsForPresentingAnItem()[0])
         if with_advices:
             # add a normal and a delay-aware advice
             self.changeUser('admin')

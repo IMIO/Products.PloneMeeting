@@ -575,20 +575,22 @@ schema = Schema((
         ),
         schemata="data",
     ),
-    LinesField(
+    DataGridField(
         name='meetingConfigsToCloneTo',
-        widget=MultiSelectionWidget(
+        widget=DataGridField._properties['widget'](
             description="MeetingConfigsToCloneTo",
             description_msgid="meeting_configs_to_clone_to_descr",
+            columns={'meeting_config': SelectColumn("Meeting config to clone to Meeting config", vocabulary="listMeetingConfigsToCloneTo", col_description='The meeting config the item of this meeting config will be sendable to.'),
+                     'trigger_workflow_transitions_until': SelectColumn("Meeting config to clone to Trigger workflow transitions until", vocabulary="listTransitionsUntilPresented", col_description='While sent, the new item is in the workflow initial state, some transitions can be automatically triggered for the new item, select until wich transition it will be done (selected transition will also be triggered).'), },
             label='Meetingconfigstocloneto',
             label_msgid='PloneMeeting_label_meetingConfigsToCloneTo',
             i18n_domain='PloneMeeting',
         ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listMeetingConfigsToCloneTo',
         default=defValues.meetingConfigsToCloneTo,
-        enforceVocabulary=False,
+        allow_oddeven=True,
+        allow_empty_rows=False,
+        schemata="data",
+        columns=('meeting_config', 'trigger_workflow_transitions_until', ),
     ),
     StringField(
         name='itemWorkflow',
@@ -718,6 +720,19 @@ schema = Schema((
         vocabulary='listAllTransitions',
         default=defValues.transitionsToConfirm,
         enforceVocabulary= False,
+    ),
+    LinesField(
+        name='transitionsForPresentingAnItem',
+        widget=InAndOutWidget(
+            description="TransitionsForPresentingAnItem",
+            description_msgid="transitions_for_presenting_an_item_descr",
+            label='Transitionsforpresentinganitem',
+            label_msgid='PloneMeeting_label_transitionsForPresentingAnItem',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        vocabulary='listTransitionsForPresentingAnItem',
+        default=defValues.transitionsForPresentingAnItem,
     ),
     LinesField(
         name='meetingTopicStates',
@@ -1615,6 +1630,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if (cfg != self) and (cfg.getShortName() == value):
                 return DUPLICATE_SHORT_NAME % value
 
+    security.declarePrivate('validate_transitionsForPresentingAnItem')
+    def validate_transitionsForPresentingAnItem(self, values):
+        '''Validate the transitionsForPresentingAnItem field.
+           Check that the given sequence of transition if starting
+           from the item workflow initial_state and ends to the 'presented' state.'''
+        wfTool = getToolByName(self, 'portal_workflow')
+        itemWorkflow = getattr(wfTool, self.getItemWorkflow())
+        # first value must be a transition that starts from the wf initial_state
+        itemWorkflowInitialState = itemWorkflow.initial_state
+        for value in values:
+            # XXX to be continued...
+            pass
+
     security.declarePrivate('validate_customAdvisers')
     def validate_customAdvisers(self, value):
         '''We have several things to check, do lighter checks first :
@@ -1757,12 +1785,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                           'adviser_group': group, },
                                  context=self.REQUEST)
 
-    def _dataForCustomAdviserRowId(self, row_id):
-        '''Return the data for the given p_row_id from the field 'customAdvisers'.'''
-        for adviser in self.getCustomAdvisers():
-            if adviser['row_id'] == row_id:
-                return adviser
-
     security.declarePrivate('validate_usedMeetingAttributes')
     def validate_usedMeetingAttributes(self, newValue):
         '''Some attributes on a meeting are mutually exclusive. This validator
@@ -1805,15 +1827,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('validate_meetingConfigsToCloneTo')
     def validate_meetingConfigsToCloneTo(self, values):
-        '''Validates the meetingConfigsToCloneTo.  Check that the necessary
-           icon exists or the action will not be triggerable'''
-        # Generate icon name
-        for value in values:
-            # sometimes, an empty value is in the values...
-            if not value:
-                continue
+        '''Validates the meetingConfigsToCloneTo.'''
+        # first check that we did not defined to rows for the same meetingConfig
+        meetingConfigs = [v['meeting_config'] for v in values if not v.get('orderindex_', None) == 'template_row_marker']
+        for meetingConfig in meetingConfigs:
+            if meetingConfigs.count(meetingConfig) > 1:
+                return translate('can_not_define_two_rows_for_same_meeting_config',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        for mctct in values:
+            # first make sure the selected transition correspond to the selected meeting_config
+            if not mctct['trigger_workflow_transitions_until'] == '__nothing__' and \
+               not mctct['trigger_workflow_transitions_until'].startswith(mctct['meeting_config']):
+                return translate('transition_not_from_selected_meeting_config',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+            # make sure the icon necessary for the action exists
+            configId = mctct['meeting_config']
             iconname = \
-                '%s.png' % self._getCloneToOtherMCActionId(value, self.getId())
+                '%s.png' % self._getCloneToOtherMCActionId(configId, self.getId())
             #try to get the icon in portal_skins
             if not getattr(self.portal_skins, iconname, None):
                 return translate('iconname_does_not_exist',
@@ -1864,6 +1896,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST,
                              default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
                                      'every values selected in the \'itemAdvicesStates\' field!')
+
+    def _dataForCustomAdviserRowId(self, row_id):
+        '''Return the data for the given p_row_id from the field 'customAdvisers'.'''
+        for adviser in self.getCustomAdvisers():
+            if adviser['row_id'] == row_id:
+                return adviser
+
     security.declarePrivate('listWorkflowAdaptations')
     def listWorkflowAdaptations(self):
         '''Lists the available workflow changes.'''
@@ -1871,17 +1910,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for adaptation in self.wfAdaptations:
             title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
             res.append((adaptation, title))
-        return DisplayList(tuple(res))
-
-    security.declarePrivate('listMeetingConfigsToCloneTo')
-    def listMeetingConfigsToCloneTo(self):
-        '''List available meetingConfigs to clone items to.'''
-        res = []
-        tool = getToolByName(self, 'portal_plonemeeting')
-        for mc in tool.getActiveConfigs():
-            mcId = mc.getId()
-            if not mcId == self.getId():
-                res.append((mcId, mc.Title()))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemRelatedColumns')
@@ -1977,11 +2005,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('listTransitions')
-    def listTransitions(self, objectType):
+    def listTransitions(self, objectType, meetingConfig=None):
         '''Lists the possible transitions for the p_objectType ("Item" or
-           "Meeting") used in this meeting config.'''
+           "Meeting") used in the given p_meetingConfig meeting config.'''
+        if not meetingConfig:
+            meetingConfig = self
         res = []
-        exec 'workflowName = self.get%sWorkflow()' % objectType
+        if objectType == 'Item':
+            workflowName = meetingConfig.getItemWorkflow()
+        else:
+            # objectType == 'Meeting'
+            workflowName = meetingConfig.getMeetingWorkflow()
         workflow = getattr(self.portal_workflow, workflowName)
         for t in workflow.transitions.objectValues():
             name = translate(t.title, domain="plone", context=self.REQUEST) + ' (' + t.id + ')'
@@ -2188,7 +2222,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            actually remove every existing actions on the portal_type then call this submethod'''
         tool = getToolByName(self, 'portal_plonemeeting')
         item_portal_type = self.portal_types[self.getItemTypeName()]
-        for configId in self.getMeetingConfigsToCloneTo():
+        for mctct in self.getMeetingConfigsToCloneTo():
+            configId = mctct['meeting_config']
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
             urlExpr = 'string:${object/absolute_url}/cloneToOtherMeeting' \
                       'Config?destMeetingConfigId=%s' % configId
@@ -2811,6 +2846,47 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(('%s.%s' % (metaType, id),
                             '%s -> %s' % (metaType, text)))
         return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePrivate('listMeetingConfigsToCloneTo')
+    def listMeetingConfigsToCloneTo(self):
+        '''List available meetingConfigs to clone items to.'''
+        res = []
+        tool = getToolByName(self, 'portal_plonemeeting')
+        for mc in tool.getActiveConfigs():
+            mcId = mc.getId()
+            if not mcId == self.getId():
+                res.append((mcId, mc.Title()))
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listTransitionsUntilPresented')
+    def listTransitionsUntilPresented(self):
+        '''List available workflow transitions until the 'present' transition included.
+           We base this on the MeetingConfig.transitionsForPresentingAnItem field.
+           This will let us set an item cloned to another meetingConfig to any state until 'presented'.
+           We list every item transitions of every available meetingConfigs.'''
+        res = [('__nothing__', translate('let_item_in_initial_state',
+                              domain='PloneMeeting',
+                              context=self.REQUEST)), ]
+        tool = getToolByName(self, 'portal_plonemeeting')
+        for cfg in tool.getActiveConfigs():
+            # only show other meetingConfigs than self
+            if cfg == self:
+                continue
+            availableItemTransitions = self.listTransitions('Item', meetingConfig=cfg)
+            availableItemTransitionIds = [tr[0] for tr in availableItemTransitions]
+            availableItemTransitionTitles = [tr[1] for tr in availableItemTransitions]
+            cfgId = cfg.getId()
+            cfgTitle = unicode(cfg.Title(), 'utf-8')
+            for tr in cfg.getTransitionsForPresentingAnItem():
+                text = '%s -> %s' % (cfgTitle,
+                                     availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
+                res.append(('%s.%s' % (cfgId, tr), text))
+        return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePrivate('listTransitionsForPresentingAnItem')
+    def listTransitionsForPresentingAnItem(self):
+        '''Vocabulary for the transitionsForPresentingAnItem field.'''
+        return DisplayList(self.listTransitions('Item')).sortedByValue()
 
     security.declarePublic('listItemStates')
     def listItemStates(self):

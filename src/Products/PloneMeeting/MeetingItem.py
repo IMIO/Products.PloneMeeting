@@ -45,6 +45,7 @@ from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions, \
@@ -90,13 +91,6 @@ class MeetingItemWorkflowConditions:
 
     # In those states, the meeting is not closed.
     meetingNotClosedStates = ('published', 'frozen', 'decided', 'decisions_published')
-
-    # Here above are defined transitions an item must trigger to be presented
-    # in a meeting.  Either we use this hardcoded list, or if we do not, relevant
-    # methods will try to do without...
-    # the 2 values here above are linked
-    useHardcodedTransitionsForPresentingAnItem = False
-    transitionsForPresentingAnItem = ('propose', 'prevalidate', 'validate', 'present')
 
     def __init__(self, item):
         self.context = item
@@ -1466,12 +1460,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         meetingConfig = tool.getMeetingConfig(self)
         res = []
-        for mcId in meetingConfig.getMeetingConfigsToCloneTo():
-            res.append((mcId, getattr(tool, mcId).Title()))
-        # if there was a value defined in the attribute and that
-        # this value is no more in the vocabulary, we need to add it to the vocabulary
-        # manually
-
+        for mctct in meetingConfig.getMeetingConfigsToCloneTo():
+            res.append((mctct['meeting_config'], getattr(tool, mctct['meeting_config']).Title()))
         # make sure otherMeetingConfigsClonableTo actually stored have their corresponding
         # term in the vocabulary, if not, add it
         otherMeetingConfigsClonableTo = self.getOtherMeetingConfigsClonableTo()
@@ -1938,7 +1928,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             item.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
             return True
         else:
-            wfTool = item.portal_workflow
+            wfTool = getToolByName(item, 'portal_workflow')
+            tool = getToolByName(item, 'portal_plonemeeting')
             try:
                 # Hmm... the currently published object is p_meeting, right?
                 item.REQUEST.set('PUBLISHED', meeting)
@@ -1948,34 +1939,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # to avoid being stopped by mandatory advices not given, we add
                 # a flag that specify that the current item is a recurring item
                 item.isRecurringItem = True
-                state = item.queryState()
-                if not item.wfConditions().useHardcodedTransitionsForPresentingAnItem:
-                    # try to present an item by triggering every avilable transitions
-                    # if the meeting is frozen, the item will never be in the
-                    # 'presented' state as it will be automatically set to itemfrozen
-                    # by the doPresent action
-                    while state not in ['presented', 'itemfrozen']:
-                        stateHasChanged = False
-                        for tr in wfTool.getTransitionsFor(item):
-                            if not tr['id'].startswith('backTo'):
-                                # It is the newt "forward" transition: trigger it
-                                wfTool.doActionFor(item, tr['id'])
-                                state = item.queryState()
-                                stateHasChanged = True
-                                break
-                        if not stateHasChanged:
-                            #avoid infinite loop
-                            raise WorkflowException("Infinite loop while adding a recurring item")
-                else:
-                    # we will use hardcoded way to insert an item defined in
-                    # self.transitionsForPresentingAnItem.  In some case this is usefull
-                    # because the workflow is too complicated
-                    for tr in item.wfConditions().transitionsForPresentingAnItem:
-                        try:
-                            wfTool.doActionFor(item, tr)
-                        except WorkflowException:
-                            # if a transition is not available, pass and try to execute following
-                            pass
+                # we use the wf path defined in the cfg.transitionsForPresentingAnItem
+                # to present the item to the meeting
+                cfg = tool.getMeetingConfig(item)
+                for tr in cfg.getTransitionsForPresentingAnItem():
+                    wfTool.doActionFor(item, tr)
+                # the item must be at least presented to a meeting, either we raise
+                if not item.hasMeeting():
+                    raise WorkflowException
                 del item.isRecurringItem
             except WorkflowException, wfe:
                 logger.warn(REC_ITEM_ERROR % (item.id, str(wfe)))
@@ -3389,16 +3360,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.adapted().mayCloneToOtherMeetingConfig(destMeetingConfigId):
             # If the user came here, he even does not deserve a clear message ;-)
             raise Unauthorized
-        pmtool = getToolByName(self, 'portal_plonemeeting')
+        tool = getToolByName(self, 'portal_plonemeeting')
         plone_utils = getToolByName(self, 'plone_utils')
-        destMeetingConfig = getattr(pmtool, destMeetingConfigId, None)
-        meetingConfig = pmtool.getMeetingConfig(self)
+        destMeetingConfig = getattr(tool, destMeetingConfigId, None)
+        cfg = tool.getMeetingConfig(self)
 
         # This will get the destFolder or create it if the current user has the permission
         # if not, then we return a message
         try:
-            destFolder = pmtool.getPloneMeetingFolder(destMeetingConfigId,
-                                                      self.Creator())
+            destFolder = tool.getPloneMeetingFolder(destMeetingConfigId,
+                                                    self.Creator())
         except ValueError:
             # While getting the destFolder, it could not exist, in this case
             # we return a clear message
@@ -3412,9 +3383,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # original item.
         newOwnerId = self.Creator()
         cloneEventAction = 'create_to_%s_from_%s' % (destMeetingConfigId,
-                                                     meetingConfig.getId())
+                                                     cfg.getId())
         fieldsToCopy = ['title', 'description', 'detailedDescription', 'decision', ]
-        originUsedItemAttributes = meetingConfig.getUsedItemAttributes()
+        originUsedItemAttributes = cfg.getUsedItemAttributes()
         destUsedItemAttributes = destMeetingConfig.getUsedItemAttributes()
         # Copy also budgetRelated fields if used in the destMeetingConfig
         if 'budgetInfos' in originUsedItemAttributes and \
@@ -3429,6 +3400,49 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              destFolder=destFolder, copyFields=fieldsToCopy,
                              newPortalType=destMeetingConfig.getItemTypeName())
         newItem.setPredecessor(self)
+        # execute some transitions on the newItem if it was defined in the cfg
+        # find the transitions to trigger
+        for mctct in cfg.getMeetingConfigsToCloneTo():
+            if mctct['meeting_config'] == destMeetingConfigId:
+                triggerUntil = mctct['trigger_workflow_transitions_until']
+        # if transitions to trigger, trigger them!
+        if triggerUntil:
+            # triggerUntil is like meeting-config-xxx.validate, get the real transition
+            triggerUntil = triggerUntil.split('.')[1]
+            wfTool = getToolByName(self, 'portal_workflow')
+            stopAfter = False
+            comment = translate('transition_auto_triggered_item_sent_to_this_config',
+                                domain='PloneMeeting',
+                                context=self.REQUEST)
+            for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
+                if stopAfter:
+                    break
+                # if we are on the triggerUntil transition, we will stop at next loop
+                if tr == triggerUntil:
+                    stopAfter = True
+                try:
+                    # special handling for the 'present' transition
+                    # that needs a meeting as 'PUBLISHED' object to work
+                    if tr == 'present':
+                        # find next meeting accepting items
+                        meetingsAcceptingItems = newItem.getMeetingsAcceptingItems()
+                        if not meetingsAcceptingItems:
+                            plone_utils.addPortalMessage(_('could_not_present_item_no_meeting_accepting_items'),
+                                                         'warning')
+                            break
+                        meeting = meetingsAcceptingItems[0]
+                        newItem.REQUEST['PUBLISHED'] = meeting.getObject()
+
+                    wfTool.doActionFor(newItem, tr, comment=comment)
+                except WorkflowException:
+                    # in case something goes wrong, only warn the user by adding a portal message
+                    plone_utils.addPortalMessage(translate('could_not_trigger_transition_for_cloned_item',
+                                                           mapping={'meetingConfigTitle': unicode(
+                                                                    destMeetingConfig.Title(), 'utf-8')},
+                                                           domain="PloneMeeting",
+                                                           context=self.REQUEST),
+                                                 type='warning')
+
         newItem.reindexObject()
         # Save that the element has been cloned to another meetingConfig
         annotation_key = self._getSentToOtherMCAnnotationKey(destMeetingConfigId)
@@ -3467,7 +3481,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # or if the given destMeetingConfigId is not clonable to.
         cfg = item.portal_plonemeeting.getMeetingConfig(item)
         if (cfg.getId() == destMeetingConfigId) or \
-           not destMeetingConfigId in cfg.getMeetingConfigsToCloneTo():
+           not destMeetingConfigId in [mctct['meeting_config'] for mctct in cfg.getMeetingConfigsToCloneTo()]:
             return False
         # The member must have necessary roles
         if not item.portal_plonemeeting.isManager():

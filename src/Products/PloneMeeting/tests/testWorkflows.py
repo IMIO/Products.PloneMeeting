@@ -78,7 +78,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(annex2.UID())
         self.failIf(len(item.objectValues()) != 1)
         # Propose the item
-        self.do(item, item.wfConditions().transitionsForPresentingAnItem[0])
+        self.do(item, self.meetingConfig.getTransitionsForPresentingAnItem()[0])
         # Remove the item with annexes
         self.changeUser('pmCreator1b')
         # Check that now MeetingMember(s) can't remove the item anymore
@@ -420,29 +420,23 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertTrue(len(meeting.getItems()) == 3)
         self.assertTrue(meeting.getItemsInOrder()[-1].getPrivacy() == 'secret')
 
-    def test_pm_RecurringItemsWithHardcodedTransitions(self):
-        '''Tests the recurring items system when using useHardcodedTransitionsForPresentingAnItem=True.'''
+    def test_pm_RecurringItemsWithWrongTransitionsForPresentingAnItem(self):
+        '''Tests the recurring items system when using a wrong MeetingConfig.transitionsForPresentingAnItem.'''
         self._setupRecurringItems()
         self.changeUser('pmManager')
         # now test with hardcoded transitions
-        from Products.PloneMeeting.MeetingItem import MeetingItemWorkflowConditions
-        oldValue1 = MeetingItemWorkflowConditions.useHardcodedTransitionsForPresentingAnItem
-        oldValue2 = MeetingItemWorkflowConditions.transitionsForPresentingAnItem
-        MeetingItemWorkflowConditions.useHardcodedTransitionsForPresentingAnItem = True
         meeting = self.create('Meeting', date='2008/12/11 09:00:00')
         # this meeting should contains the 3 usual recurring items
         self.failIf(len(meeting.getItems()) != 3)
         # if transitions for presenting an item are not correct
         # the item will no be inserted in the meeting
-        MeetingItemWorkflowConditions.transitionsForPresentingAnItem = ('propose', 'validate',)
+        # remove the last step 'present' from self.meetingConfig.transitionsForPresentingItem
+        self.assertTrue('present' in self.meetingConfig.getTransitionsForPresentingAnItem())
+        transitionsForPresentingAnItemWithoutPresent = list(self.meetingConfig.getTransitionsForPresentingAnItem())
+        transitionsForPresentingAnItemWithoutPresent.remove('present')
+        self.meetingConfig.setTransitionsForPresentingAnItem(transitionsForPresentingAnItemWithoutPresent)
         meeting2 = self.create('Meeting', date='2009/12/11 09:00:00')
         self.failIf(len(meeting2.getItems()) != 0)
-        # check that recurring items respect privacy, secretRecurringItem is at the end of the meeting
-        # tearDown
-        MeetingItemWorkflowConditions.useHardcodedTransitionsForPresentingAnItem = oldValue1
-        MeetingItemWorkflowConditions.transitionsForPresentingAnItem = oldValue2
-
-
 
     def test_pm_DeactivateMeetingGroup(self):
         '''Deactivating a MeetingGroup will remove every Plone groups from
