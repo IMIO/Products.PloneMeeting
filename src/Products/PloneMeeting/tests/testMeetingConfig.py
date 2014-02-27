@@ -30,7 +30,11 @@ from zope.i18n import translate
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
+from Products.CMFPlone import PloneMessageFactory
+
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.config import TOPIC_SEARCH_FILTERS
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 
@@ -301,7 +305,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                 'review_state': (self.WF_STATE_NAME_MAPPINGS['proposed'], )},
                                {'getProposingGroup': ('developers', ),
                                 'review_state': ('validated', )},),
-        }
+                   }
         kwargs[TOPIC_SEARCH_FILTERS] = filters
         self.changeUser('pmManager')
         vendors_item = self.create('MeetingItem')
@@ -543,6 +547,44 @@ class testMeetingConfig(PloneMeetingTestCase):
              'delay_label': 'Delay label changed', }
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
         self.failIf(cfg.validate_customAdvisers([customAdvisersCreatedUntilSetAndPast, ]))
+
+    def test_pm_validateTransitionsForPresentingAnItem(self):
+        '''Test the MeetingConfig.transitionsForPresentingAnItem validation.
+           It fails if :
+           - empty, as it is required;
+           - first given transition is not correct;
+           - given sequence is wrong;
+           - last given transition does not result in the 'presented' state.'''
+        cfg = self.meetingConfig
+        # the right sequence is the one defined on self.meetingConfig
+        self.failIf(cfg.validate_transitionsForPresentingAnItem(cfg.getTransitionsForPresentingAnItem()))
+        # if not sequence provided, it fails
+        label = cfg.Schema()['transitionsForPresentingAnItem'].widget.Label(cfg)
+        required_error_msg = PloneMessageFactory(u'error_required',
+                                                 default=u'${name} is required, please correct.',
+                                                 mapping={'name': label})
+        self.assertEquals(cfg.validate_transitionsForPresentingAnItem([]), required_error_msg)
+        # if first provided transition is wrong, it fails with a specific message
+        first_transition_error_msg = _('first_transition_must_leave_wf_initial_state')
+        self.assertEquals(cfg.validate_transitionsForPresentingAnItem(['not_a_transition_leaving_initial_state']),
+                          first_transition_error_msg)
+        # if the given sequence is not right, it fails
+        wrong_sequence_error_msg = _('given_wf_path_does_not_lead_to_present')
+        sequence = list(cfg.getTransitionsForPresentingAnItem())
+        sequence.insert(1, 'wrong_transition')
+        self.assertEquals(cfg.validate_transitionsForPresentingAnItem(sequence),
+                          wrong_sequence_error_msg)
+        # XXX for this test, we need at least 2 transitions in the sequence
+        # as we will remove last transition from the sequence and if we only have
+        # one transition, it leads to the required_error message instead
+        if not len(cfg.getTransitionsForPresentingAnItem()) > 1:
+            pm_logger.info('Could not make every checks in test_pm_validateTransitionsForPresentingAnItem '
+                           'because only one TransitionsForPresentingAnItem')
+            return
+        last_transition_error_msg = _('last_transition_must_result_in_presented_state')
+        sequence_with_last_removed = list(cfg.getTransitionsForPresentingAnItem())[:-1]
+        self.assertEquals(cfg.validate_transitionsForPresentingAnItem(sequence_with_last_removed),
+                          last_transition_error_msg)
 
 
 def test_suite():

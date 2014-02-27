@@ -39,6 +39,8 @@ from plone.memoize import ram
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone import PloneMessageFactory
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
     getCustomSchemaFields, getFieldContent, prepareSearchValue, forceHTMLContentTypeForEmptyRichFields
@@ -1635,13 +1637,35 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Validate the transitionsForPresentingAnItem field.
            Check that the given sequence of transition if starting
            from the item workflow initial_state and ends to the 'presented' state.'''
+        # we can not specify required=True in the Schema because of InAndOut widget
+        # weird behaviour, so manage required ourselves...
+        if not values or (len(values) == 1 and not values[0]):
+            label = self.Schema()['transitionsForPresentingAnItem'].widget.Label(self)
+            # take classic plone error_required msgid
+            return PloneMessageFactory(u'error_required',
+                                       default=u'${name} is required, please correct.',
+                                       mapping={'name': label})
         wfTool = getToolByName(self, 'portal_workflow')
         itemWorkflow = getattr(wfTool, self.getItemWorkflow())
-        # first value must be a transition that starts from the wf initial_state
-        itemWorkflowInitialState = itemWorkflow.initial_state
-        for value in values:
-            # XXX to be continued...
-            pass
+        # first value must be a transition leaving the wf initial_state
+        initialState = itemWorkflow.states[itemWorkflow.initial_state]
+        if not values[0] in initialState.transitions:
+            return _('first_transition_must_leave_wf_initial_state')
+        # now follow given path and check if it result in the 'presented' state
+        # start from the initial_state
+        currentState = initialState
+        for trId in values:
+            # sometimes, an empty '' is in the values?
+            if not trId:
+                continue
+            if not trId in currentState.transitions:
+                return _('given_wf_path_does_not_lead_to_present')
+            transition = itemWorkflow.transitions[trId]
+            # now set current state to the state the transition is resulting to
+            currentState = itemWorkflow.states[transition.new_state_id]
+        # at the end, the currentState must be "presented"
+        if not currentState.id == 'presented':
+            return _('last_transition_must_result_in_presented_state')
 
     security.declarePrivate('validate_customAdvisers')
     def validate_customAdvisers(self, value):
