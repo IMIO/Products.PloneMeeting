@@ -13,12 +13,10 @@
                                             item_url meetingItem/absolute_url;
                                             portal context/@@plone_portal_state/portal;
                                             tool python: portal.portal_plonemeeting;
-                                            mGroupAdviceStatePrefix string:${meetingConfig/getId}__state__;
                                             portal_url context/@@plone_portal_state/portal_url;
                                             plone_view context/@@plone;
                                             isRealManager python: tool.isManager(realManagers=True);
-                                            item_review_state meetingItem/queryState;
-                                            DateTime python: modules['DateTime'];">
+                                            item_review_state meetingItem/queryState;">
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
       <td tal:condition="advicesToAdd" class="noPadding">
         <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
@@ -41,10 +39,10 @@
               <li tal:repeat="advice python:advicesByType[adviceType]">
                 <fieldset tal:define="tool python: portal.portal_plonemeeting;
                                       mGroup python: getattr(tool, advice['id']);
-                                      itemIsViewableByGroup python: mGroupAdviceStatePrefix + item_review_state in (mGroup.getItemAdviceStates() +
-                                                                                                                    mGroup.getItemAdviceEditStates() +
-                                                                                                                    mGroup.getItemAdviceViewStates());
-                                      adviceMayBeAdded python: mGroupAdviceStatePrefix + item_review_state in mGroup.getItemAdviceStates();">
+                                      itemIsViewableByGroup python: item_review_state in (mGroup.getItemAdviceStates(meetingConfig) +
+                                                                                          mGroup.getItemAdviceEditStates(meetingConfig) +
+                                                                                          mGroup.getItemAdviceViewStates(meetingConfig));
+                                      adviceMayBeAdded python: item_review_state in mGroup.getItemAdviceStates(meetingConfig);">
                     <legend>
                          <span tal:condition="advice/delay"
                                tal:define="global delayInfos python: meetingItem.getDelayInfosForAdvice(advice['id']);">
@@ -151,7 +149,7 @@
                                                                                                                     tal:content="delayInfos/limit_date">2013/05/05</span>.
                     </span>
                 </tal:adviceGiveableWithDelay>
-
+<span tal:content="itemIsViewableByGroup" />
                 <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not itemIsViewableByGroup">
                     <span class="discreet"
                        i18n:translate="">This advice is not viewable by the advisers of this group in the current item state (<span i18n:name="item_review_state"
