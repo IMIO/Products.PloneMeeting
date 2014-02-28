@@ -3402,11 +3402,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         newItem.setPredecessor(self)
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
+        triggerUntil = '__nothing__'
         for mctct in cfg.getMeetingConfigsToCloneTo():
             if mctct['meeting_config'] == destMeetingConfigId:
                 triggerUntil = mctct['trigger_workflow_transitions_until']
         # if transitions to trigger, trigger them!
-        if triggerUntil:
+        if not triggerUntil == '__nothing__':
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]
             wfTool = getToolByName(self, 'portal_workflow')

@@ -548,7 +548,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
         self.failIf(cfg.validate_customAdvisers([customAdvisersCreatedUntilSetAndPast, ]))
 
-    def test_pm_validateTransitionsForPresentingAnItem(self):
+    def test_pm_Validate_transitionsForPresentingAnItem(self):
         '''Test the MeetingConfig.transitionsForPresentingAnItem validation.
            It fails if :
            - empty, as it is required;
