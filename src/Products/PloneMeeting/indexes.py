@@ -70,7 +70,7 @@ def indexAdvisers(obj):
         isDelayAware = obj.adviceIndex[groupId]['delay'] and True or False
         if advice['type'] == NOT_GIVEN_ADVICE_VALUE:
             suffix = '0'  # Has not been given
-            delayIsExceeded = isDelayAware and obj.getDelayInfosForAdvice(groupId)['left_delay'] < 0
+            delayIsExceeded = isDelayAware and obj.getDelayInfosForAdvice(groupId)['delay_status'] == 'timed_out'
             if delayIsExceeded:
                 suffix = '2'  # delay is exceeded, advice was not given
         if isDelayAware:

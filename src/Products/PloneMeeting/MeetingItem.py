@@ -56,7 +56,7 @@ from Products.PloneMeeting.utils import \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
-    kupuFieldIsEmpty, forceHTMLContentTypeForEmptyRichFields
+    kupuFieldIsEmpty, forceHTMLContentTypeForEmptyRichFields, workday, networkdays
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -2327,12 +2327,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            currently logged user may, on this item:
            - add an advice;
            - edit or delete an advice.'''
-        def _isStillInDelayToBeGiven(adviceInfo):
-            '''Check if advice for wich we received p_adviceInfo may still be given...'''
+        def _isStillInDelayToBeAddedEdited(adviceInfo):
+            '''Check if advice for wich we received p_adviceInfo may still be added or edited.'''
             if not adviceInfo['delay']:
                 return True
-            if (self._doClearDayFrom(adviceInfo['delay_started_on']) +
-               timedelta(int(adviceInfo['delay']))) > datetime.now():
+            delay_started_on = self._doClearDayFrom(adviceInfo['delay_started_on'])
+            delay = int(adviceInfo['delay'])
+            if workday(delay_started_on, delay) > datetime.now():
                 return True
             return False
 
@@ -2357,11 +2358,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             groupId = group.getId()
             if groupId in self.adviceIndex:
                 adviceType = self.adviceIndex[groupId]['type']
-                if (adviceType == NOT_GIVEN_ADVICE_VALUE) and \
-                   (itemState in group.getItemAdviceStates(cfg)) and _isStillInDelayToBeGiven(self.adviceIndex[groupId]):
+                if adviceType == NOT_GIVEN_ADVICE_VALUE and \
+                   itemState in group.getItemAdviceStates(cfg) and \
+                   _isStillInDelayToBeAddedEdited(self.adviceIndex[groupId]):
                     toAdd.append((groupId, group.getName()))
-                if (adviceType != NOT_GIVEN_ADVICE_VALUE) and \
-                   (itemState in group.getItemAdviceEditStates(cfg)):
+                if adviceType != NOT_GIVEN_ADVICE_VALUE and \
+                   itemState in group.getItemAdviceEditStates(cfg) and \
+                   _isStillInDelayToBeAddedEdited(self.adviceIndex[groupId]):
                     toEdit.append(groupId)
             elif groupId in powerAdvisers:
                 # if not in self.adviceIndex, aka not already given
@@ -2751,7 +2754,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             adviceObj = None
             if 'advice_id' in self.adviceIndex[groupId]:
                 adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-
             if (itemState not in itemAdviceStates) and \
                (itemState not in itemAdviceEditStates)and \
                (itemState not in itemAdviceViewStates):
@@ -2775,7 +2777,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # check if user must be able to add an advice, if not already given
             # check also if the delay is not exceeded, in this case the advice can not be given anymore
             delayIsNotExceeded = not self.adviceIndex[groupId]['delay'] or \
-                self.getDelayInfosForAdvice(groupId)['left_delay'] > 0
+                self.getDelayInfosForAdvice(groupId)['delay_status'] != 'timed_out'
             if itemState in itemAdviceStates and \
                self.adviceIndex[groupId]['type'] == NOT_GIVEN_ADVICE_VALUE and delayIsNotExceeded:
                 # advisers must be able to add a 'meetingadvice', give
@@ -2835,14 +2837,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 'delay_started_on': None,
                 'delay_stopped_on': None,
                 'delay_when_stopped': None,
-                'delay_status_when_stopped': None, }
+                'delay_status_when_stopped': None}
         delay_started_on = delay_stopped_on = None
         adviceInfos = self.adviceIndex[advice_id]
         # if it is not a delay-aware advice, return
         if not adviceInfos['delay']:
             return {}
-        delay = int(adviceInfos['delay'])
 
+        delay = int(adviceInfos['delay'])
         data['delay'] = delay
         if adviceInfos['delay_started_on']:
             data['delay_started_on'] = toLocalizedTime(adviceInfos['delay_started_on'])
@@ -2882,20 +2884,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             data['delay_status'] = 'no_more_giveable'
             return data
-        left_delay = delay - ((datetime.now() - delay_started_on).days + 1)
+
+        # compute left delay taking holidays, and unavailable weekday into account
+        date_until = workday(delay_started_on, delay, [], 5)
+        data['limit_date'] = toLocalizedTime(date_until)
+        left_delay = networkdays(datetime.now(), date_until) - 1
+        data['left_delay'] = left_delay
+
         if left_delay > 0:
-            data['left_delay'] = left_delay
             # delay status is either 'we have time' or 'please hurry up' depending
             # on value defined in 'delay_left_alert'
             if not adviceInfos['delay_left_alert'] or int(adviceInfos['delay_left_alert']) < left_delay:
                 data['delay_status'] = 'still_time'
             else:
                 data['delay_status'] = 'still_time_but_alert'
-            data['limit_date'] = toLocalizedTime(delay_started_on + timedelta(delay))
         else:
-            data['left_delay'] = left_delay
             data['delay_status'] = 'timed_out'
-            data['limit_date'] = toLocalizedTime(delay_started_on + timedelta(delay))
+
+        # advice already given, or left_delay negative left_delay shown is delay
+        # so left_delay displayed on the advices popup is not something like '-547'
+        if adviceInfos['advice_given_on'] or data['left_delay'] < 0:
+            data['left_delay'] = delay
+            return data
+
         return data
 
     security.declarePublic('isAdvicesEnabled')

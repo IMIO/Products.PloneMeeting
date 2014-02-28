@@ -144,9 +144,12 @@
                     </span>
                     <span class="discreet"
                           tal:condition="python: delayInfos['delay_status'] == 'timed_out'"
-                          i18n:translate="">This advice can not be given anymore, it could be given until the <span class="advice_delay_timed_out"
-                                                                                                                    i18n:name="advice_delay_limit_date"
-                                                                                                                    tal:content="delayInfos/limit_date">2013/05/05</span>.
+                          i18n:translate="">This advice can not be given anymore, it was asked the <span class="advice_delay_timed_out"
+                                                                                                         i18n:name="advice_delay_started_on"
+                                                                                                         tal:content="delayInfos/delay_started_on">2013/05/05</span>
+                                            and could be given until the <span class="advice_delay_timed_out"
+                                                                               i18n:name="advice_delay_limit_date"
+                                                                               tal:content="delayInfos/limit_date">2013/05/15</span>.
                     </span>
                 </tal:adviceGiveableWithDelay>
                 <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not itemIsViewableByGroup">
