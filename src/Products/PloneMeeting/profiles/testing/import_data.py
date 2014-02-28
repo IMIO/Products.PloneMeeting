@@ -199,7 +199,7 @@ meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',
-                                       'new_item_workflow_state': ''}, ]
+                                       'trigger_workflow_transitions_until': ''}, ]
 
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(

@@ -330,7 +330,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # ok, activate it and send it!
         login(self.portal, 'admin')
         self.meetingConfig.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
-                                                        'new_item_workflow_state': '__nothing__'}, ))
+                                                        'trigger_workflow_transitions_until': '__nothing__'}, ))
         self.meetingConfig.at_post_edit_script()
         login(self.portal, 'pmManager')
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -431,7 +431,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
         # let's activate the functionnality again and test
         self.meetingConfig.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
-                                                        'new_item_workflow_state': '__nothing__'}, ))
+                                                        'trigger_workflow_transitions_until': '__nothing__'}, ))
         self.meetingConfig.at_post_edit_script()
         # an action is created
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])

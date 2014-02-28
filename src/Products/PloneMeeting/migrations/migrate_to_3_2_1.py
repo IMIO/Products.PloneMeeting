@@ -17,7 +17,7 @@ class Migrate_To_3_2_1(Migrator):
             if meetingConfigsToCloneTo and not isinstance(meetingConfigsToCloneTo[0], dict):
                 for v in meetingConfigsToCloneTo:
                     newValue.append({'meeting_config': v,
-                                     'new_item_workflow_state': ''})
+                                     'trigger_workflow_transitions_until': '__nothing__'})
             cfg.setMeetingConfigsToCloneTo(newValue)
         logger.info('Done.')
 

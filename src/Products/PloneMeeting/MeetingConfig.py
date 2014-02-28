@@ -2888,9 +2888,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            We base this on the MeetingConfig.transitionsForPresentingAnItem field.
            This will let us set an item cloned to another meetingConfig to any state until 'presented'.
            We list every item transitions of every available meetingConfigs.'''
+        # we do not use an empty '' but '__nothing__' because of a bug in DataGridField SelectColumn...
         res = [('__nothing__', translate('let_item_in_initial_state',
-                              domain='PloneMeeting',
-                              context=self.REQUEST)), ]
+                                         domain='PloneMeeting',
+                                         context=self.REQUEST)), ]
         tool = getToolByName(self, 'portal_plonemeeting')
         for cfg in tool.getActiveConfigs():
             # only show other meetingConfigs than self
