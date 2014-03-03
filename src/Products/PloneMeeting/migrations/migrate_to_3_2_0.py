@@ -219,7 +219,7 @@ class Migrate_To_3_2_0(Migrator):
             if not hasattr(aq_base(mGroup), 'givesMandatoryAdviceOn'):
                 # already migrated
                 return
-            givesMandatoryAdviceOn = mGroup.givesMandatoryAdviceOn.replace(' ', '')
+            givesMandatoryAdviceOn = mGroup.givesMandatoryAdviceOn.strip()
             if givesMandatoryAdviceOn and givesMandatoryAdviceOn not in ('python:False', 'python:False;', 'False'):
                 newMCCustomAdvisersValue.append(
                     {'group': mGroup.getId(),
