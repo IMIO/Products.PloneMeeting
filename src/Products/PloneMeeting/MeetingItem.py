@@ -2111,7 +2111,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         portal = getToolByName(self, 'portal_url').getPortalObject()
         res = []
-        notEmptyAdvisersGroupIds = [mGroup.id for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers')]
+        notEmptyAdvisersGroupIds = [mGroup.id for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers',
+                                                                                  onlyActive=False)]
         for customAdviser in cfg.getCustomAdvisers():
             # first check that corresponding group containing advisers is not empty
             if not customAdviser['group'] in notEmptyAdvisersGroupIds:
