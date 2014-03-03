@@ -2071,6 +2071,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         for mGroup in tool.getMeetingGroups():
             res.append((mGroup.getId(), mGroup.getName()))
+        # make sure that if a configuration was defined for a group
+        # that is now inactive, it is still displayed
+        storedCustomAdviserGroups = [customAdviser['group'] for customAdviser in self.getCustomAdvisers()]
+        if storedCustomAdviserGroups:
+            customAdviserGroupsInVocab = [group[0] for group in res]
+        for storedCustomAdviserGroup in storedCustomAdviserGroups:
+            if not storedCustomAdviserGroup in customAdviserGroupsInVocab:
+                mGroup = getattr(tool, storedCustomAdviserGroup)
+                res.append((mGroup.getId(), mGroup.getName()))
+
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listAllVoteValues')
