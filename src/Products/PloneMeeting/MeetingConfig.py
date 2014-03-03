@@ -1741,8 +1741,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         def _checkIfConfigIsUsed(row_id):
             '''Check if the rule we want to edit logical data for
-               or that we removed was in use.  This returns True if the
-               configuration is already in use.'''
+               or that we removed was in use.  This returns an item_url
+               if the configuration is already in use, nothing otherwise.'''
             # we are setting another field, it is not permitted if
             # the rule is in use, check every items if the rule is used
             catalog = getToolByName(self, 'portal_catalog')

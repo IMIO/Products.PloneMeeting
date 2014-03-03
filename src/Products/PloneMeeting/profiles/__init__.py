@@ -466,7 +466,7 @@ class PloneMeetingConfiguration(Descriptor):
     get = classmethod(get)
 
     multiSelectFields = ('availableOcrLanguages', 'modelAdaptations',
-                         'searchItemStates')
+                         'searchItemStates', 'workingDays', )
 
     def __init__(self, meetingFolderTitle, meetingConfigs, groups):
         self.meetingFolderTitle = meetingFolderTitle
@@ -497,6 +497,21 @@ class PloneMeetingConfiguration(Descriptor):
         # Title, Description, getDeliberation or SearchableText.
         self.showItemKeywordsTargets = True
         self.searchItemStates = []
+        self.holidays = [{'date': '2014/01/01', },
+                         {'date': '2014/04/21', },
+                         {'date': '2014/05/01', },
+                         {'date': '2014/05/29', },
+                         {'date': '2014/06/09', },
+                         {'date': '2014/07/21', },
+                         {'date': '2014/08/15', },
+                         {'date': '2014/09/27', },
+                         {'date': '2014/11/01', },
+                         {'date': '2014/11/02', },
+                         {'date': '2014/11/11', },
+                         {'date': '2014/11/15', },
+                         {'date': '2014/12/25', },
+                         {'date': '2014/12/26', }, ]
+        self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.groups = groups  # ~[GroupDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~

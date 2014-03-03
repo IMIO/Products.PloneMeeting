@@ -218,10 +218,7 @@ CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG = '/* Styles have been customized, do not rem
 # so here, we define that weekday 5 (as weekday starts from 0) is unavailble
 DELAY_UNAVAILABLE_WEEKDAY_NUMBER = 5
 # Define the weekday mnemonics to match the date.weekday function
-(MON, TUE, WED, THU, FRI, SAT, SUN) = range(7)
-# days considered as weekend days
-#WEEKENDS = (SAT, SUN)
-WEEKENDS = (SUN, )
+PY_DATETIME_WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
 
 def registerClasses():

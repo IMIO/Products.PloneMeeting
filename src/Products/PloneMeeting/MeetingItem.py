@@ -26,7 +26,6 @@ from Products.PloneMeeting.config import *
 import cgi
 import re
 from datetime import datetime
-from datetime import timedelta
 from collections import OrderedDict
 from appy.gen import No
 from persistent.list import PersistentList
@@ -2334,7 +2333,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return True
             delay_started_on = self._doClearDayFrom(adviceInfo['delay_started_on'])
             delay = int(adviceInfo['delay'])
-            if workday(delay_started_on, delay) > datetime.now():
+            tool = getToolByName(self, 'portal_plonemeeting')
+            holidays = tool.getHolidaysAs_datetime()
+            weekends = tool.getNonWorkingDayNumbers()
+            if workday(delay_started_on, delay, holidays=holidays, weekends=weekends) > datetime.now():
                 return True
             return False
 
@@ -2819,6 +2821,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # now index advice annexes
             if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
                 self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
+
+        # compute and store delay_infos
+        for groupId in self.adviceIndex.iterkeys():
+            self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
+
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
     security.declarePublic('getDelayInfosForAdvice')
@@ -2835,8 +2842,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 'delay_status': None,
                 'limit_date': None,
                 'delay': None,
-                'delay_started_on': None,
-                'delay_stopped_on': None,
+                'delay_started_on_localized': None,
+                'delay_stopped_on_localized': None,
                 'delay_when_stopped': None,
                 'delay_status_when_stopped': None}
         delay_started_on = delay_stopped_on = None
@@ -2848,11 +2855,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         delay = int(adviceInfos['delay'])
         data['delay'] = delay
         if adviceInfos['delay_started_on']:
-            data['delay_started_on'] = toLocalizedTime(adviceInfos['delay_started_on'])
+            data['delay_started_on_localized'] = toLocalizedTime(adviceInfos['delay_started_on'])
             delay_started_on = self._doClearDayFrom(adviceInfos['delay_started_on'])
 
         if adviceInfos['delay_stopped_on']:
-            data['delay_stopped_on'] = toLocalizedTime(adviceInfos['delay_stopped_on'])
+            data['delay_started_on_localized'] = toLocalizedTime(adviceInfos['delay_stopped_on'])
             delay_stopped_on = self._doClearDayFrom(adviceInfos['delay_stopped_on'])
 
         # if delay still not started, we return complete delay
@@ -2887,9 +2894,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return data
 
         # compute left delay taking holidays, and unavailable weekday into account
-        date_until = workday(delay_started_on, delay, [], 5)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        holidays = tool.getHolidaysAs_datetime()
+        weekends = tool.getNonWorkingDayNumbers()
+        date_until = workday(delay_started_on, delay, holidays=holidays, weekends=weekends)
         data['limit_date'] = toLocalizedTime(date_until)
-        left_delay = networkdays(datetime.now(), date_until) - 1
+        left_delay = networkdays(datetime.now(), date_until, holidays=holidays, weekends=weekends) - 1
         data['left_delay'] = left_delay
 
         if left_delay > 0:
