@@ -2076,10 +2076,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         storedCustomAdviserGroups = [customAdviser['group'] for customAdviser in self.getCustomAdvisers()]
         if storedCustomAdviserGroups:
             customAdviserGroupsInVocab = [group[0] for group in res]
-        for storedCustomAdviserGroup in storedCustomAdviserGroups:
-            if not storedCustomAdviserGroup in customAdviserGroupsInVocab:
-                mGroup = getattr(tool, storedCustomAdviserGroup)
-                res.append((mGroup.getId(), mGroup.getName()))
+            for storedCustomAdviserGroup in storedCustomAdviserGroups:
+                if not storedCustomAdviserGroup in customAdviserGroupsInVocab:
+                    mGroup = getattr(tool, storedCustomAdviserGroup)
+                    res.append((mGroup.getId(), mGroup.getName()))
 
         return DisplayList(res).sortedByValue()
 
