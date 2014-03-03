@@ -582,17 +582,16 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="MeetingConfigsToCloneTo",
             description_msgid="meeting_configs_to_clone_to_descr",
-            columns={'meeting_config': SelectColumn("Meeting config to clone to Meeting config", vocabulary="listMeetingConfigsToCloneTo", col_description='The meeting config the item of this meeting config will be sendable to.'),
-                     'trigger_workflow_transitions_until': SelectColumn("Meeting config to clone to Trigger workflow transitions until", vocabulary="listTransitionsUntilPresented", col_description='While sent, the new item is in the workflow initial state, some transitions can be automatically triggered for the new item, select until wich transition it will be done (selected transition will also be triggered).'), },
+            columns={'meeting_config': SelectColumn("Meeting config to clone to Meeting config", vocabulary="listMeetingConfigsToCloneTo", col_description="The meeting config the item of this meeting config will be sendable to."), 'trigger_workflow_transitions_until': SelectColumn("Meeting config to clone to Trigger workflow transitions until", vocabulary="listTransitionsUntilPresented", col_description='While sent, the new item is in the workflow initial state, some transitions can be automatically triggered for the new item, select until wich transition it will be done (selected transition will also be triggered).'), },
             label='Meetingconfigstocloneto',
             label_msgid='PloneMeeting_label_meetingConfigsToCloneTo',
             i18n_domain='PloneMeeting',
         ),
+        schemata="data",
         default=defValues.meetingConfigsToCloneTo,
         allow_oddeven=True,
-        allow_empty_rows=False,
-        schemata="data",
         columns=('meeting_config', 'trigger_workflow_transitions_until', ),
+        allow_empty_rows=False,
     ),
     StringField(
         name='itemWorkflow',
@@ -725,6 +724,7 @@ schema = Schema((
     ),
     LinesField(
         name='transitionsForPresentingAnItem',
+        default=defValues.transitionsForPresentingAnItem,
         widget=InAndOutWidget(
             description="TransitionsForPresentingAnItem",
             description_msgid="transitions_for_presenting_an_item_descr",
@@ -734,7 +734,6 @@ schema = Schema((
         ),
         schemata="workflow",
         vocabulary='listTransitionsForPresentingAnItem',
-        default=defValues.transitionsForPresentingAnItem,
     ),
     LinesField(
         name='meetingTopicStates',
