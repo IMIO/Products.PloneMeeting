@@ -215,7 +215,7 @@ class Migrate_To_3_2_0(Migrator):
         # just migrate active MeetingGroups givesMandatoryAdviceOn attribute
         # but remove existing givesMandatoryAdviceOn attribute on every groups
         newMCCustomAdvisersValue = []
-        for mGroup in self.tool.getMeetingGroups():
+        for mGroup in self.tool.getMeetingGroups(onlyActive=False):
             if not hasattr(aq_base(mGroup), 'givesMandatoryAdviceOn'):
                 # already migrated
                 return
@@ -336,7 +336,7 @@ class Migrate_To_3_2_0(Migrator):
         mappings = {}
         for key, value in defaultCfg.listStates('Item'):
             mappings[key] = '%s__state__%s' % (defaultCfgId, key)
-        for mGroup in self.tool.getMeetingGroups():
+        for mGroup in self.tool.getMeetingGroups(onlyActive=False):
             if mGroup.getItemAdviceStates():
                 # if migration already executed, break
                 if '__state__' in mGroup.getItemAdviceStates()[0]:
