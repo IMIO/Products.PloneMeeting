@@ -2841,6 +2841,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         data = {'left_delay': None,
                 'delay_status': None,
                 'limit_date': None,
+                'limit_date_localized': None,
                 'delay': None,
                 'delay_started_on_localized': None,
                 'delay_stopped_on_localized': None,
@@ -2898,11 +2899,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         holidays = tool.getHolidaysAs_datetime()
         weekends = tool.getNonWorkingDayNumbers()
         date_until = workday(delay_started_on, delay, holidays=holidays, weekends=weekends)
-        data['limit_date'] = toLocalizedTime(date_until)
+        data['limit_date'] = date_until
+        data['limit_date_localized'] = toLocalizedTime(date_until)
         left_delay = networkdays(datetime.now(), date_until, holidays=holidays, weekends=weekends) - 1
         data['left_delay'] = left_delay
 
-        if left_delay > 0:
+        if left_delay >= 0:
             # delay status is either 'we have time' or 'please hurry up' depending
             # on value defined in 'delay_left_alert'
             if not adviceInfos['delay_left_alert'] or int(adviceInfos['delay_left_alert']) < left_delay:

@@ -684,6 +684,7 @@ dl.searchResults cite {
     height: 2em;
     position: relative;
     top: 0.5em;
+    float: left;
 }
 
 /* make column displayed for MeetingConfig.customAdvisers equals
