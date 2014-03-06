@@ -68,6 +68,12 @@
         allowed_interface="Products.Archetypes.interfaces.utils.IUtils"
         permission="zope2.View"
         />
+    <browser:page
+        name="overview-controlpanel"
+        for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+        class=".browser.overrides.PloneMeetingOverviewControlPanel"
+        permission="plone.app.controlpanel.Overview"
+        />
 
     <configure package="imio.actionspanel">
         <browser:page

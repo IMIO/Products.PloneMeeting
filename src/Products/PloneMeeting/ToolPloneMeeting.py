@@ -2087,9 +2087,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def _updateAllAdvices(self):
         '''Update adviceIndex for every items.'''
         catalog = getToolByName(self, 'portal_catalog')
-        for b in catalog(meta_type='MeetingItem'):
-            item = b.getObject()
-            logger.info('Updating adviceIndex of item at %s' % '/'.join(item.getPhysicalPath()))
+        brains = catalog(meta_type='MeetingItem')
+        numberOfBrains = len(brains)
+        i = 1
+        for brain in brains:
+            item = brain.getObject()
+            logger.info('%d/%d Updating adviceIndex of item at %s' % (i,
+                                                                      numberOfBrains,
+                                                                      '/'.join(item.getPhysicalPath())))
+            i = i + 1
             item.updateAdvices()
             # Update security as local_roles are set by updateAdvices
             item.reindexObject(idxs=['allowedRolesAndUsers', 'indexAdvisers', ])

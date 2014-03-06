@@ -1,5 +1,6 @@
 from zope.component import getMultiAdapter
 
+from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize.view import memoize
@@ -115,6 +116,18 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
         # hide the history for meetingadvices
         if self.context.portal_type not in ['meetingadvice', ]:
             return True
+
+
+class PloneMeetingOverviewControlPanel(OverviewControlPanel):
+    '''
+      Override the Overview control panel to add informations about
+      PloneMeeting version at the bottom of @@overview-controlpanel.
+    '''
+    def version_overview(self):
+        versions = super(PloneMeetingOverviewControlPanel, self).version_overview()
+        pm_version = self.context.portal_setup.getProfileInfo('profile-Products.PloneMeeting:default')['version']
+        versions.insert(0, 'PloneMeeting %s' % pm_version)
+        return versions
 
 
 class BaseActionsPanelView(ActionsPanelView):
