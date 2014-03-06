@@ -351,14 +351,17 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            else, it returns the global, default list in cfg.itemAdviceStates that correctly contains
            state values.'''
         res = self.getField('itemAdviceStates').get(self, **kwargs)
+
         if cfg:
             if not res:
                 res = cfg.getItemAdviceStates()
             else:
                 tmpres = []
+                givenCfgId = cfg.getId()
                 for elt in res:
                     cfgId, state = elt.split('__state__')
-                    tmpres.append(state)
+                    if cfgId == givenCfgId:
+                        tmpres.append(state)
                 res = tmpres
         return res
 
@@ -371,9 +374,11 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 res = cfg.getItemAdviceEditStates()
             else:
                 tmpres = []
+                givenCfgId = cfg.getId()
                 for elt in res:
                     cfgId, state = elt.split('__state__')
-                    tmpres.append(state)
+                    if cfgId == givenCfgId:
+                        tmpres.append(state)
                 res = tmpres
         return res
 
@@ -386,9 +391,11 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 res = cfg.getItemAdviceViewStates()
             else:
                 tmpres = []
+                givenCfgId = cfg.getId()
                 for elt in res:
                     cfgId, state = elt.split('__state__')
-                    tmpres.append(state)
+                    if cfgId == givenCfgId:
+                        tmpres.append(state)
                 res = tmpres
         return res
 

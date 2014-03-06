@@ -760,7 +760,9 @@ class testAdvices(PloneMeetingTestCase):
         # now make the delay exceeded and check again
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
         item.updateAdvices()
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] < 0)
+        # if delay is negative, we show complete delay
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] == 5)
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
         self.assertTrue(not self.hasPermission(AddAdvice, item))
         # recover delay, add the advice and check the 'edit' behaviour
         item.adviceIndex['vendors']['delay_started_on'] = datetime.now()
@@ -780,7 +782,12 @@ class testAdvices(PloneMeetingTestCase):
         # now make sure the advice is no more editable when delay is exceeded
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
         item.updateAdvices()
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] < 0)
+        # when delay is exceeded, left_delay is complete delay so we show it in red
+        # we do not show the exceeded delay because it could be very large (-654?)
+        # and represent nothing...
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] == 5)
+        # 'delay_status' is 'timed_out'
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
         self.assertTrue(not self.hasPermission(ModifyPortalContent, advice))
 
     def test_pm_UpdateDelayAwareAdvicesView(self):
@@ -809,7 +816,8 @@ class testAdvices(PloneMeetingTestCase):
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
         # the state is not consistent as advices have not been updated
         # delay is exceeded...
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] < 0)
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] == 5)
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
         # ... but user has still the permission to add it?! ;-)
         self.assertTrue(self.hasPermission(AddAdvice, item))
         # make things consistent by calling the @@update-delay-aware-advices view
@@ -822,7 +830,8 @@ class testAdvices(PloneMeetingTestCase):
         # now that advices have been updated, the state is coherent
         self.changeUser('pmReviewer2')
         # delay is still exceeded...
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] < 0)
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] == 5)
+        self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
         # ... but now the user does not have the permission to add the advice anymore
         self.assertTrue(not self.hasPermission(AddAdvice, item))
 

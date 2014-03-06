@@ -214,6 +214,15 @@ CLONE_TO_OTHER_MC_ACTION_SUFFIX = 'clone_to_other_mc_'
 # Value added in the CKeditor menuStyles to specify that it has been customized
 CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG = '/* Styles have been customized, do not remove this line! */'
 
+# if a delay for giving an item is on saturday, we extends the delay to next avaialble day
+# so here, we define that weekday 5 (as weekday starts from 0) is unavailble
+DELAY_UNAVAILABLE_WEEKDAY_NUMBER = 5
+# Define the weekday mnemonics to match the date.weekday function
+(MON, TUE, WED, THU, FRI, SAT, SUN) = range(7)
+# days considered as weekend days
+#WEEKENDS = (SAT, SUN)
+WEEKENDS = (SUN, )
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the
