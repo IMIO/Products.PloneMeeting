@@ -20,6 +20,10 @@ import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
+from Products.DataGridField import DataGridField, DataGridWidget
+from Products.DataGridField.Column import Column
+from Products.DataGridField.SelectColumn import SelectColumn
+
 from Products.PloneMeeting.config import *
 
 
@@ -29,23 +33,25 @@ from Products.CMFCore.utils import UniqueObject
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
+import re
 import string
 import time
-import re
-from openid.cryptutil import randomString
-from appy.gen import No
-from AccessControl import Unauthorized
-from OFS import CopySupport
-from BTrees.OOBTree import OOBTree
-from zExceptions import NotFound
-from Acquisition import aq_base
-from AccessControl import getSecurityManager
-from DateTime import DateTime
 import transaction
 import OFS.Moniker
+from appy.gen import No
+from datetime import datetime
+from openid.cryptutil import randomString
+from AccessControl import Unauthorized
+from AccessControl import getSecurityManager
+from Acquisition import aq_base
+from BTrees.OOBTree import OOBTree
+from DateTime import DateTime
+from OFS import CopySupport
+from zExceptions import NotFound
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
+from plone.memoize import ram
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import AccessContentsInformation, DeleteObjects, View
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -53,12 +59,13 @@ from Products.CMFPlone.PloneBatch import Batch
 from Products.DCWorkflow.Transitions import TRIGGER_USER_ACTION
 from Products.DCWorkflow.Expression import StateChangeInfo, createExprContext
 from Products.ATContentTypes import permission as ATCTPermissions
-from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
-    monthsIds, weekdaysIds, getCustomSchemaFields
+    monthsIds, weekdaysIds, getCustomSchemaFields, workday
 from Products.PloneMeeting.model.adaptations import performModelAdaptations, performWorkflowAdaptations
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -381,6 +388,50 @@ schema = Schema((
         default=defValues.searchItemStates,
         enforceVocabulary=False,
     ),
+    LinesField(
+        name='workingDays',
+        default=defValues.workingDays,
+        widget=MultiSelectionWidget(
+            description="WorkingDays",
+            description_msgid="working_days_descr",
+            size=7,
+            label='Workingdays',
+            label_msgid='PloneMeeting_label_workingDays',
+            i18n_domain='PloneMeeting',
+        ),
+        required=True,
+        multiValued=1,
+        vocabulary='listWeekDays',
+    ),
+    DataGridField(
+        name='holidays',
+        default=defValues.holidays,
+        widget=DataGridField._properties['widget'](
+            columns={'date': Column('Holiday date', col_description='holiday_date_col_descr'), },
+            description="Holidays",
+            description_msgid="holidays_descr",
+            label='Holidays',
+            label_msgid='PloneMeeting_label_holidays',
+            i18n_domain='PloneMeeting',
+        ),
+        allow_oddeven=True,
+        columns=('date', ),
+        allow_empty_rows=False,
+    ),
+    LinesField(
+        name='delayUnavailableEndDays',
+        default=defValues.delayUnavailableEndDays,
+        widget=MultiSelectionWidget(
+            description="DelayUnavailableEndDays",
+            description_msgid="delay_unavailable_end_days_descr",
+            size=7,
+            label='Delayunavailableenddays',
+            label_msgid='PloneMeeting_label_delayUnavailableEndDays',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=1,
+        vocabulary='listWeekDays',
+    ),
 
 ),
 )
@@ -468,6 +519,74 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                    'a Python interpreter is UNO-enabled, launch it and type ' \
                    '"import uno". If you have no ImportError exception it ' \
                    'is ok.' % value
+
+    security.declarePrivate('validate_holidays')
+    def validate_holidays(self, values):
+        '''Checks if encoded holidays are correct :
+           - dates must respect format YYYY/MM/DD;
+           - dates must be encoded ascending (older to newer).'''
+        if values == [{'date': '', 'orderindex_': 'template_row_marker'}]:
+            return
+        # first try to see if format is correct
+        dates = []
+        for row in values:
+            if row.get('orderindex_', None) == 'template_row_marker':
+                continue
+            try:
+                year, month, day = row['date'].split('/')
+                dates.append(datetime(int(year), int(month), int(day)))
+            except:
+                return _('holidays_wrong_date_format_error')
+        if dates:
+            # now check that dates are encoded ascending
+            previousDate = dates[0]
+            for date in dates[1:]:
+                if not date > previousDate:
+                    return _('holidays_date_not_ascending_error')
+                previousDate = date
+
+        # check that if we removed a row, it was not in use
+        dates_to_save = set([v['date'] for v in values if v['date']])
+        stored_dates = set([v['date'] for v in self.getHolidays() if v['date']])
+
+        def _checkIfDateIsUsed(date, holidays, weekends, unavailable_weekdays):
+            '''Check if the p_date we want to remove was in use.
+               This returns an item_url if the date is already in use, nothing otherwise.'''
+            # we are setting another field, it is not permitted if
+            # the rule is in use, check every items if the rule is used
+            catalog = getToolByName(self, 'portal_catalog')
+            cfgs = self.objectValues('MeetingConfig')
+            brains = catalog(Type=[cfg.getItemTypeName() for cfg in cfgs])
+            year, month, day = date.split('/')
+            date_as_datetime = datetime(int(year), int(month), int(day))
+            for brain in brains:
+                item = brain.getObject()
+                for adviser in item.adviceIndex.values():
+                    # if it is a delay aware advice, we check that the date
+                    # was not used while computing delay
+                    if adviser['delay'] and adviser['delay_started_on']:
+                        start_date = adviser['delay_started_on']
+                        if start_date > date_as_datetime:
+                            continue
+                        end_date = workday(start_date,
+                                           int(adviser['delay']),
+                                           holidays=holidays,
+                                           weekends=weekends,
+                                           unavailable_weekdays=unavailable_weekdays)
+                        if end_date > date_as_datetime:
+                            return item.absolute_url()
+
+        removed_dates = stored_dates.difference(dates_to_save)
+        holidays = self.getHolidaysAs_datetime()
+        weekends = self.getNonWorkingDayNumbers()
+        unavailable_weekdays = self.getUnavailableWeekDaysNumbers()
+        for date in removed_dates:
+            an_item_url = _checkIfDateIsUsed(date, holidays, weekends, unavailable_weekdays)
+            if an_item_url:
+                return translate('holidays_removed_date_in_use_error',
+                                 domain='PloneMeeting',
+                                 mapping={'item_url': an_item_url, },
+                                 context=self.REQUEST)
 
     security.declarePublic('getCustomFields')
     def getCustomFields(self, cols):
@@ -1259,6 +1378,61 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if not itemState[0] in res:
                     res.add(itemState[0], itemState[1])
         return res.sortedByValue()
+
+    security.declarePublic('listWeekDays')
+    def listWeekDays(self):
+        '''Method returning list of week days used in vocabularies.'''
+        res = DisplayList()
+        # we do not use utils.weekdaysIds because it is related
+        # to Zope DateTime where sunday weekday number is 0
+        # and python datetime where sunday weekday number is 6...
+        for day in PY_DATETIME_WEEKDAYS:
+            res.add(day,
+                    translate('weekday_%s' % day,
+                              domain='plonelocales',
+                              context=self.REQUEST))
+        return res
+
+    def getNonWorkingDayNumbers_cachekey(method, self):
+        '''cachekey method for self.getNonWorkingDayNumbers.'''
+        # we only recompute if the tool was modified
+        return (self.modified())
+
+    security.declarePublic('getNonWorkingDayNumbers')
+    @ram.cache(getNonWorkingDayNumbers_cachekey)
+    def getNonWorkingDayNumbers(self):
+        '''Return non working days, aka weekends.'''
+        workingDays = self.getWorkingDays()
+        not_working_days = [day for day in PY_DATETIME_WEEKDAYS if not day in workingDays]
+        return [PY_DATETIME_WEEKDAYS.index(not_working_day) for not_working_day in not_working_days]
+
+    def getHolidaysAs_datetime_cachekey(method, self):
+        '''cachekey method for self.getHolidaysAs_datetime.'''
+        # we only recompute if the tool was modified
+        return (self.modified())
+
+    security.declarePublic('getHolidaysAs_datetime')
+    @ram.cache(getHolidaysAs_datetime_cachekey)
+    def getHolidaysAs_datetime(self):
+        '''Return the holidays but as datetime objects.'''
+        res = []
+        for row in self.getHolidays():
+            year, month, day = row['date'].split('/')
+            res.append(datetime(int(year), int(month), int(day)))
+        return res
+
+    def getUnavailableWeekDaysNumbers_cachekey(method, self):
+        '''cachekey method for self.getUnavailableWeekDaysNumbers.'''
+        # we only recompute if the tool was modified
+        return (self.modified())
+
+    security.declarePublic('getUnavailableWeekDaysNumbers')
+    @ram.cache(getUnavailableWeekDaysNumbers_cachekey)
+    def getUnavailableWeekDaysNumbers(self):
+        '''Return unavailable days numbers, aka self.getDelayUnavailableEndDays as numbers.'''
+        delayUnavailableEndDays = self.getDelayUnavailableEndDays()
+        unavailable_days = [day for day in PY_DATETIME_WEEKDAYS if day in delayUnavailableEndDays]
+        return [PY_DATETIME_WEEKDAYS.index(unavailable_day) for unavailable_day in unavailable_days]
 
     security.declarePublic('showMeetingView')
     def showMeetingView(self):

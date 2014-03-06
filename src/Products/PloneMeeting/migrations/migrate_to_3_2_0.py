@@ -220,11 +220,22 @@ class Migrate_To_3_2_0(Migrator):
                 # already migrated
                 return
             givesMandatoryAdviceOn = mGroup.givesMandatoryAdviceOn.strip()
-            if givesMandatoryAdviceOn and givesMandatoryAdviceOn not in ('python:False', 'python:False;', 'False'):
+            if givesMandatoryAdviceOn and givesMandatoryAdviceOn not in ('python:False',
+                                                                         'python:False;',
+                                                                         'python: False',
+                                                                         'python: False;',
+                                                                         'False', ):
+                # if group is inactive, we set a 'for_item_created_until'
+                # that is deactivation date of the meeting group
+                for_item_created_until = ''
+                if mGroup.queryState() == 'inactive':
+                    lastActionDate = mGroup.workflow_history['plonemeeting_activity_workflow'][-1]['time']
+                    for_item_created_until = lastActionDate.strftime('%Y/%m/%d')
                 newMCCustomAdvisersValue.append(
                     {'group': mGroup.getId(),
                      # we can not do anything else but activate it from the beginning...
                      'for_item_created_from': self.portal.created().strftime('%Y/%m/%d'),
+                     'for_item_created_until': for_item_created_until,
                      'gives_auto_advice_on': givesMandatoryAdviceOn,
                      'row_id': self.portal.generateUniqueId(), })
             delattr(aq_base(mGroup), 'givesMandatoryAdviceOn')
