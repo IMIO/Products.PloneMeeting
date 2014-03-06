@@ -923,8 +923,8 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_ComputeDelaysWorkingDaysAndHolidays(self):
         '''Test that computing of delays relying on workingDays and holidays is correct.'''
         # configure one delay-aware optional adviser
-        # we use 7 days of delay so we are sure that we will encounter
-        # one and only one weekend when computing delay
+        # we use 7 days of delay so we are sure that we when setting
+        # manually 'delay_started_on' to last monday, delay is still ok
         self.meetingConfig.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
@@ -944,21 +944,28 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
         item.at_post_edit_script()
         self.proposeItem(item)
-        # advice should be giveable during 7 days, so in workingDays,
-        # by default it is 9 days after
-        # weekends are day number 5 and 6
+        # advice should be giveable during 7 working days, we set manually 'delay_started_on'
+        # to last monday (or today if we are monday) so we are sure about delay and limit_date and so on...
+        delay_started_on = item.adviceIndex['vendors']['delay_started_on']
+        while not delay_started_on.weekday() == 0:
+            delay_started_on = delay_started_on - timedelta(1)
+        item.adviceIndex['vendors']['delay_started_on'] = delay_started_on
+        item.updateAdvices()
+        self.assertTrue(item.adviceIndex['vendors']['delay_started_on'].weekday() == 0)
+        # for now, weekends are days 5 and 6, so saturday and sunday
         self.assertTrue(self.tool.getNonWorkingDayNumbers() == [5, 6])
-        limit_date_9_days_after = item._doClearDayFrom(item.adviceIndex['vendors']['delay_started_on']) + timedelta(9)
-        self.assertTrue(limit_date_9_days_after == item.adviceIndex['vendors']['delay_infos']['limit_date'])
+        # limit_date should be in 9 days, 7 days of delay + 2 days of weekends
+        limit_date_9_days = item._doClearDayFrom(item.adviceIndex['vendors']['delay_started_on'] + timedelta(9))
+        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] == limit_date_9_days)
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
-        # now set weekends to only sunday , so 'sun' will not be in workingDays
+        # now set weekends to only 'sunday'
         self.tool.setWorkingDays(('mon', 'tue', 'wed', 'thu', 'fri', 'sat', ))
         # the method is ram.cached, check that it is correct when changed
         self.tool.setModificationDate(DateTime())
         self.assertTrue(self.tool.getNonWorkingDayNumbers() == [6, ])
         item.updateAdvices()
         # this will decrease delay of one day
-        self.assertTrue(limit_date_9_days_after - timedelta(1) ==
+        self.assertTrue(limit_date_9_days - timedelta(1) ==
                         item.adviceIndex['vendors']['delay_infos']['limit_date'])
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
 
@@ -973,16 +980,48 @@ class testAdvices(PloneMeetingTestCase):
         year, month, day = holiday_changing_delay.split('/')
         self.assertTrue(self.tool.getHolidaysAs_datetime() == [datetime(2012, 5, 6),
                                                                datetime(int(year), int(month), int(day)), ])
-        # this should increase delay of one day, so as original limit_date
+        # this should increase delay of one day, so as original limit_date_9_days
         item.updateAdvices()
-        self.assertTrue(limit_date_9_days_after == item.adviceIndex['vendors']['delay_infos']['limit_date'])
+        self.assertTrue(limit_date_9_days == item.adviceIndex['vendors']['delay_infos']['limit_date'])
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
         # test that the advice may still be added the last day
         # change 'delay_started_on' manually and check that last day, the advice is 'still_giveable'
-        item.adviceIndex['vendors']['delay_started_on'] = item.adviceIndex['vendors']['delay_started_on'] - timedelta(8)
+        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(9)
         item.updateAdvices()
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] > datetime.now())
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
+        # one day more and it is not giveable anymore...
+        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(10)
+        item.updateAdvices()
+        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] < datetime.now())
+        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'timed_out')
+
+    def test_pm_ComputeDelaysAsCalendarDays(self):
+        '''
+          Test that computing of delays works also as 'calendar days'.
+          To do this, we simply define 7 days of the week as working days and no holidays.
+        '''
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '10',
+              'delay_label': ''}, ])
+        # no holidays...
+        self.tool.setHolidays([])
+        # every days are working days
+        self.tool.setWorkingDays(('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun', ))
+        self.assertTrue(self.tool.getNonWorkingDayNumbers() == [])
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
+        item.at_post_edit_script()
+        self.proposeItem(item)
+        # now test that limit_date is just now + delay of 10 days
+        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] ==
+                        item._doClearDayFrom(item.adviceIndex['vendors']['delay_started_on'] + timedelta(10)))
 
 
 def test_suite():
