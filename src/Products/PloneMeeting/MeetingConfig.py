@@ -35,6 +35,7 @@ from zope.annotation import IAnnotations
 from zope.component import getGlobalSiteManager
 from zope.i18n import translate
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+from plone.memoize import ram
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.utils import getToolByName
@@ -1654,7 +1655,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # and check if encoded date is not in the past, it has to be in the future
                     # except if it was already set before
                     storedData = self._dataForCustomAdviserRowId(customAdviser['row_id'])
-                    if date_until.isPast() and (not storedData or not storedData['for_item_created_until'] == created_until):
+                    if date_until.isPast() and (not storedData or
+                                                not storedData['for_item_created_until'] == created_until):
                         raise Exception
             except:
                 return translate('custom_adviser_wrong_date_format',
@@ -1846,8 +1848,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if '' in values:
             values.remove('')
         v_set = set(values)
-        # try to get itemAdvicesStates from REQUEST in case we just changed the value
-        # of itemAdvicesStates, we must consider this new value and not the value stored in self.getItemAdviceStates
+        # try to get itemAdviceStates from REQUEST in case we just changed the value
+        # of itemAdviceStates, we must consider this new value and not the value stored in self.getItemAdviceStates
         itemAdvicesStatesFromRequest = self.REQUEST.get('itemAdviceStates', ())
         if '' in itemAdvicesStatesFromRequest:
             itemAdvicesStatesFromRequest.remove('')
@@ -2778,9 +2780,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            objects of p_metaType ?'''
         res = ('title',)
         if metaType == 'MeetingItem':
-            res += tuple(self.getUserParam('itemColumns'))
+            res += tuple(self.getUserParam('itemColumns', self.REQUEST))
         elif metaType == 'Meeting':
-            res += tuple(self.getUserParam('meetingColumns'))
+            res += tuple(self.getUserParam('meetingColumns', self.REQUEST))
         else:
             res += ('creator', 'creationDate')
         return res
@@ -3374,12 +3376,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             editUrl = getattr(self.meetingusers, userId).absolute_url()+'/edit'
             rq.RESPONSE.redirect(editUrl)
 
+    def getUserName_cachekey(method, self, param, request, userId=None, caching=True):
+        '''cachekey method for self.getUserParam.'''
+        return (param, str(request.debug), userId)
+
     security.declarePublic('getUserParam')
-    def getUserParam(self, param, userId=None):
+    @ram.cache(getUserName_cachekey)
+    def getUserParam(self, param, request, userId=None, caching=True):
         '''Gets the value of the user-specific p_param, for p_userId if given,
            for the currently logged user if not. If user preferences are not
            enabled or if no MeetingUser instance is defined for the currently
-           logged user, this method returns the MeetingConfig-wide value.'''
+           logged user, this method returns the MeetingConfig-wide value.
+           If p_caching is True, the result will be cached.'''
         obj = self
         methodName = 'get%s%s' % (param[0].upper(), param[1:])
         tool = getToolByName(self, 'portal_plonemeeting')

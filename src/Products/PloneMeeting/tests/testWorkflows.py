@@ -237,18 +237,23 @@ class testWorkflows(PloneMeetingTestCase):
         # When a meeting is not decided, the 'advices' column is shown,
         # if selected in the meetingConfig
         self.assertEquals(meeting.adapted().showItemAdvices(), True)
-        # When a meeting is decided, items without a decision are automatically 'accepted'
+        # When a meeting is decided, items are at least set to 'itemfrozen'
         self.do(meeting, 'decide')
-        self.assertEquals(item1.queryState(), 'accepted')
-        self.assertEquals(item2.queryState(), 'accepted')
+        self.assertEquals(item1.queryState(), 'itemfrozen')
+        self.assertEquals(item2.queryState(), 'itemfrozen')
         # An already decided item keep his given decision
         self.assertEquals(item3.queryState(), 'delayed')
         # When the meeting is decided, the advices will not be shown anymore,
         # even if the column is selected in the meetingConfig
         self.assertEquals(meeting.adapted().showItemAdvices(), False)
         self.failIf(len(self.transitions(meeting)) != 2)
+        # When a meeting is closed, items without a decision are automatically 'accepted'
         self.do(meeting, 'close')
+        self.assertEquals(item1.queryState(), 'confirmed')
+        self.assertEquals(item2.queryState(), 'confirmed')
         self.do(meeting, 'archive')
+        self.assertEquals(item1.queryState(), 'itemarchived')
+        self.assertEquals(item2.queryState(), 'itemarchived')
 
     def test_pm_WorkflowPermissions(self):
         '''This test checks whether workflow permissions are correct while

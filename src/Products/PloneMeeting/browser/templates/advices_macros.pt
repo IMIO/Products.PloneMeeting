@@ -1,25 +1,24 @@
 <tal:comment replace="nothing">Displays advices as icons. Requires "meetingItem".</tal:comment>
 <metal:icons metal:define-macro="advicesIcons" i18n:domain="PloneMeeting"
      tal:define="advicesByType meetingItem/getAdvicesByType;
-                 adviceStyle python: meetingConfig.getUserParam('adviceStyle');
-                 advisableGroups python: meetingItem.getAdvicesGroupsInfosForUser();
-                 item_url meetingItem/absolute_url;
-                 advicesToAdd python: advisableGroups[0];
-                 advicesToEdit python: advisableGroups[1];
-                 portal_url context/@@plone_portal_state/portal_url;
-                 plone_view context/@@plone;
-                 isRealManager python: tool.isManager(realManagers=True);
-                 item_review_state meetingItem/queryState;
-                 advicesMayBeAdded python: item_review_state in meetingConfig.getItemAdviceStates();
-                 itemsAreViewableToAdvisers python: item_review_state in (meetingConfig.getItemAdviceStates() +
-                                                                          meetingConfig.getItemAdviceEditStates() +
-                                                                          meetingConfig.getItemAdviceViewStates());">
-
+                 advisableGroups meetingItem/getAdvicesGroupsInfosForUser;
+                 advicesToAdd python: advisableGroups[0];">
   <table width="#"
          class="contentActionsAX no-style-table" cellpadding="0" cellspacing="0"
          tal:attributes="width python: 10 + (advicesToAdd and 1 or 0) * 15 + len(advicesByType) * 26">
     <tr>
       <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
+      <tal:definesIfSomethingToShow define="advicesToEdit python: advisableGroups[1];
+                                            adviceStyle python: meetingConfig.getUserParam('adviceStyle', context.REQUEST);
+                                            item_url meetingItem/absolute_url;
+                                            portal context/@@plone_portal_state/portal;
+                                            tool python: portal.portal_plonemeeting;
+                                            mGroupAdviceStatePrefix string:${meetingConfig/getId}__state__;
+                                            portal_url context/@@plone_portal_state/portal_url;
+                                            plone_view context/@@plone;
+                                            isRealManager python: tool.isManager(realManagers=True);
+                                            item_review_state meetingItem/queryState;
+                                            DateTime python: modules['DateTime'];">
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
       <td tal:condition="advicesToAdd" class="noPadding">
         <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
@@ -40,7 +39,12 @@
             <ul style="cursor:default">
               <tal:comment replace="nothing">List of group names</tal:comment>
               <li tal:repeat="advice python:advicesByType[adviceType]">
-                <fieldset>
+                <fieldset tal:define="tool python: portal.portal_plonemeeting;
+                                      mGroup python: getattr(tool, advice['id']);
+                                      itemIsViewableByGroup python: mGroupAdviceStatePrefix + item_review_state in (mGroup.getItemAdviceStates() +
+                                                                                                                    mGroup.getItemAdviceEditStates() +
+                                                                                                                    mGroup.getItemAdviceViewStates());
+                                      adviceMayBeAdded python: mGroupAdviceStatePrefix + item_review_state in mGroup.getItemAdviceStates();">
                     <legend>
                          <span tal:condition="advice/delay"
                                tal:define="global delayInfos python: meetingItem.getDelayInfosForAdvice(advice['id']);">
@@ -130,13 +134,13 @@
                   </tr>
                 </table>
                 <span class="discreet"
-                   tal:condition="python: adviceType == 'not_given' and advicesMayBeAdded and not delayInfos"
-                   i18n:translate="">This advice has not been given yet.
+                   tal:condition="python: adviceType == 'not_given' and adviceMayBeAdded and not delayInfos"
+                   i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet.
                 </span>
-                <tal:adviceGiveableWithDelay condition="python: adviceType == 'not_given' and advicesMayBeAdded and delayInfos">
+                <tal:adviceGiveableWithDelay condition="python: adviceType == 'not_given' and adviceMayBeAdded and delayInfos">
                     <span class="discreet"
                           tal:condition="python: delayInfos['delay_status'] in ['still_time', 'still_time_but_alert']"
-                          i18n:translate="">This advice has not been given yet, it can still be given until the <span tal:attributes="class string:advice_delay_${delayInfos/delay_status}"
+                          i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet, it can still be given until the <span tal:attributes="class string:advice_delay_${delayInfos/delay_status}"
                                                                                                                       i18n:name="advice_delay_limit_date"
                                                                                                                       tal:content="delayInfos/limit_date"></span>.
                     </span>
@@ -147,18 +151,19 @@
                                                                                                                     tal:content="delayInfos/limit_date">2013/05/05</span>.
                     </span>
                 </tal:adviceGiveableWithDelay>
-                <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not itemsAreViewableToAdvisers">
+
+                <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not itemIsViewableByGroup">
                     <span class="discreet"
-                       i18n:translate="">This advice is not viewable by the advisers in the current item state (<span i18n:name="item_review_state"
-                                                                                                                      i18n:translate=""
-                                                                                                                      i18n:domain="plone"
-                                                                                                                      tal:content="item_review_state"
-                                                                                                                      tal:attributes="class string:label-state-${item_review_state}"></span>).</span>
+                       i18n:translate="">This advice is not viewable by the advisers of this group in the current item state (<span i18n:name="item_review_state"
+                                                                                                                                   i18n:translate=""
+                                                                                                                                   i18n:domain="plone"
+                                                                                                                                   tal:content="item_review_state"
+                                                                                                                                   tal:attributes="class string:label-state-${item_review_state}"></span>).</span>
                     <br /><span tal:condition="delayInfos"
                                 class="discreet"
                                 i18n:translate="">Once viewable, the adviser will have <span style="font-weight: bold;" i18n:name="advice_delay" tal:content="delayInfos/delay">15</span> days to give the advice.</span>
                 </tal:itemsStillNotViewableToAdvisers>
-                <tal:itemViewableButNoMoreAdviseableWithoutDelay condition="python: adviceType == 'not_given' and itemsAreViewableToAdvisers and not delayInfos and not advicesMayBeAdded">
+                <tal:itemViewableButNoMoreAdviseableWithoutDelay condition="python: adviceType == 'not_given' and itemIsViewableByGroup and not delayInfos and not adviceMayBeAdded">
                     <span class="discreet"
                        i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
                                                                                                        i18n:translate=""
@@ -167,7 +172,7 @@
                                                                                                        tal:attributes="class string:label-state-${item_review_state}"></span>)</span>.
 
                 </tal:itemViewableButNoMoreAdviseableWithoutDelay>
-                <tal:itemViewableButNoMoreAdviseableWithDelay condition="python: adviceType == 'not_given' and itemsAreViewableToAdvisers and delayInfos and not advicesMayBeAdded">
+                <tal:itemViewableButNoMoreAdviseableWithDelay condition="python: adviceType == 'not_given' and itemIsViewableByGroup and delayInfos and not adviceMayBeAdded">
                     <span class="discreet"
                        i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
                                                                                                        i18n:translate=""
@@ -209,6 +214,7 @@
         </dl>
       </td>
       </tal:menu>
+      </tal:definesIfSomethingToShow>
       </tal:advicesToAddOrExisting>
       <td tal:condition="not: advicesByType">-</td>
     </tr>

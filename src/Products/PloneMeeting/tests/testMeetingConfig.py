@@ -339,19 +339,20 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '',
                            'delay_left_alert': '',
                            'delay_label': '', }, ]
+        groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
         wrong_date_msg = translate('custom_adviser_wrong_date_format',
                                    domain='PloneMeeting',
-                                   mapping={'groupName': customAdvisers[0]['group']},
+                                   mapping={'groupName': groupName},
                                    context=self.portal.REQUEST)
-        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_date_msg)
         # not a date, wrong format (YYYY/MM/DD) or extra blank are not valid dates
         wrong_dates = ['wrong', '2013/20/05', '2013/02/05 ', ]
         # if wrong syntax, it fails
         for wrong_date in wrong_dates:
             customAdvisers[0]['for_item_created_from'] = wrong_date
-            self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_date_msg)
+            self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_date_msg)
             customAdvisers[0]['for_item_created_until'] = wrong_date
-            self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_date_msg)
+            self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_date_msg)
         # with a valid date, then it works, set back 'for_item_created_until' to ''
         # his special behaviour will be tested later in this test
         customAdvisers[0]['for_item_created_until'] = ''
@@ -360,7 +361,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
         # 'for_item_create_until' date must be in the future
         customAdvisers[0]['for_item_created_until'] = '2010/12/31'
-        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_date_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_date_msg)
         # with a future date, it validates ONLY if it is the first time the date
         # is defined, aka we can not change an already encoded 'for_item_created_until' date
         future_date = (DateTime() + 1).strftime('%Y/%m/%d')
@@ -396,20 +397,21 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': 'a',
                            'delay_left_alert': '',
                            'delay_label': '', }, ]
+        groupName = getattr(self.tool, customAdvisers[0]['group']).getName()
         wrong_delay_msg = translate('custom_adviser_wrong_delay_format',
                                     domain='PloneMeeting',
-                                    mapping={'groupName': customAdvisers[0]['group']},
+                                    mapping={'groupName': groupName},
                                     context=self.portal.REQUEST)
-        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_delay_msg)
         # if wrong syntax, it fails
         customAdvisers[0]['delay'] = '10,5'
-        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_delay_msg)
         # if extra blank, it fails
         customAdvisers[0]['delay'] = '10 '
-        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_delay_msg)
         # if not integer, it fails
         customAdvisers[0]['delay'] = '10.5'
-        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), wrong_delay_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_delay_msg)
         # with a valid date, then it works
         # with a single delay value
         customAdvisers[0]['delay'] = '10'
@@ -418,10 +420,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         # 'delay' must be higher or equals 'delay_left_alert'
         delay_higher_msg = translate('custom_adviser_delay_left_must_be_inferior_to_delay',
                                      domain='PloneMeeting',
-                                     mapping={'groupName': customAdvisers[0]['group']},
+                                     mapping={'groupName': groupName},
                                      context=self.portal.REQUEST)
         customAdvisers[0]['delay_left_alert'] = '12'
-        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), delay_higher_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == delay_higher_msg)
         # equals or higher is ok
         customAdvisers[0]['delay'] = '12'
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
@@ -430,10 +432,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         # if 'delay_alert_left' is defined, 'delay' must be as well
         delay_required_msg = translate('custom_adviser_no_delay_left_if_no_delay',
                                        domain='PloneMeeting',
-                                       mapping={'groupName': customAdvisers[0]['group']},
+                                       mapping={'groupName': groupName},
                                        context=self.portal.REQUEST)
         customAdvisers[0]['delay'] = ''
-        self.assertTrue(cfg.validate_customAdvisers(customAdvisers), delay_required_msg)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == delay_required_msg)
 
     def test_pm_Validate_customAdvisersCanNotChangeUsedConfig(self):
         '''Test the MeetingConfig.customAdvisers validate method.

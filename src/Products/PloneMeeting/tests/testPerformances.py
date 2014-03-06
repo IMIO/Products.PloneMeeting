@@ -243,6 +243,24 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.tool.getMeetingGroups(notEmptySuffix='advisers', caching=caching)
 
+    def test_pm_GetMeetingConfig(self):
+        '''Test ToolPloneMeeting.getMeetingConfig method performances.
+           We call the method 2000 times, this is what happens when displaying
+           a meeting containing 100 items.'''
+        # create an item
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # call getMeetingConfig 2000 times wihout caching
+        self._getMeetingConfigOnTool(item, 2000, caching=False)
+        # call getMeetingConfig 2000 times with caching
+        self._getMeetingConfigOnTool(item, 2000, caching=True)
+
+    @timecall
+    def _getMeetingConfigOnTool(self, context, times=1, caching=True):
+        ''' '''
+        for time in range(times):
+            self.tool.getMeetingConfig(context, caching=caching)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

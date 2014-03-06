@@ -248,9 +248,10 @@
           <table class="listing" align="right" width="100%">
             <thead>
             <tr>
-              <th class="nosort" i18n:translate="listingheader_title"></th>
-              <th class="nosort" width="50px" i18n:translate="group_is_active"></th>
-              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" i18n:translate="listingheader_title">Title</th>
+              <th class="nosort" width="200px" i18n:translate="PloneMeeting_label_relatedTo">Related to</th>
+              <th class="nosort" width="50px" i18n:translate="group_is_active">Active?</th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -267,6 +268,9 @@
               <td><img tal:attributes="src python: obj.absolute_url() + '/at_download/theIcon'"/>&nbsp;
                   <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
                   <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
+              </td>
+              <td>
+              <span i18n:translate="" tal:content="string:meetingfiletype_related_to_${obj/relatedTo}">Related to</span>
               </td>
               <td i18n:domain="plone">
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
@@ -315,9 +319,9 @@
           <table class="listing" align="right" width="100%">
             <thead>
             <tr>
-              <th class="nosort" i18n:translate="listingheader_title"></th>
-              <th class="nosort" width="50px" i18n:translate="config_is_active"></th>
-              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" i18n:translate="listingheader_title">Title</th>
+              <th class="nosort" width="50px" i18n:translate="config_is_active">Active?</th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -382,10 +386,10 @@
           <table class="listing" align="right" width="100%">
             <thead>
             <tr>
-              <th class="nosort" i18n:translate="listingheader_title"></th>
-              <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId"></th>
-              <th class="nosort" width="50px" i18n:translate="group_is_active"></th>
-              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" i18n:translate="listingheader_title">Title</th>
+              <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId">Category id</th>
+              <th class="nosort" width="50px" i18n:translate="group_is_active">Active?</th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -457,11 +461,11 @@
           <table class="listing" align="right" width="100%">
             <thead>
             <tr>
-              <th class="nosort" width="50%" i18n:translate="listingheader_title"></th>
-              <th class="nosort" i18n:translate="PloneMeeting_label_usages"></th>
-              <th class="nosort" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe"></th>
-              <th class="nosort" i18n:translate="PloneMeeting_label_templateUsingGroups"></th>
-              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" width="50%" i18n:translate="listingheader_title">Title</th>
+              <th class="nosort" i18n:translate="PloneMeeting_label_usages">Usages</th>
+              <th class="nosort" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe">Meeting transition inserting me</th>
+              <th class="nosort" i18n:translate="PloneMeeting_label_templateUsingGroups">Template using groups</th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -630,12 +634,12 @@
                              lastId python: objectIds and objectIds[-1] or '';">
             <thead>
             <tr>
-              <th class="nosort" i18n:translate="listingheader_title"></th>
+              <th class="nosort" i18n:translate="listingheader_title">Title</th>
               <th class="nosort" i18n:translate="topic_linked_to_type">Linked to Meeting or MeetingItem?</th>
               <th class="nosort" i18n:translate="topic_search_script">Topic search script</th>
               <th class="nosort" i18n:translate="topic_tal_expression">Topic tal expression</th>
-              <th class="nosort" width="50px" i18n:translate="pod_template_is_active"></th>
-              <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
+              <th class="nosort" width="50px" i18n:translate="pod_template_is_active">Active?</th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
             </tr>
             </thead>
 
@@ -886,12 +890,12 @@
                         lastId python: objectIds and objectIds[-1] or '';">
       <thead>
       <tr>
-        <th class="nosort" width="20%" i18n:translate="listingheader_title"></th>
-        <th class="nosort" width="20%" i18n:translate="plonemeeting_identifier"></th>
-        <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_duty"></th>
-        <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_usages"></th>
-        <th class="nosort" width="50px" i18n:translate="pod_template_is_active"></th>
-        <th class="nosort" width="130px" i18n:translate="heading_actions"></th>
+        <th class="nosort" width="20%" i18n:translate="listingheader_title">Title</th>
+        <th class="nosort" width="20%" i18n:translate="plonemeeting_identifier">Identifier</th>
+        <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_duty">Duty</th>
+        <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_usages">Usages</th>
+        <th class="nosort" width="50px" i18n:translate="pod_template_is_active">Active?</th>
+        <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
       </tr>
       </thead>
       <tr tal:condition="python: not mFolder.objectValues('MeetingUser')">
@@ -964,9 +968,9 @@
             <thead>
             <tr>
               <th class="nosort" width="20px"></th>
-              <th class="nosort" i18n:translate="listingheader_title"></th>
-              <th class="nosort" width="50px"  i18n:translate="pod_template_is_active"></th>
-              <th class="nosort" width="130px"  i18n:translate="heading_actions"></th>
+              <th class="nosort" i18n:translate="listingheader_title">Title</th>
+              <th class="nosort" width="50px"  i18n:translate="pod_template_is_active">Active?</th>
+              <th class="nosort" width="130px"  i18n:translate="heading_actions">Actions</th>
             </tr>
             </thead>
             <tal:comment replace="nothing">No template is defined.</tal:comment>

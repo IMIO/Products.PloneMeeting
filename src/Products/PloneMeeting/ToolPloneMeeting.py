@@ -488,7 +488,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            suffixes passed as argument are not empty. If it is the case, we do
            not return the group neither.  If p_onlyActive is True, we also check
            the MeetingGroup current review_state.
-           If p_caching is True (by default), the method call will be cached in the REQUEST.'''
+           If p_caching is True (by default), the method call will be cached in the REQUEST.
+           WARNING, we can not use ram.cache here because it can not be used when returning
+           persistent objects (single, list, dict, ... of persistent objects), so we need to manage
+           caching manually...'''
         data = None
         if caching:
             key = "tool-getmeetinggroups-%s-%s" % ((notEmptySuffix and notEmptySuffix.lower() or ''),
@@ -716,32 +719,45 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
 
     security.declarePublic('getMeetingConfig')
-    def getMeetingConfig(self, context):
+    def getMeetingConfig(self, context, caching=True):
         '''Based on p_context's portal type, we get the corresponding meeting
            config.'''
-        res = None
-        portalTypeName = context.getPortalTypeName()
-        if portalTypeName in ('MeetingItem', 'Meeting'):
-            # Archetypes bug. When this method is called within a default_method
-            # (when displaying a edit form), the portal_type is not already
-            # correctly set (it is equal to the meta_type, which is not
-            # necessarily equal to the portal type). In this case we look for
-            # the correct portal type in the request.
-            portalTypeName = self.REQUEST.get('type_name', None)
-        # Find config based on portal type of current p_context
-        for config in self.objectValues('MeetingConfig'):
-            if (portalTypeName == config.getItemTypeName()) or \
-               (portalTypeName == config.getMeetingTypeName()):
-                res = config
-                break
-        if not res:
-            # Get the property on the folder that indicates that this is the
-            # "official" folder of a meeting config.
-            try:
-                res = getattr(self, context.aq_acquire(MEETING_CONFIG))
-            except AttributeError:
-                res = None
-        return res
+        data = None
+        # we only do caching when we are sure that context portal_type
+        # is linked to only one MeetingConfig, it is the case for Meeting and MeetingItem
+        # portal_types, but if we have a 'Topic' or a 'Folder', we can not determinate
+        # in wich MeetingConfig it is, we can not do caching...
+        if caching and context.meta_type in ('Meeting', 'MeetingItem', ):
+            key = "tool-getmeetingconfig-%s" % context.portal_type
+            cache = IAnnotations(self.REQUEST)
+            data = cache.get(key, None)
+        else:
+            caching = False
+        if data is None:
+            portalTypeName = context.getPortalTypeName()
+            if portalTypeName in ('MeetingItem', 'Meeting'):
+                # Archetypes bug. When this method is called within a default_method
+                # (when displaying a edit form), the portal_type is not already
+                # correctly set (it is equal to the meta_type, which is not
+                # necessarily equal to the portal type). In this case we look for
+                # the correct portal type in the request.
+                portalTypeName = self.REQUEST.get('type_name', None)
+            # Find config based on portal type of current p_context
+            for config in self.objectValues('MeetingConfig'):
+                if (portalTypeName == config.getItemTypeName()) or \
+                   (portalTypeName == config.getMeetingTypeName()):
+                    data = config
+                    break
+            if not data:
+                # Get the property on the folder that indicates that this is the
+                # "official" folder of a meeting config.
+                try:
+                    data = getattr(self, context.aq_acquire(MEETING_CONFIG))
+                except AttributeError:
+                    data = None
+            if caching:
+                cache[key] = data
+        return data
 
     security.declarePublic('getDefaultMeetingConfig')
     def getDefaultMeetingConfig(self):

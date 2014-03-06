@@ -34,7 +34,7 @@
      define="itemsNumbering python: not whichItems=='availableItems' and True or False;
              showArrows python: not whichItems=='availableItems' and True or False;
              descrsStyle python: request['showDescriptions'] == 'false' and 'none' or 'inline';
-             visibleColumns python: meetingConfig.getUserParam('itemsListVisibleColumns');
+             visibleColumns python: meetingConfig.getUserParam('itemsListVisibleColumns', context.REQUEST);
              global itemNumber python:startNumber-1;
              global shownItems python:0;
              isDecided python: meeting.adapted().isDecided();

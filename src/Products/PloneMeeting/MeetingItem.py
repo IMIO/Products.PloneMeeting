@@ -96,7 +96,7 @@ class MeetingItemWorkflowConditions:
     # methods will try to do without...
     # the 2 values here above are linked
     useHardcodedTransitionsForPresentingAnItem = False
-    transitionsForPresentingAnItem = ('propose', 'validate', 'present')
+    transitionsForPresentingAnItem = ('propose', 'prevalidate', 'validate', 'present')
 
     def __init__(self, item):
         self.context = item
@@ -180,8 +180,7 @@ class MeetingItemWorkflowConditions:
         if checkPermission(ReviewPortalContent, self.context) and \
            self.context.hasMeeting():
             meeting = self.context.getMeeting()
-            if (meeting.queryState() in self.meetingNotClosedStates) and \
-               meeting.getDate().isPast():
+            if meeting.getDate().isPast():
                 if not self.context.fieldIsEmpty('decision') or not \
                    self.context.fieldIsEmpty('motivation'):
                     res = True
@@ -1350,6 +1349,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(('refused.png', 'icon_help_refused'))
             elif itemState == 'returned_to_proposing_group':
                 res.append(('return_to_proposing_group.png', 'icon_help_returned_to_proposing_group'))
+            elif itemState == 'prevalidated':
+                res.append(('prevalidate.png', 'icon_help_prevalidated'))
             # Display icons about sent/cloned to other meetingConfigs
             clonedToOtherMCIds = item._getOtherMeetingConfigsImAmClonedIn()
             for clonedToOtherMCId in clonedToOtherMCIds:
@@ -1970,7 +1971,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # self.transitionsForPresentingAnItem.  In some case this is usefull
                     # because the workflow is too complicated
                     for tr in item.wfConditions().transitionsForPresentingAnItem:
-                        wfTool.doActionFor(item, tr)
+                        try:
+                            wfTool.doActionFor(item, tr)
+                        except WorkflowException:
+                            # if a transition is not available, pass and try to execute following
+                            pass
                 del item.isRecurringItem
             except WorkflowException, wfe:
                 logger.warn(REC_ITEM_ERROR % (item.id, str(wfe)))
@@ -2637,8 +2642,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for advice in self.adviceIndex.itervalues():
                 if 'actor' in advice and (advice['actor'] != userId):
                     # Send a mail to the guy that gave the advice.
-                    if 'adviceInvalidated' in cfg.getUserParam(
-                       'mailItemEvents', userId=advice['actor']):
+                    if 'adviceInvalidated' in cfg.getUserParam('mailItemEvents',
+                                                               request=self.REQUEST,
+                                                               userId=advice['actor']):
                         recipient = tool.getMailRecipient(advice['actor'])
                         if recipient:
                             sendMail([recipient], self, 'adviceInvalidated')
@@ -3434,7 +3440,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         newItem.sendMailIfRelevant('itemClonedToThisMC', 'Modify portal content',
                                    isRole=False, mapping=mapping)
         msg = 'sendto_%s_success' % destMeetingConfigId
-        plone_utils.addPortalMessage(translate(msg, domain="PloneMeeting", context=self.REQUEST), type='info')
+        plone_utils.addPortalMessage(translate(msg,
+                                               domain="PloneMeeting",
+                                               context=self.REQUEST),
+                                     type='info')
         backUrl = self.REQUEST['HTTP_REFERER'] or self.absolute_url()
         return self.REQUEST.RESPONSE.redirect(backUrl)
 
@@ -3580,7 +3589,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getPredecessors(self):
         '''Returns the list of dict that contains infos about a predecessor.
            This method can be adapted.'''
-        pmtool = getToolByName(self.context, "portal_plonemeeting")
+        tool = getToolByName(self.context, "portal_plonemeeting")
         predecessor = self.context.getPredecessor()
         predecessors = []
         #retrieve every predecessors
@@ -3596,8 +3605,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             brefs = brefs[0].getBRefs('ItemPredecessor')
         res = []
         for predecessor in predecessors:
-            showColors = pmtool.showColorsForUser()
-            coloredLink = pmtool.getColoredLink(predecessor, showColors=showColors)
+            showColors = tool.showColorsForUser()
+            coloredLink = tool.getColoredLink(predecessor, showColors=showColors)
             #extract title from coloredLink that is HTML and complete it
             originalTitle = re.sub('<[^>]*>', '', coloredLink).strip()
             #remove '&nbsp;' left at the beginning of the string
@@ -3606,7 +3615,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting = predecessor.getMeeting()
             #display the meeting date if the item is linked to a meeting
             if meeting:
-                title = "%s (%s)" % (title, pmtool.formatDate(meeting.getDate()).encode('utf-8'))
+                title = "%s (%s)" % (title, tool.formatDate(meeting.getDate()).encode('utf-8'))
             #show that the linked item is not of the same portal_type
             if not predecessor.portal_type == self.context.portal_type:
                 title = title + '*'

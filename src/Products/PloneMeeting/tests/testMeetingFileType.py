@@ -23,8 +23,8 @@
 #
 
 from OFS.ObjectManager import BeforeDeleteException
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from zope.i18n import translate
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testMeetingFileType(PloneMeetingTestCase):
@@ -47,6 +47,26 @@ class testMeetingFileType(PloneMeetingTestCase):
         # if we remove the MeetingFile linked to the MeetingFileType, we can remove it
         item.manage_delObjects([annex.getId(), ])
         meetingFileTypesFolder.manage_delObjects([meetingFileType.getId(), ])
+
+    def test_pm_CanNotChangeRelatedToOfUsedMeetingFileType(self):
+        '''If a MeetingFileType is in use, we can not change the 'relatedTo' anymore...'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        mft = annex.getMeetingFileType()
+        self.changeUser('admin')
+        # validate relatedTo
+        self.assertEquals(mft.getRelatedTo(), 'item')
+        # try to change the value to 'advice' or 'item_decision', it fails...
+        error_msg = translate('cannot_change_inuse_item_relatedto',
+                              domain='PloneMeeting',
+                              mapping={'item_url': item.absolute_url()},
+                              context=item.REQUEST)
+        self.assertTrue(mft.validate_relatedTo('advice') == error_msg)
+        self.assertTrue(mft.validate_relatedTo('item_decision') == error_msg)
+        # but not changing value does validate correctly
+        # validate returns nothing if validation was successful
+        self.failIf(mft.validate_relatedTo('item'))
 
 
 def test_suite():
