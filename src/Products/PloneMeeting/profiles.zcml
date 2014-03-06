@@ -42,6 +42,14 @@
       profile="Products.PloneMeeting:default" />
 
   <genericsetup:upgradeStep
+      title="Go to PloneMeeting 3.2.0.1"
+      description=""
+      source="3.2.0"
+      destination="3.2.0.1"
+      handler="Products.PloneMeeting.migrations.migrate_to_3_2_0_1.migrate"
+      profile="Products.PloneMeeting:default" />
+
+  <genericsetup:upgradeStep
       title="Go to PloneMeeting 3.2.1"
       description=""
       source="3.2.0"
