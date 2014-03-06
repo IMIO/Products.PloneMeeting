@@ -7,6 +7,28 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.0.x are for Plone < 4.3
 - Versions 3.1.+ are for Plone 4.3+
 
+3.2.0.1 (2014-03-06)
+--------------------
+- Bugfix release : adapted migration to 3.2.0
+- Make computation of advice delay aware of work days and holidays
+- Added caching for some methods called several times (ToolPloneMeeting.getMeetingGroups,
+  ToolPloneMeeting.getMeetingConfig, MeetingConfig.getUserParam)
+- Added improvement about internationalization in PloneMeeting tool workflow policy.
+  [lcaballero, macagua]
+- Make sure a MeetingGroup is not used in MeetingConfig.customAdvisers
+  and MeetingConfig.powerAdvisersGroups before deleting it
+- Make sure the MeetingFileType.relatedTo can not be changed if
+  it is used in the application by a MeetingFile
+- Display relatedTo information in the table showing defined MeetingFileTypes
+- Added imio.actionspanel package in buildout "base.cfg" file.
+  [lcaballero, macagua]
+- Added more versions pinned in "versions-dev.cfg" file.
+  [lcaballero, macagua]
+- Added more support for internationalization in workflows.
+  [lcaballero, macagua]
+- Added more strings classifiers and metadata items for this package
+  [lcaballero, macagua]
+
 3.2.0 (2014-02-12)
 ------------------
 - Not backward compatible with older versions if ExternalApplications were used as the class was dropped now
