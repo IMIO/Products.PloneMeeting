@@ -497,6 +497,7 @@ class PloneMeetingConfiguration(Descriptor):
         # Title, Description, getDeliberation or SearchableText.
         self.showItemKeywordsTargets = True
         self.searchItemStates = []
+        self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [{'date': '2014/01/01', },
                          {'date': '2014/04/21', },
                          {'date': '2014/05/01', },
@@ -511,7 +512,7 @@ class PloneMeetingConfiguration(Descriptor):
                          {'date': '2014/11/15', },
                          {'date': '2014/12/25', },
                          {'date': '2014/12/26', }, ]
-        self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
+        self.delayUnavailableEndDays = ()
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.groups = groups  # ~[GroupDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~

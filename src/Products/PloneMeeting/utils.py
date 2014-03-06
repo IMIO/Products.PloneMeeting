@@ -1296,7 +1296,7 @@ def cmp(a, b):
     return (a > b) - (a < b)
 
 
-def workday(start_date, days=0, holidays=[], unavailable_weekday=-1, weekends=[]):
+def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[]):
     '''Given a p_startdate, calculate a new_date with given p_days delta.
        If some p_holidays are defined, it will increase the resulting new_date.
        Moreover, if found new_date weeknumber is p_unavailable_weekday, we will find next
@@ -1331,12 +1331,12 @@ def workday(start_date, days=0, holidays=[], unavailable_weekday=-1, weekends=[]
                 new_date += delta
                 while new_date.weekday() in weekends:
                     new_date += delta
-    if unavailable_weekday == new_date.weekday():
+    if new_date.weekday() in unavailable_weekdays:
         # we will relaunch the search if we do not want a date to be a particular
         # day number.  For example, we do not want the new_date to be on saterday,
         # so day number 5 (as beginning by 0), in this case, we add 1 to days and we relaunch
         # the workday search
-        new_date = workday(start_date, days+1, holidays, unavailable_weekday, weekends)
+        new_date = workday(start_date, days+1, holidays, weekends, unavailable_weekdays)
 
     return new_date
 # ------------------------------------------------------------------------------

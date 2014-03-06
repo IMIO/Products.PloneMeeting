@@ -388,6 +388,21 @@ schema = Schema((
         default=defValues.searchItemStates,
         enforceVocabulary=False,
     ),
+    LinesField(
+        name='workingDays',
+        default=defValues.workingDays,
+        widget=MultiSelectionWidget(
+            description="WorkingDays",
+            description_msgid="working_days_descr",
+            size=7,
+            label='Workingdays',
+            label_msgid='PloneMeeting_label_workingDays',
+            i18n_domain='PloneMeeting',
+        ),
+        required=True,
+        multiValued=1,
+        vocabulary='listWeekDays',
+    ),
     DataGridField(
         name='holidays',
         default=defValues.holidays,
@@ -404,20 +419,18 @@ schema = Schema((
         allow_empty_rows=False,
     ),
     LinesField(
-        name='workingDays',
-        default=defValues.workingDays,
+        name='delayUnavailableEndDays',
+        default=defValues.delayUnavailableEndDays,
         widget=MultiSelectionWidget(
-            description="WorkingDays",
-            description_msgid="working_days_descr",
-            label='Workingdays',
-            label_msgid='PloneMeeting_label_workingDays',
-            i18n_domain='PloneMeeting',
+            description="DelayUnavailableEndDays",
+            description_msgid="delay_unavailable_end_days_descr",
             size=7,
-            format='checkbox',
+            label='Delayunavailableenddays',
+            label_msgid='PloneMeeting_label_delayUnavailableEndDays',
+            i18n_domain='PloneMeeting',
         ),
-        required=True,
         multiValued=1,
-        vocabulary='listWorkingDays',
+        vocabulary='listWeekDays',
     ),
 
 ),
@@ -536,7 +549,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         dates_to_save = set([v['date'] for v in values if v['date']])
         stored_dates = set([v['date'] for v in self.getHolidays() if v['date']])
 
-        def _checkIfDateIsUsed(date, holidays, weekends):
+        def _checkIfDateIsUsed(date, holidays, weekends, unavailable_weekdays):
             '''Check if the p_date we want to remove was in use.
                This returns an item_url if the date is already in use, nothing otherwise.'''
             # we are setting another field, it is not permitted if
@@ -558,15 +571,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         end_date = workday(start_date,
                                            int(adviser['delay']),
                                            holidays=holidays,
-                                           weekends=weekends)
+                                           weekends=weekends,
+                                           unavailable_weekdays=unavailable_weekdays)
                         if end_date > date_as_datetime:
                             return item.absolute_url()
 
         removed_dates = stored_dates.difference(dates_to_save)
         holidays = self.getHolidaysAs_datetime()
         weekends = self.getNonWorkingDayNumbers()
+        unavailable_weekdays = self.getUnavailableWeekDaysNumbers()
         for date in removed_dates:
-            an_item_url = _checkIfDateIsUsed(date, holidays, weekends)
+            an_item_url = _checkIfDateIsUsed(date, holidays, weekends, unavailable_weekdays)
             if an_item_url:
                 return translate('holidays_removed_date_in_use_error',
                                  domain='PloneMeeting',
@@ -1364,9 +1379,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     res.add(itemState[0], itemState[1])
         return res.sortedByValue()
 
-    security.declarePublic('listWorkingDays')
-    def listWorkingDays(self):
-        '''Method for managing vocabulary of field workingDays.'''
+    security.declarePublic('listWeekDays')
+    def listWeekDays(self):
+        '''Method returning list of week days used in vocabularies.'''
         res = DisplayList()
         # we do not use utils.weekdaysIds because it is related
         # to Zope DateTime where sunday weekday number is 0
@@ -1405,6 +1420,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             year, month, day = row['date'].split('/')
             res.append(datetime(int(year), int(month), int(day)))
         return res
+
+    def getUnavailableWeekDaysNumbers_cachekey(method, self):
+        '''cachekey method for self.getUnavailableWeekDaysNumbers.'''
+        # we only recompute if the tool was modified
+        return (self.modified())
+
+    security.declarePublic('getUnavailableWeekDaysNumbers')
+    @ram.cache(getUnavailableWeekDaysNumbers_cachekey)
+    def getUnavailableWeekDaysNumbers(self):
+        '''Return unavailable days numbers, aka self.getDelayUnavailableEndDays as numbers.'''
+        delayUnavailableEndDays = self.getDelayUnavailableEndDays()
+        unavailable_days = [day for day in PY_DATETIME_WEEKDAYS if day in delayUnavailableEndDays]
+        return [PY_DATETIME_WEEKDAYS.index(unavailable_day) for unavailable_day in unavailable_days]
 
     security.declarePublic('showMeetingView')
     def showMeetingView(self):

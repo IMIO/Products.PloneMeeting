@@ -2336,7 +2336,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             tool = getToolByName(self, 'portal_plonemeeting')
             holidays = tool.getHolidaysAs_datetime()
             weekends = tool.getNonWorkingDayNumbers()
-            if workday(delay_started_on, delay, holidays=holidays, weekends=weekends) > datetime.now():
+            unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
+            if workday(delay_started_on,
+                       delay,
+                       unavailable_weekdays=unavailable_weekdays,
+                       holidays=holidays,
+                       weekends=weekends) > datetime.now():
                 return True
             return False
 
@@ -2898,10 +2903,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         holidays = tool.getHolidaysAs_datetime()
         weekends = tool.getNonWorkingDayNumbers()
-        date_until = workday(delay_started_on, delay, holidays=holidays, weekends=weekends)
+        unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
+        date_until = workday(delay_started_on,
+                             delay,
+                             holidays=holidays,
+                             weekends=weekends,
+                             unavailable_weekdays=unavailable_weekdays)
         data['limit_date'] = date_until
         data['limit_date_localized'] = toLocalizedTime(date_until)
-        left_delay = networkdays(datetime.now(), date_until, holidays=holidays, weekends=weekends) - 1
+        left_delay = networkdays(datetime.now(),
+                                 date_until,
+                                 holidays=holidays,
+                                 weekends=weekends) - 1
         data['left_delay'] = left_delay
 
         if left_delay >= 0:

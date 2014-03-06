@@ -920,8 +920,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(len(vocab) == 1)
         self.assertTrue('vendors' in vocab)
 
-    def test_pm_ComputeDelaysWorkingDaysAndHolidays(self):
-        '''Test that computing of delays relying on workingDays and holidays is correct.'''
+    def test_pm_ComputeDelaysWorkingDaysAndHolidaysAndUnavailableEndDays(self):
+        '''Test that computing of delays relying on workingDays, holidays
+           and unavailable ending days is correct.'''
         # configure one delay-aware optional adviser
         # we use 7 days of delay so we are sure that we when setting
         # manually 'delay_started_on' to last monday, delay is still ok
@@ -935,6 +936,8 @@ class testAdvices(PloneMeetingTestCase):
               'delay_label': ''}, ])
         # no holidays for now...
         self.tool.setHolidays([])
+        # no unavailable ending days for now...
+        self.tool.setDelayUnavailableEndDays([])
         # make advice giveable when item is proposed
         self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
@@ -984,6 +987,20 @@ class testAdvices(PloneMeetingTestCase):
         item.updateAdvices()
         self.assertTrue(limit_date_9_days == item.adviceIndex['vendors']['delay_infos']['limit_date'])
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
+
+        # now add one unavailable day for end of delay
+        # for now, limit_date ends day number 2, so wednesday
+        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'].weekday() == 2)
+        self.tool.setDelayUnavailableEndDays(('wed', ))
+        # the method getUnavailableWeekDaysNumbers is ram.cached, check that it is correct when changed
+        self.tool.setModificationDate(DateTime())
+        self.assertTrue(self.tool.getUnavailableWeekDaysNumbers() == [2, ])
+        item.updateAdvices()
+        # this increase limit_date of one day, aka next available day
+        self.assertTrue(limit_date_9_days + timedelta(1) == item.adviceIndex['vendors']['delay_infos']['limit_date'])
+        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
+        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'].weekday() == 3)
+
         # test that the advice may still be added the last day
         # change 'delay_started_on' manually and check that last day, the advice is 'still_giveable'
         item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(9)
