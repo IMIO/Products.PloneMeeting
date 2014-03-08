@@ -485,7 +485,11 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         currentExtension = ''
         # in case we have myimage.JPG, make sure extension is lowercase as
         # extentions on mimetypes_registry are lowercase...
-        file_extension = self.getFilename().split('.')[-1].lower()
+        try:
+            filename = self.getFilename()
+        except AttributeError:
+            filename = self.getFile().filename
+        file_extension = filename.split('.')[-1].lower()
         for extension in extensions:
             if file_extension == extension:
                 currentExtension = extension
