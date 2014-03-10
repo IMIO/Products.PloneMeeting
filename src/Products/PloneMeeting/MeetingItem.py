@@ -1187,18 +1187,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         self.getField('itemIsSigned').set(self, value, **kwargs)
 
-    security.declareProtected('Modify portal content', 'setBudgetInfos')
-    def setBudgetInfos(self, value, **kwargs):
-        '''Overrides the field 'budgetInfos' to keep
-           MeetingItem.budgetRelated behaviour consistent.
-           This could be the case if 'budgetInfos' is ajax edited
-           thru the item view.  If p_value is not empty, make sure
-           MeetingItem.budgetRelated is set to True.'''
-        # we are setting an empty value, turn budgetRelated to False
-        if not kupuFieldIsEmpty(value):
-            self.setBudgetRelated(True)
-        self.getField('budgetInfos').set(self, value, **kwargs)
-
     security.declarePublic('onDiscussChanged')
     def onDiscussChanged(self, toDiscuss):
         '''See doc in interfaces.py.'''
@@ -3665,16 +3653,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 coloredLink = spanifyLink(coloredLink)
             res.append(coloredLink)
         return res
-
-    security.declarePublic('showBudgetInfosEvenIfNotBudgetRelated')
-    def showBudgetInfosEvenIfNotBudgetRelated(self):
-        '''See doc in interfaces.py.'''
-        # show the budgetInfos field to users having the 'PloneMeeting: Write budget infos' permission
-        # so they are able to define budgetInfos even if not provided by default
-        item = self.getSelf()
-        if checkPermission(WriteBudgetInfos, item):
-            return True
-        return False
 
     security.declarePublic('showVotes')
     def showVotes(self):

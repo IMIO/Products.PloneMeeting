@@ -261,9 +261,8 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
-    <tal:comment replace="nothing">Budgetary informations, display if budgetRelated is True</tal:comment>
-    <tal:field define="fieldName python: 'budgetInfos'; ajaxEdit python:True"
-               condition="python: context.getBudgetRelated() or context.adapted().showBudgetInfosEvenIfNotBudgetRelated()">
+    <tal:comment replace="nothing">Budgetary informations</tal:comment>
+    <tal:field define="fieldName python: 'budgetInfos'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 

@@ -339,12 +339,6 @@ class IMeetingItemDocumentation:
            with this method that will returns a list of extra field ids to copy to
            the cloned item.'''
 
-    def showBudgetInfosEvenIfNotBudgetRelated():
-        '''By default the budgetInfos field is only shown on the item view if
-           budgetRelated is True.  In some case, we want some user to be able to edit this
-           field thru ajax edit on the item view.  If the budgetInfos field is edited thru
-           ajax, the budgetRelated boolean is automatically set to True.'''
-
 
 class IMeetingItemWorkflowConditions(Interface):
     '''Conditions that may be defined in the workflow associated with a meeting
