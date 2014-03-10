@@ -11,6 +11,7 @@ from imio.actionspanel.browser.views import ActionsPanelView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
@@ -147,6 +148,7 @@ class BaseActionsPanelView(ActionsPanelView):
 
     def renderDelete(self):
         """
+          Render 'delete' action.
         """
         if self.mayDelete():
             return ViewPageTemplateFile("templates/actions_panel_delete.pt")(self)
@@ -156,17 +158,15 @@ class BaseActionsPanelView(ActionsPanelView):
         """
           Check if current user may delete element.
         """
-        member = self.context.restrictedTraverse('@@plone_portal_state').member()
         isMeetingOrItem = self.context.meta_type in ('Meeting', 'MeetingItem')
-        return member.has_permission('Delete objects', self.context) and \
+        return self.member.has_permission('Delete objects', self.context) and \
             (isMeetingOrItem and self.context.wfConditions().mayDelete() or True)
 
     def mayEdit(self):
         """
           We override mayEdit to avoid the icon to be displayed for MeetingFiles.
         """
-        member = self.context.restrictedTraverse('@@plone_portal_state').member()
-        return member.has_permission('Modify portal content', self.context) and \
+        return self.member.has_permission(ModifyPortalContent, self.context) and \
             self.useIcons and not \
             self.context.meta_type == 'MeetingFile'
 
@@ -254,10 +254,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
     def renderDeleteWholeMeeting(self):
         """
         """
-        member = self.context.restrictedTraverse('@@plone_portal_state').member()
-        if self.context.meta_type == 'Meeting' and \
-           member.has_permission('Delete objects', self.context) and \
-           member.has_role('Manager'):
+        if self.member.has_role('Manager'):
             return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
 
 
