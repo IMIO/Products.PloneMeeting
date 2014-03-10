@@ -363,7 +363,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                     if cfgId == givenCfgId:
                         tmpres.append(state)
                 res = tmpres
-        return res
+        return tuple(res)
 
     security.declarePublic('getItemAdviceEditStates')
     def getItemAdviceEditStates(self, cfg=None, **kwargs):
@@ -380,7 +380,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                     if cfgId == givenCfgId:
                         tmpres.append(state)
                 res = tmpres
-        return res
+        return tuple(res)
 
     security.declarePublic('getItemAdviceViewStates')
     def getItemAdviceViewStates(self, cfg=None, **kwargs):
@@ -397,7 +397,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                     if cfgId == givenCfgId:
                         tmpres.append(state)
                 res = tmpres
-        return res
+        return tuple(res)
 
 
 
