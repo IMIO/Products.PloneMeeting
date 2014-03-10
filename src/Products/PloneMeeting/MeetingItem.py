@@ -2865,7 +2865,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             delay_started_on = self._doClearDayFrom(adviceInfos['delay_started_on'])
 
         if adviceInfos['delay_stopped_on']:
-            data['delay_started_on_localized'] = toLocalizedTime(adviceInfos['delay_stopped_on'])
+            data['delay_stopped_on_localized'] = toLocalizedTime(adviceInfos['delay_stopped_on'])
             delay_stopped_on = self._doClearDayFrom(adviceInfos['delay_stopped_on'])
 
         # if delay still not started, we return complete delay
