@@ -17,13 +17,5 @@
  <stylesheet title="PloneMeeting CSS styles" cacheable="True" compression="safe"
              cookable="True" enabled="1" media="all" rel="stylesheet"
              rendering="import" expression="" id="plonemeeting.css"/>
- <stylesheet title="PloneMeeting CSS styles for items" cacheable="True"
-             compression="safe" cookable="True" enabled="1" media="all"
-             rel="stylesheet" rendering="import" id="meetingitem.css"
-             expression="python: here.meta_type == 'MeetingItem'"/>
- <stylesheet title="PloneMeeting CSS styles for meetings" cacheable="True"
-             compression="safe" cookable="True" enabled="1" media="all"
-             rel="stylesheet" rendering="import" id="meeting.css"
-             expression="python: here.meta_type == 'Meeting'"/>
  <!-- ##/code-section cssregistry.xml -->
 </object>
