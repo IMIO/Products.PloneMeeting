@@ -731,6 +731,36 @@ select#optionalAdvisers option[disabled] {
     color: red;
 }
 
+#vote-abstain {
+    color: orange;
+    font-weight: bold;
+}
+
+#vote-yes {
+    color: green;
+    font-weight: bold;
+}
+
+#vote-no {
+    color: red;
+    font-weight: bold;
+}
+
+#vote-not_yet {
+    color: grey;
+    font-weight: bold;
+}
+
+#vote-does_not_vote {
+    color: blue;
+    font-weight: bold;
+}
+
+#vote-not_consultable {
+    color: black;
+    font-weight: bold;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
