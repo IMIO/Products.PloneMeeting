@@ -191,40 +191,42 @@
           <td tal:define="field python:here.getField('sortingMethodOnAddItem')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td colspan="2" tal:define="field python:here.getField('allItemTags')">
+          <td tal:define="field python:here.getField('allItemTags')">
             <b i18n:translate="PloneMeeting_label_allItemTags"></b>:
             <span tal:content="python: ', '.join(context.getAllItemTags().split('\n'))" />
           </td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('sortAllItemTags')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('xhtmlTransformFields')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('xhtmlTransformTypes')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('publishDeadlineDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('freezeDeadlineDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('preMeetingDateDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('useUserReplacements')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('meetingConfigsToCloneTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
       </table>
 
