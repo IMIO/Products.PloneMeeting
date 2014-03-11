@@ -29,7 +29,7 @@ from Products.PloneMeeting.config import *
 
 from Products.CMFCore.utils import UniqueObject
 
-
+    
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
@@ -395,6 +395,7 @@ schema = Schema((
             description="WorkingDays",
             description_msgid="working_days_descr",
             size=7,
+            format="checkbox",
             label='Workingdays',
             label_msgid='PloneMeeting_label_workingDays',
             i18n_domain='PloneMeeting',
@@ -425,6 +426,7 @@ schema = Schema((
             description="DelayUnavailableEndDays",
             description_msgid="delay_unavailable_end_days_descr",
             size=7,
+            format="checkbox",
             label='Delayunavailableenddays',
             label_msgid='PloneMeeting_label_delayUnavailableEndDays',
             i18n_domain='PloneMeeting',
@@ -2410,3 +2412,4 @@ registerType(ToolPloneMeeting, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+
