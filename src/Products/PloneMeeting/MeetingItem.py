@@ -873,6 +873,24 @@ schema = Schema((
         multiValued=False,
         relationship="ItemPredecessor",
     ),
+    ReferenceField(
+        name='manuallyLinkedItems',
+        widget=ReferenceBrowserWidget(
+            description="ManuallyLinkedItems",
+            description_msgid="manually_linked_items_descr",
+            condition="python: here.attributeIsUsed('manuallyLinkedItems')",
+            allow_search=True,
+            allow_browse=False,
+            base_query="manuallyLinkedItemsBaseQuery",
+            show_results_without_query=True,
+            label='Manuallylinkeditems',
+            label_msgid='PloneMeeting_label_manuallyLinkedItems',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        multiValued=True,
+        relationship="ManuallyLinkedItem",
+    ),
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
@@ -1103,32 +1121,50 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for signatory in value:
                 if signatory and signatory in absents:
                     return translate('signatories_absents_mismatch',
-                                     domain='PloneMeeting', context=self.REQUEST)
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
 
     def classifierStartupDirectory(self):
         '''Returns the startup_directory for the classifier referencebrowserwidget.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        return self.portal_url.getRelativeContentURL(cfg.classifiers)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        portal_url = getToolByName(self, 'portal_url')
+        cfg = tool.getMeetingConfig(self)
+        return portal_url.getRelativeContentURL(cfg.classifiers)
 
     security.declarePublic('classifierBaseQuery')
     def classifierBaseQuery(self):
         '''base_query for the 'classifier' field.
            Here, we restrict the widget to search in the MeetingConfig's classifiers directory only.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        dict = {}
-        dict['path'] = {'query': '/'.join(cfg.getPhysicalPath() + ('classifiers',))}
-        return dict
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        query = {}
+        query['path'] = {'query': '/'.join(cfg.getPhysicalPath() + ('classifiers',))}
+        return query
+
+    security.declarePublic('manuallyLinkedItemsBaseQuery')
+    def manuallyLinkedItemsBaseQuery(self):
+        '''base_query for the 'manuallyLinkedItems' field.
+           Here, we restrict the widget to search only MeetingItems.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        allowed_types = []
+        for cfg in tool.getActiveConfigs():
+            allowed_types.append(cfg.getItemTypeName())
+        query = {}
+        query['portal_type'] = allowed_types
+        return query
 
     security.declarePublic('getDefaultBudgetInfo')
     def getDefaultBudgetInfo(self):
         '''The default budget info is to be found in the config.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         return cfg.getBudgetDefault()
 
     security.declarePublic('getDefaultMotivation')
     def getDefaultMotivation(self):
         '''Returns the default item motivation content from the MeetingConfig.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultMeetingItemMotivation()
 
     security.declarePublic('showToDiscuss')
@@ -1136,7 +1172,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''On edit or view page for an item, we must show field 'toDiscuss' in
            early stages of item creation and validation if
            config.toDiscussSetOnItemInsert is False.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         res = self.attributeIsUsed('toDiscuss') and \
             not cfg.getToDiscussSetOnItemInsert() or \
             (cfg.getToDiscussSetOnItemInsert() and not self.queryState() in self.beforePublicationStates)
@@ -1146,9 +1183,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showItemIsSigned(self):
         '''Condition for showing the 'itemIsSigned' field on views.
            The attribute must be used and the item must be decided.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         return self.attributeIsUsed('itemIsSigned') and \
-            self.queryState() in meetingConfig.getItemDecidedStates()
+            self.queryState() in cfg.getItemDecidedStates()
 
     security.declarePublic('maySignItem')
     def maySignItem(self, member):
@@ -1160,9 +1198,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if 'Manager' in member.getRoles():
             return True
         item = self.getSelf()
+        tool = getToolByName(item, 'portal_plonemeeting')
         # Only MeetingManagers can sign an item if it is decided
         if not item.showItemIsSigned() or \
-           not item.portal_plonemeeting.isManager():
+           not tool.isManager():
             return False
         # If the meeting is in a closed state, the item can only be signed but
         # not "unsigned".  This way, a final state 'signed' exists for the item
