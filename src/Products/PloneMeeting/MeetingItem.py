@@ -55,7 +55,7 @@ from Products.PloneMeeting.utils import \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
-    kupuFieldIsEmpty, forceHTMLContentTypeForEmptyRichFields, workday, networkdays
+    forceHTMLContentTypeForEmptyRichFields, workday, networkdays
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -429,7 +429,8 @@ class MeetingItemWorkflowActions:
            the initial state and will be linked to this one.'''
         creator = self.context.Creator()
         # We create a copy in the initial item state, in the folder of creator.
-        clonedItem = self.context.clone(copyAnnexes=True, newOwnerId=creator,
+        clonedItem = self.context.clone(copyAnnexes=True,
+                                        newOwnerId=creator,
                                         cloneEventAction='create_from_predecessor')
         clonedItem.setPredecessor(self.context)
         # Send, if configured, a mail to the person who created the item
@@ -3364,8 +3365,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             wfName = self.portal_workflow.getWorkflowsFor(res)[0].id
             firstEvent = res.workflow_history[wfName][0]
             cloneEvent = firstEvent.copy()
+            # to be translated, cloneEventAction_comments must be in the 'PloneMeeting' domain
+            # so it is displayed in content_history together with wf transitions
             cLabel = cloneEventAction + '_comments'
-            cloneEvent['comments'] = translate(cLabel, domain='PloneMeeting', context=self.REQUEST)
+            cloneEvent['comments'] = cLabel
+            # to be translated, cloneEventAction must be in the 'plone' domain
+            # so it is displayed in content_history together with wf transitions
             cloneEvent['action'] = cloneEventAction
             cloneEvent['actor'] = userId
             res.workflow_history[wfName] = (firstEvent, cloneEvent)
@@ -3373,7 +3378,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res.adapted().onDuplicated(self)
         res.reindexObject()
         logger.info('Item at %s cloned (%s) by "%s" from %s.' %
-                    (res.absolute_url_path(), cloneEventAction, userId,
+                    (res.absolute_url_path(),
+                     cloneEventAction,
+                     userId,
                      self.absolute_url_path()))
         return res
 
@@ -3528,7 +3535,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''This method is triggered when the users clicks on
            "duplicate item".'''
         user = self.portal_membership.getAuthenticatedMember()
-        newItem = self.clone(newOwnerId=user.id, cloneEventAction=None)
+        newItem = self.clone(newOwnerId=user.id, cloneEventAction='Duplicate')
         self.plone_utils.addPortalMessage(
             translate('item_duplicated', domain='PloneMeeting', context=self.REQUEST))
         return self.REQUEST.RESPONSE.redirect(newItem.absolute_url())
@@ -3538,7 +3545,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''This method is triggered when the users clicks on
            "duplicate item and keep link".'''
         user = self.portal_membership.getAuthenticatedMember()
-        newItem = self.clone(newOwnerId=user.id, cloneEventAction=None)
+        newItem = self.clone(newOwnerId=user.id, cloneEventAction='Duplicate and keep link')
         newItem.setPredecessor(self)
         self.plone_utils.addPortalMessage(
             translate('item_duplicated_and_link_kept', domain='PloneMeeting', context=self.REQUEST))
