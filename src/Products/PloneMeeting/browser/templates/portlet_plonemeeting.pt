@@ -63,7 +63,9 @@
            tal:condition="python: userIsAmongCreators and templateItems and not ploneDiskAware">
         <img  style="cursor:pointer"
              tal:attributes="src string: $portal_url/new_from.png"
-             title="create_meeting_item_from" i18n:attributes="title"/>
+             title="create_meeting_item_from_template"
+             i18n:domain="plone"
+             i18n:attributes="title"/>
         </a>
       </td>
      </tr>

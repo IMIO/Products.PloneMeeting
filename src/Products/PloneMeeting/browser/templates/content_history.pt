@@ -43,8 +43,10 @@
                       username actor/username|nothing"
           tal:content="python:fullname or username or actorid"/>
       <td tal:content="python:context.restrictedTraverse('@@plone').toLocalizedTime(event['time'],long_format=True)"/>
-      <td tal:condition="not: isDataChange"><tal:comment condition="rhComments" i18n:translate="" tal:content="structure rhComments"/>
-        <tal:noComment condition="not: rhComments" i18n:translate="no_comments"/></td>
+      <td tal:condition="not: isDataChange">
+        <tal:comment condition="rhComments" i18n:translate="" i18n:domain="PloneMeeting" tal:content="structure rhComments"/>
+        <tal:noComment condition="not: rhComments" i18n:translate="no_comments"/>
+      </td>
       <td tal:condition="isDataChange">
         <tal:comment replace="nothing">
           Display the previous values of the fields whose value were modified in this change.</tal:comment>
