@@ -140,6 +140,12 @@ class AdviceTypeVocabulary(object):
         """"""
         terms = []
         cfg = context.portal_plonemeeting.getMeetingConfig(context)
+        usedAdviceTypes = cfg.getUsedAdviceTypes()
+        # make sure if an adviceType was used for context and it is no more available, it
+        # appears in the vocabulary and is so useable...
+        if not context.advice_type in usedAdviceTypes:
+            usedAdviceTypes = usedAdviceTypes + (context.advice_type, )
         for advice_id, advice_title in cfg.listAdviceTypes().items():
-            terms.append(SimpleTerm(advice_id, advice_id, advice_title))
+            if advice_id in usedAdviceTypes:
+                terms.append(SimpleTerm(advice_id, advice_id, advice_title))
         return SimpleVocabulary(terms)
