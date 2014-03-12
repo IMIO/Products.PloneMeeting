@@ -180,7 +180,7 @@
               </tr>
             </table>
             <tal:budget condition="python: showBudgetInfos and isPrivacyViewable and meetingItem.getBudgetRelated()">
-             <br/><div tal:content="meetingItem/getBudgetInfos"></div>
+             <br/><div tal:replace="structure meetingItem/getBudgetInfos"></div>
             </tal:budget>
             </tal:wakeUpItem>
           </tal:forItem>
