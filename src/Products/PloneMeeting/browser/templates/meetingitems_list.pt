@@ -261,7 +261,7 @@
             </td>
            </tr>
            <tr tal:condition="python: isPrivacyViewable and ('budgetInfos' in visibleColumns) and meetingItem.getBudgetRelated()">
-             <td colspan="2" tal:content="meetingItem/getBudgetInfos"></td>
+             <td colspan="2" tal:content="structure meetingItem/getBudgetInfos"></td>
            </tr>
           </table>
         </td>
