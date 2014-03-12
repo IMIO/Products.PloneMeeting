@@ -143,7 +143,7 @@ class AdviceTypeVocabulary(object):
         usedAdviceTypes = cfg.getUsedAdviceTypes()
         # make sure if an adviceType was used for context and it is no more available, it
         # appears in the vocabulary and is so useable...
-        if not context.advice_type in usedAdviceTypes:
+        if context.portal_type == 'meetingadvice' and not context.advice_type in usedAdviceTypes:
             usedAdviceTypes = usedAdviceTypes + (context.advice_type, )
         for advice_id, advice_title in cfg.listAdviceTypes().items():
             if advice_id in usedAdviceTypes:
