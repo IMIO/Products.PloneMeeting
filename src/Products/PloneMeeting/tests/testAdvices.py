@@ -973,9 +973,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
 
         # now add 2 holidays, one passed date and one date that will change delay
-        # a date 2 days after the 'delay_started_on'
+        # a date next day after the 'delay_started_on'
         delay_started_on = item.adviceIndex['vendors']['delay_started_on']
-        holiday_changing_delay = '%s' % (delay_started_on + timedelta(2)).strftime('%Y/%m/%d')
+        holiday_changing_delay = '%s' % (delay_started_on + timedelta(1)).strftime('%Y/%m/%d')
         self.tool.setHolidays(({'date': '2012/05/06'},
                                {'date': holiday_changing_delay}, ))
         # the method getHolidaysAs_datetime is ram.cached, check that it is correct when changed
