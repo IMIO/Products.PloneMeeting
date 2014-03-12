@@ -24,7 +24,9 @@
                tal:attributes="src string:$portal_url/new.png;" />
         </a>
       </td>
-      <tal:menu repeat="adviceType python: meetingConfig.getUsedAdviceTypes() + ('not_given',)">
+      <tal:comment replace="nothing">For history reasons, we use meetingConfig.listAdviceTypes to be sure
+                                     that a deactivated adviceType is still shown.</tal:comment>
+      <tal:menu repeat="adviceType python: meetingConfig.listAdviceTypes().keys() + ['not_given',]">
       <td tal:condition="python: adviceType in advicesByType" class="noPadding">
         <dl class="actionMenuAX">
           <dt class="actionMenuHeaderAX pmLinks"><tal:comment replace="nothing">Icon with advice type</tal:comment>
