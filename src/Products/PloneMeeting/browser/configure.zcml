@@ -118,6 +118,13 @@
         for="Products.PloneMeeting.interfaces.IMeetingFile"
         permission="zope2.View" />
     <browser:page
+        name="toggle_budget_related"
+        attribute="toggle"
+        allowed_attributes="toggle"
+        class=".async.BudgetRelated"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        permission="zope2.View" />
+    <browser:page
         name="toggle_item_is_signed"
         attribute="toggle"
         allowed_attributes="toggle"

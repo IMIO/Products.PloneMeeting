@@ -554,6 +554,7 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
     cursor: not-allowed !important;
 }
 
+.budgetRelatedEditable,
 .toDiscussEditable,
 .itemIsSignedEditable,
 .annexToPrintEditable,

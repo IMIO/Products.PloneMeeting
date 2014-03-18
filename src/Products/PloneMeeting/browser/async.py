@@ -111,8 +111,7 @@ class AnnexToPrint(BrowserView):
             # in case last conversion failed, we should not let the user
             # specify that the annex is toPrint
             if self.context.conversionFailed():
-                raise Exception, \
-                    'This annex can not be printed because the conversion to a printable format failed!'
+                raise Exception('This annex can not be printed because the conversion to a printable format failed!')
 
             if annexToPrint:
                 filename = 'annexToPrintNo.png'
@@ -125,8 +124,7 @@ class AnnexToPrint(BrowserView):
 
             title = self.context.utranslate(title_msgid,
                                             domain="PloneMeeting")
-            portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
-            portal_url = portal_state.portal_url()
+            portal_url = self.portal_state.portal_url()
             src = "%s/%s" % (portal_url, filename)
             html = self.IMG_TEMPLATE % (src, title, name)
             return html
@@ -141,3 +139,44 @@ class AnnexToPrint(BrowserView):
                 type='error')
             self.request.RESPONSE.status = 500
             return
+
+
+class BudgetRelated(BrowserView):
+    """
+      View that switch the item 'budgetRelated' attribute using an ajax call.
+    """
+    IMG_TEMPLATE = u'<img class="budgetRelatedEditable" src="%s" name="%s" />' \
+                   u' <span class="discreet">%s</span>'
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
+        self.portal = portal_state.portal()
+
+    def toggle(self):
+        member = self.portal.restrictedTraverse('@@plone_portal_state').member()
+        if not member.has_permission('PloneMeeting: Write budget infos', self.context):
+            raise Unauthorized
+
+        budgetRelated = self.context.getBudgetRelated()
+        # toggle value
+        self.context.setBudgetRelated(not budgetRelated)
+
+        if budgetRelated:
+            filename = 'budgetRelatedNo.png'
+            # prefix with 'name' so we can discriminate this label from icon name
+            name = 'nameBudgetRelatedYes'
+            msgid = 'budget_related_no_edit'
+        else:
+            filename = 'budgetRelatedYes.png'
+            name = 'nameBudgetRelatedNo'
+            msgid = 'budget_related_yes_edit'
+
+        label = self.context.utranslate(msgid,
+                                        domain="PloneMeeting")
+        portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
+        portal_url = portal_state.portal_url()
+        src = "%s/%s" % (portal_url, filename)
+        html = self.IMG_TEMPLATE % (src, name, label)
+        return html
