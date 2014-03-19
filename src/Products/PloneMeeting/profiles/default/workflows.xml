@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<object name="portal_workflow" meta_type="Plone Workflow Tool" purge="True">
+<object name="portal_workflow" meta_type="Plone Workflow Tool">
  <object name="meeting_workflow" meta_type="Workflow"/>
  <object name="meetingadvice_workflow" meta_type="Workflow"/>
  <object name="meetingitem_workflow" meta_type="Workflow"/>
