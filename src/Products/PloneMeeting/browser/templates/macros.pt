@@ -256,11 +256,11 @@ document.location.reload(true);
         tal:define="UID meetingItem/UID;
                     baseUrl meetingItem/absolute_url;"
         tal:condition="python: showItemIsSigned and mayEdit and isManager">
-    <img class="itemIsSignedEditable" tal:condition="itemIsSigned" name="itemIsSignedNo" style="cursor:pointer"
+    <img class="itemIsSignedEditable" tal:condition="itemIsSigned" name="itemIsSignedNo"
          title="item_is_signed_yes_edit" i18n:attributes="title"
          tal:attributes="src string:$portal_url/itemIsSignedYes.png;
                          onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
-    <img class="itemIsSignedEditable" tal:condition="not: itemIsSigned" name="itemIsSignedYes" style="cursor:pointer"
+    <img class="itemIsSignedEditable" tal:condition="not: itemIsSigned" name="itemIsSignedYes"
          title="item_is_signed_no_edit" i18n:attributes="title"
          tal:attributes="src string: $portal_url/itemIsSignedNo.png;
                          onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
