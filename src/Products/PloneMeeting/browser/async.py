@@ -145,7 +145,7 @@ class BudgetRelated(BrowserView):
     """
       View that switch the item 'budgetRelated' attribute using an ajax call.
     """
-    IMG_TEMPLATE = u'<img class="budgetRelatedEditable" src="%s" name="%s" />' \
+    IMG_TEMPLATE = u'<img class="budgetRelatedEditable" src="%s" name="%s" title="%s" />' \
                    u' <span class="discreet">%s</span>'
 
     def __init__(self, context, request):
@@ -168,15 +168,19 @@ class BudgetRelated(BrowserView):
             # prefix with 'name' so we can discriminate this label from icon name
             name = 'nameBudgetRelatedYes'
             msgid = 'budget_related_no_edit'
+            img_title_msgid = 'budget_related_no_img_title_edit'
         else:
             filename = 'budgetRelatedYes.png'
             name = 'nameBudgetRelatedNo'
             msgid = 'budget_related_yes_edit'
+            img_title_msgid = 'budget_related_yes_img_title_edit'
 
         label = self.context.utranslate(msgid,
                                         domain="PloneMeeting")
+        img_title = self.context.utranslate(img_title_msgid,
+                                            domain="PloneMeeting")
         portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
         portal_url = portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
-        html = self.IMG_TEMPLATE % (src, name, label)
+        html = self.IMG_TEMPLATE % (src, name, img_title, label)
         return html

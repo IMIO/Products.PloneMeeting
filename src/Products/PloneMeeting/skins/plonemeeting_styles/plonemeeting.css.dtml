@@ -562,7 +562,7 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
 .itemSignaturesEditable i {
     border-bottom: 1px dotted;
     padding-bottom: 2px;
-    cursor:pointer;
+    cursor: pointer;
 }
 /* remove padding-bottom */
 .itemAssemblyEditable i,

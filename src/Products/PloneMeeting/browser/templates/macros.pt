@@ -287,20 +287,27 @@ document.location.reload(true);
         tal:define="UID context/UID;
                     baseUrl context/absolute_url;"
         tal:condition="mayEdit">
-    <img class="budgetRelatedEditable" tal:condition="budgetRelated" name="budgetRelatedNo" style="cursor:pointer"
+    <img class="budgetRelatedEditable"
+         tal:condition="budgetRelated"
+         title="budget_related_yes_img_title_edit"
+         name="budgetRelatedNo"
+         i18n:attributes="title"
          tal:attributes="src string:$portal_url/budgetRelatedYes.png;
                          onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_budget_related\', baseSelector=\'#marker_toggle_budgetrelated_\')'"/>
     <span tal:condition="budgetRelated"
           class="discreet"
-          i18n:translate="budget_related_yes_edit">This item is budget related, check 'Budgetary informations' here under (click on the icon to switch to not budget related).</span>
+          i18n:translate="budget_related_yes_edit">This item is budget related, check 'Budgetary informations' here under.</span>
 
-    <img class="budgetRelatedEditable" tal:condition="not: budgetRelated" name="budgetRelatedYes" style="cursor:pointer"
+    <img class="budgetRelatedEditable"
+         tal:condition="not: budgetRelated"
+         title="budget_related_yes_img_title_edit"
+         name="budgetRelatedYes"
+         i18n:attributes="title"
          tal:attributes="src string: $portal_url/budgetRelatedNo.png;
                          onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_budget_related\', baseSelector=\'#marker_toggle_budgetrelated_\')'"/>
     <span tal:condition="not: budgetRelated"
           class="discreet"
-          i18n:translate="budget_related_no_edit">This item is not budget related (click on the icon to switch to budget related).</span>
-
+          i18n:translate="budget_related_no_edit">This item is not budget related.</span>
   </span>
 
   <tal:notMayEdit condition="not: mayEdit">
