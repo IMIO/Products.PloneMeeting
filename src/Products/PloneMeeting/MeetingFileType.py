@@ -20,6 +20,10 @@ import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
+from Products.DataGridField import DataGridField, DataGridWidget
+from Products.DataGridField.Column import Column
+from Products.DataGridField.SelectColumn import SelectColumn
+
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
@@ -61,6 +65,20 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         vocabulary='listRelatedTo',
+    ),
+    DataGridField(
+        name='subTypes',
+        widget=DataGridWidget(
+            columns={'title': Column('Subtype title'), 'predefinedTitle': Column('Predefined subtype title'), },
+            description="SubTypes",
+            description_msgid="sub_types_descr",
+            label='Subtypes',
+            label_msgid='PloneMeeting_label_subTypes',
+            i18n_domain='PloneMeeting',
+        ),
+        allow_oddeven=True,
+        columns=('title', 'predefinedTitle', ),
+        allow_empty_rows=False,
     ),
 
 ),
@@ -198,14 +216,13 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
             brefs = self.getBRefs()
             if brefs:
-                # if we have back references, it means that at least an annex
+                # if we have back references, it means that at least one annex
                 # is linked to this MeetingFileType
                 # in some case, the getBRefs returns 'None' in the list of back references
                 # so check that we have at least one back references that is not 'None'
                 for bref in brefs:
                     if bref:
-                        raise BeforeDeleteException, \
-                            "can_not_delete_meetingfiletype_meetingfile"
+                        raise BeforeDeleteException("can_not_delete_meetingfiletype_meetingfile")
         BaseContent.manage_beforeDelete(self, item, container)
 
 

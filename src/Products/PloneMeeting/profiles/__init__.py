@@ -98,12 +98,13 @@ class CategoryDescriptor(Descriptor):
 
 class MeetingFileTypeDescriptor(Descriptor):
     def __init__(self, id, title, theIcon, predefinedTitle,
-                 relatedTo='item', active=True):
+                 relatedTo='item', active=True, subTypes={}):
         self.id = id
         self.setBilingual('title', title)
         self.theIcon = theIcon
         self.setBilingual('predefinedTitle', predefinedTitle)
         self.relatedTo = relatedTo
+        self.subTypes = subTypes
         self.active = active
 
 
