@@ -2638,11 +2638,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.adviceIndex = PersistentMapping()
             return
         tool = getToolByName(self, 'portal_plonemeeting')
+        plone_utils = getToolByName(self, 'plone_utils')
         cfg = tool.getMeetingConfig(self)
 
         # check if the given p_triggered_by_transition transition name
         # is the transition that will restart delays
         isTransitionReinitializingDelays = bool(cfg.getTransitionReinitializingDelays() == triggered_by_transition)
+
+        # add a message for the user
+        if isTransitionReinitializingDelays:
+            plone_utils.addPortalMessage(translate('advices_delays_reinitialized',
+                                                   domain="PloneMeeting",
+                                                   context=self.REQUEST),
+                                         type='info')
 
         # Invalidate advices if needed
         if invalidate:
@@ -2657,10 +2665,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         recipient = tool.getMailRecipient(advice['actor'])
                         if recipient:
                             sendMail([recipient], self, 'adviceInvalidated')
-            self.plone_utils.addPortalMessage(translate('advices_invalidated',
-                                                        domain="PloneMeeting",
-                                                        context=self.REQUEST),
-                                              type='info')
+            plone_utils.addPortalMessage(translate('advices_invalidated',
+                                                   domain="PloneMeeting",
+                                                   context=self.REQUEST),
+                                         type='info')
             # remove every meetingadvice from self
             # to be able to remove every contained meetingadvice, we need to mark
             # them as deletable, aka we need to give permission 'Delete objects' on
