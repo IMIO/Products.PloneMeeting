@@ -13,6 +13,8 @@ from AccessControl import Unauthorized
 
 from zope.annotation import IAnnotations
 
+from plone.memoize import ram
+
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import checkPermission
 
@@ -100,9 +102,14 @@ class AnnexableAdapter(object):
             res = False
         return res
 
+    def getAnnexesToPrint_cachekey(method, self, relatedTo='item'):
+        '''cachekey method for self.getAnnexesToPrint.'''
+        # invalidate if annexes changed or if toPrint changed
+        return ([(annex.UID(), annex.getToPrint()) for annex in self.getAnnexesInOrder(relatedTo)])
+
+    @ram.cache(getAnnexesToPrint_cachekey)
     def getAnnexesToPrint(self, relatedTo='item'):
         '''See docstring in interfaces.py'''
-
         portal = getToolByName(self.context, 'portal_url').getPortalObject()
         global_settings = GlobalSettings(portal)
         annexes = self.getAnnexesInOrder(relatedTo)
@@ -170,9 +177,8 @@ class AnnexableAdapter(object):
         else:
             del self.context.annexIndex[:]
             sortableList = []
-            annexes = self.context.objectValues('MeetingFile')
-            normalAnnexes = [mfile for mfile in annexes if (mfile and not mfile.findRelatedTo() == 'item_decision')]
-            decisionAnnexes = [mfile for mfile in annexes if (mfile and mfile.findRelatedTo() == 'item_decision')]
+            normalAnnexes = self.getAnnexesInOrder(relatedTo='item')
+            decisionAnnexes = self.getAnnexesInOrder(relatedTo='item_decision')
             for annex in normalAnnexes:
                 sortableList.append(annex.getAnnexInfo())
             for annex in decisionAnnexes:
@@ -181,10 +187,10 @@ class AnnexableAdapter(object):
             for a in sortableList:
                 self.context.annexIndex.append(a)
 
-    def getAnnexesInOrder(self, relatedTo='item'):
+    def getAnnexesInOrder(self, relatedTo=None):
         '''See docstring in interfaces.py'''
         annexes = self.context.objectValues('MeetingFile')
-        return [annex for annex in annexes if annex.findRelatedTo() == relatedTo]
+        return [annex for annex in annexes if (not relatedTo or annex.findRelatedTo() == relatedTo)]
 
     def getLastInsertedAnnex(self):
         '''See docstring in interfaces.py'''
@@ -218,15 +224,4 @@ class AnnexableAdapter(object):
                     res.append(annexes)
                 else:
                     res += annexes
-        return res
-
-    def getAnnexes(self, decisionRelated=False):
-        '''See docstring in interfaces.py'''
-        res = []
-        for annex in self.context.objectValues('MeetingFile'):
-            relatedTo = annex.findRelatedTo()
-            if decisionRelated and relatedTo == 'item_decision':
-                res.append(annex)
-            elif not decisionRelated and relatedTo == 'item':
-                res.append(annex)
         return res

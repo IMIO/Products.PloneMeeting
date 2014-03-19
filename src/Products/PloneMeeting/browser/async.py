@@ -1,6 +1,7 @@
 from zope.component import getMultiAdapter
 from AccessControl import Unauthorized
 from Products.Five import BrowserView
+from Products.CMFCore.utils import getToolByName
 
 
 class Discuss(BrowserView):
@@ -10,8 +11,8 @@ class Discuss(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = portal_state.portal()
+        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
+        self.portal = self.portal_state.portal()
 
     def isAsynchToggleEnabled(self):
         """
@@ -28,7 +29,7 @@ class Discuss(BrowserView):
           asynchronously, meaning that the entire page is not fully reloaded but only the
           relevant icon.
         """
-        member = self.portal.restrictedTraverse('@@plone_portal_state').member()
+        member = self.portal_state.member()
         if not member.has_permission('Modify portal content', self.context):
             raise Unauthorized
 
@@ -48,9 +49,7 @@ class Discuss(BrowserView):
         title = self.context.translate(title_msgid,
                                        domain="PloneMeeting")
 
-        portal_state = getMultiAdapter((self.context, self.request),
-                                       name=u"plone_portal_state")
-        portal_url = portal_state.portal_url()
+        portal_url = self.portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
 
         html = self.IMG_TEMPLATE % (src, title, name)
@@ -82,7 +81,8 @@ class Discuss(BrowserView):
             toDiscuss = not item.getToDiscuss()
             item.setToDiscuss(toDiscuss)
             item.adapted().onDiscussChanged(toDiscuss)
-        return self.context.portal_plonemeeting.gotoReferer()
+        tool = getToolByName(self.portal, 'portal_plonemeeting')
+        return tool.gotoReferer()
 
 
 class AnnexToPrint(BrowserView):
@@ -94,11 +94,11 @@ class AnnexToPrint(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = portal_state.portal()
+        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
+        self.portal = self.portal_state.portal()
 
     def toggle(self):
-        member = self.portal.restrictedTraverse('@@plone_portal_state').member()
+        member = self.portal_state.member()
         if not member.has_permission('Modify portal content', self.context):
             raise Unauthorized
 
@@ -131,7 +131,8 @@ class AnnexToPrint(BrowserView):
         except Exception, exc:
             # set an error status in request.RESPONSE so the ajax call knows
             # that something wrong happened and redirect the page so portalMessages are displayed
-            self.portal.plone_utils.addPortalMessage(
+            plone_utils = getToolByName(self.context, 'plone_utils')
+            plone_utils.addPortalMessage(
                 self.context.translate("There was an error while trying to set this annex to printable. "
                                        "The error message was : ${error}. Please contact system administrator.",
                                        mapping={'error': str(exc)},
@@ -151,8 +152,8 @@ class BudgetRelated(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = portal_state.portal()
+        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
+        self.portal = self.portal_state.portal()
 
     def toggle(self):
         member = self.portal.restrictedTraverse('@@plone_portal_state').member()
@@ -179,8 +180,7 @@ class BudgetRelated(BrowserView):
                                         domain="PloneMeeting")
         img_title = self.context.utranslate(img_title_msgid,
                                             domain="PloneMeeting")
-        portal_state = getMultiAdapter((self.context, self.request), name=u"plone_portal_state")
-        portal_url = portal_state.portal_url()
+        portal_url = self.portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
         html = self.IMG_TEMPLATE % (src, name, img_title, label)
         return html

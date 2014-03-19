@@ -30,6 +30,7 @@ from appy.pod.renderer import Renderer
 from appy.shared.utils import normalizeString
 from StringIO import StringIO
 from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import clonePermissions, getCustomAdapter, \
     getOsTempFolder, sendMail, getFieldContent
 from Products.CMFCore.Expression import Expression, createExprContext
@@ -285,7 +286,9 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
                       'meetingIsDecided': self.meetingIsDecided(obj),
                       'itemUids': itemUids,
                       'user': currentUser,
-                      'podTemplate': self
+                      'podTemplate': self,
+                      # give ability to access annexes related methods
+                      'IAnnexable': IAnnexable,
                       }
         podContext.update(obj.adapted().getSpecificDocumentContext())
         rendererParams = {'template': StringIO(self.getPodTemplate()),
