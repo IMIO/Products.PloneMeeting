@@ -29,7 +29,7 @@ from Products.PloneMeeting.config import *
 
 from Products.CMFCore.utils import UniqueObject
 
-    
+
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
@@ -1712,8 +1712,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         toPrintDefault = meetingConfig.getAnnexToPrintDefault()
                     else:
                         toPrintDefault = meetingConfig.getAnnexDecisionToPrintDefault()
-                    decisionRelated = annexTypeRelatedTo == 'item_decision' and True or False
-                    oldAnnexes = IAnnexable(copiedItem).getAnnexes(decisionRelated=decisionRelated)
+                    oldAnnexes = IAnnexable(copiedItem).getAnnexesInOrder(relatedTo=annexTypeRelatedTo)
                     for oldAnnex in oldAnnexes:
                         newAnnex = getattr(newItem, oldAnnex.id)
                         # In case the item is copied from another MeetingConfig, we need
@@ -2244,8 +2243,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # update annexes in items and advices
             for brain in catalog(meta_type='MeetingItem') + catalog(portal_type='meetingadvice'):
                 obj = brain.getObject()
-                annexes = IAnnexable(obj).getAnnexes()
-                annexes = annexes + IAnnexable(obj).getAnnexes(decisionRelated=True)
+                annexes = IAnnexable(obj).getAnnexesInOrder()
                 for annex in annexes:
                     convertToImages(annex, None, force=True)
             self.plone_utils.addPortalMessage('Done.')
@@ -2412,4 +2410,3 @@ registerType(ToolPloneMeeting, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-
