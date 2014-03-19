@@ -72,17 +72,16 @@ class IAnnexable(Interface):
             self.annexIndex.
         """
 
-    def getAnnexesInOrder(context, relatedTo='item'):
+    def getAnnexesInOrder(context, relatedTo=None):
         """
-          Returns contained annexes respecting order (container is oerdered).
-          XXX first step to remove annexes/annexesDeicision fields as ReferenceFields
-          as taking contained annexes should be sufficient...
-          It returns item-related annexes depending on p_relatedTo.
+          Returns contained annexes respecting order (container is ordered).
+          It returns annexes depending on p_relatedTo.  If p_relatedTo is None,
+          every annexes are returned, no matter the relatedTo.
         """
 
     def getLastInsertedAnnex(context):
         """
-          Gets the last inserted annex on this item, be it decision-related or not.
+          Gets the last inserted annex on this item, regardless relatedTo.
         """
 
     def getAnnexesByType(context, relatedTo, makeSubLists=True,
@@ -100,13 +99,6 @@ class IAnnexable(Interface):
           In all cases, within each annex type annexes are sorted by
           creation date (more recent last).
         """
-
-    def getAnnexes(context, decisionRelated=False):
-        """
-          Return every annexes, if p_decisionRelated is True, return annexes
-          relatedTo 'item_decision', if it is False, return annexes relatedTo 'item'.
-        """
-
 ##/code-section HEAD
 
 
