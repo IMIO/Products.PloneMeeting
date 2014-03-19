@@ -111,14 +111,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(
             set([item1, clonedItem]), set(workingFolder.objectValues()))
         # Check that the annexes have been cloned, too.
-        self.assertEquals(len(IAnnexable(clonedItem).getAnnexes()), 1)
+        self.assertEquals(len(IAnnexable(clonedItem).getAnnexesInOrder()), 1)
         newAnnex = clonedItem.objectValues('MeetingFile')[0]
         # toPrint is the value defined in the configuration
         self.assertEquals(newAnnex.getToPrint(), False)
-        # check that annexes returned by the IAnnexable.getAnnexes method
+        # check that annexes returned by the IAnnexable.getAnnexesInOrder method
         # and stored in annexIndex correspond to new cloned annexes
         newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues('MeetingFile')]
-        self.assertEquals([annex.UID() for annex in IAnnexable(clonedItem).getAnnexes()], newAnnexesUids)
+        self.assertEquals([annex.UID() for annex in IAnnexable(clonedItem).getAnnexesInOrder()], newAnnexesUids)
         self.assertEquals([annex['UID'] for annex in clonedItem.annexIndex], newAnnexesUids)
         # The annexIndex must be filled
         self.assertEquals(len(clonedItem.annexIndex), 1)
@@ -129,7 +129,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         clonedItem = item1.clone(copyAnnexes=False)
         self.assertEquals(set([clonedItem]),
                           set(clonedItem.getParentNode().objectValues()))
-        self.assertEquals(len(IAnnexable(clonedItem).getAnnexes()), 0)
+        self.assertEquals(len(IAnnexable(clonedItem).getAnnexesInOrder()), 0)
 
     def test_pm_CloneItemWithContentNotRemovableByPermission(self):
         '''Clones a given item in parent item folder. Here we test that even
@@ -188,23 +188,23 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(len(res2.workflow_history[itemWorkflow]), 1)
         # Annexes are copied for item1
         # and that existing references are correctly kept
-        self.assertEquals(len(IAnnexable(res1).getAnnexes()), 2)
+        self.assertEquals(len(IAnnexable(res1).getAnnexesInOrder()), 2)
         # Check also that the annexIndex is correct
         self.assertEquals(len(res1.annexIndex), 2)
         # And that indexed and references values are actually the right ones...
-        self.failUnless(IAnnexable(res1).getAnnexes()[0].absolute_url().startswith(res1.absolute_url()))
-        res1AnnexesUids = [annex.UID() for annex in IAnnexable(res1).getAnnexes()]
-        item1AnnexesUids = [annex.UID() for annex in IAnnexable(item1).getAnnexes()]
+        self.failUnless(IAnnexable(res1).getAnnexesInOrder()[0].absolute_url().startswith(res1.absolute_url()))
+        res1AnnexesUids = [annex.UID() for annex in IAnnexable(res1).getAnnexesInOrder()]
+        item1AnnexesUids = [annex.UID() for annex in IAnnexable(item1).getAnnexesInOrder()]
         self.failUnless(res1.annexIndex[0]['UID'] in res1AnnexesUids)
         self.failIf(len(set(item1AnnexesUids).intersection(set(res1AnnexesUids))) != 0)
         #Now check item2 : no annexes nor given advices
-        self.assertEquals(len(IAnnexable(res2).getAnnexes()), 0)
+        self.assertEquals(len(IAnnexable(res2).getAnnexesInOrder()), 0)
         self.assertEquals(len(res2.annexIndex), 0)
         self.assertEquals(len(res2.getGivenAdvices()), 0)
         self.assertEquals(len(res2.adviceIndex), 0)
         # Now check the 'keepReferencesOnCopy' attribute of MeetingFile.meetingFileType
-        self.failUnless(IAnnexable(res1).getAnnexes()[0].getMeetingFileType())
-        self.failUnless(IAnnexable(res1).getAnnexes()[1].getMeetingFileType())
+        self.failUnless(IAnnexable(res1).getAnnexesInOrder()[0].getMeetingFileType())
+        self.failUnless(IAnnexable(res1).getAnnexesInOrder()[1].getMeetingFileType())
 
     def test_pm_ShowPloneMeetingTab(self):
         '''Test when PM tabs are shown'''

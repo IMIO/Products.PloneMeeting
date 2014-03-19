@@ -536,8 +536,10 @@ class testMeetingItem(PloneMeetingTestCase):
         decisionAnnex1 = data['decisionAnnex1']
         decisionAnnex2 = data['decisionAnnex2']
         # Check that annexes are actually correctly sent too
-        self.failUnless(len(IAnnexable(newItem).getAnnexes()) == 2)
-        self.failUnless(len(IAnnexable(newItem).getAnnexes(decisionRelated=True)) == 2)
+        # we had 2 normal annexes and 2 decision annexes
+        self.failUnless(len(IAnnexable(newItem).getAnnexesInOrder()) == 4)
+        self.failUnless(len(IAnnexable(newItem).getAnnexesInOrder(relatedTo='item')) == 2)
+        self.failUnless(len(IAnnexable(newItem).getAnnexesInOrder(relatedTo='item_decision')) == 2)
         # As annexes are references from the item, check that these are not
         self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues()))
         # Especially test that references are ok about the MeetingFileTypes
