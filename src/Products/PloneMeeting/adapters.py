@@ -103,7 +103,8 @@ class AnnexableAdapter(object):
         return res
 
     def getAnnexesToPrint_cachekey(method, self, relatedTo='item'):
-        '''cachekey method for self.getAnnexesToPrint.'''
+        '''cachekey method for self.getAnnexesToPrint.
+           We cache it because it is called several times while used in POD templates.'''
         # invalidate if annexes changed or if toPrint changed
         return ([(annex.UID(), annex.getToPrint()) for annex in self.getAnnexesInOrder(relatedTo)])
 
