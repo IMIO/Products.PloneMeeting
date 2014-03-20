@@ -78,6 +78,7 @@ schema = Schema((
     StringField(
         name='meetingFileType',
         widget=StringField._properties['widget'](
+            visible=False,
             label='Meetingfiletype',
             label_msgid='PloneMeeting_label_meetingFileType',
             i18n_domain='PloneMeeting',
