@@ -42,6 +42,7 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import workday
 
 
 class testAdvices(PloneMeetingTestCase):
@@ -1002,13 +1003,20 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'].weekday() == 3)
 
         # test that the advice may still be added the last day
+        # to avoid that current day (aka last day) is a weekend or holiday or unavailable day
+        # or so, we just remove everything that increase/decrease delay
+        self.tool.setDelayUnavailableEndDays([])
+        self.tool.setHolidays([])
+        self.tool.setWorkingDays(('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun', ))
+        self.tool.setModificationDate(DateTime())
         # change 'delay_started_on' manually and check that last day, the advice is 'still_giveable'
-        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(9)
+        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(7)
         item.updateAdvices()
-        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] > datetime.now())
+        # we are the last day
+        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'].day == datetime.now().day)
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
         # one day more and it is not giveable anymore...
-        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(10)
+        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(8)
         item.updateAdvices()
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] < datetime.now())
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'timed_out')
