@@ -71,7 +71,7 @@ class AnnexableAdapter(object):
         newAnnex = getattr(self.context, newAnnexId)
         newAnnex.setFile(annex_file, **kwargs)
         newAnnex.setTitle(annex_title)
-        newAnnex.setMeetingFileType(meetingFileType)
+        newAnnex.setMeetingFileType(meetingFileType.UID())
 
         # do some specific stuffs if we are adding an annex on an item, not on an advice
         if self.context.meta_type == 'MeetingItem':
@@ -178,11 +178,7 @@ class AnnexableAdapter(object):
         else:
             del self.context.annexIndex[:]
             sortableList = []
-            normalAnnexes = self.getAnnexesInOrder(relatedTo='item')
-            decisionAnnexes = self.getAnnexesInOrder(relatedTo='item_decision')
-            for annex in normalAnnexes:
-                sortableList.append(annex.getAnnexInfo())
-            for annex in decisionAnnexes:
+            for annex in self.getAnnexesInOrder():
                 sortableList.append(annex.getAnnexInfo())
             sortableList.sort(key=lambda x: x['modification_date'])
             for a in sortableList:
@@ -213,7 +209,7 @@ class AnnexableAdapter(object):
             annexes = []
             for annexInfo in self.context.annexIndex:
                 if (annexInfo['relatedTo'] == relatedTo) and \
-                   (annexInfo['fileTypeId'] == fileType.id):
+                   (annexInfo['fileTypeUID'] == fileType.UID()):
                     if not realAnnexes:
                         annexes.append(annexInfo)
                     else:

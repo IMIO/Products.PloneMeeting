@@ -29,6 +29,7 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
 ##/code-section module-header
 
@@ -133,16 +134,28 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
     security.declarePrivate('validate_relatedTo')
     def validate_relatedTo(self, value):
         '''We can not change the relatedTo if it is in use by an existing MeetingFile.'''
-        # if value was not changed, no problem
-        if value == self.getRelatedTo():
+        # if value was not changed or set for the first time, no problem
+        storedRelatedTo = self.getRelatedTo()
+        if not storedRelatedTo or value == storedRelatedTo:
             return
-        # the link between a MeetingFile and a MeetingFileType is a reference
-        # so we will check if the current MFT has back references
-        if self.getBRefs():
+
+        # we can not change a relatedTo if a MeetingFile is already using this MeetingFileType
+        foundAnnex = False
+        catalog = getToolByName(self, 'portal_catalog')
+        brains = catalog(portal_type='MeetingFile')
+        mftUID = self.UID()
+        for brain in brains:
+            annex = brain.getObject()
+            if annex.getMeetingFileType() == mftUID:
+                # we found an annex using this mft
+                foundAnnex = True
+                break
+
+        if foundAnnex:
             if self.getRelatedTo() == 'advice':
                 # display msg specifying that an advice annex is using this mft
                 # and add a link to the item the advice is given on
-                item = self.getBRefs()[0].getParentNode().getParentNode()
+                item = annex.getParentNode().getParentNode()
                 return translate('cannot_change_inuse_advice_relatedto',
                                  domain='PloneMeeting',
                                  mapping={'item_url': item.absolute_url()},
@@ -150,7 +163,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
             else:
                 # display msg specifying that an item annex is using this mft
                 # and add a link to the item the annex is added in
-                item = self.getBRefs()[0].getParentNode()
+                item = annex.getParentNode()
                 return translate('cannot_change_inuse_item_relatedto',
                                  domain='PloneMeeting',
                                  mapping={'item_url': item.absolute_url()},
@@ -210,19 +223,17 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
         '''Checks if the current meetingFile can be deleted:
-          - it can not be linked to an existing MeetingFile.'''
+          - it can not be used in a MeetingFile.meetingFileType.'''
         # If we are trying to remove the whole Plone Site, bypass this hook.
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
-            brefs = self.getBRefs()
-            if brefs:
-                # if we have back references, it means that at least one annex
-                # is linked to this MeetingFileType
-                # in some case, the getBRefs returns 'None' in the list of back references
-                # so check that we have at least one back references that is not 'None'
-                for bref in brefs:
-                    if bref:
-                        raise BeforeDeleteException("can_not_delete_meetingfiletype_meetingfile")
+            catalog = getToolByName(self, 'portal_catalog')
+            brains = catalog(portal_type='MeetingFile')
+            mftUID = self.UID()
+            for brain in brains:
+                annex = brain.getObject()
+                if annex.getMeetingFileType() == mftUID:
+                    raise BeforeDeleteException("can_not_delete_meetingfiletype_meetingfile")
         BaseContent.manage_beforeDelete(self, item, container)
 
 

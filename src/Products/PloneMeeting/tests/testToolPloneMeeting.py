@@ -202,7 +202,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(len(res2.annexIndex), 0)
         self.assertEquals(len(res2.getGivenAdvices()), 0)
         self.assertEquals(len(res2.adviceIndex), 0)
-        # Now check the 'keepReferencesOnCopy' attribute of MeetingFile.meetingFileType
+        # Now check that meetingFileTypes are kept
         self.failUnless(IAnnexable(res1).getAnnexesInOrder()[0].getMeetingFileType())
         self.failUnless(IAnnexable(res1).getAnnexesInOrder()[1].getMeetingFileType())
 

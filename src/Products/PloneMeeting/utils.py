@@ -347,7 +347,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         if lastAnnex:
             translationMapping['lastAnnexTitle'] = lastAnnex.Title().decode(enc)
             translationMapping['lastAnnexTypeTitle'] = \
-                lastAnnex.getMeetingFileType().Title().decode(enc)
+                lastAnnex.getMeetingFileType(theObject=True).Title().decode(enc)
         meeting = obj.getMeeting(brain=True)
         if meeting:
             translationMapping['meetingTitle'] = meeting.Title().decode(enc)

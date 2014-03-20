@@ -35,7 +35,7 @@ class testMeetingFileType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        meetingFileType = annex.getMeetingFileType()
+        meetingFileType = annex.getMeetingFileType(theObject=True)
         self.changeUser('admin')
         # if we try to remove this meetingFileType, it raises an Exception
         meetingFileTypesFolder = meetingFileType.aq_inner.aq_parent
@@ -53,7 +53,7 @@ class testMeetingFileType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        mft = annex.getMeetingFileType()
+        mft = annex.getMeetingFileType(theObject=True)
         self.changeUser('admin')
         # validate relatedTo
         self.assertEquals(mft.getRelatedTo(), 'item')

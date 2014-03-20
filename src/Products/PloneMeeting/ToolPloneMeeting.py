@@ -2217,12 +2217,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
             raise Unauthorized
-        # update items
-        for b in self.portal_catalog(meta_type='MeetingItem'):
-            IAnnexable(b.getObject()).updateAnnexIndex()
-        # update advices
-        for b in self.portal_catalog(portal_type='meetingadvice'):
-            IAnnexable(b.getObject()).updateAnnexIndex()
+        catalog = getToolByName(self, 'portal_catalog')
+        # update items and advices
+        brains = catalog(meta_type=('MeetingItem', ))
+        brains = brains + catalog(portal_type=('meetingadvice', ))
+        numberOfBrains = len(brains)
+        i = 1
+        for brain in brains:
+            IAnnexable(brain.getObject()).updateAnnexIndex()
+            logger.info('%d/%d Updating adviceIndex of %s at %s' % (i,
+                                                                    numberOfBrains,
+                                                                    brain.portal_type,
+                                                                    brain.getPath()))
+            i = i + 1
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 

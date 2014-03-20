@@ -2,6 +2,7 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.migrations import Migrator
 
 
@@ -26,13 +27,18 @@ class Migrate_To_3_2_1(Migrator):
            existing annexes, we store now the id of the used meetingFileType.'''
         logger.info('Updating every MeetingFile.meetingFileType attributes...')
         brains = self.portal.portal_catalog(portal_type='MeetingFile')
+        refCat = getToolByName(self.portal, 'reference_catalog')
         for brain in brains:
             annex = brain.getObject()
             # already migrated?
             if annex.getMeetingFileType():
                 break
             # find the old meetingFileType in the reference_catalog
-            pass
+            mft = refCat(sourceUID=annex.UID(), relationship="MeetingFileType")[0].getObject().getTargetObject()
+            annex.setMeetingFileType(mft.UID())
+            annex.deleteReferences(relationship="MeetingFileType")
+        # update every items annexIndex as a key changed from fileTypeId to fileTypeUID
+        self.tool.reindexAnnexes()
         logger.info('Done.')
 
     def run(self):

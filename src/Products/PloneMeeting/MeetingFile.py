@@ -35,7 +35,6 @@ from zope.i18n import translate
 from plone.memoize.instance import memoize
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
-from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collective.documentviewer.async import asyncInstalled
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, sendMailIfRelevant
@@ -76,16 +75,14 @@ CONVERSION_ERROR_MANAGER = u'There was an error during annex conversion at %s.'
 
 schema = Schema((
 
-    ReferenceField(
+    StringField(
         name='meetingFileType',
-        keepReferencesOnCopy=True,
-        widget=ReferenceBrowserWidget(
+        widget=StringField._properties['widget'](
             label='Meetingfiletype',
             label_msgid='PloneMeeting_label_meetingFileType',
             i18n_domain='PloneMeeting',
         ),
         required=True,
-        relationship="MeetingFileType",
     ),
     BooleanField(
         name='toPrint',
@@ -152,11 +149,25 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         if not field:
             # field is empty
             return BaseContent.getIcon(self, relative_to_portal)
-        mft = self.getMeetingFileType()
+        mft = self.getMeetingFileType(theObject=True)
         if mft:
             return self.portal_url.getRelativeContentURL(mft) + '/theIcon'
         else:
             return None
+
+    security.declarePublic('getMeetingFileType')
+    def getMeetingFileType(self, theObject=False, **kwargs):
+        '''Override Archetypes accessor to be able to get the MeetingFileType object.'''
+        res = self.getField('meetingFileType').get(self, **kwargs)  # = mft id
+        if res and theObject:
+            # MeetingFileTypes are not in the portal_catalog
+            # but it is indexed in the uid_catalog...
+            uid_catalog = getToolByName(self, 'uid_catalog')
+            try:
+                res = uid_catalog(UID=res)[0].getObject()
+            except:
+                pass
+        return res
 
     security.declarePublic('getBestIcon')
     def getBestIcon(self):
@@ -168,7 +179,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         '''
           Check what the corresponding MeetingFileType is relatedTo...
         '''
-        mft = self.getMeetingFileType()
+        mft = self.getMeetingFileType(theObject=True)
         if mft:
             return mft.getRelatedTo()
         return ''
@@ -236,12 +247,12 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         '''Produces a dict with some useful info about this annex. This is
            used for indexing purposes (see method updateAnnexIndex in
            browser/annexes.py).'''
-        fileType = self.getMeetingFileType()
+        fileTypeUID = self.getMeetingFileType()
         portal_url = getToolByName(self, 'portal_url')
         res = {'Title': self.Title(),
                'absolute_url': portal_url.getRelativeContentURL(self),
                'UID': self.UID(),
-               'fileTypeId': fileType.id,
+               'fileTypeUID': fileTypeUID,
                'iconUrl': self.getIcon(),
                # if the parent also has a pm_modification_date,
                # make sure we use the real MeetingFile's one
@@ -399,16 +410,17 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                                                                            onlyActive=False)]
         existingFileTypesIds = [ft.getId() for ft in mftFolder.getFileTypes(relatedTo=relatedTo,
                                                                             onlyActive=False)]
-        mft = self.getMeetingFileType()
+        mft = self.getMeetingFileType(theObject=True)
+        mftId = mft.getId()
         if not mft or not mft.UID() in existingFileTypesUids:
             # get the corresponding meetingFileType in the current meetingConfig
             # or use the default meetingFileType
-            if mft and mft.id in existingFileTypesIds:
+            if mft and mftId in existingFileTypesIds:
                 # a corresponding meetingFileType has been found, use it
-                correspondingFileType = getattr(mftFolder, mft.id)
+                correspondingFileType = getattr(mftFolder, mftId)
             else:
                 correspondingFileType = getattr(mftFolder, existingFileTypesIds[0])
-            self.setMeetingFileType(correspondingFileType)
+            self.setMeetingFileType(correspondingFileType.UID())
             return True
 
     security.declareProtected(ModifyPortalContent, 'setToPrint')
