@@ -97,8 +97,10 @@ class CategoryDescriptor(Descriptor):
 
 
 class MeetingFileTypeDescriptor(Descriptor):
+    multiSelectFields = ('subTypes', )
+
     def __init__(self, id, title, theIcon, predefinedTitle,
-                 relatedTo='item', active=True, subTypes={}):
+                 relatedTo='item', active=True, subTypes=()):
         self.id = id
         self.setBilingual('title', title)
         self.theIcon = theIcon

@@ -11,10 +11,6 @@
 from DateTime import DateTime
 rq = context.REQUEST
 
-# Get current meeting config
-meetingConfig = container.portal_plonemeeting.getMeetingConfig(context)
-meetingFileType = getattr(meetingConfig.meetingfiletypes, annex_type)
-
 # Try to create, within the item (which is folderish), an object whose id
 # is derived from the fileName of the file to upload. If this id already exists
 # or is blacklisted (for more info about it see
@@ -52,7 +48,7 @@ while not idMayBeUsed:
         # Ok idCandidate is good!
         idMayBeUsed = True
 
-annexes_view.addAnnex(idCandidate, annex_title, annex_file, relatedTo, meetingFileType)
+annexes_view.addAnnex(idCandidate, annex_title, annex_file, relatedTo, annex_type)
 
 state.set(status='success')
 context.plone_utils.addPortalMessage('Annex correctly added.')

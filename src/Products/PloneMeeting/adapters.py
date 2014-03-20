@@ -31,7 +31,7 @@ class AnnexableAdapter(object):
         self.request = self.context.REQUEST
 
     def addAnnex(self, idCandidate, annex_title, annex_file,
-                 relatedTo, meetingFileType, **kwargs):
+                 relatedTo, meetingFileTypeUID, **kwargs):
         '''See docstring in interfaces.py'''
         # first of all, check if we can actually add the annex
         if relatedTo == 'item_decision':
@@ -71,7 +71,7 @@ class AnnexableAdapter(object):
         newAnnex = getattr(self.context, newAnnexId)
         newAnnex.setFile(annex_file, **kwargs)
         newAnnex.setTitle(annex_title)
-        newAnnex.setMeetingFileType(meetingFileType.UID())
+        newAnnex.setMeetingFileType(meetingFileTypeUID)
 
         # do some specific stuffs if we are adding an annex on an item, not on an advice
         if self.context.meta_type == 'MeetingItem':
@@ -200,8 +200,12 @@ class AnnexableAdapter(object):
     def getAnnexesByType(self, relatedTo, makeSubLists=True,
                          typesIds=[], realAnnexes=False):
         '''See docstring in interfaces.py'''
-        meetingFileTypes = self.context.portal_plonemeeting.getMeetingConfig(self.context). \
-            getFileTypes(relatedTo, typesIds=typesIds, onlyActive=False)
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        meetingFileTypes = cfg.getFileTypes(relatedTo,
+                                            typesIds=typesIds,
+                                            onlySelectable=False,
+                                            includeSubTypes=False)
         res = []
         if not hasattr(self.context, 'annexIndex'):
             self.updateAnnexIndex()
@@ -209,7 +213,7 @@ class AnnexableAdapter(object):
             annexes = []
             for annexInfo in self.context.annexIndex:
                 if (annexInfo['relatedTo'] == relatedTo) and \
-                   (annexInfo['fileTypeUID'] == fileType.UID()):
+                   (annexInfo['meetingFileTypeObjectUID'] == fileType['meetingFileTypeObjectUID']):
                     if not realAnnexes:
                         annexes.append(annexInfo)
                     else:

@@ -286,7 +286,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
                                   annexTitle,
                                   annexFile,
                                   decisionRelated and 'item_decision' or 'item',
-                                  meetingFileType=fileType)
+                                  meetingFileTypeUID=fileType.UID())
         # Find the last created annex
         annexUid = IAnnexable(item).getAnnexesByType(decisionRelated and 'item_decision' or 'item',
                                                      makeSubLists=False,

@@ -1109,7 +1109,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if tag_title:
             tag_title = translate(tag_title, domain='PloneMeeting', context=self.REQUEST, ).encode('utf-8')
         if objClassName in self.ploneMeetingTypes:
-            isAnnex = False
+            isFromAnnexIndex = False
             uid = obj.UID()
             modifDate = obj.pm_modification_date
             url = obj.absolute_url() + appendToUrl
@@ -1145,7 +1145,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 isPrivacyViewable = False
         else:
             # It is an annex entry in an annexIndex
-            isAnnex = True
+            isFromAnnexIndex = True
             uid = obj['UID']
             modifDate = obj['modification_date']
             portal_url = self.portal_url.getPortalObject().absolute_url()
@@ -1179,7 +1179,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # We just colorize the link depending on the workflow state of
             # the item
             try:
-                if isAnnex:
+                if isFromAnnexIndex:
                     obj_state = obj['review_state']
                 else:
                     obj_state = obj.queryState()

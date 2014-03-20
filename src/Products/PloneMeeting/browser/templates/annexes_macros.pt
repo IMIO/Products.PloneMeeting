@@ -38,7 +38,7 @@
     <input type="hidden" name="selected_uid" value=""/>
     <input type="hidden" name="relatedTo" tal:attributes="value relatedTo"/>
 
-  <fieldset tal:define="fileTypes python:[ft for ft in meetingConfig.getFileTypes(relatedTo) if ft.adapted().isSelectable()]">
+  <fieldset tal:define="fileTypes python:[mft for mft in meetingConfig.getFileTypes(relatedTo)]">
     <legend i18n:translate="add_annex">Add an annex</legend>
 
     <tal:showWarningWillInvalidateAdvices condition="python: context.meta_type == 'MeetingItem' and context.willInvalidateAdvices()">
@@ -49,7 +49,7 @@
 
     <tal:oneFileType condition="python: len(fileTypes) == 1">
       <tal:comment replace="nothing">In this case we do not display the listbox that allows to choose the file type.</tal:comment>
-      <input type="hidden" tal:attributes="value python: fileTypes[0].id" id="idHidden1" name="annex_type"/>
+      <input type="hidden" tal:attributes="value python: fileTypes[0]['id']" id="idHidden1" name="annex_type"/>
     </tal:oneFileType>
 
     <tal:manyFileTypes condition="python: len(fileTypes) &gt; 1">
@@ -72,7 +72,7 @@
                               num python:str(fileTypes.index(meetingFileType)+1)">
               <img id="idImage1" tal:attributes="src python: meetingFileType.absolute_url() + '/theIcon';"
                    alt="" class="ploneMeetingSelectImage" />
-              <span id="idButtonText1" tal:content="python: meetingFileType.getName()" class="ploneMeetingRef"></span>
+              <span id="idButtonText1" tal:content="meetingFileType/name" class="ploneMeetingRef"></span>
             </span>
           </span>
           <span tal:condition="python: (not request.has_key('annex_type')) or (not request['annex_type'])">
@@ -96,13 +96,13 @@
           </p>
           <tal:loop repeat="meetingFileType fileTypes">
            <p tal:define="global num python: num + 1;
-                          ftName meetingFileType/getName"
+                          ftName meetingFileType/name"
              class="ploneMeetingSelectItem" onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
              onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
              onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage1', 'value1', 'predefined_title1'); ploneMeetingSelectOnMouseOutItem(this)"
-             tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage1' + str(num) + '\', \'' + tool.forJs(ftName) + '\', \'' + meetingFileType.getId() + '\', \'' + tool.forJs(meetingFileType.getPredefinedTitle()) + '\');; ploneMeetingSelectOnMouseOutItem(this)'">
+             tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage1' + str(num) + '\', \'' + tool.forJs(ftName) + '\', \'' + meetingFileType['id'] + '\', \'' + tool.forJs(meetingFileType['predefinedTitle']) + '\');; ploneMeetingSelectOnMouseOutItem(this)'">
             <img class="ploneMeetingSelectImage"
-                tal:attributes="src python: meetingFileType.absolute_url() + '/theIcon'; id python: 'idImage1' + str(num)"
+                tal:attributes="src python: meetingFileType['absolute_url'] + '/theIcon'; id python: 'idImage1' + str(num)"
                 id="idImage1" src="#" alt="" />
             <span tal:content="ftName" />
            </p>
@@ -124,7 +124,7 @@
                tal:condition="python: len(fileTypes) &gt; 1" tal:attributes="value rq_annex_title" />
         <input type="text" size="50" name="annex_title" id="annex_title"
                tal:condition="python: len(fileTypes) == 1"
-               tal:attributes="value python: rq_annex_title and rq_annex_title or fileTypes[0].getPredefinedTitle();" />
+               tal:attributes="value python: rq_annex_title and rq_annex_title or fileTypes[0]['predefinedTitle'];" />
       </div>
 
       <tal:comment replace="nothing">Annex file to upload</tal:comment>
@@ -205,7 +205,8 @@
      <tr tal:repeat="annexInfo annexes">
        <span tal:define="annex python: context.uid_catalog(UID=annexInfo['UID'])[0].getObject()">
        <td class="pmLinks">
-         <img tal:attributes="src string:${portal_url}/${annex/getIcon}"/>&nbsp;
+         <img style="cursor: help;" tal:attributes="src string:${portal_url}/${annex/getIcon};
+                              title python: annex.getMeetingFileType(theData=True)['name']"/>&nbsp;
          <metal:withOrWithoutPreview use-macro="here/@@annexes-macros/withOrWithoutPreview" />
        </td>
        <td tal:content="python: tool.getUserName(annex.Creator())"></td>

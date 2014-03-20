@@ -22,7 +22,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 from Products.DataGridField import DataGridField, DataGridWidget
 from Products.DataGridField.Column import Column
-from Products.DataGridField.SelectColumn import SelectColumn
+from Products.DataGridField.CheckboxColumn import CheckboxColumn
 
 from Products.PloneMeeting.config import *
 
@@ -69,8 +69,9 @@ schema = Schema((
     ),
     DataGridField(
         name='subTypes',
+        default=(),
         widget=DataGridWidget(
-            columns={'title': Column('Subtype title'), 'predefinedTitle': Column('Predefined subtype title'), },
+            columns={'row_id': Column("Custom adviser row id", visible=False), 'title': Column('Subtype title', required=True), 'predefinedTitle': Column('Predefined subtype title'), 'isActive': CheckboxColumn('Active?', default='1'),},
             description="SubTypes",
             description_msgid="sub_types_descr",
             label='Subtypes',
@@ -78,7 +79,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         allow_oddeven=True,
-        columns=('title', 'predefinedTitle', ),
+        columns=('row_id', 'title', 'predefinedTitle', 'isActive'),
         allow_empty_rows=False,
     ),
 
@@ -130,6 +131,21 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
     def getBestIcon(self):
         '''Calculates the icon for the AT default view'''
         self.getIcon()
+
+    security.declareProtected('Modify portal content', 'setSubTypes')
+    def setSubTypes(self, value, **kwargs):
+        '''Overrides the field 'subTypes' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker" or not 'row_id' in v:
+                continue
+            if not v.get('row_id', None):
+                v['row_id'] = self.generateUniqueId()
+        self.getField('subTypes').set(self, value, **kwargs)
 
     security.declarePrivate('validate_relatedTo')
     def validate_relatedTo(self, value):
@@ -209,8 +225,31 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
+    def _dataFor(self, row_id=None):
+        '''Returns a dict of data of either the MeetingFileType object if p_row_id is None
+           or one of his subTypes for wich the 'row_id' correspond to given p_row_id.'''
+        data = {}
+        if not row_id:
+            # return the data of the MeetingFileType itself
+            data = {'name': self.getName(),
+                    'meetingFileTypeObjectUID': self.UID(),
+                    'id': self.UID(),
+                    'absolute_url': self.absolute_url(),
+                    'predefinedTitle': self.getPredefinedTitle(),
+                    'relatedTo': self.getRelatedTo(), }
+        # either return the data of a subtype
+        for subType in self.getSubTypes():
+            if subType['row_id'] == row_id:
+                data = {'name': subType['title'],
+                        'meetingFileTypeObjectUID': self.UID(),
+                        'id': "%s__subtype__%s" % (self.UID(), subType['row_id']),
+                        'absolute_url': self.absolute_url(),
+                        'predefinedTitle': subType['predefinedTitle'],
+                        'relatedTo': self.getRelatedTo(), }
+        return data
+
     security.declarePublic('isSelectable')
-    def isSelectable(self):
+    def isSelectable(self, row_id=None):
         '''See documentation in interfaces.py.'''
         mft = self.getSelf()
         try:

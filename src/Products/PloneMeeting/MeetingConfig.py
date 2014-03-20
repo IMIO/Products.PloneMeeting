@@ -3054,19 +3054,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res).sortedByValue()
 
     security.declarePublic('getFileTypes')
-    def getFileTypes(self, relatedTo='item', typesIds=[], onlyActive=True):
+    def getFileTypes(self, relatedTo='item', typesIds=[], onlySelectable=True, includeSubTypes=True):
         '''Gets the item- or decision-related active meeting file types. If
            p_typesIds is not empty, it returns only file types whose ids are
-           in this param.'''
+           in this param.  If p_includeSubTypes is True, MeetingFileType.subTypes are
+           also returned and considered as normal MeetingFileTypes.'''
         res = []
-        wfTool = self.portal_workflow
-        for ft in self.meetingfiletypes.objectValues('MeetingFileType'):
-            isActive = True
-            if onlyActive:
-                isActive = bool(wfTool.getInfoFor(ft, 'review_state') == 'active')
-            if isActive and ft.getRelatedTo() == relatedTo:
-                if not typesIds or (typesIds and (ft.id in typesIds)):
-                    res.append(ft)
+        for mft in self.meetingfiletypes.objectValues('MeetingFileType'):
+            if not mft.getRelatedTo() == relatedTo:
+                continue
+            isSelectable = True
+            if onlySelectable:
+                isSelectable = bool(mft.isSelectable())
+            if isSelectable:
+                if not typesIds or (typesIds and (mft.id in typesIds)):
+                    data = mft._dataFor()
+                    res.append(data)
+                    # manage subTypes if necessary
+                    if includeSubTypes:
+                        for subType in mft.getSubTypes():
+                            if not mft.isSelectable(row_id=subType['row_id']):
+                                continue
+                            data = mft._dataFor(row_id=subType['row_id'])
+                            res.append(data)
+                    pass
         return res
 
     security.declarePublic('getCategories')

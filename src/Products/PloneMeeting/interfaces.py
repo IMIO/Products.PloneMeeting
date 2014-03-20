@@ -600,12 +600,13 @@ class IMeetingFileCustom(IMeetingFile):
 class IMeetingFileTypeDocumentation:
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def isSelectable():
+    def isSelectable(row_id=None):
         '''When adding an annex to an item, the user may choose a file type for
            this annex, among all file types defined in the corresponding meeting
            config for which this method isSelectable returns True. The
            default implementation of isSelectable returns True if the workflow
-           state is "active" for the meeting file type.'''
+           state is "active" for the meeting file type.  If a p_row_id is given,
+           it will check if the corresponding subType having p_row_id 'isActive'.'''
 
 
 class IMeetingFileTypeCustom(IMeetingFileType):
