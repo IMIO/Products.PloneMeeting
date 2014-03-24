@@ -56,6 +56,11 @@ p {
 #content p.ploneMeetingSelectItem {
     margin-bottom: 0em;
 }
+/* add some padding before a annex sub type */
+#content p.ploneMeetingSelectItem.subtype {
+    padding-left: 15px;
+}
+
 .ploneMeetingSelectItemUnselected {
     background-color: &dtml-globalBackgroundColor;;
 }
@@ -699,6 +704,23 @@ dl.searchResults cite {
 div[id^="archetypes-fieldname-customAdvisers-"] TH {
     width: 12.5%;
 }
+/* make column displayed for MeetingFileType.subTypes equals
+   except last column that will be tighter
+   ...-column-1 is a hidden column (row_id) */
+#datagridwidget-table-subTypes .datagridwidget-column-2,
+#datagridwidget-table-subTypes .datagridwidget-column-3,
+#datagridwidget-table-subTypes .datagridwidget-column-4,
+div[id^="archetypes-fieldname-subTypes-"] TH {
+    width: 30%;
+}
+#datagridwidget-table-subTypes .datagridwidget-column-5 {
+    width: 10%;
+}
+/* center the 'Active?' label of the MeetingFileType.subTypes DataGridField */
+#datagridwidget-table-subTypes .datagridwidget-column-5 span {
+    text-align: center;
+}
+
 /* hide the title of the customAdvisers DataGridField in view mode */
 div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
     display: none;

@@ -67,12 +67,14 @@
         <tal:comment replace="nothing">Select button</tal:comment>
         <div class="ploneMeetingSelectButton ploneMeetingSelectDropdownIcon" id="idButton1"
              onclick="displayPloneMeetingSelectBox('annexTypeBox')">
+          <tal:comment replace="nothing">Manage validation failed and form is displayed again to the user</tal:comment>
           <span tal:condition="python: (request.has_key('annex_type')) and request['annex_type']">
-            <span tal:define="meetingFileType python:getattr(meetingConfig.meetingfiletypes, request['annex_type']);
-                              num python:str(fileTypes.index(meetingFileType)+1)">
-              <img id="idImage1" tal:attributes="src python: meetingFileType.absolute_url() + '/theIcon';"
+            <span tal:define="annexType python: request['annex_type'];
+                              meetingFileType python:context.uid_catalog(UID=annexType.split('__subtype__')[0])[0].getObject();
+                              mftData python: '__subtype__' in annexType and meetingFileType._dataFor(annexType.split('__subtype__')[1]) or meetingFileType._dataFor()">
+              <img id="idImage1" tal:attributes="src string:${meetingFileType/absolute_url}/theIcon;"
                    alt="" class="ploneMeetingSelectImage" />
-              <span id="idButtonText1" tal:content="meetingFileType/name" class="ploneMeetingRef"></span>
+              <span id="idButtonText1" tal:content="mftData/name" class="ploneMeetingRef"></span>
             </span>
           </span>
           <span tal:condition="python: (not request.has_key('annex_type')) or (not request['annex_type'])">
@@ -100,7 +102,8 @@
              class="ploneMeetingSelectItem" onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
              onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
              onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage1', 'value1', 'predefined_title1'); ploneMeetingSelectOnMouseOutItem(this)"
-             tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage1' + str(num) + '\', \'' + tool.forJs(ftName) + '\', \'' + meetingFileType['id'] + '\', \'' + tool.forJs(meetingFileType['predefinedTitle']) + '\');; ploneMeetingSelectOnMouseOutItem(this)'">
+             tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage1' + str(num) + '\', \'' + tool.forJs(ftName) + '\', \'' + meetingFileType['id'] + '\', \'' + tool.forJs(meetingFileType['predefinedTitle']) + '\');; ploneMeetingSelectOnMouseOutItem(this)';
+                             class python: '__subtype__' in meetingFileType['id'] and 'ploneMeetingSelectItem subtype' or 'ploneMeetingSelectItem'">
             <img class="ploneMeetingSelectImage"
                 tal:attributes="src python: meetingFileType['absolute_url'] + '/theIcon'; id python: 'idImage1' + str(num)"
                 id="idImage1" src="#" alt="" />
@@ -194,6 +197,7 @@
      <thead>
      <tr i18n:domain="PloneMeeting">
        <th class="nosort" i18n:translate="listingheader_title">Title</th>
+       <th class="nosort" i18n:translate="pm_annex_type">Annex type</th>
        <th class="nosort" i18n:translate="pm_creator">Creator</th>
        <th class="nosort" i18n:translate="pm_creation_date">Creation date</th>
        <th class="nosort" i18n:translate="PloneMeeting_label_toPrint" tal:condition="meetingConfig/getEnableAnnexToPrint">To print?</th>
@@ -205,10 +209,10 @@
      <tr tal:repeat="annexInfo annexes">
        <span tal:define="annex python: context.uid_catalog(UID=annexInfo['UID'])[0].getObject()">
        <td class="pmLinks">
-         <img style="cursor: help;" tal:attributes="src string:${portal_url}/${annex/getIcon};
-                              title python: annex.getMeetingFileType(theData=True)['name']"/>&nbsp;
+         <img tal:attributes="src string:${portal_url}/${annex/getIcon};"/>&nbsp;
          <metal:withOrWithoutPreview use-macro="here/@@annexes-macros/withOrWithoutPreview" />
        </td>
+       <td tal:content="python: annex.getMeetingFileType(theData=True)['name']"></td>
        <td tal:content="python: tool.getUserName(annex.Creator())"></td>
        <td tal:content="python: context.restrictedTraverse('@@plone').toLocalizedTime(annex.CreationDate(),long_format=True)"></td>
        <td tal:condition="meetingConfig/getEnableAnnexToPrint">

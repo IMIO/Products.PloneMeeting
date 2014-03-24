@@ -31,6 +31,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
+from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 ##/code-section module-header
 
 schema = Schema((
@@ -67,11 +68,31 @@ schema = Schema((
         enforceVocabulary=True,
         vocabulary='listRelatedTo',
     ),
+    LinesField(
+        name='otherMCCorrespondences',
+        widget=MultiSelectionWidget(
+            description="OtherMCCorrespondences",
+            description_msgid="other_mc_correspondences_descr",
+            size=10,
+            label='Othermccorrespondences',
+            label_msgid='PloneMeeting_label_otherMCCorrespondences',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=1,
+        vocabulary='listOtherMCCorrespondences',
+        enforceVocabulary=False,
+    ),
     DataGridField(
         name='subTypes',
         default=(),
         widget=DataGridWidget(
-            columns={'row_id': Column("Custom adviser row id", visible=False), 'title': Column('Subtype title', required=True), 'predefinedTitle': Column('Predefined subtype title'), 'isActive': CheckboxColumn('Active?', default='1'),},
+            columns={'row_id': Column("Sub type row id", visible=False),
+                     'title': Column("Sub type title", required=True),
+                     'predefinedTitle': Column("Sub type predefined title"),
+                     'otherMCCorrespondences': MultiSelectColumn("Sub type correspondences while sent to other meeting configs",
+                                                                 vocabulary='listOtherMCCorrespondences',
+                                                                 col_description="Sub type correspondences while sent to other meeting configs description."),
+                     'isActive': CheckboxColumn("Sub type is active?", default='1'), },
             description="SubTypes",
             description_msgid="sub_types_descr",
             label='Subtypes',
@@ -79,7 +100,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         allow_oddeven=True,
-        columns=('row_id', 'title', 'predefinedTitle', 'isActive'),
+        columns=('row_id', 'title', 'predefinedTitle', 'otherMCCorrespondences', 'isActive'),
         allow_empty_rows=False,
     ),
 
@@ -184,6 +205,59 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  mapping={'item_url': item.absolute_url()},
                                  context=self.REQUEST)
+
+    security.declarePrivate('validate_subTypes')
+    def validate_subTypes(self, value):
+        '''A subType can not be removed if it is in use.'''
+        def _checkIfSubTypeIsUsed(row_id):
+            '''Check if the subType we want to remove was in use.
+               This returns an item url if the subType is in use.'''
+            catalog = getToolByName(self, 'portal_catalog')
+            brains = catalog(Type=self.getItemTypeName())
+            for brain in brains:
+                item = brain.getObject()
+                for annexInfo in item.annexIndex:
+                    if annexInfo['id'].split('__subtype__')[-1] == row_id:
+                        return item.absolute_url()
+
+        row_ids_to_save = set([v['row_id'] for v in value if v['row_id']])
+        stored_row_ids = set([v['row_id'] for v in self.getSubTypes() if v['row_id']])
+
+        removed_row_ids = stored_row_ids.difference(row_ids_to_save)
+        for row_id in removed_row_ids:
+            an_item_url = _checkIfSubTypeIsUsed(row_id)
+            if an_item_url:
+                return translate('sub_type_can_not_remove_used_row',
+                                 domain='PloneMeeting',
+                                 mapping={'item_url': an_item_url,
+                                          'sub_type_title': self._dataFor(row_id)['name'], },
+                                 context=self.REQUEST)
+
+    security.declarePrivate('listOtherMCCorrespondences')
+    def listOtherMCCorrespondences(self):
+        '''Vocabulary for the otherMCCorrespondence field, also
+           used for the subTypes.otherMCCorrespondence column.
+           This will only appear for the 'item' and 'item_decision' relatedTo
+           MeetingFileType as advices are not transfered to another MC.'''
+        # display also inactive MeetingConfigs because during configuration
+        # we can define thses values before activating the new meetingConfig
+        # and we do not have to manage inactive meetingConfigs consistency
+        tool = getToolByName(self, 'portal_plonemeeting')
+        currentCfgId = self.getParentNode().getParentNode().getId()
+        relatedToVocab = self.listRelatedTo()
+        res = []
+        for cfg in tool.objectValues('MeetingConfig'):
+            cfgId = cfg.getId()
+            if cfgId == currentCfgId:
+                continue
+            fileTypes = cfg.getFileTypes(relatedTo='item')
+            fileTypes = fileTypes + cfg.getFileTypes(relatedTo='item_decision')
+            for fileType in fileTypes:
+                res.append(('%s__filetype__%s' % (cfg.getId(), fileType['id']),
+                            u'%s -> %s -> %s' % (unicode(cfg.Title(), 'utf-8'),
+                                                 self.displayValue(relatedToVocab, fileType['relatedTo']),
+                                                 unicode(fileType['name'], 'utf-8'))))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listRelatedTo')
     def listRelatedTo(self):

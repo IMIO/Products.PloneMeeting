@@ -3054,14 +3054,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res).sortedByValue()
 
     security.declarePublic('getFileTypes')
-    def getFileTypes(self, relatedTo='item', typesIds=[], onlySelectable=True, includeSubTypes=True):
-        '''Gets the item- or decision-related active meeting file types. If
+    def getFileTypes(self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
+        '''Gets the relatedTo-related meeting file types. If
            p_typesIds is not empty, it returns only file types whose ids are
-           in this param.  If p_includeSubTypes is True, MeetingFileType.subTypes are
+           in this param.  If p_onlySelectable is True, it will check if MeetingFileType.isSelectable().
+           If p_includeSubTypes is True, MeetingFileType.subTypes are
            also returned and considered as normal MeetingFileTypes.'''
         res = []
         for mft in self.meetingfiletypes.objectValues('MeetingFileType'):
-            if not mft.getRelatedTo() == relatedTo:
+            if not relatedTo == '*' and not mft.getRelatedTo() == relatedTo:
                 continue
             isSelectable = True
             if onlySelectable:

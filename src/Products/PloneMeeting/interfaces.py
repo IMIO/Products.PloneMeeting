@@ -72,7 +72,7 @@ class IAnnexable(Interface):
             self.annexIndex.
         """
 
-    def getAnnexesInOrder(context, relatedTo=None):
+    def getAnnexes(context, relatedTo=None):
         """
           Returns contained annexes respecting order (container is ordered).
           It returns annexes depending on p_relatedTo.  If p_relatedTo is None,

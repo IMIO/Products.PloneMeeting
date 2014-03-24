@@ -97,10 +97,11 @@ class CategoryDescriptor(Descriptor):
 
 
 class MeetingFileTypeDescriptor(Descriptor):
-    multiSelectFields = ('subTypes', )
+    multiSelectFields = ('otherMCCorrespondences', 'subTypes', )
 
     def __init__(self, id, title, theIcon, predefinedTitle,
-                 relatedTo='item', active=True, subTypes=()):
+                 relatedTo='item', otherMCCorrespondences=(),
+                 active=True, subTypes=()):
         self.id = id
         self.setBilingual('title', title)
         self.theIcon = theIcon
@@ -108,6 +109,7 @@ class MeetingFileTypeDescriptor(Descriptor):
         self.relatedTo = relatedTo
         self.subTypes = subTypes
         self.active = active
+        self.otherMCCorrespondences = otherMCCorrespondences
 
 
 class PodTemplateDescriptor(Descriptor):

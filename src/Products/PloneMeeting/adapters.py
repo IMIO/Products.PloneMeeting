@@ -106,14 +106,14 @@ class AnnexableAdapter(object):
         '''cachekey method for self.getAnnexesToPrint.
            We cache it because it is called several times while used in POD templates.'''
         # invalidate if annexes changed or if toPrint changed
-        return ([(annex.UID(), annex.getToPrint()) for annex in self.getAnnexesInOrder(relatedTo)])
+        return ([(annex.UID(), annex.getToPrint()) for annex in self.getAnnexes(relatedTo)])
 
     @ram.cache(getAnnexesToPrint_cachekey)
     def getAnnexesToPrint(self, relatedTo='item'):
         '''See docstring in interfaces.py'''
         portal = getToolByName(self.context, 'portal_url').getPortalObject()
         global_settings = GlobalSettings(portal)
-        annexes = self.getAnnexesInOrder(relatedTo)
+        annexes = self.getAnnexes(relatedTo)
         res = []
         i = 1
         for annex in annexes:
@@ -178,13 +178,13 @@ class AnnexableAdapter(object):
         else:
             del self.context.annexIndex[:]
             sortableList = []
-            for annex in self.getAnnexesInOrder():
+            for annex in self.getAnnexes():
                 sortableList.append(annex.getAnnexInfo())
             sortableList.sort(key=lambda x: x['modification_date'])
             for a in sortableList:
                 self.context.annexIndex.append(a)
 
-    def getAnnexesInOrder(self, relatedTo=None):
+    def getAnnexes(self, relatedTo=None):
         '''See docstring in interfaces.py'''
         annexes = self.context.objectValues('MeetingFile')
         return [annex for annex in annexes if (not relatedTo or annex.findRelatedTo() == relatedTo)]

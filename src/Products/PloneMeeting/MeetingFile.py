@@ -150,18 +150,21 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         if not field:
             # field is empty
             return BaseContent.getIcon(self, relative_to_portal)
-        mft = self.getMeetingFileType(theTrueObject=True)
+        mft = self.getMeetingFileType(theRealObject=True)
         if mft:
             return self.portal_url.getRelativeContentURL(mft) + '/theIcon'
         else:
             return None
 
     security.declarePublic('getMeetingFileType')
-    def getMeetingFileType(self, theData=False, theTrueObject=False, **kwargs):
-        '''Override Archetypes accessor to be able to get the data of
-           the used MeetingFileType or MeetingFileType subType.'''
+    def getMeetingFileType(self, theData=False, theRealObject=False, **kwargs):
+        '''Override Archetypes accessor to be able to manage subTypes that are not real
+           objects but dict of data.  If p_theData is True, we return a dict containing
+           data of linked meetingFileType that can be the real MFT object of one of the subTypes.
+           If p_theRealObject is True, we will return the real MFT object, even if we are on
+           one of its subTypes.'''
         res = self.getField('meetingFileType').get(self, **kwargs)  # = mft id
-        if res and (theData or theTrueObject):
+        if res and (theData or theRealObject):
             # MeetingFileTypes are not in the portal_catalog
             # but it is indexed in the uid_catalog...
             uid_catalog = getToolByName(self, 'uid_catalog')
@@ -172,7 +175,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             if '__subtype__' in res:
                 mftUID, row_id = res.split('__subtype__')
             mft = uid_catalog(UID=mftUID)[0].getObject()
-            if theTrueObject:
+            if theRealObject:
                 res = mft
             else:
                 # res will contain data of the MFT object if row_id is None
@@ -407,33 +410,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                 f.close()
                 os.remove(resultFileName)
         return extractedText
-
-    def _updateMeetingFileType(self, cfg):
-        '''
-          Update the linked MeetingFileType of the annex while an item is sent from
-          a MeetingConfig to another : find a corresponding MeetingFileType in the new MeetingConfig :
-          - either we have a corresponding MeetingFileType (same id)
-          - or if we can not get a corresponding MeetingFileType, we use the default one (the first found).
-          Returns True if the meetingFileType was actually updated
-        '''
-        relatedTo = self.findRelatedTo()
-        mftFolder = cfg.meetingfiletypes
-        existingFileTypesUids = [ft['UID'] for ft in mftFolder.getFileTypes(relatedTo=relatedTo,
-                                                                            onlySelectable=False)]
-        existingFileTypesIds = [ft['id'] for ft in mftFolder.getFileTypes(relatedTo=relatedTo,
-                                                                          onlySelectable=False)]
-        mft = self.getMeetingFileType(theData=True)
-        mftId = mft['id']
-        if not mft or not mft['UID'] in existingFileTypesUids:
-            # get the corresponding meetingFileType in the current meetingConfig
-            # or use the default meetingFileType
-            if mft and mftId in existingFileTypesIds:
-                # a corresponding meetingFileType has been found, use it
-                correspondingFileType = getattr(mftFolder, mftId)
-            else:
-                correspondingFileType = getattr(mftFolder, existingFileTypesIds[0])
-            self.setMeetingFileType(correspondingFileType.UID())
-            return True
 
     security.declareProtected(ModifyPortalContent, 'setToPrint')
     def setToPrint(self, value):

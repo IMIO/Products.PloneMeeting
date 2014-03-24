@@ -1712,14 +1712,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         toPrintDefault = meetingConfig.getAnnexToPrintDefault()
                     else:
                         toPrintDefault = meetingConfig.getAnnexDecisionToPrintDefault()
-                    oldAnnexes = IAnnexable(copiedItem).getAnnexesInOrder(relatedTo=annexTypeRelatedTo)
+                    oldAnnexes = IAnnexable(copiedItem).getAnnexes(relatedTo=annexTypeRelatedTo)
                     for oldAnnex in oldAnnexes:
                         newAnnex = getattr(newItem, oldAnnex.id)
                         # In case the item is copied from another MeetingConfig, we need
                         # to update every annex.meetingFileType because it still refers
                         # the meetingFileType in the old MeetingConfig the item is copied from
                         if newPortalType:
-                            newAnnex._updateMeetingFileType(meetingConfig)
+                            self._updateMeetingFileTypesAfterSentToOtherMeetingConfig(newAnnex, meetingConfig)
                         # initialize toPrint correctly regarding configuration
                         newAnnex.setToPrint(toPrintDefault)
                         # call processForm on the newAnnex so it is fully initialized
@@ -1756,6 +1756,34 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             newItem.reindexObject()
             res.append(newItem)
         return res
+
+    def _updateMeetingFileTypesAfterSentToOtherMeetingConfig(self, annex, cfg):
+        '''
+          Update the linked MeetingFileType of the annex while an item is sent from
+          a MeetingConfig to another : find a corresponding MeetingFileType in the new MeetingConfig :
+          - either we have a correspondence defined on the original MeetingFileType specifying what is the MFT
+            to use in the new MeetingConfig;
+          - or if we can not get a correspondence, we use the default MFT of the new MeetingConfig.
+          Returns True if the meetingFileType was actually updated.
+        '''
+        relatedTo = annex.findRelatedTo()
+        mftFolder = cfg.meetingfiletypes
+        existingFileTypesUids = [ft['UID'] for ft in mftFolder.getFileTypes(relatedTo=relatedTo,
+                                                                            onlySelectable=False)]
+        existingFileTypesIds = [ft['id'] for ft in mftFolder.getFileTypes(relatedTo=relatedTo,
+                                                                          onlySelectable=False)]
+        mft = annex.getMeetingFileType(theData=True)
+        mftId = mft['id']
+        if not mft or not mft['UID'] in existingFileTypesUids:
+            # get the corresponding meetingFileType in the current meetingConfig
+            # or use the default meetingFileType
+            if mft and mftId in existingFileTypesIds:
+                # a corresponding meetingFileType has been found, use it
+                correspondingFileType = getattr(mftFolder, mftId)
+            else:
+                correspondingFileType = getattr(mftFolder, existingFileTypesIds[0])
+            annex.setMeetingFileType(correspondingFileType.UID())
+            return True
 
     security.declarePublic('getSelf')
     def getSelf(self):
@@ -2250,7 +2278,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # update annexes in items and advices
             for brain in catalog(meta_type='MeetingItem') + catalog(portal_type='meetingadvice'):
                 obj = brain.getObject()
-                annexes = IAnnexable(obj).getAnnexesInOrder()
+                annexes = IAnnexable(obj).getAnnexes()
                 for annex in annexes:
                     convertToImages(annex, None, force=True)
             self.plone_utils.addPortalMessage('Done.')

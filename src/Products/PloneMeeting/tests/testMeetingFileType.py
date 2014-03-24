@@ -24,6 +24,7 @@
 
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -35,7 +36,7 @@ class testMeetingFileType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        meetingFileType = annex.getMeetingFileType(theObject=True)
+        meetingFileType = annex.getMeetingFileType(theRealObject=True)
         self.changeUser('admin')
         # if we try to remove this meetingFileType, it raises an Exception
         meetingFileTypesFolder = meetingFileType.aq_inner.aq_parent
@@ -48,12 +49,56 @@ class testMeetingFileType(PloneMeetingTestCase):
         item.manage_delObjects([annex.getId(), ])
         meetingFileTypesFolder.manage_delObjects([meetingFileType.getId(), ])
 
+    def test_pm_validate_subTypes(self):
+        '''Test the MeetingFileType.subTypes validation.
+           A subType can not be removed if in use.'''
+        # get the first available MeetingFileType
+        mftData = self.meetingConfig.getFileTypes('item')[0]
+        mft = getattr(self.meetingConfig.meetingfiletypes, mftData['id'])
+        mft.setSubTypes(({'row_id': 'unique_row_id_123',
+                          'title': 'Annex sub type',
+                          'predefinedTitle': 'Annex sub type predefined title',
+                          'otherMCCorrespondences': (),
+                          'isActive': '1', }, ))
+        # create an annex using the sub type
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        # modify annex fileType to use the defined subType
+        annex.setMeetingFileType('%s__subtype__unique_row_id_123' % mft.UID())
+        IAnnexable(item).updateAnnexIndex()
+        self.assertTrue(item.annexIndex[0]['id'] == '%s__subtype__unique_row_id_123' % mft.UID())
+        self.assertTrue(IAnnexable(item).getAnnexes()[0].getMeetingFileType() ==
+                        '%s__subtype__unique_row_id_123' % mft.UID())
+        # it is used, we can not remove it from the defined MeetingFileType.subTypes
+        can_not_remove_msg = translate('sub_type_can_not_remove_used_row',
+                                       domain='PloneMeeting',
+                                       mapping={'sub_type_title': 'Annex sub type',
+                                                'item_url': item.absolute_url()},
+                                       context=self.portal.REQUEST)
+        subTypes = ({'row_id': 'unique_row_id_123',
+                     'title': 'Annex sub type',
+                     'predefinedTitle': 'Annex sub type predefined title',
+                     'otherMCCorrespondences': (),
+                     'isActive': '1', }, )
+        # if re-applying config, it works...
+        # validate returns nothing if validation was successful
+        self.failIf(mft.validate_subTypes(subTypes))
+        # now remove the subType
+        subTypes = tuple()
+        # validation fails
+        self.assertTrue(mft.validate_subTypes(subTypes) == can_not_remove_msg)
+        # we will be able to remove the subType if not annex is using it
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
+        # validate returns nothing if validation was successful
+        self.failIf(mft.validate_subTypes(subTypes))
+
     def test_pm_CanNotChangeRelatedToOfUsedMeetingFileType(self):
         '''If a MeetingFileType is in use, we can not change the 'relatedTo' anymore...'''
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        mft = annex.getMeetingFileType(theObject=True)
+        mft = annex.getMeetingFileType(theRealObject=True)
         self.changeUser('admin')
         # validate relatedTo
         self.assertEquals(mft.getRelatedTo(), 'item')
