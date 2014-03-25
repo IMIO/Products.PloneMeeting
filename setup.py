@@ -59,6 +59,7 @@ setup(name='Products.PloneMeeting',
           'imio.actionspanel',
           'plone.directives.form',
           'Products.DataGridField',
-          'Products.cron4plone', ],
+          'Products.cron4plone',
+          'collective.datagridcolumns', ],
       entry_points={},
       )
