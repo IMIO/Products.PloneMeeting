@@ -35,6 +35,7 @@ from zope.i18n import translate
 from plone.memoize.instance import memoize
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
+from Products.MimetypesRegistry.common import MimeTypeException
 from collective.documentviewer.async import asyncInstalled
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, sendMailIfRelevant
@@ -472,7 +473,10 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
           account by collective.documentviewer CONVERTABLE_TYPES, then it should be convertable...
         """
         mr = self.mimetypes_registry
-        content_type = mr.lookup(self.content_type)
+        try:
+            content_type = mr.lookup(self.content_type)
+        except MimeTypeException:
+            content_type = None
         if not content_type:
             logger.warning(CONTENT_TYPE_NOT_FOUND % self.absolute_url_path())
             return False
