@@ -260,6 +260,96 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                     self.failIf(secondLevelElement._at_creation_flag)
                     self.failIf(secondLevelElement.Title() == 'Site')
 
+    def test_pm_updateMeetingFileTypesAfterSentToOtherMeetingConfig(self):
+        '''Test the ToolPloneMeeting._updateMeetingFileTypesAfterSentToOtherMeetingConfig method.
+           This method take care of updating the MeetingFileType used by annexes of an item
+           that is sent to another MeetingConfig.  The annexes of the new item will use MeetingFileTypes
+           of the destination MeetingConfig using the MeetingFileType.otherMCCorrespondences values.
+        '''
+        # create an item with one annex and manipulate the stored MeetingFileType
+        login(self.portal, 'pmManager')
+        item = self.create('MeetingItem')
+        # Add one annex
+        annex = self.addAnnex(item)
+        # now set a MFT UID existing in self.meetingConfig2
+        anItemMFTOfMC2Data = self.meetingConfig2.getFileTypes(relatedTo='item')[0]
+
+        # 1) normal MFT with no correspondence
+        # so the default (first found) MFT will be used
+        annex.setMeetingFileType(anItemMFTOfMC2Data['id'])
+        self.assertTrue(annex.getMeetingFileType() == anItemMFTOfMC2Data['id'])
+        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
+        # now annex.getMeetingFileType is the first relatedTo item MFT
+        # of self.meetingConfig
+        self.assertTrue(annex.getMeetingFileType() == self.meetingConfig.getFileTypes(relatedTo='item')[0]['id'])
+
+        # 2) subType MFT with no correspondence
+        # so the default (first found) MFT will be used
+        anItemMFTOfMC2Obj = self.portal.uid_catalog(UID=anItemMFTOfMC2Data['id'])[0].getObject()
+        anItemMFTOfMC2Obj.setSubTypes(({'row_id': 'unique_row_id_123',
+                                        'title': 'Annex sub type',
+                                        'predefinedTitle': 'Annex sub type predefined title',
+                                        'otherMCCorrespondences': (),
+                                        'isActive': '1', }, ))
+        subTypeIdOfMFTOfMC2 = '%s__subtype__unique_row_id_123' % anItemMFTOfMC2Data['id']
+        annex.setMeetingFileType(subTypeIdOfMFTOfMC2)
+        self.assertTrue(annex.getMeetingFileType() == subTypeIdOfMFTOfMC2)
+        # after update, it will be linked to first available MFT...
+        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
+        self.assertTrue(annex.getMeetingFileType() == self.meetingConfig.getFileTypes(relatedTo='item')[0]['id'])
+
+        # 3) normal MFT with correspondence, we will set the correspondence to
+        # second relatedTo item of self.meetingConfig
+        mftMC1Correspondence = '%s__filetype__%s' % (self.meetingConfig.getId(),
+                                                     self.meetingConfig.getFileTypes(relatedTo='item')[1]['id'])
+        anItemMFTOfMC2Obj.setOtherMCCorrespondences((mftMC1Correspondence, ))
+        annex.setMeetingFileType(anItemMFTOfMC2Obj.UID())
+        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
+        # now annex.getMeetingFileType is the second relatedTo item MFT as defined as correspondence
+        self.assertTrue(annex.getMeetingFileType() == self.meetingConfig.getFileTypes(relatedTo='item')[1]['id'])
+
+        # 4) normal MFT with correspondence to a subType, we will set the correspondence to
+        # second relatedTo first subType item of self.meetingConfig
+        anItemMFTOfMC1Obj = self.portal.uid_catalog(UID=self.meetingConfig.getFileTypes(relatedTo='item')[1]['id'])[0].getObject()
+        anItemMFTOfMC1Obj.setSubTypes(({'row_id': 'unique_row_id_456',
+                                        'title': 'Annex2 sub type',
+                                        'predefinedTitle': 'Annex2 sub type predefined title',
+                                        'otherMCCorrespondences': (),
+                                        'isActive': '1', }, ))
+        subTypeMC1Correspondence = '%s__filetype__%s__subtype__unique_row_id_456' % (self.meetingConfig.getId(),
+                                   self.meetingConfig.getFileTypes(relatedTo='item')[1]['id'])
+        anItemMFTOfMC2Obj.setOtherMCCorrespondences((subTypeMC1Correspondence, ))
+        annex.setMeetingFileType(anItemMFTOfMC2Obj.UID())
+        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
+        # now annex.getMeetingFileType is the second relatedTo item MFT as defined as correspondence
+        self.assertTrue(annex.getMeetingFileType() == subTypeMC1Correspondence.split('__filetype__')[1])
+
+        # 5) subType MFT with correspondence to a normal MFT, we will set the correspondence to
+        # second relatedTo item of self.meetingConfig
+        anItemMFTOfMC2Obj.setSubTypes(({'row_id': 'unique_row_id_123',
+                                        'title': 'Annex sub type',
+                                        'predefinedTitle': 'Annex sub type predefined title',
+                                        'otherMCCorrespondences': (mftMC1Correspondence, ),
+                                        'isActive': '1', }, ))
+        annex.setMeetingFileType(subTypeIdOfMFTOfMC2)
+        self.assertTrue(annex.getMeetingFileType() == subTypeIdOfMFTOfMC2)
+        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
+        # the MFT now should be the given subType otherMCCorrespondences
+        self.assertTrue(annex.getMeetingFileType() == mftMC1Correspondence.split('__filetype__')[1])
+
+        # 6) subType MFT with correspondence to a subType MFT, we will set the correspondence to
+        # second relatedTo first subType item of self.meetingConfig
+        anItemMFTOfMC2Obj.setSubTypes(({'row_id': 'unique_row_id_123',
+                                        'title': 'Annex sub type',
+                                        'predefinedTitle': 'Annex sub type predefined title',
+                                        'otherMCCorrespondences': (subTypeMC1Correspondence, ),
+                                        'isActive': '1', }, ))
+        annex.setMeetingFileType(subTypeIdOfMFTOfMC2)
+        self.assertTrue(annex.getMeetingFileType() == subTypeIdOfMFTOfMC2)
+        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
+        # the MFT now should be the given subType otherMCCorrespondences
+        self.assertTrue(annex.getMeetingFileType() == subTypeMC1Correspondence.split('__filetype__')[1])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

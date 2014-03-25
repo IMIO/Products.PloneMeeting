@@ -1719,7 +1719,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         # to update every annex.meetingFileType because it still refers
                         # the meetingFileType in the old MeetingConfig the item is copied from
                         if newPortalType:
-                            self._updateMeetingFileTypesAfterSentToOtherMeetingConfig(newAnnex, meetingConfig)
+                            self._updateMeetingFileTypesAfterSentToOtherMeetingConfig(newAnnex)
                         # initialize toPrint correctly regarding configuration
                         newAnnex.setToPrint(toPrintDefault)
                         # call processForm on the newAnnex so it is fully initialized
@@ -1757,33 +1757,56 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res.append(newItem)
         return res
 
-    def _updateMeetingFileTypesAfterSentToOtherMeetingConfig(self, annex, cfg):
+    def _updateMeetingFileTypesAfterSentToOtherMeetingConfig(self, annex):
         '''
           Update the linked MeetingFileType of the annex while an item is sent from
           a MeetingConfig to another : find a corresponding MeetingFileType in the new MeetingConfig :
           - either we have a correspondence defined on the original MeetingFileType specifying what is the MFT
             to use in the new MeetingConfig;
           - or if we can not get a correspondence, we use the default MFT of the new MeetingConfig.
-          Returns True if the meetingFileType was actually updated.
+          Returns True if the meetingFileType was actually updated, False if no correspondence could be found.
         '''
-        relatedTo = annex.findRelatedTo()
-        mftFolder = cfg.meetingfiletypes
-        existingFileTypesUids = [ft['UID'] for ft in mftFolder.getFileTypes(relatedTo=relatedTo,
-                                                                            onlySelectable=False)]
-        existingFileTypesIds = [ft['id'] for ft in mftFolder.getFileTypes(relatedTo=relatedTo,
-                                                                          onlySelectable=False)]
-        mft = annex.getMeetingFileType(theData=True)
-        mftId = mft['id']
-        if not mft or not mft['UID'] in existingFileTypesUids:
-            # get the corresponding meetingFileType in the current meetingConfig
-            # or use the default meetingFileType
-            if mft and mftId in existingFileTypesIds:
-                # a corresponding meetingFileType has been found, use it
-                correspondingFileType = getattr(mftFolder, mftId)
-            else:
-                correspondingFileType = getattr(mftFolder, existingFileTypesIds[0])
-            annex.setMeetingFileType(correspondingFileType.UID())
-            return True
+        # for now, the stored MFT on the annex is the MFT UID of the MeetingConfig
+        # the item was sent from
+        mcFromMftUID = annex.getMeetingFileType()
+        isSubType = bool('__subtype__' in mcFromMftUID)
+        # get the MeetingFileType
+        uid_catalog = getToolByName(self, 'uid_catalog')
+        row_id = None
+        if isSubType:
+            mcFromMftUID, row_id = mcFromMftUID.split('__subtype__')
+        fromMft = uid_catalog(UID=mcFromMftUID)[0].getObject()
+        # check if a mft correspondence was defined when sent to this new MeetingConfig
+        cfg = self.getMeetingConfig(annex)
+        correspondenceIdStartWith = '%s__filetype__' % cfg.getId()
+        hasCorrespondence = False
+        correspondenceId = None
+        if isSubType:
+            fromMftSubTypes = fromMft.getSubTypes()
+            for subType in fromMftSubTypes:
+                for correspondence in subType['otherMCCorrespondences']:
+                    if correspondence.startswith(correspondenceIdStartWith):
+                        hasCorrespondence = True
+                        # a correspondence is like idOfTheMeetingConfig__filetype__uidOfMFT__subtype__row_id
+                        correspondenceId = correspondence.split('__filetype__')[1]
+        else:
+            for correspondence in fromMft.getOtherMCCorrespondences():
+                if correspondence.startswith(correspondenceIdStartWith):
+                    hasCorrespondence = True
+                    # a correspondence is like idOfTheMeetingConfig__filetype__uidOfMFT
+                    correspondenceId = correspondence.split('__filetype__')[1]
+        # if we did not find a correspondence, then we take the default MFT of same relatedTo
+        if not hasCorrespondence:
+            fromRelatedTo = fromMft.getRelatedTo()
+            destFileTypes = cfg.getFileTypes(relatedTo=fromRelatedTo)
+            if not destFileTypes:
+                # no correspondence could be found, we return False
+                return False
+            correspondenceId = destFileTypes[0]['id']
+        # now we have a correspondence in correspondenceId that can be a
+        # correspondence to a real MFT object or to a MFT subType
+        annex.setMeetingFileType(correspondenceId)
+        return True
 
     security.declarePublic('getSelf')
     def getSelf(self):

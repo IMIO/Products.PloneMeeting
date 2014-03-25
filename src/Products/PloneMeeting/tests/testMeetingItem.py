@@ -543,14 +543,19 @@ class testMeetingItem(PloneMeetingTestCase):
         # As annexes are references from the item, check that these are not
         self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues()))
         # Especially test that references are ok about the MeetingFileTypes
-        existingMeetingFileTypeUids = [ft['UID'] for ft in self.meetingConfig.getFileTypes()]
-        existingMeetingFileTypeDecisionUids = [ft['UID'] for ft in
-                                               self.meetingConfig.getFileTypes(relatedTo='item_decision')]
-        self.failUnless(annex1.getMeetingFileType() in existingMeetingFileTypeUids)
-        self.failUnless(annex2.getMeetingFileType() in existingMeetingFileTypeUids)
-        self.failUnless(decisionAnnex1.getMeetingFileType() in existingMeetingFileTypeDecisionUids)
+        existingMeetingFileTypeIds = [ft['id'] for ft in self.meetingConfig.getFileTypes(relatedTo='item')]
+        existingMeetingFileTypeDecisionIds = [ft['id'] for ft in
+                                              self.meetingConfig.getFileTypes(relatedTo='item_decision')]
+        self.failUnless(annex1.getMeetingFileType() in existingMeetingFileTypeIds)
+        self.failUnless(annex2.getMeetingFileType() in existingMeetingFileTypeIds)
+        self.failUnless(decisionAnnex1.getMeetingFileType() in existingMeetingFileTypeDecisionIds)
         # the MeetingFileType of decisionAnnex1 is deactivated
-        self.failIf(decisionAnnex2.getMeetingFileType() in existingMeetingFileTypeDecisionUids)
+        self.failIf(decisionAnnex2.getMeetingFileType() in existingMeetingFileTypeDecisionIds)
+        # query existing MFT even disabled ones
+        existingMeetingFileTypeIncludingNotSelectableIds = [ft['id'] for ft in
+                                                            self.meetingConfig.getFileTypes(relatedTo='item_decision',
+                                                                                            onlySelectable=False)]
+        self.failUnless(decisionAnnex2.getMeetingFileType() in existingMeetingFileTypeIncludingNotSelectableIds)
         # Now check the MeetingFileType of new annexes
         # annex1 was of annexType "item-annex" that exists in the new MeetingConfig
         # so it stays "item-annex" but the one in the new MeetingConfig
@@ -559,7 +564,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # annex2 was of annexType "overhead-analysis" that does NOT exist in the new MeetingConfig
         # so the MeetingFileType of the annex2 will be the default one, the first available
         self.assertEquals(newItem.objectValues('MeetingFile')[1].getMeetingFileType(),
-                          self.meetingConfig2.getFileTypes()[0]['UID'])
+                          self.meetingConfig2.getFileTypes()[0]['id'])
         # annexDecision1 was of annexType "decision-annex" that exists in the new MeetingConfig
         # so it stays "decision-annex" but the one in the new MeetingConfig
         self.assertEquals(newItem.objectValues('MeetingFile')[2].getMeetingFileType(),
@@ -567,7 +572,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # annexDecision2 was of annexType "marketing-annex" that does NOT exist in the new MeetingConfig
         # so the MeetingFileType of the annexDecision2 will be the default one, the first available
         self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType(),
-                          self.meetingConfig2.getFileTypes(relatedTo='item_decision')[0]['UID'])
+                          self.meetingConfig2.getFileTypes(relatedTo='item_decision')[0]['id'])
 
     def test_pm_SendItemToOtherMCWithAdvices(self):
         '''Test that sending an item to another MeetingConfig behaves normaly with advices.
