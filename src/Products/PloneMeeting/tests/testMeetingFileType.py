@@ -54,7 +54,7 @@ class testMeetingFileType(PloneMeetingTestCase):
            A subType can not be removed if in use.'''
         # get the first available MeetingFileType
         mftData = self.meetingConfig.getFileTypes('item')[0]
-        mft = getattr(self.meetingConfig.meetingfiletypes, mftData['id'])
+        mft = self.portal.uid_catalog(UID=mftData['id'])[0].getObject()
         mft.setSubTypes(({'row_id': 'unique_row_id_123',
                           'title': 'Annex sub type',
                           'predefinedTitle': 'Annex sub type predefined title',
