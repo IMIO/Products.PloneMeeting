@@ -557,22 +557,24 @@ class testMeetingItem(PloneMeetingTestCase):
                                                                                             onlySelectable=False)]
         self.failUnless(decisionAnnex2.getMeetingFileType() in existingMeetingFileTypeIncludingNotSelectableIds)
         # Now check the MeetingFileType of new annexes
-        # annex1 was of annexType "item-annex" that exists in the new MeetingConfig
-        # so it stays "item-annex" but the one in the new MeetingConfig
+        # annex1 has no correspondence on the new MeetingConfig so the
+        # frist MFT of same relatedTo is used
+        defaultMC2ItemMFT = self.meetingConfig2.getFileTypes(annex1.findRelatedTo())[0]
         self.assertEquals(newItem.objectValues('MeetingFile')[0].getMeetingFileType(),
-                          getattr(self.meetingConfig2.meetingfiletypes, self.annexFileType).UID())
-        # annex2 was of annexType "overhead-analysis" that does NOT exist in the new MeetingConfig
-        # so the MeetingFileType of the annex2 will be the default one, the first available
+                          defaultMC2ItemMFT['id'])
+        # annex2 was of annexType "overhead-analysis" that does NOT have correspondence
+        # frist MFT of same relatedTo is used
         self.assertEquals(newItem.objectValues('MeetingFile')[1].getMeetingFileType(),
-                          self.meetingConfig2.getFileTypes()[0]['id'])
-        # annexDecision1 was of annexType "decision-annex" that exists in the new MeetingConfig
-        # so it stays "decision-annex" but the one in the new MeetingConfig
+                          defaultMC2ItemMFT['id'])
+        # decisionAnnex1 was 'item_decision' relatedTo
+        # frist MFT of same relatedTo is used
+        defaultMC2ItemDecisionMFT = self.meetingConfig2.getFileTypes(decisionAnnex1.findRelatedTo())[0]
         self.assertEquals(newItem.objectValues('MeetingFile')[2].getMeetingFileType(),
-                          getattr(self.meetingConfig2.meetingfiletypes, self.annexFileTypeDecision).UID())
-        # annexDecision2 was of annexType "marketing-annex" that does NOT exist in the new MeetingConfig
-        # so the MeetingFileType of the annexDecision2 will be the default one, the first available
+                          defaultMC2ItemDecisionMFT['id'])
+        # decisionAnnex2 was 'item_decision' relatedTo
+        # frist MFT of same relatedTo is used
         self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType(),
-                          self.meetingConfig2.getFileTypes(relatedTo='item_decision')[0]['id'])
+                          defaultMC2ItemDecisionMFT['id'])
 
     def test_pm_SendItemToOtherMCWithAdvices(self):
         '''Test that sending an item to another MeetingConfig behaves normaly with advices.
