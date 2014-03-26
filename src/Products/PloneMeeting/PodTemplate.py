@@ -339,7 +339,7 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
         tool = obj.portal_plonemeeting
         # Preamble: ensure that the mailingList is really active.
         if mailingList not in self.getAvailableMailingLists(obj, member):
-            raise self.BAD_MAILINGLIST
+            raise Exception(BAD_MAILINGLIST)
         # Retrieve mailing list recipients
         recipients = []
         for line in self.getMailingLists().strip().split('\n'):
@@ -352,7 +352,7 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
                     continue
                 recipients.append(recipient)
         if not recipients:
-            raise self.BAD_MAILINGLIST
+            raise Exception(BAD_MAILINGLIST)
         # Send the mail with the document as attachment
         docName = '%s.%s' % (self._getFileName(obj), self.getPodFormat())
         # generate event name depending on obj type
