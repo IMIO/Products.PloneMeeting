@@ -16,6 +16,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   it will be displayed in the add annex select file type box but every annexes will be displayed
   behind the same icon of the master MeetingFileType, this let's user manage several mft title and
   predefined title
+- Take 'for_item_created_until' for delay aware advisers in optional advisers
 - Added improvement about internationalization in PloneMeeting tool workflow policy.
   [lcaballero, macagua]
 - Make sure a MeetingGroup is not used in MeetingConfig.customAdvisers
