@@ -2157,13 +2157,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # then check if corresponding MeetingGroup is not empty
             if not customAdviserConfig['group'] in notEmptyAdvisersGroupIds:
                 continue
-            # ok, proceed, one single delay or several
-            for delay in customAdviserConfig['delay'].split(';'):
-                res.append({'meetingGroupId': customAdviserConfig['group'],
-                            'meetingGroupName': getattr(tool, customAdviserConfig['group']).getName(),
-                            'delay': delay,
-                            'delay_label': customAdviserConfig['delay_label'],
-                            'row_id': customAdviserConfig['row_id']})
+
+            # respect 'for_item_created_from' and 'for_item_created_until' defined dates
+            createdFrom = customAdviserConfig['for_item_created_from']
+            createdUntil = customAdviserConfig['for_item_created_until']
+            # createdFrom is required but not createdUntil
+            if DateTime(createdFrom) > self.created() or \
+               (createdUntil and DateTime(createdUntil) < self.created()):
+                continue
+
+            # ok add the adviser
+            res.append({'meetingGroupId': customAdviserConfig['group'],
+                        'meetingGroupName': getattr(tool, customAdviserConfig['group']).getName(),
+                        'delay': customAdviserConfig['delay'],
+                        'delay_label': customAdviserConfig['delay_label'],
+                        'row_id': customAdviserConfig['row_id']})
         return res
 
     security.declarePublic('addAutoCopyGroups')

@@ -1441,6 +1441,25 @@ class testMeetingItem(PloneMeetingTestCase):
                            'not_selectable_value_non_delay_aware_optional_advisers',
                            'developers',
                            'vendors'])
+        # check that if a 'for_item_created_until' date is passed, it does not appear anymore
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'developers',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'delay': '5'},
+             {'row_id': 'unique_id_456',
+              'group': 'developers',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '2013/01/01',
+              'delay': '10'}, ])
+        self.assertEquals(item.listOptionalAdvisers().keys(),
+                          ['not_selectable_value_delay_aware_optional_advisers',
+                           'developers__rowid__unique_id_123',
+                           'not_selectable_value_non_delay_aware_optional_advisers',
+                           'developers',
+                           'vendors'])
 
     def test_pm_Validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         """
