@@ -260,7 +260,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                     self.failIf(secondLevelElement._at_creation_flag)
                     self.failIf(secondLevelElement.Title() == 'Site')
 
-    def test_pm_updateMeetingFileTypesAfterSentToOtherMeetingConfig(self):
+    def test_pm_UpdateMeetingFileTypesAfterSentToOtherMeetingConfig(self):
         '''Test the ToolPloneMeeting._updateMeetingFileTypesAfterSentToOtherMeetingConfig method.
            This method take care of updating the MeetingFileType used by annexes of an item
            that is sent to another MeetingConfig.  The annexes of the new item will use MeetingFileTypes
