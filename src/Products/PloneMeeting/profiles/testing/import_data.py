@@ -90,14 +90,22 @@ powerobserver1 = UserDescriptor('powerobserver1',
                                 email="powerobserver1@plonemeeting.org",
                                 fullname='M. Power Observer1')
 # powerobserver1 is 'power observer' because in the meetingPma '_powerobservers' group
-plonemeeting_assembly_powerobservers = PloneGroupDescriptor('plonegov-assembly_powerobservers',
-                                                            'plonegov-assembly_powerobservers',
+plonemeeting_assembly_powerobservers = PloneGroupDescriptor('plonemeeting-assembly_powerobservers',
+                                                            'plonemeeting-assembly_powerobservers',
                                                             [])
 powerobserver1.ploneGroups = [plonemeeting_assembly_powerobservers, ]
 powerobserver2 = UserDescriptor('powerobserver2',
                                 [],
                                 email="powerobserver2@plonemeeting.org",
                                 fullname='M. Power Observer2')
+restrictedpowerobserver1 = UserDescriptor('restrictedpowerobserver1',
+                                          [],
+                                          email="restrictedpowerobserver1@plonemeeting.org",
+                                          fullname='M. Restricted Power Observer1')
+plonegov_assembly_restrictedpowerobservers = PloneGroupDescriptor('plonegov-assembly_restrictedpowerobservers',
+                                                                  'plonegov-assembly_restrictedpowerobservers',
+                                                                  [])
+restrictedpowerobserver1.ploneGroups = [plonegov_assembly_restrictedpowerobservers, ]
 
 developers = GroupDescriptor('developers', 'Developers', 'Devel')
 developers.creators.append(pmCreator1)
@@ -232,5 +240,5 @@ meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', '
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
                                  (developers, vendors, endUsers))
-data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2]
+data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2, restrictedpowerobserver1]
 # ------------------------------------------------------------------------------

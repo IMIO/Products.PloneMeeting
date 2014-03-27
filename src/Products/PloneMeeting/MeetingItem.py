@@ -3047,7 +3047,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([user.getId()])
         self.manage_addLocalRoles(user.getId(), ('Owner',))
         self.updateLocalRoles()
-        # Update 'power observers' and 'budget impact reviewers' local roles given to the
+        # Update '(restricted) power observers' and 'budget impact reviewers' local roles given to the
         # corresponding MeetingConfig powerobsevers/budgetimpacteditors group in case the 'initial_wf_state'
         # is selected in MeetingConfig.itemPowerObserversStates or MeetingConfig.itemBudgetInfosStates
         self.updatePowerObserversLocalRoles()
@@ -3196,19 +3196,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('updatePowerObserversLocalRoles')
     def updatePowerObserversLocalRoles(self):
-        '''Configure local role for use case 'power_observers' to the corresponding
-           MeetingConfig 'powerobservers' group.'''
-        # First, remove 'power observer' local roles granted to powerobservers.
+        '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
+           to the corresponding MeetingConfig 'powerobservers/restrictedpowerobservers' group.'''
+        # First, remove 'power observer' local roles granted to (restricted) powerobservers.
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove=READER_USECASES['power_observers'],
+                                                          role_to_remove=READER_USECASES['powerobservers'],
                                                           suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
+        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
+                                                          role_to_remove=READER_USECASES['restrictedpowerobservers'],
+                                                          suffixes=[RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX, ])
         # Then, add local roles for powerobservers.
         itemState = self.queryState()
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        if not itemState in cfg.getItemPowerObserversStates():
-            return
-        powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-        self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['power_observers'],))
+        if itemState in cfg.getItemPowerObserversStates():
+            powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
+            self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
+        elif itemState in cfg.getItemRestrictedPowerObserversStates():
+            restrictedPowerObserversGroupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
+            self.manage_addLocalRoles(restrictedPowerObserversGroupId, (READER_USECASES['restrictedpowerobservers'],))
 
     def updateBudgetImpactEditorsLocalRoles(self):
         '''Configure local role for use case 'budget_impact_reviewers' to the corresponding

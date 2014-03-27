@@ -1691,20 +1691,24 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     security.declarePublic('updatePowerObserversLocalRoles')
     def updatePowerObserversLocalRoles(self):
-        '''Give the 'power observers' local role to the corresponding
-           MeetingConfig 'powerobservers' group on self.'''
-        # First, remove 'power observers' local roles granted to powerobservers.
-        role_to_remove = READER_USECASES['power_observers']
+        '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
+           to the corresponding MeetingConfig 'powerobservers/restrictedpowerobservers' group.'''
+        # First, remove 'power observer' local roles granted to (restricted) powerobservers.
         self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove=role_to_remove,
+                                                          role_to_remove=READER_USECASES['powerobservers'],
                                                           suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
+        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
+                                                          role_to_remove=READER_USECASES['restrictedpowerobservers'],
+                                                          suffixes=[RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX, ])
         # Then, add local roles for powerobservers.
         meetingState = self.queryState()
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        if not meetingState in cfg.getMeetingPowerObserversStates():
-            return
-        powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-        self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['power_observers'],))
+        if meetingState in cfg.getMeetingPowerObserversStates():
+            powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
+            self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
+        elif meetingState in cfg.getMeetingRestrictedPowerObserversStates():
+            restrictedPowerObserversGroupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
+            self.manage_addLocalRoles(restrictedPowerObserversGroupId, (READER_USECASES['restrictedpowerobservers'],))
 
     security.declareProtected('Modify portal content', 'transformRichTextField')
     def transformRichTextField(self, fieldName, richContent):

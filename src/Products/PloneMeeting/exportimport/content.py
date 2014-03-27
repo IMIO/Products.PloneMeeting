@@ -82,7 +82,7 @@ class ToolInitializer:
         # Register classes again, after model adaptations have been performed
         # (see comment in __init__.py)
         registerClasses()
-        self.tool.addUsersAndGroups(d.groups, d.usersOutsideGroups)
+        self.tool.addUsersAndGroups(d.groups)
         savedMeetingConfigsToCloneTo = {}
         for mConfig in d.meetingConfigs:
             # XXX we need to defer the management of the 'meetingConfigsToCloneTo'
@@ -111,6 +111,9 @@ class ToolInitializer:
         # now that MeetingConfigs have been created, we can define
         # tool.searchItemStates, we select every item states by default
         self.tool.setSearchItemStates(self.tool.listItemStates().keys())
+        # at the end, add users outside PloneMeeting groups because
+        # they could have to be added in groups created by the MeetingConfig
+        self.tool.addUsersOutsideGroups(d.usersOutsideGroups)
         return self.successMessage
 
 

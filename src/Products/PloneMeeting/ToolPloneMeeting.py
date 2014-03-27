@@ -53,7 +53,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
 from plone.memoize import ram
 from Products.CMFCore.utils import getToolByName, _checkPermission
-from Products.CMFCore.permissions import AccessContentsInformation, DeleteObjects, View
+from Products.CMFCore.permissions import DeleteObjects, View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.PloneBatch import Batch
 from Products.DCWorkflow.Transitions import TRIGGER_USER_ACTION
@@ -931,7 +931,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 return True
         # or maybe this is a user in a _powerobservers group
         for groupId in user.getGroups():
-            if groupId.endswith(POWEROBSERVERS_GROUP_SUFFIX):
+            if groupId.endswith(POWEROBSERVERS_GROUP_SUFFIX) or \
+               groupId.endswith(RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
                 return True
 
     security.declarePublic('isManager')
@@ -945,18 +946,23 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             (not realManagers and user.has_role('MeetingManager'))
 
     security.declarePublic('isPowerObserverFor')
-    def isPowerObserverFor(self, itemOrMeeting):
+    def isPowerObserverFor(self, itemOrMeeting, isRestricted=False):
         """
           Returns True if the current user is a power observer
           for the given p_itemOrMeeting.
-          Is is a power observer if in the corresponding _powerobservers
+          It is a power observer if in the corresponding _powerobservers
           suffixed group.
+          If p_iRestricted is True, it will check if current user is a
+          restricted power observer.
         """
-        if self.isManager():
+        if not isRestricted and self.isManager():
             return True
         member = self.portal_membership.getAuthenticatedMember()
         cfg = self.getMeetingConfig(itemOrMeeting)
-        groupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
+        if not isRestricted:
+            groupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
+        else:
+            groupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
         if groupId in self.portal_groups.getGroupsForPrincipal(member):
             return True
         return False
@@ -986,14 +992,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''I show the PloneMeeting tabs (corresponding to meeting configs) if
            the user has one of the PloneMeeting roles and if the meeting config
            is active.'''
+        # self.getActiveConfigs also check for 'View' access of current member to it
         activeConfigs = self.getActiveConfigs()
-        # Does the meetingConfig exist and is it active?
-        if not meetingConfigId in [activeConfig.id for activeConfig in activeConfigs]:
-            return False
-        # Has the current user the permission to see the meeting config ?
-        meetingConfig = getattr(self, meetingConfigId)
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_permission(AccessContentsInformation, meetingConfig):
+        if not meetingConfigId in [activeConfig.getId() for activeConfig in activeConfigs]:
             return False
         return True
 
@@ -1911,6 +1912,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = userInfo.getProperty('email').decode(enc)
         return res.encode(enc)
 
+    security.declarePublic('addUsersOutsideGroups')
+    def addUsersOutsideGroups(self, usersOutsideGroups):
+        '''Create users that are outside any PloneMeeting group (like WebDAV
+           users or users that are in groups created by MeetingConfigs).'''
+        for userDescr in usersOutsideGroups:
+            self.addUser(userDescr)
+
     security.declarePublic('addUsersAndGroups')
     def addUsersAndGroups(self, groups, usersOutsideGroups=[]):
         '''Creates MeetingGroups (and potentially Plone users in it) in the
@@ -1950,10 +1958,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         groupsTool.addPrincipalToGroup(userDescr.id, groupId)
             if not groupDescr.active:
                 self.portal_workflow.doActionFor(group, 'deactivate')
-        # Create users that are outside any PloneMeeting group (like WebDAV
-        # users)
-        for userDescr in usersOutsideGroups:
-            self.addUser(userDescr)
 
     security.declarePublic('attributeIsUsed')
     def attributeIsUsed(self, objectType, attrName):
@@ -2276,10 +2280,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         i = 1
         for brain in brains:
             IAnnexable(brain.getObject()).updateAnnexIndex()
-            logger.info('%d/%d Updating adviceIndex of %s at %s' % (i,
-                                                                    numberOfBrains,
-                                                                    brain.portal_type,
-                                                                    brain.getPath()))
+            logger.info('%d/%d Updating annexIndex of %s at %s' % (i,
+                                                                   numberOfBrains,
+                                                                   brain.portal_type,
+                                                                   brain.getPath()))
             i = i + 1
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
@@ -2334,14 +2338,25 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('updatePowerObservers')
     def updatePowerObservers(self):
-        '''Update local_roles regarging the PowerObservers for every meetings and items.'''
+        '''Update local_roles regarging the RestrictedPowerObservers
+           and PowerObservers for every meetings and items.'''
         if not self.isManager(realManagers=True):
             raise Unauthorized
-        for b in self.portal_catalog(meta_type=('Meeting', 'MeetingItem')):
-            obj = b.getObject()
-            obj.updatePowerObserversLocalRoles()
+        catalog = getToolByName(self, 'portal_catalog')
+        brains = catalog(meta_type=('Meeting', 'MeetingItem'))
+        numberOfBrains = len(brains)
+        i = 1
+        for brain in brains:
+            itemOrMeeting = brain.getObject()
+            logger.info('%d/%d Updating restricted power observers and power observers of %s at %s' %
+                        (i,
+                         numberOfBrains,
+                         brain.portal_type,
+                         '/'.join(itemOrMeeting.getPhysicalPath())))
+            i = i + 1
+            itemOrMeeting.updatePowerObserversLocalRoles()
             # Update security
-            obj.reindexObject(idxs=['allowedRolesAndUsers', ])
+            itemOrMeeting.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 

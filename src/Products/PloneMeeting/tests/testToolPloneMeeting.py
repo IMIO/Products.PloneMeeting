@@ -22,7 +22,6 @@
 # 02110-1301, USA.
 #
 
-from plone.app.testing import login
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
@@ -46,7 +45,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         '''Tests changing MeetingGroup and MeetingConfig order within the tool.
            This is more coplex than it seems at first glance because groups and
            configs are mixed together within the tool.'''
-        login(self.portal, 'admin')
+        self.changeUser('admin')
         # Create a new MeetingGroup
         newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
         newGroupId = newGroup.getId()
@@ -64,7 +63,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_CloneItem(self):
         '''Clones a given item in parent item folder.'''
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
         item1.setItemKeywords('My keywords')
         item1.setTitle('My title')
@@ -86,7 +85,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.failUnless(clonedItem.getPreferredMeeting() == ITEM_NO_PREFERRED_MEETING_VALUE)
         # Test that an item viewable by a different user (another member of the
         # same group) can be pasted too. item1 is viewable by pmCreator1 too.
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         clonedItem = item1.clone()
         # The item is cloned in the pmCreator1 personnal folder.
         self.assertEquals(
@@ -98,7 +97,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_CloneItemWithContent(self):
         '''Clones a given item containing annexes in parent item folder.'''
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
         # Add one annex
         annex1 = self.addAnnex(item1)
@@ -125,7 +124,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Test that an item viewable by a different user (another member of the
         # same group) can be pasted too if it contains things. item1 is viewable
         # by pmCreator1 too. And Also tests cloning without annex copying.
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         clonedItem = item1.clone(copyAnnexes=False)
         self.assertEquals(set([clonedItem]),
                           set(clonedItem.getParentNode().objectValues()))
@@ -136,7 +135,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            if the contained objects are not removable, they are removed.
            Now we use removeGivenObject to remove contained objects of
            copied items.'''
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # Add one annex
         self.addAnnex(item)
@@ -151,7 +150,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_PasteItems(self):
         '''Paste objects (previously copied) in destFolder.'''
         self.setMeetingConfig(self.meetingConfig2.getId())
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         # Add annexes to item1
         self.addAnnex(item1)
@@ -163,13 +162,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item2.setOptionalAdvisers(('vendors', ))
         # propose the item so the advice can be given
         self.proposeItem(item2)
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         createContentInContainer(item2,
                                  'meetingadvice',
                                  **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         destFolder = item1.getParentNode()
         # Copy items
         copiedData1 = destFolder.manage_copyObjects(ids=[item1.id, ])
@@ -215,26 +214,30 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         meetingConfig2Id = self.meetingConfig2.getId()
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
-        # every roles of the application can see the tabs, except 'power observers' corresponding role
-        login(self.portal, 'pmManager')
+        # every roles of the application can see the tabs
+        self.changeUser('pmManager')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
-        login(self.portal, 'pmReviewer1')
+        self.changeUser('pmReviewer1')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
         # If a wrong meetingConfigId is passed, it returns False
         self.assertEquals(self.tool.showPloneMeetingTab('wrong-meeting-config-id'), False)
-        # The tab of 'meetingConfig1Id' is not viewable by 'power observers' corresponding role of 'meetingConfig2Id'
-        login(self.portal, 'powerobserver1')
+        # The tab of 'meetingConfig1Id' is viewable by 'power observers'
+        self.changeUser('powerobserver1')
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
+        # restrictedpowerobserver1 can only see self.meetingConfig2Id tab also
+        self.changeUser('restrictedpowerobserver1')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
         # If we disable one meetingConfig, it is no more shown
-        login(self.portal, 'admin')
+        self.changeUser('admin')
         self.do(getattr(self.tool, meetingConfig2Id), 'deactivate')
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
 
     def test_pm_SetupProcessForCreationFlag(self):
@@ -267,7 +270,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            of the destination MeetingConfig using the MeetingFileType.otherMCCorrespondences values.
         '''
         # create an item with one annex and manipulate the stored MeetingFileType
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         item = self.create('MeetingItem')
         # Add one annex
         annex = self.addAnnex(item)

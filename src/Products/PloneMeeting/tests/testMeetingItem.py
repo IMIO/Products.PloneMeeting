@@ -720,7 +720,7 @@ class testMeetingItem(PloneMeetingTestCase):
         i1.processForm()
         # only the _powerobservers group have the corresponding local role, no other groups
         self.failUnless(i1.__ac_local_roles__['%s_powerobservers' % self.meetingConfig.getId()] ==
-                        [READER_USECASES['power_observers']])
+                        [READER_USECASES['powerobservers']])
         for principalId, localRoles in i1.get_local_roles():
             if not principalId.endswith(POWEROBSERVERS_GROUP_SUFFIX):
                 self.failIf((READER_USECASES['advices'],) == localRoles)

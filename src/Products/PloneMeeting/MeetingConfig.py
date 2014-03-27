@@ -1228,6 +1228,36 @@ schema = Schema((
         enforceVocabulary=False,
     ),
     LinesField(
+        name='itemRestrictedPowerObserversStates',
+        widget=MultiSelectionWidget(
+            description="ItemRestrictedPowerObserversStates",
+            description_msgid="item_restricted_powerobservers_states_descr",
+            label='Itemrestrictedpowerobserversstates',
+            label_msgid='PloneMeeting_label_itemRestrictedPowerObserversStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemRestrictedPowerObserversStates,
+        enforceVocabulary=False,
+    ),
+    LinesField(
+        name='meetingRestrictedPowerObserversStates',
+        widget=MultiSelectionWidget(
+            description="meetingRestrictedPowerObserversStates",
+            description_msgid="meeting_restricted_powerobservers_states_descr",
+            label='Meetingrestrictedpowerobserversstates',
+            label_msgid='PloneMeeting_label_meetingRestrictedPowerObserversStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listMeetingStates',
+        default=defValues.meetingRestrictedPowerObserversStates,
+        enforceVocabulary=False,
+    ),
+    LinesField(
         name='itemBudgetInfosStates',
         widget=MultiSelectionWidget(
             description="ItemBudgetInfosStates",
@@ -2385,27 +2415,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createPowerObserversGroup')
     def createPowerObserversGroup(self):
-        '''Creates a Plone group that will be used to apply the 'Reader'
-           local role on every items of this MeetingConfig regarding self.itemPowerObserverStates.'''
-        groupId = "%s_%s" % (self.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-        if not groupId in self.portal_groups.listGroupIds():
-            enc = self.portal_properties.site_properties.getProperty(
-                'default_charset')
-            groupTitle = '%s (%s)' % (
-                self.Title().decode(enc),
-                translate(POWEROBSERVERS_GROUP_SUFFIX, domain='PloneMeeting', context=self.REQUEST))
-            # a default Plone group title is NOT unicode.  If a Plone group title is
-            # edited TTW, his title is no more unicode if it was previously...
-            # make sure we behave like Plone...
-            groupTitle = groupTitle.encode(enc)
-            self.portal_groups.addGroup(groupId, title=groupTitle)
-        # now define local_roles on the tool so it is accessible by this group
+        '''Creates Plone groups to manage (restricted) power observers.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        tool.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
-        # but we do not want this group to access every MeetingConfigs so
-        # remove inheritance on self and define these local_roles for self too
-        self.__ac_local_roles_block__ = True
-        self.manage_addLocalRoles(groupId, (READER_USECASES['power_observers'],))
+        for grpSuffix in (RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+                          POWEROBSERVERS_GROUP_SUFFIX, ):
+            groupId = "%s_%s" % (self.getId(), grpSuffix)
+            if not groupId in self.portal_groups.listGroupIds():
+                enc = self.portal_properties.site_properties.getProperty(
+                    'default_charset')
+                groupTitle = '%s (%s)' % (
+                    self.Title().decode(enc),
+                    translate(grpSuffix, domain='PloneMeeting', context=self.REQUEST))
+                # a default Plone group title is NOT unicode.  If a Plone group title is
+                # edited TTW, his title is no more unicode if it was previously...
+                # make sure we behave like Plone...
+                groupTitle = groupTitle.encode(enc)
+                self.portal_groups.addGroup(groupId, title=groupTitle)
+                # now define local_roles on the tool so it is accessible by this group
+                tool.manage_addLocalRoles(groupId, (READER_USECASES[grpSuffix],))
+                # but we do not want this group to access every MeetingConfigs so
+                # remove inheritance on self and define these local_roles for self too
+                self.__ac_local_roles_block__ = True
+                self.manage_addLocalRoles(groupId, (READER_USECASES[grpSuffix],))
 
     security.declarePrivate('createBudgetImpactEditorsGroup')
     def createBudgetImpactEditorsGroup(self):

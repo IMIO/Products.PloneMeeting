@@ -22,7 +22,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 from Products.DataGridField import DataGridField, DataGridWidget
 from Products.DataGridField.Column import Column
-from Products.DataGridField.CheckboxColumn import CheckboxColumn
+from Products.DataGridField.SelectColumn import SelectColumn
 
 from Products.PloneMeeting.config import *
 
@@ -31,6 +31,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
+from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 ##/code-section module-header
 
@@ -78,21 +79,15 @@ schema = Schema((
             label_msgid='PloneMeeting_label_otherMCCorrespondences',
             i18n_domain='PloneMeeting',
         ),
+        enforceVocabulary=False,
         multiValued=1,
         vocabulary='listOtherMCCorrespondences',
-        enforceVocabulary=False,
     ),
     DataGridField(
         name='subTypes',
         default=(),
         widget=DataGridWidget(
-            columns={'row_id': Column("Sub type row id", visible=False),
-                     'title': Column("Sub type title", required=True),
-                     'predefinedTitle': Column("Sub type predefined title"),
-                     'otherMCCorrespondences': MultiSelectColumn("Sub type correspondences while sent to other meeting configs",
-                                                                 vocabulary='listOtherMCCorrespondences',
-                                                                 col_description="Sub type correspondences while sent to other meeting configs description."),
-                     'isActive': CheckboxColumn("Sub type is active?", default='1'), },
+            columns={'row_id': Column("Sub type row id", visible=False), 'title': Column("Sub type title", required=True), 'predefinedTitle': Column("Sub type predefined title"), 'otherMCCorrespondences': MultiSelectColumn("Sub type correspondences while sent to other meeting configs", vocabulary='listOtherMCCorrespondences', col_description="Sub type correspondences while sent to other meeting configs description."), 'isActive': CheckboxColumn("Sub type is active?", default='1'), },
             description="SubTypes",
             description_msgid="sub_types_descr",
             label='Subtypes',
@@ -356,3 +351,4 @@ registerType(MeetingFileType, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+

@@ -212,7 +212,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
                          'mailItemEvents', 'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates', 'powerAdvisersGroups',
-                         'itemPowerObserversStates', 'meetingPowerObserversStates', 'meetingConfigsToCloneTo',
+                         'itemPowerObserversStates', 'meetingPowerObserversStates',
+                         'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates', 'meetingConfigsToCloneTo',
                          'itemAdviceInvalidateStates', 'customAdvisers', 'selectableCopyGroups', 'votesEncoder',
                          'meetingTopicStates', 'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes',
                          'usedVoteValues'
@@ -434,6 +435,8 @@ class MeetingConfigDescriptor(Descriptor):
         # corresponding powerObservers group will see the item/meeting
         self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'refused', 'delayed']
         self.meetingPowerObserversStates = ['frozen', 'decided', 'closed']
+        self.itemRestrictedPowerObserversStates = []
+        self.meetingRestrictedPowerObserversStates = []
         self.usedAdviceTypes = ('positive', 'positive_with_remarks', 'negative', 'nil')
         self.defaultAdviceType = 'positive'
         # When advice mandatoriness is enabled, it is not possible to put an
