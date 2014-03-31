@@ -83,11 +83,22 @@ schema = Schema((
         multiValued=1,
         vocabulary='listOtherMCCorrespondences',
     ),
+    BooleanField(
+        name='isConfidentialDefault',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            description="IsConfidentialDefault",
+            description_msgid="is_confidential_default_descr",
+            label='Isconfidentialdefault',
+            label_msgid='PloneMeeting_label_isConfidentialDefault',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
     DataGridField(
         name='subTypes',
         default=(),
         widget=DataGridWidget(
-            columns={'row_id': Column("Sub type row id", visible=False), 'title': Column("Sub type title", required=True), 'predefinedTitle': Column("Sub type predefined title"), 'otherMCCorrespondences': MultiSelectColumn("Sub type correspondences while sent to other meeting configs", vocabulary='listOtherMCCorrespondences', col_description="Sub type correspondences while sent to other meeting configs description."), 'isActive': CheckboxColumn("Sub type is active?", default='1'), },
+            columns={'row_id': Column("Sub type row id", visible=False), 'title': Column("Sub type title", required=True), 'predefinedTitle': Column("Sub type predefined title"), 'otherMCCorrespondences': MultiSelectColumn("Sub type correspondences while sent to other meeting configs", vocabulary='listOtherMCCorrespondences', col_description="Sub type correspondences while sent to other meeting configs description."), 'isConfidentialDefault': CheckboxColumn("Sub type confidentiality of created annexes", col_description="Sub type confidentiality of created annexes description.", default=''), 'isActive': CheckboxColumn("Sub type is active?", default='1'), },
             description="SubTypes",
             description_msgid="sub_types_descr",
             label='Subtypes',
@@ -95,7 +106,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         allow_oddeven=True,
-        columns=('row_id', 'title', 'predefinedTitle', 'otherMCCorrespondences', 'isActive'),
+        columns=('row_id', 'title', 'predefinedTitle', 'otherMCCorrespondences', 'isConfidentialDefault', 'isActive'),
         allow_empty_rows=False,
     ),
 
@@ -305,7 +316,8 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
                     'id': self.UID(),
                     'absolute_url': self.absolute_url(),
                     'predefinedTitle': self.getPredefinedTitle(),
-                    'relatedTo': self.getRelatedTo(), }
+                    'relatedTo': self.getRelatedTo(),
+                    'isConfidentialDefault': self.getIsConfidentialDefault(), }
         # either return the data of a subtype
         for subType in self.getSubTypes():
             if subType['row_id'] == row_id:
@@ -314,7 +326,8 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
                         'id': "%s__subtype__%s" % (self.UID(), subType['row_id']),
                         'absolute_url': self.absolute_url(),
                         'predefinedTitle': subType['predefinedTitle'],
-                        'relatedTo': self.getRelatedTo(), }
+                        'relatedTo': self.getRelatedTo(),
+                        'isConfidentialDefault': subType['isConfidentialDefault'], }
         return data
 
     security.declarePublic('isSelectable')
@@ -351,4 +364,3 @@ registerType(MeetingFileType, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

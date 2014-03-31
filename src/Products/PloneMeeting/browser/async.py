@@ -142,6 +142,44 @@ class AnnexToPrint(BrowserView):
             return
 
 
+class AnnexIsConfidential(BrowserView):
+    """
+      View that switch the annex 'isConfidential' attribute using an ajax call.
+    """
+    IMG_TEMPLATE = u'<img class="annexIsConfidentialEditable" src="%s" title="%s" name="%s" />'
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
+        self.portal = self.portal_state.portal()
+
+    def toggle(self):
+        member = self.portal_state.member()
+        if not member.has_permission('Modify portal content', self.context):
+            raise Unauthorized
+
+        isConfidential = self.context.getIsConfidential()
+        # toggle value
+        self.context.setIsConfidential(not isConfidential)
+
+        if isConfidential:
+            filename = 'isConfidentialNo.png'
+            name = 'isConfidentialYes'
+            title_msgid = 'annex_is_confidential_no_edit'
+        else:
+            filename = 'isConfidentialYes.png'
+            name = 'isConfidentialNo'
+            title_msgid = 'annex_is_confidential_yes_edit'
+
+        title = self.context.utranslate(title_msgid,
+                                        domain="PloneMeeting")
+        portal_url = self.portal_state.portal_url()
+        src = "%s/%s" % (portal_url, filename)
+        html = self.IMG_TEMPLATE % (src, title, name)
+        return html
+
+
 class BudgetRelated(BrowserView):
     """
       View that switch the item 'budgetRelated' attribute using an ajax call.

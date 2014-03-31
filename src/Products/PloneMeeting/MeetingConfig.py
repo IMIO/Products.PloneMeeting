@@ -577,6 +577,18 @@ schema = Schema((
         ),
         schemata="data",
     ),
+    BooleanField(
+        name='enableAnnexConfidentiality',
+        default=defValues.enableAnnexConfidentiality,
+        widget=BooleanField._properties['widget'](
+            description="EnableAnnexConfidentiality",
+            description_msgid="enable_annex_confidentiality_descr",
+            label='Enableannexconfidentiality',
+            label_msgid='PloneMeeting_label_enableAnnexConfidentiality',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+    ),
     DataGridField(
         name='meetingConfigsToCloneTo',
         widget=DataGridField._properties['widget'](
@@ -3084,7 +3096,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(("meeting_state_changed_%s" % meeting_transition_id, meeting_transition_name))
         return DisplayList(res).sortedByValue()
 
+    def getFileTypes_cachekey(method, self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
+        '''cachekey method for self.getFileTypes.'''
+        # check last object modified and last time container was modified (element added or removed)
+        return (int(max([mft.modified() for mft in self.meetingfiletypes.objectValues()])),
+                self.meetingfiletypes._tree._p_mtime, relatedTo, typesIds, onlySelectable, includeSubTypes)
+
     security.declarePublic('getFileTypes')
+    @ram.cache(getFileTypes_cachekey)
     def getFileTypes(self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
         '''Gets the relatedTo-related meeting file types. If
            p_typesIds is not empty, it returns only file types whose ids are
@@ -3092,6 +3111,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            If p_includeSubTypes is True, MeetingFileType.subTypes are
            also returned and considered as normal MeetingFileTypes.'''
         res = []
+        logger.info('tssssssssssss')
         for mft in self.meetingfiletypes.objectValues('MeetingFileType'):
             if not relatedTo == '*' and not mft.getRelatedTo() == relatedTo:
                 continue

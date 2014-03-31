@@ -188,6 +188,7 @@
   </tal:comment>
   <tal:defines define="tool python: context.portal_plonemeeting;
                        meetingConfig python: context.portal_plonemeeting.getMeetingConfig(context);
+                       isManager meetingConfig/isManager;
                        annexes python: context.restrictedTraverse('@@annexes').getAnnexesByType(relatedTo, makeSubLists=False);
                        member member|context/@@plone_portal_state/member;">
    <div tal:condition="not: annexes" i18n:translate="no_annexes" class="discreet">No annexes</div>
@@ -200,6 +201,9 @@
        <th class="nosort" i18n:translate="pm_annex_type">Annex type</th>
        <th class="nosort" i18n:translate="pm_creator">Creator</th>
        <th class="nosort" i18n:translate="pm_creation_date">Creation date</th>
+       <th class="nosort"
+           i18n:translate="PloneMeeting_label_isConfidential"
+           tal:condition="python: meetingConfig.getEnableAnnexConfidentiality() and isManager">Confidential?</th>
        <th class="nosort" i18n:translate="PloneMeeting_label_toPrint" tal:condition="meetingConfig/getEnableAnnexToPrint">To print?</th>
        <th class="nosort" i18n:translate="listingheader_size" i18n:domain="plone">Size</th>
        <th class="nosort" i18n:translate="heading_actions" i18n:domain="plone" tal:condition="python:member.has_permission('Delete objects', here)">Actions</th>
@@ -215,6 +219,9 @@
        <td tal:content="python: annex.getMeetingFileType(theData=True)['name']"></td>
        <td tal:content="python: tool.getUserName(annex.Creator())"></td>
        <td tal:content="python: context.restrictedTraverse('@@plone').toLocalizedTime(annex.CreationDate(),long_format=True)"></td>
+       <td tal:condition="python: meetingConfig.getEnableAnnexConfidentiality() and isManager">
+          <metal:isConfidential use-macro="here/@@annexes-macros/isConfidential" />
+       </td>
        <td tal:condition="meetingConfig/getEnableAnnexToPrint">
            <metal:annexToPrint use-macro="here/@@annexes-macros/annexToPrint" />
        </td>
@@ -378,3 +385,33 @@
          tal:attributes="src string: $portal_url/annexToPrintDisabled.png"/>
   </tal:isNotPrintable>
 </metal:annexToPrint>
+
+
+<tal:comment replace="nothing">
+  This macro manage the isConfidential attribute of annexes.
+  annex : the relevant MeetingFile
+</tal:comment>
+<metal:isConfidential define-macro="isConfidential" i18n:domain="PloneMeeting"
+                      tal:define="mayEdit python: member.has_permission('Modify portal content', annex);
+                                  isConfidential annex/getIsConfidential;">
+  <span tal:condition="mayEdit"
+        id="marker_toggle_isconfidential_UID#"
+        tal:attributes="id string:marker_toggle_isconfidential_$UID;"
+        tal:define="UID annex/UID;
+                    baseUrl annex/absolute_url;">
+    <img class="annexIsConfidentialEditable" tal:condition="isConfidential" name="isConfidentialNo" style="cursor:pointer"
+         title="annex_is_confidential_yes_edit" i18n:attributes="title"
+         tal:attributes="src string:$portal_url/isConfidentialYes.png;
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_annex_is_confidential\', baseSelector=\'#marker_toggle_isconfidential_\')'"/>
+    <img class="annexIsConfidentialEditable" tal:condition="not: isConfidential" name="isConfidentialYes" style="cursor:pointer"
+         title="annex_is_confidential_no_edit" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/isConfidentialNo.png;
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_annex_is_confidential\', baseSelector=\'#marker_toggle_isconfidential_\')'"/>
+  </span>
+  <tal:notMayEdit condition="not: mayEdit">
+    <img tal:condition="isConfidential" title="annex_is_confidential_yes" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/isConfidentialYes.png"/>
+    <img tal:condition="not: isConfidential" title="annex_is_confidential_no" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/isConfidentialNo.png"/>
+  </tal:notMayEdit>
+</metal:isConfidential>

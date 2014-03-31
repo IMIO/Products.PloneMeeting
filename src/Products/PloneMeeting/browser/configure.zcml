@@ -118,6 +118,13 @@
         for="Products.PloneMeeting.interfaces.IMeetingFile"
         permission="zope2.View" />
     <browser:page
+        name="toggle_annex_is_confidential"
+        attribute="toggle"
+        allowed_attributes="toggle"
+        class=".async.AnnexIsConfidential"
+        for="Products.PloneMeeting.interfaces.IMeetingFile"
+        permission="zope2.View" />
+    <browser:page
         name="toggle_budget_related"
         attribute="toggle"
         allowed_attributes="toggle"

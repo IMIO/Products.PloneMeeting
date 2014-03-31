@@ -223,10 +223,12 @@
           <td tal:define="field python:here.getField('useUserReplacements')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('enableAnnexConfidentiality')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('meetingConfigsToCloneTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
         </tr>
       </table>
 

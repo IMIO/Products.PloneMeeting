@@ -95,6 +95,17 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
+    BooleanField(
+        name='isConfidential',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            description="IsConfidential",
+            description_msgid="is_confidential_descr",
+            label='Isconfidential',
+            label_msgid='PloneMeeting_label_isConfidential',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
 
 ),
 )
@@ -223,8 +234,9 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         # the PloneMeeting color system because some events like parent state
         # changes update security settings on annexes and modification_date is
         # updated.
+        tool = getToolByName(self, 'portal_plonemeeting')
         self.pm_modification_date = self.modification_date
-        self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
+        tool.rememberAccess(self.UID(), commitNeeded=False)
         parent = self.getParent()
         if parent:
             # update parent.annexIndex if it was not already set
@@ -235,7 +247,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             parent.alreadyUsedAnnexNames.append(self.id)
         # at the end of creation, we know now self.relatedTo
         # and we can manage the self.toPrint default value
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        cfg = tool.getMeetingConfig(self)
         if self.findRelatedTo() == 'item_decision':
             self.setToPrint(cfg.getAnnexDecisionToPrintDefault())
         elif self.findRelatedTo() == 'item':
@@ -243,7 +255,12 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         else:
             # relatedTo == 'advice'
             self.setToPrint(cfg.getAnnexAdviceToPrintDefault())
-        self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
+        # at the end of creation, we know now self.meetingFileType
+        # and we can manage the self.isConfidential default value
+        mft = self.getMeetingFileType(theData=True)
+        self.setIsConfidential(mft['isConfidentialDefault'])
+        # Call sub-product code if any
+        self.adapted().onEdit(isCreated=True)
         # Add text-extraction-related attributes
         rq = self.REQUEST
         self.needsOcr = rq.get('needs_ocr', None) is not None
@@ -275,6 +292,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'modification_date': aq_base(self).pm_modification_date,
                'relatedTo': self.findRelatedTo(),
                'conversionStatus': self.conversionStatus(),
+               'isConfidential': self.getIsConfidential()
                }
         return res
 

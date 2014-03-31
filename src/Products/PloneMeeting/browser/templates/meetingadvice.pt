@@ -21,7 +21,7 @@
     </script>
 
     <dl class="enableFormTabbing">
-        <dt i18n:translate="">Advice</dt>
+        <dt i18n:translate="MeetingAdvice">Advice</dt>
         <dd>
             <table class="no-style-table" width="100%">
                 <tal:loop repeat="widget view/widgets/values">

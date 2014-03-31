@@ -200,15 +200,19 @@ class AnnexableAdapter(object):
     def getAnnexesByType(self, relatedTo, makeSubLists=True,
                          typesIds=[], realAnnexes=False):
         '''See docstring in interfaces.py'''
+        res = []
+        if not hasattr(self.context, 'annexIndex'):
+            self.updateAnnexIndex()
+        # bypass if no annex for current context
+        if not self.context.annexIndex:
+            return res
+
         tool = getToolByName(self.context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         meetingFileTypes = cfg.getFileTypes(relatedTo,
                                             typesIds=typesIds,
                                             onlySelectable=False,
                                             includeSubTypes=False)
-        res = []
-        if not hasattr(self.context, 'annexIndex'):
-            self.updateAnnexIndex()
         for fileType in meetingFileTypes:
             annexes = []
             for annexInfo in self.context.annexIndex:
