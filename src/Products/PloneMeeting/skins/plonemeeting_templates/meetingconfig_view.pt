@@ -270,13 +270,15 @@
               <td><img tal:attributes="src python: obj.absolute_url() + '/at_download/theIcon'"/>&nbsp;
                   <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
                   <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
-                  <div style="padding-left: 30px;" tal:define="subTypes obj/getSubTypes">
-                    <b><i><span i18n:translate="PloneMeeting_label_subTypes">Sub types</span> :</i></b>
+                  <div class="discreet" style="padding-left: 30px; font-size: 90%;" tal:define="subTypes obj/getSubTypes">
+                    <label class="formQuestion">
+                        <span i18n:translate="PloneMeeting_label_subTypes">Sub types</span>
+                    </label> :
                     <tal:loop condition="subTypes" repeat="subType subTypes">
                         <br /><img tal:attributes="src python: obj.absolute_url() + '/at_download/theIcon'"/>&nbsp;<span tal:content="subType/title" />
                     </tal:loop>
                     <tal:noSubTypes condition="not:subTypes">
-                        <br /><span class="discreet" i18n:translate="no_sub_types_defined">No sub type has been defined.</span>
+                        <br /><span i18n:translate="no_sub_types_defined">No sub type has been defined.</span>
                     </tal:noSubTypes>
                   </div>
               </td>
