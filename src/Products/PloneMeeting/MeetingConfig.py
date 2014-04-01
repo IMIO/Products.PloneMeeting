@@ -3111,7 +3111,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            If p_includeSubTypes is True, MeetingFileType.subTypes are
            also returned and considered as normal MeetingFileTypes.'''
         res = []
-        logger.info('tssssssssssss')
         for mft in self.meetingfiletypes.objectValues('MeetingFileType'):
             if not relatedTo == '*' and not mft.getRelatedTo() == relatedTo:
                 continue
