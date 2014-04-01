@@ -2531,6 +2531,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     return False
         return True
 
+    security.declarePrivate('getAdviceDataFor')
+    def getAdviceDataFor(self, adviserId=None):
+        '''Returns data info for given p_adviserId adviser id.
+           If not p_adviserId is given, every advice infos are returned.'''
+        data = {}
+        if not adviserId:
+            for adviceInfo in self.adviceIndex.values():
+                advId = adviceInfo['id']
+                data[advId] = adviceInfo.copy()
+                # optimize some saved data
+                data[advId]['type'] = translate(data[advId]['type'],
+                                                domain='PloneMeeting',
+                                                context=self.REQUEST)
+                data[advId]['advice_given_on'] = data[advId]['advice_given_on'] and \
+                    data[advId]['advice_given_on'].strftime('%d/%m/%Y') or None
+        else:
+            data = self.adviceIndex[adviserId].copy()
+            data['type'] = translate(data['type'],
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
+            data['advice_given_on'] = data['advice_given_on'] and \
+                data['advice_given_on'].strftime('%d/%m/%Y') or None
+        return data
+
     security.declarePublic('printAdvicesInfos')
     def printAdvicesInfos(self,
                           withAdvicesTitle=True,
