@@ -7,9 +7,6 @@
                  meetingConfig  python: context;
                  topic          python: request.get('topicId', '') and context.topics.get(request['topicId']) or portal.events;
                  isFake         python: request.get('isFake', 'False') == 'True';
-                 dummy          meetingConfig/updateSearchParams;
-                 session        request/SESSION;
-                 isDistant      python: isFake and session.has_key('searchParams') and session['searchParams'].has_key('search_site') and session['searchParams']['search_site'] != '_local';
                  showColors     python: meetingConfig.getParentNode().showColorsForUser();
                  resultMetaType python: topic.getProperty('meeting_topic_type', 'MeetingFile');
                  searchResults  python: meetingConfig.getTopicResults(topic, isFake);
@@ -32,13 +29,13 @@
                   visibleColumns      python: meetingConfig.getQueryColumns(resultMetaType);
                   sortKey             request/sortKey | nothing;
                   sortOrder           request/sortOrder | python:'asc';
-                  showAdvices         python: meetingConfig.getUseAdvices() and ('advices' in visibleColumns) and not isDistant;
-                  showRelatedMeeting  python: (resultMetaType == 'MeetingItem') and not isDistant and (isFake or ('meeting' in visibleColumns));
-                  showToDiscuss       python: not isFake and not isDistant and ('toDiscuss' in visibleColumns);
-                  showItemIsSigned    python: not isFake and not isDistant and ('itemIsSigned' in visibleColumns);
-                  showPrefMeeting     python: not isFake and not isDistant and ('preferredMeeting' in visibleColumns);
-                  showBudgetInfos     python: not isFake and not isDistant and ('budgetInfos' in visibleColumns);
-                  showActions         python: not isFake and not isDistant and ('actions' in visibleColumns)">
+                  showAdvices         python: meetingConfig.getUseAdvices() and ('advices' in visibleColumns);
+                  showRelatedMeeting  python: (resultMetaType == 'MeetingItem') and (isFake or ('meeting' in visibleColumns));
+                  showToDiscuss       python: not isFake and ('toDiscuss' in visibleColumns);
+                  showItemIsSigned    python: not isFake and ('itemIsSigned' in visibleColumns);
+                  showPrefMeeting     python: not isFake and ('preferredMeeting' in visibleColumns);
+                  showBudgetInfos     python: not isFake and ('budgetInfos' in visibleColumns);
+                  showActions         python: not isFake and ('actions' in visibleColumns)">
     <tr>
       <tal:comment replace="nothing">Title</tal:comment>
       <th class="pm_listing_th_title" tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
@@ -145,7 +142,7 @@
           <tal:comment replace="nothing">For a meeting item, show its title with
              a color that depends on the color scheme used in the meeting config,
              and its description.</tal:comment>
-          <tal:forItem condition="python: (resultMetaType == 'MeetingItem') and not isDistant">
+          <tal:forItem condition="python: (resultMetaType == 'MeetingItem')">
             <tal:wakeUpItem define="meetingItem brain/getObject;
                                     isPrivacyViewable meetingItem/isPrivacyViewable">
             <tal:comment replace="nothing">Icon to display</tal:comment>
@@ -184,10 +181,6 @@
             </tal:budget>
             </tal:wakeUpItem>
           </tal:forItem>
-          <tal:comment replace="nothing">Title for a distant item</tal:comment>
-          <a id="pmNoNewContent" tal:condition="python: (resultMetaType == 'MeetingItem') and isDistant"
-             tal:content="structure python: isFake and tool.highlight(brain.pretty_title_or_id()) or brain.pretty_title_or_id()"
-             tal:attributes="href brain/getURL"></a>
           <tal:comment replace="nothing">Title for a meeting (uncolored)</tal:comment>
           <a tal:condition="python: resultMetaType == 'Meeting'"
              id="pmNoNewContent" tal:content="python: tool.formatDate(brain, prefixed=True)"
@@ -209,7 +202,7 @@
         <td tal:condition="python: 'state' in visibleColumns"
             tal:content="brain/review_state" i18n:domain="plone" i18n:translate=""></td>
 
-        <tal:itemOrMeeting condition="python: not isDistant and (resultMetaType in ('MeetingItem', 'Meeting'))">
+        <tal:itemOrMeeting condition="python: resultMetaType in ('MeetingItem', 'Meeting')">
         <tal:comment replace="nothing">For performance reasons, when displaying all decisions, we avoid waking up
             Meeting objects as this query needs to wake up all Meeting objects.</tal:comment>
         <tal:wakeUpObject define="obj brain/getObject">

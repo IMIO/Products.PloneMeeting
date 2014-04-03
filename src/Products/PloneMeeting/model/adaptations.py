@@ -270,8 +270,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
 
     # "items_come_validated" removes the early steps of the item workflow: the
     # initial state becomes "validated". This can be used, for example, when
-    # chaining several HubSessions: items may have been validated in another
-    # HubSessions, and transferred in this one.
+    # an item comes from another MeetingConfig.
     if 'items_come_validated' in wfAdaptations:
         wf = itemWorkflow
         # State 'validated' becomes the initial state

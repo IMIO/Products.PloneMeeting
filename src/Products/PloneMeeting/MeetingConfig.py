@@ -3562,15 +3562,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 obj = getattr(self.meetingusers, user.id)
         return getattr(obj, methodName)()
 
-    security.declarePublic('updateSearchParams')
-    def updateSearchParams(self):
-        '''Updates the search parameters if the user switched from one site to
-           the other.'''
-        newSite = self.REQUEST.get('search_site', None)
-        if newSite:
-            self.REQUEST.SESSION['searchParams']['search_site'] = newSite
-
-
 
 registerType(MeetingConfig, PROJECTNAME)
 # end of class MeetingConfig

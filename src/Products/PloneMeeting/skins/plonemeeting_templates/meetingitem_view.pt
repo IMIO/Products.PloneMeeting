@@ -352,7 +352,7 @@
     </span>
     </tal:tasks>
 
-    <tal:comment replace="nothing">Remember in session when this item was last accessed</tal:comment>
+    <tal:comment replace="nothing">Remember when this item was last accessed</tal:comment>
     <span tal:define="dummy python: tool.rememberAccess(context.UID())"></span>
 
 

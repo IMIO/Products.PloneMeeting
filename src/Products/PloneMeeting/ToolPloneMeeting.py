@@ -946,7 +946,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             (not realManagers and user.has_role('MeetingManager'))
 
     security.declarePublic('isPowerObserverFor')
-    def isPowerObserverFor(self, itemOrMeeting, isRestricted=False):
+    def isPowerObserverForCfg(self, cfg, isRestricted=False):
         """
           Returns True if the current user is a power observer
           for the given p_itemOrMeeting.
@@ -958,7 +958,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not isRestricted and self.isManager():
             return True
         member = self.portal_membership.getAuthenticatedMember()
-        cfg = self.getMeetingConfig(itemOrMeeting)
         if not isRestricted:
             groupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
         else:
@@ -1064,8 +1063,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('highlight')
     def highlight(self, text):
         '''This method highlights parts of p_text corresponding to keywords if
-           keywords are found in search params in the session.'''
-        searchParams = self.REQUEST.SESSION.get('searchParams', None)
+           keywords are found in search params in the REQUEST.form.'''
+        searchParams = eval(self.REQUEST.form.get('searchParams', {}))
         if not searchParams:
             return text
         keywords = searchParams.get('keywords', None)
@@ -1087,7 +1086,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            specifies the 'target' attribute of the 'a' tag. p_maxLength
            defines the number of characters to display if the content of the
            link is too long. If p_highlight is True, and search params are in
-           the session and contain keywords, we highlight keywords found in
+           the REQUEST.form and contain keywords, we highlight keywords found in
            the title.
 
            p_inMeeting and p_meeting will be passed to the used item.getIcons
@@ -2184,8 +2183,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         elif rq['ACTUAL_URL'].endswith('/search_results'):
             if 'search_types' in rq.form:
                 sTypes = rq.form['search_types']
-            elif rq.SESSION.get('searchParams', None):
-                sTypes = rq.SESSION['searchParams']['search_types']
             else:
                 sTypes = ()
             if (isinstance(sTypes, basestring) and (sTypes == 'search_type_items')) or \
@@ -2383,17 +2380,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             obj.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
-
-    security.declarePublic('storeSearchParams')
-    def storeSearchParams(self, form):
-        '''Stores, in the session, advanced-search-related parameters from the
-           given p_form.'''
-        # In some specific cases (ie, when switching language), p_form is empty
-        # (or does only contain a single key) and must not be saved: we suppose
-        # a form was previously saved in the session.
-        if len(form) <= 1:
-            return
-        self.REQUEST.SESSION['searchParams'] = form.copy()
 
     security.declarePublic('truncate')
     def truncate(self, line, size=30):

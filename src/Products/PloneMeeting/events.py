@@ -225,4 +225,5 @@ def onAdviceRemoved(advice, event):
         # the newItem has an empty adviceIndex but can contains advices that will be removed
         logger = logging.getLogger('PloneMeeting')
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
+
 ##/code-section FOOT
