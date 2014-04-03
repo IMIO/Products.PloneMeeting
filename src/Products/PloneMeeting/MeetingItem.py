@@ -1409,7 +1409,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if privacy == 'public':
             return True
         # Bypass privacy check for super users
-        if self.portal_plonemeeting.isPowerObserverFor(self):
+        tool = getToolByName(self, 'portal_plonemeeting')
+        if tool.isPowerObserverForCfg(tool.getMeetingConfig(self)):
             return True
         # Checks that the user belongs to the proposing group.
         proposingGroup = self.getProposingGroup()
@@ -2738,11 +2739,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             i += 1
             optional = (i == 0)
             for adviceInfo in adviceType:
-                # manage only not given advices
-                groupId = adviceInfo['meetingGroupId']
                 # We create an empty dictionary that will store advice info
                 # once the advice will have been created.  But for now, we already
                 # store known infos coming from the configuration and from selected otpional advisers
+                groupId = adviceInfo['meetingGroupId']
                 self.adviceIndex[groupId] = d = PersistentMapping()
                 d['type'] = NOT_GIVEN_ADVICE_VALUE
                 d['optional'] = optional

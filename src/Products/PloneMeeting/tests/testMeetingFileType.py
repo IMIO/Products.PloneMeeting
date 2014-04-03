@@ -67,7 +67,7 @@ class testMeetingFileType(PloneMeetingTestCase):
         # modify annex fileType to use the defined subType
         annex.setMeetingFileType('%s__subtype__unique_row_id_123' % mft.UID())
         IAnnexable(item).updateAnnexIndex()
-        self.assertTrue(item.annexIndex[0]['id'] == '%s__subtype__unique_row_id_123' % mft.UID())
+        self.assertTrue(item.annexIndex[0]['mftId'] == '%s__subtype__unique_row_id_123' % mft.UID())
         self.assertTrue(IAnnexable(item).getAnnexes()[0].getMeetingFileType() ==
                         '%s__subtype__unique_row_id_123' % mft.UID())
         # it is used, we can not remove it from the defined MeetingFileType.subTypes

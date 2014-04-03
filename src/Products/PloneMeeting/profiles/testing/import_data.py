@@ -101,11 +101,19 @@ powerobserver2 = UserDescriptor('powerobserver2',
 restrictedpowerobserver1 = UserDescriptor('restrictedpowerobserver1',
                                           [],
                                           email="restrictedpowerobserver1@plonemeeting.org",
-                                          fullname='M. Restricted Power Observer1')
+                                          fullname='M. Restricted Power Observer 1')
+plonemeeting_assembly_restrictedpowerobservers = PloneGroupDescriptor('plonemeeting-assembly_restrictedpowerobservers',
+                                                                      'plonemeeting-assembly_restrictedpowerobservers',
+                                                                      [])
+restrictedpowerobserver1.ploneGroups = [plonemeeting_assembly_restrictedpowerobservers, ]
+restrictedpowerobserver2 = UserDescriptor('restrictedpowerobserver2',
+                                          [],
+                                          email="restrictedpowerobserver2@plonemeeting.org",
+                                          fullname='M. Restricted Power Observer 2')
 plonegov_assembly_restrictedpowerobservers = PloneGroupDescriptor('plonegov-assembly_restrictedpowerobservers',
                                                                   'plonegov-assembly_restrictedpowerobservers',
                                                                   [])
-restrictedpowerobserver1.ploneGroups = [plonegov_assembly_restrictedpowerobservers, ]
+restrictedpowerobserver2.ploneGroups = [plonegov_assembly_restrictedpowerobservers, ]
 
 developers = GroupDescriptor('developers', 'Developers', 'Devel')
 developers.creators.append(pmCreator1)
@@ -240,5 +248,6 @@ meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', '
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
                                  (developers, vendors, endUsers))
-data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2, restrictedpowerobserver1]
+data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2,
+                           restrictedpowerobserver1, restrictedpowerobserver2]
 # ------------------------------------------------------------------------------

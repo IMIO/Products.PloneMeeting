@@ -285,7 +285,8 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'absolute_url': portal_url.getRelativeContentURL(self),
                'UID': self.UID(),
                'meetingFileTypeObjectUID': fileTypeData['meetingFileTypeObjectUID'],
-               'id': fileTypeData['id'],
+               'mftId': fileTypeData['id'],
+               'id': self.getId(),
                'iconUrl': self.getIcon(),
                # if the parent also has a pm_modification_date,
                # make sure we use the real MeetingFile's one

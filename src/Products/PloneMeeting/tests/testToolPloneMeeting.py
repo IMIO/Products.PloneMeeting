@@ -230,8 +230,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
-        # restrictedpowerobserver1 can only see self.meetingConfig2Id tab also
-        self.changeUser('restrictedpowerobserver1')
+        # restrictedpowerobserver2 can only see self.meetingConfig2Id tab
+        self.changeUser('restrictedpowerobserver2')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
         # If we disable one meetingConfig, it is no more shown

@@ -2,6 +2,7 @@ from zope.component import getMultiAdapter
 from AccessControl import Unauthorized
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.interfaces import IAnnexable
 
 
 class Discuss(BrowserView):
@@ -162,6 +163,9 @@ class AnnexIsConfidential(BrowserView):
         isConfidential = self.context.getIsConfidential()
         # toggle value
         self.context.setIsConfidential(not isConfidential)
+        # update parent item's annexIndex
+        item = self.context.getParentNode()
+        IAnnexable(item).updateAnnexIndex()
 
         if isConfidential:
             filename = 'isConfidentialNo.png'

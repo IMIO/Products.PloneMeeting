@@ -223,7 +223,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
             for brain in brains:
                 item = brain.getObject()
                 for annexInfo in item.annexIndex:
-                    if annexInfo['id'].split('__subtype__')[-1] == row_id:
+                    if annexInfo['mftId'].split('__subtype__')[-1] == row_id:
                         return item.absolute_url()
 
         row_ids_to_save = set([v['row_id'] for v in value if v['row_id']])

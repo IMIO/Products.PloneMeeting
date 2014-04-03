@@ -213,11 +213,18 @@ class AnnexableAdapter(object):
                                             typesIds=typesIds,
                                             onlySelectable=False,
                                             includeSubTypes=False)
+        useConfidentiality = cfg.getEnableAnnexConfidentiality()
+        isRestrictedPowerObserver = False
+        if useConfidentiality:
+            isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
         for fileType in meetingFileTypes:
             annexes = []
             for annexInfo in self.context.annexIndex:
                 if (annexInfo['relatedTo'] == relatedTo) and \
                    (annexInfo['meetingFileTypeObjectUID'] == fileType['meetingFileTypeObjectUID']):
+                    # manage annex confidentiality, do not consider annex not to show
+                    if useConfidentiality and annexInfo['isConfidential'] and isRestrictedPowerObserver:
+                        continue
                     if not realAnnexes:
                         annexes.append(annexInfo)
                     else:

@@ -316,24 +316,22 @@
         <span class="discreet">:</span>
       </td>
       <td tal:repeat="annexesGroup annexesByType" class="noPadding">
-        <tal:comment replace="nothing">Only one annex of this type is present.  If preview is enabled, we show
-        the dropdown list in every case because the user may either preview or download the annex.</tal:comment>
-        <span tal:define="annex python:annexesGroup[0]" class="pmLinks"
-              tal:condition="python: len(annexesGroup) == 1 and not previewEnabled"
-              tal:content="structure python: tool.getColoredLink(annex, showColors, showIcon=True, target=target)">
-        </span>
         <tal:comment replace="nothing">Several annexes of this type are present</tal:comment>
         <dl class="actionMenuAX"
             tal:define="imgUrl python:portal_url + '/' + annexesGroup[0]['iconUrl'];
                         global count python:count+1"
-            tal:attributes="id python:'annexesMenu_' + str(count) + '_' + obj.UID() + '_' + str(relatedTo)"
-            tal:condition="python: len(annexesGroup) > 1 or previewEnabled">
-          <dt class="actionMenuHeaderAX pmLinks">
-              <a href="#" class="#" tal:attributes="class extra_css_class"><img
-                 tal:attributes="src imgUrl"/><b tal:condition="showColors"
-                 tal:content="python: len(annexesGroup)"
-                 tal:attributes="id python: tool.lastModifsConsultedOnAnnexes(annexesGroup) and 'pmNoNewContent' or 'pmNewContent';"></b><b tal:condition="not: showColors"
-                 tal:content="python: len(annexesGroup)" id="pmNoNewContent"></b></a>
+            tal:attributes="id python:'annexesMenu_' + str(count) + '_' + obj.UID() + '_' + str(relatedTo)">
+            <dt class="actionMenuHeaderAX pmLinks">
+                <a href="#" class="#" tal:attributes="class extra_css_class">
+                    <img tal:attributes="src imgUrl" />
+                    <b tal:condition="showColors"
+                       tal:content="python: len(annexesGroup)"
+                       tal:attributes="id python: tool.lastModifsConsultedOnAnnexes(annexesGroup) and 'pmNoNewContent' or 'pmNewContent';">
+                    </b>
+                    <b tal:condition="not: showColors"
+                       tal:content="python: len(annexesGroup)" id="pmNoNewContent">
+                    </b>
+                </a>
           </dt>
           <dd class="actionMenuContentAX">
             <ul>
@@ -343,7 +341,6 @@
             </ul>
           </dd>
         </dl>
-
       </td>
     </tr>
   </table>
