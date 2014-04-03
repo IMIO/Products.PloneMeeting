@@ -90,10 +90,6 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         self.createUser('admin', ('Member', 'Manager', 'MeetingManager', ))
         # Import the test profile
         login(self.portal, 'admin')
-        #setup_tool = getToolByName(self.portal, 'portal_setup')
-        #setup_tool.runImportStepFromProfile(
-        #    'profile-Products.PloneMeeting:test', 'initializetool-PloneMeeting',
-        #    run_dependencies=True)
         # Create some member areas
         for userId in ('pmManager', 'pmCreator1', 'pmCreator2', 'admin', ):
             _createHomeFolder(self.portal, userId)
