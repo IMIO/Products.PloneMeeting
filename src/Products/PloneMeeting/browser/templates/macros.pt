@@ -295,7 +295,7 @@ document.location.reload(true);
          tal:attributes="src string:$portal_url/budgetRelatedYes.png;
                          onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_budget_related\', baseSelector=\'#marker_toggle_budgetrelated_\')'"/>
     <span tal:condition="budgetRelated"
-          class="discreet"
+          class="discreet budgetRelated"
           i18n:translate="budget_related_yes_edit">This item is budget related, check 'Budgetary informations' here under.</span>
 
     <img class="budgetRelatedEditable"
@@ -306,20 +306,20 @@ document.location.reload(true);
          tal:attributes="src string: $portal_url/budgetRelatedNo.png;
                          onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_budget_related\', baseSelector=\'#marker_toggle_budgetrelated_\')'"/>
     <span tal:condition="not: budgetRelated"
-          class="discreet"
+          class="discreet notBudgetRelated"
           i18n:translate="budget_related_no_edit">This item is not budget related.</span>
   </span>
 
   <tal:notMayEdit condition="not: mayEdit">
     <tal:budgetRelated condition="budgetRelated">
       <img tal:attributes="src string: $portal_url/budgetRelatedYes.png"/>
-      <span class="discreet"
+      <span class="discreet budgetRelated"
             i18n:translate="budget_related_yes_view">This item is budget related, check 'Budgetary informations' here under.</span>
     </tal:budgetRelated>
     <tal:notBudgetRelated condition="not: budgetRelated">
       <img tal:condition="not: budgetRelated"
            tal:attributes="src string: $portal_url/budgetRelatedNo.png"/>
-      <span class="discreet"
+      <span class="discreet notBudgetRelated"
             i18n:translate="budget_related_no_view">This item is not budget related.</span>
     </tal:notBudgetRelated>
   </tal:notMayEdit>

@@ -189,7 +189,7 @@ class BudgetRelated(BrowserView):
       View that switch the item 'budgetRelated' attribute using an ajax call.
     """
     IMG_TEMPLATE = u'<img class="budgetRelatedEditable" src="%s" name="%s" title="%s" />' \
-                   u' <span class="discreet">%s</span>'
+                   u' <span class="discreet %s">%s</span>'
 
     def __init__(self, context, request):
         self.context = context
@@ -202,11 +202,11 @@ class BudgetRelated(BrowserView):
         if not member.has_permission('PloneMeeting: Write budget infos', self.context):
             raise Unauthorized
 
-        budgetRelated = self.context.getBudgetRelated()
+        beforeTogglebudgetRelated = self.context.getBudgetRelated()
         # toggle value
-        self.context.setBudgetRelated(not budgetRelated)
+        self.context.setBudgetRelated(not beforeTogglebudgetRelated)
 
-        if budgetRelated:
+        if beforeTogglebudgetRelated:
             filename = 'budgetRelatedNo.png'
             # prefix with 'name' so we can discriminate this label from icon name
             name = 'nameBudgetRelatedYes'
@@ -224,5 +224,6 @@ class BudgetRelated(BrowserView):
                                             domain="PloneMeeting")
         portal_url = self.portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
-        html = self.IMG_TEMPLATE % (src, name, img_title, label)
+        budgetRelatedClass = beforeTogglebudgetRelated and 'notBudgetRelated' or 'budgetRelated'
+        html = self.IMG_TEMPLATE % (src, name, img_title, budgetRelatedClass, label)
         return html

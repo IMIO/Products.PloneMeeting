@@ -570,6 +570,9 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
     padding-bottom: 2px;
     cursor: pointer;
 }
+#content span.budgetRelated {
+    color: green;
+}
 /* remove padding-bottom */
 .itemAssemblyEditable i,
 .itemSignaturesEditable i {
