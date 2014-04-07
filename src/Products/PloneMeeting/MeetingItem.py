@@ -916,6 +916,33 @@ schema = Schema((
         optional=True,
         vocabulary='listPrivacyValues',
     ),
+    StringField(
+        name='completeness',
+        default='completeness_not_yet_evaluated',
+        widget=SelectionWidget(
+            condition="python: here.attributeIsUsed('completeness')",
+            description="Completeness",
+            description_msgid="completeness_descr",
+            label='Completeness',
+            label_msgid='PloneMeeting_label_completeness',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        vocabulary='listCompleteness',
+    ),
+    TextField(
+        name='completenessComment',
+        widget=RichWidget(
+            label_msgid="PloneMeeting_label_completenessComment",
+            condition="python: here.attributeIsUsed('completeness')",
+            rows=15,
+            label='CompletenessComment',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type='text/plain',
+        allowable_content_types=('text/plain',),
+        default_output_type='text/plain',
+    ),
     LinesField(
         name='questioners',
         widget=MultiSelectionWidget(
@@ -1587,6 +1614,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList((
             ("public", translate('ip_public', domain=d, context=self.REQUEST)),
             ("secret", translate('ip_secret', domain=d, context=self.REQUEST)),
+        ))
+        return res
+
+    security.declarePublic('listCompleteness')
+    def listCompleteness(self):
+        '''Vocabulary for the 'completeness' vocabulary.'''
+        d = 'PloneMeeting'
+        res = DisplayList((
+            ("completeness_not_yet_evaluated", translate('completeness_not_yet_evaluated',
+                                                         domain=d,
+                                                         context=self.REQUEST)),
+            ("completeness_complete", translate('completeness_complete',
+                                                domain=d,
+                                                context=self.REQUEST)),
+            ("completeness_incomplete", translate('completeness_incomplete',
+                                                  domain=d,
+                                                  context=self.REQUEST)),
         ))
         return res
 

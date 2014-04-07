@@ -95,6 +95,27 @@
             <td><metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/></td>
             <td><metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/></td>
             <td><metal:field use-macro="python:here.widget('privacy', mode='edit')"/></td>
+            <td>
+                <tal:comment replace="nothing">Completeness informations, completenessComment is shown if completeness radio is 'completeness_incomplete'</tal:comment>
+                <metal:field use-macro="python:here.widget('completeness', mode='edit')" />
+                <div id="completenessComment" name="completenessComment"
+                     tal:attributes="style python: test(context.getCompleteness() == 'completeness_incomplete', 'display: block', 'display: none');">
+                    <metal:field use-macro="python:here.widget('completenessComment', mode='edit')" />
+                </div>
+                <script language="javascript">
+                    $('input:radio[name=completeness]').change(function() {
+                        var completenessComment = $('#completenessComment');
+                        if (this.value == 'completeness_incomplete') {
+                            completenessComment.fadeIn();
+                        }
+                        else {
+                            completenessComment.fadeOut("normal", function() {
+                                $(this).hide();
+                            });
+                        }
+                    });
+                </script>
+            </td>
           </tr>
         </table>
         <tal:comment replace="nothing">Budget-related information</tal:comment>

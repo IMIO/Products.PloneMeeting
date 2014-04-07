@@ -154,6 +154,11 @@
            <metal:itemIsSigned use-macro="here/@@pm-macros/itemIsSigned" />
           </tal:defines>
         </div>
+        <div class="discreet"
+             tal:condition="python: 'completeness' in usedAttrs">
+          <i><span i18n:translate="PloneMeeting_label_completeness"></span></i>:&nbsp;&nbsp;
+            <span metal:use-macro="python: here.widget('completeness', mode='view')" />
+        </div>
         </td>
         <td width="50%" align="right">
         <tal:comment replace="nothing">Preferred meeting</tal:comment>
