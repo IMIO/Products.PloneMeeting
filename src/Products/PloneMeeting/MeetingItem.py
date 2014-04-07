@@ -2458,7 +2458,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'name': getattr(tool, advice.advice_group).getName().decode('utf-8'),
                                         'advice_id': advice.getId(),
                                         'advice_uid': advice.UID(),
-                                        'comment': advice.advice_comment and advice.advice_comment.raw,
+                                        'comment': advice.advice_comment and advice.advice_comment.output,
                                         'row_id': advice.advice_row_id,
                                         'gives_auto_advice_on_help_message': gives_auto_advice_on_help_message,
                                         'delay': delay,

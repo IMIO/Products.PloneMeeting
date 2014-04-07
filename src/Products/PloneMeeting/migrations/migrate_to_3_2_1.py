@@ -55,11 +55,19 @@ class Migrate_To_3_2_1(Migrator):
                     "here.portal_plonemeeting.userIsAmong('restrictedpowerobservers'))")
         logger.info('Done.')
 
+    def _updateAdvices(self):
+        '''Update advices as we store 'comment' of given advices as
+           'utf-8' instead of unicode as other stored data of the item.'''
+        logger.info('Updating advices...')
+        self.tool._updateAllAdvices()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
         self._updateAnnexesMeetingFileType()
         self._addRestrictedPowerObserverGroupsByMeetingConfig()
+        self._updateAdvices()
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.finish()
@@ -72,7 +80,8 @@ def migrate(context):
        1) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
        2) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
        3) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
-       4) Reinstall PloneMeeting.
+       4) Update advices to store 'comment' as utf-8 and not as unicode;
+       5) Reinstall PloneMeeting.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------
