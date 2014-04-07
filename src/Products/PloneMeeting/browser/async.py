@@ -202,11 +202,11 @@ class BudgetRelated(BrowserView):
         if not member.has_permission('PloneMeeting: Write budget infos', self.context):
             raise Unauthorized
 
-        beforeTogglebudgetRelated = self.context.getBudgetRelated()
+        beforeToggleBudgetRelated = self.context.getBudgetRelated()
         # toggle value
-        self.context.setBudgetRelated(not beforeTogglebudgetRelated)
+        self.context.setBudgetRelated(not beforeToggleBudgetRelated)
 
-        if beforeTogglebudgetRelated:
+        if beforeToggleBudgetRelated:
             filename = 'budgetRelatedNo.png'
             # prefix with 'name' so we can discriminate this label from icon name
             name = 'nameBudgetRelatedYes'
@@ -224,6 +224,6 @@ class BudgetRelated(BrowserView):
                                             domain="PloneMeeting")
         portal_url = self.portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
-        budgetRelatedClass = beforeTogglebudgetRelated and 'notBudgetRelated' or 'budgetRelated'
+        budgetRelatedClass = beforeToggleBudgetRelated and 'notBudgetRelated' or 'budgetRelated'
         html = self.IMG_TEMPLATE % (src, name, img_title, budgetRelatedClass, label)
         return html
