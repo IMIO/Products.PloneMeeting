@@ -809,7 +809,7 @@ select#optionalAdvisers option[disabled] {
     color: green;
 }
 .item_completeness_not_yet_evaluated {
-    color: grey;
+    color: &dtml-discreetColor;;
 }
 .item_completeness_incomplete.Editable,
 .item_completeness_complete.Editable,
