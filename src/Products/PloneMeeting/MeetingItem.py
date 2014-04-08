@@ -2052,8 +2052,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            a real Manager (Site Administrator/Manager).'''
         portal = getToolByName(self, 'portal_url').getPortalObject()
         tool = getToolByName(self, 'portal_plonemeeting')
-        if (self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not
-           self.getMeeting().queryState() in Meeting.meetingClosedStates) or tool.isManager(realManagers=True):
+        if self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
+           (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or tool.isManager(realManagers=True):
             return True
         return False
 
