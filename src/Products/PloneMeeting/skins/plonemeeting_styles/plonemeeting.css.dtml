@@ -440,18 +440,23 @@ div.hsGrey {
 .hsLanguage {position: absolute; right: 15px; font-style: italic; font-size: 95%;}
 legend .hsLanguage {top: -0.3em; right: 5px;}
 
-.hsPopup {
+.pmDropdown {
     display:none;
     border: 1px solid gray;
     position: absolute;
     background-color: white;
     padding: 0.3em;
     z-index: 5;
-    right: 10px;
 }
-
-.hsPopup a:hover {
+.pmDropdown a {
+    display: block;
+    cursor: pointer;
+}
+.pmDropdown a:hover {
     text-decoration: underline;
+}
+.pmDropdown.podTemplateSendmail {
+    right: 10px;
 }
 
 /* CSS for data changes in object histories. */
@@ -795,6 +800,21 @@ select#optionalAdvisers option[disabled] {
 #ref_browser_items_manuallyLinkedItems > li {
     line-height: 1em;
     margin-bottom: 0;
+}
+
+.item_completeness_incomplete {
+    color: red;
+}
+.item_completeness_complete {
+    color: green;
+}
+.item_completeness_not_yet_evaluated {
+    color: grey;
+}
+.item_completeness_incomplete.Editable,
+.item_completeness_complete.Editable,
+.item_completeness_not_yet_evaluated.Editable {
+    border-bottom: 1px dotted;
 }
 
 /* </dtml-with> */

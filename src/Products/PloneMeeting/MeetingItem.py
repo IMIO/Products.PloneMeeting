@@ -939,9 +939,9 @@ schema = Schema((
             label='CompletenessComment',
             i18n_domain='PloneMeeting',
         ),
-        default_content_type='text/plain',
-        allowable_content_types=('text/plain',),
-        default_output_type='text/plain',
+        default_content_type='text/html',
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
     ),
     LinesField(
         name='questioners',

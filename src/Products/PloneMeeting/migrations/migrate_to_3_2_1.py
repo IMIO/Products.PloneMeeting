@@ -4,6 +4,7 @@ logger = logging.getLogger('PloneMeeting')
 
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 
 
 # The migration class ----------------------------------------------------------
@@ -62,12 +63,26 @@ class Migrate_To_3_2_1(Migrator):
         self.tool._updateAllAdvices()
         logger.info('Done.')
 
+    def _initMeetingItemCompletenessCommentHTMLField(self):
+        '''Initialize the new field MeetingItem.completenessComment for existing items.'''
+        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
+        logger.info('Initializing new field MeetingItem.completenessComment for %d MeetingItem objects...' % len(brains))
+        for brain in brains:
+            item = brain.getObject()
+            forceHTMLContentTypeForEmptyRichFields(item)
+        logger.info('Initializing new field MeetingItem.completenessComment for items of MeetingConfigs...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            for item in cfg.recurringitems.objectValues('MeetingItem'):
+                forceHTMLContentTypeForEmptyRichFields(item)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
         self._updateAnnexesMeetingFileType()
         self._addRestrictedPowerObserverGroupsByMeetingConfig()
         self._updateAdvices()
+        self._initMeetingItemCompletenessCommentHTMLField()
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.finish()
@@ -81,7 +96,8 @@ def migrate(context):
        2) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
        3) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
        4) Update advices to store 'comment' as utf-8 and not as unicode;
-       5) Reinstall PloneMeeting.
+       5) Initialize new field MeetingItem.completenessComment;
+       6) Reinstall PloneMeeting.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------

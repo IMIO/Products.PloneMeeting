@@ -29,9 +29,9 @@
                                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
                                   portal context/plone_portal_state/portal;">
 
-  <script language="javascript"
-    tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
-  </script>
+    <script language="javascript"
+            tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
+    </script>
 
     <tal:comment replace="nothing">Form used for going to meetingitem_view for an item
         whose number is given by the user.</tal:comment>
@@ -59,7 +59,6 @@
              <span tal:condition="classifier" tal:content="classifier/Title">-</span>
              <span tal:condition="not: classifier">-</span>
         </div>
-
 
         <tal:comment replace="nothing">Category or proposing group (if group is used as category)</tal:comment>
         <div class="discreet" tal:define="cat python: context.getCategory(True)" tal:condition="python: cat">
@@ -153,11 +152,6 @@
                                ajaxEdit python: True;">
            <metal:itemIsSigned use-macro="here/@@pm-macros/itemIsSigned" />
           </tal:defines>
-        </div>
-        <div class="discreet"
-             tal:condition="python: 'completeness' in usedAttrs">
-          <i><span i18n:translate="PloneMeeting_label_completeness"></span></i>:&nbsp;&nbsp;
-            <span metal:use-macro="python: here.widget('completeness', mode='view')" />
         </div>
         </td>
         <td width="50%" align="right">
@@ -256,6 +250,31 @@
 
     <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
     <metal:people use-macro="here/@@pm-macros/itemPeople"/>
+
+    <div tal:condition="python: 'completeness' in usedAttrs">
+        <i class="discreet">
+            <span i18n:translate="PloneMeeting_label_completeness"></span>
+        </i>:&nbsp;&nbsp;
+        <tal:defines define="mayQuickEdit python: context.mayQuickEdit('completeness');">
+            <span class="#"
+                  tal:attributes="onClick python:'toggleMenu(\'item_completeness\')';
+                                  class python: mayQuickEdit and ('item_%s Editable' % context.getCompleteness()) or ('item_%s' % context.getCompleteness())"
+                  tal:content="python: context.displayValue(context.listCompleteness(), context.getCompleteness())">Completeness</span>
+            <div id="pm_menu_item_completeness"
+                 name="pm_menu_item_completeness"
+                 class="pmDropdown">
+                <div tal:repeat="completeness python: context.listCompleteness().items()">
+                    <tal:block tal:condition="python: completeness[0] != context.getCompleteness()">
+                        <a tal:content="python: completeness[1]">Completness</a>
+                    </tal:block>
+                </div>
+            </div>
+        </tal:defines>
+        <tal:field condition="python: context.getCompleteness() == 'completeness_incomplete'"
+                   define="fieldName python: 'completenessComment'; ajaxEdit python:True">
+           <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+        </tal:field>
+    </div>
 
     <tal:comment replace="nothing">Description</tal:comment>
     <tal:field define="fieldName python: 'description'; ajaxEdit python:True">

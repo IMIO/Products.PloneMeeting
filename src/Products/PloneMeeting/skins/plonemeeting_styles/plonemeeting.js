@@ -210,6 +210,13 @@ function toggleDoc(id) {
   else { elem.style.display = 'none'; }
 }
 
+function toggleMenu(menuId){
+  var menu = document.getElementById("pm_menu_"+menuId);
+  var displayValue = menu.style.display;
+  if (displayValue == "block") menu.style.display = "none";
+  else menu.style.display = "block";
+}
+
 var wrongTextInput = '#ff934a none';
 function gotoItem(inputWidget, totalNbOfItems, meetingUid) {
   // Go to meetingitem_view for the item whose number is in p_inputWidget

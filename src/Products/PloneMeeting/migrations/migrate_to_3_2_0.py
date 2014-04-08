@@ -29,8 +29,7 @@ class Migrate_To_3_2_0(Migrator):
     def _initDefaultBudgetHTML(self):
         '''We changed type of field MeetingConfig.budgetInfos from text to rich, we need to update
            existing MeetingConfigs so the field is correctly initialized.'''
-        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
-        logger.info('Initializing new field MeetingItem.motivation for %d MeetingItem objects...' % len(brains))
+        logger.info('Initializing field MeetingConfig.budgetDefault')
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             field = cfg.getField('budgetDefault')
             if field.getContentType(cfg) == 'text/html':

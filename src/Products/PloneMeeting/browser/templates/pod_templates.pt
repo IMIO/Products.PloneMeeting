@@ -38,12 +38,6 @@
         }
       }
     }
-    function toggleMailMenu(menuId){
-      var menu = document.getElementById("podsendmail_"+menuId);
-      var displayValue= menu.style.display;
-      if (displayValue == "block") menu.style.display = "none";
-      else menu.style.display = "block";
-    }
   -->
   </script>
 
@@ -69,11 +63,11 @@
     <tal:mail define="mailingLists python: podTemplate.getAvailableMailingLists(currentObj, member)"
               condition="mailingLists">
     <img src="sendMail.gif"
-         tal:attributes="onClick python:'toggleMailMenu(\'%s\')' % podTemplate.getId();
+         tal:attributes="onClick python:'toggleMenu(\'%s\')' % podTemplate.getId();
                          src string:${portal_url}/sendMail.gif;"
          style="cursor:pointer; position: relative;"/>
-    <div tal:define="menuId python: 'podsendmail_%s' % podTemplate.getId()"
-         tal:attributes="id menuId; name menuId" class="hsPopup">
+    <div tal:define="menuId python: 'pm_menu_%s' % podTemplate.getId()"
+         tal:attributes="id menuId; name menuId" class="pmDropdown podTemplateSendmail">
       <div tal:repeat="name mailingLists">
         <a style="cursor: pointer" tal:content="name"
            tal:attributes="onclick python: 'generatePodDocument(\'%s\',\'%s\',%s,\'%s\')' % (currentObj.UID(), podTemplate.getId(), isItemParam, name)"></a>
