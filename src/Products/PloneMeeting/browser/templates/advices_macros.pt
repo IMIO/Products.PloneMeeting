@@ -109,8 +109,8 @@
                         <a href="#"
                            class="link-overlay-pm"
                            tal:attributes="href string:${item_url}/${advice/advice_id}/view">
-                            <img src="access_detailled_advice.gif"
-                                 tal:attributes="src string:${portal_url}/access_detailled_advice.gif"/>&nbsp;<span i18n:translate="">Access detailled advice</span>
+                            <img src="blue_arrow.gif"
+                                 tal:attributes="src string:${portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Access detailled advice</span>
                         </a>
                     </td>
                     <td colspan="3"
@@ -155,7 +155,7 @@
                 </tal:adviceGiveableWithDelay>
                 <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not itemIsViewableByGroup">
                     <span class="discreet"
-                       i18n:translate="">This advice is not viewable by the advisers of this group in the current item state (<span i18n:name="item_review_state"
+                       i18n:translate="">This item is not viewable by the advisers of this group in the current review state (<span i18n:name="item_review_state"
                                                                                                                                    i18n:translate=""
                                                                                                                                    i18n:domain="plone"
                                                                                                                                    tal:content="item_review_state"

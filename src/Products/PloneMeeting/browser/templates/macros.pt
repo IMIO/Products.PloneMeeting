@@ -358,7 +358,9 @@ document.location.reload(true);
              tal:condition="mayQuickEdit">
             <div style="clear: left;" tal:repeat="completeness python: context.listCompleteness().items()">
                 <tal:block tal:condition="python: completeness[0] != context.getCompleteness()">
-                    <img style="float: left;" src="access_detailled_advice.gif" />
+                    <img style="float: left; padding-right: 0.3em;"
+                         src="blue_arrow.gif"
+                         tal:attributes="src string:${portal_url}/blue_arrow.gif"/>
                     <a href="#"
                        tal:attributes="href python: '%s/@@change-item-completeness?new_completeness_value=%s' % (context.absolute_url(),
                                                                                         completeness[0]);
