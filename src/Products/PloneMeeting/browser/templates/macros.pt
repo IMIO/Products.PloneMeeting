@@ -344,13 +344,12 @@ document.location.reload(true);
                               class python: mayQuickEdit and ('item_%s Editable' % context.getCompleteness()) or ('item_%s' % context.getCompleteness())"
               tal:content="python: context.displayValue(context.listCompleteness(), context.getCompleteness())">Completeness</span>
         <tal:completenessAuthor condition="python: context.getCompleteness() != 'completeness_not_yet_evaluated' and lastCompletenessEvent">
-        (<span i18n:domain="plone"
-               i18n:translate="label_by_author"
-               class="discreet">
+        <span class="discreet">(<span i18n:domain="plone"
+               i18n:translate="label_by_author">
               by
               <span tal:content="python: context.portal_membership.getMemberInfo(lastCompletenessEvent['actor'])['fullname']"
                     i18n:name="author">Roland Barthes</span>
-        </span><span class="discreet"> — </span><span class="discreet" tal:content="python: context.toLocalizedTime(lastCompletenessEvent['time'])" />)
+        </span> — <span tal:content="python: context.toLocalizedTime(lastCompletenessEvent['time'])" />)</span>
         </tal:completenessAuthor>
         <div id="pm_menu_item_completeness"
              name="pm_menu_item_completeness"
