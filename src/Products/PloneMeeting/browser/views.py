@@ -251,7 +251,7 @@ class ChangeItemOrderView(BrowserView):
 
 class UpdateDelayAwareAdvicesView(BrowserView):
     """
-      Thsi is a view that is called as a maintenance task by Products.cron4plone.
+      This is a view that is called as a maintenance task by Products.cron4plone.
       It will be launched at 0:00 each night and update advices on each items so
       delay-aware advices that are using clear day are updated at the very beginning
       of the day.  It will also update the indexAdvisers portal_catalog index.
@@ -261,6 +261,5 @@ class UpdateDelayAwareAdvicesView(BrowserView):
           Update every items adviceIndex and update portal_catalog indexAdvisers index.
           The view itself is protected by the 'Manage portal' permission.
         """
-        # now go on, update every items adviceIndex
         tool = getToolByName(self.context, 'portal_plonemeeting')
         tool._updateAllAdvices()

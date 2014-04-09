@@ -330,6 +330,50 @@ document.location.reload(true);
   </tal:displayBudgetInfos>
 </metal:budgetInfos>
 
+
+<tal:comment replace="nothing">
+  This macro manage the completeness informations of an item, so the 2 fields
+  MeetingItem.completeness and MeetingItem.completenessComment.
+</tal:comment>
+<metal:itemCompleteness define-macro="itemCompleteness">
+
+    <tal:defines define="mayQuickEdit python: context.mayQuickEdit('completeness');
+                         lastCompletenessEvent python: context.getLastEvent(context.getCompleteness());">
+        <span class="#"
+              tal:attributes="onClick python:'toggleMenu(\'item_completeness\')';
+                              class python: mayQuickEdit and ('item_%s Editable' % context.getCompleteness()) or ('item_%s' % context.getCompleteness())"
+              tal:content="python: context.displayValue(context.listCompleteness(), context.getCompleteness())">Completeness</span>
+        <tal:completenessAuthor condition="lastCompletenessEvent">
+        (<span i18n:domain="plone"
+               i18n:translate="label_by_author"
+               class="discreet">
+              by
+              <span tal:content="lastCompletenessEvent/actor"
+                    i18n:name="author">Roland Barthes</span>
+        </span><span class="discreet"> — </span><span class="discreet" tal:content="python: context.toLocalizedTime(lastCompletenessEvent['time'])" />)
+        </tal:completenessAuthor>
+        <div id="pm_menu_item_completeness"
+             name="pm_menu_item_completeness"
+             class="pmDropdown">
+            <div tal:repeat="completeness python: context.listCompleteness().items()">
+                <tal:block tal:condition="python: completeness[0] != context.getCompleteness()">
+                    <a hred="#"
+                       tal:attributes="href python: '%s/@@change-item-completeness?new_completeness_value=%s' % (context.absolute_url(),
+                                                                                        completeness[0]);
+                                       class python: 'item_%s' % completeness[0]"
+                       tal:content="python: completeness[1]">Completness</a>
+                </tal:block>
+            </div>
+        </div>
+    </tal:defines>
+    <tal:field condition="python: context.getCompleteness() == 'completeness_incomplete'"
+               define="fieldName python: 'completenessComment'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+</metal:itemCompleteness>
+
+
 <tal:comment replace="nothing">
   This macro displays buttons for triggering available transitions for any other
   content type than Item or Meeting.

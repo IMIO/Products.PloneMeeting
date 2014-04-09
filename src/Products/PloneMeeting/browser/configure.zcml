@@ -204,6 +204,14 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
 
+    <!-- the view that change MeetingItem.completeness value then refresh page -->
+    <browser:view
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="change-item-completeness"
+        class=".itemcompleteness.ChangeItemCompletenessView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- this view will contains some methods doing unrestricted things.  It replaces Manager Proxy roled python Scripts -->
     <browser:page
         for="*"

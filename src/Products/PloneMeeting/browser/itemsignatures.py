@@ -153,7 +153,7 @@ class ManageItemSignaturesForm(form.Form):
         if not self.context.mayQuickEdit('itemAssembly'):
             raise Unauthorized
 
-        def getItemsToUpdate():
+        def _itemsToUpdate():
             """
               Return items we want to update regarding the number defined in apply_until_item_number
             """
@@ -165,7 +165,7 @@ class ManageItemSignaturesForm(form.Form):
                 meeting = self.context.getMeeting()
                 return meeting.getAllItems(ordered=True)[currentItemNumber-1:self.apply_until_item_number]
 
-        for itemToUpdate in getItemsToUpdate():
+        for itemToUpdate in _itemsToUpdate():
             itemToUpdate.setItemSignatures(self.item_signatures)
 
         plone_utils = getToolByName(self.context, 'plone_utils')

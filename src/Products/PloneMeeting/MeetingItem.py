@@ -929,6 +929,7 @@ schema = Schema((
         ),
         optional=True,
         vocabulary='listCompleteness',
+        write_permission="PloneMeeting: Write completeness",
     ),
     TextField(
         name='completenessComment',
@@ -942,6 +943,7 @@ schema = Schema((
         default_content_type='text/html',
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
+        write_permission="PloneMeeting: Write completeness",
     ),
     LinesField(
         name='questioners',
@@ -1620,7 +1622,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listCompleteness')
     def listCompleteness(self):
         '''Vocabulary for the 'completeness' vocabulary.'''
-        d = 'PloneMeeting'
+        # use plone domain as we display completeness changes in content_history
+        d = 'plone'
         res = DisplayList((
             ("completeness_not_yet_evaluated", translate('completeness_not_yet_evaluated',
                                                          domain=d,

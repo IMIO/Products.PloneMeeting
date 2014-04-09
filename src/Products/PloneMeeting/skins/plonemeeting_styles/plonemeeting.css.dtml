@@ -802,14 +802,18 @@ select#optionalAdvisers option[disabled] {
     margin-bottom: 0;
 }
 
-.item_completeness_incomplete {
-    color: red;
+.item_completeness_incomplete,
+#content a:link.item_completeness_incomplete,
+#hook_completenessComment legend {
+    color: red !important;
 }
-.item_completeness_complete {
-    color: green;
+.item_completeness_complete,
+#content a:link.item_completeness_complete {
+    color: green !important;
 }
-.item_completeness_not_yet_evaluated {
-    color: &dtml-discreetColor;;
+.item_completeness_not_yet_evaluated,
+#content a:link.item_completeness_not_yet_evaluated {
+    color: &dtml-discreetColor; !important;
 }
 .item_completeness_incomplete.Editable,
 .item_completeness_complete.Editable,

@@ -255,25 +255,7 @@
         <i class="discreet">
             <span i18n:translate="PloneMeeting_label_completeness"></span>
         </i>:&nbsp;&nbsp;
-        <tal:defines define="mayQuickEdit python: context.mayQuickEdit('completeness');">
-            <span class="#"
-                  tal:attributes="onClick python:'toggleMenu(\'item_completeness\')';
-                                  class python: mayQuickEdit and ('item_%s Editable' % context.getCompleteness()) or ('item_%s' % context.getCompleteness())"
-                  tal:content="python: context.displayValue(context.listCompleteness(), context.getCompleteness())">Completeness</span>
-            <div id="pm_menu_item_completeness"
-                 name="pm_menu_item_completeness"
-                 class="pmDropdown">
-                <div tal:repeat="completeness python: context.listCompleteness().items()">
-                    <tal:block tal:condition="python: completeness[0] != context.getCompleteness()">
-                        <a tal:content="python: completeness[1]">Completness</a>
-                    </tal:block>
-                </div>
-            </div>
-        </tal:defines>
-        <tal:field condition="python: context.getCompleteness() == 'completeness_incomplete'"
-                   define="fieldName python: 'completenessComment'; ajaxEdit python:True">
-           <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-        </tal:field>
+        <metal:people use-macro="here/@@pm-macros/itemCompleteness"/>
     </div>
 
     <tal:comment replace="nothing">Description</tal:comment>
