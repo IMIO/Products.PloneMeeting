@@ -343,21 +343,23 @@ document.location.reload(true);
               tal:attributes="onClick python:'toggleMenu(\'item_completeness\')';
                               class python: mayQuickEdit and ('item_%s Editable' % context.getCompleteness()) or ('item_%s' % context.getCompleteness())"
               tal:content="python: context.displayValue(context.listCompleteness(), context.getCompleteness())">Completeness</span>
-        <tal:completenessAuthor condition="lastCompletenessEvent">
+        <tal:completenessAuthor condition="python: context.getCompleteness() != 'completeness_not_yet_evaluated' and lastCompletenessEvent">
         (<span i18n:domain="plone"
                i18n:translate="label_by_author"
                class="discreet">
               by
-              <span tal:content="lastCompletenessEvent/actor"
+              <span tal:content="python: context.portal_membership.getMemberInfo(lastCompletenessEvent['actor'])['fullname']"
                     i18n:name="author">Roland Barthes</span>
         </span><span class="discreet"> — </span><span class="discreet" tal:content="python: context.toLocalizedTime(lastCompletenessEvent['time'])" />)
         </tal:completenessAuthor>
         <div id="pm_menu_item_completeness"
              name="pm_menu_item_completeness"
-             class="pmDropdown">
-            <div tal:repeat="completeness python: context.listCompleteness().items()">
+             class="pmDropdown"
+             tal:condition="mayQuickEdit">
+            <div style="clear: left;" tal:repeat="completeness python: context.listCompleteness().items()">
                 <tal:block tal:condition="python: completeness[0] != context.getCompleteness()">
-                    <a hred="#"
+                    <img style="float: left;" src="access_detailled_advice.gif" />
+                    <a href="#"
                        tal:attributes="href python: '%s/@@change-item-completeness?new_completeness_value=%s' % (context.absolute_url(),
                                                                                         completeness[0]);
                                        class python: 'item_%s' % completeness[0]"

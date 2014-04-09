@@ -69,9 +69,9 @@ p {
     max-width: 16px;
     vertical-align: top;
 }
-.ploneMeetingSelectDropdownIcon{
+.ploneMeetingSelectDropdownIcon {
     height: 16px;
-    background-image: url(<dtml-var portal_url>/drop_down.png);
+    background-image: url(&dtml-portal_url;/drop_down.png);
     background-repeat: no-repeat;
     background-position: right;
     min-width: 250px;
@@ -459,6 +459,11 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
     right: 10px;
 }
 
+#pm_menu_item_completeness.pmDropdown {
+    left: 80px;
+    min-width: 250px;
+}
+
 /* CSS for data changes in object histories. */
 .dataChanges { border: 0; }
 .dataChanges th {
@@ -805,20 +810,27 @@ select#optionalAdvisers option[disabled] {
 .item_completeness_incomplete,
 #content a:link.item_completeness_incomplete,
 #hook_completenessComment legend {
+    vertical-align: middle;
+    display: inline;
     color: red !important;
 }
 .item_completeness_complete,
 #content a:link.item_completeness_complete {
+    vertical-align: middle;
+    display: inline;
     color: green !important;
 }
 .item_completeness_not_yet_evaluated,
 #content a:link.item_completeness_not_yet_evaluated {
+    vertical-align: middle;
+    display: inline;
     color: &dtml-discreetColor; !important;
 }
 .item_completeness_incomplete.Editable,
 .item_completeness_complete.Editable,
 .item_completeness_not_yet_evaluated.Editable {
     border-bottom: 1px dotted;
+    cursor: pointer;
 }
 
 /* </dtml-with> */
