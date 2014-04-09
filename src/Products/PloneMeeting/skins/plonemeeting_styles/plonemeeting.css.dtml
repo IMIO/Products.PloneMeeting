@@ -807,6 +807,11 @@ select#optionalAdvisers option[disabled] {
     margin-bottom: 0;
 }
 
+/* show label of completenessComment in red on the item edit form */
+#archetypes-fieldname-completenessComment label {
+    color: #FF0000;
+}
+
 .item_completeness_incomplete,
 #content a:link.item_completeness_incomplete,
 #hook_completenessComment legend {
