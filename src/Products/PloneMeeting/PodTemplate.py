@@ -452,8 +452,7 @@ def freezePodDocumentsIfRelevant(obj, transition):
             # I must dump a document in the DB based on this template and
             # object.
             fileId = podTemplate.getDocumentId(obj)
-            folder = obj.aq_inner.aq_parent
-            existingDoc = getattr(folder, fileId, None)
+            existingDoc = getattr(obj, fileId, None)
             # If the doc was already generated, we do not rewrite it.
             # This way, if some doc generations crash, when retrying them
             # the already generated docs are not generated again.
@@ -461,8 +460,8 @@ def freezePodDocumentsIfRelevant(obj, transition):
                 try:
                     docContent = podTemplate.generateDocument(obj,
                                                               forBrowser=False)
-                    folder.invokeFactory('File', id=fileId, file=docContent)
-                    doc = getattr(folder, fileId)
+                    obj.invokeFactory('File', id=fileId, file=docContent)
+                    doc = getattr(obj, fileId)
                     mr = getToolByName(obj, 'mimetypes_registry')
                     mimetype = mr.lookupExtension(podTemplate.getPodFormat())
                     doc.setFormat(mimetype.normalized())
@@ -476,5 +475,5 @@ def freezePodDocumentsIfRelevant(obj, transition):
                              obj, "documentGenerationFailed")
                 except Unauthorized:
                     logger.warn(CANT_WRITE_DOC % (
-                        user.id, fileId, folder.absolute_url(), podTemplate.id))
+                        user.id, fileId, obj.absolute_url(), podTemplate.id))
 ##/code-section module-footer

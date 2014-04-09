@@ -2,7 +2,9 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 
+from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 
@@ -76,6 +78,19 @@ class Migrate_To_3_2_1(Migrator):
                 forceHTMLContentTypeForEmptyRichFields(item)
         logger.info('Done.')
 
+    def _updateAddFilePermissionOnMeetingConfigFolders(self):
+        '''Update 'Add File' permission on each meetingConfig folder.'''
+        logger.info('Updating the \'Add File\' permission for every meetingConfig folders...')
+        for userFolder in self.portal.Members.objectValues():
+            # if something else than a userFolder, pass
+            if not hasattr(aq_base(userFolder), 'mymeetings'):
+                continue
+            for mConfigFolder in userFolder.mymeetings.objectValues():
+                mConfigFolder.manage_permission('ATContentTypes: Add File',
+                                                PLONEMEETING_UPDATERS,
+                                                acquire=False)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
@@ -83,6 +98,7 @@ class Migrate_To_3_2_1(Migrator):
         self._addRestrictedPowerObserverGroupsByMeetingConfig()
         self._updateAdvices()
         self._initMeetingItemCompletenessCommentHTMLField()
+        self._updateAddFilePermissionOnMeetingConfigFolders()
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.finish()
@@ -97,7 +113,8 @@ def migrate(context):
        3) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
        4) Update advices to store 'comment' as utf-8 and not as unicode;
        5) Initialize new field MeetingItem.completenessComment;
-       6) Reinstall PloneMeeting.
+       6) Update 'Add File' permission on each meetingConfig folder;
+       7) Reinstall PloneMeeting.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------

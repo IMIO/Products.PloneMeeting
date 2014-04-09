@@ -142,7 +142,9 @@ ploneMeetingRoles = (
 )
 
 # Roles that may create or edit item and/or meetings in PloneMeeting
-PLONEMEETING_UPDATERS = ('MeetingManager', 'Manager', 'Owner')
+# Constant defined here so it can be easily overrided by an extension profile
+PLONEMEETING_UPDATERS = ('MeetingManager', 'Manager', 'Owner',
+                         'MeetingMember', 'MeetingPreReviewer', 'MeetingReviewer', )
 
 # The id used for the root folder added to the member personal area that
 # will contain every meetingConfigs available to the member
