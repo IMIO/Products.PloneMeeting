@@ -928,20 +928,20 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         optional=True,
-        vocabulary='listCompleteness',
         write_permission="PloneMeeting: Write completeness",
+        vocabulary='listCompleteness',
     ),
     TextField(
         name='completenessComment',
+        allowable_content_types=('text/html',),
         widget=RichWidget(
-            label_msgid="PloneMeeting_label_completenessComment",
             condition="python: here.attributeIsUsed('completeness')",
             rows=15,
-            label='CompletenessComment',
+            label='Completenesscomment',
+            label_msgid='PloneMeeting_label_completenessComment',
             i18n_domain='PloneMeeting',
         ),
-        default_content_type='text/html',
-        allowable_content_types=('text/html',),
+        default_content_type="text/html",
         default_output_type="text/x-html-safe",
         write_permission="PloneMeeting: Write completeness",
     ),
@@ -2055,8 +2055,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            a real Manager (Site Administrator/Manager).'''
         portal = getToolByName(self, 'portal_url').getPortalObject()
         tool = getToolByName(self, 'portal_plonemeeting')
-        if self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
-           (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or tool.isManager(realManagers=True):
+        member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
+        field = self.Schema()[fieldName]
+        if member.has_permission(field.write_permission, self) and \
+           self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
+           (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
+           tool.isManager(realManagers=True):
             return True
         return False
 

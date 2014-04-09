@@ -36,10 +36,10 @@ class ChangeItemCompletenessView(BrowserView):
         wfHistory = self.context.workflow_history[wfName]
         comments = ''
         if self.new_completeness_value == 'completeness_incomplete':
-            # this will be translated one viewed
+            # this will be translated once viewed
             comments = 'completeness_incomplete_check_completenessComment'
         self.context.workflow_history[wfName] = wfHistory + ({'action': self.new_completeness_value,
-                                                              'review_state': '',
+                                                              'review_state': wfHistory[-1]['review_state'],
                                                               'actor': memberId,
                                                               'comments': comments,
                                                               'time': DateTime()}, )
