@@ -342,7 +342,8 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'gives_auto_advice_on_help_message': '',
                            'delay': '',
                            'delay_left_alert': '',
-                           'delay_label': '', }, ]
+                           'delay_label': '',
+                           'is_linked_to_previous_row': '', }, ]
         groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
         wrong_date_msg = translate('custom_adviser_wrong_date_format',
                                    domain='PloneMeeting',
@@ -459,7 +460,8 @@ class testMeetingConfig(PloneMeetingTestCase):
                                   'gives_auto_advice_on_help_message': 'Auto help message',
                                   'delay': '10',
                                   'delay_left_alert': '',
-                                  'delay_label': 'Delay label', }
+                                  'delay_label': 'Delay label',
+                                  'is_linked_to_previous_row': '', }
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
         # change everything including logical data
@@ -471,7 +473,8 @@ class testMeetingConfig(PloneMeetingTestCase):
                                  'gives_auto_advice_on_help_message': 'Auto help message changed',
                                  'delay': '20',
                                  'delay_left_alert': '',
-                                 'delay_label': 'Delay label changed', }
+                                 'delay_label': 'Delay label changed',
+                                 'is_linked_to_previous_row': '', }
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers([changedCustomAdvisers, ]))
         # now use the config
@@ -544,7 +547,8 @@ class testMeetingConfig(PloneMeetingTestCase):
              'gives_auto_advice_on_help_message': 'Auto help message changed',
              'delay': '20',
              'delay_left_alert': '',
-             'delay_label': 'Delay label changed', }
+             'delay_label': 'Delay label changed',
+             'is_linked_to_previous_row': '', }
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
         self.failIf(cfg.validate_customAdvisers([customAdvisersCreatedUntilSetAndPast, ]))
 
