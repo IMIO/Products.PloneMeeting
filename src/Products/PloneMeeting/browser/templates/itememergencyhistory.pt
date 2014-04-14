@@ -1,0 +1,56 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      lang="en"
+      metal:use-macro="context/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+
+<body>
+
+    <metal:main fill-slot="main">
+        <h1 class="documentFirstHeading" i18n:translate="">
+            History of emergency changes
+        </h1>
+
+        <div id="content-core"
+             tal:define="historyInfos context/emergency_changes_history;">
+
+        <tal:comment replace="nothing">Table containing the history of emergency field changes</tal:comment>
+        <tal:history condition="historyInfos">
+        <table class="listing nosort" style="width: 100%">
+         <thead>
+          <tr i18n:domain="plone">
+            <th i18n:translate="listingheader_action" width="100px">Action</th>
+            <th i18n:translate="listingheader_performed_by" width="125px">Performed by</th>
+            <th i18n:translate="listingheader_date_and_time" width="125px">Date and time</th>
+            <th i18n:translate="history_details" i18n:domain="PloneMeeting">Details</th>
+          </tr>
+         </thead>
+         <tbody>
+          <tal:historyInfo repeat="historyInfo historyInfos">
+          <tr tal:define="odd repeat/historyInfo/odd;
+                          comment historyInfo/comment|nothing;"
+              tal:attributes="class python: odd and 'even' or 'odd'" valign="top">
+            <td class="#"
+                tal:define="actionTitle python: historyInfo['action']"
+                tal:content="actionTitle" i18n:translate="">Action</td>
+            <td tal:define="actorid python:historyInfo.get('actor');
+                            actor python:context.portal_membership.getMemberInfo(actorid);
+                            fullname actor/fullname|nothing;
+                            username actor/username|nothing"
+                tal:content="python:fullname or username or actorid"/>
+            <td tal:content="python:context.restrictedTraverse('@@plone').toLocalizedTime(historyInfo['time'],long_format=True)"/>
+            <td>
+              <tal:comment condition="comment" i18n:translate="" i18n:domain="PloneMeeting" tal:content="structure comment"/>
+              <tal:noComment condition="not: comment" i18n:translate="no_comments"/>
+            </td>
+          </tr>
+          </tal:historyInfo>
+         </tbody>
+        </table>
+        </tal:history>
+        </div>
+    </metal:main>
+</body>
+</html>

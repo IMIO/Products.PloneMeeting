@@ -831,9 +831,37 @@ select#optionalAdvisers option[disabled] {
     display: inline;
     color: &dtml-discreetColor; !important;
 }
+.item_no_emergency,
+#content a:link.item_no_emergency {
+    vertical-align: middle;
+    display: inline;
+    color: &dtml-discreetColor; !important;
+}
+.item_emergency_asked,
+#content a:link.item_emergency_asked {
+    vertical-align: middle;
+    display: inline;
+    color: DarkOrange !important;
+}
+.item_emergency_accepted,
+#content a:link.item_emergency_accepted {
+    vertical-align: middle;
+    display: inline;
+    color: green !important;
+}
+.item_emergency_refused,
+#content a:link.item_emergency_refused {
+    vertical-align: middle;
+    display: inline;
+    color: red !important;
+}
 .item_completeness_incomplete.Editable,
 .item_completeness_complete.Editable,
-.item_completeness_not_yet_evaluated.Editable {
+.item_completeness_not_yet_evaluated.Editable,
+.item_no_emergency.Editable,
+.item_emergency_asked.Editable,
+.item_emergency_accepted.Editable,
+.item_emergency_refused.Editable {
     border-bottom: 1px dotted;
     cursor: pointer;
 }

@@ -139,6 +139,8 @@ def onItemAdded(item, event):
     item.annexIndex = PersistentList()
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
+    # Add a place to store emergency changes history
+    item.emergency_changes_history = PersistentList()
 
 
 def onMeetingAdded(meeting, event):

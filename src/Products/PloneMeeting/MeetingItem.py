@@ -600,6 +600,21 @@ schema = Schema((
         vocabulary='listAssociatedGroups',
     ),
     StringField(
+        name='emergency',
+        default='no_emergency',
+        widget=SelectionWidget(
+            condition="python: here.attributeIsUsed('emergency')",
+            description="Emergency",
+            description_msgid="item_emergency_descr",
+            visible=False,
+            label='Emergency',
+            label_msgid='PloneMeeting_label_emergency',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        vocabulary='listEmergencies',
+    ),
+    StringField(
         name='preferredMeeting',
         default='whatever',
         widget=SelectionWidget(
@@ -922,7 +937,7 @@ schema = Schema((
         widget=SelectionWidget(
             condition="python: here.attributeIsUsed('completeness')",
             description="Completeness",
-            description_msgid="completeness_descr",
+            description_msgid="item_completeness_descr",
             label='Completeness',
             label_msgid='PloneMeeting_label_completeness',
             i18n_domain='PloneMeeting',
@@ -1619,9 +1634,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
+    security.declarePublic('listEmergencies')
+    def listEmergencies(self):
+        '''Vocabulary for the 'emergency' field.'''
+        d = 'PloneMeeting'
+        res = DisplayList((
+            ("no_emergency", translate('no_emergency',
+                                       domain=d,
+                                       context=self.REQUEST)),
+            ("emergency_asked", translate('emergency_asked',
+                                          domain=d,
+                                          context=self.REQUEST)),
+            ("emergency_accepted", translate('emergency_accepted',
+                                             domain=d,
+                                             context=self.REQUEST)),
+            ("emergency_refused", translate('emergency_refused',
+                                            domain=d,
+                                            context=self.REQUEST)),
+        ))
+        return res
+
     security.declarePublic('listCompleteness')
     def listCompleteness(self):
-        '''Vocabulary for the 'completeness' vocabulary.'''
+        '''Vocabulary for the 'completeness' field.'''
         # use plone domain as we display completeness changes in content_history
         d = 'plone'
         res = DisplayList((
