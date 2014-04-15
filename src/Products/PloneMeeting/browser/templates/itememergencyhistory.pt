@@ -14,7 +14,8 @@
         </h1>
 
         <div id="content-core"
-             tal:define="historyInfos context/emergency_changes_history;">
+             tal:define="historyInfos context/emergency_changes_history;
+                         dummy python: historyInfos.reverse();">
 
         <tal:comment replace="nothing">Table containing the history of emergency field changes</tal:comment>
         <tal:history condition="historyInfos">
@@ -33,8 +34,11 @@
                           comment historyInfo/comment|nothing;"
               tal:attributes="class python: odd and 'even' or 'odd'" valign="top">
             <td class="#"
-                tal:define="actionTitle python: historyInfo['action']"
-                tal:content="actionTitle" i18n:translate="">Action</td>
+                tal:define="actionTitle python: historyInfo['action']">
+                <span tal:content="actionTitle"
+                      i18n:translate=""
+                      tal:attributes="class string:item_${historyInfo/action};">Action</span>
+            </td>
             <td tal:define="actorid python:historyInfo.get('actor');
                             actor python:context.portal_membership.getMemberInfo(actorid);
                             fullname actor/fullname|nothing;

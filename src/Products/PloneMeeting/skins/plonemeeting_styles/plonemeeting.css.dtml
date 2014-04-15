@@ -458,10 +458,15 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
 .pmDropdown.podTemplateSendmail {
     right: 10px;
 }
+.pmDropdown.podTemplateSendmail > div {
+    padding-right: 50px;
+}
 
 #pm_menu_item_completeness.pmDropdown {
-    left: 80px;
-    min-width: 250px;
+    left: 92px;
+}
+#pm_menu_item_emergency.pmDropdown {
+    left: 70px;
 }
 
 /* CSS for data changes in object histories. */
@@ -831,11 +836,16 @@ select#optionalAdvisers option[disabled] {
     display: inline;
     color: &dtml-discreetColor; !important;
 }
+a.item_completeness_incomplete,
+a.item_completeness_complete,
+a.item_completeness_not_yet_evaluated {
+    padding-right: 50px;
+}
 .item_no_emergency,
 #content a:link.item_no_emergency {
     vertical-align: middle;
     display: inline;
-    color: &dtml-discreetColor; !important;
+    color: &dtml-discreetColor;;
 }
 .item_emergency_asked,
 #content a:link.item_emergency_asked {
@@ -854,6 +864,12 @@ select#optionalAdvisers option[disabled] {
     vertical-align: middle;
     display: inline;
     color: red !important;
+}
+a.item_no_emergency,
+a.item_emergency_asked,
+a.item_emergency_accepted,
+a.item_emergency_refused {
+    padding-right: 50px;
 }
 .item_completeness_incomplete.Editable,
 .item_completeness_complete.Editable,

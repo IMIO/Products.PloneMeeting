@@ -72,6 +72,12 @@
         <a style="cursor: pointer" tal:content="name"
            tal:attributes="onclick python: 'generatePodDocument(\'%s\',\'%s\',%s,\'%s\')' % (currentObj.UID(), podTemplate.getId(), isItemParam, name)"></a>
       </div>
+            <div style="text-align: right;"
+                 tal:attributes="onClick python:'toggleMenu(\'%s\')' % podTemplate.getId();">
+                <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
+                     src="pb_close_small.png"
+                     tal:attributes="src string:${portal_url}/pb_close_small.png"/>
+            </div>
     </div>
     </tal:mail>
   &nbsp;
