@@ -935,7 +935,7 @@ schema = Schema((
         name='completeness',
         default='completeness_not_yet_evaluated',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('completeness')",
+            condition="python: here.attributeIsUsed('completeness') and here.mayWriteCompleteness()",
             description="Completeness",
             description_msgid="item_completeness_descr",
             label='Completeness',
@@ -943,14 +943,13 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         optional=True,
-        write_permission="PloneMeeting: Write completeness",
         vocabulary='listCompleteness',
     ),
     TextField(
         name='completenessComment',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('completeness')",
+            condition="python: here.attributeIsUsed('completeness') and here.mayWriteCompleteness()",
             rows=15,
             label='Completenesscomment',
             label_msgid='PloneMeeting_label_completenessComment',
@@ -958,7 +957,6 @@ schema = Schema((
         ),
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
-        write_permission="PloneMeeting: Write completeness",
     ),
     LinesField(
         name='questioners',
@@ -1251,6 +1249,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # not "unsigned".  This way, a final state 'signed' exists for the item
         if item.getMeeting().queryState() in Meeting.meetingClosedStates and \
            item.getItemIsSigned():
+            return False
+        return True
+
+    security.declarePublic('mayWriteCompleteness')
+    def mayWriteCompleteness(self):
+        '''Condition for editing 'completeness' field.'''
+        # user must be able to edit current item
+        membershipTool = getToolByName(self, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        # user must be an item completeness editor (one of corresponding role)
+        if not member.has_permission(ModifyPortalContent, self) or \
+           not member.has_role(ITEM_COMPLETENESS_EDITORS, self):
             return False
         return True
 
@@ -3653,7 +3663,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ann[annotation_key] = newItem.UID()
         # Send an email to the user being able to modify the new item if relevant
         mapping = {'meetingConfigTitle': destMeetingConfig.Title(), }
-        newItem.sendMailIfRelevant('itemClonedToThisMC', 'Modify portal content',
+        newItem.sendMailIfRelevant('itemClonedToThisMC', ModifyPortalContent,
                                    isRole=False, mapping=mapping)
         msg = 'sendto_%s_success' % destMeetingConfigId
         plone_utils.addPortalMessage(translate(msg,
@@ -4021,7 +4031,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check if current user may switch votes mode.'''
         member = self.restrictedTraverse('@@plone_portal_state').member()
         if not self.hasVotes() and \
-           member.has_permission('Modify portal content', self) and \
+           member.has_permission(ModifyPortalContent, self) and \
            self.portal_plonemeeting.isManager():
             return True
         return False

@@ -945,7 +945,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             user.has_role('Site Administrator') or \
             (not realManagers and user.has_role('MeetingManager'))
 
-    security.declarePublic('isPowerObserverFor')
+    security.declarePublic('isPowerObserverForCfg')
     def isPowerObserverForCfg(self, cfg, isRestricted=False):
         """
           Returns True if the current user is a power observer
