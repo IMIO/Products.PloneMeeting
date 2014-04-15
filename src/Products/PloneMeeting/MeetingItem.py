@@ -1115,7 +1115,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def validate_optionalAdvisers(self, value):
         '''When selecting an optional adviser, make sure that 2 values regarding the same
            group are not selected, this could be the case when using delay-aware advisers.
-           Moreover, make sure we can not unselect an adviser that already gave hsi advice.'''
+           Moreover, make sure we can not unselect an adviser that already gave his advice.'''
         for adviser in value:
             # if it is a delay-aware advice, check that the same 'normal'
             # optional adviser has not be selected and that another delay-aware adviser
@@ -1142,6 +1142,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if removedAdvisers:
             givenAdvices = self.getGivenAdvices()
             for removedAdviser in removedAdvisers:
+                if '__rowid__' in removedAdviser:
+                    removedAdviser, rowid = self._decodeDelayAwareId(removedAdviser)
                 if removedAdviser in givenAdvices and givenAdvices[removedAdviser]['optional'] is True:
                     return translate('can_not_unselect_already_given_advice',
                                      mapping={'removedAdviser': self.displayValue(self.listOptionalAdvisers(),

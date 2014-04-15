@@ -1532,6 +1532,35 @@ class testMeetingItem(PloneMeetingTestCase):
             'advice_comment': RichTextValue(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
         self.assertTrue(item.validate_optionalAdvisers(()), can_not_unselect_msg)
+
+        # we can not unselect an advice-aware if given
+        # remove advice given by developers and make it a delay-aware advice
+        self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
+        self.changeUser('admin')
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'developers',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': 'Optional help message',
+                           'delay': '10',
+                           'delay_label': 'Delay label', }, ]
+        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        self.changeUser('pmManager')
+        item.setOptionalAdvisers(('developers__rowid__unique_id_123', ))
+        # for now as developers advice is not given, we can unselect it
+        # validate returns nothing if validation was successful
+        self.failIf(item.validate_optionalAdvisers(()))
+        # now give the advice
+        developers_advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+            'advice_type': u'positive',
+            'advice_comment': RichTextValue(u'My comment')})
+        # now we can not unselect the 'developers' anymore as advice was given
+        self.assertTrue(item.validate_optionalAdvisers(()), can_not_unselect_msg)
+
         # we can unselect an optional advice if the given advice is an automatic one
         # remove the given one and make what necessary for an automatic advice
         # equivalent to the selected optional advice to be given
