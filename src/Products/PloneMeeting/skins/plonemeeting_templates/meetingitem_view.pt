@@ -158,7 +158,7 @@
                 <i class="discreet">
                     <span i18n:translate="PloneMeeting_label_emergency"></span>
                 </i>:&nbsp;&nbsp;
-                <metal:people use-macro="here/@@pm-macros/itemEmergency"/>
+                <tal:itemEmergency replace="structure here/@@item-emergency/index" />
             </div>
         </td>
         <td width="50%" align="right">

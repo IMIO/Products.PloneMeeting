@@ -14,7 +14,7 @@
         </h1>
 
         <div id="content-core"
-             tal:define="historyInfos context/emergency_changes_history;
+             tal:define="historyInfos python: list(context.emergency_changes_history);
                          dummy python: historyInfos.reverse();">
 
         <tal:comment replace="nothing">Table containing the history of emergency field changes</tal:comment>
@@ -54,6 +54,9 @@
          </tbody>
         </table>
         </tal:history>
+        <tal:noHistory condition="not: historyInfos" i18n:translate="">
+            No history informations are avaialble for now.
+        </tal:noHistory>
         </div>
     </metal:main>
 </body>

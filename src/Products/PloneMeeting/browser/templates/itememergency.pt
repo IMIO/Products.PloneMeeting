@@ -1,30 +1,31 @@
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xml:lang="en"
-      lang="en"
-      xmlns:tal="http://xml.zope.org/namespaces/tal"
-      xmlns:metal="http://xml.zope.org/namespaces/metal"
-      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-      metal:use-macro="here/main_template/macros/master"
-      i18n:domain="Products.PloneMeeting">
-
-  <body>
-  <metal:fill fill-slot="main">
-
-    <h1 class="documentFirstHeading" tal:content="context/Title">Title</h1>
-    <form id="changeEmergencyValueForm" method="post"
-          tal:attributes="action python:context.absolute_url() + '/@@change-item-emergency'">
-    <input type="hidden" name="new_emergency_value" tal:attributes="value view/request/new_emergency_value"/>
-    <tal:comment replace="nothing">Optional comment</tal:comment>
-    <p class="popups_field_descr" i18n:translate="change_emergency_comment">You are about to <span style="text-transform: lowercase; font-weight: bold;" i18n:name="emergency_value" i18n:domain="plone" i18n:translate="" tal:content="view/request/new_emergency_value">emergency value</span>, add a comment if necessary.</p>
-    <label for="comment" i18n:translate="emergency_comment">Comment</label>
-    <textarea name="comment" rows="8"></textarea><br/><br/>
-    <div align="center">
-      <input type="hidden" name="form.submitted:boolean" value="True" />
-      <input type="submit" name="form.buttons.save" class="context" value="Save" i18n:attributes="value" i18n:domain="plone" />
-      <input type="submit" name="form.buttons.cancel" class="standalone" value="Cancel" i18n:attributes="value" i18n:domain="plone" />
+<tal:defines define="mayQuickEdit python: context.mayQuickEdit('emergency');
+                     currentEmergency context/getEmergency;
+                     lastEmergencyEvent python: context.getLastEvent(currentEmergency);">
+    <span class="#"
+          onclick="javascript:toggleMenu('item_emergency')"
+          tal:attributes="class python: mayQuickEdit and ('item_%s Editable' % currentEmergency) or ('item_%s' % currentEmergency)"
+          tal:content="python: context.displayValue(context.listEmergencies(), currentEmergency)">Emergency</span>
+    <span class="discreet"> — <a href="item-emergency-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
+    <div id="pm_menu_item_emergency"
+         name="pm_menu_item_emergency"
+         class="pmDropdown"
+         tal:condition="mayQuickEdit">
+        <div style="clear: left;" tal:repeat="emergency python: view.listSelectableEmergencies().items()">
+            <tal:block tal:condition="python: emergency[0] != currentEmergency">
+                <img style="float: left; padding-right: 0.3em;"
+                     src="blue_arrow.gif"
+                     tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
+                <a href="#"
+                   tal:attributes="href python: '%s/@@change-item-emergency?new_emergency_value=%s' % (context.absolute_url(),
+                                                                                    emergency[0]);
+                                   class python: 'link-overlay-pm item_%s' % emergency[0]"
+                   tal:content="python: emergency[1]">Emergency</a>
+            </tal:block>
+        </div>
+        <div style="text-align: right;" onclick="javascript:toggleMenu('item_emergency')">
+            <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
+                 src="pb_close_small.png"
+                 tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
+        </div>
     </div>
-    </form>
-
-  </metal:fill>
-  </body>
-</html>
+</tal:defines>

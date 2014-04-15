@@ -383,47 +383,6 @@ document.location.reload(true);
 </metal:itemCompleteness>
 
 
-
-<tal:comment replace="nothing">
-  This macro manage the emergency of an item, so the 'emergency' field
-  and a popup that is displayed to enter relevant comment (motivation) about the emergency (asked/accepted/refused).
-</tal:comment>
-<metal:itemEmergency define-macro="itemEmergency">
-
-    <tal:defines define="mayQuickEdit python: context.mayQuickEdit('emergency');
-                         currentEmergency context/getEmergency;
-                         lastEmergencyEvent python: context.getLastEvent(currentEmergency);">
-        <span class="#"
-              onclick="javascript:toggleMenu('item_emergency')"
-              tal:attributes="class python: mayQuickEdit and ('item_%s Editable' % currentEmergency) or ('item_%s' % currentEmergency)"
-              tal:content="python: context.displayValue(context.listEmergencies(), currentEmergency)">Emergency</span>
-        <span class="discreet"> — <a href="item-emergency-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
-        <div id="pm_menu_item_emergency"
-             name="pm_menu_item_emergency"
-             class="pmDropdown"
-             tal:condition="mayQuickEdit">
-            <div style="clear: left;" tal:repeat="emergency python: context.listEmergencies().items()">
-                <tal:block tal:condition="python: emergency[0] != currentEmergency">
-                    <img style="float: left; padding-right: 0.3em;"
-                         src="blue_arrow.gif"
-                         tal:attributes="src string:${portal_url}/blue_arrow.gif"/>
-                    <a href="#"
-                       tal:attributes="href python: '%s/@@change-item-emergency?new_emergency_value=%s' % (context.absolute_url(),
-                                                                                        emergency[0]);
-                                       class python: 'item_%s' % emergency[0]"
-                       tal:content="python: emergency[1]">Emergency</a>
-                </tal:block>
-            </div>
-            <div style="text-align: right;" onclick="javascript:toggleMenu('item_emergency')">
-                <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
-                     src="pb_close_small.png"
-                     tal:attributes="src string:${portal_url}/pb_close_small.png"/>
-            </div>
-        </div>
-    </tal:defines>
-</metal:itemEmergency>
-
-
 <tal:comment replace="nothing">
   This macro displays buttons for triggering available transitions for any other
   content type than Item or Meeting.

@@ -824,17 +824,27 @@ select#optionalAdvisers option[disabled] {
     display: inline;
     color: red !important;
 }
+/* generated class used in object's history */
+.transition-completeness_incomplete {
+    color: red;
+}
 .item_completeness_complete,
 #content a:link.item_completeness_complete {
     vertical-align: middle;
     display: inline;
     color: green !important;
 }
+.transition-completeness_complete {
+    color: green;
+}
 .item_completeness_not_yet_evaluated,
 #content a:link.item_completeness_not_yet_evaluated {
     vertical-align: middle;
     display: inline;
     color: &dtml-discreetColor; !important;
+}
+.transition-completeness_not_yet_evaluated {
+    color: &dtml-discreetColor;;
 }
 a.item_completeness_incomplete,
 a.item_completeness_complete,
