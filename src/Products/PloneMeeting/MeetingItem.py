@@ -935,7 +935,7 @@ schema = Schema((
         name='completeness',
         default='completeness_not_yet_evaluated',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('completeness') and here.mayWriteCompleteness()",
+            condition="python: here.attributeIsUsed('completeness') and here.adapted().mayWriteCompleteness()",
             description="Completeness",
             description_msgid="item_completeness_descr",
             label='Completeness',
@@ -949,7 +949,7 @@ schema = Schema((
         name='completenessComment',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('completeness') and here.mayWriteCompleteness()",
+            condition="python: here.attributeIsUsed('completeness') and here.adapted().mayWriteCompleteness()",
             rows=15,
             label='Completenesscomment',
             label_msgid='PloneMeeting_label_completenessComment',
@@ -1259,8 +1259,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         membershipTool = getToolByName(self, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
         # user must be an item completeness editor (one of corresponding role)
-        if not member.has_permission(ModifyPortalContent, self) or \
-           not member.has_role(ITEM_COMPLETENESS_EDITORS, self):
+        item = self.getSelf()
+        if not member.has_permission(ModifyPortalContent, item) or \
+           not member.has_role(ITEM_COMPLETENESS_EDITORS, item):
             return False
         return True
 
