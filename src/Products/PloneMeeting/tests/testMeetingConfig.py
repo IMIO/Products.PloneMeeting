@@ -343,6 +343,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '',
                            'delay_left_alert': '',
                            'delay_label': '',
+                           'available_on': '',
                            'is_linked_to_previous_row': '', }, ]
         groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
         wrong_date_msg = translate('custom_adviser_wrong_date_format',
@@ -401,7 +402,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                            # wrong value
                            'delay': 'a',
                            'delay_left_alert': '',
-                           'delay_label': '', }, ]
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '', }, ]
         groupName = getattr(self.tool, customAdvisers[0]['group']).getName()
         wrong_delay_msg = translate('custom_adviser_wrong_delay_format',
                                     domain='PloneMeeting',
@@ -461,6 +464,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                   'delay': '10',
                                   'delay_left_alert': '',
                                   'delay_label': 'Delay label',
+                                  'available_on': '',
                                   'is_linked_to_previous_row': '', }
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
@@ -474,6 +478,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                  'delay': '20',
                                  'delay_left_alert': '',
                                  'delay_label': 'Delay label changed',
+                                 'available_on': '',
                                  'is_linked_to_previous_row': '', }
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers([changedCustomAdvisers, ]))
@@ -548,6 +553,7 @@ class testMeetingConfig(PloneMeetingTestCase):
              'delay': '20',
              'delay_left_alert': '',
              'delay_label': 'Delay label changed',
+             'available_on': '',
              'is_linked_to_previous_row': '', }
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
         self.failIf(cfg.validate_customAdvisers([customAdvisersCreatedUntilSetAndPast, ]))

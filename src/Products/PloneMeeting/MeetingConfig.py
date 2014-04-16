@@ -40,7 +40,6 @@ from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
-from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
@@ -1199,7 +1198,7 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="CustomAdvisers",
             description_msgid="custom_advisers_descr",
-            columns={'row_id': Column("Custom adviser row id", visible=False), 'group': SelectColumn("Custom adviser group", vocabulary="listActiveMeetingGroups"), 'gives_auto_advice_on': Column("Custom adviser gives automatic advice on", col_description="gives_auto_advice_on_col_description"), 'gives_auto_advice_on_help_message': Column("Custom adviser gives automatic advice on help message", col_description="gives_auto_advice_on_help_message_col_description"), 'for_item_created_from': Column("Rule activated for item created from", col_description="for_item_created_from_col_description", default=DateTime().strftime('%Y/%m/%d'), required=True), 'for_item_created_until': Column("Rule activated for item created until", col_description="for_item_created_until_col_description"), 'delay': Column("Delay for giving advice", col_description="delay_col_description"), 'delay_left_alert': Column("Delay left alert", col_description="delay_left_alert_col_description"), 'delay_label': Column("Custom adviser delay label", col_description="delay_label_col_description"), 'is_linked_to_previous_row': CheckboxColumn("Is linked to previous row", col_description="Is linked to previous row description", default='')},
+            columns={'row_id': Column("Custom adviser row id", visible=False), 'group': SelectColumn("Custom adviser group", vocabulary="listActiveMeetingGroups"), 'gives_auto_advice_on': Column("Custom adviser gives automatic advice on", col_description="gives_auto_advice_on_col_description"), 'gives_auto_advice_on_help_message': Column("Custom adviser gives automatic advice on help message", col_description="gives_auto_advice_on_help_message_col_description"), 'for_item_created_from': Column("Rule activated for item created from", col_description="for_item_created_from_col_description", default=DateTime().strftime('%Y/%m/%d'), required=True), 'for_item_created_until': Column("Rule activated for item created until", col_description="for_item_created_until_col_description"), 'delay': Column("Delay for giving advice", col_description="delay_col_description"), 'delay_left_alert': Column("Delay left alert", col_description="delay_left_alert_col_description"), 'delay_label': Column("Custom adviser delay label", col_description="delay_label_col_description"), 'available_on': Column("Available on", col_description="available_on_col_description"), 'is_linked_to_previous_row': SelectColumn("Is linked to previous row?", vocabulary="listBooleanVocabulary", col_description="Is linked to previous row description", default=False)},
             label='Customadvisers',
             label_msgid='PloneMeeting_label_customAdvisers',
             i18n_domain='PloneMeeting',
@@ -1207,7 +1206,7 @@ schema = Schema((
         schemata="advices",
         default=defValues.customAdvisers,
         allow_oddeven=True,
-        columns=('row_id', 'group', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message', 'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert', 'delay_label', 'is_linked_to_previous_row'),
+        columns=('row_id', 'group', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message', 'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert', 'delay_label', 'available_on', 'is_linked_to_previous_row'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -1722,16 +1721,42 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              'for_item_created_until' that we can only set if not already set to deactivate a used row
              and 'help_message' fields.
             '''
+        # first row can not be 'is_linked_to_previous_row' == '1'
+        if value and value[0]['is_linked_to_previous_row'] == '1':
+            return translate('custom_adviser_first_row_can_not_be_linked_to_previous',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
         tool = getToolByName(self, 'portal_plonemeeting')
+        previousRow = None
         for customAdviser in value:
             # a row_id, even empty is required
             if not 'row_id' in customAdviser:
                 raise Exception('A row_id is required!')
+            group = getattr(tool, customAdviser['group'])
+            # 'is_linked_to_previous_row' is only relevant for delay-aware advices
+            if customAdviser['is_linked_to_previous_row'] == '1' and not customAdviser['delay']:
+                return translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 context=self.REQUEST)
+            # 'is_linked_to_previous_row' is only relevant if previous row is also delay-aware advices
+            if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['delay']:
+                return translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser_previous_row',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 context=self.REQUEST)
+            # 'is_linked_to_previous_row' is only if previous row is of same group
+            if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['group'] == customAdviser['group']:
+                return translate('custom_adviser_can_not_is_linked_to_previous_row_with_other_group',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 context=self.REQUEST)
+
             # validate the date in the 'for_item_created_from' and
             # 'for_item_created_until' columns
             created_from = customAdviser['for_item_created_from']
             created_until = customAdviser['for_item_created_until']
-            group = getattr(tool, customAdviser['group'])
             try:
                 # 'for_item_created_from' is required
                 date_from = DateTime(created_from)
@@ -1781,6 +1806,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      domain='PloneMeeting',
                                      mapping={'groupName': unicode(group.Title(), 'utf-8'), },
                                      context=self.REQUEST)
+            previousRow = customAdviser
 
         def _checkIfConfigIsUsed(row_id):
             '''Check if the rule we want to edit logical data for
@@ -1796,44 +1822,38 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     if adviser['row_id'] == row_id:
                         return item.absolute_url()
 
-        # check that if a row changed, it is not already in use
-        # we can not change any logical value but the 'for_item_created_until'
-        # and only if it was empty before
-        for customAdviser in value:
-            # if we still have no value in the 'row_id', it means that it is a new row
-            row_id = customAdviser['row_id']
-            if not row_id:
-                continue
-            for storedCustomAdviser in self.getCustomAdvisers():
-                # find the stored value with same 'row_id'
-                if storedCustomAdviser['row_id'] == row_id:
-                    # we found the corresponding row, check if it was modified
-                    for k, v in storedCustomAdviser.items():
-                        if not customAdviser[k] == v:
-                            # we found a value that changed, check if we could
-                            # first check if it is not the 'for_item_created_until' value
-                            # for wich we are setting a value for the first time (aka is empty in the stored value)
-                            # or a 'help_message', those fields we can change the value
-                            if not (k == 'for_item_created_until' and not v) and \
-                               not k in ['gives_auto_advice_on_help_message', 'delay_left_alert', 'delay_label']:
-                                # we are setting another field, it is not permitted if
-                                # the rule is in use, check every items if the rule is used
-                                # _checkIfConfigIsUsed will return an item absolute_url using this configuration if any
-                                an_item_url = _checkIfConfigIsUsed(row_id)
-                                if an_item_url:
-                                    tool = getToolByName(self, 'portal_plonemeeting')
-                                    groupName = unicode(getattr(tool, customAdviser['group']).getName(), 'utf-8')
-                                    columnName = self.Schema()['customAdvisers'].widget.columns[k].label
-                                    return translate(
-                                        'custom_adviser_can_not_edit_used_row',
-                                        domain='PloneMeeting',
-                                        mapping={'item_url': an_item_url,
-                                                 'adviser_group': groupName,
-                                                 'column_name': translate(columnName,
-                                                                          domain='datagridfield',
-                                                                          context=self.REQUEST),
-                                                 'column_old_data': v, },
-                                        context=self.REQUEST)
+        # we can not change the position of a row that 'is_linked_to_previous_row'
+        # if it is in use and linked to an automatic adviser
+        # check every rows for wich 'is_linked_to_previous_row' == '1'
+        # and if in use, the prior row must be the same as before
+        # take also into account rows for wich we changed the position
+        # and the value of 'is_linked_to_previous_row'
+        storedCustomAdvisers = self.getCustomAdvisers()
+        for storedRow in storedCustomAdvisers:
+            # if the stored custom adviser is an automatic one and linked to others...
+            linkedRows = self._findLinkedRowsFor(storedRow['row_id'])
+            # just do not consider if storedRow is the first of linkedRows
+            if linkedRows and \
+               linkedRows[0]['gives_auto_advice_on'] and \
+               not storedRow == linkedRows[0]:
+                # save _checkIfConfigIsUsed and continue the 'if'
+                an_item_url = _checkIfConfigIsUsed(storedRow['row_id'])
+                if an_item_url:
+                    #... check that it was not moved in the new value
+                    # we are on the second/third/... value of a used 'is_linked_to_previous_row' automatic adviser
+                    # get the previous in stored value and check that it is the same in new value to set
+                    previousStoredRow = storedCustomAdvisers[storedCustomAdvisers.index(storedRow) - 1]
+                    previousCustomAdviserRowId = None
+                    for customAdviser in value:
+                        if customAdviser['row_id'] == storedRow['row_id']:
+                            # we found the corresponding row, check if previous row is the same
+                            if not previousCustomAdviserRowId == previousStoredRow['row_id']:
+                                return translate('custom_adviser_can_change_row_order_of_used_row_linked_to_previous',
+                                                 domain='PloneMeeting',
+                                                 mapping={'item_url': an_item_url,
+                                                          'adviser_group': group, },
+                                                 context=self.REQUEST)
+                        previousCustomAdviserRowId = customAdviser['row_id']
 
         # check also that if we removed some row_id, it was not in use neither
         row_ids_to_save = set([v['row_id'] for v in value if v['row_id']])
@@ -1850,6 +1870,67 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  mapping={'item_url': an_item_url,
                                           'adviser_group': group, },
                                  context=self.REQUEST)
+
+        # check that if a row changed, it is not already in use
+        # we can not change any logical value but the 'for_item_created_until'
+        # and only if it was empty before
+        for customAdviser in value:
+            # if we still have no value in the 'row_id', it means that it is a new row
+            row_id = customAdviser['row_id']
+            if not row_id:
+                continue
+            for storedCustomAdviser in storedCustomAdvisers:
+                # find the stored value with same 'row_id'
+                if storedCustomAdviser['row_id'] == row_id:
+                    # we found the corresponding row, check if it was modified
+                    for k, v in storedCustomAdviser.items():
+                        if not customAdviser[k] == v:
+                            # we found a value that changed, check if we could
+                            # 1) first check if it is not the 'for_item_created_until' value
+                            #    for wich we are setting a value for the first time (aka is empty in the stored value)
+                            # 2) or a 'non logical field', those fields we can change the value of
+                            # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser that is not permitted
+                            if not (k == 'for_item_created_until' and not v) and \
+                               not k in ['gives_auto_advice_on_help_message', 'delay_left_alert', 'delay_label', ] and \
+                               not (k == 'is_linked_to_previous_row' and (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0]['gives_auto_advice_on'])):
+                                # we are setting another field, it is not permitted if
+                                # the rule is in use, check every items if the rule is used
+                                # _checkIfConfigIsUsed will return an item absolute_url using this configuration
+                                an_item_url = _checkIfConfigIsUsed(row_id)
+                                if an_item_url:
+                                    tool = getToolByName(self, 'portal_plonemeeting')
+                                    groupName = unicode(getattr(tool, customAdviser['group']).getName(), 'utf-8')
+                                    columnName = self.Schema()['customAdvisers'].widget.columns[k].label
+                                    return translate(
+                                        'custom_adviser_can_not_edit_used_row',
+                                        domain='PloneMeeting',
+                                        mapping={'item_url': an_item_url,
+                                                 'adviser_group': groupName,
+                                                 'column_name': translate(columnName,
+                                                                          domain='datagridfield',
+                                                                          context=self.REQUEST),
+                                                 'column_old_data': v, },
+                                        context=self.REQUEST)
+                                elif k == 'is_linked_to_previous_row':
+                                    # if we are here because k == 'is_linked_to_previous_row', we need to check that the entire chain
+                                    # of linked rows is not in use because we could in a first step set 'is_linked_to_previous_row' to '0'
+                                    # for an intermediate row of the chain that would isolate a used row then it would not be considered
+                                    # as linked to an automatic adviser...
+                                    for linkedRow in self._findLinkedRowsFor(customAdviser['row_id']):
+                                        an_item_url = _checkIfConfigIsUsed(linkedRow['row_id'])
+                                        if an_item_url:
+                                            tool = getToolByName(self, 'portal_plonemeeting')
+                                            groupName = unicode(getattr(tool, customAdviser['group']).getName(), 'utf-8')
+                                            columnName = self.Schema()['customAdvisers'].widget.columns[k].label
+                                            return translate('custom_adviser_can_not_change_is_linked_to_previous_row_isolating_used_rows',
+                                                             domain='PloneMeeting',
+                                                             mapping={'item_url': an_item_url,
+                                                                      'adviser_group': groupName,
+                                                                      'column_name': translate(columnName,
+                                                                                               domain='datagridfield',
+                                                                                               context=self.REQUEST),
+                                                                      'column_old_data': v, },
+                                                             context=self.REQUEST)
 
     security.declarePrivate('validate_usedMeetingAttributes')
     def validate_usedMeetingAttributes(self, newValue):
@@ -1964,10 +2045,46 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      'every values selected in the \'itemAdvicesStates\' field!')
 
     def _dataForCustomAdviserRowId(self, row_id):
-        '''Return the data for the given p_row_id from the field 'customAdvisers'.'''
+        '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''
         for adviser in self.getCustomAdvisers():
             if adviser['row_id'] == row_id:
                 return adviser
+
+    def _findLinkedRowsFor(self, row_id):
+        '''Returns the rows linked to given p_row_id row.  If not linked, returns an empty list.'''
+        res = []
+        currentRowData = self._dataForCustomAdviserRowId(row_id)
+        currentRowIndex = self.getCustomAdvisers().index(currentRowData)
+        # if the current row is not linked to previous row or the next row
+        # is not linked the current row, return nothing
+        if not currentRowData['is_linked_to_previous_row'] == '1' and \
+           (currentRowIndex == len(self.getCustomAdvisers())-1 or not
+           self.getCustomAdvisers()[currentRowIndex+1]['is_linked_to_previous_row'] == '1'):
+            return res
+        res.append(currentRowData)
+
+        # find previous and next rows linked to row_id row
+        i = currentRowIndex
+        if currentRowData['is_linked_to_previous_row'] == '1':
+            while i > 0:
+                i = i - 1
+                # loop until the first row is found, aka a row for wich
+                # is_linked_to_previous_row == '0'
+                previousRow = self.getCustomAdvisers()[i]
+                res.insert(0, previousRow)
+                if previousRow['is_linked_to_previous_row'] == '0':
+                    break
+        i = currentRowIndex
+        while i < len(self.getCustomAdvisers())-1:
+            i = i + 1
+            # loop until the last row is found, aka end of customAdvisers
+            # or row after has 'is_linked_to_previous_row' == '0'
+            nextRow = self.getCustomAdvisers()[i]
+            if nextRow['is_linked_to_previous_row'] == '1':
+                res.append(nextRow)
+            else:
+                break
+        return res
 
     security.declarePrivate('listWorkflowAdaptations')
     def listWorkflowAdaptations(self):
@@ -2125,6 +2242,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append((mGroup.getId(), mGroup.getName()))
 
         return DisplayList(res).sortedByValue()
+
+    def listBooleanVocabulary(self):
+        '''Vocabulary generating a boolean behaviour : just 2 values, one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn that does not handle validation correctly.'''
+        d = "PloneMeeting"
+        res = DisplayList((
+            ('0', translate('boolean_value_false', domain=d, context=self.REQUEST)),
+            ('1', translate('boolean_value_true', domain=d, context=self.REQUEST)),
+        ))
+        return res
 
     security.declarePrivate('listAllVoteValues')
     def listAllVoteValues(self):

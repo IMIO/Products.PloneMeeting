@@ -720,8 +720,11 @@ dl.searchResults cite {
 #datagridwidget-table-customAdvisers .datagridwidget-column-5,
 #datagridwidget-table-customAdvisers .datagridwidget-column-6,
 #datagridwidget-table-customAdvisers .datagridwidget-column-7,
-div[id^="archetypes-fieldname-customAdvisers-"] TH {
-    width: 12.5%;
+#datagridwidget-table-customAdvisers .datagridwidget-column-8,
+#datagridwidget-table-customAdvisers .datagridwidget-column-9,
+#datagridwidget-table-customAdvisers .datagridwidget-column-10,
+#datagridwidget-table-customAdvisers .datagridwidget-column-11 {
+    width: 10%;
 }
 /* make column displayed for MeetingFileType.subTypes equals
    except 2 last columns that will be tighter
@@ -822,7 +825,7 @@ select#optionalAdvisers option[disabled] {
 #hook_completenessComment legend {
     vertical-align: middle;
     display: inline;
-    color: red !important;
+    color: red;
 }
 /* generated class used in object's history */
 .transition-completeness_incomplete {
@@ -832,7 +835,7 @@ select#optionalAdvisers option[disabled] {
 #content a:link.item_completeness_complete {
     vertical-align: middle;
     display: inline;
-    color: green !important;
+    color: green;
 }
 .transition-completeness_complete {
     color: green;
@@ -841,7 +844,7 @@ select#optionalAdvisers option[disabled] {
 #content a:link.item_completeness_not_yet_evaluated {
     vertical-align: middle;
     display: inline;
-    color: &dtml-discreetColor; !important;
+    color: &dtml-discreetColor;;
 }
 .transition-completeness_not_yet_evaluated {
     color: &dtml-discreetColor;;
@@ -861,19 +864,19 @@ a.item_completeness_not_yet_evaluated {
 #content a:link.item_emergency_asked {
     vertical-align: middle;
     display: inline;
-    color: DarkOrange !important;
+    color: DarkOrange;
 }
 .item_emergency_accepted,
 #content a:link.item_emergency_accepted {
     vertical-align: middle;
     display: inline;
-    color: green !important;
+    color: green;
 }
 .item_emergency_refused,
 #content a:link.item_emergency_refused {
     vertical-align: middle;
     display: inline;
-    color: red !important;
+    color: red;
 }
 a.item_no_emergency,
 a.item_emergency_asked,
