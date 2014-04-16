@@ -54,6 +54,7 @@ class Discuss(BrowserView):
         src = "%s/%s" % (portal_url, filename)
 
         html = self.IMG_TEMPLATE % (src, title, name)
+        self.context.at_post_edit_script()
         return html
 
     def synchToggle(self, itemUid, discussAction):
@@ -83,6 +84,7 @@ class Discuss(BrowserView):
             item.setToDiscuss(toDiscuss)
             item.adapted().onDiscussChanged(toDiscuss)
         tool = getToolByName(self.portal, 'portal_plonemeeting')
+        self.context.at_post_edit_script()
         return tool.gotoReferer()
 
 
@@ -128,6 +130,7 @@ class AnnexToPrint(BrowserView):
             portal_url = self.portal_state.portal_url()
             src = "%s/%s" % (portal_url, filename)
             html = self.IMG_TEMPLATE % (src, title, name)
+            self.context.at_post_edit_script()
             return html
         except Exception, exc:
             # set an error status in request.RESPONSE so the ajax call knows
@@ -181,6 +184,7 @@ class AnnexIsConfidential(BrowserView):
         portal_url = self.portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
         html = self.IMG_TEMPLATE % (src, title, name)
+        self.context.at_post_edit_script()
         return html
 
 
@@ -226,4 +230,13 @@ class BudgetRelated(BrowserView):
         src = "%s/%s" % (portal_url, filename)
         budgetRelatedClass = beforeToggleBudgetRelated and 'notBudgetRelated' or 'budgetRelated'
         html = self.IMG_TEMPLATE % (src, name, img_title, budgetRelatedClass, label)
+        # reload the page if current toggle did change adviceIndex
+        # indeed, budgetRelated informations often impact automtic advices
+        storedAdviceIndex = self.context.adviceIndex
+        self.context.at_post_edit_script()
+        if not self.context.adviceIndex == storedAdviceIndex:
+            # we set a status reponse of 500 so the jQuery calling this
+            # will refresh the page
+            self.request.RESPONSE.status = 500
+            return
         return html
