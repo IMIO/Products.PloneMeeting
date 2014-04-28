@@ -337,7 +337,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         customAdvisers = [{'row_id': 'unique_id_123',
                            'group': 'vendors',
                            'gives_auto_advice_on': '',
-                           'for_item_created_from': '2012/31/12',
+                           'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
                            'delay': '',
@@ -557,6 +557,124 @@ class testMeetingConfig(PloneMeetingTestCase):
              'is_linked_to_previous_row': '', }
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
         self.failIf(cfg.validate_customAdvisers([customAdvisersCreatedUntilSetAndPast, ]))
+
+    def test_pm_Validate_customAdvisersIsLinkedToPreviousRow(self):
+        '''Test the MeetingConfig.customAdvisers validate method.
+           This validates the 'is_linked_to_previous_row' row :
+           - first row can not be linked to previous row...;
+           - can not be set on a row that is not delay-aware;
+           - can not be set if linked row is not delay-aware;
+           - can not change ('' to '1' and the other way round) if chained rows are in use;
+           - can not change position of used rows.'''
+        cfg = self.meetingConfig
+        # the validate method returns a translated message if the validation failed
+        # wrong date format, should be YYYY/MM/DD
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/12/31',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': '',
+                           'delay': '',
+                           'delay_left_alert': '',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '', }, ]
+        groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
+        first_row_msg = translate('custom_adviser_first_row_can_not_be_linked_to_previous',
+                                  domain='PloneMeeting',
+                                  mapping={'groupName': groupName},
+                                  context=self.portal.REQUEST)
+        # check that 'is_linked_to_previous_row'
+        # can not be set on the first row
+        customAdvisers[0]['is_linked_to_previous_row'] = '1'
+        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
+                          first_row_msg)
+        customAdvisers[0]['is_linked_to_previous_row'] = ''
+
+        # check that 'is_linked_to_previous_row'
+        # can only be set on a delay-aware row
+        customAdvisers.append({'row_id': 'unique_id_456',
+                               'group': 'vendors',
+                               'gives_auto_advice_on': '',
+                               'for_item_created_from': '2012/12/31',
+                               'for_item_created_until': '',
+                               'gives_auto_advice_on_help_message': '',
+                               'delay': '',
+                               'delay_left_alert': '',
+                               'delay_label': '',
+                               'available_on': '',
+                               'is_linked_to_previous_row': '1'})
+        row_not_delay_aware_msg = translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser',
+                                            domain='PloneMeeting',
+                                            mapping={'groupName': groupName},
+                                            context=self.portal.REQUEST)
+        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
+                          row_not_delay_aware_msg)
+
+        # check that 'is_linked_to_previous_row'
+        # can only be set if previous row is also a delay-aware row
+        # make second row a delay aware row, first row is not delay aware
+        customAdvisers[1]['delay'] = '5'
+        self.assertTrue(customAdvisers[0]['delay'] == '')
+        previous_row_not_delay_aware_msg = translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser_previous_row',
+                                                     domain='PloneMeeting',
+                                                     mapping={'groupName': groupName},
+                                                     context=self.portal.REQUEST)
+        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
+                          previous_row_not_delay_aware_msg)
+
+        # check that 'is_linked_to_previous_row' value can be changed
+        # while not already in use by created items
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/12/31',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': '',
+                           'delay': '5',
+                           'delay_left_alert': '2',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '', },
+                          {'row_id': 'unique_id_456',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/12/31',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': '',
+                           'delay': '10',
+                           'delay_left_alert': '4',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '1'},
+                          {'row_id': 'unique_id_789',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/12/31',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': '',
+                           'delay': '20',
+                           'delay_left_alert': '4',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '1'}]
+        cfg.setCustomAdvisers(customAdvisers)
+        # change 'is_linked_to_previous_row' of second row to ''
+        customAdvisers[1]['is_linked_to_previous_row'] = ''
+        # validate returns nothing if validation was successful
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        customAdvisers[2]['is_linked_to_previous_row'] = '1'
+        customAdvisers[1]['is_linked_to_previous_row'] = ''
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+
+        # we can change row positions, no problem
+        tmp = dict(customAdvisers[1])
+        customAdvisers[1] = dict(customAdvisers[2])
+        customAdvisers[2] = tmp
+        self.assertTrue(customAdvisers[1]['row_id'] == 'unique_id_789')
+        self.assertTrue(customAdvisers[2]['row_id'] == 'unique_id_456')
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
 
     def test_pm_Validate_transitionsForPresentingAnItem(self):
         '''Test the MeetingConfig.transitionsForPresentingAnItem validation.
