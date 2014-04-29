@@ -337,7 +337,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         customAdvisers = [{'row_id': 'unique_id_123',
                            'group': 'vendors',
                            'gives_auto_advice_on': '',
-                           'for_item_created_from': '2012/12/31',
+                           # wrong date format, should have been '2012/12/31'
+                           'for_item_created_from': '2012/31/12',
                            'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
                            'delay': '',
