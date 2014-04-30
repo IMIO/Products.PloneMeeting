@@ -1831,11 +1831,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         storedCustomAdvisers = self.getCustomAdvisers()
         for storedRow in storedCustomAdvisers:
             # if the stored custom adviser is an automatic one and linked to others...
-            linkedRows = self._findLinkedRowsFor(storedRow['row_id'])
+            isAutomaticAdvice, linkedRows = self._findLinkedRowsFor(storedRow['row_id'])
             # just do not consider if storedRow is the first of linkedRows
-            if linkedRows and \
-               linkedRows[0]['gives_auto_advice_on'] and \
-               not storedRow == linkedRows[0]:
+            if linkedRows and isAutomaticAdvice and not storedRow == linkedRows[0]:
                 # save _checkIfConfigIsUsed and continue the 'if'
                 an_item_url = _checkIfConfigIsUsed(storedRow['row_id'])
                 if an_item_url:
@@ -1848,10 +1846,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         if customAdviser['row_id'] == storedRow['row_id']:
                             # we found the corresponding row, check if previous row is the same
                             if not previousCustomAdviserRowId == previousStoredRow['row_id']:
-                                return translate('custom_adviser_can_change_row_order_of_used_row_linked_to_previous',
+                                return translate('custom_adviser_can_not_change_row_order_of_used_row_linked_to_previous',
                                                  domain='PloneMeeting',
                                                  mapping={'item_url': an_item_url,
-                                                          'adviser_group': group, },
+                                                          'adviser_group': group.getName(), },
                                                  context=self.REQUEST)
                         previousCustomAdviserRowId = customAdviser['row_id']
 
@@ -1892,7 +1890,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser that is not permitted
                             if not (k == 'for_item_created_until' and not v) and \
                                not k in ['gives_auto_advice_on_help_message', 'delay_left_alert', 'delay_label', ] and \
-                               not (k == 'is_linked_to_previous_row' and (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0]['gives_auto_advice_on'])):
+                               not (k == 'is_linked_to_previous_row' and (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):
                                 # we are setting another field, it is not permitted if
                                 # the rule is in use, check every items if the rule is used
                                 # _checkIfConfigIsUsed will return an item absolute_url using this configuration
@@ -1912,11 +1910,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                  'column_old_data': v, },
                                         context=self.REQUEST)
                                 elif k == 'is_linked_to_previous_row':
-                                    # if we are here because k == 'is_linked_to_previous_row', we need to check that the entire chain
-                                    # of linked rows is not in use because we could in a first step set 'is_linked_to_previous_row' to '0'
-                                    # for an intermediate row of the chain that would isolate a used row then it would not be considered
-                                    # as linked to an automatic adviser...
-                                    for linkedRow in self._findLinkedRowsFor(customAdviser['row_id']):
+                                    # if we are here because k == 'is_linked_to_previous_row', we know that it is
+                                    # an automatic advice, we need to check that the entire chain of linked rows
+                                    # is not in use because we could in a first step set 'is_linked_to_previous_row'
+                                    # to '0' for an intermediate row of the chain that would isolate an used row then
+                                    # it would not be considered as linked to an automatic adviser...
+                                    for linkedRow in self._findLinkedRowsFor(customAdviser['row_id'])[1]:
                                         an_item_url = _checkIfConfigIsUsed(linkedRow['row_id'])
                                         if an_item_url:
                                             tool = getToolByName(self, 'portal_plonemeeting')
@@ -2051,16 +2050,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return adviser
 
     def _findLinkedRowsFor(self, row_id):
-        '''Returns the rows linked to given p_row_id row.  If not linked, returns an empty list.'''
+        '''Returns the fact that linked rows are 'automatic advice' or not and
+           rows linked to given p_row_id row.  If not linked, returns False and an empty list.'''
         res = []
+        isAutomaticAdvice = False
         currentRowData = self._dataForCustomAdviserRowId(row_id)
+        if currentRowData['gives_auto_advice_on']:
+            isAutomaticAdvice = True
         currentRowIndex = self.getCustomAdvisers().index(currentRowData)
         # if the current row is not linked to previous row or the next row
         # is not linked the current row, return nothing
         if not currentRowData['is_linked_to_previous_row'] == '1' and \
            (currentRowIndex == len(self.getCustomAdvisers())-1 or not
            self.getCustomAdvisers()[currentRowIndex+1]['is_linked_to_previous_row'] == '1'):
-            return res
+            return isAutomaticAdvice, res
         res.append(currentRowData)
 
         # find previous and next rows linked to row_id row
@@ -2072,6 +2075,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # is_linked_to_previous_row == '0'
                 previousRow = self.getCustomAdvisers()[i]
                 res.insert(0, previousRow)
+                if previousRow['gives_auto_advice_on']:
+                    isAutomaticAdvice = True
                 if previousRow['is_linked_to_previous_row'] == '0':
                     break
         i = currentRowIndex
@@ -2082,9 +2087,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             nextRow = self.getCustomAdvisers()[i]
             if nextRow['is_linked_to_previous_row'] == '1':
                 res.append(nextRow)
+                if nextRow['gives_auto_advice_on']:
+                    isAutomaticAdvice = True
             else:
                 break
-        return res
+        return isAutomaticAdvice, res
 
     security.declarePrivate('listWorkflowAdaptations')
     def listWorkflowAdaptations(self):
