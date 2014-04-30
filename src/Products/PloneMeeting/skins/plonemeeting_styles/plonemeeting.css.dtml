@@ -821,7 +821,8 @@ select#optionalAdvisers option[disabled] {
 }
 
 .item_completeness_incomplete,
-#content a:link.item_completeness_incomplete,
+#content a.item_completeness_incomplete:link,
+#content a.item_completeness_incomplete:visited,
 #hook_completenessComment legend {
     vertical-align: middle;
     display: inline;
@@ -832,7 +833,8 @@ select#optionalAdvisers option[disabled] {
     color: red;
 }
 .item_completeness_complete,
-#content a:link.item_completeness_complete {
+#content a.item_completeness_complete:link,
+#content a.item_completeness_complete:visited {
     vertical-align: middle;
     display: inline;
     color: green;
@@ -841,12 +843,23 @@ select#optionalAdvisers option[disabled] {
     color: green;
 }
 .item_completeness_not_yet_evaluated,
-#content a:link.item_completeness_not_yet_evaluated {
+#content a.item_completeness_not_yet_evaluated:link,
+#content a.item_completeness_not_yet_evaluated:visited {
     vertical-align: middle;
     display: inline;
     color: &dtml-discreetColor;;
 }
 .transition-completeness_not_yet_evaluated {
+    color: &dtml-discreetColor;;
+}
+.item_completeness_evaluation_asked_again,
+#content a.item_completeness_evaluation_asked_again:link,
+#content a.item_completeness_evaluation_asked_again:visited {
+    vertical-align: middle;
+    display: inline;
+    color: DarkOrange;
+}
+.transition-completeness_evaluation_asked_again {
     color: &dtml-discreetColor;;
 }
 a.item_completeness_incomplete,
@@ -887,6 +900,7 @@ a.item_emergency_refused {
 .item_completeness_incomplete.Editable,
 .item_completeness_complete.Editable,
 .item_completeness_not_yet_evaluated.Editable,
+.item_completeness_evaluation_asked_again.Editable,
 .item_no_emergency.Editable,
 .item_emergency_asked.Editable,
 .item_emergency_accepted.Editable,

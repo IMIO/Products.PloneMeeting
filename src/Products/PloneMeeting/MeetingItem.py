@@ -1683,6 +1683,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             ("completeness_incomplete", translate('completeness_incomplete',
                                                   domain=d,
                                                   context=self.REQUEST)),
+            ("completeness_evaluation_asked_again", translate('completeness_evaluation_asked_again',
+                                                              domain=d,
+                                                              context=self.REQUEST)),
         ))
         return res
 
