@@ -603,7 +603,7 @@ schema = Schema((
         name='emergency',
         default='no_emergency',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('emergency')",
+            condition="python: here.attributeIsUsed('emergency') and not here.isDefinedInTool()",
             description="Emergency",
             description_msgid="item_emergency_descr",
             visible=False,
@@ -1262,7 +1262,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         member = membershipTool.getAuthenticatedMember()
         # user must be an item completeness editor (one of corresponding role)
         item = self.getSelf()
-        if not member.has_permission(ModifyPortalContent, item) or \
+        if item.isDefinedInTool() or \
+           not member.has_permission(ModifyPortalContent, item) or \
            not member.has_role(ITEM_COMPLETENESS_EDITORS, item):
             return False
         return True
