@@ -24,11 +24,11 @@ class ItemEmergencyView(BrowserView):
         if not self.mayAskEmergency():
             emergencyKeys.remove('emergency_asked')
         # now check if user can accept/refuse and asked emergency if it is not already the case
-        if not self.mayAcceptOrRefuseEmergency():
+        if not self.mayAcceptOrRefuseEmergency() or not currentEmergency == 'emergency_asked':
             emergencyKeys.remove('emergency_accepted')
             emergencyKeys.remove('emergency_refused')
         # now if currentEmergency is still in emergencies, we remove it
-        if currentEmergency in emergencies:
+        if currentEmergency in emergencyKeys:
             emergencyKeys.remove(currentEmergency)
         # now build a vocabulary with left values
         res = []
