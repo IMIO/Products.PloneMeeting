@@ -2,6 +2,7 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 
+from persistent.list import PersistentList
 from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
@@ -91,6 +92,18 @@ class Migrate_To_3_2_1(Migrator):
                                                 acquire=False)
         logger.info('Done.')
 
+    def _addEmergencyChangesHistoryToItems(self):
+        '''Add the attribute 'emergency_changes_history' on every existing items,
+           this will be used to store changes about the MeetingItem.emergency field values
+           and comments.'''
+        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
+        logger.info('Initializing attribute \'emergency_changes_history\' for %d MeetingItem objects...' % len(brains))
+        for brain in brains:
+            item = brain.getObject()
+            if not hasattr(item, 'emergency_changes_history'):
+                item.emergency_changes_history = PersistentList()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
@@ -99,6 +112,7 @@ class Migrate_To_3_2_1(Migrator):
         self._updateAdvices()
         self._initMeetingItemCompletenessCommentHTMLField()
         self._updateAddFilePermissionOnMeetingConfigFolders()
+        self._addEmergencyChangesHistoryToItems()
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.finish()
@@ -114,7 +128,8 @@ def migrate(context):
        4) Update advices to store 'comment' as utf-8 and not as unicode;
        5) Initialize new field MeetingItem.completenessComment;
        6) Update 'Add File' permission on each meetingConfig folder;
-       7) Reinstall PloneMeeting.
+       7) Add an attribute 'emergency_changes_history' for every existing items;
+       8) Reinstall PloneMeeting.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------
