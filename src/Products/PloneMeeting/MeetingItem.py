@@ -2891,6 +2891,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not adviceInfo['row_id']:
                     # this is a given advice that was not asked (given by a PowerAdviser)
                     adviceInfo['not_asked'] = True
+                if adviceInfo['delay'] and groupId in delay_started_stopped_on_save:
+                    # an automatic advice was given but because something changed on the item
+                    # for example switched from budgetRelated to not budgetRelated, the automatic
+                    # advice should not be asked, but as already given, we keep it
+                    adviceInfo['delay_started_on'] = delay_started_stopped_on_save[groupId]['delay_started_on']
+                    adviceInfo['delay_stopped_on'] = delay_started_stopped_on_save[groupId]['delay_stopped_on']
             self.adviceIndex[groupId].update(adviceInfo)
 
         # Clean-up advice-related local roles and granted permissions.
