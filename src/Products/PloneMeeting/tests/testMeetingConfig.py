@@ -709,6 +709,17 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay_left_alert': '4',
                            'delay_label': '',
                            'available_on': '',
+                           'is_linked_to_previous_row': '1'},
+                          {'row_id': 'unique_id_1011',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/12/31',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': '',
+                           'delay': '30',
+                           'delay_left_alert': '4',
+                           'delay_label': '',
+                           'available_on': '',
                            'is_linked_to_previous_row': '1'}]
         cfg.setCustomAdvisers(customAdvisers)
         # for now stored data are ok
@@ -782,12 +793,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         # can not delete used or chained row
         # delete second row (unused but in the chain)
         secondRow = customAdvisers.pop(1)
-        # while removing a row in a chain, it consider firrst that the chain was changed
+        # while removing a row in a chain, it consider first that the chain was changed
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           changed_row_pos_msg)
         customAdvisers.insert(1, secondRow)
         # delete third row (used)
-        customAdvisers.pop(2)
+        thirdRow = customAdvisers.pop(2)
         can_not_remove_msg = translate('custom_adviser_can_not_remove_used_row',
                                        domain='PloneMeeting',
                                        mapping={'item_url': item.absolute_url(),
@@ -795,6 +806,10 @@ class testMeetingConfig(PloneMeetingTestCase):
                                        context=self.portal.REQUEST)
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           can_not_remove_msg)
+        customAdvisers.insert(2, thirdRow)
+        # we can remove the last row, chained but unused
+        customAdvisers.pop(3)
+        self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
 
     def test_pm_Validate_transitionsForPresentingAnItem(self):
         '''Test the MeetingConfig.transitionsForPresentingAnItem validation.

@@ -2252,6 +2252,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             'delay': customAdviser['delay'],
                             'delay_left_alert': customAdviser['delay_left_alert'],
                             'delay_label': customAdviser['delay_label'], })
+                # check if the found automatic adviser is not already in the self.adviceIndex
+                # but with a manually changed delay, aka 'delay_for_automatic_adviser_changed_manually' is True
+                storedCustomAdviser = self.adviceIndex.get(customAdviser['group'], {})
+                if storedCustomAdviser and \
+                   not storedCustomAdviser['row_id'] == customAdviser['row_id'] and \
+                   storedCustomAdviser['delay_for_automatic_adviser_changed_manually'] and \
+                   not storedCustomAdviser['optional']:
+                    # we have an automatic advice for relevant group but not for current row_id
+                    # check if it is from a linked row in the MeetingConfig.customAdvisers
+                    isAutomatic, linkedRows = cfg._findLinkedRowsFor(customAdviser['row_id'])
+                    for linkedRow in linkedRows:
+                        if linkedRow['row_id'] == customAdviser['row_id']:
+                            # the found advice was actually linked, we keep it
+                            # adapt last added dict to res
+                            res[-1]['row_id'] = linkedRow['row_id']
+                            res[-1]['gives_auto_advice_on_help_message'] = linkedRow['gives_auto_advice_on_help_message']
+                            res[-1]['delay'] = linkedRow['delay']
+                            res[-1]['delay_left_alert'] = linkedRow['delay_left_alert']
+                            res[-1]['delay_label'] = linkedRow['delay_label']
         return res
 
     def _optionalDelayAwareAdvisers(self):
@@ -2819,7 +2838,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # every meetingadvice to the role 'Authenticated', a role that current user has
             self._removeEveryContainedAdvices()
 
-        # Compute automatic and get optional advisers
+        # Compute automatic
         automaticAdvisers = self.getAutomaticAdvisers()
         # get formatted optionalAdvisers to be coherent with automaticAdvisers data format
         optionalAdvisers = self.getOptionalAdvisersData()
@@ -2827,19 +2846,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Update the dictionary self.adviceIndex with every advices to give
         i = -1
         # we will recompute the entire adviceIndex
-        # just save the 'delay_started_on' and 'delay_stopped_on' as it is the only values stored
-        # in the adviceIndex that is not stored anywhere else
-        delay_started_stopped_on_save = {}
+        # just save some data that are only in the adviceIndex :
+        # 'delay_started_on'
+        # 'delay_stopped_on'
+        # 'delay_for_automatic_adviser_changed_manually'
+        saved_stored_data = {}
         for groupId, adviceInfo in self.adviceIndex.iteritems():
-            delay_started_stopped_on_save[groupId] = {}
+            saved_stored_data[groupId] = {}
             if isTransitionReinitializingDelays:
-                delay_started_stopped_on_save[groupId]['delay_started_on'] = None
-                delay_started_stopped_on_save[groupId]['delay_stopped_on'] = None
+                saved_stored_data[groupId]['delay_started_on'] = None
+                saved_stored_data[groupId]['delay_stopped_on'] = None
             else:
-                delay_started_stopped_on_save[groupId]['delay_started_on'] = 'delay_started_on' in adviceInfo and \
-                                                                             adviceInfo['delay_started_on'] or None
-                delay_started_stopped_on_save[groupId]['delay_stopped_on'] = 'delay_stopped_on' in adviceInfo and \
-                                                                             adviceInfo['delay_stopped_on'] or None
+                saved_stored_data[groupId]['delay_started_on'] = 'delay_started_on' in adviceInfo and \
+                    adviceInfo['delay_started_on'] or None
+                saved_stored_data[groupId]['delay_stopped_on'] = 'delay_stopped_on' in adviceInfo and \
+                    adviceInfo['delay_stopped_on'] or None
+            saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually'] = \
+                'delay_for_automatic_adviser_changed_manually' in adviceInfo and \
+                adviceInfo['delay_for_automatic_adviser_changed_manually'] or False
 
         itemState = self.queryState()
         self.adviceIndex = PersistentMapping()
@@ -2866,18 +2890,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
                 # manage the 'delay_started_on' data that was saved prior
-                if adviceInfo['delay'] and groupId in delay_started_stopped_on_save:
-                    d['delay_started_on'] = delay_started_stopped_on_save[groupId]['delay_started_on']
+                if adviceInfo['delay'] and groupId in saved_stored_data:
+                    d['delay_started_on'] = saved_stored_data[groupId]['delay_started_on']
                 else:
                     d['delay_started_on'] = None
-                # advice_given_on will be filled by already given advices
-                d['advice_given_on'] = None
-
                 # manage stopped delay
-                if groupId in delay_started_stopped_on_save:
-                    d['delay_stopped_on'] = delay_started_stopped_on_save[groupId]['delay_stopped_on']
+                if groupId in saved_stored_data:
+                    d['delay_stopped_on'] = saved_stored_data[groupId]['delay_stopped_on']
                 else:
                     d['delay_stopped_on'] = None
+                # advice_given_on will be filled by already given advices
+                d['advice_given_on'] = None
+                # save the fact that a delay for an automatically asked advice
+                # was changed manually.  Indeed, we need to know it because at next advice update,
+                # the normally auto asked advice must not interfer this manually managed advice.
+                # This is the case if some delay-aware auto advice are linked together using the
+                # 'is_linked_to_previous_row' on the MeetingConfig.customAdvisers
+                d['delay_for_automatic_adviser_changed_manually'] = False
 
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():
@@ -2891,12 +2920,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not adviceInfo['row_id']:
                     # this is a given advice that was not asked (given by a PowerAdviser)
                     adviceInfo['not_asked'] = True
-                if adviceInfo['delay'] and groupId in delay_started_stopped_on_save:
+                if adviceInfo['delay'] and groupId in saved_stored_data:
                     # an automatic advice was given but because something changed on the item
                     # for example switched from budgetRelated to not budgetRelated, the automatic
                     # advice should not be asked, but as already given, we keep it
-                    adviceInfo['delay_started_on'] = delay_started_stopped_on_save[groupId]['delay_started_on']
-                    adviceInfo['delay_stopped_on'] = delay_started_stopped_on_save[groupId]['delay_stopped_on']
+                    adviceInfo['delay_started_on'] = saved_stored_data[groupId]['delay_started_on']
+                    adviceInfo['delay_stopped_on'] = saved_stored_data[groupId]['delay_stopped_on']
             self.adviceIndex[groupId].update(adviceInfo)
 
         # Clean-up advice-related local roles and granted permissions.
@@ -3005,8 +3034,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not itemState in itemAdviceStates and \
                self.adviceIndex[groupId]['delay'] and not \
                isTransitionReinitializingDelays and not \
-               bool(groupId in delay_started_stopped_on_save and
-                    delay_started_stopped_on_save[groupId]['delay_stopped_on']):
+               bool(groupId in saved_stored_data and
+                    saved_stored_data[groupId]['delay_stopped_on']):
                 self.adviceIndex[groupId]['delay_stopped_on'] = datetime.now()
             # now index advice annexes
             if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
