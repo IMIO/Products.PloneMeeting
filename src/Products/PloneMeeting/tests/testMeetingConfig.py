@@ -380,7 +380,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'for_item_created_from': '2012/31/12',
                            'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
-                           'delay': '',
+                           'delay': '10',
                            'delay_left_alert': '',
                            'delay_label': '',
                            'available_on': '',
@@ -435,7 +435,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # wrong format, should be empty or a digit
         customAdvisers = [{'row_id': 'unique_id_123',
                            'group': 'vendors',
-                           'gives_auto_advice_on': '',
+                           'gives_auto_advice_on': 'python:True',
                            'for_item_created_from': '2012/01/01',
                            'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
@@ -640,7 +640,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # wrong date format, should be YYYY/MM/DD
         customAdvisers = [{'row_id': 'unique_id_123',
                            'group': 'vendors',
-                           'gives_auto_advice_on': '',
+                           'gives_auto_advice_on': 'python:True',
                            'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
                            'gives_auto_advice_on_help_message': '',
@@ -665,7 +665,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # can only be set on a delay-aware row
         customAdvisers.append({'row_id': 'unique_id_456',
                                'group': 'vendors',
-                               'gives_auto_advice_on': '',
+                               'gives_auto_advice_on': 'python:True',
                                'for_item_created_from': '2012/12/31',
                                'for_item_created_until': '',
                                'gives_auto_advice_on_help_message': '',
@@ -828,6 +828,8 @@ class testMeetingConfig(PloneMeetingTestCase):
                                      mapping={'item_url': item.absolute_url(),
                                               'adviser_group': 'Vendors'},
                                      context=self.portal.REQUEST)
+        # we need to invalidate ram.cache of _findLinkedRowsFor
+        cfg.setModificationDate(DateTime())
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           isolated_row_msg)
         customAdvisers[1]['is_linked_to_previous_row'] = '1'
