@@ -1756,7 +1756,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  mapping={'groupName': unicode(group.Title(), 'utf-8'), },
                                  context=self.REQUEST)
-            # 'is_linked_to_previous_row' is only if previous row is of same group
+            # 'is_linked_to_previous_row' is only relevant if previous row is of same group
             if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['group'] == customAdviser['group']:
                 return translate('custom_adviser_can_not_is_linked_to_previous_row_with_other_group',
                                  domain='PloneMeeting',
@@ -2072,7 +2072,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _findLinkedRowsFor_cachekey(method, self, row_id):
         '''cachekey method for self._findLinkedRowsFor.'''
-        return (row_id, str(self.REQUEST.debug))
+        return (row_id, self.modified())
 
     @ram.cache(_findLinkedRowsFor_cachekey)
     def _findLinkedRowsFor(self, row_id):
