@@ -327,6 +327,45 @@ class testMeetingConfig(PloneMeetingTestCase):
         developers_item.reindexObject()
         self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 2)
 
+    def test_pm_Validate_customAdvisersEnoughData(self):
+        '''Test the MeetingConfig.customAdvisers validate method.
+           This validates that enough columns are filled, either the 'delay' or the
+           'gives_auto_advice_on' column must be filled.'''
+        cfg = self.meetingConfig
+        # the validate method returns a translated message if the validation failed
+        # wrong date format, should be YYYY/MM/DD
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'vendors',
+                           # empty
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': '',
+                           # empty
+                           'delay': '',
+                           'delay_left_alert': '',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '0', }, ]
+        groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
+        empty_columns_msg = translate('custom_adviser_not_enough_colmuns_filled',
+                                      domain='PloneMeeting',
+                                      mapping={'groupName': groupName},
+                                      context=self.portal.REQUEST)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == empty_columns_msg)
+        # if the 'delay' column is filled, it validates
+        customAdvisers[0]['delay'] = '10'
+        # validate returns nothing if validation was successful
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        # if the 'gives_auto_advice_on' column is filled, it validates
+        customAdvisers[0]['gives_auto_advice_on'] = 'python:True'
+        customAdvisers[0]['delay'] = ''
+        # validate returns nothing if validation was successful
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        # if both colmuns are filled, it validated too obviously
+        customAdvisers[0]['delay'] = '10'
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+
     def test_pm_Validate_customAdvisersDateColumns(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates dates of the 'for_item_created_from' and ''for_item_created_until' columns :
@@ -558,6 +597,36 @@ class testMeetingConfig(PloneMeetingTestCase):
              'is_linked_to_previous_row': '0', }
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
         self.failIf(cfg.validate_customAdvisers([customAdvisersCreatedUntilSetAndPast, ]))
+
+    def test_pm_Validate_customAdvisersAvailableOn(self):
+        '''Test the MeetingConfig.customAdvisers validate method.
+           This validates that available_on can only be used if nothing is defined
+           in the 'gives_auto_advice_on' column.'''
+        cfg = self.meetingConfig
+        # the validate method returns a translated message if the validation failed
+        # wrong date format, should be YYYY/MM/DD
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'vendors',
+                           # empty
+                           'gives_auto_advice_on': 'python: item.getBudgetRelated()',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': '',
+                           'delay': '10',
+                           'delay_left_alert': '',
+                           'delay_label': '',
+                           'available_on': 'python: item.getItemIsSigned()',
+                           'is_linked_to_previous_row': '0', }, ]
+        groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
+        available_on_msg = translate('custom_adviser_can_not_available_on_and_gives_auto_advice_on',
+                                     domain='PloneMeeting',
+                                     mapping={'groupName': groupName},
+                                     context=self.portal.REQUEST)
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == available_on_msg)
+        # available_on can be filled if nothing is defined in the 'gives_auto_advice_on'
+        customAdvisers[0]['gives_auto_advice_on'] = ''
+        # validate returns nothing if validation was successful
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
 
     def test_pm_Validate_customAdvisersIsLinkedToPreviousRowDelayAware(self):
         '''Test the MeetingConfig.customAdvisers validate method.

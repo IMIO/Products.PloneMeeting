@@ -204,6 +204,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
 
+    <!-- the view that show available delays for an advice on the advices list -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="advice-change-delay"
+        class=".advicechangedelay.AdviceDelaysView"
+        template="templates/advicedelays.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the view that show MeetingItem.emergency on the meetingitem_view -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

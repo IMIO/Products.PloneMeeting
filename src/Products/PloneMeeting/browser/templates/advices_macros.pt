@@ -44,10 +44,13 @@
                                       itemIsViewableByGroup python: item_review_state in (mGroup.getItemAdviceStates(meetingConfig) +
                                                                                           mGroup.getItemAdviceEditStates(meetingConfig) +
                                                                                           mGroup.getItemAdviceViewStates(meetingConfig));
-                                      adviceMayBeAdded python: item_review_state in mGroup.getItemAdviceStates(meetingConfig);">
+                                      adviceMayBeAdded python: item_review_state in mGroup.getItemAdviceStates(meetingConfig);
+                                      obj python: advice.get('advice_id', None) and getattr(meetingItem, advice['advice_id']) or None;
+                                      mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');">
                     <legend>
                          <span tal:condition="advice/delay">
-                              <img src="advice_with_delay_big.png" tal:attributes="src string:${portal_url}/advice_with_delay_big.png"/>
+                              <img src="advice_with_delay_big.png"
+                                   tal:attributes="src string:${portal_url}/advice_with_delay_big.png;"/>
                               <span class="advice_delay"
                                     tal:content="advice/delay_infos/left_delay"
                                     tal:define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};"
@@ -61,8 +64,13 @@
                          <span tal:condition="advice/optional">)</span>
                          <acronym tal:attributes="title python: meetingItem.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
                     </legend>
-                <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%"
-                       tal:define="mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given')">
+                    <tal:advice-change-delay
+                      tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
+                                  dummy python: context.REQUEST.set('advice_change_delay_cfg', meetingConfig);
+                                  dummy python: context.REQUEST.set('advice_change_delay_mayEdit', mayEdit);"
+                      replace="structure meetingItem/@@advice-change-delay/index" />
+
+                <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%">
                   <tr tal:condition="mayEdit">
                     <td class="noPadding" width="auto">
                     </td>
@@ -116,8 +124,7 @@
                     <td colspan="3"
                         align="right"
                         class="advice_annexes">
-                        <tal:defines define="obj python: getattr(meetingItem, advice['advice_id']);
-                                             relatedTo string:advice;
+                        <tal:defines define="relatedTo string:advice;
                                              extra_css_class string:annexIcon;"
                                      condition="python: bool(obj.annexIndex)">
                             <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons" />

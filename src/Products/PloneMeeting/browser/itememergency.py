@@ -53,9 +53,7 @@ class ItemEmergencyView(BrowserView):
 
 class ChangeItemEmergencyView(BrowserView):
     '''
-      This manage the overlay popup displayed when the emergency is changed and need a comment.
-      When the emergency change does not need a comment, this views is also used but the comment popup
-      is not shown.
+      This manage the overlay popup displayed to enter a comment when the emergency is changed.
     '''
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
@@ -64,9 +62,6 @@ class ChangeItemEmergencyView(BrowserView):
 
     def __call__(self):
         form = self.request.form
-        # either we received form.submitted in the request because we are triggering
-        # a transition that does not need a confirmation or we clicked on the save button of
-        # the confirmation popup
         submitted = form.get('form.buttons.save', False) or form.get('form.submitted', False)
         cancelled = form.get('form.buttons.cancel', False)
         if cancelled:

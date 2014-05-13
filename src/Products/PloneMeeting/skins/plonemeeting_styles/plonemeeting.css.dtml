@@ -468,6 +468,10 @@ legend .hsLanguage {top: -0.3em; right: 5px;}
 #pm_menu_item_emergency.pmDropdown {
     left: 70px;
 }
+div[id^="pm_menu_advice_change_delay"].pmDropdown {
+    left: 47px;
+    margin-top: -1px;
+}
 
 /* CSS for data changes in object histories. */
 .dataChanges { border: 0; }
@@ -864,8 +868,18 @@ select#optionalAdvisers option[disabled] {
 }
 a.item_completeness_incomplete,
 a.item_completeness_complete,
-a.item_completeness_not_yet_evaluated {
+a.item_completeness_not_yet_evaluated,
+a.item_completeness_evaluation_asked_again,
+a.item_no_emergency,
+a.item_emergency_asked,
+a.item_emergency_accepted,
+a.item_emergency_refused {
     padding-right: 50px;
+}
+/* need to set !important because used in the advice popup where actionMenuAX defines padding */
+div a.advice_delay_change_value {
+    padding-right: 50px !important;
+    display: inline !important;
 }
 .item_no_emergency,
 #content a:link.item_no_emergency {
@@ -891,12 +905,6 @@ a.item_completeness_not_yet_evaluated {
     display: inline;
     color: red;
 }
-a.item_no_emergency,
-a.item_emergency_asked,
-a.item_emergency_accepted,
-a.item_emergency_refused {
-    padding-right: 50px;
-}
 .item_completeness_incomplete.Editable,
 .item_completeness_complete.Editable,
 .item_completeness_not_yet_evaluated.Editable,
@@ -904,9 +912,13 @@ a.item_emergency_refused {
 .item_no_emergency.Editable,
 .item_emergency_asked.Editable,
 .item_emergency_accepted.Editable,
-.item_emergency_refused.Editable {
+.item_emergency_refused.Editable,
+.advice_change_delay.Editable {
     border-bottom: 1px dotted;
     cursor: pointer;
+}
+.advice_change_delay.Editable {
+    font-style: italic;
 }
 
 /* </dtml-with> */

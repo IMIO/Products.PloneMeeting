@@ -1733,14 +1733,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # a row_id, even empty is required
             if not 'row_id' in customAdviser:
                 raise Exception('A row_id is required!')
+            # pass 'template_row_marker'
+            if 'orderindex_' in customAdviser and customAdviser['orderindex_'] == 'template_row_marker':
+                continue
             group = getattr(tool, customAdviser['group'])
+            # a value is required either for the 'delay' or the 'gives_auto_advice_on' column
+            if not customAdviser['delay'] and not customAdviser['gives_auto_advice_on']:
+                return translate('custom_adviser_not_enough_colmuns_filled',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 context=self.REQUEST)
+
             # 'is_linked_to_previous_row' is only relevant for delay-aware advices
             if customAdviser['is_linked_to_previous_row'] == '1' and not customAdviser['delay']:
                 return translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser',
                                  domain='PloneMeeting',
                                  mapping={'groupName': unicode(group.Title(), 'utf-8'), },
                                  context=self.REQUEST)
-            # 'is_linked_to_previous_row' is only relevant if previous row is also delay-aware advices
+            # 'is_linked_to_previous_row' is only relevant if previous row is also delay-aware
             if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['delay']:
                 return translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser_previous_row',
                                  domain='PloneMeeting',
@@ -1749,6 +1759,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # 'is_linked_to_previous_row' is only if previous row is of same group
             if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['group'] == customAdviser['group']:
                 return translate('custom_adviser_can_not_is_linked_to_previous_row_with_other_group',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 context=self.REQUEST)
+
+            # 'available_on' is only relevant on an optional advice
+            # or the row linked to an automatic advice, but not the automatic advice itself
+            # the 'gives_auto_advice_on' will manage availability of an automatic advice
+            # and the fact to specify an 'avilable_on' will give the possibility to restrict
+            # to what value can be changed an automatic advice delay
+            if customAdviser['available_on'] and customAdviser['gives_auto_advice_on']:
+                return translate('custom_adviser_can_not_available_on_and_gives_auto_advice_on',
                                  domain='PloneMeeting',
                                  mapping={'groupName': unicode(group.Title(), 'utf-8'), },
                                  context=self.REQUEST)
@@ -2049,6 +2070,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if adviser['row_id'] == row_id:
                 return adviser
 
+    def _findLinkedRowsFor_cachekey(method, self, row_id):
+        '''cachekey method for self._findLinkedRowsFor.'''
+        return (row_id, str(self.REQUEST.debug))
+
+    @ram.cache(_findLinkedRowsFor_cachekey)
     def _findLinkedRowsFor(self, row_id):
         '''Returns the fact that linked rows are 'automatic advice' or not and
            rows linked to given p_row_id row.  If not linked, returns False and an empty list.'''

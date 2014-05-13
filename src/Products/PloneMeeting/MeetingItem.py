@@ -66,6 +66,9 @@ ITEM_REF_ERROR = 'There was an error in the TAL expression for defining the ' \
 AUTOMATIC_ADVICE_CONDITION_ERROR = 'There was an error in the TAL expression ' \
     'defining if the advice of the group must be automatically asked. ' \
     'Please check this in your meeting config. %s'
+ADVICE_AVAILABLE_ON_CONDITION_ERROR = 'There was an error in the TAL expression ' \
+    'defined in the \'Available on\' column of the MeetingConfig.customAdvisers. ' \
+    'Please check this in your meeting config. %s'
 AS_COPYGROUP_CONDITION_ERROR = 'There was an error in the TAL expression ' \
     'defining if the group must be set as copyGroup. ' \
     'Please check this in your meeting config. %s'
@@ -2218,12 +2221,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         portal = getToolByName(self, 'portal_url').getPortalObject()
         res = []
-        notEmptyAdvisersGroupIds = [mGroup.id for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers',
-                                                                                  onlyActive=False)]
         for customAdviser in cfg.getCustomAdvisers():
-            # first check that corresponding group containing advisers is not empty
-            if not customAdviser['group'] in notEmptyAdvisersGroupIds:
-                continue
             # check if there is something to evaluate...
             strippedExprToEvaluate = customAdviser['gives_auto_advice_on'].replace(' ', '')
             if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
@@ -2244,11 +2242,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 eRes = Expression(customAdviser['gives_auto_advice_on'])(ctx)
             except Exception, e:
                 logger.warning(AUTOMATIC_ADVICE_CONDITION_ERROR % str(e))
+
             if eRes:
                 res.append({'meetingGroupId': customAdviser['group'],
                             'meetingGroupName': getattr(tool, customAdviser['group']).getName(),
-                            'gives_auto_advice_on_help_message': customAdviser['gives_auto_advice_on_help_message'],
                             'row_id': customAdviser['row_id'],
+                            'gives_auto_advice_on_help_message': customAdviser['gives_auto_advice_on_help_message'],
                             'delay': customAdviser['delay'],
                             'delay_left_alert': customAdviser['delay_left_alert'],
                             'delay_label': customAdviser['delay_label'], })
@@ -2265,12 +2264,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     for linkedRow in linkedRows:
                         if linkedRow['row_id'] == customAdviser['row_id']:
                             # the found advice was actually linked, we keep it
-                            # adapt last added dict to res
-                            res[-1]['row_id'] = linkedRow['row_id']
-                            res[-1]['gives_auto_advice_on_help_message'] = linkedRow['gives_auto_advice_on_help_message']
-                            res[-1]['delay'] = linkedRow['delay']
-                            res[-1]['delay_left_alert'] = linkedRow['delay_left_alert']
-                            res[-1]['delay_label'] = linkedRow['delay_label']
+                            # adapt last added dict to res to keep storedCustomAdviser value
+                            res[-1]['row_id'] = storedCustomAdviser['row_id']
+                            res[-1]['gives_auto_advice_on_help_message'] = storedCustomAdviser['gives_auto_advice_on_help_message']
+                            res[-1]['delay'] = storedCustomAdviser['delay']
+                            res[-1]['delay_left_alert'] = storedCustomAdviser['delay_left_alert']
+                            res[-1]['delay_label'] = storedCustomAdviser['delay_label']
         return res
 
     def _optionalDelayAwareAdvisers(self):
@@ -2280,7 +2279,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
-        notEmptyAdvisersGroupIds = [mGroup.getId() for mGroup in tool.getMeetingGroups(notEmptySuffix='advisers')]
+        ctx = createExprContext(self.getParentNode(), tool.getParentNode(), self)
+        ctx.setGlobal('item', self)
         for customAdviserConfig in cfg.getCustomAdvisers():
             # first check that the customAdviser is actually optional
             if customAdviserConfig['gives_auto_advice_on']:
@@ -2288,15 +2288,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # and check that it is not an advice linked to
             # an automatic advice ('is_linked_to_previous_row')
             if customAdviserConfig['is_linked_to_previous_row'] == '1':
-                linkedRows = cfg._findLinkedRowsFor(customAdviserConfig['row_id'])
+                isAutomatic, linkedRows = cfg._findLinkedRowsFor(customAdviserConfig['row_id'])
                 # is the first row an automatic adviser?
-                if linkedRows[0]['gives_auto_advice_on']:
+                if isAutomatic:
                     continue
             # then check if it is a delay-aware advice
             if not customAdviserConfig['delay']:
-                continue
-            # check if corresponding MeetingGroup is not empty
-            if not customAdviserConfig['group'] in notEmptyAdvisersGroupIds:
                 continue
 
             # respect 'for_item_created_from' and 'for_item_created_until' defined dates
@@ -2305,6 +2302,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # createdFrom is required but not createdUntil
             if DateTime(createdFrom) > self.created() or \
                (createdUntil and DateTime(createdUntil) < self.created()):
+                continue
+
+            # check the 'available_on' TAL expression
+            eRes = False
+            try:
+                if customAdviserConfig['available_on']:
+                    eRes = Expression(customAdviserConfig['available_on'])(ctx)
+                else:
+                    eRes = True
+            except Exception, e:
+                logger.warning(ADVICE_AVAILABLE_ON_CONDITION_ERROR % str(e))
+            if not eRes:
                 continue
 
             # ok add the adviser
