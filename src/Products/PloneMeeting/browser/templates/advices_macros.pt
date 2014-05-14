@@ -41,10 +41,11 @@
               <li tal:repeat="advice python:advicesByType[adviceType]">
                 <fieldset tal:define="tool python: portal.portal_plonemeeting;
                                       mGroup python: getattr(tool, advice['id']);
-                                      itemIsViewableByGroup python: item_review_state in (mGroup.getItemAdviceStates(meetingConfig) +
-                                                                                          mGroup.getItemAdviceEditStates(meetingConfig) +
-                                                                                          mGroup.getItemAdviceViewStates(meetingConfig));
-                                      adviceMayBeAdded python: item_review_state in mGroup.getItemAdviceStates(meetingConfig);
+                                      itemAdviceStates python: mGroup.getItemAdviceStates(meetingConfig);
+                                      itemAdviceEditStates python: mGroup.getItemAdviceEditStates(meetingConfig);
+                                      itemAdviceViewStates python: mGroup.getItemAdviceViewStates(meetingConfig);
+                                      itemIsViewableByGroup python: item_review_state in (itemAdviceStates + itemAdviceEditStates + itemAdviceViewStates);
+                                      adviceMayBeAdded python: item_review_state in itemAdviceStates;
                                       obj python: advice.get('advice_id', None) and getattr(meetingItem, advice['advice_id']) or None;
                                       mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');">
                     <legend>
@@ -68,7 +69,7 @@
                       tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
                                   dummy python: context.REQUEST.set('advice_change_delay_cfg', meetingConfig);
                                   dummy python: context.REQUEST.set('advice_change_delay_mayEdit', mayEdit);"
-                      replace="structure meetingItem/@@advice-change-delay/index" />
+                      replace="structure meetingItem/@@advice-available-delays/index" />
 
                 <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%">
                   <tr tal:condition="mayEdit">

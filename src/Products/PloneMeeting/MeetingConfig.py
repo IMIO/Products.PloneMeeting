@@ -2068,7 +2068,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''
         for adviser in self.getCustomAdvisers():
             if adviser['row_id'] == row_id:
-                return adviser
+                return dict(adviser)
 
     def _findLinkedRowsFor_cachekey(method, self, row_id):
         '''cachekey method for self._findLinkedRowsFor.'''

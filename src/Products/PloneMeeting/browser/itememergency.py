@@ -52,9 +52,7 @@ class ItemEmergencyView(BrowserView):
 
 
 class ChangeItemEmergencyView(BrowserView):
-    '''
-      This manage the overlay popup displayed to enter a comment when the emergency is changed.
-    '''
+    '''This manage the overlay popup displayed to enter a comment when the emergency is changed.'''
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
         self.context = context
@@ -87,9 +85,7 @@ class ChangeItemEmergencyView(BrowserView):
 
 
 class ItemEmergencyHistoryView(BrowserView):
-    '''
-      Display history of emergency value changes.
-    '''
+    '''Display history of emergency value changes.'''
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
         self.context = context

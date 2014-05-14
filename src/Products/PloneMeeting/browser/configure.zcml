@@ -207,9 +207,18 @@
     <!-- the view that show available delays for an advice on the advices list -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
-        name="advice-change-delay"
+        name="advice-available-delays"
         class=".advicechangedelay.AdviceDelaysView"
         template="templates/advicedelays.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that change an advice delay and display a popup to confirm change -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="change-advice-delay"
+        class=".advicechangedelay.ChangeAdviceDelayView"
+        template="templates/advicedelayschange.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 

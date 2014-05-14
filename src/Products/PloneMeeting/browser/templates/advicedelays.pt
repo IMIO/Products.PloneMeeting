@@ -15,8 +15,9 @@
                  src="blue_arrow.gif"
                  tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
             <a href="#"
-               tal:attributes="href python: '%s/@@change-advice-delay?new_delay_value=%s' % (view.advice['id'],
-                                                                                             delay[0]);
+               tal:attributes="href python: '%s/@@change-advice-delay?new_advice_row_id=%s&current_advice_row_id=%s' % (view.context.absolute_url(),
+                                                                                                                       delay[0],
+                                                                                                                       view.advice['row_id']);
                                class python: 'link-overlay-pm advice_delay_change_value'">
                 <img src="advice_with_delay_big.png"
                      tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png">
@@ -32,7 +33,7 @@
                  tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
         </div>
     </div>
-    <tal:addBlackSpacesIfNeeded condition="not:view/mayEdit">
+    <tal:addBlankSpacesIfNeeded condition="not:view/mayEdit">
         <br /><br />
-    </tal:addBlackSpacesIfNeeded>
+    </tal:addBlankSpacesIfNeeded>
 </tal:defines>
