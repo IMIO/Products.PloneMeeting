@@ -13,6 +13,7 @@ from plone.directives import form
 
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.utils import getHistory
 
 
 class IMeetingAdvice(Interface):
@@ -95,6 +96,10 @@ class MeetingAdvice(Container):
             else:
                 raise KeyError('Not able to find a value to set for advice row_id!')
         self.advice_row_id = row_id
+
+    def getHistory(self, *args, **kwargs):
+        '''See doc in utils.py.'''
+        return getHistory(self, *args, **kwargs)
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
