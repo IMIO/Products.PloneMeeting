@@ -47,129 +47,135 @@
     </dl><br />
     </tal:showWarningWillInvalidateAdvices>
 
-    <tal:oneFileType condition="python: len(fileTypes) == 1">
-      <tal:comment replace="nothing">In this case we do not display the listbox that allows to choose the file type.</tal:comment>
-      <input type="hidden" tal:attributes="value python: fileTypes[0]['id']" id="idHidden1" name="annex_type"/>
-    </tal:oneFileType>
+    <tal:withoutFileType condition="not:fileTypes">
+        <p class='discreet' i18n:translate="">It is not possible to add annexes because no file types is defined, please contact system administrator.</p>
+    </tal:withoutFileType>
 
-    <tal:manyFileTypes condition="python: len(fileTypes) &gt; 1">
-    <tal:comment replace="nothing">Listbox for selecting a file type</tal:comment>
-    <div class="field"
-         tal:define="error errors/annexType|nothing;"
-         tal:attributes="class python: error and 'field error' or 'field';
-                         style python: error and 'height:4.2em' or 'height:3.0em';">
-      <label for="annex_type" i18n:translate="">annex_type</label>
-      <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
-      <div tal:content="error"></div>
-      <div class="ploneMeetingSelectContainer">
-        <input type="hidden" tal:attributes="value request/annex_type|nothing" id="idHidden1" name="annex_type">
+    <tal:withFileTypes condition="fileTypes">
+        <tal:oneFileType condition="python: len(fileTypes) == 1">
+          <tal:comment replace="nothing">In this case we do not display the listbox that allows to choose the file type.</tal:comment>
+          <input type="hidden" tal:attributes="value python: fileTypes[0]['id']" id="idHidden1" name="annex_type"/>
+        </tal:oneFileType>
 
-        <tal:comment replace="nothing">Select button</tal:comment>
-        <div class="ploneMeetingSelectButton ploneMeetingSelectDropdownIcon" id="idButton1"
-             onclick="displayPloneMeetingSelectBox('annexTypeBox')">
-          <tal:comment replace="nothing">Manage validation failed and form is displayed again to the user</tal:comment>
-          <span tal:condition="python: (request.has_key('annex_type')) and request['annex_type']">
-            <span tal:define="annexType python: request['annex_type'];
-                              meetingFileType python:context.uid_catalog(UID=annexType.split('__subtype__')[0])[0].getObject();
-                              mftData python: '__subtype__' in annexType and meetingFileType._dataFor(annexType.split('__subtype__')[1]) or meetingFileType._dataFor()">
-              <img id="idImage1" tal:attributes="src string:${meetingFileType/absolute_url}/theIcon;"
-                   alt="" class="ploneMeetingSelectImage" />
-              <span id="idButtonText1" tal:content="mftData/name" class="ploneMeetingRef"></span>
-            </span>
-          </span>
-          <span tal:condition="python: (not request.has_key('annex_type')) or (not request['annex_type'])">
-            <img id="idImage1" src="pixel.gif" class="ploneMeetingSelectImage"/>
-            <span id="idButtonText1" class="ploneMeetingRef" i18n:translate="">make_a_choice</span>
-          </span>
+        <tal:manyFileTypes condition="python: len(fileTypes) &gt; 1">
+        <tal:comment replace="nothing">Listbox for selecting a file type</tal:comment>
+        <div class="field"
+             tal:define="error errors/annexType|nothing;"
+             tal:attributes="class python: error and 'field error' or 'field';
+                             style python: error and 'height:4.2em' or 'height:3.0em';">
+          <label for="annex_type" i18n:translate="">annex_type</label>
+          <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
+          <div tal:content="error"></div>
+          <div class="ploneMeetingSelectContainer">
+            <input type="hidden" tal:attributes="value request/annex_type|nothing" id="idHidden1" name="annex_type">
+
+            <tal:comment replace="nothing">Select button</tal:comment>
+            <div class="ploneMeetingSelectButton ploneMeetingSelectDropdownIcon" id="idButton1"
+                 onclick="displayPloneMeetingSelectBox('annexTypeBox')">
+              <tal:comment replace="nothing">Manage validation failed and form is displayed again to the user</tal:comment>
+              <span tal:condition="python: (request.has_key('annex_type')) and request['annex_type']">
+                <span tal:define="annexType python: request['annex_type'];
+                                  meetingFileType python:context.uid_catalog(UID=annexType.split('__subtype__')[0])[0].getObject();
+                                  mftData python: '__subtype__' in annexType and meetingFileType._dataFor(annexType.split('__subtype__')[1]) or meetingFileType._dataFor()">
+                  <img id="idImage1" tal:attributes="src string:${meetingFileType/absolute_url}/theIcon;"
+                       alt="" class="ploneMeetingSelectImage" />
+                  <span id="idButtonText1" tal:content="mftData/name" class="ploneMeetingRef"></span>
+                </span>
+              </span>
+              <span tal:condition="python: (not request.has_key('annex_type')) or (not request['annex_type'])">
+                <img id="idImage1" src="pixel.gif" class="ploneMeetingSelectImage"/>
+                <span id="idButtonText1" class="ploneMeetingRef" i18n:translate="">make_a_choice</span>
+              </span>
+            </div>
+
+            <tal:comment replace="nothing">The listbox</tal:comment>
+            <div class="ploneMeetingSelectBox" id="idBox1"
+                 tal:define="global num python: 0">
+              <p tal:define='choose python:here.translate("make_a_choice", domain="PloneMeeting")'
+                 tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage10\', \'' + tool.forJs(choose) + '\', \'\', \'\');; ploneMeetingSelectOnMouseOutItem(this)'"
+                 class="ploneMeetingSelectItem"
+                 onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
+                 onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
+                 onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage10', '--- Choisissez ---', '', ''); ploneMeetingSelectOnMouseOutItem(this)"
+                 id="idButtonText10">
+                <img id="idImage10" src="pixel.gif" class="ploneMeetingSelectImage" />
+                <span i18n:translate="">make_a_choice</span>
+              </p>
+              <tal:loop repeat="meetingFileType fileTypes">
+               <p tal:define="global num python: num + 1;
+                              ftName meetingFileType/name"
+                 class="ploneMeetingSelectItem" onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
+                 onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
+                 onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage1', 'value1', 'predefined_title1'); ploneMeetingSelectOnMouseOutItem(this)"
+                 tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage1' + str(num) + '\', \'' + tool.forJs(ftName) + '\', \'' + meetingFileType['id'] + '\', \'' + tool.forJs(meetingFileType['predefinedTitle']) + '\');; ploneMeetingSelectOnMouseOutItem(this)';
+                                 class python: '__subtype__' in meetingFileType['id'] and 'ploneMeetingSelectItem subtype' or 'ploneMeetingSelectItem'">
+                <img class="ploneMeetingSelectImage"
+                    tal:attributes="src python: meetingFileType['absolute_url'] + '/theIcon'; id python: 'idImage1' + str(num)"
+                    id="idImage1" src="#" alt="" />
+                <span tal:content="ftName" />
+               </p>
+              </tal:loop>
+            </div>
+          </div>
         </div>
+        </tal:manyFileTypes>
 
-        <tal:comment replace="nothing">The listbox</tal:comment>
-        <div class="ploneMeetingSelectBox" id="idBox1"
-             tal:define="global num python: 0">
-          <p tal:define='choose python:here.translate("make_a_choice", domain="PloneMeeting")'
-             tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage10\', \'' + tool.forJs(choose) + '\', \'\', \'\');; ploneMeetingSelectOnMouseOutItem(this)'"
-             class="ploneMeetingSelectItem"
-             onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
-             onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
-             onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage10', '--- Choisissez ---', '', ''); ploneMeetingSelectOnMouseOutItem(this)"
-             id="idButtonText10">
-            <img id="idImage10" src="pixel.gif" class="ploneMeetingSelectImage" />
-            <span i18n:translate="">make_a_choice</span>
-          </p>
-          <tal:loop repeat="meetingFileType fileTypes">
-           <p tal:define="global num python: num + 1;
-                          ftName meetingFileType/name"
-             class="ploneMeetingSelectItem" onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
-             onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
-             onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage1', 'value1', 'predefined_title1'); ploneMeetingSelectOnMouseOutItem(this)"
-             tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage1' + str(num) + '\', \'' + tool.forJs(ftName) + '\', \'' + meetingFileType['id'] + '\', \'' + tool.forJs(meetingFileType['predefinedTitle']) + '\');; ploneMeetingSelectOnMouseOutItem(this)';
-                             class python: '__subtype__' in meetingFileType['id'] and 'ploneMeetingSelectItem subtype' or 'ploneMeetingSelectItem'">
-            <img class="ploneMeetingSelectImage"
-                tal:attributes="src python: meetingFileType['absolute_url'] + '/theIcon'; id python: 'idImage1' + str(num)"
-                id="idImage1" src="#" alt="" />
-            <span tal:content="ftName" />
-           </p>
-          </tal:loop>
-        </div>
-      </div>
-    </div>
-    </tal:manyFileTypes>
+        <tal:comment replace="nothing">Annex title</tal:comment>
+        <div class="field"
+               tal:define="error errors/annexTitle|nothing;
+                           rq_annex_title request/annex_title|nothing"
+               tal:attributes="class python: error and 'field error' or 'field';">
+            <label for="annex_title" i18n:domain="plone" i18n:translate="label_title">Title</label>
+            <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
+            <div tal:content="error">Validation error output</div>
+            <input type="text" size="50" name="annex_title" id="annex_title"
+                   tal:condition="python: len(fileTypes) &gt; 1" tal:attributes="value rq_annex_title" />
+            <input type="text" size="50" name="annex_title" id="annex_title"
+                   tal:condition="python: len(fileTypes) == 1"
+                   tal:attributes="value python: rq_annex_title and rq_annex_title or fileTypes[0]['predefinedTitle'];" />
+          </div>
 
-    <tal:comment replace="nothing">Annex title</tal:comment>
-    <div class="field"
-           tal:define="error errors/annexTitle|nothing;
-                       rq_annex_title request/annex_title|nothing"
-           tal:attributes="class python: error and 'field error' or 'field';">
-        <label for="annex_title" i18n:domain="plone" i18n:translate="label_title">Title</label>
-        <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
-        <div tal:content="error">Validation error output</div>
-        <input type="text" size="50" name="annex_title" id="annex_title"
-               tal:condition="python: len(fileTypes) &gt; 1" tal:attributes="value rq_annex_title" />
-        <input type="text" size="50" name="annex_title" id="annex_title"
-               tal:condition="python: len(fileTypes) == 1"
-               tal:attributes="value python: rq_annex_title and rq_annex_title or fileTypes[0]['predefinedTitle'];" />
-      </div>
+          <tal:comment replace="nothing">Annex file to upload</tal:comment>
+          <div class="field"
+               tal:define="error errors/annexFile|nothing;"
+               tal:attributes="class python: error and 'field error' or 'field';">
+            <label for="annex_file" i18n:domain="plone" i18n:translate="File">File</label>
+            <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
+            <div tal:content="error">Validation error output</div>
+            <input type="file" size="30" name="annex_file" id="annex_file" tal:attributes="value request/annex_file/filename|nothing" />
+          </div>
 
-      <tal:comment replace="nothing">Annex file to upload</tal:comment>
-      <div class="field"
-           tal:define="error errors/annexFile|nothing;"
-           tal:attributes="class python: error and 'field error' or 'field';">
-        <label for="annex_file" i18n:domain="plone" i18n:translate="File">File</label>
-        <span class="fieldRequired" i18n:domain="plone" i18n:translate="label_required">Required</span>
-        <div tal:content="error">Validation error output</div>
-        <input type="file" size="30" name="annex_file" id="annex_file" tal:attributes="value request/annex_file/filename|nothing" />
-      </div>
+          <tal:ocrQuestions condition="extractTextFromFiles">
+          <table cellpadding="0" cellspacing="0" width="100%">
+            <tr valign="top">
+            <tal:comment replace="nothing">Checkbox for asking OCR</tal:comment>
+            <td width="48%">
+              <input class="noborder" type="checkbox" name="needs_ocr"
+                     tal:attributes="checked python: request.get('needs_ocr', None) != None and True or False;"/>
+              <label for="needs_ocr" i18n:domain="PloneMeeting" i18n:translate="needs_ocr"></label>
+              <div class="formHelp" i18n:translate="needs_ocr_descr"></div>
+            </td>
+            <td width="4%"></td>
+            <tal:comment replace="nothing">Select the OCR language</tal:comment>
+            <td width="48%"
+                tal:define="requestValue request/ocr_language|nothing;
+                            selectedValue python: requestValue and requestValue or tool.getDefaultOcrLanguage();">
+              <label for="ocr_language" i18n:domain="PloneMeeting" i18n:translate="ocr_language"></label>
+              <div class="formHelp" i18n:translate="ocr_language_descr"></div>
+              <select name="ocr_language">
+                <option tal:repeat="lang tool/getAvailableOcrLanguages" i18n:translate=""
+                        tal:content="python: 'language_%s' % lang"
+                        tal:attributes="value lang;
+                                        selected python: lang == selectedValue" ></option>
+              </select>
+            </td>
+            </tr>
+          </table>
+          </tal:ocrQuestions>
 
-      <tal:ocrQuestions condition="extractTextFromFiles">
-      <table cellpadding="0" cellspacing="0" width="100%">
-        <tr valign="top">
-        <tal:comment replace="nothing">Checkbox for asking OCR</tal:comment>
-        <td width="48%">
-          <input class="noborder" type="checkbox" name="needs_ocr"
-                 tal:attributes="checked python: request.get('needs_ocr', None) != None and True or False;"/>
-          <label for="needs_ocr" i18n:domain="PloneMeeting" i18n:translate="needs_ocr"></label>
-          <div class="formHelp" i18n:translate="needs_ocr_descr"></div>
-        </td>
-        <td width="4%"></td>
-        <tal:comment replace="nothing">Select the OCR language</tal:comment>
-        <td width="48%"
-            tal:define="requestValue request/ocr_language|nothing;
-                        selectedValue python: requestValue and requestValue or tool.getDefaultOcrLanguage();">
-          <label for="ocr_language" i18n:domain="PloneMeeting" i18n:translate="ocr_language"></label>
-          <div class="formHelp" i18n:translate="ocr_language_descr"></div>
-          <select name="ocr_language">
-            <option tal:repeat="lang tool/getAvailableOcrLanguages" i18n:translate=""
-                    tal:content="python: 'language_%s' % lang"
-                    tal:attributes="value lang;
-                                    selected python: lang == selectedValue" ></option>
-          </select>
-        </td>
-        </tr>
-      </table>
-      </tal:ocrQuestions>
-
-      <tal:comment replace="nothing">Button "OK"</tal:comment>
-      <p><input class="context" type="submit" name="form.button.Select" value="Save" i18n:attributes="value label_save" i18n:domain="plone" /></p>
+          <tal:comment replace="nothing">Button "OK"</tal:comment>
+          <p><input class="context" type="submit" name="form.button.Select" value="Save" i18n:attributes="value label_save" i18n:domain="plone" /></p>
+    </tal:withFileTypes>
   </fieldset>
   </form>
   <fieldset>

@@ -43,6 +43,10 @@
 
     <metal:closeButton use-macro="here/@@pm-macros/closeButtonMacro" />
 
+    <div tal:condition="python: 'ajax_load' in context.REQUEST" id="viewlet-below-content-title">
+        <div tal:replace="structure provider:plone.belowcontentbody" />
+    </div>
+
   </metal:content-core>
 </metal:main>
 

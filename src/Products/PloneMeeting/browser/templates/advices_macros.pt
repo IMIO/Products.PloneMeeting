@@ -16,7 +16,8 @@
                                             portal_url context/@@plone_portal_state/portal_url;
                                             plone_view context/@@plone;
                                             isRealManager python: tool.isManager(realManagers=True);
-                                            item_review_state meetingItem/queryState;">
+                                            item_review_state meetingItem/queryState;
+                                            adviceFileTypes python: meetingConfig.getFileTypes('advice')">
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
       <td tal:condition="advicesToAdd" class="noPadding">
         <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
@@ -83,7 +84,7 @@
                            tal:attributes="src string:$portal_url/edit.gif;" />
                     </a>
                     </td>
-                    <td align="right" width="20px" class="noPadding">
+                    <td tal:condition="python: adviceFileTypes or bool(advice['annexIndex'])" align="right" width="20px" class="noPadding">
                       <a href="#"
                          class="link-overlay-pm"
                          tal:attributes="href string:${item_url}/${advice/advice_id}/annexes_form">
