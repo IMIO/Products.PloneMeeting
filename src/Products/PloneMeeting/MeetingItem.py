@@ -2915,7 +2915,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # the normally auto asked advice must not interfer this manually managed advice.
                 # This is the case if some delay-aware auto advice are linked together using the
                 # 'is_linked_to_previous_row' on the MeetingConfig.customAdvisers
-                d['delay_for_automatic_adviser_changed_manually'] = False
+                if groupId in saved_stored_data:
+                    d['delay_for_automatic_adviser_changed_manually'] = saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually']
+                else:
+                    d['delay_for_automatic_adviser_changed_manually'] = False
 
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():
