@@ -1004,10 +1004,12 @@ def getHistoryTexts(obj, event):
 
 
 def getHistory(obj, startNumber=0, batchSize=5):
-    '''Returns the history for this object, sorted in reverse order (most
-       recent change first) if p_reverse is True.'''
+    '''Returns the history for this object, sorted in reverse order
+       (most recent change first)'''
     res = []
-    history = list(obj.workflow_history[obj.getWorkflowName()])
+    wfTool = getToolByName(obj, 'portal_workflow')
+    wfName = wfTool.getWorkflowsFor(obj)[0].getId()
+    history = list(obj.workflow_history[wfName])
     history.reverse()
     stopIndex = startNumber + batchSize - 1
     i = -1
