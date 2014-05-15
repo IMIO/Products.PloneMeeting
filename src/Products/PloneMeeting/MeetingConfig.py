@@ -3260,7 +3260,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def getFileTypes_cachekey(method, self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
         '''cachekey method for self.getFileTypes.'''
         # check last object modified and last time container was modified (element added or removed)
+        # compare also with a list of elements review_state
         return (int(max([mft.modified() for mft in self.meetingfiletypes.objectValues()])),
+                [mft.workflow_history.values()[0][-1]['review_state'] for mft in self.meetingfiletypes.objectValues()],
                 self.meetingfiletypes._tree._p_mtime, relatedTo, typesIds, onlySelectable, includeSubTypes)
 
     security.declarePublic('getFileTypes')
