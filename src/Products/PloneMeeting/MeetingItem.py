@@ -3026,7 +3026,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if itemState in itemAdviceEditStates and delayIsNotExceeded:
                 # make sure the advice given by groupId is in state 'advice_under_edit'
                 if adviceObj and not adviceObj.queryState() == 'advice_under_edit':
-                    wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
+                    try:
+                        wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
+                    except WorkflowException:
+                        # if we have another workflow than default meetingadvice_workflow
+                        # maybe we can not 'backToAdviceUnderEdit'
+                        pass
             else:
                 # make sure it is no more editable
                 if adviceObj and not adviceObj.queryState() == 'advice_given':
