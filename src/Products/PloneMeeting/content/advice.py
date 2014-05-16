@@ -32,6 +32,15 @@ class IMeetingAdvice(Interface):
         vocabulary=u'Products.PloneMeeting.content.advice.advice_type_vocabulary',
         required=True,
     )
+    advice_hide_during_redaction = schema.Bool(
+        title=_(u'Hide advice during redaction'),
+        description=_(u"If you do not want the advice to be shown immediately after redaction, you can check this "
+                      "box.  This will let you or other member of your group work on the advice before showing it.  "
+                      "Note that if you lose access to the advice (for example if the item state evolve), "
+                      "the advice will be considered 'Not given, was under edition'.  A manager will be able "
+                      "to publish it nevertheless."),
+        default=False,
+    )
     advice_comment = RichText(
         title=_(u"Advice comment"),
         description=_("Enter an optional comment."),
@@ -100,6 +109,26 @@ class MeetingAdvice(Container):
     def getHistory(self, *args, **kwargs):
         '''See doc in utils.py.'''
         return getHistory(self, *args, **kwargs)
+
+    def mayBackToAdviceUnderEdit(self):
+        '''This is the guard_expr for transition backToAdviceUnderEdit.
+           By default, nobody can trigger this transition, it is automatically triggered,
+           during MeetingItem.updateAdvices.  Make sure MeetingItem.updateAdvices can trigger
+           it but nobody else.'''
+        # the transition is protected by the presence of a key 'mayBackToAdviceUnderEdit' in the REQUEST
+        if not self.REQUEST.get('mayBackToAdviceUnderEdit', False):
+            return False
+        return True
+
+    def mayGiveAdvice(self):
+        '''This is the guard_expr for transition giveAdvice.
+           By default, nobody can trigger this transition, it is automatically triggered,
+           during MeetingItem.updateAdvices.  Make sure MeetingItem.updateAdvices can trigger
+           it but nobody else.'''
+        # the transition is protected by the presence of a key 'mayGiveAdvice' in the REQUEST
+        if not self.REQUEST.get('mayGiveAdvice', False):
+            return False
+        return True
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):

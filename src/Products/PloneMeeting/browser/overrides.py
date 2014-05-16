@@ -114,9 +114,7 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
           'CMFEditions: Access previous versions' permission, here
           we want everybody than can acces the item to see the history...
         """
-        # hide the history for meetingadvices
-        if self.context.portal_type not in ['meetingadvice', ]:
-            return True
+        return True
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):

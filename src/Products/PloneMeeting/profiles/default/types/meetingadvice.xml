@@ -41,4 +41,13 @@
     url_expr="string:${object_url}/edit" visible="True">
   <permission value="Modify portal content"/>
  </action>
+ <action title="Annexes"
+         i18n:attributes="title"
+         action_id="annexes_form"
+         category="object"
+         condition_expr=""
+         url_expr="string:${object_url}/annexes_form"
+         visible="True">
+  <permission value="View"/>
+ </action>
 </object>

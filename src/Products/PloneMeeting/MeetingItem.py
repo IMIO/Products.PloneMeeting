@@ -2562,10 +2562,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {}
         for groupId, advice in self.adviceIndex.iteritems():
             # Create the entry for this type of advice if not yet created.
-            if advice['type'] not in res:
-                res[advice['type']] = advices = []
+            # if the advice is 'hidden_during_redaction', we create a specific advice type
+            adviceType = advice['hidden_during_redaction'] and 'hidden_during_redaction' or advice['type']
+            if adviceType not in res:
+                res[adviceType] = advices = []
             else:
-                advices = res[advice['type']]
+                advices = res[adviceType]
             advices.append(advice.__dict__['data'])
         return res
 
@@ -2603,6 +2605,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'delay_left_alert': delay_left_alert,
                                         'delay_label': delay_label,
                                         'advice_given_on': advice.created(),
+                                        'hidden_during_redaction': advice.advice_hide_during_redaction,
                                         }
         return res
 
@@ -2898,6 +2901,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['delay_label'] = adviceInfo['delay_label']
                 d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
+                d['hidden_during_redaction'] = False
+                d['annexIndex'] = []
                 # manage the 'delay_started_on' data that was saved prior
                 if adviceInfo['delay'] and groupId in saved_stored_data:
                     d['delay_started_on'] = saved_stored_data[groupId]['delay_started_on']
@@ -2992,8 +2997,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                (itemState not in itemAdviceEditStates)and \
                (itemState not in itemAdviceViewStates):
                 # make sure the advice given by groupId is no more editable
-                if adviceObj and adviceObj.queryState() == 'advice_under_edit':
-                        wfTool.doActionFor(adviceObj, 'giveAdvice')
+                if adviceObj and not adviceObj.queryState() == 'advice_given':
+                    self.REQUEST.set('mayGiveAdvice', True)
+                    wfTool.doActionFor(adviceObj, 'giveAdvice')
+                    self.REQUEST.set('mayGiveAdvice', True)
                 # make sure the delay is reinitialized if advice not already given
                 if self.adviceIndex[groupId]['delay'] and self.adviceIndex[groupId]['type'] == 'not_given':
                     self.adviceIndex[groupId]['delay_started_on'] = None
@@ -3027,15 +3034,38 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # make sure the advice given by groupId is in state 'advice_under_edit'
                 if adviceObj and not adviceObj.queryState() == 'advice_under_edit':
                     try:
-                        wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit')
+                        # make the guard_expr protecting 'backToAdviceUnderEdit' alright
+                        self.REQUEST.set('mayBackToAdviceUnderEdit', True)
+                        # add a comment for this transition triggered by the application,
+                        # we want to show why it was triggered : item state change or
+                        # delay no more exceeded because of delay manually changed
+                        # the only way to
+                        if not delayIsNotExceeded:
+                            wf_comment = _('advice_wf_changed_delay_exceeded')
+                        else:
+                            wf_comment = _('advice_wf_changed_item_state_changed',
+                                           mapping={'item_state': self.queryState()})
+                        wfTool.doActionFor(adviceObj,
+                                           'backToAdviceUnderEdit',
+                                           comment=wf_comment)
                     except WorkflowException:
                         # if we have another workflow than default meetingadvice_workflow
                         # maybe we can not 'backToAdviceUnderEdit'
                         pass
+                    self.REQUEST.set('mayBackToAdviceUnderEdit', False)
             else:
                 # make sure it is no more editable
                 if adviceObj and not adviceObj.queryState() == 'advice_given':
-                    wfTool.doActionFor(adviceObj, 'giveAdvice')
+                    self.REQUEST.set('mayGiveAdvice', True)
+                    # add a comment for this transition triggered by the application,
+                    # we want to show why it was triggered : item state change or delay exceeded
+                    if not delayIsNotExceeded:
+                        wf_comment = _('advice_wf_changed_delay_exceeded')
+                    else:
+                        wf_comment = _('advice_wf_changed_item_state_changed',
+                                       mapping={'item_state': self.queryState()})
+                    wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
+                    self.REQUEST.set('mayGiveAdvice', False)
             # if item needs to be accessible by advisers, it is already
             # done by self.manage_addLocalRoles here above because it is necessary in any case
             if itemState in itemAdviceViewStates:
@@ -3057,7 +3087,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # now index advice annexes
             if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
                 self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
-
         # compute and store delay_infos
         for groupId in self.adviceIndex.iterkeys():
             self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)

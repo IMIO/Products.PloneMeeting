@@ -27,7 +27,7 @@
       </td>
       <tal:comment replace="nothing">For history reasons, we use meetingConfig.listAdviceTypes to be sure
                                      that a deactivated adviceType is still shown.</tal:comment>
-      <tal:menu repeat="adviceType python: meetingConfig.listAdviceTypes().keys() + ['not_given',]">
+      <tal:menu repeat="adviceType python: meetingConfig.listAdviceTypes().keys() + ['not_given', 'hidden_during_redaction']">
       <td tal:condition="python: adviceType in advicesByType" class="noPadding">
         <dl class="actionMenuAX">
           <dt class="actionMenuHeaderAX pmLinks"><tal:comment replace="nothing">Icon with advice type</tal:comment>
@@ -40,6 +40,7 @@
             <ul style="cursor:default">
               <tal:comment replace="nothing">List of group names</tal:comment>
               <li tal:repeat="advice python:advicesByType[adviceType]">
+
                 <fieldset tal:define="tool python: portal.portal_plonemeeting;
                                       mGroup python: getattr(tool, advice['id']);
                                       itemAdviceStates python: mGroup.getItemAdviceStates(meetingConfig);
@@ -47,6 +48,7 @@
                                       itemAdviceViewStates python: mGroup.getItemAdviceViewStates(meetingConfig);
                                       itemIsViewableByGroup python: item_review_state in (itemAdviceStates + itemAdviceEditStates + itemAdviceViewStates);
                                       adviceMayBeAdded python: item_review_state in itemAdviceStates;
+                                      adviceMayBeEdited python: item_review_state in itemAdviceEditStates;
                                       obj python: advice.get('advice_id', None) and getattr(meetingItem, advice['advice_id']) or None;
                                       mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');">
                     <legend>
@@ -66,6 +68,13 @@
                          <span tal:condition="advice/optional">)</span>
                          <acronym tal:attributes="title python: meetingItem.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
                     </legend>
+                <tal:hiddenUnderRedaction condition="python: adviceMayBeEdited and adviceType == 'hidden_during_redaction'">
+                  <p class="discreet" i18n:translate="">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</p>
+                </tal:hiddenUnderRedaction>
+                <tal:underRedactionNoMoreEditable condition="python: not adviceMayBeEdited and adviceType == 'hidden_during_redaction'">
+                  <p class="discreet" style="color: red;" i18n:translate="">This advice is considered 'Not given' because it was still under redaction when the ability to write the advice was removed to advisers of the group.  If you need this advice to be considered, contact relevant meeting managers.</p>
+                </tal:underRedactionNoMoreEditable>
+                <tal:notHiddenUnderRedaction condition="python: mayEdit or not adviceType == 'hidden_during_redaction'">
                     <tal:advice-change-delay
                       tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
                                   dummy python: context.REQUEST.set('advice_change_delay_cfg', meetingConfig);
@@ -86,7 +95,6 @@
                     </td>
                     <td tal:condition="python: adviceFileTypes or bool(advice['annexIndex'])" align="right" width="20px" class="noPadding">
                       <a href="#"
-                         class="link-overlay-pm"
                          tal:attributes="href string:${item_url}/${advice/advice_id}/annexes_form">
                         <img src="manage_annexes.gif"
                              i18n:attributes="title" title="Manage advice annexes"
@@ -117,10 +125,16 @@
                   <tr tal:condition="python: 'advice_id' in advice">
                     <td>
                         <a href="#"
-                           class="link-overlay-pm"
+                           class="link-overlay-pm-advice"
                            tal:attributes="href string:${item_url}/${advice/advice_id}/view">
                             <img src="blue_arrow.gif"
-                                 tal:attributes="src string:${portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Access detailled advice</span>
+                                 tal:attributes="src string:${portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Preview detailled advice</span>
+                        </a>
+                        <a href="#"
+                           tal:attributes="href string:${item_url}/${advice/advice_id}/view"
+                           tal:condition="mayEdit">
+                            <img src="blue_arrow.gif"
+                                 tal:attributes="src string:${portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Advice advanced management screen</span>
                         </a>
                     </td>
                     <td colspan="3"
@@ -217,6 +231,7 @@
                           tal:condition="python: advice['delay_stopped_on'] and not advice['delay_started_on']">the advice was asked after this date.
                     </span>
                 </tal:itemViewableButNoMoreAdviseableWithDelay>
+                </tal:notHiddenUnderRedaction>
                 </fieldset>
               </li>
             </ul>

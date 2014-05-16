@@ -14,37 +14,48 @@
     the advice is displayed in an overlay because every vielwets are hidden in overlays...</tal:comment>
     <div tal:condition="python: 'ajax_load' in context.REQUEST" id="viewlet-below-content-title">
         <div tal:replace="structure provider:plone.belowcontenttitle" />
+        <script type="text/javascript">
+        jQuery(document).ready(removeLinkOnByLine);
+        </script>
     </div>
 
-    <script type="text/javascript">
-    jQuery(document).ready(removeLinkOnByLine);
-    </script>
+    <div tal:condition="python: not 'ajax_load' in context.REQUEST">
+        <p>
+            <a href='../#adviceAndAnnexes'><img src="back_to.gif" tal:attributes="src string:${portal_url}/back_to.gif" />Back to the item</a>
+        </p>
+        <table class="no-style-table" width="100%">
+            <tal:loop repeat="widget view/widgets/values">
+            <tr tal:condition="python: widget.mode != 'hidden'">
+                <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+                <td class="table_widget_value" tal:content="structure widget/render">Value</td>
+            </tr>
+            </tal:loop>
+        </table>
+    </div>
 
-    <dl class="enableFormTabbing">
-        <dt i18n:translate="MeetingAdvice">Advice</dt>
-        <dd>
-            <table class="no-style-table" width="100%">
-                <tal:loop repeat="widget view/widgets/values">
-                <tr tal:condition="python: widget.mode != 'hidden'">
-                    <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
-                    <td class="table_widget_value" tal:content="structure widget/render">Value</td>
-                </tr>
-                </tal:loop>
-            </table>
-        </dd>
-        <dt><span i18n:translate="">Annexes</span>&nbsp;(<span tal:replace="context/numberOfAnnexes" />)</dt>
-        <dd tal:define="relatedTo string:advice;
-                        showColors python: False;">
-          <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
-        </dd>
-    </dl>
+    <div tal:condition="python: 'ajax_load' in context.REQUEST">
+        <dl class="enableFormTabbing">
+            <dt i18n:translate="MeetingAdvice">Advice</dt>
+            <dd>
+                <table class="no-style-table" width="100%">
+                    <tal:loop repeat="widget view/widgets/values">
+                    <tr tal:condition="python: widget.mode != 'hidden'">
+                        <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+                        <td class="table_widget_value" tal:content="structure widget/render">Value</td>
+                    </tr>
+                    </tal:loop>
+                </table>
+            </dd>
+            <dt><span i18n:translate="">Annexes</span>&nbsp;(<span tal:replace="context/numberOfAnnexes" />)</dt>
+            <dd tal:define="relatedTo string:advice;
+                            showColors python: False;">
+              <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
+            </dd>
+        </dl>
 
-    <div class="visualClear"></div>
+        <div class="visualClear"></div>
 
-    <metal:closeButton use-macro="here/@@pm-macros/closeButtonMacro" />
-
-    <div tal:condition="python: 'ajax_load' in context.REQUEST" id="viewlet-below-content-title">
-        <div tal:replace="structure provider:plone.belowcontentbody" />
+        <metal:closeButton use-macro="here/@@pm-macros/closeButtonMacro" />
     </div>
 
   </metal:content-core>
