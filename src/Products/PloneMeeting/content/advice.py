@@ -16,6 +16,12 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.utils import getHistory
 
 
+def default_advice_hide_during_redaction():
+    '''Default value for field 'advice_hide_during_redaction'.
+       This is made for now to be overrided...'''
+    return False
+
+
 class IMeetingAdvice(Interface):
     """
         MeetingAdvice schema
@@ -39,11 +45,19 @@ class IMeetingAdvice(Interface):
                       "Note that if you lose access to the advice (for example if the item state evolve), "
                       "the advice will be considered 'Not given, was under edition'.  A manager will be able "
                       "to publish it nevertheless."),
-        default=False,
+        defaultFactory=default_advice_hide_during_redaction,
     )
     advice_comment = RichText(
-        title=_(u"Advice comment"),
-        description=_("Enter an optional comment."),
+        title=_(u"Advice official comment"),
+        description=_("Enter the official comment."),
+        required=False,
+        default_mime_type='text/html',
+        output_mime_type='text/html',
+        allowed_mime_types=('text/html',),
+    )
+    advice_observations = RichText(
+        title=_(u"Advice observations"),
+        description=_("Enter optionnal observations if necessary."),
         required=False,
         default_mime_type='text/html',
         output_mime_type='text/html',

@@ -49,6 +49,7 @@
                                       itemIsViewableByGroup python: item_review_state in (itemAdviceStates + itemAdviceEditStates + itemAdviceViewStates);
                                       adviceMayBeAdded python: item_review_state in itemAdviceStates;
                                       adviceMayBeEdited python: item_review_state in itemAdviceEditStates;
+                                      memberIsAdviserForGroup python:  advice['id'] in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')];
                                       obj python: advice.get('advice_id', None) and getattr(meetingItem, advice['advice_id']) or None;
                                       mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');">
                     <legend>
@@ -69,12 +70,12 @@
                          <acronym tal:attributes="title python: meetingItem.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
                     </legend>
                 <tal:hiddenUnderRedaction condition="python: adviceMayBeEdited and adviceType == 'hidden_during_redaction'">
-                  <p class="discreet" i18n:translate="">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</p>
+                  <p class="discreet" style="color: red;" i18n:translate="">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</p>
                 </tal:hiddenUnderRedaction>
                 <tal:underRedactionNoMoreEditable condition="python: not adviceMayBeEdited and adviceType == 'hidden_during_redaction'">
                   <p class="discreet" style="color: red;" i18n:translate="">This advice is considered 'Not given' because it was still under redaction when the ability to write the advice was removed to advisers of the group.  If you need this advice to be considered, contact relevant meeting managers.</p>
                 </tal:underRedactionNoMoreEditable>
-                <tal:notHiddenUnderRedaction condition="python: mayEdit or not adviceType == 'hidden_during_redaction'">
+                <tal:notHiddenUnderRedaction condition="python: memberIsAdviserForGroup or mayEdit or not adviceType == 'hidden_during_redaction'">
                     <tal:advice-change-delay
                       tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
                                   dummy python: context.REQUEST.set('advice_change_delay_cfg', meetingConfig);
@@ -89,8 +90,15 @@
                     <a href="edit"
                        class="link-overlay-pm-advice"
                        tal:attributes="href string:${item_url}/${advice/advice_id}/edit">
-                      <img i18n:attributes="title" title="advice_edit" style="cursor:pointer"
+                      <img i18n:attributes="title" title="advice_edit"
                            tal:attributes="src string:$portal_url/edit.gif;" />
+                    </a>
+                    </td>
+                    <td align="right" width="20px" class="noPadding">
+                    <a href="view"
+                       tal:attributes="href string:${item_url}/${advice/advice_id}/view">
+                      <img i18n:attributes="title" title="Advice advanced management screen"
+                           tal:attributes="src string:$portal_url/advice_manage.png;" />
                     </a>
                     </td>
                     <td tal:condition="python: adviceFileTypes or bool(advice['annexIndex'])" align="right" width="20px" class="noPadding">
@@ -129,12 +137,6 @@
                            tal:attributes="href string:${item_url}/${advice/advice_id}/view">
                             <img src="blue_arrow.gif"
                                  tal:attributes="src string:${portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Preview detailled advice</span>
-                        </a>
-                        <a href="#"
-                           tal:attributes="href string:${item_url}/${advice/advice_id}/view"
-                           tal:condition="mayEdit">
-                            <img src="blue_arrow.gif"
-                                 tal:attributes="src string:${portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Advice advanced management screen</span>
                         </a>
                     </td>
                     <td colspan="3"

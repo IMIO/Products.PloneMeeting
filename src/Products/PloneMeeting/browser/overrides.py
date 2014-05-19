@@ -114,6 +114,9 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
           'CMFEditions: Access previous versions' permission, here
           we want everybody than can acces the item to see the history...
         """
+        # show the history on the meetingadvice only on the advanced management view
+        if self.context.portal_type == 'meetingadvice' and 'ajax_load' in self.request:
+            return False
         return True
 
 
