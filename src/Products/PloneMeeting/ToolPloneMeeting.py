@@ -648,7 +648,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(meetingConfig)
         return res
 
+    def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffix=None, zope=False):
+        '''cachekey method for self.getGroupsForUser.'''
+        # we only recompute if param or REQUEST changed
+        return (str(self.REQUEST.debug), userId, active, suffix, zope)
+
     security.declarePublic('getGroupsForUser')
+    @ram.cache(getGroupsForUser_cachekey)
     def getGroupsForUser(self, userId=None, active=True, suffix=None, zope=False):
         '''Gets the groups p_userId belongs to. If p_userId is None, we use the
            authenticated user. If active is True, we select only active
