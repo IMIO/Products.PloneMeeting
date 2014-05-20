@@ -141,6 +141,8 @@ def onItemAdded(item, event):
     item.adviceIndex = PersistentMapping()
     # Add a place to store emergency changes history
     item.emergency_changes_history = PersistentList()
+    # Add a place to store completeness changes history
+    item.completeness_changes_history = PersistentList()
 
 
 def onMeetingAdded(meeting, event):
