@@ -1,46 +1,81 @@
 from DateTime import DateTime
 from AccessControl import Unauthorized
-from zope.component import getMultiAdapter
 from Products.Five.browser import BrowserView
 from Products.CMFCore.utils import getToolByName
+from Products.Archetypes import DisplayList
 
 
-class ChangeItemCompletenessView(BrowserView):
-    '''
-      Manage the MeetingItem.itemCompleteness change on the item view.
-      Check if change allowed, apply the change then reload the page.
-      We reload the page because several things can happen upon completeness value change.
-    '''
+class ItemCompletenessView(BrowserView):
+    '''Render the item completeness HTML on the meetingitem_view.'''
+
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
-        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = portal_state.portal()
-        self.new_completeness_value = self.request.form.get('new_completeness_value', '')
+        self.portal_url = getToolByName(self, 'portal_url').getPortalObject().absolute_url()
+
+    def listSelectableCompleteness(self):
+        '''Returns a list of completeness the current user can set the item to.'''
+        # we base our actions on avaialble terms in the MeetingItem.completeness field vocabulary
+        completenesses = self.context.listCompleteness()
+        completenessKeys = completenesses.keys()
+        currentCompleteness = self.context.getCompleteness()
+        # now check if user can evaluate completeness
+        if not self.context.adapted().mayEvaluateCompleteness():
+            completenessKeys.remove('completeness_complete')
+            completenessKeys.remove('completeness_incomplete')
+            completenessKeys.remove('completeness_not_yet_evaluated')
+        # now check if user can set to 'completeness_evaluation_asked_again'
+        if not self.context.adapted().mayAskCompletenessEvalAgain():
+            completenessKeys.remove('completeness_evaluation_asked_again')
+        # now if currentComplenteness is still in completeness, we remove it
+        if currentCompleteness in completenessKeys:
+            completenessKeys.remove(currentCompleteness)
+        # now build a vocabulary with left values
+        res = []
+        for completeness in completenesses.items():
+            if completeness[0] in completenessKeys:
+                res.append(completeness)
+        return DisplayList(tuple(res))
+
+
+class ChangeItemCompletenessView(BrowserView):
+    '''This manage the overlay popup displayed to enter a comment when the completeness is changed.'''
+
+    def __init__(self, context, request):
+        super(BrowserView, self).__init__(context, request)
+        self.context = context
+        self.request = request
 
     def __call__(self):
-        if not self.context.mayQuickEdit('completeness'):
-            raise Unauthorized
+        form = self.request.form
+        submitted = form.get('form.buttons.save', False) or form.get('form.submitted', False)
+        cancelled = form.get('form.buttons.cancel', False)
+        if cancelled:
+            # the only way to enter here is the popup overlay not to be shown
+            # because while using the popup overlay, the jQ function take care of hidding it
+            # while the Cancel button is hit
+            return self.request.response.redirect(self.context.absolute_url())
+        elif submitted:
+            # check that given 'new_completeness_value' is available in the field vocabulary
+            # if not available, just raise Unauthorized
+            new_completeness_value = self.request.get('new_completeness_value')
+            if not new_completeness_value in self.context.restrictedTraverse('@@item-completeness').listSelectableCompleteness().keys():
+                raise Unauthorized
+            self.context.setCompleteness(new_completeness_value)
+            # add a line to the item's emergency_change_history
+            history_data = {'action': new_completeness_value,
+                            'actor': '',
+                            'time': DateTime(),
+                            'comment': self.request.get('comment', '')}
+            self.context.completeness_changes_history.append(history_data)
+            self.request.response.redirect(self.context.absolute_url())
+        return self.index()
 
-        # check that we are actually applying a consistent value
-        if not self.new_completeness_value in self.context.listCompleteness():
-            # if it is not the case then someone is trying nasty things
-            raise Unauthorized
 
-        # apply and refresh page
-        self.context.setCompleteness(self.new_completeness_value)
-        # add an line in the item's history
-        memberId = getToolByName(self, 'portal_membership').getAuthenticatedMember().getId()
-        wfName = self.context.getWorkflowName()
-        wfHistory = self.context.workflow_history[wfName]
-        comments = ''
-        if self.new_completeness_value == 'completeness_incomplete':
-            # this will be translated once viewed
-            comments = 'completeness_incomplete_check_completenessComment'
-        self.context.workflow_history[wfName] = wfHistory + ({'action': self.new_completeness_value,
-                                                              'review_state': wfHistory[-1]['review_state'],
-                                                              'actor': memberId,
-                                                              'comments': comments,
-                                                              'time': DateTime()}, )
-        return self.context.REQUEST.RESPONSE.redirect(self.context.absolute_url())
+class ItemCompletenessHistoryView(BrowserView):
+    '''Display history of emergency value changes.'''
+    def __init__(self, context, request):
+        super(BrowserView, self).__init__(context, request)
+        self.context = context
+        self.request = request

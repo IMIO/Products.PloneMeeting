@@ -1,0 +1,30 @@
+<tal:defines define="selectableCompleteness python: view.listSelectableCompleteness().items();
+                     currentCompleteness context/getCompleteness;">
+    <span class="#"
+          onclick="javascript:toggleMenu('item_completeness')"
+          tal:attributes="class python: selectableCompleteness and ('item_%s Editable' % currentCompleteness) or ('item_%s' % currentCompleteness)"
+          tal:content="python: context.displayValue(context.listCompleteness(), currentCompleteness)">Completeness</span>
+    <span class="discreet"> — <a href="item-completeness-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
+    <div id="pm_menu_item_completeness"
+         name="pm_menu_item_completeness"
+         class="pmDropdown"
+         tal:condition="selectableCompleteness">
+        <div style="clear: left;" tal:repeat="completeness python: selectableCompleteness">
+            <tal:block tal:condition="python: completeness[0] != currentCompleteness">
+                <img style="float: left; padding-right: 0.3em;"
+                     src="blue_arrow.gif"
+                     tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
+                <a href="#"
+                   tal:attributes="href python: '%s/@@change-item-completeness?new_completeness_value=%s' % (context.absolute_url(),
+                                                                                    completeness[0]);
+                                   class python: 'link-overlay-pm item_%s' % completeness[0]"
+                   tal:content="python: completeness[1]">Completeness</a>
+            </tal:block>
+        </div>
+        <div style="text-align: right;" onclick="javascript:toggleMenu('item_completeness')">
+            <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
+                 src="pb_close_small.png"
+                 tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
+        </div>
+    </div>
+</tal:defines>

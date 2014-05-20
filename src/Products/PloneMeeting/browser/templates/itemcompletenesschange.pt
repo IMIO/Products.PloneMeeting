@@ -1,0 +1,30 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xml:lang="en"
+      lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      metal:use-macro="here/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+
+  <body>
+  <metal:fill fill-slot="main">
+
+    <h1 class="documentFirstHeading" tal:content="context/Title">Title</h1>
+    <form id="changeCompletenessValueForm" method="post"
+          tal:attributes="action python:context.absolute_url() + '/@@change-item-completeness'">
+    <input type="hidden" name="new_completeness_value" tal:attributes="value view/request/new_completeness_value"/>
+    <tal:comment replace="nothing">Optional comment</tal:comment>
+    <p class="popups_field_descr" i18n:translate="change_completeness_comment">You are about to set completeness to <span style="font-weight: bold;" i18n:name="completeness_value" i18n:domain="PloneMeeting" i18n:translate="" tal:content="view/request/new_completeness_value">completeness value</span>, you can add a comment if necessary.</p>
+    <label for="comment" i18n:translate="completeness_comment">Comment</label>
+    <textarea name="comment" rows="8"></textarea><br/><br/>
+    <div align="center">
+      <input type="hidden" name="form.submitted:boolean" value="True" />
+      <input type="submit" name="form.buttons.save" class="context" value="Save" i18n:attributes="value" i18n:domain="plone" />
+      <input type="submit" name="form.buttons.cancel" class="standalone" value="Cancel" i18n:attributes="value" i18n:domain="plone" />
+    </div>
+    </form>
+
+  </metal:fill>
+  </body>
+</html>
