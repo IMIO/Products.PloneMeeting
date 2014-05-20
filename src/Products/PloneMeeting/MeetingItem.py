@@ -938,28 +938,16 @@ schema = Schema((
         name='completeness',
         default='completeness_not_yet_evaluated',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('completeness') and here.adapted().mayWriteCompleteness()",
+            condition="python: here.attributeIsUsed('completeness') and (here.adapted().mayEvaluateCompleteness() or here.adapted().mayAskCompletenessEvalAgain())",
             description="Completeness",
             description_msgid="item_completeness_descr",
+            visible=False,
             label='Completeness',
             label_msgid='PloneMeeting_label_completeness',
             i18n_domain='PloneMeeting',
         ),
         optional=True,
         vocabulary='listCompleteness',
-    ),
-    TextField(
-        name='completenessComment',
-        allowable_content_types=('text/html',),
-        widget=RichWidget(
-            condition="python: here.attributeIsUsed('completeness') and here.adapted().mayWriteCompleteness()",
-            rows=15,
-            label='Completenesscomment',
-            label_msgid='PloneMeeting_label_completenessComment',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type="text/html",
-        default_output_type="text/x-html-safe",
     ),
     LinesField(
         name='questioners',
@@ -1257,17 +1245,54 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
         return True
 
-    security.declarePublic('mayWriteCompleteness')
-    def mayWriteCompleteness(self):
-        '''Condition for editing 'completeness' field.'''
+    security.declarePublic('mayAskEmergency')
+    def mayAskEmergency(self):
+        '''Returns True if current user may ask emergency for an item.'''
+        # by default, everybody able to edit the item can ask emergency
+        return True
+
+    security.declarePublic('mayAcceptOrRefuseEmergency')
+    def mayAcceptOrRefuseEmergency(self):
+        '''Returns True if current user may accept or refuse emergency if asked for an item.'''
+        # by default, only MeetingManagers can accept or refuse emergency
+        item = self.getSelf()
+        tool = getToolByName(item, 'portal_plonemeeting')
+        if tool.isManager():
+            return True
+        return False
+
+    security.declarePublic('mayEvaluateCompleteness')
+    def mayEvaluateCompleteness(self):
+        '''Condition for editing 'completeness' field,
+           being able to define if item is 'complete' or 'incomplete'.'''
         # user must be able to edit current item
-        membershipTool = getToolByName(self, 'portal_membership')
+        item = self.getSelf()
+        if item.isDefinedInTool():
+            return
+
+        membershipTool = getToolByName(item, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
         # user must be an item completeness editor (one of corresponding role)
+        if not member.has_permission(ModifyPortalContent, item) or \
+           not member.has_role(ITEM_COMPLETENESS_EVALUATORS, item):
+            return False
+        return True
+
+    security.declarePublic('mayAskCompletenessEvalAgain')
+    def mayAskCompletenessEvalAgain(self):
+        '''Condition for editing 'completeness' field,
+           being able to ask completeness evaluation again when completeness
+           was 'incomplete'.'''
+        # user must be able to edit current item
         item = self.getSelf()
-        if item.isDefinedInTool() or \
+        if item.isDefinedInTool():
+            return
+        membershipTool = getToolByName(item, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        # user must be an item completeness editor (one of corresponding role)
+        if not item.getCompleteness() == 'completeness_incomplete' or \
            not member.has_permission(ModifyPortalContent, item) or \
-           not member.has_role(ITEM_COMPLETENESS_EDITORS, item):
+           not member.has_role(ITEM_COMPLETENESS_ASKERS, item):
             return False
         return True
 
@@ -1674,8 +1699,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listCompleteness')
     def listCompleteness(self):
         '''Vocabulary for the 'completeness' field.'''
-        # use plone domain as we display completeness changes in content_history
-        d = 'plone'
+        d = 'PloneMeeting'
         res = DisplayList((
             ("completeness_not_yet_evaluated", translate('completeness_not_yet_evaluated',
                                                          domain=d,
