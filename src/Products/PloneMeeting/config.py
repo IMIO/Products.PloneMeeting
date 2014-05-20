@@ -146,8 +146,10 @@ ploneMeetingRoles = (
 PLONEMEETING_UPDATERS = ('MeetingManager', 'Manager', 'Owner',
                          'MeetingMember', 'MeetingPreReviewer', 'MeetingReviewer', )
 
-# Roles that can update MeetingItem.completeness field
-ITEM_COMPLETENESS_EDITORS = ('MeetingManager', 'Manager', 'MeetingReviewer', )
+# Roles that can evaluate MeetingItem.completeness
+ITEM_COMPLETENESS_EVALUATORS = ('MeetingManager', 'Manager', 'MeetingReviewer', 'MeetingPreReviewer', )
+# Roles that can ask new evaluation of  MeetingItem.completeness if set to 'incomplete'
+ITEM_COMPLETENESS_ASKERS = ('MeetingManager', 'Manager', 'MeetingReviewer', 'MeetingPreReviewer', 'MeetingMember', )
 
 # The id used for the root folder added to the member personal area that
 # will contain every meetingConfigs available to the member

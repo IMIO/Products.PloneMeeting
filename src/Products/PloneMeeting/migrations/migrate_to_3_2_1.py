@@ -59,6 +59,16 @@ class Migrate_To_3_2_1(Migrator):
                     "here.portal_plonemeeting.userIsAmong('restrictedpowerobservers'))")
         logger.info('Done.')
 
+    def _addAdvicesNewFieldHiddenDuringRedaction(self):
+        '''Add the attribute 'advice_hide_during_redaction' on every existing advices.'''
+        brains = self.portal.portal_catalog(portal_type=('meetingadvice', ))
+        logger.info('Initializing attribute \'advice_hide_during_redaction\' for %d meetingadvice objects...' % len(brains))
+        for brain in brains:
+            advice = brain.getObject()
+            if not hasattr(advice, 'advice_hide_during_redaction'):
+                advice.advice_hide_during_redaction = False
+        logger.info('Done.')
+
     def _updateAdvices(self):
         '''Update advices as we store 'comment' of given advices as
            'utf-8' instead of unicode as other stored data of the item.'''
@@ -92,16 +102,18 @@ class Migrate_To_3_2_1(Migrator):
                                                 acquire=False)
         logger.info('Done.')
 
-    def _addEmergencyChangesHistoryToItems(self):
-        '''Add the attribute 'emergency_changes_history' on every existing items,
-           this will be used to store changes about the MeetingItem.emergency field values
-           and comments.'''
+    def _addChangesHistoryToItems(self):
+        '''Add the attribute 'emergency_changes_history' and 'completeness_changes_history'
+           on every existing items, this will be used to store changes about the
+           MeetingItem.emergency and MeetingItem.completeness fields values and comments.'''
         brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
-        logger.info('Initializing attribute \'emergency_changes_history\' for %d MeetingItem objects...' % len(brains))
+        logger.info('Initializing attribute \'emergency_changes_history\' and \'completeness_changes_history\' for %d MeetingItem objects...' % len(brains))
         for brain in brains:
             item = brain.getObject()
             if not hasattr(item, 'emergency_changes_history'):
                 item.emergency_changes_history = PersistentList()
+            if not hasattr(item, 'completeness_changes_history'):
+                item.completeness_changes_history = PersistentList()
         logger.info('Done.')
 
     def run(self):
@@ -109,10 +121,11 @@ class Migrate_To_3_2_1(Migrator):
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
         self._updateAnnexesMeetingFileType()
         self._addRestrictedPowerObserverGroupsByMeetingConfig()
+        self._addAdvicesNewFieldHiddenDuringRedaction()
         self._updateAdvices()
         self._initMeetingItemCompletenessCommentHTMLField()
         self._updateAddFilePermissionOnMeetingConfigFolders()
-        self._addEmergencyChangesHistoryToItems()
+        self._addChangesHistoryToItems()
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.finish()
@@ -125,11 +138,12 @@ def migrate(context):
        1) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
        2) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
        3) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
-       4) Update advices to store 'comment' as utf-8 and not as unicode;
-       5) Initialize new field MeetingItem.completenessComment;
-       6) Update 'Add File' permission on each meetingConfig folder;
-       7) Add an attribute 'emergency_changes_history' for every existing items;
-       8) Reinstall PloneMeeting.
+       4) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
+       5) Update advices to store 'comment' as utf-8 and not as unicode;
+       6) Initialize new field MeetingItem.completenessComment;
+       7) Update 'Add File' permission on each meetingConfig folder;
+       8) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
+       9) Reinstall PloneMeeting.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------

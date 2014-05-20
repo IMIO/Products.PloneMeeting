@@ -149,7 +149,7 @@
                         </tal:defines>
                     </td>
                   </tr>
-                  <tr tal:condition="python: advice['type'] != 'not_given' and advice['delay']">
+                  <tr tal:condition="python: advice['type'] != 'not_given' and advice['delay'] and not advice['hidden_during_redaction']">
                     <td colspan="4">
                          <div i18n:translate="" class="discreet" style="text-align: right;">This advice was asked on <span i18n:name="advice_asked_on_date" tal:content="python: context.toLocalizedTime(advice['delay_started_on'])">2013/05/08</span>
                          and was given on <span i18n:name="advice_given_on_date" tal:content="python: context.toLocalizedTime(advice['advice_given_on'])">2013/05/08</span>.

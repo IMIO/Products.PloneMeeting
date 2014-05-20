@@ -160,6 +160,12 @@
                 </i>:&nbsp;&nbsp;
                 <tal:itemEmergency replace="structure here/@@item-emergency/index" />
             </div>
+            <div tal:condition="python: 'completeness' in usedAttrs">
+                <i class="discreet">
+                    <span i18n:translate="PloneMeeting_label_completeness"></span>
+                </i>:&nbsp;&nbsp;
+                <tal:itemCompleteness replace="structure here/@@item-completeness/index" />
+            </div>
         </td>
         <td width="50%" align="right">
             <tal:comment replace="nothing">Preferred meeting</tal:comment>
@@ -257,13 +263,6 @@
 
     <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
     <metal:people use-macro="here/@@pm-macros/itemPeople"/>
-
-    <div tal:condition="python: 'completeness' in usedAttrs">
-        <i class="discreet">
-            <span i18n:translate="PloneMeeting_label_completeness"></span>
-        </i>:&nbsp;&nbsp;
-        <metal:people use-macro="here/@@pm-macros/itemCompleteness"/>
-    </div>
 
     <tal:comment replace="nothing">Description</tal:comment>
     <tal:field define="fieldName python: 'description'; ajaxEdit python:True">

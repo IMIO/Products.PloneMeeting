@@ -47,7 +47,7 @@
             <td tal:content="python:context.restrictedTraverse('@@plone').toLocalizedTime(historyInfo['time'],long_format=True)"/>
             <td>
               <tal:comment condition="comment" i18n:translate="" i18n:domain="PloneMeeting" tal:content="structure comment"/>
-              <tal:noComment condition="not: comment" i18n:translate="no_comments"/>
+              <span tal:condition="not:comment" i18n:domain="plone" i18n:translate="no_comments" class="discreet">No comments</span>
             </td>
           </tr>
           </tal:historyInfo>

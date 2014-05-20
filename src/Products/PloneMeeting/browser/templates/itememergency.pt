@@ -1,16 +1,15 @@
-<tal:defines define="mayQuickEdit python: context.mayQuickEdit('emergency');
-                     currentEmergency context/getEmergency;
-                     lastEmergencyEvent python: context.getLastEvent(currentEmergency);">
+<tal:defines define="selectableEmergencies python: view.listSelectableEmergencies().items();
+                     currentEmergency context/getEmergency;">
     <span class="#"
           onclick="javascript:toggleMenu('item_emergency')"
-          tal:attributes="class python: mayQuickEdit and ('item_%s Editable' % currentEmergency) or ('item_%s' % currentEmergency)"
+          tal:attributes="class python: selectableEmergencies and ('item_%s Editable' % currentEmergency) or ('item_%s' % currentEmergency)"
           tal:content="python: context.displayValue(context.listEmergencies(), currentEmergency)">Emergency</span>
     <span class="discreet"> — <a href="item-emergency-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
     <div id="pm_menu_item_emergency"
          name="pm_menu_item_emergency"
          class="pmDropdown"
-         tal:condition="mayQuickEdit">
-        <div style="clear: left;" tal:repeat="emergency python: view.listSelectableEmergencies().items()">
+         tal:condition="selectableEmergencies">
+        <div style="clear: left;" tal:repeat="emergency python: selectableEmergencies">
             <tal:block tal:condition="python: emergency[0] != currentEmergency">
                 <img style="float: left; padding-right: 0.3em;"
                      src="blue_arrow.gif"

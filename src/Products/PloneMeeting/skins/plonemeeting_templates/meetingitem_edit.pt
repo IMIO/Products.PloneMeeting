@@ -29,27 +29,6 @@
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
 
-    <tal:comment replace="nothing">Completeness informations, completenessComment is shown if completeness radio is 'completeness_incomplete'</tal:comment>
-    <metal:field use-macro="python:here.widget('completeness', mode='edit')" />
-    <metal:field use-macro="python:here.widget('completenessComment', mode='edit')" />
-    <script language="javascript">
-        function hideCompletenessCommentFieldIfNecessary(value) {
-            var completenessComment = $('#archetypes-fieldname-completenessComment');
-            if (value == 'completeness_incomplete' || this.value == 'completeness_incomplete') {
-                completenessComment.fadeIn();
-            }
-            else {
-                completenessComment.fadeOut("normal", function() {
-                $(this).hide();
-            });
-            };
-        }
-        $('input:radio[name=completeness]').change(hideCompletenessCommentFieldIfNecessary);
-    </script>
-    <script language="javascript"
-      tal:content="string:jQuery(document).ready(hideCompletenessCommentFieldIfNecessary('${context/getCompleteness}'));">
-    </script>
-
     <tal:field define="fieldName python: 'description'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>

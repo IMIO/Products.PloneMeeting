@@ -21,10 +21,10 @@ class ItemEmergencyView(BrowserView):
         emergencyKeys = emergencies.keys()
         currentEmergency = self.context.getEmergency()
         # now check if user can ask emergency if it is not already the case
-        if not self.mayAskEmergency():
+        if not self.context.adapted().mayAskEmergency():
             emergencyKeys.remove('emergency_asked')
         # now check if user can accept/refuse and asked emergency if it is not already the case
-        if not self.mayAcceptOrRefuseEmergency() or not currentEmergency == 'emergency_asked':
+        if not self.context.adapted().mayAcceptOrRefuseEmergency() or not currentEmergency == 'emergency_asked':
             emergencyKeys.remove('emergency_accepted')
             emergencyKeys.remove('emergency_refused')
         # now if currentEmergency is still in emergencies, we remove it
@@ -36,19 +36,6 @@ class ItemEmergencyView(BrowserView):
             if emergency[0] in emergencyKeys:
                 res.append(emergency)
         return DisplayList(tuple(res))
-
-    def mayAskEmergency(self):
-        '''Returns True if current user may ask emergency for an item.'''
-        # by default, everybody able to edit the item can ask emergency
-        return True
-
-    def mayAcceptOrRefuseEmergency(self):
-        '''Returns True if current user may accept or refuse emergency if asked for an item.'''
-        # by default, only MeetingManagers can accept or refuse emergency
-        tool = getToolByName(self, 'portal_plonemeeting')
-        if tool.isManager():
-            return True
-        return False
 
 
 class ChangeItemEmergencyView(BrowserView):

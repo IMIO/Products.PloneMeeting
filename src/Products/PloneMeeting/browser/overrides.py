@@ -1,5 +1,3 @@
-from zope.component import getMultiAdapter
-
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
@@ -194,9 +192,9 @@ class BaseActionsPanelView(ActionsPanelView):
         http_referer = self.request['HTTP_REFERER']
         if http_referer.startswith(self.context.absolute_url()):
             # we were on the item, redirect to user home page
-            meetingFolderRedirectView = getMultiAdapter((self.context.aq_inner.aq_parent, self.request),
-                                                        name='meetingfolder_redirect_view')
-            redirectToUrl = meetingFolderRedirectView.getFolderRedirectUrl()
+            mc = self.context.portal_plonemeeting.getMeetingConfig(self.context)
+            app = self.context.portal_plonemeeting.getPloneMeetingFolder(mc.id)
+            redirectToUrl = app.restrictedTraverse('@@meetingfolder_redirect_view').getFolderRedirectUrl()
         else:
             redirectToUrl = http_referer
         return redirectToUrl
