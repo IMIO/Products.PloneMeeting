@@ -1,10 +1,11 @@
 <tal:defines define="selectableDelays python: view.advice['delay'] and view.listSelectableDelays(view.advice['row_id']) or [];
                      menuId string:advice_change_delay_row_id_${view/advice/row_id}_${view/context/UID};"
-             condition="selectableDelays">
+             condition="selectableDelays"
+             i18n:domain="PloneMeeting">
     <span onclick="javascript:toggleMenu('advice_change_delay_row_id_123')"
           class="advice_change_delay Editable"
           tal:attributes="onclick string:javascript:toggleMenu('${menuId}')">
-        Change delay
+        <img src="advice_with_delay.png" />&nbsp;<span i18n:translate="">Change delay</span>
     </span>
     <div id="pm_menu_advice_change_delay"
          name="pm_menu_advice_change_delay"

@@ -920,6 +920,9 @@ div a.advice_delay_change_value {
 .advice_change_delay.Editable {
     font-style: italic;
 }
+.advice_change_delay.Editable img {
+    vertical-align: middle;
+}
 
 /* </dtml-with> */
 
