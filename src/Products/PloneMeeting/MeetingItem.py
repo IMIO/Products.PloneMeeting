@@ -2836,10 +2836,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            that all advices must be "not_given" again.
            If p_triggered_by_transition is given, we know that the advices are
            updated because of a workflow transition, we receive the transition name.'''
-        # no sense to compute advice on items defined in the configuration
-        if self.isDefinedInTool():
+        # no sense to compute automatic advice on items defined in the configuration
+        isDefinedInTool = self.isDefinedInTool()
+        if isDefinedInTool:
             self.adviceIndex = PersistentMapping()
-            return
         tool = getToolByName(self, 'portal_plonemeeting')
         plone_utils = getToolByName(self, 'plone_utils')
         cfg = tool.getMeetingConfig(self)
@@ -2879,7 +2879,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._removeEveryContainedAdvices()
 
         # Compute automatic
-        automaticAdvisers = self.getAutomaticAdvisers()
+        if isDefinedInTool:
+            automaticAdvisers = []
+        else:
+            automaticAdvisers = self.getAutomaticAdvisers()
         # get formatted optionalAdvisers to be coherent with automaticAdvisers data format
         optionalAdvisers = self.getOptionalAdvisersData()
 
