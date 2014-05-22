@@ -6,6 +6,8 @@ from zope.i18n import translate
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
 
+from z3c.form.browser.radio import RadioFieldWidget
+
 from plone.app.textfield import RichText
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
@@ -38,13 +40,15 @@ class IMeetingAdvice(Interface):
         vocabulary=u'Products.PloneMeeting.content.advice.advice_type_vocabulary',
         required=True,
     )
+    form.widget('advice_hide_during_redaction', RadioFieldWidget)
     advice_hide_during_redaction = schema.Bool(
         title=_(u'Hide advice during redaction'),
-        description=_(u"If you do not want the advice to be shown immediately after redaction, you can check this "
+        description=_("If you do not want the advice to be shown immediately after redaction, you can check this "
                       "box.  This will let you or other member of your group work on the advice before showing it.  "
                       "Note that if you lose access to the advice (for example if the item state evolve), "
                       "the advice will be considered 'Not given, was under edition'.  A manager will be able "
                       "to publish it nevertheless."),
+        required=False,
         defaultFactory=default_advice_hide_during_redaction,
     )
     advice_comment = RichText(
