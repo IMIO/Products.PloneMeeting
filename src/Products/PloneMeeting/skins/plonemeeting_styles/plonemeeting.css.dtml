@@ -766,6 +766,7 @@ select#optionalAdvisers option[disabled] {
     position: relative;
     left: -8px;
     margin-right: -6px;
+    font-weight: bold;
 }
 .advice_delay_not_giveable {
     color: grey;
