@@ -210,7 +210,7 @@ def onAdviceEditFinished(advice, event):
     item = advice.getParentNode()
     item.updateAdvices()
     http_referer = item.REQUEST['HTTP_REFERER']
-    if not http_referer.endswith('/edit'):
+    if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
         advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
 
