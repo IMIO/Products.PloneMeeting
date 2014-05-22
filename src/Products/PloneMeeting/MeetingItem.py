@@ -240,7 +240,7 @@ class MeetingItemWorkflowConditions:
                 return True
             # See (*) above: done when meeting goes from 'frozen' to
             # 'published' or 'created'.
-        elif currentState in ('accepted', 'refused'):
+        elif currentState in ('accepted', 'refused', 'delayed'):
             if meetingState in self.meetingNotClosedStates:
                 return True
         elif currentState == 'confirmed':
@@ -250,8 +250,6 @@ class MeetingItemWorkflowConditions:
             if meetingState == 'closed':
                 return True
             # See (*) above: done when meeting goes from 'archived' to 'closed'.
-        elif currentState == 'delayed':
-            return True
 
     security.declarePublic('mayBackToMeeting')
     def mayBackToMeeting(self, transitionName):
@@ -1249,7 +1247,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayAskEmergency(self):
         '''Returns True if current user may ask emergency for an item.'''
         # by default, everybody able to edit the item can ask emergency
-        return True
+        item = self.getSelf()
+        membershipTool = getToolByName(item, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        if member.has_permission(ModifyPortalContent, item):
+            return True
 
     security.declarePublic('mayAcceptOrRefuseEmergency')
     def mayAcceptOrRefuseEmergency(self):
@@ -1257,7 +1259,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # by default, only MeetingManagers can accept or refuse emergency
         item = self.getSelf()
         tool = getToolByName(item, 'portal_plonemeeting')
-        if tool.isManager():
+        membershipTool = getToolByName(item, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        if tool.isManager() and member.has_permission(ModifyPortalContent, item):
             return True
         return False
 

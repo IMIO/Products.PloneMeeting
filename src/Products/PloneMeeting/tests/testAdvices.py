@@ -145,6 +145,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
         login(self.portal, 'pmReviewer2')
         # 'pmReviewer2' has one advice to give for 'vendors' and no advice to edit
+        self._cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         self.assertEquals(item1.hasAdvices(), False)
         # fields 'advice_type' and 'advice_group' are mandatory
@@ -178,7 +179,8 @@ class testAdvices(PloneMeetingTestCase):
                         'advice_type' in data and
                         'advice_comment' in data and
                         'advice_row_id' in data)
-        self.assertTrue(len(data) == 4)
+        # we receive the 6 fields
+        self.assertTrue(len(data) == 6)
         form.request.form['advice_group'] = u'vendors'
         form.request.form['advice_type'] = u'positive'
         form.request.form['advice_comment'] = RichTextValue(u'My comment')

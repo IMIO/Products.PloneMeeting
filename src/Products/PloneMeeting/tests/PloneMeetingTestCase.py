@@ -26,6 +26,7 @@ from Acquisition import aq_base
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
 
+from zope.component import getUtility
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
 
@@ -33,6 +34,7 @@ from zope.annotation.interfaces import IAnnotations
 
 from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
+from plone.memoize.interfaces import ICacheChooser
 
 from Products.PloneTestCase.setup import _createHomeFolder
 
@@ -197,6 +199,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
             if not 'proposingGroup' in attrs.keys():
+                self._cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
                 proposingGroup = self.tool.getGroupsForUser(suffix="creators")
                 if len(proposingGroup):
                     attrs.update({'proposingGroup': proposingGroup[0].id})
@@ -313,6 +316,12 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             annotations['plone.memoize'].clear()
         if obj and hasattr(aq_base(obj), '_memojito_'):
             delattr(obj, '_memojito_')
+
+    def _cleanRamCacheFor(self, methodId):
+        '''Clean ram.cache for given methodId.'''
+        cache_chooser = getUtility(ICacheChooser)
+        thecache = cache_chooser(methodId)
+        thecache.ramcache.invalidate(methodId)
 
     def _removeRecurringItems(self, meetingConfig):
         """

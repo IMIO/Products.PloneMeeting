@@ -217,6 +217,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.changeUser('admin')
         developers = self.tool.developers
         self.do(developers, 'deactivate')
+        self._cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.changeUser('pmManager')
         self.assertTrue('developers' not in item.listAssociatedGroups())
         # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...
