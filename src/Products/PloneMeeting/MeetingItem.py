@@ -3024,13 +3024,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             adviceObj = None
             if 'advice_id' in self.adviceIndex[groupId]:
                 adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-            if (itemState not in itemAdviceStates) and \
-               (itemState not in itemAdviceEditStates)and \
-               (itemState not in itemAdviceViewStates):
+            if itemState not in itemAdviceStates and \
+               itemState not in itemAdviceEditStates and \
+               itemState not in itemAdviceViewStates:
+                # in this case, the advice is no more accessible in any way by the adviser
                 # make sure the advice given by groupId is no more editable
                 if adviceObj and not adviceObj.queryState() == 'advice_given':
                     self.REQUEST.set('mayGiveAdvice', True)
-                    wfTool.doActionFor(adviceObj, 'giveAdvice')
+                    # add a comment for this transition triggered by the application,
+                    # we want to show why it was triggered : item state change or delay exceeded
+                    wf_comment = _('advice_wf_changed_triggered_by_application')
+                    wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
                     self.REQUEST.set('mayGiveAdvice', True)
                 # make sure the delay is reinitialized if advice not already given
                 if self.adviceIndex[groupId]['delay'] and self.adviceIndex[groupId]['type'] == 'not_given':
@@ -3067,18 +3071,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     try:
                         # make the guard_expr protecting 'backToAdviceUnderEdit' alright
                         self.REQUEST.set('mayBackToAdviceUnderEdit', True)
-                        # add a comment for this transition triggered by the application,
-                        # we want to show why it was triggered : item state change or
-                        # delay no more exceeded because of delay manually changed
-                        # the only way to
-                        if not delayIsNotExceeded:
-                            wf_comment = _('advice_wf_changed_delay_exceeded')
-                        else:
-                            wf_comment = _('advice_wf_changed_item_state_changed',
-                                           mapping={'item_state': self.queryState()})
-                        wfTool.doActionFor(adviceObj,
-                                           'backToAdviceUnderEdit',
-                                           comment=wf_comment)
+                        # add a comment for this transition triggered by the application
+                        wf_comment = _('advice_wf_changed_triggered_by_application')
+                        wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit', comment=wf_comment)
                     except WorkflowException:
                         # if we have another workflow than default meetingadvice_workflow
                         # maybe we can not 'backToAdviceUnderEdit'
@@ -3088,13 +3083,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # make sure it is no more editable
                 if adviceObj and not adviceObj.queryState() == 'advice_given':
                     self.REQUEST.set('mayGiveAdvice', True)
-                    # add a comment for this transition triggered by the application,
-                    # we want to show why it was triggered : item state change or delay exceeded
-                    if not delayIsNotExceeded:
-                        wf_comment = _('advice_wf_changed_delay_exceeded')
-                    else:
-                        wf_comment = _('advice_wf_changed_item_state_changed',
-                                       mapping={'item_state': self.queryState()})
+                    # add a comment for this transition triggered by the application
+                    wf_comment = _('advice_wf_changed_triggered_by_application')
                     wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
                     self.REQUEST.set('mayGiveAdvice', False)
             # if item needs to be accessible by advisers, it is already
