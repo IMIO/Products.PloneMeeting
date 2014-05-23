@@ -1271,16 +1271,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             del self.accessInfo[userId]
         return toDelete
 
-    security.declarePublic('enterProfiler')
-    def enterProfiler(self, methodName):
-        from Products.PloneMeeting.tests.profiling import profiler
-        profiler.enter(methodName)
-
-    security.declarePublic('leaveProfiler')
-    def leaveProfiler(self):
-        from Products.PloneMeeting.tests.profiling import profiler
-        profiler.leave()
-
     security.declarePublic('generateDocument')
     def generateDocument(self):
         '''Generates the document from a template specified in the request
@@ -1451,9 +1441,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         restrictMode = self.getRestrictUsers()
         res = True
         if restrictMode:
-            user = self.portal_membership.getAuthenticatedMember()
-            isManager = user.has_role('MeetingManager') or user.has_role('Manager')
-            if not isManager:
+            if not self.isManager():
+                user = self.portal_membership.getAuthenticatedMember()
                 # Check if the user is in specific list
                 if user.id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
                     res = False
