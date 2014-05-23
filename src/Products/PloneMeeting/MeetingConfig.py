@@ -2456,7 +2456,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            This method should only be called if you are sure that no actions regarding
            the 'send to other mc' functionnality exist.  Either, call updatePortalTypes that
            actually remove every existing actions on the portal_type then call this submethod'''
-        tool = getToolByName(self, 'portal_plonemeeting')
         item_portal_type = self.portal_types[self.getItemTypeName()]
         for mctct in self.getMeetingConfigsToCloneTo():
             configId = mctct['meeting_config']
@@ -2466,9 +2465,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
                         'object.adapted().mayCloneToOtherMeetingConfig("%s")' \
                         % configId
-            label = translate('clone_to', domain='PloneMeeting', context=self.REQUEST)
-            cfg = getattr(tool, configId)
-            actionName = '%s %s' % (label.encode('utf-8'), cfg.Title())
+            actionName = 'create_to_%s_from_%s' % (configId, self.getId())
             item_portal_type.addAction(id=actionId,
                                        name=actionName,
                                        category='object_buttons',
