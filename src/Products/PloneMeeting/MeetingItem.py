@@ -1415,14 +1415,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getMeetingsAcceptingItems')
-    def getMeetingsAcceptingItems(self):
+    def getMeetingsAcceptingItems(self, review_states=('created', 'published', 'frozen', 'decided')):
         '''Check docstring in interfaces.py.'''
         item = self.getSelf()
         meetingPortalType = item.portal_plonemeeting.getMeetingConfig(
             item).getMeetingTypeName()
         res = item.portal_catalog.unrestrictedSearchResults(
             portal_type=meetingPortalType,
-            review_state=('created', 'published', 'frozen', 'decided'),
+            review_state=review_states,
             sort_on='getDate')
         # Published, frozen and decided meetings may still accept "late" items.
         return res
@@ -3754,10 +3754,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # special handling for the 'present' transition
                     # that needs a meeting as 'PUBLISHED' object to work
                     if tr == 'present':
-                        # find next meeting accepting items
-                        meetingsAcceptingItems = newItem.getMeetingsAcceptingItems()
+                        # find next meeting accepting items, only query meetings that
+                        # are in the initial workflow state
+                        initial_state = wfTool[destMeetingConfig.getMeetingWorkflow()].initial_state
+                        meetingsAcceptingItems = newItem.getMeetingsAcceptingItems(review_states=(initial_state, ))
+                        # we only keep meetings that are in the
                         if not meetingsAcceptingItems:
-                            plone_utils.addPortalMessage(_('could_not_present_item_no_meeting_accepting_items'),
+                            plone_utils.addPortalMessage(_('could_not_present_item_no_meeting_accepting_items',
+                                                           mapping={'destMeetingConfigTitle': destMeetingConfig.Title(),
+                                                                    'initial_state': translate(initial_state,
+                                                                                               domain="plone",
+                                                                                               context=self.REQUEST)}),
                                                          'warning')
                             break
                         meeting = meetingsAcceptingItems[0]
