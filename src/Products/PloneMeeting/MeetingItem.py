@@ -131,7 +131,9 @@ class MeetingItemWorkflowConditions:
            necessary fields are filled.  In the case an item is transferred from
            another meetingConfig, the category could not be defined.'''
         if not self.context.getCategory():
-            return False
+            return No(translate('required_category_ko',
+                                domain="PloneMeeting",
+                                context=self.context.REQUEST))
         if checkPermission(ReviewPortalContent, self.context) and \
            (not self.context.isDefinedInTool()):
             return True
@@ -3741,9 +3743,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             triggerUntil = triggerUntil.split('.')[1]
             wfTool = getToolByName(self, 'portal_workflow')
             stopAfter = False
-            comment = translate('transition_auto_triggered_item_sent_to_this_config',
-                                domain='PloneMeeting',
-                                context=self.REQUEST)
+            wf_comment = translate('transition_auto_triggered_item_sent_to_this_config',
+                                  domain='PloneMeeting',
+                                  context=self.REQUEST)
             for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
                 if stopAfter:
                     break
@@ -3770,7 +3772,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         meeting = meetingsAcceptingItems[0]
                         newItem.REQUEST['PUBLISHED'] = meeting.getObject()
 
-                    wfTool.doActionFor(newItem, tr, comment=comment)
+                    wfTool.doActionFor(newItem, tr, comment=wf_comment)
                 except WorkflowException:
                     # in case something goes wrong, only warn the user by adding a portal message
                     plone_utils.addPortalMessage(translate('could_not_trigger_transition_for_cloned_item',
@@ -3779,6 +3781,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                            domain="PloneMeeting",
                                                            context=self.REQUEST),
                                                  type='warning')
+                    break
 
         newItem.reindexObject()
         # Save that the element has been cloned to another meetingConfig
