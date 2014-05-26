@@ -173,28 +173,33 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
                 i += 1
         return res
 
-    def getMeetingFolder(self):
+    def getMeetingFolder(self, meetingConfig=None):
         '''Get the meeting folder for the current meeting config.'''
-        return self.tool.getPloneMeetingFolder(self.meetingConfig.id)
+        if not meetingConfig:
+            meetingConfig = self.meetingConfig
+        return self.tool.getPloneMeetingFolder(meetingConfig.id)
 
-    def create(self, objectType, folder=None, autoAddCategory=True, **attrs):
+    def create(self, objectType, folder=None, autoAddCategory=True, meetingConfig=None, **attrs):
         '''Creates an instance of a meeting (if p_objectType is 'Meeting') or
            meeting item (if p_objectType is 'MeetingItem') and
            returns the created object. p_attrs is a dict of attributes
            that will be given to invokeFactory.'''
-        shortName = self.meetingConfig.getShortName()
+        cfg = meetingConfig
+        if not cfg:
+            cfg = self.meetingConfig
+        shortName = cfg.getShortName()
         # Some special behaviour occurs if the thing to create is a recurring
         # item
         isRecurringItem = objectType.startswith('Recurring')
         if isRecurringItem:
             contentType = '%s%s' % (objectType[9:], shortName)
-            folder = self.meetingConfig.recurringitems
+            folder = cfg.recurringitems
         elif objectType in ('MeetingGroup', 'MeetingConfig'):
             contentType = objectType
             folder = self.tool
         else:
             contentType = '%s%s' % (objectType, shortName)
-            folder = self.getMeetingFolder()
+            folder = self.getMeetingFolder(meetingConfig)
         # Add some computed attributes
         attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
@@ -212,9 +217,9 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
                 obj.setOptionalAdvisers(attrs['optionalAdvisers'])
             # define a category for the item if necessary
             if autoAddCategory and not \
-               self.meetingConfig.getUseGroupsAsCategories() and not \
+               cfg.getUseGroupsAsCategories() and not \
                obj.getCategory():
-                aCategory = self.meetingConfig.getCategories()[0].getId()
+                aCategory = cfg.getCategories()[0].getId()
                 obj.setCategory(aCategory)
         # Some attributes in attrs are not taken into account.
         # The setAttributes method can set attrs after the object is created.

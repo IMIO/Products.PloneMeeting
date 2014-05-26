@@ -36,6 +36,7 @@ from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import View
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.statusmessages.interfaces import IStatusMessage
 
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -616,6 +617,97 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertNotEquals(newItemWF.initial_state, originalItemWF.initial_state)
         # but the initial_state for new item is correct
         self.assertEquals(self.wfTool.getInfoFor(newItem, 'review_state'), newItemWF.initial_state)
+
+    def test_pm_SendItemToOtherMCWithTriggeredTransitions(self):
+        '''Test when sending an item to another MeetingConfig and some transitions are
+           defined to be triggered on the resulting item.
+           Test that :
+           - we can validate an item;
+           - we can present an item to next available 'created' meeting;
+           - errors are managed.'''
+        cfg = self.meetingConfig
+        data = self._setupSendItemToOtherMC(with_advices=True)
+        # by default, an item sent is resulting in his wf initial_state
+        # if no transitions to trigger are defined when sending the item to the new MC
+        newItem = data['newItem']
+        item_initial_state = self.wfTool[newItem.getWorkflowName()].initial_state
+        self.assertTrue(newItem.queryState() == item_initial_state)
+        self.assertTrue(cfg.getMeetingConfigsToCloneTo() ==
+                        ({'meeting_config': 'plonegov-assembly',
+                          'trigger_workflow_transitions_until': '__nothing__'},))
+        # remove the items and define that we want the item to be 'validated' when sent
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': 'plonegov-assembly',
+                                         'trigger_workflow_transitions_until': '%s.%s' %
+                                         (self.meetingConfig2.getId(), 'validate')},))
+        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        originalItem = data['originalItem']
+        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
+
+        # if it fails to trigger transitions until defined one, we have a portal_message
+        # and the newItem is not in the required state
+        # in this case, it failed because a category is required for newItem and was not set
+        data = self._setupSendItemToOtherMC(with_advices=True)
+        newItem = data['newItem']
+        self.assertTrue(self.meetingConfig2.getUseGroupsAsCategories() is False)
+        self.assertTrue(not newItem.queryState() == 'validated')
+        fail_to_trigger_msg = translate('could_not_trigger_transition_for_cloned_item',
+                                        domain='PloneMeeting',
+                                        mapping={'meetingConfigTitle': self.meetingConfig2.Title()},
+                                        context=self.request)
+        lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
+        self.assertTrue(lastPortalMessage.message == fail_to_trigger_msg)
+
+        # now adapt self.meetingConfig2 to not use categories,
+        # the required transitions should have been triggerd this time
+        self.meetingConfig2.setUseGroupsAsCategories(True)
+        # change insert order method too as 'on_categories' for now
+        self.meetingConfig2.setSortingMethodOnAddItem('on_proposing_groups')
+        # remove items and try again
+        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        originalItem = data['originalItem']
+        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
+        data = self._setupSendItemToOtherMC(with_advices=True)
+        newItem = data['newItem']
+        self.assertTrue(newItem.queryState() == 'validated')
+
+        # now try to present now item, it will be presented
+        # to next available meeting in it's initial_state
+        # first, if no meeting available, newItem will stop to previous
+        # state, aka 'validated' and a status message is added
+        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        originalItem = data['originalItem']
+        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': 'plonegov-assembly',
+                                         'trigger_workflow_transitions_until': '%s.%s' %
+                                         (self.meetingConfig2.getId(), 'present')},))
+        data = self._setupSendItemToOtherMC(with_advices=True)
+        newItem = data['newItem']
+        # could not be added because no meeting in initial_state is available
+        meeting_initial_state = self.wfTool[self.meetingConfig2.getMeetingWorkflow()].initial_state
+        self.assertTrue(len(newItem.getMeetingsAcceptingItems(review_states=(meeting_initial_state, ))) == 0)
+        self.assertTrue(newItem.queryState() == 'validated')
+        # a status message was added
+        fail_to_present_msg = translate('could_not_present_item_no_meeting_accepting_items',
+                                        domain='PloneMeeting',
+                                        mapping={'destMeetingConfigTitle': self.meetingConfig2.Title(),
+                                                 'initial_state': translate(meeting_initial_state,
+                                                                            domain="plone",
+                                                                            context=self.request)},
+                                        context=self.request)
+        lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
+        self.assertTrue(lastPortalMessage.message == fail_to_present_msg)
+
+        # add a meeting where we will be able to present the item
+        self.create('Meeting',
+                    date=DateTime('2008/06/12 08:00:00'),
+                    meetingConfig=self.meetingConfig2)
+        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        originalItem = data['originalItem']
+        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
+        data = self._setupSendItemToOtherMC(with_advices=True)
+        newItem = data['newItem']
+        # this time it is correctly 'presented'
+        self.assertTrue(newItem.queryState() == 'presented')
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on

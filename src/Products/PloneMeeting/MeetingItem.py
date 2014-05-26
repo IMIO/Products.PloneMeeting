@@ -3744,8 +3744,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             wfTool = getToolByName(self, 'portal_workflow')
             stopAfter = False
             wf_comment = translate('transition_auto_triggered_item_sent_to_this_config',
-                                  domain='PloneMeeting',
-                                  context=self.REQUEST)
+                                   domain='PloneMeeting',
+                                   context=self.REQUEST)
             for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
                 if stopAfter:
                     break
