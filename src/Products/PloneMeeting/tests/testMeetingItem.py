@@ -633,15 +633,17 @@ class testMeetingItem(PloneMeetingTestCase):
         item_initial_state = self.wfTool[newItem.getWorkflowName()].initial_state
         self.assertTrue(newItem.queryState() == item_initial_state)
         self.assertTrue(cfg.getMeetingConfigsToCloneTo() ==
-                        ({'meeting_config': 'plonegov-assembly',
+                        ({'meeting_config': '%s' % self.meetingConfig2.getId(),
                           'trigger_workflow_transitions_until': '__nothing__'},))
         # remove the items and define that we want the item to be 'validated' when sent
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': 'plonegov-assembly',
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig2.getId(),
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (self.meetingConfig2.getId(), 'validate')},))
+        self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
         originalItem = data['originalItem']
         self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
+        self.changeUser('pmManager')
 
         # if it fails to trigger transitions until defined one, we have a portal_message
         # and the newItem is not in the required state
@@ -663,9 +665,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # change insert order method too as 'on_categories' for now
         self.meetingConfig2.setSortingMethodOnAddItem('on_proposing_groups')
         # remove items and try again
+        self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
         originalItem = data['originalItem']
         self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
+        self.changeUser('pmManager')
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         self.assertTrue(newItem.queryState() == 'validated')
@@ -674,10 +678,12 @@ class testMeetingItem(PloneMeetingTestCase):
         # to next available meeting in it's initial_state
         # first, if no meeting available, newItem will stop to previous
         # state, aka 'validated' and a status message is added
+        self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
         originalItem = data['originalItem']
         self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': 'plonegov-assembly',
+        self.changeUser('pmManager')
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig2.getId(),
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (self.meetingConfig2.getId(), 'present')},))
         data = self._setupSendItemToOtherMC(with_advices=True)
@@ -701,9 +707,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.create('Meeting',
                     date=DateTime('2008/06/12 08:00:00'),
                     meetingConfig=self.meetingConfig2)
+        self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
         originalItem = data['originalItem']
         self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
+        self.changeUser('pmManager')
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # this time it is correctly 'presented'
