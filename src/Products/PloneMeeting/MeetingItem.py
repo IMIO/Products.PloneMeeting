@@ -924,7 +924,7 @@ schema = Schema((
     ),
     StringField(
         name='privacy',
-        default= 'public',
+        default='public',
         widget=SelectionWidget(
             condition="python: here.attributeIsUsed('privacy')",
             label='Privacy',
