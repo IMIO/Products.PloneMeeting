@@ -45,7 +45,6 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_SearchItemsToAdvice(self):
         '''Test the searchItemsToAdvice method.  This should return a list of items
            a user has to give an advice for.'''
-        self.setMeetingConfig(self.meetingConfig2.getId())
         self.meetingConfig.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
@@ -105,7 +104,6 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_SearchAdvisedItems(self):
         '''Test the searchAdvisedItems method.  This should return a list of items
            a user has already give an advice for.'''
-        self.setMeetingConfig(self.meetingConfig2.getId())
         # by default, no advices item...
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchAdvisedItems('', '', '', ''))
@@ -160,7 +158,6 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_SearchAdvisedItemsWithDelay(self):
         '''Test the searchAdvisedItemsWithDelay method.  This should return a list
            of items a user has already give a delay-aware advice for.'''
-        self.setMeetingConfig(self.meetingConfig2.getId())
         # by default, no advices item...
         self.changeUser('pmAdviser1')
         self.failIf(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', ''))

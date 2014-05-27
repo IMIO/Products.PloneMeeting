@@ -24,6 +24,7 @@
 
 from profilehooks import timecall
 
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from PloneMeetingTestCase import pm_logger
 
@@ -260,6 +261,28 @@ class testPerformances(PloneMeetingTestCase):
         ''' '''
         for time in range(times):
             self.tool.getMeetingConfig(context, caching=caching)
+
+    def test_pm_GetAuthenticatedMember(self):
+        '''Test performance between portal_membership.getAuthenticatedMember and
+           plone_portal_state.member().'''
+        # create an item
+        self.changeUser('pmManager')
+        # call getAuthenticatedMember 2000 times
+        self._portalMembershipGetAuthenticatedMember(2000)
+        # call plone_portal_state.member() 2000 times
+        self._plonePortalStateMember(2000)
+
+    @timecall
+    def _portalMembershipGetAuthenticatedMember(self, times=1):
+        ''' '''
+        for time in range(times):
+            getToolByName(self.portal, 'portal_membership').getAuthenticatedMember()
+
+    @timecall
+    def _plonePortalStateMember(self, times=1):
+        ''' '''
+        for time in range(times):
+            self.portal.restrictedTraverse('@@plone_portal_state').member()
 
 
 def test_suite():

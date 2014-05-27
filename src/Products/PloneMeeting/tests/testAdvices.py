@@ -48,12 +48,6 @@ class testAdvices(PloneMeetingTestCase):
     '''Tests various aspects of advices management.
        Advices are enabled for PloneGov Assembly, not for PloneMeeting Assembly.'''
 
-    def setUp(self):
-        """
-        """
-        super(testAdvices, self).setUp()
-        self.setMeetingConfig(self.meetingConfig2.getId())
-
     def test_pm_ViewItemToAdvice(self):
         '''Test when an adviser can see the item his advice is asked on.
            The item can still be viewable no matter the advice has been given or not,
@@ -412,8 +406,6 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_IndexAdvisers(self):
         '''Test the indexAdvisers index and check that it is always consistent.
            Ask a delay and a non delay-aware advice.'''
-        # advices are activated for meetingConfig2
-        self.setMeetingConfig(self.meetingConfig2.getId())
         self.meetingConfig.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',

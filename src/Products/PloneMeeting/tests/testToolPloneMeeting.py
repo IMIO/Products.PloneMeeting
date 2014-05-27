@@ -149,7 +149,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_PasteItems(self):
         '''Paste objects (previously copied) in destFolder.'''
-        self.setMeetingConfig(self.meetingConfig2.getId())
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         # Add annexes to item1
