@@ -365,7 +365,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
           We check that there are the same test methods in PloneMeeting and the sub-product.
         """
         # our test class always inheritate from a PloneMeeting test class
-        # except the testCustomXXX that are proper to MeetingCommunes
+        # except the testCustomXXX that are proper to subproducts
         pmInheritatedClass = self.__class__.__bases__[0]
         localTestClass = self
         # if we do not inheritate from a PloneMeeting test class, just return...

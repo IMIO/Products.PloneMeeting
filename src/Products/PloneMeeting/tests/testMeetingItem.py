@@ -466,13 +466,13 @@ class testMeetingItem(PloneMeetingTestCase):
             annex1 = self.addAnnex(item, annexType=self.annexFileType)
             annex2 = self.addAnnex(item, annexType='overhead-analysis')
         # Propose the item
-        self.do(item, self.meetingConfig.getTransitionsForPresentingAnItem()[0])
+        self.proposeItem(item)
         if with_advices:
             # add a normal and a delay-aware advice
             self.changeUser('admin')
             self.meetingConfig.setUseAdvices(True)
-            self.meetingConfig.setItemAdviceStates(['proposed', ])
-            self.meetingConfig.setItemAdviceEditStates(['proposed', 'validated', ])
+            self.meetingConfig.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+            self.meetingConfig.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ])
             self.meetingConfig.setItemAdviceViewStates(['presented', ])
             self.meetingConfig.setCustomAdvisers(
                 [{'row_id': 'unique_id_123',
@@ -483,6 +483,7 @@ class testMeetingItem(PloneMeetingTestCase):
             self.changeUser('pmManager')
             item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123'))
             item.at_post_edit_script()
+
             developers_advice = createContentInContainer(
                 item,
                 'meetingadvice',
@@ -651,13 +652,15 @@ class testMeetingItem(PloneMeetingTestCase):
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         self.assertTrue(self.meetingConfig2.getUseGroupsAsCategories() is False)
-        self.assertTrue(not newItem.queryState() == 'validated')
-        fail_to_trigger_msg = translate('could_not_trigger_transition_for_cloned_item',
-                                        domain='PloneMeeting',
-                                        mapping={'meetingConfigTitle': self.meetingConfig2.Title()},
-                                        context=self.request)
-        lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
-        self.assertTrue(lastPortalMessage.message == fail_to_trigger_msg)
+        # item is not 'validated' unless it was it's initial_state...
+        if not self.wfTool[newItem.getWorkflowName()].initial_state == 'validated':
+            self.assertTrue(not newItem.queryState() == 'validated')
+            fail_to_trigger_msg = translate('could_not_trigger_transition_for_cloned_item',
+                                            domain='PloneMeeting',
+                                            mapping={'meetingConfigTitle': self.meetingConfig2.Title()},
+                                            context=self.request)
+            lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
+            self.assertTrue(lastPortalMessage.message == fail_to_trigger_msg)
 
         # now adapt self.meetingConfig2 to not use categories,
         # the required transitions should have been triggerd this time
@@ -955,7 +958,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                                        BUDGETIMPACTEDITORS_GROUP_SUFFIX))
         # we will let copyGroups view items when in state 'validated'
         self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates(('proposed', 'validated', ))
+        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
         self.meetingConfig.setItemBudgetInfosStates(('validated', ))
         # first make sure the permission associated with MeetingItem.budgetInfos.write_permission is the right one
         self.assertTrue(MeetingItem.schema['budgetInfos'].write_permission == WriteBudgetInfos)
