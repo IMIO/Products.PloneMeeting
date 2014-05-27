@@ -118,7 +118,7 @@ class testMeeting(PloneMeetingTestCase):
                           ['o3', 'o4', 'o5', 'o6', newItem.getId(), 'o2'])
         # now test while inserting items using a disabled category
         # remove newItem, change his category for a disabled one and present it again
-        self.backToState(newItem, 'proposed')
+        self.backToState(newItem, self.WF_STATE_NAME_MAPPINGS['validated'])
         self.assertTrue(not newItem.hasMeeting())
         newItem.setCategory('development')
         self.assertTrue(newItem.getCategory(), u'developement')
@@ -316,10 +316,13 @@ class testMeeting(PloneMeetingTestCase):
         i1.reindexObject()
         i2.reindexObject()
         i3.reindexObject()
-        #for now, no items are presentable...
-        self.assertEquals(len(m1.adapted().getAvailableItems()), 0)
-        self.assertEquals(len(m2.adapted().getAvailableItems()), 0)
-        self.assertEquals(len(m3.adapted().getAvailableItems()), 0)
+        # for now, no items are presentable...
+        # except if items are already 'validated', this could be the case when using
+        # 'items_come_validated' wfAdaptation or if item initial_state is 'validated'
+        if not self.wfTool[i1.getWorkflowName()].initial_state == 'validated':
+            self.assertEquals(len(m1.adapted().getAvailableItems()), 0)
+            self.assertEquals(len(m2.adapted().getAvailableItems()), 0)
+            self.assertEquals(len(m3.adapted().getAvailableItems()), 0)
         # validate the items
         for item in (i1, i2, i3):
             self.validateItem(item)
