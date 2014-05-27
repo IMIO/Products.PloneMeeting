@@ -172,9 +172,11 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue('advice_group' in data and
                         'advice_type' in data and
                         'advice_comment' in data and
-                        'advice_row_id' in data)
+                        'advice_row_id' in data and
+                        'advice_observations' in data and
+                        'advice_hide_during_redaction' in data)
         # we receive the 6 fields
-        self.assertTrue(len(data) == 6)
+        self.assertTrue(len(data) == len(form.fields))
         form.request.form['advice_group'] = u'vendors'
         form.request.form['advice_type'] = u'positive'
         form.request.form['advice_comment'] = RichTextValue(u'My comment')
