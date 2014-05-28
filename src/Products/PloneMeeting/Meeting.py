@@ -279,7 +279,7 @@ class MeetingWorkflowActions:
             itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
                 intersection(set(('itemfreeze', 'itempublish')))
             while itemAvailableTransitions:
-                wfTool.doActionFor(item, itemAvailableTransitions[0])
+                wfTool.doActionFor(item, itemAvailableTransitions.pop())
                 itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
                     intersection(set(('itemfreeze', 'itempublish')))
 
