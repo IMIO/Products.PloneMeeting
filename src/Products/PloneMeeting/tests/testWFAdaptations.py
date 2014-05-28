@@ -64,6 +64,9 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.
            This test check the removal of the 'published' state in the meeting/item WF.'''
+        # ease override by subproducts
+        if not 'no_publication' in self.meetingConfig.listWorkflowAdaptations():
+            return
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._no_publication_inactive()
@@ -97,6 +100,9 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_no_proposal(self):
         '''Test the workflowAdaptation 'no_proposal'.
            Check the removal of state 'proposed' in the item WF.'''
+        # ease override by subproducts
+        if not 'no_proposal' in self.meetingConfig.listWorkflowAdaptations():
+            return
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._no_proposal_inactive()
@@ -124,6 +130,9 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_pre_validation(self):
         '''Test the workflowAdaptation 'pre_validation'.
            Check the addition of a 'prevalidated' state in the item WF.'''
+        # ease override by subproducts
+        if not 'pre_validation' in self.meetingConfig.listWorkflowAdaptations():
+            return
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._pre_validation_inactive()
@@ -160,6 +169,9 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_creator_initiated_decisions(self):
         '''Test the workflowAdaptation 'creator_initiated_decisions'.
            Check that the creator can edit the decision field while activated.'''
+        # ease override by subproducts
+        if not 'creator_initiated_decisions' in self.meetingConfig.listWorkflowAdaptations():
+            return
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._creator_initiated_decisions_inactive()
@@ -183,6 +195,9 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_items_come_validated(self):
         '''Test the workflowAdaptation 'items_come_validated'.'''
+        # ease override by subproducts
+        if not 'items_come_validated' in self.meetingConfig.listWorkflowAdaptations():
+            return
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._items_come_validated_inactive()
@@ -208,6 +223,9 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_archiving(self):
         '''Test the workflowAdaptation 'archiving'.'''
+        # ease override by subproducts
+        if not 'archiving' in self.meetingConfig.listWorkflowAdaptations():
+            return
         # check while the wfAdaptation is not activated
         self._archiving_inactive()
         # activate the wfAdaptation and check
@@ -236,6 +254,9 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_only_creator_may_delete(self):
         '''Test the workflowAdaptation 'archiving'.'''
+        # ease override by subproducts
+        if not 'only_creator_may_delete' in self.meetingConfig.listWorkflowAdaptations():
+            return
         # check while the wfAdaptation is not activated
         self._only_creator_may_delete_inactive()
         # activate the wfAdaptation and check
@@ -283,6 +304,9 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_no_global_observation(self):
         '''Test the workflowAdaptation 'no_global_observation'.'''
+        # ease override by subproducts
+        if not 'no_global_observation' in self.meetingConfig.listWorkflowAdaptations():
+            return
         # check while the wfAdaptation is not activated
         self._no_global_observation_inactive()
         # activate the wfAdaptation and check
@@ -389,6 +413,9 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_everyone_reads_all(self):
         '''Test the workflowAdaptation 'everyone_reads_all'.'''
+        # ease override by subproducts
+        if not 'everyone_reads_all' in self.meetingConfig.listWorkflowAdaptations():
+            return
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._everyone_reads_all_inactive()
@@ -482,6 +509,9 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_creator_edits_unless_closed(self):
         '''Test the workflowAdaptation 'creator_edits_unless_closed'.'''
+        # ease override by subproducts
+        if not 'creator_edits_unless_closed' in self.meetingConfig.listWorkflowAdaptations():
+            return
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._creator_edits_unless_closed_inactive()
@@ -555,6 +585,9 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_local_meeting_managers(self):
         '''Test the workflowAdaptation 'local_meeting_managers'.'''
+        # ease override by subproducts
+        if not 'local_meeting_managers' in self.meetingConfig.listWorkflowAdaptations():
+            return
         # create a MeetingManager and put it in another _creators group than
         # the default MeetingManager
         self.createUser('pmManager2', ['Member', 'MeetingManager', ])
@@ -600,6 +633,9 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_return_to_proposing_group(self):
         '''Test the workflowAdaptation 'return_to_proposing_group'.'''
+        # ease override by subproducts
+        if not 'return_to_proposing_group' in self.meetingConfig.listWorkflowAdaptations():
+            return
         # check while the wfAdaptation is not activated
         self._return_to_proposing_group_inactive()
         # activate the wfAdaptation and check
@@ -761,6 +797,9 @@ class testWFAdaptations(PloneMeetingTestCase):
            If meeting is in 'decided' state, only the MeetingManagers can
            view the real decision. The other people view a standard
            message taken from the MeetingConfig.'''
+        # ease override by subproducts
+        if not 'hide_decisions_when_under_writing' in self.meetingConfig.listWorkflowAdaptations():
+            return
         login(self.portal, 'admin')
         self._removeRecurringItems(self.meetingConfig)
         login(self.portal, 'pmManager')
