@@ -360,7 +360,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(newItem.portal_type == item.portal_type)
         self.failUnless(newItem.portal_type == self.tool.getMeetingConfig(newItem).getItemTypeName())
         # the new item is created in his initial state
-        self.failUnless(self.wfTool.getInfoFor(newItem, 'review_state') == 'itemcreated')
+        newItemInitialState = self.wfTool[newItem.getWorkflowName()].initial_state
+        self.failUnless(self.wfTool.getInfoFor(newItem, 'review_state') == newItemInitialState)
         # the original item is no more sendable to the same meetingConfig
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # while cloning to another meetingConfig, some fields that are normally kept
@@ -752,13 +753,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # True will make it add the relevant copyGroups
         # moreover, check that auto added copyGroups add correctly
         # relevant local roles for copyGroups
-        self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
+        initial_state = self.wfTool[i4.getWorkflowName()].initial_state
+        self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
         i5 = self.create('MeetingItem', proposingGroup='vendors')
         # We only have the '_reviewers' group, not the '_advisers'
         # as not in self.meetingConfig.selectableCopyGroups
         self.failUnless(i5.getCopyGroups() == ('developers_reviewers',))
         # corresponding local roles are added because copyGroups
-        # can access the item when it is in state 'itemcreated'
+        # can access the item when it is in its initial_state
         self.failUnless('developers_reviewers' in i5.__ac_local_roles__.keys())
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_reviewers'])
         # addAutoCopyGroups is triggered upon each edit (at_post_edit_script)
@@ -919,10 +921,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(validatedItem, 'backToValidated')
         presentedItem = meeting.getItems()[0]
         self.changeUser(userThatCanSee)
-        self.assertEquals(createdItem.queryState(), 'itemcreated')
+        createdItemInitialState = self.wfTool[createdItem.getWorkflowName()].initial_state
+        self.assertEquals(createdItem.queryState(), createdItemInitialState)
         self.assertEquals(validatedItem.queryState(), 'validated')
         self.assertEquals(presentedItem.queryState(), 'presented')
-        self.failUnless(self.hasPermission(View, (createdItem, presentedItem)))
+        # createItem is visible unless it's initial_state is 'validated'
+        if not createdItemInitialState == 'validated':
+            self.failUnless(self.hasPermission(View, createdItem))
+        self.failUnless(self.hasPermission(View, presentedItem))
         self.failIf(self.hasPermission(View, validatedItem))
         # powerobserver2 can not see anything in meetingConfig
         self.changeUser(userThatCanNotSee)
