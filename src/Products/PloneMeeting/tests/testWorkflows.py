@@ -55,9 +55,14 @@ class testWorkflows(PloneMeetingTestCase):
         myItems = self.meetingConfig.topics.searchmyitems.queryCatalog()
         self.failIf(len(myItems) != 1)
         self.changeUser('pmManager')
-        # The manager may not see the item yet.
+        # The manager may not see the item yet except if item is already 'validated'
+        # this could be the case if item initial_state is 'validated' or when using
+        # wfAdaptation 'items_come_validated'
         allItems = self.meetingConfig.topics.searchallitems.queryCatalog()
-        self.failIf(len(allItems) != 0)
+        numberOfFoundItems = 0
+        if item.queryState() == 'validated':
+            numberOfFoundItems = 1
+        self.failIf(len(allItems) != numberOfFoundItems)
 
     def test_pm_RemoveObjects(self):
         '''Tests objects removal (items, meetings, annexes...).'''
