@@ -31,6 +31,7 @@ from appy.gen import No
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from AccessControl import Unauthorized
+from AccessControl.SecurityManagement import newSecurityManager, getSecurityManager, setSecurityManager
 from AccessControl.PermissionRole import rolesForPermissionOn
 from DateTime import DateTime
 from App.class_init import InitializeClass
@@ -56,6 +57,7 @@ from Products.PloneMeeting.utils import \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
     forceHTMLContentTypeForEmptyRichFields, workday, networkdays
+from Products.PloneMeeting.browser.views_unrestricted import PMOmnipotentUser
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -2102,13 +2104,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # we use the wf path defined in the cfg.transitionsForPresentingAnItem
                 # to present the item to the meeting
                 cfg = tool.getMeetingConfig(item)
+                # give 'Manager' role to current user to bypass transitions guard
+                # and avoid permission problems when transitions are triggered
+                gaveManagerRole = False
+                member = getToolByName(item, 'portal_membership').getAuthenticatedMember()
+                if not member.has_role('Manager', item):
+                    gaveManagerRole = True
+                    item.manage_addLocalRoles(member.getId(), ('Manager', ))
                 for tr in cfg.getTransitionsForPresentingAnItem():
                     wfTool.doActionFor(item, tr)
+                if gaveManagerRole:
+                    rolesToAssign = item.__ac_local_roles__[member.getId()]
+                    rolesToAssign.remove('Manager')
+                    item.__ac_local_roles__[member.getId()] = rolesToAssign
                 # the item must be at least presented to a meeting, either we raise
                 if not item.hasMeeting():
                     raise WorkflowException
                 del item.isRecurringItem
             except WorkflowException, wfe:
+                if gaveManagerRole:
+                    item.acl_users.portal_role_manager.removeRoleFromPrincipal('Manager', member.getId())
                 logger.warn(REC_ITEM_ERROR % (item.id, str(wfe)))
                 sendMail(None, item, 'recurringItemWorkflowError')
                 item.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
