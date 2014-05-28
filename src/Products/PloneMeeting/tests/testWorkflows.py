@@ -70,10 +70,10 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         parentFolder = item.getParentNode()
-        #test that we can remove an empty item...
+        # test that we can remove an empty item...
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.failIf(len(parentFolder.objectValues()) != 0)
-        #test removal of an item with annexes
+        # test removal of an item with annexes
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)
         self.changeUser('pmCreator1b')
@@ -83,7 +83,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(annex2.UID())
         self.failIf(len(item.objectValues()) != 1)
         # Propose the item
-        self.do(item, self.meetingConfig.getTransitionsForPresentingAnItem()[0])
+        self.proposeItem(item)
         # Remove the item with annexes
         self.changeUser('pmCreator1b')
         # Check that now MeetingMember(s) can't remove the item anymore
