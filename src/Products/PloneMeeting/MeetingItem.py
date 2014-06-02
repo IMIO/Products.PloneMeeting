@@ -31,7 +31,6 @@ from appy.gen import No
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from AccessControl import Unauthorized
-from AccessControl.SecurityManagement import newSecurityManager, getSecurityManager, setSecurityManager
 from AccessControl.PermissionRole import rolesForPermissionOn
 from DateTime import DateTime
 from App.class_init import InitializeClass
@@ -57,7 +56,6 @@ from Products.PloneMeeting.utils import \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
     forceHTMLContentTypeForEmptyRichFields, workday, networkdays
-from Products.PloneMeeting.browser.views_unrestricted import PMOmnipotentUser
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -3411,6 +3409,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # MeetingItem.updateAdvices.
                 groupId = meetingGroup.getPloneGroupId(groupSuffix)
                 ploneGroup = self.portal_groups.getGroupById(groupId)
+                if not ploneGroup:
+                    # in some case, MEETING_GROUP_SUFFIXES are used to manage
+                    # only some groups so some other may not have a linked Plone group
+                    continue
                 meetingRole = ploneGroup.getProperties()['meetingRole']
                 self.manage_addLocalRoles(groupId, (meetingRole,))
         # update local roles regarding copyGroups
