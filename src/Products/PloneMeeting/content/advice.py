@@ -23,6 +23,9 @@ def default_advice_hide_during_redaction():
     '''Default value for field 'advice_hide_during_redaction'.
        This is made for now to be overrided...'''
     portal = getSite()
+    published = portal.REQUEST.get('PUBLISHED')
+    if not published:
+        return False
     item = portal.REQUEST['PUBLISHED'].context
     tool = getToolByName(portal, 'portal_plonemeeting')
     cfg = tool.getMeetingConfig(item)
