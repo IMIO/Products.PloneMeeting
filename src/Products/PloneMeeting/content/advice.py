@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from zope.component.hooks import getSite
 from zope.interface import implements, Interface
 from zope import schema
 from zope.i18n import translate
@@ -21,7 +22,11 @@ from Products.PloneMeeting.utils import getHistory
 def default_advice_hide_during_redaction():
     '''Default value for field 'advice_hide_during_redaction'.
        This is made for now to be overrided...'''
-    return False
+    portal = getSite()
+    item = portal.REQUEST['PUBLISHED'].context
+    tool = getToolByName(portal, 'portal_plonemeeting')
+    cfg = tool.getMeetingConfig(item)
+    return cfg.getDefaultAdviceHiddenDuringRedaction()
 
 
 class IMeetingAdvice(Interface):

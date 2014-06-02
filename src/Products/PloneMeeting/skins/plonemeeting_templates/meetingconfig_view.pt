@@ -803,10 +803,11 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('transitionReinitializingDelays')">
+          <td tal:define="field python:here.getField('defaultAdviceHiddenDuringRedaction')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td>
+          <td tal:define="field python:here.getField('transitionReinitializingDelays')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td>
           </td>

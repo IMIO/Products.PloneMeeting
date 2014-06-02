@@ -1179,6 +1179,18 @@ schema = Schema((
         schemata="advices",
         vocabulary='listAdviceStyles',
     ),
+    BooleanField(
+        name='defaultAdviceHiddenDuringRedaction',
+        default=defValues.defaultAdviceHiddenDuringRedaction,
+        widget=BooleanField._properties['widget'](
+            description="DefaultAdviceHiddenDuringRedaction",
+            description_msgid="default_advice_hidden_during_redaction_descr",
+            label='Defaultadvicehiddenduringredaction',
+            label_msgid='PloneMeeting_label_defaultAdviceHiddenDuringRedaction',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+    ),
     StringField(
         name='transitionReinitializingDelays',
         default=defValues.transitionReinitializingDelays,
@@ -3721,6 +3733,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if hasattr(self.meetingusers.aq_base, user.id):
                 obj = getattr(self.meetingusers, user.id)
         return getattr(obj, methodName)()
+
 
 
 registerType(MeetingConfig, PROJECTNAME)
