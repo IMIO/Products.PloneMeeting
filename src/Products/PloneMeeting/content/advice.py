@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from zope.component.hooks import getSite
 from zope.interface import implements, Interface
 from zope import schema
 from zope.i18n import translate
@@ -17,19 +16,6 @@ from plone.directives import form
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.utils import getHistory
-
-
-def default_advice_hide_during_redaction():
-    '''Default value for field 'advice_hide_during_redaction'.
-       This is made for now to be overrided...'''
-    portal = getSite()
-    published = portal.REQUEST.get('PUBLISHED')
-    if not published:
-        return False
-    item = portal.REQUEST['PUBLISHED'].context
-    tool = getToolByName(portal, 'portal_plonemeeting')
-    cfg = tool.getMeetingConfig(item)
-    return cfg.getDefaultAdviceHiddenDuringRedaction()
 
 
 class IMeetingAdvice(Interface):
@@ -57,7 +43,6 @@ class IMeetingAdvice(Interface):
                       "the advice will be considered 'Not given, was under edition'.  A manager will be able "
                       "to publish it nevertheless."),
         required=False,
-        defaultFactory=default_advice_hide_during_redaction,
     )
     advice_comment = RichText(
         title=_(u"Advice official comment"),
@@ -88,6 +73,16 @@ def advice_typeDefaultValue(data):
     tool = getToolByName(data.context, 'portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     return cfg and cfg.getDefaultAdviceType() or ''
+
+
+@form.default_value(field=IMeetingAdvice['advice_hide_during_redaction'])
+def advice_hide_during_redactionDefaultValue(data):
+    published = data.context.REQUEST.get('PUBLISHED')
+    if not published:
+        return False
+    tool = getToolByName(data.context, 'portal_plonemeeting')
+    cfg = tool.getMeetingConfig(data.context)
+    return cfg.getDefaultAdviceHiddenDuringRedaction()
 
 
 class MeetingAdvice(Container):
