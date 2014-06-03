@@ -46,6 +46,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            This is more coplex than it seems at first glance because groups and
            configs are mixed together within the tool.'''
         self.changeUser('admin')
+        existingGroupIds = self.tool.objectIds('MeetingGroup')
         # Create a new MeetingGroup
         newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
         newGroupId = newGroup.getId()
@@ -55,11 +56,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.tool.folder_position = folder_position
         # After creation, the new MeetingGroup is in last position
         self.assertEquals(self.tool.objectIds('MeetingGroup'),
-                          ['developers', 'vendors', 'endUsers', newGroupId])
+                          existingGroupIds + [newGroupId, ])
         # Move the new MeetingGroup one position up
         self.tool.folder_position(position='up', id=newGroupId, template_id='.')
         self.assertEquals(self.tool.objectIds('MeetingGroup'),
-                          ['developers', 'vendors', newGroupId, 'endUsers'])
+                          existingGroupIds[:-1] + [newGroupId, ] + existingGroupIds[-1:])
 
     def test_pm_CloneItem(self):
         '''Clones a given item in parent item folder.'''
