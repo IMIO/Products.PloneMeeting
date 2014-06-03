@@ -1210,7 +1210,7 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="CustomAdvisers",
             description_msgid="custom_advisers_descr",
-            columns={'row_id': Column("Custom adviser row id", visible=False), 'group': SelectColumn("Custom adviser group", vocabulary="listActiveMeetingGroups"), 'gives_auto_advice_on': Column("Custom adviser gives automatic advice on", col_description="gives_auto_advice_on_col_description"), 'gives_auto_advice_on_help_message': Column("Custom adviser gives automatic advice on help message", col_description="gives_auto_advice_on_help_message_col_description"), 'for_item_created_from': Column("Rule activated for item created from", col_description="for_item_created_from_col_description", default=DateTime().strftime('%Y/%m/%d'), required=True), 'for_item_created_until': Column("Rule activated for item created until", col_description="for_item_created_until_col_description"), 'delay': Column("Delay for giving advice", col_description="delay_col_description"), 'delay_left_alert': Column("Delay left alert", col_description="delay_left_alert_col_description"), 'delay_label': Column("Custom adviser delay label", col_description="delay_label_col_description"), 'available_on': Column("Available on", col_description="available_on_col_description"), 'is_linked_to_previous_row': SelectColumn("Is linked to previous row?", vocabulary="listBooleanVocabulary", col_description="Is linked to previous row description", default='0')},
+            columns={'row_id': Column("Custom adviser row id", visible=False), 'group': SelectColumn("Custom adviser group", vocabulary="listActiveMeetingGroupsForCustomAdvisers"), 'gives_auto_advice_on': Column("Custom adviser gives automatic advice on", col_description="gives_auto_advice_on_col_description"), 'gives_auto_advice_on_help_message': Column("Custom adviser gives automatic advice on help message", col_description="gives_auto_advice_on_help_message_col_description"), 'for_item_created_from': Column("Rule activated for item created from", col_description="for_item_created_from_col_description", default=DateTime().strftime('%Y/%m/%d'), required=True), 'for_item_created_until': Column("Rule activated for item created until", col_description="for_item_created_until_col_description"), 'delay': Column("Delay for giving advice", col_description="delay_col_description"), 'delay_left_alert': Column("Delay left alert", col_description="delay_left_alert_col_description"), 'delay_label': Column("Custom adviser delay label", col_description="delay_label_col_description"), 'available_on': Column("Available on", col_description="available_on_col_description"), 'is_linked_to_previous_row': SelectColumn("Is linked to previous row?", vocabulary="listBooleanVocabulary", col_description="Is linked to previous row description", default='0')},
             label='Customadvisers',
             label_msgid='PloneMeeting_label_customAdvisers',
             i18n_domain='PloneMeeting',
@@ -1309,7 +1309,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listActiveMeetingGroups',
+        vocabulary='listActiveMeetingGroupsForPowerAdvisers',
     ),
     BooleanField(
         name='useCopies',
@@ -2266,8 +2266,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((transition[0], transition[1]))
         return DisplayList(res).sortedByValue()
 
-    security.declarePrivate('listActiveMeetingGroups')
-    def listActiveMeetingGroups(self):
+    security.declarePrivate('listActiveMeetingGroupsForPowerAdvisers')
+    def listActiveMeetingGroupsForPowerAdvisers(self):
+        """
+          Vocabulary for the powerAdvisersGroups field.
+          It returns every active MeetingGroups.
+        """
+        res = []
+        tool = getToolByName(self, 'portal_plonemeeting')
+        for mGroup in tool.getMeetingGroups():
+            res.append((mGroup.getId(), mGroup.getName()))
+        # make sure that if a configuration was defined for a group
+        # that is now inactive, it is still displayed
+        storedPowerAdvisersGroups = self.getPowerAdvisersGroups()
+        if storedPowerAdvisersGroups:
+            groupsInVocab = [group[0] for group in res]
+            for storedPowerAdvisersGroup in storedPowerAdvisersGroups:
+                if not storedPowerAdvisersGroup in groupsInVocab:
+                    mGroup = getattr(tool, storedPowerAdvisersGroup)
+                    res.append((mGroup.getId(), mGroup.getName()))
+        return DisplayList(res).sortedByValue()
+
+    security.declarePrivate('listActiveMeetingGroupsForCustomAdvisers')
+    def listActiveMeetingGroupsForCustomAdvisers(self):
         """
           Vocabulary for the customAdvisers.group DatagridField attribute.
           It returns every active MeetingGroups.
@@ -2280,12 +2301,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # that is now inactive, it is still displayed
         storedCustomAdviserGroups = [customAdviser['group'] for customAdviser in self.getCustomAdvisers()]
         if storedCustomAdviserGroups:
-            customAdviserGroupsInVocab = [group[0] for group in res]
+            groupsInVocab = [group[0] for group in res]
             for storedCustomAdviserGroup in storedCustomAdviserGroups:
-                if not storedCustomAdviserGroup in customAdviserGroupsInVocab:
+                if not storedCustomAdviserGroup in groupsInVocab:
                     mGroup = getattr(tool, storedCustomAdviserGroup)
                     res.append((mGroup.getId(), mGroup.getName()))
-
         return DisplayList(res).sortedByValue()
 
     def listBooleanVocabulary(self):
