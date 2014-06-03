@@ -948,6 +948,11 @@ div a.advice_delay_change_value {
     vertical-align: middle;
 }
 
+.item_attribute_label {
+    font-style: italic;
+    font-weight: bold !important;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
