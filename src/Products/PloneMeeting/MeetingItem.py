@@ -1751,8 +1751,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns a DisplayList containing all available active categories in
            the meeting config that corresponds me.'''
         res = []
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        for cat in meetingConfig.getCategories():
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        for cat in cfg.getCategories():
             res.append((cat.id, cat.getName()))
         if len(res) > 4:
             res.insert(0, ('_none_', translate('make_a_choice',
