@@ -573,7 +573,8 @@ class IMeetingCategoryDocumentation:
 
 
 class IMeetingCategoryCustom(IMeetingCategory):
-    pass
+    '''If you want to propose your own implementations of IMeetingCategory methods,
+       you must define an adapter that adapts IMeetingCategory to IMeetingCategoryCustom.'''
 
 
 # Interfaces used for customizing the behaviour of meeting configs -------------
