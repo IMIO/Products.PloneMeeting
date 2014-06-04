@@ -418,16 +418,21 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('developers', 'vendors__rowid__unique_id_123', ))
+        item.updateAdvices()
+        # no advice to give as item is 'itemcreated'
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers_advice_not_giveable',
+                                                                  'delay__vendors_advice_not_giveable', ]))
         self.proposeItem(item)
         item.reindexObject()
-        # no advice to give as item is 'itemcreated'
         self.changeUser('pmAdviser1')
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'delay__vendors0', ]))
+        # now advice are giveable but not given
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers_advice_not_given',
+                                                                  'delay__vendors_advice_not_given', ]))
         itemUID = item.UID()
-        brains = self.portal.portal_catalog(indexAdvisers='developers0')
+        brains = self.portal.portal_catalog(indexAdvisers='developers_advice_not_given')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
-        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors0')
+        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors_advice_not_given')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         createContentInContainer(item,
@@ -436,32 +441,46 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # now that an advice has been given for the developers group, the indexAdvisers has been updated
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers1', 'delay__vendors0', ]))
-        brains = self.portal.portal_catalog(indexAdvisers='developers1')
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers_advice_under_edit',
+                                                                  'delay__vendors_advice_not_given', ]))
+        brains = self.portal.portal_catalog(indexAdvisers='developers_advice_under_edit')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         # now change the value of the created meetingadvice.advice_group
         item.meetingadvice.advice_group = self.portal.portal_plonemeeting.vendors.getId()
         # notify modified
         notify(ObjectModifiedEvent(item.meetingadvice))
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'delay__vendors1', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers_advice_not_given',
+                                                                  'delay__vendors_advice_under_edit', ]))
         # the index in the portal_catalog is updated too
-        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors1')
+        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors_advice_under_edit')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
+        # put the item in a state where given advices are not editable anymore
+        self.changeUser('pmReviewer1')
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers_advice_not_giveable',
+                                                                  'delay__vendors_advice_given', ]))
+        # put it back to a state where it is editable
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        item.reindexObject()
         # delete the advice
+        self.changeUser('pmAdviser1')
         item.restrictedTraverse('@@delete_givenuid')(item.meetingadvice.UID())
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'delay__vendors0', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers_advice_not_given',
+                                                                  'delay__vendors_advice_not_given', ]))
         # the index in the portal_catalog is updated too
-        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors0')
+        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors_advice_not_given')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
-        brains = self.portal.portal_catalog(indexAdvisers='developers0')
+        brains = self.portal.portal_catalog(indexAdvisers='developers_advice_not_given')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         # if a delay-aware advice delay is exceeded, it is indexed with an ending '2'
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 01, 01)
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers0', 'delay__vendors2', ]))
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['developers_advice_not_given',
+                                                                  'delay__vendors_advice_delay_exceeded', ]))
 
     def test_pm_AutomaticAdvices(self):
         '''Test the automatic advices mechanism, some advices can be

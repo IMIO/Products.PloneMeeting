@@ -2811,19 +2811,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         groups = tool.getGroupsForUser(suffix='advisers')
         # Add a '0' at the end of every group id: we want "not given" advices.
         # this search will also return 'delay-aware' advices
-        groupIds = [g.getId() + '0' for g in groups] + ['delay__' + g.getId() + '0' for g in groups]
-        # Compute the list of states relevant for giving an advice.
-        itemStates = set()
-        for group in groups:
-            for state in group.getItemAdviceStates(self):
-                itemStates.add(state)
+        groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
+                   ['delay__' + g.getId() + '_advice_not_given' for g in groups]
         # Create query parameters
         params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
                   'sort_order': sortOrder,
-                  'review_state': list(itemStates), }
+                  }
         # Manage filter
         if filterKey:
             params[filterKey] = prepareSearchValue(filterValue)
@@ -2837,21 +2833,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries items for which the current user must give a delay-aware advice.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '0' at the end of every group id: we want "not given" advices.
+        # Add a '_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
-        groupIds = ['delay__' + g.getId() + '0' for g in groups]
-        # Compute the list of states relevant for giving an advice.
-        itemStates = set()
-        for group in groups:
-            for state in group.getItemAdviceStates(self):
-                itemStates.add(state)
+        groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups]
         # Create query parameters
         params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
                   'sort_order': sortOrder,
-                  'review_state': list(itemStates), }
+                  }
         # Manage filter
         if filterKey:
             params[filterKey] = prepareSearchValue(filterValue)
@@ -2866,21 +2857,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            delay-aware advice for but did not give it in the deadline.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '2' at the end of every group id: we want "not given" advices.
+        # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices for wich delay is exceeded
-        groupIds = ['delay__' + g.getId() + '2' for g in groups]
-        # Compute the list of states relevant for giving an advice.
-        itemStates = set()
-        for group in groups:
-            for state in group.getItemAdviceStates(self):
-                itemStates.add(state)
+        groupIds = ['delay__' + g.getId() + '_advice_delay_exceeded' for g in groups]
         # Create query parameters
         params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
                   'sort_order': sortOrder,
-                  'review_state': list(itemStates), }
+                  }
         # Manage filter
         if filterKey:
             params[filterKey] = prepareSearchValue(filterValue)
@@ -2894,10 +2880,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries all items for which the current user has given an advice.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '1' at the end of every group id: we want "given" advices.
+        # advised items are items that has an advice in a particular review_state
+        # just append every available meetingadvice state: we want "given" advices.
         # this search will return every advices
-        groupIds = [g.id + '1' for g in groups]
-        groupIds = groupIds + ['delay__' + groupId for groupId in groupIds]
+        wfTool = getToolByName(self, 'portal_workflow')
+        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
+        adviceStates = adviceWF.states.keys()
+        groupIds = []
+        for adviceState in adviceStates:
+            groupIds += [g.getId() + '_%s' % adviceState for g in groups]
+            groupIds += groupIds + ['delay__' + groupId for groupId in groupIds]
         # Create query parameters
         params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
@@ -2917,9 +2909,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries all items for which the current user has given an advice that was delay-aware.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '1' at the end of every group id: we want "given" advices.
+        # advised items are items that has an advice in a particular review_state
+        # just append every available meetingadvice state: we want "given" advices.
         # this search will only return 'delay-aware' advices
-        groupIds = ['delay__' + g.getId() + '1' for g in groups]
+        wfTool = getToolByName(self, 'portal_workflow')
+        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
+        adviceStates = adviceWF.states.keys()
+        groupIds = []
+        for adviceState in adviceStates:
+            groupIds = ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
         # Create query parameters
         params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default

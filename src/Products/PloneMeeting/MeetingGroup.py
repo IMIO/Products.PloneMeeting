@@ -347,7 +347,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            simply returns the content of field MeetingGroup.itemAdviceStates.
            When called with a p_cfg (MeetingConfig), if MeetingGroup.itemAdviceStates
            is not empty it returns it, but manipulates returned value as stored value is
-           something like 'meeting-config-if__state__itemcreate' and we want 'itemcreated';
+           something like 'meeting-config-sample__state__itemcreated' and we want 'itemcreated';
            else, it returns the global, default list in cfg.itemAdviceStates that correctly contains
            state values.'''
         res = self.getField('itemAdviceStates').get(self, **kwargs)
@@ -367,7 +367,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     security.declarePublic('getItemAdviceEditStates')
     def getItemAdviceEditStates(self, cfg=None, **kwargs):
-        '''See docstring of previous method.'''
+        '''See docstring of method MeetingGroup.getItemAdviceStates.'''
         res = self.getField('itemAdviceEditStates').get(self, **kwargs)
         if cfg:
             if not res:
@@ -384,7 +384,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     security.declarePublic('getItemAdviceViewStates')
     def getItemAdviceViewStates(self, cfg=None, **kwargs):
-        '''See docstring of previous method.'''
+        '''See docstring of method MeetingGroup.getItemAdviceStates.'''
         res = self.getField('itemAdviceViewStates').get(self, **kwargs)
         if cfg:
             if not res:

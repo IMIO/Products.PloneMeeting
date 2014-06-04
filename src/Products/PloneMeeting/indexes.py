@@ -8,6 +8,9 @@
 #
 
 from plone.indexer import indexer
+
+from Products.CMFCore.utils import getToolByName
+
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 
@@ -53,26 +56,52 @@ def indexAdvisers(obj):
     """
       Build the index specifying advices to give.
       Values are different if it is a delay-aware or not advice :
-      Delay-aware advice is like "delay__developers0" :
-      - delay__ specifies that it is a delay-aware advice
-      - developers is the name of the group the advice is asked to
-      - '0' for advice not given, '1' for advice given
-         and '2' for advice no given but no more giveable (delay exceeded)
-       Non delay-aware advice is like "developers0" :
-      - developers is the name of the group the advice is asked to
-      - '0' for advice not given, '1' for advice given
+      Delay-aware advice is like "delay__developers_advice_not_given":
+      - delay__ specifies that it is a delay-aware advice;
+      - developers is the name of the group the advice is asked to;
+      Non delay-aware advice is like "developers_advice_not_given".
+      In both cases (delay-aware or not), we have a suffix :
+        - '_advice_not_giveable' for advice not given and not giveable;
+        - '_advice_not_given' for advice not given but giveable;
+        - '_advice_delay_exceeded' for delay-aware advice not given but
+           no more giveable because of delay exceeded;
     """
     if not hasattr(obj, 'adviceIndex'):
         return ''
-    res = []
-    for groupId, advice in obj.adviceIndex.iteritems():
-        suffix = '1'  # Has been given (for now...)
-        isDelayAware = obj.adviceIndex[groupId]['delay'] and True or False
+    tool = getToolByName(obj, 'portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    item_state = obj.queryState()
+
+    def _computeSuffixFor(groupId, advice):
+        '''
+        '''
+        # still not given but still giveable?  Not giveable?  Delay exceeded?
         if advice['type'] == NOT_GIVEN_ADVICE_VALUE:
-            suffix = '0'  # Has not been given
             delayIsExceeded = isDelayAware and obj.getDelayInfosForAdvice(groupId)['delay_status'] == 'timed_out'
             if delayIsExceeded:
-                suffix = '2'  # delay is exceeded, advice was not given
+                return '_advice_delay_exceeded'  # delay is exceeded, advice was not given
+            else:
+                # does the relevant group may add the advice in current item state?
+                meetingGroup = getattr(tool, groupId)
+                itemAdviceStates = meetingGroup.getItemAdviceStates(cfg)
+                if item_state in itemAdviceStates:
+                    return '_advice_not_given'
+                else:
+                    return '_advice_not_giveable'
+        else:
+            # if advice was given, is it still editable or not?
+            # we return the current advice review_state
+            # by default, a still editable advice is 'advice_under_edit'
+            # and a no more editable advice is 'advice_given'
+            advice = getattr(obj, advice['advice_id'])
+            return '_%s' % advice.queryState()
+
+    res = []
+    for groupId, advice in obj.adviceIndex.iteritems():
+        isDelayAware = obj.adviceIndex[groupId]['delay'] and True or False
+        # compute suffix
+        suffix = _computeSuffixFor(groupId, advice)
+
         if isDelayAware:
             res.append('delay__' + groupId + suffix)
         else:
