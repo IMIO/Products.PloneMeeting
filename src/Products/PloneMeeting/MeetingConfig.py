@@ -1657,8 +1657,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             (field.type != 'reference') and \
                             (field.read_permission != 'Manage portal')
             if condition:
-                res.append((field.getName(), translate(field.widget.label_msgid,
-                            domain=field.widget.i18n_domain, context=self.REQUEST)))
+                res.append((field.getName(),
+                            '%s (%s)' % (translate(field.widget.label_msgid,
+                                                   domain=field.widget.i18n_domain,
+                                                   context=self.REQUEST),
+                                         field.getName())
+                            ))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listUsedItemAttributes')
