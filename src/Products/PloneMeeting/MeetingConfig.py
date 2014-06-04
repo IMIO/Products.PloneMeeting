@@ -2438,9 +2438,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             listOfTypeIds=factoryTypesToRegister+registeredFactoryTypes)
 
     security.declarePrivate('createTopics')
-    def createTopics(self):
+    def createTopics(self, topicsInfo):
         '''Adds a bunch of topics within the 'topics' sub-folder.'''
-        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in self.topicsInfo:
+        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in topicsInfo:
             if topicId in self.topics.objectIds():
                 logger.info("Trying to add an already existing topic with id '%s', skipping..." % topicId)
                 continue
@@ -2680,7 +2680,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Set a property allowing to know in which MeetingConfig we are
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
         # Create the topics related to this meeting config
-        self.createTopics()
+        self.createTopics(self.topicsInfo)
         # Create the action (tab) that corresponds to this meeting config
         self.createTab()
         # Sort the item tags if needed
@@ -2898,7 +2898,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   'sort_order': sortOrder, }
         # Manage filter
         if filterKey:
-            params[filterKey] = prepareSearchValue(value)
+            params[filterKey] = prepareSearchValue(filterValue)
         # update params with kwargs
         params.update(kwargs)
         # Perform the query in portal_catalog
@@ -2917,7 +2917,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         adviceStates = adviceWF.states.keys()
         groupIds = []
         for adviceState in adviceStates:
-            groupIds = ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
+            groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
         # Create query parameters
         params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
@@ -2926,7 +2926,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   'sort_order': sortOrder, }
         # Manage filter
         if filterKey:
-            params[filterKey] = prepareSearchValue(value)
+            params[filterKey] = prepareSearchValue(filterValue)
         # update params with kwargs
         params.update(kwargs)
         # Perform the query in portal_catalog
@@ -2944,7 +2944,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   'sort_order': sortOrder, }
         # Manage filter
         if filterKey:
-            params[filterKey] = prepareSearchValue(value)
+            params[filterKey] = prepareSearchValue(filterValue)
         # update params with kwargs
         params.update(kwargs)
         # Perform the query in portal_catalog
@@ -2971,7 +2971,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         searchFilters = kwargs.pop(TOPIC_SEARCH_FILTERS)
         # Manage additional ui filters
         if filterKey:
-            params[filterKey] = prepareSearchValue(value)
+            params[filterKey] = prepareSearchValue(filterValue)
         # update params with kwargs
         params.update(kwargs)
         # update params with 'query' given in searchFilters
