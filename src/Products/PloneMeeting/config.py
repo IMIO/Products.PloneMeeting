@@ -176,9 +176,13 @@ DEFAULT_TOPIC_ITEM_COUNT = 20
 
 ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 
+# default fields kept when an item is cloned
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
                          'decision', 'classifier', 'category', 'budgetInfos',
                          'budgetRelated', 'privacy']
+# extra fields kept when an item is created from a template
+EXTRA_COPIED_FIELDS_FOR_TEMPLATE = ['associatedGroups', 'copyGroups', 'optionalAdvisers',
+                                    'otherMeetingConfigsClonableTo', 'oralQuestion', 'observations']
 
 # There are various ways to insert items into meetings
 itemSortMethods = (  # Items are inserted:

@@ -146,8 +146,6 @@ class MeetingItemWorkflowConditions:
 
     security.declarePublic('mayValidate')
     def mayValidate(self):
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        user = membershipTool.getAuthenticatedMember()
         if checkPermission(ReviewPortalContent, self.context) and \
            not self.context.isDefinedInTool():
             return True
@@ -1208,7 +1206,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         res = self.attributeIsUsed('toDiscuss') and \
             not cfg.getToDiscussSetOnItemInsert() or \
-            (cfg.getToDiscussSetOnItemInsert() and not self.queryState() in self.beforePublicationStates)
+            (not self.isDefinedInTool() and cfg.getToDiscussSetOnItemInsert() and not self.queryState() in self.beforePublicationStates)
         return res
 
     security.declarePublic('showItemIsSigned')

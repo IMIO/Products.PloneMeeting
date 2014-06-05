@@ -2,6 +2,7 @@ from Products.Five.browser import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
+from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FOR_TEMPLATE
 
 from zope.component import getMultiAdapter
 from plone.memoize.instance import memoize
@@ -58,7 +59,7 @@ class ItemTemplateView(BrowserView):
         newItem = templateItem.clone(newOwnerId=user.id,
                                      cloneEventAction='create_meeting_item_from_template',
                                      destFolder=self.context,
-                                     copyFields=DEFAULT_COPIED_FIELDS + ['optionalAdvisers', ])
+                                     copyFields=DEFAULT_COPIED_FIELDS + EXTRA_COPIED_FIELDS_FOR_TEMPLATE)
         return newItem
 
     @memoize
