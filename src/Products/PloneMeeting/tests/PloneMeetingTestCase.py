@@ -117,6 +117,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         pms = self.portal.portal_membership
         pms.addMember(username, 'password', [], [])
         setRoles(self.portal, username, roles)
+        _createHomeFolder(self.portal, username)
 
     def setMeetingConfig(self, meetingConfigId):
         '''On which meeting config must we work?'''
@@ -332,10 +333,13 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         """
           Helper method for removing every recurring items of a given p_meetingConfig
         """
+        currentUser = self.portal.portal_membership.getAuthenticatedMember().getId()
+        self.changeUser('admin')
         recurringItemsIds = []
         for item in meetingConfig.recurringitems.objectValues():
             recurringItemsIds.append(item.getId())
         meetingConfig.recurringitems.manage_delObjects(ids=recurringItemsIds)
+        self.changeUser(currentUser)
 
     def _turnUserIntoPrereviewer(self, member):
         """

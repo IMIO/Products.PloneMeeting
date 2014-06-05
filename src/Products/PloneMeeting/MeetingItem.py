@@ -146,13 +146,10 @@ class MeetingItemWorkflowConditions:
 
     security.declarePublic('mayValidate')
     def mayValidate(self):
-        # We check if the current user is MeetingManager to allow transitions
-        # for recurring items added in a meeting
         membershipTool = getToolByName(self.context, 'portal_membership')
         user = membershipTool.getAuthenticatedMember()
-        if (checkPermission(ReviewPortalContent, self.context) or
-            user.has_role('MeetingManager')) and \
-           (not self.context.isDefinedInTool()):
+        if checkPermission(ReviewPortalContent, self.context) and \
+           not self.context.isDefinedInTool():
             return True
 
     security.declarePublic('mayPresent')

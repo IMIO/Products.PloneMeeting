@@ -99,9 +99,8 @@ class testWorkflows(PloneMeetingTestCase):
            does not check inner objects security...
            Check that removing an item or a meeting by is container fails.'''
         # make sure we do not have recurring items
-        self.changeUser('admin')
-        self._removeRecurringItems(self.meetingConfig)
         self.changeUser('pmManager')
+        self._removeRecurringItems(self.meetingConfig)
         # this is the folder that will contain create item and meeting
         pmManagerFolder = self.getMeetingFolder()
         item = self.create('MeetingItem')
@@ -406,6 +405,36 @@ class testWorkflows(PloneMeetingTestCase):
         # a recurring item is added during the 'decide' transition
         self.failIf(len(meeting.getItems()) != 4)
         self.failIf(len(meeting.getLateItems()) != 3)
+
+    def test_pm_RecurringItemsBypassSecutiry(self):
+        '''Tests that recurring items are addable by a MeetingManager even if by default,
+           one of the transition to trigger for the item to be presented should not be triggerable
+           by the MeetingManager inserting the recurring item.
+           For example here, we will add a recurring item for group 'developers' and
+           we create a 'pmManagerRestricted' that will not be able to propose the item.'''
+        self.changeUser('pmManager')
+        self._removeRecurringItems(self.meetingConfig)
+        # just one recurring item added for 'developers'
+        self.changeUser('admin')
+        self.create('RecurringMeetingItem', title='Rec item developers',
+                    proposingGroup='developers',
+                    meetingTransitionInsertingMe='_init_')
+        self.createUser('pmManagerRestricted', ('MeetingManager', ))
+        self.portal.portal_groups.addPrincipalToGroup('pmManagerRestricted', 'developers_creators')
+        self.changeUser('pmManagerRestricted')
+        # first check that current 'pmManager' may not 'propose'
+        # an item created with proposing group 'vendors'
+        item = self.create('MeetingItem')
+        # 'pmManager' may propose the item but he will not be able to validate it
+        self.proposeItem(item)
+        self.assertTrue(item.queryState() == self.WF_STATE_NAME_MAPPINGS['proposed'])
+        # we have only one available transition, and it is a 'back' transition
+        availableTransitions = self.wfTool.getTransitionsFor(item)
+        self.assertTrue(len(availableTransitions) == 1 and availableTransitions[0]['id'].startswith('back'))
+        # now, create a meeting, the item is correctly added no matter MeetingManager could not validate it
+        meeting = self.create('Meeting', date=DateTime('2013/01/01'))
+        self.assertTrue(len(meeting.getAllItems()) == 1)
+        self.assertTrue(meeting.getAllItems()[0].getProposingGroup() == 'developers')
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted
