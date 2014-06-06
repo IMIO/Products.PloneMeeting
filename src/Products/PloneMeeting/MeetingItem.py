@@ -1206,7 +1206,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         res = self.attributeIsUsed('toDiscuss') and \
             not cfg.getToDiscussSetOnItemInsert() or \
-            (not self.isDefinedInTool() and cfg.getToDiscussSetOnItemInsert() and not self.queryState() in self.beforePublicationStates)
+            (not self.isDefinedInTool() and cfg.getToDiscussSetOnItemInsert() and
+             not self.queryState() in self.beforePublicationStates)
         return res
 
     security.declarePublic('showItemIsSigned')
@@ -2541,31 +2542,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            currently logged user may, on this item:
            - add an advice;
            - edit or delete an advice.'''
-        def _isStillInDelayToBeAddedEdited(adviceInfo):
-            '''Check if advice for wich we received p_adviceInfo may still be added or edited.'''
-            if not adviceInfo['delay']:
-                return True
-            delay_started_on = self._doClearDayFrom(adviceInfo['delay_started_on'])
-            delay = int(adviceInfo['delay'])
-            tool = getToolByName(self, 'portal_plonemeeting')
-            holidays = tool.getHolidaysAs_datetime()
-            weekends = tool.getNonWorkingDayNumbers()
-            unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
-            if workday(delay_started_on,
-                       delay,
-                       unavailable_weekdays=unavailable_weekdays,
-                       holidays=holidays,
-                       weekends=weekends) > datetime.now():
-                return True
-            return False
-
         tool = self.portal_plonemeeting
         cfg = tool.getMeetingConfig(self)
         # Advices must be enabled
         if not cfg.getUseAdvices():
             return ([], [])
-        # Item state must be within the states allowing to add/edit an advice
-        itemState = self.queryState()
         # Logged user must be an adviser
         meetingGroups = tool.getGroupsForUser(suffix='advisers')
         if not meetingGroups:
@@ -2576,23 +2557,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         toAdd = []
         toEdit = []
         powerAdvisers = cfg.getPowerAdvisersGroups()
+        itemState = self.queryState()
         for group in meetingGroups:
             groupId = group.getId()
             if groupId in self.adviceIndex:
-                adviceType = self.adviceIndex[groupId]['type']
-                if adviceType == NOT_GIVEN_ADVICE_VALUE and \
-                   itemState in group.getItemAdviceStates(cfg) and \
-                   _isStillInDelayToBeAddedEdited(self.adviceIndex[groupId]):
+                advice = self.adviceIndex[groupId]
+                if advice['type'] == NOT_GIVEN_ADVICE_VALUE and advice['advice_addable']:
                     toAdd.append((groupId, group.getName()))
-                if adviceType != NOT_GIVEN_ADVICE_VALUE and \
-                   itemState in group.getItemAdviceEditStates(cfg) and \
-                   _isStillInDelayToBeAddedEdited(self.adviceIndex[groupId]):
+                if advice['type'] != NOT_GIVEN_ADVICE_VALUE and advice['advice_editable']:
                     toEdit.append(groupId)
-            elif groupId in powerAdvisers:
-                # if not in self.adviceIndex, aka not already given
-                # check if group is a power adviser
-                if itemState in group.getItemAdviceStates(cfg):
-                    toAdd.append((groupId, group.getName()))
+            # if not in self.adviceIndex, aka not already given
+            # check if group is a power adviser and if he is allowed
+            # to add an advice in current item state
+            elif groupId in powerAdvisers and itemState in group.getItemAdviceStates(cfg):
+                toAdd.append((groupId, group.getName()))
         return (toAdd, toEdit)
 
     security.declarePublic('getAdvicesByType')
@@ -2602,7 +2580,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for groupId, advice in self.adviceIndex.iteritems():
             # Create the entry for this type of advice if not yet created.
             # if the advice is 'hidden_during_redaction', we create a specific advice type
-            adviceType = advice['hidden_during_redaction'] and 'hidden_during_redaction' or advice['type']
+            if not advice['hidden_during_redaction']:
+                adviceType = advice['type']
+            else:
+                # check if advice still giveable/editable
+                if advice['advice_editable']:
+                    adviceType = 'hidden_during_redaction'
+                else:
+                    adviceType = 'considered_not_given_hidden_during_redaction'
             if adviceType not in res:
                 res[adviceType] = advices = []
             else:
@@ -2966,6 +2951,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     d['delay_for_automatic_adviser_changed_manually'] = saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually']
                 else:
                     d['delay_for_automatic_adviser_changed_manually'] = False
+                # index view/add/edit access
+                d['item_viewable_by_advisers'] = False
+                d['advice_addable'] = False
+                d['advice_editable'] = False
 
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():
@@ -2985,6 +2974,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # advice should not be asked, but as already given, we keep it
                     adviceInfo['delay_started_on'] = saved_stored_data[groupId]['delay_started_on']
                     adviceInfo['delay_stopped_on'] = saved_stored_data[groupId]['delay_stopped_on']
+                # index view/add/edit access
+                adviceInfo['item_viewable_by_advisers'] = False
+                adviceInfo['advice_addable'] = False
+                adviceInfo['advice_editable'] = False
             self.adviceIndex[groupId].update(adviceInfo)
 
         # Clean-up advice-related local roles and granted permissions.
@@ -3054,6 +3047,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             # give access to the item in any case
             self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
+            self.adviceIndex[groupId]['item_viewable_by_advisers'] = True
 
             # manage delay-aware advice, we start the delay if not already started
             if itemState in itemAdviceStates and \
@@ -3075,7 +3069,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self._grantPermissionToRole(permission=AddAdvice,
                                             role_to_give='Contributor',
                                             obj=self)
+                self.adviceIndex[groupId]['advice_addable'] = True
 
+            # is advice still editable?
             if itemState in itemAdviceEditStates and delayIsNotExceeded:
                 # make sure the advice given by groupId is in state 'advice_under_edit'
                 if adviceObj and not adviceObj.queryState() == 'advice_under_edit':
@@ -3090,6 +3086,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # maybe we can not 'backToAdviceUnderEdit'
                         pass
                     self.REQUEST.set('mayBackToAdviceUnderEdit', False)
+                self.adviceIndex[groupId]['advice_editable'] = True
             else:
                 # make sure it is no more editable
                 if adviceObj and not adviceObj.queryState() == 'advice_given':
@@ -3221,7 +3218,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # advice already given, or left_delay negative left_delay shown is delay
         # so left_delay displayed on the advices popup is not something like '-547'
-        if adviceInfos['advice_given_on'] or data['left_delay'] < 0:
+        # only show left delay if advice in under redaction, aka not really given...
+        if not adviceInfos['hidden_during_redaction'] and \
+           (adviceInfos['advice_given_on'] or data['left_delay'] < 0):
             data['left_delay'] = delay
             return data
 
@@ -4330,7 +4329,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                       context=self.REQUEST).encode(enc),
             self.getMeeting().getSignatures().replace('\n', '<br />'))
         return value + collapsibleMeetingSignatures
-
 
 
 registerType(MeetingItem, PROJECTNAME)

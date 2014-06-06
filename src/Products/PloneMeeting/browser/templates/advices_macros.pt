@@ -27,7 +27,7 @@
       </td>
       <tal:comment replace="nothing">For history reasons, we use meetingConfig.listAdviceTypes to be sure
                                      that a deactivated adviceType is still shown.</tal:comment>
-      <tal:menu repeat="adviceType python: meetingConfig.listAdviceTypes().keys() + ['not_given', 'hidden_during_redaction']">
+      <tal:menu repeat="adviceType python: meetingConfig.listAdviceTypes().keys() + ['not_given', 'hidden_during_redaction', 'considered_not_given_hidden_during_redaction']">
       <td tal:condition="python: adviceType in advicesByType" class="noPadding">
         <dl class="actionMenuAX">
           <dt class="actionMenuHeaderAX pmLinks"><tal:comment replace="nothing">Icon with advice type</tal:comment>
@@ -43,12 +43,6 @@
 
                 <fieldset tal:define="tool python: portal.portal_plonemeeting;
                                       mGroup python: getattr(tool, advice['id']);
-                                      itemAdviceStates python: mGroup.getItemAdviceStates(meetingConfig);
-                                      itemAdviceEditStates python: mGroup.getItemAdviceEditStates(meetingConfig);
-                                      itemAdviceViewStates python: mGroup.getItemAdviceViewStates(meetingConfig);
-                                      itemIsViewableByGroup python: item_review_state in (itemAdviceStates + itemAdviceEditStates + itemAdviceViewStates);
-                                      adviceMayBeAdded python: item_review_state in itemAdviceStates;
-                                      adviceMayBeEdited python: item_review_state in itemAdviceEditStates;
                                       memberIsAdviserForGroup python:  advice['id'] in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')];
                                       obj python: advice.get('advice_id', None) and getattr(meetingItem, advice['advice_id']) or None;
                                       mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');">
@@ -59,7 +53,7 @@
                               <span class="advice_delay"
                                     tal:content="advice/delay_infos/left_delay"
                                     tal:define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};"
-                                    tal:attributes="class python: advice['type'] == 'not_given' and class_if_not_given or 'advice_delay'" />
+                                    tal:attributes="class python: (advice['type'] == 'not_given' or advice['hidden_during_redaction']) and class_if_not_given or 'advice_delay'" />
                          </span>
                          <span tal:condition="advice/optional">(</span>
                               <b tal:content="structure advice/name"></b>
@@ -69,13 +63,13 @@
                          <span tal:condition="advice/optional">)</span>
                          <acronym tal:attributes="title python: meetingItem.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
                     </legend>
-                <tal:hiddenUnderRedaction condition="python: adviceMayBeEdited and adviceType == 'hidden_during_redaction'">
+                <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
                   <p class="discreet" style="color: red;" i18n:translate="">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</p>
                 </tal:hiddenUnderRedaction>
-                <tal:underRedactionNoMoreEditable condition="python: not adviceMayBeEdited and adviceType == 'hidden_during_redaction'">
-                  <p class="discreet" style="color: red;" i18n:translate="">This advice is considered 'Not given' because it was still under redaction when the ability to write the advice was removed to advisers of the group.  If you need this advice to be considered, contact relevant meeting managers.</p>
+                <tal:underRedactionNoMoreEditable condition="python: adviceType == 'considered_not_given_hidden_during_redaction'">
+                  <p class="discreet" style="color: red;" i18n:translate="">This advice is considered 'Not given' because it was still under redaction when the ability to write the advice was removed to advisers of the group. If you need this advice to be considered, contact relevant meeting managers.</p>
                 </tal:underRedactionNoMoreEditable>
-                <tal:notHiddenUnderRedaction condition="python: memberIsAdviserForGroup or mayEdit or not adviceType == 'hidden_during_redaction'">
+                <tal:notHiddenUnderRedaction condition="python: memberIsAdviserForGroup or mayEdit or not adviceType in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')">
                     <tal:advice-change-delay
                       tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
                                   dummy python: context.REQUEST.set('advice_change_delay_cfg', meetingConfig);
@@ -158,18 +152,19 @@
                   </tr>
                 </table>
                 <span class="discreet"
-                   tal:condition="python: adviceType == 'not_given' and adviceMayBeAdded and not advice['delay_infos']"
+                   tal:condition="python: adviceType == 'not_given' and advice['advice_addable'] and not advice['delay_infos']"
                    i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet.
                 </span>
-                <tal:adviceGiveableWithDelay condition="python: adviceType == 'not_given' and adviceMayBeAdded and advice['delay_infos']">
+                <tal:adviceGiveableWithDelay condition="python: adviceType == 'not_given' and advice['advice_addable'] and advice['delay_infos']">
                     <span class="discreet"
                           tal:condition="python: advice['delay_infos']['delay_status'] in ['still_time', 'still_time_but_alert']"
                           i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet, it can still be given until the <span tal:attributes="class string:advice_delay_${advice/delay_infos/delay_status}"
                                                                                                                       i18n:name="advice_delay_limit_date"
                                                                                                                       tal:content="advice/delay_infos/limit_date_localized"></span>.
                     </span>
+                </tal:adviceGiveableWithDelay>
+                <tal:adviceNoMoreGiveableBecauseDelayExceeded condition="python: adviceType == 'not_given' and not advice['advice_addable'] and advice['delay_infos'] and advice['delay_infos']['delay_status'] == 'timed_out'">
                     <span class="discreet"
-                          tal:condition="python: advice['delay_infos']['delay_status'] == 'timed_out'"
                           i18n:translate="">This advice can not be given anymore, it was asked the <span class="advice_delay_timed_out"
                                                                                                          i18n:name="advice_delay_started_on"
                                                                                                          tal:content="advice/delay_infos/delay_started_on_localized">2013/05/05</span>
@@ -177,8 +172,8 @@
                                                                                i18n:name="advice_delay_limit_date"
                                                                                tal:content="advice/delay_infos/limit_date_localized">2013/05/15</span>.
                     </span>
-                </tal:adviceGiveableWithDelay>
-                <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not itemIsViewableByGroup">
+                </tal:adviceNoMoreGiveableBecauseDelayExceeded>
+                <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not advice['item_viewable_by_advisers']">
                     <span class="discreet"
                        i18n:translate="">This item is not viewable by the advisers of this group in the current review state (<span i18n:name="item_review_state"
                                                                                                                                    i18n:translate=""
@@ -189,7 +184,7 @@
                                 class="discreet"
                                 i18n:translate="">Once viewable, the adviser will have <span style="font-weight: bold;" i18n:name="advice_delay" tal:content="advice/delay_infos/delay">15</span> days to give the advice.</span>
                 </tal:itemsStillNotViewableToAdvisers>
-                <tal:itemViewableButNoMoreAdviseableWithoutDelay condition="python: adviceType == 'not_given' and itemIsViewableByGroup and not advice['delay_infos'] and not adviceMayBeAdded">
+                <tal:itemViewableButNoMoreAdviseableWithoutDelay condition="python: adviceType == 'not_given' and advice['item_viewable_by_advisers'] and not advice['delay_infos'] and not advice['advice_addable']">
                     <span class="discreet"
                        i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
                                                                                                        i18n:translate=""
@@ -198,7 +193,7 @@
                                                                                                        tal:attributes="class string:label-state-${item_review_state}"></span>)</span>.
 
                 </tal:itemViewableButNoMoreAdviseableWithoutDelay>
-                <tal:itemViewableButNoMoreAdviseableWithDelay condition="python: adviceType == 'not_given' and itemIsViewableByGroup and advice['delay_infos'] and not adviceMayBeAdded">
+                <tal:itemViewableButNoMoreAdviseableWithDelay condition="python: adviceType == 'not_given' and advice['item_viewable_by_advisers'] and advice['delay_infos'] and not advice['delay_infos']['delay_status'] == 'timed_out' and not advice['advice_addable']">
                     <span class="discreet"
                        i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
                                                                                                        i18n:translate=""
@@ -226,7 +221,7 @@
                          <span i18n:name="delay_when_stopped"
                                tal:content="python: -(advice['delay_infos']['delay_when_stopped'])">
                               10
-                         </span> day(s).
+                         </span><img src="logo.png" /> day(s).
                     </span>
                     <span i18n:translate=""
                           tal:attributes="class string:discreet advice_delay_${advice/delay_infos/delay_status_when_stopped};"
