@@ -428,9 +428,10 @@ class testWorkflows(PloneMeetingTestCase):
         # 'pmManager' may propose the item but he will not be able to validate it
         self.proposeItem(item)
         self.assertTrue(item.queryState() == self.WF_STATE_NAME_MAPPINGS['proposed'])
-        # we have only one available transition, and it is a 'back' transition
+        # we have no avaialble transition, or just one, and in this case, it is a 'back' transition
         availableTransitions = self.wfTool.getTransitionsFor(item)
-        self.assertTrue(len(availableTransitions) == 1 and availableTransitions[0]['id'].startswith('back'))
+        if availableTransitions:
+            self.assertTrue(len(availableTransitions) == 1 and availableTransitions[0]['id'].startswith('back'))
         # now, create a meeting, the item is correctly added no matter MeetingManager could not validate it
         meeting = self.create('Meeting', date=DateTime('2013/01/01'))
         self.assertTrue(len(meeting.getAllItems()) == 1)
