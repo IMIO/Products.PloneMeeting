@@ -230,4 +230,3 @@ def onAdviceRemoved(advice, event):
         logger = logging.getLogger('PloneMeeting')
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 
-##/code-section FOOT

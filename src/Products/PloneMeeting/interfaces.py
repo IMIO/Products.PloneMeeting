@@ -3,7 +3,13 @@
 from zope.interface import Interface
 
 ##code-section HEAD
+from zope.component.interfaces import IObjectEvent
 from zope.publisher.interfaces.browser import IBrowserRequest
+
+
+class IAdvicesUpdatedEvent(IObjectEvent):
+    """
+    """
 
 
 class IRedirect(Interface):

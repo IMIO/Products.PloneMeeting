@@ -38,6 +38,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
+from zope.event import notify
 from zope.i18n import translate
 from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
 from Products.CMFCore.Expression import Expression, createExprContext
@@ -56,6 +57,7 @@ from Products.PloneMeeting.utils import \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
     forceHTMLContentTypeForEmptyRichFields, workday, networkdays
+from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -3119,7 +3121,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # compute and store delay_infos
         for groupId in self.adviceIndex.iterkeys():
             self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
-
+        # notify that advices have been updated so subproducts
+        # may interact if necessary
+        notify(AdvicesUpdatedEvent(self))
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
     security.declarePublic('getDelayInfosForAdvice')

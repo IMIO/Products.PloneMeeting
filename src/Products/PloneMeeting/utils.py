@@ -34,6 +34,8 @@ from email import Encoders
 from DateTime import DateTime
 from AccessControl import getSecurityManager
 from zope.i18n import translate
+from zope.component.interfaces import ObjectEvent
+from zope.interface import implements
 from Products.CMFCore.utils import getToolByName
 from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
@@ -1341,4 +1343,10 @@ def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[
         new_date = workday(start_date, days+1, holidays, weekends, unavailable_weekdays)
 
     return new_date
-# ------------------------------------------------------------------------------
+
+
+class AdvicesUpdatedEvent(ObjectEvent):
+    implements(IAdvicesUpdatedEvent)
+
+    def __init__(self, object):
+        self.object = object
