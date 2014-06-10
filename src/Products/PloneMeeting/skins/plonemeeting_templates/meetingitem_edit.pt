@@ -155,6 +155,8 @@
       </tr>
     </table>
     <metal:field use-macro="python:here.widget('itemAssembly', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('itemAssemblyExcused', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('itemAssemblyAbsents', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemSignatures', mode='edit')"/>
 
 </metal:widgets>

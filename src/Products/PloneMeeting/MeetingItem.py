@@ -807,6 +807,37 @@ schema = Schema((
             description_msgid="item_assembly_descr",
             label='Itemassembly',
             label_msgid='PloneMeeting_label_itemAssembly',
+            label_method='getLabelItemAssembly',
+            i18n_domain='PloneMeeting',
+        ),
+        default_output_type="text/x-html-safe",
+        default_content_type="text/plain",
+    ),
+    TextField(
+        name='itemAssemblyExcused',
+        allowable_content_types=('text/plain',),
+        optional=True,
+        widget=TextAreaWidget(
+            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused')",
+            description="ItemAssemblyExcusedDescrMethod",
+            description_msgid="item_assembly_excused_descr",
+            label='Itemassemblyexcused',
+            label_msgid='PloneMeeting_label_itemAssemblyExcused',
+            i18n_domain='PloneMeeting',
+        ),
+        default_output_type="text/x-html-safe",
+        default_content_type="text/plain",
+    ),
+    TextField(
+        name='itemAssemblyAbsents',
+        allowable_content_types=('text/plain',),
+        optional=True,
+        widget=TextAreaWidget(
+            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents')",
+            description="ItemAssemblyAbsentsDescrMethod",
+            description_msgid="item_assembly_absents_descr",
+            label='Itemassemblyabsents',
+            label_msgid='PloneMeeting_label_itemAssemblyAbsents',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/x-html-safe",
@@ -1936,15 +1967,53 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                    includeReplacements=includeReplacements)
         return res
 
+    def redefinedItemAssemblies(self, usedItemAttributes):
+        '''
+          Helper method that returns list of redefined assembly attributes if assembly of item has been redefined,
+          this is used on the item view.  Depending on used item attributes (assembly, excused, absents),
+          if ont of relevant attribute has been redefined, it will return True.
+        '''
+        res = []
+        # check if assembly redefined
+        if self.getItemAssembly(real=True):
+            res.append('assembly')
+        if self.getItemAssemblyExcused(real=True):
+            res.append('assemblyExcused')
+        if self.getItemAssemblyAbsents(real=True):
+            res.append('assemblyAbsents')
+        return res
+
     security.declarePublic('getItemAssembly')
     def getItemAssembly(self, real=False, **kwargs):
-        '''Returns the assembly for this item. If no assembly is defined,
-           meeting assembly are returned.'''
+        '''Returns the assembly for this item.
+           If no assembly is defined, meeting assembly is returned.'''
         res = self.getField('itemAssembly').get(self, **kwargs)
         if real:
             return res
         if not res and self.hasMeeting():
             res = self.getMeeting().getAssembly()
+        return res
+
+    security.declarePublic('getItemAssemblyExcused')
+    def getItemAssemblyExcused(self, real=False, **kwargs):
+        '''Returns the assembly excused for this item.
+           If no assembly excused is defined, meeting assembly excused are returned.'''
+        res = self.getField('itemAssemblyExcused').get(self, **kwargs)
+        if real:
+            return res
+        if not res and self.hasMeeting():
+            res = self.getMeeting().getAssemblyExcused()
+        return res
+
+    security.declarePublic('getItemAssemblyAbsents')
+    def getItemAssemblyAbsents(self, real=False, **kwargs):
+        '''Returns the assembly absents for this item.
+           If no assembly absents is defined, meeting assembly absents are returned.'''
+        res = self.getField('itemAssemblyAbsents').get(self, **kwargs)
+        if real:
+            return res
+        if not res and self.hasMeeting():
+            res = self.getMeeting().getAssemblyAbsents()
         return res
 
     security.declarePublic('getStrikedItemAssembly')
@@ -4301,6 +4370,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           the linked Meeting.assembly value so it is easily overridable.'''
         enc = self.portal_properties.site_properties.getProperty(
             'default_charset')
+        # depending on the fact that we use 'excused' and 'absents', we will have
+        # a different translation for the assembly defined on the meeting (assembly or attendees)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        if 'assemblyExcused' in usedMeetingAttributes or \
+           'assemblyAbsents' in usedMeetingAttributes:
+            msg = 'attendees_defined_on_meeting'
+        else:
+            msg = 'assembly_defined_on_meeting'
         value = translate(self.Schema()['itemAssembly'].widget.description_msgid,
                           domain='PloneMeeting',
                           context=self.REQUEST).encode(enc) + '<br/>'
@@ -4309,11 +4388,51 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 <dd class="collapsibleContent">
 %s
 </dd>
-</dl>""" % (translate('assembly_defined_on_meeting',
+</dl>""" % (translate(msg,
                       domain='PloneMeeting',
                       context=self.REQUEST).encode(enc),
-            self.getMeeting().getAssembly())
+            self.getMeeting().getAssembly() or '-')
         return value + collapsibleMeetingAssembly
+
+    security.declareProtected('Modify portal content', 'ItemAssemblyExcusedDescrMethod')
+    def ItemAssemblyExcusedDescrMethod(self):
+        '''Special handling of itemAssemblyExcused field description where we display
+          the linked Meeting.assemblyExcused value so it is easily overridable.'''
+        enc = self.portal_properties.site_properties.getProperty(
+            'default_charset')
+        value = translate(self.Schema()['itemAssemblyExcused'].widget.description_msgid,
+                          domain='PloneMeeting',
+                          context=self.REQUEST).encode(enc) + '<br/>'
+        collapsibleMeetingAssemblyExcused = """<dl id="meetingAssemblyExcused" class="collapsible inline collapsedOnLoad">
+<dt class="collapsibleHeader">%s</dt>
+<dd class="collapsibleContent">
+%s
+</dd>
+</dl>""" % (translate('assembly_excused_defined_on_meeting',
+                      domain='PloneMeeting',
+                      context=self.REQUEST).encode(enc),
+            self.getMeeting().getAssemblyExcused() or '-')
+        return value + collapsibleMeetingAssemblyExcused
+
+    security.declareProtected('Modify portal content', 'ItemAssemblyAbsentsDescrMethod')
+    def ItemAssemblyAbsentsDescrMethod(self):
+        '''Special handling of itemAssemblyAbsents field description where we display
+          the linked Meeting.assemblyAbsents value so it is easily overridable.'''
+        enc = self.portal_properties.site_properties.getProperty(
+            'default_charset')
+        value = translate(self.Schema()['itemAssemblyAbsents'].widget.description_msgid,
+                          domain='PloneMeeting',
+                          context=self.REQUEST).encode(enc) + '<br/>'
+        collapsibleMeetingAssemblyAbsents = """<dl id="meetingAssemblyAbsents" class="collapsible inline collapsedOnLoad">
+<dt class="collapsibleHeader">%s</dt>
+<dd class="collapsibleContent">
+%s
+</dd>
+</dl>""" % (translate('assembly_absents_defined_on_meeting',
+                      domain='PloneMeeting',
+                      context=self.REQUEST).encode(enc),
+            self.getMeeting().getAssemblyAbsents() or '-')
+        return value + collapsibleMeetingAssemblyAbsents
 
     security.declareProtected('Modify portal content', 'ItemSignaturesDescrMethod')
     def ItemSignaturesDescrMethod(self):
@@ -4334,6 +4453,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                       context=self.REQUEST).encode(enc),
             self.getMeeting().getSignatures().replace('\n', '<br />'))
         return value + collapsibleMeetingSignatures
+
+    security.declarePublic('getLabelItemAssembly')
+    def getLabelItemAssembly(self):
+        '''
+          Depending on the fact that we use 'itemAssembly' alone or
+          'assembly, excused, absents', we will translate the 'assembly' label
+          a different way.
+        '''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        if 'assemblyExcused' in usedMeetingAttributes or \
+           'assemblyAbsents' in usedMeetingAttributes:
+            return _('attendees_for_item')
+        else:
+            return _('PloneMeeting_label_itemAssembly')
 
 
 registerType(MeetingItem, PROJECTNAME)

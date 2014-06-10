@@ -303,10 +303,40 @@
   </div>
 
   <tal:comment replace="nothing">Assembly.  Backward compatibility for people that used the 'assembly' field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
-  <div class="discreet" tal:condition="python: ('assembly' in usedAttrs) or context.getAssembly()">
-    <b i18n:translate="meeting_assembly"></b>&nbsp;&nbsp;
-       <span tal:replace="structure context/getStrikedAssembly"/>
-  </div>
+  <tal:assemblyFields condition="python: 'assembly' in usedAttrs">
+  <table class="no-style-table discreet"
+         style="width: 100%;"
+         tal:define="usedAssemblyFields python: ((context.getAssembly() and True) or 'assembly' in usedAttrs,
+                                                 (context.getAssemblyExcused() and True) or 'assemblyExcused' in usedAttrs,
+                                                 (context.getAssemblyAbsents() and True) or 'assemblyAbsents' in usedAttrs).count(True);
+                     colWidthPercentage python: int(100/usedAssemblyFields);">
+    <tr>
+        <td width="33%"
+            style="padding-right: 0.3em !important;"
+            tal:attributes="width string:${colWidthPercentage}%">
+            <fieldset tal:condition="python: 'assembly' in usedAttrs or context.getAssembly()">
+                <legend tal:content="context/getLabelAssembly">Assembly</legend>
+                <span tal:replace="structure context/getStrikedAssembly"/>
+            </fieldset>
+        </td>
+        <td width="33%"
+            style="padding-right: 0.3em !important;"
+            tal:attributes="width string:${colWidthPercentage}%">
+            <fieldset tal:condition="python: 'assemblyExcused' in usedAttrs or context.getAssemblyExcused()">
+                <legend i18n:translate="meeting_assembly_excused">Assembly</legend>
+                <span tal:replace="structure python: context.getAssemblyExcused() or '-'"/>
+            </fieldset>
+        </td>
+        <td width="33%"
+            tal:attributes="width string:${colWidthPercentage}%">
+            <fieldset tal:condition="python: 'assemblyAbsents' in usedAttrs or context.getAssemblyAbsents()">
+                <legend i18n:translate="meeting_assembly_absents">Assembly</legend>
+                <span tal:replace="structure python: context.getAssemblyAbsents() or '-'"/>
+            </fieldset>
+        </td>
+    </tr>
+  </table>
+  </tal:assemblyFields>
 
   <tal:comment replace="nothing">Attendees, excused, absents, replacements</tal:comment>
   <table id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0"

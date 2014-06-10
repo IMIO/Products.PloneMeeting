@@ -50,6 +50,32 @@ def item_assembly_default():
     return itemAssembly
 
 
+def item_excused_default():
+    """
+      Returns the itemAssemblyExcused of the item.
+      As from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
+      does not seem to work, we have to get current context manually...
+    """
+    context = getSite().REQUEST['PUBLISHED'].context
+    itemAssemblyExcused = context.getRawItemAssemblyExcused(content_type='text/plain')
+    if not isinstance(itemAssemblyExcused, unicode):
+        itemAssemblyExcused = unicode(itemAssemblyExcused, 'utf-8')
+    return itemAssemblyExcused
+
+
+def item_absents_default():
+    """
+      Returns the itemAssemblyAbsents of the item.
+      As from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
+      does not seem to work, we have to get current context manually...
+    """
+    context = getSite().REQUEST['PUBLISHED'].context
+    itemAssemblyAbsents = context.getRawItemAssemblyAbsents(content_type='text/plain')
+    if not isinstance(itemAssemblyAbsents, unicode):
+        itemAssemblyAbsents = unicode(itemAssemblyAbsents, 'utf-8')
+    return itemAssemblyAbsents
+
+
 class IManageItemAssembly(interface.Interface):
     item_assembly = schema.Text(title=_(u"Item assembly to apply"),
                                 description=_(u"Enter the item assembly to be applied.  The value displayed "
@@ -57,6 +83,16 @@ class IManageItemAssembly(interface.Interface):
                                               u"people (like [[Mister Sample Peter]])."),
                                 defaultFactory=item_assembly_default,
                                 required=False,)
+    item_excused = schema.Text(title=_(u"Item excused to apply"),
+                               description=_(u"Enter the item excused to be applied.  The value "
+                                             u"displayed by default is the value of the current item."),
+                               defaultFactory=item_excused_default,
+                               required=False,)
+    item_absents = schema.Text(title=_(u"Item absents to apply"),
+                               description=_(u"Enter the item absents to be applied.  The value "
+                                             u"displayed by default is the value of the current item."),
+                               defaultFactory=item_absents_default,
+                               required=False,)
     apply_until_item_number = schema.Int(title=_(u"Apply until item number"),
                                          description=_(u"If you specify a number, the item assembly entered here "
                                                        u"above will be applied from current item to the item number "
@@ -80,6 +116,19 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
         """
         meeting = self.context.getMeeting()
         return meeting.getAssembly()
+
+    def get_msgid_assembly_or_attendees(self):
+        """
+          Return the msgid to translate, either 'Assembly' or 'Attendees' defined on the meeting.
+        """
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        if 'assemblyExcused' in usedMeetingAttributes or \
+           'assemblyExcused' in usedMeetingAttributes:
+            return 'display_meeting_attendees_legend'
+        else:
+            return 'display_meeting_assembly_legend'
 
     def render(self):
         return self.template()
@@ -118,6 +167,8 @@ class ManageItemAssemblyForm(form.Form):
             return
         # do adapt item assembly
         self.item_assembly = self.request.form.get('form.widgets.item_assembly')
+        self.item_excused = self.request.form.get('form.widgets.item_excused')
+        self.item_absents = self.request.form.get('form.widgets.item_absents')
         self.apply_until_item_number = self.request.form.get('form.widgets.apply_until_item_number') and \
             int(self.request.form.get('form.widgets.apply_until_item_number')) or 0
         self._doApplyItemAssembly()
@@ -138,6 +189,24 @@ class ManageItemAssemblyForm(form.Form):
 
     def updateWidgets(self):
         # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
+        # show only relevant fields
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        self.fields['item_excused'].mode = 'hidden'
+        self.fields['item_absents'].mode = 'hidden'
+        changeItemAssemblyTitleAndDescr = False
+        if 'assemblyExcused' in usedMeetingAttributes:
+            changeItemAssemblyTitleAndDescr = True
+            self.fields['item_excused'].mode = 'input'
+        if 'assemblyAbsents' in usedMeetingAttributes:
+            changeItemAssemblyTitleAndDescr = True
+            self.fields['item_absents'].mode = 'input'
+        if changeItemAssemblyTitleAndDescr:
+            self.fields['item_assembly'].field.title = _('Item attendees to apply')
+            self.fields['item_assembly'].field.description = _(u"Enter the item attendees to be applied.  "
+                                                               u"The value displayed by default is the value "
+                                                               u"of the current item.")
         form.Form.updateWidgets(self)
 
     def render(self):
@@ -168,6 +237,8 @@ class ManageItemAssemblyForm(form.Form):
 
         for itemToUpdate in _itemsToUpdate():
             itemToUpdate.setItemAssembly(self.item_assembly)
+            itemToUpdate.setItemAssemblyExcused(self.item_excused)
+            itemToUpdate.setItemAssemblyAbsents(self.item_absents)
 
         plone_utils = getToolByName(self.context, 'plone_utils')
         plone_utils.addPortalMessage(_("Item assemblies have been updated."))

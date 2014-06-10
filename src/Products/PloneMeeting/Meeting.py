@@ -42,6 +42,7 @@ from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, ku
     kupuEquals, getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting import PMMessageFactory as _
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -636,10 +637,41 @@ schema = Schema((
             description="MeetingAssembly",
             description_msgid="assembly_meeting_descr",
             label='Assembly',
+            label_method='getLabelAssembly',
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/plain",
         default_method="getDefaultAssembly",
+        default_output_type="text/html",
+        optional=True,
+    ),
+    TextField(
+        name='assemblyExcused',
+        allowable_content_types="text/plain",
+        widget=TextAreaWidget(
+            condition="python: here.attributeIsUsed('assemblyExcused')",
+            label_msgid="meeting_assembly_excused",
+            description="MeetingAssemblyExcused",
+            description_msgid="assembly_excused_meeting_descr",
+            label='AssemblyExcused',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/plain",
+        default_output_type="text/html",
+        optional=True,
+    ),
+    TextField(
+        name='assemblyAbsents',
+        allowable_content_types="text/plain",
+        widget=TextAreaWidget(
+            condition="python: here.attributeIsUsed('assemblyAbsents')",
+            label_msgid="meeting_assembly_absents",
+            description="MeetingAssemblyAbsents",
+            description_msgid="assembly_absents_meeting_descr",
+            label='AssemblyAbsents',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/plain",
         default_output_type="text/html",
         optional=True,
     ),
@@ -2119,6 +2151,21 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
         return self.portal_plonemeeting.gotoReferer()
 
+    security.declarePublic('getLabelAssembly')
+    def getLabelAssembly(self):
+        '''
+          Depending on the fact that we use 'assembly' alone or
+          'assembly, excused, absents', we will translate the 'assembly' label
+          a different way.
+        '''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        if 'assemblyExcused' in usedMeetingAttributes or \
+           'assemblyAbsents' in usedMeetingAttributes:
+            return _('PloneMeeting_label_attendees')
+        else:
+            return _('PloneMeeting_label_assembly')
 
 
 registerType(Meeting, PROJECTNAME)
