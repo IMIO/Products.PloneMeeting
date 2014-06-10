@@ -3958,8 +3958,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getPredecessors(self):
         '''Returns the list of dict that contains infos about a predecessor.
            This method can be adapted.'''
-        tool = getToolByName(self.context, "portal_plonemeeting")
-        predecessor = self.context.getPredecessor()
+        item = self.getSelf()
+        tool = getToolByName(item, "portal_plonemeeting")
+        predecessor = item.getPredecessor()
         predecessors = []
         #retrieve every predecessors
         while predecessor:
@@ -3968,7 +3969,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         #keep order
         predecessors.reverse()
         #retrieve backrefs too
-        brefs = self.context.getBRefs('ItemPredecessor')
+        brefs = item.getBRefs('ItemPredecessor')
         while brefs:
             predecessors = predecessors + brefs
             brefs = brefs[0].getBRefs('ItemPredecessor')
@@ -3986,7 +3987,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if meeting:
                 title = "%s (%s)" % (title, tool.formatDate(meeting.getDate()).encode('utf-8'))
             #show that the linked item is not of the same portal_type
-            if not predecessor.portal_type == self.context.portal_type:
+            if not predecessor.portal_type == item.portal_type:
                 title = title + '*'
             #only replace last occurence because title appear in the "title" tag,
             #could be the same as the last part of url (id), ...
