@@ -305,7 +305,7 @@
   <tal:comment replace="nothing">Assembly.  Backward compatibility for people that used the 'assembly' field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
   <tal:assemblyFields condition="python: 'assembly' in usedAttrs">
   <table class="no-style-table discreet"
-         style="width: 100%;"
+         style="width: auto;"
          tal:define="usedAssemblyFields python: ((context.getAssembly() and True) or 'assembly' in usedAttrs,
                                                  (context.getAssemblyExcused() and True) or 'assemblyExcused' in usedAttrs,
                                                  (context.getAssemblyAbsents() and True) or 'assemblyAbsents' in usedAttrs).count(True);
@@ -321,15 +321,17 @@
         </td>
         <td width="33%"
             style="padding-right: 0.3em !important;"
+            tal:condition="python: 'assemblyExcused' in usedAttrs or context.getAssemblyExcused()"
             tal:attributes="width string:${colWidthPercentage}%">
-            <fieldset tal:condition="python: 'assemblyExcused' in usedAttrs or context.getAssemblyExcused()">
+            <fieldset>
                 <legend i18n:translate="meeting_assembly_excused">Assembly</legend>
                 <span tal:replace="structure python: context.getAssemblyExcused() or '-'"/>
             </fieldset>
         </td>
         <td width="33%"
+            tal:condition="python: 'assemblyAbsents' in usedAttrs or context.getAssemblyAbsents()"
             tal:attributes="width string:${colWidthPercentage}%">
-            <fieldset tal:condition="python: 'assemblyAbsents' in usedAttrs or context.getAssemblyAbsents()">
+            <fieldset>
                 <legend i18n:translate="meeting_assembly_absents">Assembly</legend>
                 <span tal:replace="structure python: context.getAssemblyAbsents() or '-'"/>
             </fieldset>
