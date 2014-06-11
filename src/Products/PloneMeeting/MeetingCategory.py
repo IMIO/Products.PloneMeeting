@@ -26,6 +26,7 @@ from Products.PloneMeeting.config import *
 from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
+from Products.PloneMeeting import PMMessageFactory
 ##/code-section module-header
 
 schema = Schema((
@@ -77,6 +78,19 @@ schema = Schema((
         multiValued=1,
         vocabulary='listUsingGroups',
     ),
+    LinesField(
+        name='categoryMappingsWhenCloningToOtherMC',
+        widget=MultiSelectionWidget(
+            description="CategoryMappingsWhenCloningToOtherMC",
+            description_msgid="category_mapping_when_cloning_to_other_mc_descr",
+            label='Categorymappingswhencloningtoothermc',
+            label_msgid='PloneMeeting_label_categoryMappingsWhenCloningToOtherMC',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=True,
+        multiValued=True,
+        vocabulary='listCategoriesOfOtherMCs',
+    ),
 
 ),
 )
@@ -113,18 +127,25 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
+    def getMeetingConfig(self):
+        '''Get the MeetingConfig I am defined in.'''
+        parent = self.getParentNode()
+        while not parent.meta_type == 'MeetingConfig':
+            parent = parent.getParentNode()
+        return parent
+
     def getOrder(self, onlySelectable=True):
         '''At what position am I among all the active categories of my
            folder in the meeting config?  If p_onlySelectable is passed to
            MeetingConfig.getCategories, see doc string in MeetingConfig.'''
         try:
-            folderId = self.getParentNode().id
+            folderId = self.getParentNode().getId()
             classifiers = False
             if folderId == 'classifiers':
                 classifiers = True
             # to avoid problems with categories that are disabled or
             # restricted to some groups, we pass onlySelectable=False
-            i = self.getParentNode().getParentNode().getCategories(
+            i = self.getMeetingConfig().getCategories(
                 classifiers=classifiers, onlySelectable=onlySelectable).index(self)
         except ValueError:
             i = None
@@ -146,7 +167,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
             isLinked = False
-            for brain in self.portal_catalog(Type=self.getParentNode().getParentNode().getItemTypeName()):
+            for brain in self.portal_catalog(Type=self.getMeetingConfig().getItemTypeName()):
                 obj = brain.getObject()
                 if obj.getCategory() == self.getId():
                     isLinked = True
@@ -223,6 +244,42 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
             res.append((group.id, group.Title()))
         return DisplayList(tuple(res))
 
+    security.declarePublic('listCategoriesOfOtherMCs')
+    def listCategoriesOfOtherMCs(self):
+        '''Vocabulary for 'categoryMappingsWhenCloningToOtherMC' field, it returns
+           a list of available categories by available MC the items of the current MC
+           can be sent to, like :
+           - otherMC1 : category 1
+           - otherMC1 : category 2
+           - otherMC1 : category 3
+           - otherMC1 : category 4
+           - otherMC2 : category 1
+           - otherMC2 : category 2'''
+        res = []
+        tool = getToolByName(self, 'portal_plonemeeting')
+        # get every other MC the items of this MC can be sent to
+        otherMCs = self.getMeetingConfig().getMeetingConfigsToCloneTo()
+        for otherMC in otherMCs:
+            otherMCObj = getattr(tool, otherMC['meeting_config'])
+            if otherMCObj.getUseGroupsAsCategories():
+                continue
+            otherMCId = otherMCObj.getId()
+            otherMCTitle = otherMCObj.Title()
+            for category in otherMCObj.getCategories():
+                res.append(('%s.%s' % (otherMCId, category.getId()),
+                            '%s -> %s' % (otherMCTitle, category.Title())))
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('validate_categoryMappingsWhenCloningToOtherMC')
+    def validate_categoryMappingsWhenCloningToOtherMC(self, values):
+        '''This method does validate the 'categoryMappingsWhenCloningToOtherMC'.
+           We can only select one single value (category) for a given MC.'''
+        previousMCValue = 'DummyFalseMCId'
+        for value in values:
+            MCValue = value.split('.')[0]
+            if MCValue.startswith(previousMCValue):
+                return PMMessageFactory(u'error_can_not_select_several_cat_for_same_mc')
+            previousMCValue = MCValue
 
 
 registerType(MeetingCategory, PROJECTNAME)

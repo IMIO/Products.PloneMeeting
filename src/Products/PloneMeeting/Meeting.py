@@ -636,8 +636,8 @@ schema = Schema((
             label_msgid="meeting_assembly",
             description="MeetingAssembly",
             description_msgid="assembly_meeting_descr",
+            label_method="getLabelAssembly",
             label='Assembly',
-            label_method='getLabelAssembly',
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/plain",
@@ -648,32 +648,32 @@ schema = Schema((
     TextField(
         name='assemblyExcused',
         allowable_content_types="text/plain",
+        optional=True,
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('assemblyExcused')",
-            label_msgid="meeting_assembly_excused",
             description="MeetingAssemblyExcused",
             description_msgid="assembly_excused_meeting_descr",
-            label='AssemblyExcused',
+            label='Assemblyexcused',
+            label_msgid='PloneMeeting_label_assemblyExcused',
             i18n_domain='PloneMeeting',
         ),
-        default_content_type="text/plain",
         default_output_type="text/html",
-        optional=True,
+        default_content_type="text/plain",
     ),
     TextField(
         name='assemblyAbsents',
         allowable_content_types="text/plain",
+        optional=True,
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('assemblyAbsents')",
-            label_msgid="meeting_assembly_absents",
             description="MeetingAssemblyAbsents",
             description_msgid="assembly_absents_meeting_descr",
-            label='AssemblyAbsents',
+            label='Assemblyabsents',
+            label_msgid='PloneMeeting_label_assemblyAbsents',
             i18n_domain='PloneMeeting',
         ),
-        default_content_type="text/plain",
         default_output_type="text/html",
-        optional=True,
+        default_content_type="text/plain",
     ),
     LinesField(
         name='attendees',
@@ -2165,7 +2165,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            'assemblyAbsents' in usedMeetingAttributes:
             return _('PloneMeeting_label_attendees')
         else:
-            return _('PloneMeeting_label_assembly')
+            return _('meeting_assembly')
 
 
 registerType(Meeting, PROJECTNAME)

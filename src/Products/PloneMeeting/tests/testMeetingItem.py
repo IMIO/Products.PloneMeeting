@@ -721,6 +721,30 @@ class testMeetingItem(PloneMeetingTestCase):
         # this time it is correctly 'presented'
         self.assertTrue(newItem.queryState() == 'presented')
 
+    def test_pm_SendItemToOtherMCWithMappedCategories(self):
+        '''Test when sending an item to another MeetingConfig and both using
+           categories, a mapping can be defined for a category in original meetingConfig
+           to a category in destination meetingConfig.'''
+        # activate categories in both meetingConfigs, as no mapping is defined,
+        # the newItem will have no category
+        self.meetingConfig.setUseGroupsAsCategories(False)
+        self.meetingConfig2.setUseGroupsAsCategories(False)
+        data = self._setupSendItemToOtherMC()
+        newItem = data['newItem']
+        self.assertTrue(newItem.getCategory() == '')
+        # now define a mapping of category, set it to first cat mapping
+        originalItem = data['originalItem']
+        originalItemCat = getattr(self.meetingConfig.categories, originalItem.getCategory())
+        catIdOfMC2Mapped = self.meetingConfig2.categories.objectIds()[0]
+        originalItemCat.setCategoryMappingsWhenCloningToOtherMC(('%s.%s' %
+                                                                 (self.meetingConfig2.getId(),
+                                                                  catIdOfMC2Mapped), ))
+        # delete newItem and send originalItem again
+        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
+        newItem = originalItem.getBRefs('ItemPredecessor')[0].getObject()
+        self.assertTrue(newItem.getCategory() == catIdOfMC2Mapped)
+
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
            the TAL expression defined on every MeetingGroup.asCopyGroupOn.'''

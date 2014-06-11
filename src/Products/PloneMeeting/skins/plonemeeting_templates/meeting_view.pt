@@ -324,7 +324,7 @@
             tal:condition="python: 'assemblyExcused' in usedAttrs or context.getAssemblyExcused()"
             tal:attributes="width string:${colWidthPercentage}%">
             <fieldset>
-                <legend i18n:translate="meeting_assembly_excused">Assembly</legend>
+                <legend i18n:translate="PloneMeeting_label_assemblyExcused">Assembly</legend>
                 <span tal:replace="structure python: context.getAssemblyExcused() or '-'"/>
             </fieldset>
         </td>
@@ -332,7 +332,7 @@
             tal:condition="python: 'assemblyAbsents' in usedAttrs or context.getAssemblyAbsents()"
             tal:attributes="width string:${colWidthPercentage}%">
             <fieldset>
-                <legend i18n:translate="meeting_assembly_absents">Assembly</legend>
+                <legend i18n:translate="PloneMeeting_label_assemblyAbsents">Assembly</legend>
                 <span tal:replace="structure python: context.getAssemblyAbsents() or '-'"/>
             </fieldset>
         </td>

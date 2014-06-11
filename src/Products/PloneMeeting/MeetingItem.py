@@ -805,9 +805,9 @@ schema = Schema((
             condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
+            label_method="getLabelItemAssembly",
             label='Itemassembly',
             label_msgid='PloneMeeting_label_itemAssembly',
-            label_method='getLabelItemAssembly',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/x-html-safe",
@@ -816,9 +816,8 @@ schema = Schema((
     TextField(
         name='itemAssemblyExcused',
         allowable_content_types=('text/plain',),
-        optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused')",
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused')",
             description="ItemAssemblyExcusedDescrMethod",
             description_msgid="item_assembly_excused_descr",
             label='Itemassemblyexcused',
@@ -831,9 +830,8 @@ schema = Schema((
     TextField(
         name='itemAssemblyAbsents',
         allowable_content_types=('text/plain',),
-        optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents')",
+            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents')",
             description="ItemAssemblyAbsentsDescrMethod",
             description_msgid="item_assembly_absents_descr",
             label='Itemassemblyabsents',
@@ -1085,7 +1083,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return res
     getRawDecision = getDecision
-
     security.declarePublic('getMotivation')
     def getMotivation(self, **kwargs):
         '''Overridden version of 'motivation' field accessor. It allows to manage
@@ -1103,7 +1100,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return self.getField('motivation').get(self, **kwargs)
     getRawMotivation = getMotivation
-
     security.declarePublic('getDeliberation')
     def getDeliberation(self, **kwargs):
         '''Returns the entire deliberation depending on fields used.'''
@@ -3815,6 +3811,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
                              newPortalType=destMeetingConfig.getItemTypeName())
+        # manage categories mapping, if oroginal and new items use
+        # categories, we check if a mapping is defined in the configuration of the original item
+        if not cfg.getUseGroupsAsCategories() and \
+           not destMeetingConfig.getUseGroupsAsCategories():
+            originalCategory = getattr(cfg.categories, self.getCategory())
+            # find out if something is defined when sending an item to destMeetingConfig
+            for destCat in originalCategory.getCategoryMappingsWhenCloningToOtherMC():
+                if destCat.split('.')[0] == destMeetingConfigId:
+                    # we found a mapping defined for the new category, apply it
+                    # get the category so it fails if it does not exist (that should not be possible...)
+                    newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
+                    newItem.setCategory(newCat.getId())
+                    break
+
+        # now that new item has been created, we can set self as the predecessor
         newItem.setPredecessor(self)
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
@@ -4471,8 +4482,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return _('PloneMeeting_label_itemAssembly')
 
 
+
 registerType(MeetingItem, PROJECTNAME)
 # end of class MeetingItem
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+

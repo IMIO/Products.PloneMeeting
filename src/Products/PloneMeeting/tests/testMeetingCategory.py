@@ -23,6 +23,7 @@
 #
 
 from OFS.ObjectManager import BeforeDeleteException
+from zope.i18n import translate
 from Products.PloneMeeting.tests.PloneMeetingTestCase import \
     PloneMeetingTestCase
 
@@ -59,6 +60,44 @@ class testMeetingCategory(PloneMeetingTestCase):
         # remove the created item so the category is removable too
         item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
         self.meetingConfig.categories.manage_delObjects([category1])
+
+    def test_pm_ListCategoriesOfOtherMCs(self):
+        '''Test the vocabulary of the 'categoryMappingsWhenCloningToOtherMC' field.'''
+        # by default, items of meetingConfig can be sent to meetingConfig2
+        # as meetingConfig2 use categories, it will appear in a category of meetingConfig
+        aCatInMC = self.meetingConfig.categories.development
+        self.assertTrue(aCatInMC.listCategoriesOfOtherMCs())
+        # but as meetingConfig does not use categories, a category of meetingConfig2 will not see it
+        aCatInMC2 = self.meetingConfig2.categories.deployment
+        self.assertTrue(not aCatInMC2.listCategoriesOfOtherMCs())
+        # activate categories in both meetingConfigs
+        self.meetingConfig.setUseGroupsAsCategories(False)
+        # still not enough...
+        self.assertTrue(not aCatInMC2.listCategoriesOfOtherMCs())
+        # ... we must also specify that elements of self.meetingConfig2 can be sent to self.meetingConfig
+        self.meetingConfig2.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig.getId(),
+                                                        'trigger_workflow_transitions_until': '__nothing__'}, ))
+        self.assertTrue(aCatInMC2.listCategoriesOfOtherMCs())
+
+    def test_pm_Validate_categoryMappingsWhenCloningToOtherMC(self):
+        '''Test the 'categoryMappingsWhenCloningToOtherMC' field validate method.
+           It just validate that we can not define more than one value for the same meetingConfig.'''
+        aCatInMC = self.meetingConfig.categories.development
+        # if only passing one value, it works
+        values = (aCatInMC.listCategoriesOfOtherMCs().keys()[0], )
+        self.failIf(aCatInMC.validate_categoryMappingsWhenCloningToOtherMC(values))
+        # but not 2 for the same meetingConfig...
+        error_msg = translate('error_can_not_select_several_cat_for_same_mc',
+                              domain='PloneMeeting',
+                              context=self.portal.REQUEST)
+        values = (aCatInMC.listCategoriesOfOtherMCs().keys()[0],
+                  aCatInMC.listCategoriesOfOtherMCs().keys()[1])
+        self.assertTrue(aCatInMC.validate_categoryMappingsWhenCloningToOtherMC(values) == error_msg)
+        # simulate a third meetingConfig, select one single value of existing meetingConfig2 and
+        # one of unexisting meetingConfig3, the validate is ok...
+        values = (aCatInMC.listCategoriesOfOtherMCs().keys()[0],
+                  'meeting-config-dummy.category_name')
+        self.failIf(aCatInMC.validate_categoryMappingsWhenCloningToOtherMC(values))
 
 
 def test_suite():
