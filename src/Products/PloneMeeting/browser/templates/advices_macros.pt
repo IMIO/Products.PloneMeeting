@@ -64,7 +64,13 @@
                          <acronym tal:attributes="title python: meetingItem.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
                     </legend>
                 <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
-                  <p class="discreet" style="color: red;" i18n:translate="">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</p>
+                    <p>
+                        <span class="advice_hidden_during_redaction discreet" i18n:translate="">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</span>
+                        &nbsp;<span tal:condition="advice/delay_infos"
+                                    class="advice_hidden_during_redaction discreet"
+                                    i18n:translate="">This advice must not be 'hidden during redaction' anymore before <span i18n:name="limit_date" tal:content="advice/delay_infos/limit_date_localized">limit date</span> or it will be considered not given.
+                        </span>
+                    </p>
                 </tal:hiddenUnderRedaction>
                 <tal:underRedactionNoMoreEditable condition="python: adviceType == 'considered_not_given_hidden_during_redaction'">
                   <p class="discreet" style="color: red;" i18n:translate="">This advice is considered 'Not given' because it was still under redaction when the ability to write the advice was removed to advisers of the group. If you need this advice to be considered, contact relevant meeting managers.</p>

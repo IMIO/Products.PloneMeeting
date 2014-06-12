@@ -953,6 +953,11 @@ div a.advice_delay_change_value {
     font-weight: bold !important;
 }
 
+#portal-columns p.advice_hidden_during_redaction,
+#portal-columns span.advice_hidden_during_redaction {
+    color: red;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
