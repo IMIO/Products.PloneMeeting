@@ -662,7 +662,8 @@ div.itemSignaturesEditable {
 .pm_listing_th_creationDate {
     width: 100px;
 }
-.pm_listing_th_relatedMeeting {
+.pm_listing_th_relatedMeeting,
+.pm_listing_th_preferredMeeting {
     width: 90px;
 }
 .pm_listing_th_creator, .pm_meeting_listing_th_creator {
