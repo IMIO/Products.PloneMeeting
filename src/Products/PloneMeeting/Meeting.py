@@ -110,7 +110,9 @@ class MeetingWorkflowConditions:
         if not checkPermission(ReviewPortalContent, self.context):
             return False
         if not self.context.getRawItems():
-            return No(translate('item_required_to_publish', domain="PloneMeeting", context=self.context.REQUEST))
+            return No(translate('item_required_to_publish',
+                                domain="PloneMeeting",
+                                context=self.context.REQUEST))
         return True
 
     security.declarePublic('mayPublishDecisions')
