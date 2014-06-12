@@ -1062,6 +1062,10 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] ==
                         item._doClearDayFrom(item.adviceIndex['vendors']['delay_started_on'] + timedelta(10)))
 
+    def test_pm_AdviceAvailableOn(self):
+        ''' '''
+        pass
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

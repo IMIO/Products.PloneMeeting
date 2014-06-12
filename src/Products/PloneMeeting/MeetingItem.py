@@ -2670,14 +2670,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # meta_type 'Dexterity Container' are meetingadvices...
         res = {}
         tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         for advice in self.getAdvices():
             optional = True
             gives_auto_advice_on_help_message = delay = delay_left_alert = delay_label = ''
             # find the relevant row in customAdvisers if advice has a row_id
             if advice.advice_row_id:
-                cfg = tool.getMeetingConfig(self)
                 customAdviserConfig = cfg._dataForCustomAdviserRowId(advice.advice_row_id)
-                optional = not customAdviserConfig['gives_auto_advice_on'] and True or False
+                # cfg._findLinkedRowsFor returns as first element the fact that it is an automatic advice or not
+                optional = not cfg._findLinkedRowsFor(advice.advice_row_id)[0]
                 gives_auto_advice_on_help_message = customAdviserConfig['gives_auto_advice_on_help_message'] or ''
                 delay = customAdviserConfig['delay'] or ''
                 delay_left_alert = customAdviserConfig['delay_left_alert'] or ''
@@ -3126,8 +3127,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # check also if the delay is not exceeded, in this case the advice can not be given anymore
             delayIsNotExceeded = not self.adviceIndex[groupId]['delay'] or \
                 self.getDelayInfosForAdvice(groupId)['delay_status'] != 'timed_out'
-            if itemState in itemAdviceStates and \
-               self.adviceIndex[groupId]['type'] == NOT_GIVEN_ADVICE_VALUE and delayIsNotExceeded:
+            if itemState in itemAdviceStates and not adviceObj and delayIsNotExceeded:
                 # advisers must be able to add a 'meetingadvice', give
                 # relevant permissions to 'Contributor' role
                 # the 'Add portal content' permission is given by default to 'Contributor', so
@@ -3139,9 +3139,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.adviceIndex[groupId]['advice_addable'] = True
 
             # is advice still editable?
-            if itemState in itemAdviceEditStates and delayIsNotExceeded:
+            if itemState in itemAdviceEditStates and delayIsNotExceeded and adviceObj:
                 # make sure the advice given by groupId is in state 'advice_under_edit'
-                if adviceObj and not adviceObj.queryState() == 'advice_under_edit':
+                if adviceObj.queryState() == 'advice_under_edit':
                     try:
                         # make the guard_expr protecting 'backToAdviceUnderEdit' alright
                         self.REQUEST.set('mayBackToAdviceUnderEdit', True)
@@ -4488,4 +4488,3 @@ registerType(MeetingItem, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-
