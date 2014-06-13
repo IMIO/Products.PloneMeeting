@@ -3141,7 +3141,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # is advice still editable?
             if itemState in itemAdviceEditStates and delayIsNotExceeded and adviceObj:
                 # make sure the advice given by groupId is in state 'advice_under_edit'
-                if adviceObj.queryState() == 'advice_under_edit':
+                if not adviceObj.queryState() == 'advice_under_edit':
                     try:
                         # make the guard_expr protecting 'backToAdviceUnderEdit' alright
                         self.REQUEST.set('mayBackToAdviceUnderEdit', True)
