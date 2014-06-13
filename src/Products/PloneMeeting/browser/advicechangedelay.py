@@ -62,6 +62,11 @@ class AdviceDelaysView(BrowserView):
         ctx = createExprContext(self.context.getParentNode(), self.portal, self.context)
         # Check that the TAL expression on the group returns True
         ctx.setGlobal('item', self.context)
+        # set a special value in the request usable in the TAL expression
+        # that just specify that we are managing available delays
+        # this way, it is easy to protect a custom adviser by just checking
+        # this value in the REQUEST
+        self.request.set('managing_available_delays', True)
         for linkedRow in linkedRows:
             eRes = False
             try:
@@ -73,6 +78,7 @@ class AdviceDelaysView(BrowserView):
                 logger.warning(ADVICE_AVAILABLE_ON_CONDITION_ERROR % str(e))
             if eRes:
                 availableLinkedRows.append(linkedRow)
+        self.request.set('managing_available_delays', False)
 
         # no delay to change to, return
         if not availableLinkedRows:
