@@ -40,16 +40,18 @@ class AdviceDelaysView(BrowserView):
            - An automatic advice delay can only be edited by Managers (and MeetingManagers);
            - In both cases (isAutomatic or not) the delay can be changed only if the advice has still
              never be giveable or is currently giveable, but no more when the advice is no more giveable.'''
-        if not isAutomatic and not checkPermission('PloneMeeting: Write optional advisers', self.context):
+        # advice is not automatic, the user must have 'PloneMeeting: Write optional advisers' permission
+        if not isAutomatic:
+            if not checkPermission('PloneMeeting: Write optional advisers', self.context):
                 return False
         else:
-            # only Managers and MeetingManagers can change an automatic advice delay
+            # advice is automatic, only Managers and MeetingManagers can change an automatic advice delay
             # and only if the advice still could not be given or if it is currently editable
             tool = getToolByName(self.context, 'portal_plonemeeting')
             if not tool.isManager() or not checkPermission('Modify portal content', self.context):
                 return False
         # we can not change delay for an advice that is no more giveable,
-        # aka for wich a delay stopped on date is defined
+        # aka for wich a delay_stopped_on date is defined
         if self.context.adviceIndex[self.advice['id']]['delay_stopped_on']:
             return False
         return True

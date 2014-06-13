@@ -1565,17 +1565,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(cfg.getCustomAdvisers())
         self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
         # now define some delay-aware advisers in MeetingConfig.customAdvisers
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
-              'group': 'developers',
-              'gives_auto_advice_on': '',
-              'for_item_created_from': '2012/01/01',
-              'delay': '5'},
-             {'row_id': 'unique_id_456',
-              'group': 'developers',
-              'gives_auto_advice_on': '',
-              'for_item_created_from': '2012/01/01',
-              'delay': '10'}, ])
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'developers',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '5'},
+                          {'row_id': 'unique_id_456',
+                           'group': 'developers',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '10'}, ]
+        cfg.setCustomAdvisers(customAdvisers)
         # a special key is prepended that will be disabled in the UI
         # at the beginning of 'both' list (delay-aware and non delay-aware advisers)
         self.assertEquals(item.listOptionalAdvisers().keys(),
@@ -1586,21 +1586,23 @@ class testMeetingItem(PloneMeetingTestCase):
                            'developers',
                            'vendors'])
         # check that if a 'for_item_created_until' date is passed, it does not appear anymore
-        cfg.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
-              'group': 'developers',
-              'gives_auto_advice_on': '',
-              'for_item_created_from': '2012/01/01',
-              'delay': '5'},
-             {'row_id': 'unique_id_456',
-              'group': 'developers',
-              'gives_auto_advice_on': '',
-              'for_item_created_from': '2012/01/01',
-              'for_item_created_until': '2013/01/01',
-              'delay': '10'}, ])
+        customAdvisers[1]['for_item_created_until'] = '2013/01/01'
+        cfg.setCustomAdvisers(customAdvisers)
         self.assertEquals(item.listOptionalAdvisers().keys(),
                           ['not_selectable_value_delay_aware_optional_advisers',
                            'developers__rowid__unique_id_123',
+                           'not_selectable_value_non_delay_aware_optional_advisers',
+                           'developers',
+                           'vendors'])
+        # check when using 'available_on' in the custom advisers
+        # available_on is taken into account by listOptionalAdvisers
+        # here, first element is not available because 'available_on' is python:False
+        customAdvisers[1]['for_item_created_until'] = ''
+        customAdvisers[0]['available_on'] = 'python:False'
+        cfg.setCustomAdvisers(customAdvisers)
+        self.assertEquals(item.listOptionalAdvisers().keys(),
+                          ['not_selectable_value_delay_aware_optional_advisers',
+                           'developers__rowid__unique_id_456',
                            'not_selectable_value_non_delay_aware_optional_advisers',
                            'developers',
                            'vendors'])
