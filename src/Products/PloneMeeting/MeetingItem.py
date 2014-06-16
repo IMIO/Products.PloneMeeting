@@ -2600,11 +2600,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                   cgi.escape(unicode(author['fullname'], 'utf-8')), )
 
                 adviceComment = 'comment' in advice and advice['comment'] or '-'
-                comment = adviceComment and cgi.escape(adviceComment.replace('\r', '').replace('\n', '').replace('\t', '')) or '-'
                 res = res + (u"<br /><u>%s :</u> %s<p></p>" % (translate('Advice comment',
                                                                          domain='PloneMeeting',
                                                                          context=self.REQUEST),
-                                                               comment))
+                                                               unicode(adviceComment, 'utf-8')))
         if not itemAdvicesByType:
             res += '-'
         res += u"</p>"
