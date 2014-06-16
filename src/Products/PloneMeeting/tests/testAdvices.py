@@ -1103,33 +1103,22 @@ class testAdvices(PloneMeetingTestCase):
         # select delay of 5 days
         item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
         item.at_post_edit_script()
-        changeDelayView = item.restrictedTraverse('@@advice-available-delays')
+        availableDelaysView = item.restrictedTraverse('@@advice-available-delays')
         # some values are defined in the __init__ of the view
-        changeDelayView.advice = item.adviceIndex['vendors']
-        changeDelayView.cfg = self.meetingConfig
+        availableDelaysView.advice = item.adviceIndex['vendors']
+        availableDelaysView.cfg = self.meetingConfig
         # the delay may still be edited when the user can edit the item
         # except if it is an automatic advice for wich only MeetingManagers may change delay
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # the creator may only edit the delays if it has the 'PloneMeeting: Write optional advisers' permission
         # if pmCreator1 propose the item, it can no more edit it so it can not change delays
-        # back to an optional advice
-        customAdvisers[0]['gives_auto_advice_on'] = ''
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
-        # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        self.meetingConfig.processForm({'dummy': ''})
-        self.changeUser('pmCreator1')
-        item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
-        item.at_post_edit_script()
-        # test again that selectable delays are there
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
-                        [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # now propose the item, selectable delays should be empty
         self.proposeItem(item)
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
         # the pmReviewer1 can change delay as he can write optional advisers
         self.changeUser('pmReviewer1')
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
 
         # makes it an automatic advice
@@ -1142,15 +1131,15 @@ class testAdvices(PloneMeetingTestCase):
         self.meetingConfig.processForm({'dummy': ''})
         item.setOptionalAdvisers(())
         item.at_post_edit_script()
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
         self.proposeItem(item)
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
         # the pmReviewer1 can not change an automatic advice delay
         self.changeUser('pmReviewer1')
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
         # a MeetingManager may edit an automatic advice delay
         self.changeUser('pmManager')
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # but only if no 'delay_stopped_on' date is defined
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
@@ -1158,12 +1147,12 @@ class testAdvices(PloneMeetingTestCase):
         self.validateItem(item)
         self.assertTrue(isinstance(item.adviceIndex['vendors']['delay_stopped_on'], datetime))
         # even a MeetingManager can no more change delay of a 'delay_stopped_on' advice
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
 
         # ok, back to proposed and test the 'available_on' behaviour
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # now define a 'available_on' for third row
         # first step, something that is False
@@ -1171,14 +1160,14 @@ class testAdvices(PloneMeetingTestCase):
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
         self.meetingConfig.processForm({'dummy': ''})
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ])
         # second step, something that is True
         customAdvisers[2]['available_on'] = 'python:True'
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
         self.meetingConfig.processForm({'dummy': ''})
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # now test the particular expression that makes a custom adviser
         # useable when changing delays but not in other cases
@@ -1186,8 +1175,88 @@ class testAdvices(PloneMeetingTestCase):
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
         self.meetingConfig.processForm({'dummy': ''})
         self.meetingConfig.setCustomAdvisers(customAdvisers)
-        self.assertTrue(changeDelayView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+
+    def test_pm_ChangeDelayView(self):
+        '''Test the view '@@change-advice-delay' that apply the change delay action.'''
+        # make advice addable and editable when item is 'proposed'
+        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
+                                                    self.WF_STATE_NAME_MAPPINGS['validated']))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'delay': '5',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '0'},
+                          {'row_id': 'unique_id_456',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'delay': '10',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '1'},
+                          {'row_id': 'unique_id_789',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'delay': '20',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '1'}, ]
+        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        # select delay of 5 days
+        item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
+        item.at_post_edit_script()
+        # for now, delay is 5 days and 'row_id' is unique_id_123
+        self.assertTrue(item.adviceIndex['vendors']['row_id'] == 'unique_id_123')
+        self.assertTrue(item.adviceIndex['vendors']['delay'] == '5')
+        self.assertTrue(item.adviceIndex['vendors']['optional'] is True)
+        changeDelayView = item.restrictedTraverse('@@change-advice-delay')
+        self.portal.REQUEST.set('current_advice_row_id', 'unique_id_123')
+        self.portal.REQUEST.form['form.submitted'] = True
+        # first check that if we try to play the fennec, it raises Unauthorized
+        self.portal.REQUEST.set('new_advice_row_id', 'some_dummy_value')
+        self.assertRaises(Unauthorized, changeDelayView)
+        # now change the delay, really
+        self.portal.REQUEST.set('new_advice_row_id', 'unique_id_789')
+        # delay is changed to third custom adviser, aka 20 days
+        changeDelayView()
+        self.assertTrue(item.adviceIndex['vendors']['row_id'] == 'unique_id_789')
+        self.assertTrue(item.adviceIndex['vendors']['delay'] == '20')
+        # a special key save the fact that we saved delay of an automatic adviser
+        # this should be 'False' for now as we changed an optional adviser delay
+        self.assertTrue(item.adviceIndex['vendors']['delay_for_automatic_adviser_changed_manually'] is False)
+
+        # it works also for automatic advices but only MeetingManagers may change it
+        # makes it an automatic advice
+        customAdvisers[0]['gives_auto_advice_on'] = 'python:True'
+        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
+        self.meetingConfig.processForm({'dummy': ''})
+        item.setOptionalAdvisers(())
+        item.at_post_edit_script()
+        self.assertTrue(item.adviceIndex['vendors']['row_id'] == 'unique_id_123')
+        self.assertTrue(item.adviceIndex['vendors']['delay'] == '5')
+        self.assertTrue(item.adviceIndex['vendors']['optional'] is False)
+        # if a normal user tries to change an automatic advice delay, it will raises Unauthorized
+        self.assertRaises(Unauthorized, changeDelayView)
+        # now as MeetingManager it works
+        self.changeUser('pmManager')
+        changeDelayView()
+        self.assertTrue(item.adviceIndex['vendors']['row_id'] == 'unique_id_789')
+        self.assertTrue(item.adviceIndex['vendors']['delay'] == '20')
+        self.assertTrue(item.adviceIndex['vendors']['delay_for_automatic_adviser_changed_manually'] is True)
 
 
 def test_suite():

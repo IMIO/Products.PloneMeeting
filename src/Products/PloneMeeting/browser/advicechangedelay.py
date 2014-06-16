@@ -124,18 +124,23 @@ class ChangeAdviceDelayView(BrowserView):
             new_advice_row_id = self.request.get('new_advice_row_id')
             listAvailableDelaysView = self.context.restrictedTraverse('@@advice-available-delays')
             listAvailableDelaysView.cfg = self.cfg
+            # find right advice in MeetingItem.adviceIndex
+            currentAdviceData = self.getDataForRowId(current_advice_row_id)
+            listAvailableDelaysView.advice = self.context.adviceIndex[currentAdviceData['group']]
             isAutomatic, linkedRows = self.cfg._findLinkedRowsFor(current_advice_row_id)
-            selectableDelays = listAvailableDelaysView._availableDelays(linkedRows, current_advice_row_id)
+            selectableDelays = listAvailableDelaysView.listSelectableDelays(current_advice_row_id)
             # selectableDelays is a list of tuple containing 3 elements, the first is the row_id
             selectableDelays = [selectableDelay[0] for selectableDelay in selectableDelays]
             if not new_advice_row_id in selectableDelays:
                 raise Unauthorized
             # update the advice with new delay and relevant data
-            # find right advice in MeetingItem.adviceIndex
-            currentAdviceData = self.getDataForRowId(current_advice_row_id)
+
             newAdviceData = self.getDataForRowId(new_advice_row_id)
             # just keep relevant infos
-            dataToUpdate = ('delay', 'delay_label', 'gives_auto_advice_on_help_message', 'row_id')
+            dataToUpdate = ('delay',
+                            'delay_label',
+                            'gives_auto_advice_on_help_message',
+                            'row_id')
             for elt in dataToUpdate:
                 self.context.adviceIndex[currentAdviceData['group']][elt] = newAdviceData[elt]
             # if the advice was already given, we need to update row_id on the given advice object too
