@@ -185,7 +185,7 @@ EXTRA_COPIED_FIELDS_FOR_TEMPLATE = ['associatedGroups', 'copyGroups', 'optionalA
                                     'otherMeetingConfigsClonableTo', 'oralQuestion', 'observations']
 
 # There are various ways to insert items into meetings
-itemSortMethods = (  # Items are inserted:
+itemInsertMethods = (  # Items are inserted:
     'at_the_end',  # at the end of meetings;
     'on_categories',  # according to category order;
     'on_proposing_groups',  # according to proposing group order;
@@ -193,8 +193,8 @@ itemSortMethods = (  # Items are inserted:
     # associated groups). Similar to the previous sort method, with this
     # difference: the group taken into consideration is the group among all
     # groups that comes first in the order.
-    'on_privacy_then_proposing_groups',  # according to proposing group order;
-    'on_privacy_then_categories',  # according to proposing group order;
+    'on_privacy_public',  # according to the item privacy (public then secret);
+    'on_privacy_secret',  # according to the item privacy (secret then public);
 )
 # List of color system options : the way the item titles and annexes are colored
 colorSystems = (

@@ -210,13 +210,13 @@ class MeetingConfigDescriptor(Descriptor):
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'itemsListVisibleColumns', 'itemColumns', 'meetingColumns',
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
-                         'mailItemEvents', 'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates', 'itemDecidedStates',
-                         'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates', 'powerAdvisersGroups',
-                         'itemPowerObserversStates', 'meetingPowerObserversStates',
-                         'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates', 'meetingConfigsToCloneTo',
-                         'itemAdviceInvalidateStates', 'customAdvisers', 'selectableCopyGroups', 'votesEncoder',
-                         'meetingTopicStates', 'decisionTopicStates', 'xhtmlTransformFields', 'xhtmlTransformTypes',
-                         'usedVoteValues'
+                         'mailItemEvents', 'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates',
+                         'itemDecidedStates', 'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
+                         'powerAdvisersGroups', 'itemPowerObserversStates', 'meetingPowerObserversStates',
+                         'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates',
+                         'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'customAdvisers',
+                         'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates', 'decisionTopicStates',
+                         'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues', 'insertingMethodsOnAddItem'
                          )
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -298,10 +298,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \
             "here.getMeeting().getDate().strftime('%Y%m%d') or '') " \
             "+ '/' + str(here.getItemNumber(relativeTo='meeting'))"
-        # When adding items to a meeting, must I add the items at the end of
-        # the items list or at the end of the items belonging to the same
-        # category or proposing group ?
-        self.sortingMethodOnAddItem = "at_the_end"
+        # When adding items to a meeting, what sortingMethod must be applied successively?
+        self.insertingMethodsOnAddItem = ({'insertingMethod': 'at_the_end', }, )
         # List if item tags defined for this meeting config
         self.allItemTags = ''  # Must be terms separated by carriage returns in
         # a string.

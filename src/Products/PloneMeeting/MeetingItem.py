@@ -40,6 +40,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
+from plone.memoize import ram
 from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -2237,51 +2238,89 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         pass
 
     security.declarePublic('getInsertOrder')
-    def getInsertOrder(self, sortOrder, meeting, late):
+    def getInsertOrder(self, insertMethods, meeting, late):
         '''When inserting an item into a meeting, depending on the sort method
            chosen in the meeting config we must insert the item at a given
            position that depends on the "insert order", ie the order of the
-           category or proposing group specified for this meeting. p_sortOrder
-           specifies this order.'''
+           category or proposing group specified for this meeting.
+           In p_insertMethods, we receive a list of insertMethod to apply successively
+           when inserting the item.  So we use an algorithm that compute what we call
+           an 'orderLevel' so we are sure that each order level is large enough to
+           contains every sub insertMethod given in p_insertMethods.'''
         res = None
         item = self.getSelf()
-        if sortOrder == 'on_categories':
+        oneLevels = []
+        if len(insertMethods) > 1:
+            # we need to compute len of relevant levels
+            # a oneLevel is a complete set of useable values for a given insertMethod
+            # for example "10" categories or "2" privacy values
+            # So if we have insertMethods ['on_privacy_public', 'on_proposing_groups', 'on_categories']
+            # if we have "2" privacies, "10 proposing groups" and "8 categories", the first
+            # step here under will create the list [2, 10, 8]
+            for insertMethod in insertMethods[1:]:
+                oneLevels.append(self._findOneLevelFor(insertMethod, item))
+            # now what we will do is build a list for wich last element is always "1"
+            # and first elements are factorial of elements of the list
+            # so [2, 10, 8] will be translated to [160, 80, 1] aka 2*10*8, 10*8 and last element always 1
+            tmp = []
+            for oneLevel in oneLevels:
+                oneLevelValue = 1
+                for elt in oneLevels[oneLevels.index(oneLevel):]:
+                    oneLevelValue = oneLevelValue * elt
+                tmp.append(oneLevelValue)
+            oneLevels = tmp
+        oneLevels.append(1)
+        for insertMethod in insertMethods:
+            if not res:
+                res = 0
+            order = self._findOrderFor(insertMethod, item)
+            res = res + oneLevels[insertMethods.index(insertMethod)] * order
+
+        if res is None:
+            raise PloneMeetingError(INSERT_ITEM_ERROR)
+        return res
+
+    def get_findOneLevelFor_cachekey(method, self, insertMethod, item):
+        '''cachekey method for self._findOneLevelFor.'''
+        return (insertMethod, str(item.REQUEST.debug))
+
+    @ram.cache(get_findOneLevelFor_cachekey)
+    def _findOneLevelFor(self, insertMethod, item):
+        '''
+          Find the size of a complete set of given p_insertMethod.
+          We use it in the algorythm that calculate item order
+          when inserting it in a meeting.
+        '''
+        tool = getToolByName(item, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        if insertMethod == 'on_categories':
+            return len(cfg.getCategories(onlySelectable=False))
+        elif insertMethod in ('on_proposing_groups', 'on_all_groups'):
+            return len(tool.getMeetingGroups(onlyActive=False))
+        elif insertMethod in ('on_privacy_public', 'on_privacy_secret'):
+            return len(item.listPrivacyValues())
+
+    def _findOrderFor(self, insertMethod, item):
+        '''
+          Find the order of given p_insertMethod.
+        '''
+        res = ''
+        if insertMethod == 'on_categories':
             # get the category order, pass onlySelectable to False so disabled categories
             # are taken into account also, so we avoid problems with freshly disabled categories
             # or when a category is restricted to a group a MeetingManager is not member of
             res = item.getCategory(True).getOrder(onlySelectable=False)
-        elif sortOrder == 'on_proposing_groups':
+        elif insertMethod == 'on_proposing_groups':
             res = item.getProposingGroup(True).getOrder(onlyActive=False)
-        elif sortOrder == 'on_all_groups':
+        elif insertMethod == 'on_all_groups':
             res = item.getProposingGroup(True).getOrder(item.getAssociatedGroups(), onlyActive=False)
-        elif sortOrder in ('on_privacy_then_proposing_groups', 'on_privacy_then_categories', ):
-            tool = getToolByName(item, 'portal_plonemeeting')
-            if sortOrder == 'on_privacy_then_proposing_groups':
-                # Second sorting on proposing groups
-                res = item.getProposingGroup(True).getOrder(onlyActive=False)
-                oneLevel = len(tool.getMeetingGroups(onlyActive=False))
-            else:
-                # Second sorting on categories
-                res = item.getCategory(True).getOrder(onlySelectable=False)
-                mc = tool.getMeetingConfig(item)
-                oneLevel = len(mc.getCategories(onlySelectable=False))
-            # How does that work?
-            # We will define the order depending on the privacy order in
-            # listPrivacyValues multiplied by the length of active MeetingGroups
-            # or Categories so elements of privacy index "2" will always be
-            # after elements of privacy index "1"
+        elif insertMethod in ('on_privacy_public', 'on_privacy_secret'):
             privacy = item.getPrivacy()
             privacies = item.listPrivacyValues().keys()
+            if insertMethod == 'on_privacy_secret':
+                privacies.reverse()
             # Get the order of the privacy
-            privacyOrder = privacies.index(privacy)
-            # The order is one relevant level multiplied by the privacyOrder
-            orderLevel = privacyOrder * oneLevel
-            # Now we have the good order "level" depending on groups/categories
-            # and privacy
-            res = res + orderLevel
-
-        if res is None:
-            raise PloneMeetingError(INSERT_ITEM_ERROR)
+            res = privacies.index(privacy)
         return res
 
     security.declarePublic('sendMailIfRelevant')

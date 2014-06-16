@@ -61,7 +61,7 @@ class testMeeting(PloneMeetingTestCase):
         '''Test that inserting an item using the "on_proposing_groups" sorting method
            in a meeting having items using a disabled proposing group and inserting an item
            for wich the group is disabled works.'''
-        self.meetingConfig.setSortingMethodOnAddItem('on_proposing_groups')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups'}, ))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         orderedItems = meeting.getItemsInOrder()
@@ -131,7 +131,7 @@ class testMeeting(PloneMeetingTestCase):
            It takes into account the group having the lowest position in all
            group (aka proposing group + associated groups).'''
         self.changeUser('pmManager')
-        self.meetingConfig.setSortingMethodOnAddItem('on_all_groups')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_all_groups'}, ))
         meeting = self._createMeetingWithItems()
         orderedItems = meeting.getItemsInOrder()
         # 'o2' as got an associated group 'developers' even if main proposing group is 'vendors'
@@ -148,7 +148,7 @@ class testMeeting(PloneMeetingTestCase):
         '''Sort method tested here is "on_all_groups" but with an associated group and
            a proposing group that are disabled.'''
         self.changeUser('pmManager')
-        self.meetingConfig.setSortingMethodOnAddItem('on_all_groups')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_all_groups'}, ))
         meeting = self._createMeetingWithItems()
         self.assertTrue([item.id for item in meeting.getItemsInOrder()] ==
                         ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6'])
@@ -177,20 +177,33 @@ class testMeeting(PloneMeetingTestCase):
                         ['recItem1', 'recItem2', 'o2', 'o3', 'o5', newItem.getId(), secondItem.getId(), 'o4', 'o6'])
 
     def test_pm_InsertItemPrivacyThenProposingGroups(self):
-        '''Sort method tested here is "on_privacy_then_proposing_groups".'''
+        '''Sort method tested here is "on_privacy_xxx" then "on_proposing_groups".'''
         self.changeUser('pmManager')
-        self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_proposing_groups')
+
+        # on_privacy_public
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy_public'},
+                                                         {'insertingMethod': 'on_proposing_groups'},))
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o5', 'o4'])
         self.assertEquals([item.getPrivacy() for item in meeting.getItemsInOrder()],
                           ['public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
 
+        # on_privacy_secret
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy_secret'},
+                                                         {'insertingMethod': 'on_proposing_groups'},))
+        meeting = self._createMeetingWithItems()
+        self.assertEquals([item.id for item in meeting.getItemsInOrder()],
+                          ['o11', 'o10', 'copy_of_recItem1', 'copy_of_recItem2', 'o9', 'o8', 'o12'])
+        self.assertEquals([item.getPrivacy() for item in meeting.getItemsInOrder()],
+                          ['secret', 'secret', 'public', 'public', 'public', 'public', 'public'])
+
     def test_pm_InsertItemPrivacyThenProposingGroupsWithDisabledGroup(self):
         '''Sort method tested here is "on_privacy_then_proposing_groups" but
            with a deactivated group used as proposing group.'''
         self.changeUser('pmManager')
-        self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_proposing_groups')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy_public'},
+                                                         {'insertingMethod': 'on_proposing_groups'},))
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o5', 'o4'])
@@ -210,12 +223,24 @@ class testMeeting(PloneMeetingTestCase):
         '''Sort method tested here is "on_privacy_then_categories".'''
         self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_categories')
+
+        # on_privacy_public
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy_public'},
+                                                         {'insertingMethod': 'on_categories'},))
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['o3', 'o6', 'o2', 'o4', 'o5'])
         self.assertEquals([item.getPrivacy() for item in meeting.getItemsInOrder()],
                           ['public', 'public', 'public', 'secret', 'secret'])
+
+        # on_privacy_secret
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy_secret'},
+                                                         {'insertingMethod': 'on_categories'},))
+        meeting = self._createMeetingWithItems()
+        self.assertEquals([item.id for item in meeting.getItemsInOrder()],
+                          ['o10', 'o11', 'o9', 'o12', 'o8'])
+        self.assertEquals([item.getPrivacy() for item in meeting.getItemsInOrder()],
+                          ['secret', 'secret', 'public', 'public', 'public'])
 
     def test_pm_InsertItemPrivacyThenCategoriesWithDisabledCategory(self):
         '''Sort method tested here is "on_privacy_then_categories" but
@@ -223,7 +248,8 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
         self.meetingConfig.setUseGroupsAsCategories(False)
-        self.meetingConfig.setSortingMethodOnAddItem('on_privacy_then_categories')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy_public'},
+                                                         {'insertingMethod': 'on_categories'},))
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.id for item in meeting.getItemsInOrder()],
                           ['o3', 'o6', 'o2', 'o4', 'o5'])

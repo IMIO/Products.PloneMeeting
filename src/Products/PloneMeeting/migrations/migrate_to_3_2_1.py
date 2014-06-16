@@ -26,6 +26,28 @@ class Migrate_To_3_2_1(Migrator):
             cfg.setMeetingConfigsToCloneTo(newValue)
         logger.info('Done.')
 
+    def _updateInsertingMethodsAttributeOnMeetingConfigs(self):
+        '''MeetingConfig.sortingMethodOnAddItem is now
+           MeetingConfig.insertingMethodsOnAddItem and use a DataGridField, move to it.'''
+        logger.info('Updating every MeetingConfig.sortingMethodOnAddItem attributes...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            if not hasattr(cfg, 'sortingMethodOnAddItem'):
+                # already migrated
+                continue
+            oldValue = cfg.sortingMethodOnAddItem
+            # on_privacy_then_proposing_groups and on_privacy_then_categories
+            # were splitted into 2 seperated inserting methods
+            if oldValue.startswith('on_privacy'):
+                newValue = [{'insertingMethod': 'on_privacy_public'}, ]
+                if oldValue.endswith('groups'):
+                    newValue.append({'insertingMethod': 'on_proposing_groups'})
+                else:
+                    newValue.append({'insertingMethod': 'on_categories'})
+            else:
+                newValue = ({'insertingMethod': oldValue}, )
+            cfg.setInsertingMethodsOnAddItem(newValue)
+        logger.info('Done.')
+
     def _updateAnnexesMeetingFileType(self):
         '''MeetingFile.meetingFileType was a ReferenceField and is now a StringField, so update
            existing annexes, we store now the id of the used meetingFileType.'''
@@ -119,6 +141,7 @@ class Migrate_To_3_2_1(Migrator):
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
+        self._updateInsertingMethodsAttributeOnMeetingConfigs()
         self._updateAnnexesMeetingFileType()
         self._addRestrictedPowerObserverGroupsByMeetingConfig()
         self._addAdvicesNewFieldHiddenDuringRedaction()
@@ -136,14 +159,16 @@ def migrate(context):
     '''This migration function:
 
        1) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
-       2) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
-       3) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
-       4) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
-       5) Update advices to store 'comment' as utf-8 and not as unicode;
-       6) Initialize new field MeetingItem.completenessComment;
-       7) Update 'Add File' permission on each meetingConfig folder;
-       8) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
-       9) Reinstall PloneMeeting.
+       2) Update every MeetingConfig.sortingMethodOnAddItem attribute
+          (moved to MeetingConfig.insertingMethodOnAddItem DataGridField);
+       3) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
+       4) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
+       5) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
+       6) Update advices to store 'comment' as utf-8 and not as unicode;
+       7) Initialize new field MeetingItem.completenessComment;
+       8) Update 'Add File' permission on each meetingConfig folder;
+       9) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
+       10) Reinstall PloneMeeting.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------

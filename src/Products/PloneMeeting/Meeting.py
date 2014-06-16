@@ -1356,16 +1356,19 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if meetingConfig.getToDiscussSetOnItemInsert():
             item.setToDiscuss(toDiscussValue)
         # At what place must we insert the item in the list ?
-        insertMethod = meetingConfig.getSortingMethodOnAddItem()
+        insertMethods = meetingConfig.getInsertingMethodsOnAddItem()
+        # wipe out insert methods as stored value is a DataGridField
+        # and we only need a tuple of insert methods
+        insertMethods = [insertMethod['insertingMethod'] for insertMethod in insertMethods]
         insertAtTheEnd = False
-        if insertMethod != 'at_the_end':
+        if insertMethods[0] != 'at_the_end':
             # We must insert it according to category or proposing group order
             # (at the end of the items belonging to the same category or
             # proposing group). We will insert the p_item just before the first
             # item whose category/group immediately follows p_item's category/
             # group (or at the end if inexistent). Note that the MeetingManager,
             # in subsequent manipulations, may completely change items order.
-            itemOrder = item.adapted().getInsertOrder(insertMethod, self, isLate)
+            itemOrder = item.adapted().getInsertOrder(insertMethods, self, isLate)
             higherItemFound = False
             insertIndex = 0  # That's where I will insert the item
             for anItem in items:
@@ -1374,7 +1377,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     # continue to visit the items in order to increment their
                     # number.
                     anItem.setItemNumber(anItem.getItemNumber()+1)
-                elif anItem.adapted().getInsertOrder(insertMethod, self, isLate) > itemOrder:
+                elif anItem.adapted().getInsertOrder(insertMethods, self, isLate) > itemOrder:
                     higherItemFound = True
                     insertIndex = anItem.getItemNumber()-1
                     anItem.setItemNumber(anItem.getItemNumber()+1)
@@ -1383,7 +1386,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 item.setItemNumber(insertIndex+1)
             else:
                 insertAtTheEnd = True
-        if (insertMethod == 'at_the_end') or insertAtTheEnd:
+        if insertMethods[0] == 'at_the_end' or insertAtTheEnd:
             # Add the item at the end of the items list
             items.append(item)
             item.setItemNumber(len(items))

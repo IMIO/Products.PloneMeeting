@@ -458,20 +458,22 @@ schema = Schema((
         schemata="data",
         default_content_type='text/plain',
     ),
-    StringField(
-        name='sortingMethodOnAddItem',
-        default=defValues.sortingMethodOnAddItem,
-        widget=SelectionWidget(
-            description="sortingMethodOnAddItem",
-            description_msgid="sorting_method_on_add_item_descr",
-            format="select",
-            label='Sortingmethodonadditem',
-            label_msgid='PloneMeeting_label_sortingMethodOnAddItem',
+    DataGridField(
+        name='insertingMethodsOnAddItem',
+        widget=DataGridField._properties['widget'](
+            description="InsertingMethodsOnAddItem",
+            description_msgid="inserting_methods_on_add_item_descr",
+            columns={'insertingMethod': SelectColumn("Inserting method", vocabulary="listInsertingMethods", col_description="Select the inserting method, methods will be applied in given order, you can not select twice same inserting method."), },
+            label='Insertingmethodsonadditem',
+            label_msgid='PloneMeeting_label_insertingMethodsOnAddItem',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=True,
+        required=True,
         schemata="data",
-        vocabulary='listSortingMethods',
+        default=defValues.insertingMethodsOnAddItem,
+        allow_oddeven=True,
+        columns=('insertingMethod', ),
+        allow_empty_rows=False,
     ),
     TextField(
         name='allItemTags',
@@ -3050,8 +3052,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 brains = getattr(self, methodId)(sortKey, sortOrder,
                                                  filterKey, filterValue, **kwargs)
             else:
-                # Execute the topic, but decide ourselves for sorting and
-                # filtering.
+                # Execute the topic, but decide ourselves for sorting and filtering
                 params = topic.buildQuery()
                 params['sort_on'] = sortKey
                 params['sort_order'] = sortOrder
@@ -3447,15 +3448,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(podTemplate)
         return res
 
-    security.declarePublic('listSortingMethods')
-    def listSortingMethods(self):
-        '''Return a list of available sorting methods when adding a item
-           to a meeting'''
+    security.declarePublic('listInsertingMethods')
+    def listInsertingMethods(self):
+        '''Return a list of available inserting methods when
+           adding a item to a meeting'''
         res = []
-        for sm in itemSortMethods:
-            res.append((sm, translate(sm,
-                                      domain='PloneMeeting',
-                                      context=self.REQUEST)))
+        for itemInsertMethod in itemInsertMethods:
+            res.append((itemInsertMethod,
+                        translate(itemInsertMethod,
+                                  domain='PloneMeeting',
+                                  context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listSelectableCopyGroups')
