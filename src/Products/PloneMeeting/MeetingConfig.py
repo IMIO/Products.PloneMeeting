@@ -461,18 +461,18 @@ schema = Schema((
     DataGridField(
         name='insertingMethodsOnAddItem',
         widget=DataGridField._properties['widget'](
-            description="InsertingMethodsOnAddItem",
+            description="insertingMethodsOnAddItem",
             description_msgid="inserting_methods_on_add_item_descr",
             columns={'insertingMethod': SelectColumn("Inserting method", vocabulary="listInsertingMethods", col_description="Select the inserting method, methods will be applied in given order, you can not select twice same inserting method."), },
             label='Insertingmethodsonadditem',
             label_msgid='PloneMeeting_label_insertingMethodsOnAddItem',
             i18n_domain='PloneMeeting',
         ),
-        required=True,
         schemata="data",
         default=defValues.insertingMethodsOnAddItem,
+        required=True,
         allow_oddeven=True,
-        columns=('insertingMethod', ),
+        columns=('insertionMethod',),
         allow_empty_rows=False,
     ),
     TextField(
