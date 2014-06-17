@@ -65,7 +65,10 @@
                   <form name="deleteMGForm" action="delete_givenuid">
                   <!-- Edit meeting config -->
                   <a tal:attributes="href python: obj.absolute_url() + '/edit'">
-                    <img src="edit.gif" title="label_edit" i18n:attributes="title" />
+                    <img src="edit.gif"
+                         tal:attributes="src string:${portal_url}/edit.gif"
+                         title="label_edit"
+                         i18n:attributes="title" />
                   </a>
                   <!-- Delete the meeting config -->
                   <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
@@ -135,7 +138,10 @@
                   <!-- Edit the meeting group -->
                   <form name="deleteMGForm" action="delete_givenuid">
                   <a tal:attributes="href python: obj.absolute_url() + '/edit'">
-                    <img src="edit.gif" title="label_edit" i18n:attributes="title" />
+                    <img src="edit.gif"
+                         tal:attributes="src string:${portal_url}/edit.gif"
+                         title="label_edit"
+                         i18n:attributes="title" />
                   </a>
                   <!-- Delete the meeting group -->
                   <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
