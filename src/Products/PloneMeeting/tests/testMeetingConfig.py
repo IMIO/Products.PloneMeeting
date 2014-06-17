@@ -931,6 +931,40 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEquals(cfg.validate_transitionsForPresentingAnItem(sequence_with_last_removed),
                           last_transition_error_msg)
 
+    def test_pm_Validate_insertingMethodsOnAddItem(self):
+        '''Test the MeetingConfig.insertingMethodsOnAddItem validation.
+           We will test that :
+           - if 'at_the_end' is selected, no other is selected;
+           - the same inserting method is not selected twice;
+           - if categories are not used, we can not select the 'on_categories' method.'''
+        cfg = self.meetingConfig
+        # first test when using 'at_the_end' and something else
+        at_the_end_error_msg = _('inserting_methods_at_the_end_not_alone_error')
+        values = ({'insertingMethod': 'at_the_end'},
+                  {'insertingMethod': 'on_proposing_groups'}, )
+        self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == at_the_end_error_msg)
+        # test when using several times same inserting method
+        several_times_error_msg = _('inserting_methods_can_not_select_several_times_same_method_error')
+        values = ({'insertingMethod': 'on_proposing_groups'},
+                  {'insertingMethod': 'on_proposing_groups'}, )
+        self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == several_times_error_msg)
+        # test when selecting 'on_categories' without using categories
+        not_using_categories_error_msg = _('inserting_methods_not_using_categories_error')
+        values = ({'insertingMethod': 'on_categories'}, )
+        self.assertTrue(cfg.getUseGroupsAsCategories() is True)
+        self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
+        # check on using categories is made on presence of 'useGroupsAsCategories' in the
+        # REQUEST, or if not found, on the value defined on the MeetingConfig object
+        cfg.setUseGroupsAsCategories(False)
+        # this time it validates
+        self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+        # except if we just redefined it, aka 'useGroupsAsCategories' to True in the REQUEST
+        self.portal.REQUEST.set('useGroupsAsCategories', True)
+        self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
+        self.portal.REQUEST.set('useGroupsAsCategories', False)
+        # this time it validates as redefining it to using categories
+        self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

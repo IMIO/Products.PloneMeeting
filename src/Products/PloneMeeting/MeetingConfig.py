@@ -472,7 +472,7 @@ schema = Schema((
         default=defValues.insertingMethodsOnAddItem,
         required=True,
         allow_oddeven=True,
-        columns=('insertionMethod',),
+        columns=('insertingMethod',),
         allow_empty_rows=False,
     ),
     TextField(
@@ -2081,6 +2081,41 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST,
                              default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
                                      'every values selected in the \'itemAdvicesStates\' field!')
+
+    security.declarePrivate('validate_insertingMethodsOnAddItem')
+    def validate_insertingMethodsOnAddItem(self, values):
+        '''This method validate the 'insertingMethodsOnAddItem' DataGridField :
+           - if sortingMethod 'at_the_end' is selected, no other sorting method can be selected;
+           - a same sortingMethod can not be selected twice;
+           - the 'on_categories' method can not be selected if we do not use categories.'''
+        # transform in a list so we can handle it easily
+        res = []
+        for value in values:
+            # pass 'template_row_marker'
+            if 'orderindex_' in value and value['orderindex_'] == 'template_row_marker':
+                continue
+            res.append(value['insertingMethod'])
+        # now that we have a list in res, we can check
+        # first check presence of 'at_the_end'
+        if 'at_the_end' in res and len(res) > 1:
+            return translate('inserting_methods_at_the_end_not_alone_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+        # now check that a same value is not there twice
+        for value in res:
+            if res.count(value) > 1:
+                return translate('inserting_methods_can_not_select_several_times_same_method_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        # finally check that if we selected 'on_categories', we actually use categories...
+        if hasattr(self.REQUEST, 'useGroupsAsCategories'):
+            notUsingCategories = self.REQUEST.get('useGroupsAsCategories')
+        else:
+            notUsingCategories = self.getUseGroupsAsCategories()
+        if 'on_categories' in res and notUsingCategories:
+            return translate('inserting_methods_not_using_categories_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
 
     def _dataForCustomAdviserRowId(self, row_id):
         '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''
