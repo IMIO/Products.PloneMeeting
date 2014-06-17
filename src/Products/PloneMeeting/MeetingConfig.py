@@ -3362,29 +3362,41 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getCategories')
-    def getCategories(self, classifiers=False, onlySelectable=True, userId=None):
+    def getCategories(self, classifiers=False, onlySelectable=True, userId=None, caching=True):
         '''Returns the categories defined for this meeting config or the
            classifiers if p_classifiers is True. If p_onlySelectable is True,
            there will be a check to see if the category is available to the
            current user, otherwise, we return every existing MeetingCategories.
            If a p_userId is given, it will be used to be passed to isSelectable'''
-
-        if classifiers:
-            catFolder = self.classifiers
-        elif self.getUseGroupsAsCategories():
-            tool = getToolByName(self, 'portal_plonemeeting')
-            return tool.getMeetingGroups()
-        else:
-            catFolder = self.categories
-        res = []
-        if onlySelectable:
-            for cat in catFolder.objectValues('MeetingCategory'):
-                if cat.adapted().isSelectable(userId=userId):
-                    res.append(cat)
-        else:
-            res = catFolder.objectValues('MeetingCategory')
-        # be coherent as objectValues returns a LazyMap
-        return list(res)
+        data = None
+        if caching:
+            key = "meeting-config-getcategories-%s-%s-%s" % (str(classifiers), str(onlySelectable), str(userId))
+            cache = IAnnotations(self.REQUEST)
+            data = cache.get(key, None)
+        if data is None:
+            data = []
+            if classifiers:
+                catFolder = self.classifiers
+            elif self.getUseGroupsAsCategories():
+                tool = getToolByName(self, 'portal_plonemeeting')
+                data = tool.getMeetingGroups()
+                if caching:
+                    cache[key] = data
+                return data
+            else:
+                catFolder = self.categories
+            res = []
+            if onlySelectable:
+                for cat in catFolder.objectValues('MeetingCategory'):
+                    if cat.adapted().isSelectable(userId=userId):
+                        res.append(cat)
+            else:
+                res = catFolder.objectValues('MeetingCategory')
+            # be coherent as objectValues returns a LazyMap
+            data = list(res)
+            if caching:
+                cache[key] = data
+        return data
 
     security.declarePublic('getAdvicesIconsWidth')
     def getAdvicesIconsWidth(self):

@@ -284,6 +284,103 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.portal.restrictedTraverse('@@plone_portal_state').member()
 
+    def _setupForMeetingCategories(self, number_of_categories, withUsingGroups=False):
+        self.changeUser('admin')
+        # remove existing categoriesgroups and add our own
+        # make what necessary for categories to be removable...
+        ids_to_remove = []
+        for item in self.meetingConfig.recurringitems.objectValues():
+            ids_to_remove.append(item.getId())
+        self.meetingConfig.recurringitems.manage_delObjects(ids=ids_to_remove)
+
+        ids_to_remove = []
+        for category in self.meetingConfig.categories.objectValues('MeetingCategory'):
+            ids_to_remove.append(category.getId())
+        self.meetingConfig.categories.manage_delObjects(ids=ids_to_remove)
+        # create categories
+        for i in range(number_of_categories):
+            catId = self.meetingConfig.categories.invokeFactory('MeetingCategory', id=i, title='Category %d' % i)
+            catObj = getattr(self.meetingConfig.categories, catId)
+            if withUsingGroups:
+                catObj.setUsingGroups(('developers', ))
+            catObj._at_creation_flag = False
+            catObj.at_post_create_script()
+
+    def test_pm_GetCategoriesCaching(self):
+        '''Test MeetingConfig.getCategories caching.'''
+        self.meetingConfig.setUseGroupsAsCategories(False)
+        # first test with 10 groups without usingGroups
+        self._setupForMeetingCategories(10, withUsingGroups=False)
+        pm_logger.info('getCategories called 100 times with %d activated groups, without usingGroups.' % 10)
+        pm_logger.info('No caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        # second time, cached
+        pm_logger.info('Caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        # remove cache
+        self.cleanMemoize()
+
+        # first test with 10 groups with usingGroups
+        self._setupForMeetingCategories(10, withUsingGroups=True)
+        pm_logger.info('getCategories called 100 times with %d activated groupsn with usingGroups.' % 10)
+        pm_logger.info('No caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        # second time, cached
+        pm_logger.info('Caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        # remove cache
+        self.cleanMemoize()
+
+        # test with 100 categories without usingGroups
+        self._setupForMeetingCategories(100, withUsingGroups=False)
+        pm_logger.info('getCategories called 100 times with %d activated groups, without usingGroups.' % 100)
+        pm_logger.info('No caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        # second time, cached
+        pm_logger.info('Caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        # remove cache
+        self.cleanMemoize()
+
+        # test with 100 categories with usingGroups
+        self._setupForMeetingCategories(100, withUsingGroups=True)
+        pm_logger.info('getCategories called 100 times with %d activated groups, with usingGroups.' % 100)
+        pm_logger.info('No caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        # second time, cached
+        pm_logger.info('Caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        # remove cache
+        self.cleanMemoize()
+
+        # test with 250 categories without usingGroups
+        self._setupForMeetingCategories(250, withUsingGroups=False)
+        pm_logger.info('getCategories called 100 times with %d activated groups, without usingGroups.' % 250)
+        pm_logger.info('No caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        # second time, cached
+        pm_logger.info('Caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        # remove cache
+        self.cleanMemoize()
+
+        # test with 250 categories with usingGroups
+        self._setupForMeetingCategories(250, withUsingGroups=True)
+        pm_logger.info('getCategories called 100 times with %d activated groups, with usingGroups.' % 250)
+        pm_logger.info('No caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        # second time, cached
+        pm_logger.info('Caching.')
+        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        # remove cache
+        self.cleanMemoize()
+
+    @timecall
+    def _getCategoriesOnMeetingConfig(self, times=1, caching=True):
+        ''' '''
+        for time in range(times):
+            self.meetingConfig.getCategories(userId='pmManager', caching=caching)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

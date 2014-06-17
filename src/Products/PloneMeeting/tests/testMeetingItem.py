@@ -80,6 +80,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.wfTool.doActionFor(cfg.classifiers.class2, 'deactivate')
         expectedCategories.remove('deployment')
         expectedClassifiers.remove('class2')
+        # getCategories has caching in the REQUEST, we need to wipe this out
+        self.cleanMemoize()
         login(self.portal, 'pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
         self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
@@ -92,6 +94,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.classifiers.class1.setUsingGroups(('vendors',))
         expectedCategories.remove('maintenance')
         expectedClassifiers.remove('class1')
+        # getCategories has caching in the REQUEST, we need to wipe this out
+        self.cleanMemoize()
         login(self.portal, 'pmCreator1')
         # if current user is not creator for one of the usingGroups defined for the category, he can not use it
         self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
@@ -105,6 +109,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # change usingGroup for 'subproducts'
         cfg.categories.subproducts.setUsingGroups(('developers',))
         expectedCategories.remove('subproducts')
+        # getCategories has caching in the REQUEST, we need to wipe this out
+        self.cleanMemoize()
         self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
 
     def test_pm_UsedColorSystemShowColors(self):
