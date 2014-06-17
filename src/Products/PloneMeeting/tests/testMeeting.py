@@ -267,6 +267,61 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue([item.id for item in meeting.getItemsInOrder()] ==
                         ['o3', 'o6', 'o2', 'o4', 'o7', 'o5'])
 
+    def test_pm_InsertItemByCategoriesThenProposingGroups(self):
+        '''Sort method tested here is "on_categories" then "on_proposing_groups".'''
+        self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_categories'},
+                                                          {'insertingMethod': 'on_proposing_groups'},))
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        self.assertTrue(self.meetingConfig2.getUseGroupsAsCategories() is False)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2014/01/01'))
+        data = ({'proposingGroup': 'developers',
+                 'category': 'marketing'},
+                {'proposingGroup': 'vendors',
+                 'category': 'development'},
+                {'proposingGroup': 'vendors',
+                 'category': 'projects'},
+                {'proposingGroup': 'developers',
+                 'category': 'projects'},
+                {'proposingGroup': 'developers',
+                 'category': 'development'},
+                {'proposingGroup': 'vendors',
+                 'category': 'deployment'},
+                {'proposingGroup': 'developers',
+                 'category': 'projects'},
+                {'proposingGroup': 'vendors',
+                 'category': 'events'},
+                {'proposingGroup': 'developers',
+                 'category': 'events'},
+                {'proposingGroup': 'vendors',
+                 'category': 'marketing'},
+                {'proposingGroup': 'vendors',
+                 'category': 'marketing'},
+                {'proposingGroup': 'vendors',
+                 'category': 'projects'},
+                {'proposingGroup': 'developers',
+                 'category': 'projects'}, )
+        for itemData in data:
+            item = self.create('MeetingItem', **itemData)
+            self.presentItem(item)
+        self.assertEquals([item.getId() for item in meeting.getItemsInOrder()],
+                          ['o7', 'o6', 'o3', 'o10', 'o9', 'o5', 'o8', 'o14', 'o4', 'o13', 'o2', 'o11', 'o12'])
+        # items are correctly sorted first by categories, then within a category, by proposing group
+        self.assertEquals([(item.getCategory(), item.getProposingGroup()) for item in meeting.getItemsInOrder()],
+                          [('deployment', 'vendors'),
+                           ('development', 'developers'),
+                           ('development', 'vendors'),
+                           ('events', 'developers'),
+                           ('events', 'vendors'),
+                           ('projects', 'developers'),
+                           ('projects', 'developers'),
+                           ('projects', 'developers'),
+                           ('projects', 'vendors'),
+                           ('projects', 'vendors'),
+                           ('marketing', 'developers'),
+                           ('marketing', 'vendors'),
+                           ('marketing', 'vendors')])
+
     def test_pm_RemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
         login(self.portal, 'pmManager')
