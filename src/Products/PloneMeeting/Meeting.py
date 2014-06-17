@@ -1359,9 +1359,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         insertMethods = meetingConfig.getInsertingMethodsOnAddItem()
         # wipe out insert methods as stored value is a DataGridField
         # and we only need a tuple of insert methods
-        insertMethods = [insertMethod['insertingMethod'] for insertMethod in insertMethods]
         insertAtTheEnd = False
-        if insertMethods[0] != 'at_the_end':
+        if insertMethods[0]['insertingMethod'] != 'at_the_end':
             # We must insert it according to category or proposing group order
             # (at the end of the items belonging to the same category or
             # proposing group). We will insert the p_item just before the first
@@ -1386,7 +1385,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 item.setItemNumber(insertIndex+1)
             else:
                 insertAtTheEnd = True
-        if insertMethods[0] == 'at_the_end' or insertAtTheEnd:
+        if insertMethods[0]['insertingMethod'] == 'at_the_end' or insertAtTheEnd:
             # Add the item at the end of the items list
             items.append(item)
             item.setItemNumber(len(items))

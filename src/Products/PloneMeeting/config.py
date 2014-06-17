@@ -193,8 +193,7 @@ itemInsertMethods = (  # Items are inserted:
     # associated groups). Similar to the previous sort method, with this
     # difference: the group taken into consideration is the group among all
     # groups that comes first in the order.
-    'on_privacy_public',  # according to the item privacy (public then secret);
-    'on_privacy_secret',  # according to the item privacy (secret then public);
+    'on_privacy',  # according to the item privacy;
 )
 # List of color system options : the way the item titles and annexes are colored
 colorSystems = (

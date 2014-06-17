@@ -201,7 +201,7 @@ meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
-meetingPma.insertingMethodsOnAddItem = ({'insertingMethod': 'on_proposing_groups', }, )
+meetingPma.insertingMethodsOnAddItem = ({'insertingMethod': 'on_proposing_groups', 'reverse': '0'}, )
 meetingPma.useGroupsAsCategories = True
 meetingPma.useAdvices = True
 meetingPma.itemAdviceStates = ['proposed', ]
@@ -236,7 +236,7 @@ meetingPga.meetingFileTypes = [
     decisionAnnex, adviceAnnex, adviceLegalAnalysis]
 meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
 meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
-meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', }, )
+meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
 meetingPga.useAdvices = False
 meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')

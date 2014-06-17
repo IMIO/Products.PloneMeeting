@@ -940,17 +940,22 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # first test when using 'at_the_end' and something else
         at_the_end_error_msg = _('inserting_methods_at_the_end_not_alone_error')
-        values = ({'insertingMethod': 'at_the_end'},
-                  {'insertingMethod': 'on_proposing_groups'}, )
+        values = ({'insertingMethod': 'at_the_end',
+                   'reverse': '0'},
+                  {'insertingMethod': 'on_proposing_groups',
+                   'reverse': '0'}, )
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == at_the_end_error_msg)
         # test when using several times same inserting method
         several_times_error_msg = _('inserting_methods_can_not_select_several_times_same_method_error')
-        values = ({'insertingMethod': 'on_proposing_groups'},
-                  {'insertingMethod': 'on_proposing_groups'}, )
+        values = ({'insertingMethod': 'on_proposing_groups',
+                   'reverse': '0'},
+                  {'insertingMethod': 'on_proposing_groups',
+                   'reverse': '0'}, )
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == several_times_error_msg)
         # test when selecting 'on_categories' without using categories
         not_using_categories_error_msg = _('inserting_methods_not_using_categories_error')
-        values = ({'insertingMethod': 'on_categories'}, )
+        values = ({'insertingMethod': 'on_categories',
+                   'reverse': '0'}, )
         self.assertTrue(cfg.getUseGroupsAsCategories() is True)
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
         # check on using categories is made on presence of 'useGroupsAsCategories' in the

@@ -2249,32 +2249,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            contains every sub insertMethod given in p_insertMethods.'''
         res = None
         item = self.getSelf()
-        oneLevels = []
+        oneLevelsTotals = []
         if len(insertMethods) > 1:
+            oneLevels = []
             # we need to compute len of relevant levels
             # a oneLevel is a complete set of useable values for a given insertMethod
             # for example "10" categories or "2" privacy values
-            # So if we have insertMethods ['on_privacy_public', 'on_proposing_groups', 'on_categories']
+            # So if we have insertMethods ['on_privacy', 'on_proposing_groups', 'on_categories']
             # if we have "2" privacies, "10 proposing groups" and "8 categories", the first
             # step here under will create the list [2, 10, 8]
             for insertMethod in insertMethods[1:]:
-                oneLevels.append(self._findOneLevelFor(insertMethod, item))
+                oneLevels.append(self._findOneLevelFor(insertMethod['insertingMethod'], item))
             # now what we will do is build a list for wich last element is always "1"
             # and first elements are factorial of elements of the list
             # so [2, 10, 8] will be translated to [160, 80, 1] aka 2*10*8, 10*8 and last element always 1
-            tmp = []
             for oneLevel in oneLevels:
                 oneLevelValue = 1
                 for elt in oneLevels[oneLevels.index(oneLevel):]:
                     oneLevelValue = oneLevelValue * elt
-                tmp.append(oneLevelValue)
-            oneLevels = tmp
-        oneLevels.append(1)
+                oneLevelsTotals.append(oneLevelValue)
+        oneLevelsTotals.append(1)
         for insertMethod in insertMethods:
             if not res:
                 res = 0
-            order = self._findOrderFor(insertMethod, item)
-            res = res + oneLevels[insertMethods.index(insertMethod)] * order
+            order = self._findOrderFor(insertMethod['insertingMethod'], item)
+            # check if we need to reverse order
+            if insertMethod['reverse'] == '1':
+                halfOneLevel = oneLevels[insertMethods.index(insertMethod)]/2
+                halfOneLevelDiff = halfOneLevel - order
+                order = int(halfOneLevel + halfOneLevelDiff)
+            res = res + oneLevelsTotals[insertMethods.index(insertMethod)] * order
 
         if res is None:
             raise PloneMeetingError(INSERT_ITEM_ERROR)
@@ -2297,7 +2301,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return len(cfg.getCategories(onlySelectable=False))
         elif insertMethod in ('on_proposing_groups', 'on_all_groups'):
             return len(tool.getMeetingGroups(onlyActive=False))
-        elif insertMethod in ('on_privacy_public', 'on_privacy_secret'):
+        elif insertMethod == 'on_privacy':
             return len(item.listPrivacyValues())
 
     def _findOrderFor(self, insertMethod, item):
@@ -2314,11 +2318,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = item.getProposingGroup(True).getOrder(onlyActive=False)
         elif insertMethod == 'on_all_groups':
             res = item.getProposingGroup(True).getOrder(item.getAssociatedGroups(), onlyActive=False)
-        elif insertMethod in ('on_privacy_public', 'on_privacy_secret'):
+        elif insertMethod == 'on_privacy':
             privacy = item.getPrivacy()
             privacies = item.listPrivacyValues().keys()
-            if insertMethod == 'on_privacy_secret':
-                privacies.reverse()
             # Get the order of the privacy
             res = privacies.index(privacy)
         return res

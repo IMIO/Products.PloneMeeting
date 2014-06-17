@@ -441,8 +441,10 @@ class testWorkflows(PloneMeetingTestCase):
         '''Tests the recurring items system when items are inserted
            in the meeting are respecting the 'privacy' attribute.'''
         self._setupRecurringItems()
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy_public'},
-                                                         {'insertingMethod': 'on_proposing_groups'}, ))
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
+                                                          'reverse': '0'},
+                                                         {'insertingMethod': 'on_proposing_groups',
+                                                          'reverse': '0'}, ))
         # set the first recurring item that will be inserted as 'secret'
         # when every recurring items are inserted, this will be at the very end
         # of the meeting presented items

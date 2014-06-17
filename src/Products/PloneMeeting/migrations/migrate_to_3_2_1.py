@@ -38,14 +38,19 @@ class Migrate_To_3_2_1(Migrator):
             # on_privacy_then_proposing_groups and on_privacy_then_categories
             # were splitted into 2 seperated inserting methods
             if oldValue.startswith('on_privacy'):
-                newValue = [{'insertingMethod': 'on_privacy_public'}, ]
+                newValue = [{'insertingMethod': 'on_privacy',
+                             'reverse': '0'}, ]
                 if oldValue.endswith('groups'):
-                    newValue.append({'insertingMethod': 'on_proposing_groups'})
+                    newValue.append({'insertingMethod': 'on_proposing_groups',
+                                     'reverse': '0'})
                 else:
-                    newValue.append({'insertingMethod': 'on_categories'})
+                    newValue.append({'insertingMethod': 'on_categories',
+                                     'reverse': '0'})
             else:
-                newValue = ({'insertingMethod': oldValue}, )
+                newValue = ({'insertingMethod': oldValue,
+                             'reverse': '0'}, )
             cfg.setInsertingMethodsOnAddItem(newValue)
+            delattr(cfg, 'sortingMethodOnAddItem')
         logger.info('Done.')
 
     def _updateAnnexesMeetingFileType(self):

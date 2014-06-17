@@ -673,7 +673,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # the required transitions should have been triggerd this time
         self.meetingConfig2.setUseGroupsAsCategories(True)
         # change insert order method too as 'on_categories' for now
-        self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups'}, ))
+        self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                                          'reverse': '0'}, ))
         # remove items and try again
         self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
@@ -1181,7 +1182,8 @@ class testMeetingItem(PloneMeetingTestCase):
         """
         self.changeUser('admin')
         # make items inserted in a meeting inserted in this order
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end'}, ))
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                                          'reverse': '0'}, ))
         # remove recurring items if any as we are playing with item number here under
         self._removeRecurringItems(self.meetingConfig)
         # a user create an item and we insert it into a meeting
