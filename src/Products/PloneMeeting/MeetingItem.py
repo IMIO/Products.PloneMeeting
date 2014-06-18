@@ -2319,7 +2319,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('addAutoCopyGroups')
-    def addAutoCopyGroups(self):
+    def addAutoCopyGroups(self, isCreated):
         '''What group should be automatically set as copyGroups for this item?
            We get it by evaluating the TAL expression on every active
            MeetingGroup.asCopyGroupOn. The expression returns a list of suffixes
@@ -2340,6 +2340,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # suffixes or an empty list (or False)
             ctx = createExprContext(self.getParentNode(), portal, self)
             ctx.setGlobal('item', self)
+            ctx.setGlobal('isCreated', isCreated)
             suffixes = False
             try:
                 suffixes = Expression(mGroup.getAsCopyGroupOn())(ctx)
@@ -2713,7 +2714,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Check if some copyGroups must be automatically added before updateLocalRoles
         # because specific localRoles are given to copyGroups
         if self.isCopiesEnabled():
-            self.addAutoCopyGroups()
+            self.addAutoCopyGroups(isCreated=True)
         # Remove temp local role that allowed to create the item in
         # portal_factory.
         user = self.portal_membership.getAuthenticatedMember()
@@ -2743,7 +2744,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Check if some copyGroups must be automatically added before updateLocalRoles
         # because specific localRoles are given to copyGroups
         if self.isCopiesEnabled():
-            self.addAutoCopyGroups()
+            self.addAutoCopyGroups(isCreated=False)
         self.updateLocalRoles()
         # Tell the color system that the current user has consulted this item.
         self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
