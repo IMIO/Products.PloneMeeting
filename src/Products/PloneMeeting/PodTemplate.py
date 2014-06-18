@@ -60,7 +60,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_description',
             i18n_domain='PloneMeeting',
         ),
-        default_output_type='text/html',
+        default_output_type="text/plain",
         default_content_type='text/plain',
         accessor="Description",
     ),

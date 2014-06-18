@@ -1017,7 +1017,11 @@
                 tal:attributes="class python: not isActive and 'state-inactive' or ''">
               <td align="center"><img tal:define="fmt obj/getPodFormat"
                                       tal:attributes="src string: $portal_url/$fmt.png"/></td>
-              <td><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></td>
+              <td>
+                <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
+                <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
+
+              </td>
               <td i18n:domain="plone">
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
                 <span tal:condition="not: isActive" i18n:translate="">No</span>

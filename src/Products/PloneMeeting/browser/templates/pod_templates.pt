@@ -51,7 +51,7 @@
     <input type="hidden" name="mailingList" value=""/>
   </form>
   <span class="discreet" style="position: relative;"
-        tal:attributes="title podTemplate/Description;"
+        tal:attributes="title python: podTemplate.Description(mimetype='text/plain');"
         tal:define="isItemParam python: (currentObj.meta_type == 'MeetingItem') and 'true' or 'false'"
         tal:repeat="podTemplate python: meetingConfig.getAvailablePodTemplates(currentObj)">
     <a tal:attributes="onclick python: 'generatePodDocument(\'%s\',\'%s\',%s)' % (currentObj.UID(), podTemplate.getId(), isItemParam)" style="cursor: pointer">
