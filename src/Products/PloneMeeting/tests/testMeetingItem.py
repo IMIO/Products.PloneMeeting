@@ -609,7 +609,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
            the TAL expression defined on every MeetingGroup.asCopyGroupOn.'''
-        # Use the 'plonegov-assembly' meetingConfig
+        # Use the 'meetingConfig2' where copies are enabled
         self.setMeetingConfig(self.meetingConfig2.getId())
         login(self.portal, 'pmManager')
         # By default, adding an item does not add any copyGroup
@@ -624,7 +624,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # the developers will be set as copyGroups.  That is what the expression says, but in reality,
         # only the 'developers_reviewers' will be set as copyGroups as the 'developers_advisers' are
         # not in the meetingConfig.selectableCopyGroups
-        self.meetingConfig.developers.setAsCopyGroupOn(
+        self.tool.developers.setAsCopyGroupOn(
             "python: item.getProposingGroup() == 'vendors' and ['reviewers', 'advisers', ] or []")
         login(self.portal, 'pmManager')
         # Creating an item with the default proposingGroup ('developers') does nothing
@@ -648,17 +648,48 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless('developers_reviewers' in i5.__ac_local_roles__.keys())
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_reviewers'])
         # addAutoCopyGroups is triggered upon each edit (at_post_edit_script)
-        self.meetingConfig.vendors.setAsCopyGroupOn(
+        self.tool.vendors.setAsCopyGroupOn(
             "python: item.getProposingGroup() == 'vendors' and ['reviewers', ] or []")
         # edit the item, 'vendors_reviewers' should be in the copyGroups of the item
         i5.at_post_edit_script()
         self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
         # even if removed from the config, existing copyGroups are not changed
-        self.meetingConfig.vendors.setAsCopyGroupOn("")
+        self.tool.vendors.setAsCopyGroupOn("")
         i5.at_post_edit_script()
         self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
         # check that local_roles are correct
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['vendors_reviewers'])
+
+    def test_pm_AddAutoCopyGroupsIsCreated(self):
+        '''Test the addAutoCopyGroups functionnality when using the parameter 'isCreated'
+           in the TAL expression.  This will allow to restrict an expression to be True only
+           at item creation time (at_post_create_script) and not after (at_post_edit_script),
+           this will allow for example to add a copy group and being able to unselect it after.'''
+        self.meetingConfig.setUseCopies(True)
+        self.tool.vendors.setAsCopyGroupOn(
+            "python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
+        self.changeUser('pmManager')
+        # create an item with group 'developers', 'vendors' will be copy group
+        item = self.create('MeetingItem')
+        self.assertTrue(item.getCopyGroups() == ('vendors_reviewers', ))
+        # now unselect it and call at_post_edit_script again
+        item.setCopyGroups(())
+        self.assertTrue(item.getCopyGroups() == ())
+        item.at_post_edit_script()
+        self.assertTrue(item.getCopyGroups() == ('vendors_reviewers', ))
+
+        # now use the isCreated in the TAL expression so an expression
+        # is only True on item creation
+        self.tool.vendors.setAsCopyGroupOn(
+            "python: (isCreated and item.getProposingGroup() == 'developers') and ['reviewers', ] or []")
+        item2 = self.create('MeetingItem')
+        self.assertTrue(item2.getCopyGroups() == ('vendors_reviewers', ))
+        # now unselect it and call at_post_edit_script again
+        item2.setCopyGroups(())
+        self.assertTrue(item2.getCopyGroups() == ())
+        item2.at_post_edit_script()
+        # this time it is now added again as the expression is only True at item creation time
+        self.assertTrue(item2.getCopyGroups() == ())
 
     def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
