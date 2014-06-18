@@ -339,6 +339,55 @@ class testMeeting(PloneMeetingTestCase):
                            ('marketing', 'vendors'),
                            ('marketing', 'vendors')])
 
+    def test_pm_InsertItemOnToDiscuss(self):
+        '''Sort method tested here is "on_to_discuss".'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_to_discuss',
+                                                          'reverse': '0'}, ))
+        # make sure toDiscuss is not set on item insertion in a meeting
+        self.meetingConfig.setToDiscussSetOnItemInsert(False)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2014/01/01'))
+        data = ({'proposingGroup': 'developers',
+                 'toDiscuss': True},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': True},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': False},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': False},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': True},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': False},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': True},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': True},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': False}, )
+        for itemData in data:
+            item = self.create('MeetingItem', **itemData)
+            self.presentItem(item)
+
+        self.assertEquals([item.getId() for item in meeting.getItemsInOrder()],
+                          ['recItem1', 'recItem2', 'o2', 'o3', 'o6', 'o8', 'o9', 'o4', 'o5', 'o7', 'o10'])
+        # items are correctly sorted first toDiscuss then not toDiscuss
+        self.assertEquals([item.getToDiscuss() for item in meeting.getItemsInOrder()],
+                          [True, True, True, True, True, True, True, False, False, False, False])
+
+        # now if 'reverse' is activated
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_to_discuss',
+                                                          'reverse': '1'}, ))
+        itemsToPresent = []
+        for item in meeting.getItems():
+            self.backToState(item, 'validated')
+            itemsToPresent.append(item)
+        for itemToPresent in itemsToPresent:
+            self.presentItem(itemToPresent)
+        # items are correctly sorted first not toDiscuss then toDiscuss
+        self.assertEquals([item.getToDiscuss() for item in meeting.getItemsInOrder()],
+                          [False, False, False, False, True, True, True, True, True, True, True])
+
     def test_pm_RemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
         login(self.portal, 'pmManager')

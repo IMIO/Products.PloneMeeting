@@ -194,6 +194,7 @@ itemInsertMethods = (  # Items are inserted:
     # difference: the group taken into consideration is the group among all
     # groups that comes first in the order.
     'on_privacy',  # according to the item privacy;
+    'on_to_discuss',  # according to the item toDiscuss;
 )
 # List of color system options : the way the item titles and annexes are colored
 colorSystems = (

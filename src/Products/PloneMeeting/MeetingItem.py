@@ -2250,8 +2250,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = None
         item = self.getSelf()
         oneLevelsTotals = []
+        oneLevels = []
         if len(insertMethods) > 1:
-            oneLevels = []
             # we need to compute len of relevant levels
             # a oneLevel is a complete set of useable values for a given insertMethod
             # for example "10" categories or "2" privacy values
@@ -2268,7 +2268,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 for elt in oneLevels[oneLevels.index(oneLevel):]:
                     oneLevelValue = oneLevelValue * elt
                 oneLevelsTotals.append(oneLevelValue)
+        # last value of oneLevels is always "1"
         oneLevelsTotals.append(1)
+        oneLevels.append(1)
         for insertMethod in insertMethods:
             if not res:
                 res = 0
@@ -2303,6 +2305,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return len(tool.getMeetingGroups(onlyActive=False))
         elif insertMethod == 'on_privacy':
             return len(item.listPrivacyValues())
+        elif insertMethod == 'on_to_discuss':
+            # either 'toDiscuss' is True or False
+            return 2
 
     def _findOrderFor(self, insertMethod, item):
         '''
@@ -2323,6 +2328,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             privacies = item.listPrivacyValues().keys()
             # Get the order of the privacy
             res = privacies.index(privacy)
+        elif insertMethod == 'on_to_discuss':
+            if item.getToDiscuss():
+                res = 0
+            else:
+                res = 1
         return res
 
     security.declarePublic('sendMailIfRelevant')

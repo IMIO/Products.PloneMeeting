@@ -2088,7 +2088,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''This method validate the 'insertingMethodsOnAddItem' DataGridField :
            - if sortingMethod 'at_the_end' is selected, no other sorting method can be selected;
            - a same sortingMethod can not be selected twice;
-           - the 'on_categories' method can not be selected if we do not use categories.'''
+           - the 'on_categories' method can not be selected if we do not use categories;
+           - the 'on_to_discuss' mathod can not be selected if we do not use the toDicuss field.'''
         # transform in a list so we can handle it easily
         res = []
         for value in values:
@@ -2108,15 +2109,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('inserting_methods_can_not_select_several_times_same_method_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        # finally check that if we selected 'on_categories', we actually use categories...
-        if hasattr(self.REQUEST, 'useGroupsAsCategories'):
-            notUsingCategories = self.REQUEST.get('useGroupsAsCategories')
-        else:
-            notUsingCategories = self.getUseGroupsAsCategories()
-        if 'on_categories' in res and notUsingCategories:
-            return translate('inserting_methods_not_using_categories_error',
-                             domain='PloneMeeting',
-                             context=self.REQUEST)
+        # check that if we selected 'on_categories', we actually use categories...
+        if 'on_categories' in res:
+            if hasattr(self.REQUEST, 'useGroupsAsCategories'):
+                notUsingCategories = self.REQUEST.get('useGroupsAsCategories')
+            else:
+                notUsingCategories = self.getUseGroupsAsCategories()
+            if notUsingCategories:
+                return translate('inserting_methods_not_using_categories_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        # check that if we selected 'on_to_discuss', we actually use the field 'toDisucss'...
+        if 'on_to_discuss' in res:
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingToDiscuss = not 'toDiscuss' in self.REQUEST.get('usedItemAttributes')
+            else:
+                notUsingToDiscuss = not 'toDiscuss' in self.getUsedItemAttributes()
+            if notUsingToDiscuss:
+                return translate('inserting_methods_not_using_to_discuss_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
 
     def _dataForCustomAdviserRowId(self, row_id):
         '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''

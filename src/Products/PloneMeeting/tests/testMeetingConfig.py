@@ -936,8 +936,10 @@ class testMeetingConfig(PloneMeetingTestCase):
            We will test that :
            - if 'at_the_end' is selected, no other is selected;
            - the same inserting method is not selected twice;
-           - if categories are not used, we can not select the 'on_categories' method.'''
+           - if categories are not used, we can not select the 'on_categories' method;
+           - fi the 'toDiscuss' field is not used, we can not select the 'on_to_discuss' method.'''
         cfg = self.meetingConfig
+
         # first test when using 'at_the_end' and something else
         at_the_end_error_msg = _('inserting_methods_at_the_end_not_alone_error')
         values = ({'insertingMethod': 'at_the_end',
@@ -945,6 +947,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                   {'insertingMethod': 'on_proposing_groups',
                    'reverse': '0'}, )
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == at_the_end_error_msg)
+
         # test when using several times same inserting method
         several_times_error_msg = _('inserting_methods_can_not_select_several_times_same_method_error')
         values = ({'insertingMethod': 'on_proposing_groups',
@@ -952,6 +955,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                   {'insertingMethod': 'on_proposing_groups',
                    'reverse': '0'}, )
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == several_times_error_msg)
+
         # test when selecting 'on_categories' without using categories
         not_using_categories_error_msg = _('inserting_methods_not_using_categories_error')
         values = ({'insertingMethod': 'on_categories',
@@ -968,6 +972,29 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
         self.portal.REQUEST.set('useGroupsAsCategories', False)
         # this time it validates as redefining it to using categories
+        self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+
+        # test when selecting 'on_to_discuss' without using the 'toDiscuss' field
+        not_using_categories_error_msg = _('inserting_methods_not_using_to_discuss_error')
+        values = ({'insertingMethod': 'on_to_discuss',
+                   'reverse': '0'}, )
+        self.assertTrue('toDiscuss' in cfg.getUsedItemAttributes())
+        # it valdiates
+        self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+        # check on using 'toDiscuss' is made on presence of 'toDiscuss' in 'usedItemAttributes' in the
+        # REQUEST, or if not found, on the value defined on the MeetingConfig object
+        # unselect 'toDiscuss', validation fails
+        usedItemAttrs = list(cfg.getUsedItemAttributes())
+        usedItemAttrsWithoutToDiscuss = usedItemAttrs
+        usedItemAttrsWithoutToDiscuss.remove('toDiscuss')
+        cfg.setUsedItemAttributes(usedItemAttrsWithoutToDiscuss)
+        self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
+        # it validates if 'usedItemAttributes' found in the REQUEST
+        # and 'toDiscuss' in the 'usedItemAttributes', if not it fails...
+        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss)
+        self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
+        # but validates if 'toDiscuss' in 'usedItemAttributes' found in the REQUEST
+        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss + ['toDiscuss', ])
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
 
