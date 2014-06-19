@@ -462,16 +462,16 @@ class testMeeting(PloneMeetingTestCase):
         # items are correctly sorted first by category, then within a category, by other meeting config to clone to
         self.assertEquals([(item.getCategory(),
                             item.getOtherMeetingConfigsClonableTo()) for item in meeting.getItemsInOrder()],
-                          [('deployment', ('plonegov-assembly',)),
-                           ('deployment', ('plonegov-assembly',)),
-                           ('deployment', ('plonegov-assembly',)),
+                          [('deployment', ('%s' % cfg1Id, )),
+                           ('deployment', ('%s' % cfg1Id, )),
+                           ('deployment', ('%s' % cfg1Id, )),
                            ('deployment', ()),
                            ('deployment', ()),
-                           ('events', ('plonegov-assembly',)),
-                           ('events', ('plonegov-assembly',)),
+                           ('events', ('%s' % cfg1Id, )),
+                           ('events', ('%s' % cfg1Id, )),
                            ('events', ()),
                            ('events', ()),
-                           ('marketing', ('plonegov-assembly',)),
+                           ('marketing', ('%s' % cfg1Id, )),
                            ('marketing', ())]
                           )
 
