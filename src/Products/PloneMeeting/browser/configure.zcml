@@ -222,6 +222,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that display MeetingItem.emergency_changes_history in a popup -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="advice-delay-changes-history"
+        class=".advicechangedelay.ChangeAdviceDelayHistoryView"
+        template="templates/advicedelayshistory.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the view that show MeetingItem.emergency on the meetingitem_view -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

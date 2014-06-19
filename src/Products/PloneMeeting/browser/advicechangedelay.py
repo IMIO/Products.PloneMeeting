@@ -1,3 +1,4 @@
+from DateTime import DateTime
 from AccessControl import Unauthorized
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.utils import getToolByName
@@ -161,5 +162,40 @@ class ChangeAdviceDelayView(BrowserView):
                 # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
                 self.context.adviceIndex[currentAdviceData['group']]['delay_for_automatic_adviser_changed_manually'] = True
             self.context.updateAdvices()
+            # add a line to the item's emergency_change_history
+            membershipTool = getToolByName(self.context, 'portal_membership')
+            member = membershipTool.getAuthenticatedMember()
+            history_data = {'action': newAdviceData['delay'],
+                            'actor': member.getId(),
+                            'time': DateTime(),
+                            'comment': self.request.get('comment', '')}
+            self.context.adviceIndex[currentAdviceData['group']]['delay_changes_history'].append(history_data)
             self.request.response.redirect(self.context.absolute_url() + '/#adviceAndAnnexes')
         return self.index()
+
+
+class ChangeAdviceDelayHistoryView(BrowserView):
+    '''Display history of advice delay value changes.'''
+    def __init__(self, context, request):
+        super(BrowserView, self).__init__(context, request)
+        self.context = context
+        self.request = request
+
+    def getHistoryInfos(self):
+        '''
+          Return history of delay changes for an advice.
+        '''
+        # get the advice in the REQUEST
+        advice = self.request.get('advice')
+        # and check if user can actually access it's history
+        # fist check that received advice exists, either something is going wrong
+        if not advice in self.context.adviceIndex:
+            raise Unauthorized
+        # MeetingManagers and advisers of the group
+        # can access the delay changes history
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        if tool.isManager() or advice in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')]:
+            return self.context.adviceIndex[advice]['delay_changes_history']
+        # if user arrives here, he is trying to access the delay history
+        # without permission, we raise Unauthorized
+        raise Unauthorized

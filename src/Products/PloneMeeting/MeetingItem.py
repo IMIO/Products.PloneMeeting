@@ -3033,6 +3033,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually'] = \
                 'delay_for_automatic_adviser_changed_manually' in adviceInfo and \
                 adviceInfo['delay_for_automatic_adviser_changed_manually'] or False
+            saved_stored_data[groupId]['delay_changes_history'] = \
+                'delay_changes_history' in adviceInfo and \
+                adviceInfo['delay_changes_history'] or []
 
         itemState = self.queryState()
         self.adviceIndex = PersistentMapping()
@@ -3085,6 +3088,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['item_viewable_by_advisers'] = False
                 d['advice_addable'] = False
                 d['advice_editable'] = False
+                # a place for delay changes history
+                if groupId in saved_stored_data:
+                    d['delay_changes_history'] = saved_stored_data[groupId]['delay_changes_history']
+                else:
+                    d['delay_changes_history'] = []
 
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():

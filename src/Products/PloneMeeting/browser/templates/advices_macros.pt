@@ -55,6 +55,7 @@
                                     tal:define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};"
                                     tal:attributes="class python: (advice['type'] == 'not_given' or advice['hidden_during_redaction']) and class_if_not_given or 'advice_delay'" />
                          </span>
+
                          <span tal:condition="advice/optional">(</span>
                               <b tal:content="structure advice/name"></b>
                               <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
@@ -62,6 +63,14 @@
                               </tal:showDelayLabel>
                          <span tal:condition="advice/optional">)</span>
                          <acronym tal:attributes="title python: meetingItem.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
+                         <acronym tal:condition="advice/delay">
+                            <a class="link-overlay-pm"
+                               style="display: inline;"
+                               href="@@advice-delay-changes-history"
+                               tal:attributes="href string:${meetingItem/absolute_url}/@@advice-delay-changes-history?advice=${advice/id}">
+                                <img src="advice_delay_changes_history.gif" />
+                            </a>
+                         </acronym>
                     </legend>
                 <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
                     <p>
