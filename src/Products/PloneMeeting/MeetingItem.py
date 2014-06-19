@@ -2259,7 +2259,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # if we have "2" privacies, "10 proposing groups" and "8 categories", the first
             # step here under will create the list [2, 10, 8]
             for insertMethod in insertMethods[1:]:
-                oneLevels.append(self._findOneLevelFor(insertMethod['insertingMethod'], item))
+                oneLevels.append(item._findOneLevelFor(insertMethod['insertingMethod'], item))
             # now what we will do is build a list for wich last element is always "1"
             # and first elements are factorial of elements of the list
             # so [2, 10, 8] will be translated to [160, 80, 1] aka 2*10*8, 10*8 and last element always 1
@@ -2274,7 +2274,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for insertMethod in insertMethods:
             if not res:
                 res = 0
-            order = self._findOrderFor(insertMethod['insertingMethod'], item)
+            order = item._findOrderFor(insertMethod['insertingMethod'], item)
             # check if we need to reverse order
             if insertMethod['reverse'] == '1':
                 halfOneLevel = oneLevels[insertMethods.index(insertMethod)]/2
