@@ -3873,7 +3873,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
                              newPortalType=destMeetingConfig.getItemTypeName())
-        # manage categories mapping, if oroginal and new items use
+        # manage categories mapping, if original and new items use
         # categories, we check if a mapping is defined in the configuration of the original item
         if not cfg.getUseGroupsAsCategories() and \
            not destMeetingConfig.getUseGroupsAsCategories():
