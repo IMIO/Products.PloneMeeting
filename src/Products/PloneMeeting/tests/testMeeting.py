@@ -388,6 +388,93 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.getToDiscuss() for item in meeting.getItemsInOrder()],
                           [False, False, False, False, True, True, True, True, True, True, True])
 
+    def test_pm_InsertItemOnToOtherMCToCloneTo(self):
+        '''Sort method tested here is "on_other_mc_to_clone_to".'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_other_mc_to_clone_to',
+                                                          'reverse': '0'}, ))
+        # items of mc1 are clonable to mc2
+        cfg2Id = self.meetingConfig2.getId()
+        self.assertTrue(self.meetingConfig.getMeetingConfigsToCloneTo(),
+                        ({'meeting_config': '%s' % cfg2Id,
+                          'trigger_workflow_transitions_until': '__nothing__'}, ))
+        self.changeUser('pmManager')
+        self._removeRecurringItems(self.meetingConfig)
+        meeting = self.create('Meeting', date=DateTime('2014/01/01'))
+        data = ({'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': ()},
+                {'otherMeetingConfigsClonableTo': ()},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': ()},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': ()},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': ()},)
+        for itemData in data:
+            item = self.create('MeetingItem', **itemData)
+            self.presentItem(item)
+        # items are correctly sorted first items to send to cfg2 then items not to send
+        self.assertEquals([item.getOtherMeetingConfigsClonableTo() for item in meeting.getItemsInOrder()],
+                          [(cfg2Id, ), (cfg2Id, ), (cfg2Id, ), (cfg2Id, ), (cfg2Id, ), (cfg2Id, ), (), (), (), (), ()])
+
+    def test_pm_InsertItemOnCategoriesThenOnToOtherMCToCloneTo(self):
+        '''Sort method tested here is "on_categories" then "on_other_mc_to_clone_to".'''
+        # use meetingConfig2 for wich categories are configured
+        self.meetingConfig2.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig.getId(),
+                                                         'trigger_workflow_transitions_until': '__nothing__'}, ))
+        self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_categories',
+                                                           'reverse': '0'},
+                                                          {'insertingMethod': 'on_other_mc_to_clone_to',
+                                                           'reverse': '0'}, ))
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        cfg1Id = self.meetingConfig.getId()
+        self.assertTrue(self.meetingConfig2.getMeetingConfigsToCloneTo(),
+                        ({'meeting_config': '%s' % cfg1Id,
+                          'trigger_workflow_transitions_until': '__nothing__'}, ))
+        self.changeUser('pmManager')
+        self._removeRecurringItems(self.meetingConfig)
+        meeting = self.create('Meeting', date=DateTime('2014/01/01'))
+        data = ({'otherMeetingConfigsClonableTo': ('%s' % cfg1Id, ),
+                 'category': 'events'},
+                {'otherMeetingConfigsClonableTo': (),
+                 'category': 'deployment'},
+                {'otherMeetingConfigsClonableTo': (),
+                 'category': 'marketing'},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg1Id, ),
+                 'category': 'deployment'},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg1Id, ),
+                 'category': 'deployment'},
+                {'otherMeetingConfigsClonableTo': (),
+                 'category': 'events'},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg1Id, ),
+                 'category': 'events'},
+                {'otherMeetingConfigsClonableTo': ()},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg1Id, ),
+                 'category': 'deployment'},
+                {'otherMeetingConfigsClonableTo': ('%s' % cfg1Id, ),
+                 'category': 'marketing'},
+                {'otherMeetingConfigsClonableTo': (),
+                 'category': 'events'},)
+        for itemData in data:
+            item = self.create('MeetingItem', **itemData)
+            self.presentItem(item)
+        # items are correctly sorted first by category, then within a category, by other meeting config to clone to
+        self.assertEquals([(item.getCategory(),
+                            item.getOtherMeetingConfigsClonableTo()) for item in meeting.getItemsInOrder()],
+                          [('deployment', ('plonegov-assembly',)),
+                           ('deployment', ('plonegov-assembly',)),
+                           ('deployment', ('plonegov-assembly',)),
+                           ('deployment', ()),
+                           ('deployment', ()),
+                           ('events', ('plonegov-assembly',)),
+                           ('events', ('plonegov-assembly',)),
+                           ('events', ()),
+                           ('events', ()),
+                           ('marketing', ('plonegov-assembly',)),
+                           ('marketing', ())]
+                          )
+
     def test_pm_RemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
         login(self.portal, 'pmManager')

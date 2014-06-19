@@ -2308,6 +2308,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif insertMethod == 'on_to_discuss':
             # either 'toDiscuss' is True or False
             return 2
+        elif insertMethod == 'on_other_mc_to_clone_to':
+            # list every other MC the items of this MC
+            # can be sent to + the fact that an item is not
+            # to send to another MC
+            return len(self.listOtherMeetingConfigsClonableTo()) + 1
 
     def _findOrderFor(self, insertMethod, item):
         '''
@@ -2333,6 +2338,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res = 0
             else:
                 res = 1
+        elif insertMethod == 'on_other_mc_to_clone_to':
+            toCloneTo = self.getOtherMeetingConfigsClonableTo()
+            values = self.listOtherMeetingConfigsClonableTo().keys()
+            if not toCloneTo:
+                return len(values) + 1
+            else:
+                return values.index(toCloneTo[0])
         return res
 
     security.declarePublic('sendMailIfRelevant')

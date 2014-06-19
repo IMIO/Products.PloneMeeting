@@ -195,6 +195,7 @@ itemInsertMethods = (  # Items are inserted:
     # groups that comes first in the order.
     'on_privacy',  # according to the item privacy;
     'on_to_discuss',  # according to the item toDiscuss;
+    'on_other_mc_to_clone_to',  # according to items that need to be sent to another meeting config;
 )
 # List of color system options : the way the item titles and annexes are colored
 colorSystems = (
