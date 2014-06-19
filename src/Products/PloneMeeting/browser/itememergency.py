@@ -62,8 +62,10 @@ class ChangeItemEmergencyView(BrowserView):
                 raise Unauthorized
             self.context.setEmergency(new_emergency_value)
             # add a line to the item's emergency_change_history
+            membershipTool = getToolByName(self.context, 'portal_membership')
+            member = membershipTool.getAuthenticatedMember()
             history_data = {'action': new_emergency_value,
-                            'actor': '',
+                            'actor': member.getId(),
                             'time': DateTime(),
                             'comment': self.request.get('comment', '')}
             self.context.emergency_changes_history.append(history_data)

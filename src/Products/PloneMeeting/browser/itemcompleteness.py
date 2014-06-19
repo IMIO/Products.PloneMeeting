@@ -64,8 +64,10 @@ class ChangeItemCompletenessView(BrowserView):
                 raise Unauthorized
             self.context.setCompleteness(new_completeness_value)
             # add a line to the item's emergency_change_history
+            membershipTool = getToolByName(self.context, 'portal_membership')
+            member = membershipTool.getAuthenticatedMember()
             history_data = {'action': new_completeness_value,
-                            'actor': '',
+                            'actor': member.getId(),
                             'time': DateTime(),
                             'comment': self.request.get('comment', '')}
             self.context.completeness_changes_history.append(history_data)
