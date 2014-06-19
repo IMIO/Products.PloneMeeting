@@ -154,6 +154,8 @@ class Migrate_To_3_2_1(Migrator):
         self._initMeetingItemCompletenessCommentHTMLField()
         self._updateAddFilePermissionOnMeetingConfigFolders()
         self._addChangesHistoryToItems()
+        # clean registries (js, css, portal_setup)
+        self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.finish()
