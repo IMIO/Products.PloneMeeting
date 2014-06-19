@@ -9,6 +9,58 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.2.1 (unreleased)
 ------------------
+- Moved to Products.CMFPlone 4.3.3
+- Moved to collective.ckeditor 4.2.0
+- Refactored mechanism when inserting an item in a meeting : it is now possible
+  to select successive sorting methods to apply on item insertion
+- Added management of absents and excused in separated plain text fields,
+  refactored display of item assembly and signatures on item
+- Added restricted power observers, a second kind of power observers that may
+  access elements in different states
+- Added 'confidentiality' for annexes, making them not visibile by restricted power observers,
+  annex confidentialy is ajax switchable in the UI
+- When sending an item to antoher meeting config, if both configurations use categories,
+  added possibility to define for a category in original meeting configuration what will
+  be the used category in the destination meeting configuration
+- Added possibility to automatically trigger workflow transitions of an item that is sent
+  to another meeting config so the new item can be automatically set in a defined state
+  (for example : validated, proposed or presented in a meeting)
+- It is now necessary to manually define transitions for presenting an item or a per
+  meeting config basis so we know the "workflow path to present an item"
+- Added possibility for advisers to hide their advice when it is under redaction
+- Added possibility to easily change an advice delay from the advice popup view
+  using a drop down box displaying available delays
+- When creating an item from a template, keep every informations defined on the template
+- In MeetingConfig custom advisers, added possibility to restrict the selection of a custom
+  adviser using a TAL expression (column 'Available on') and added a way to specify in that
+  two or more custom advisers are linked together (column 'Is linked to previous row?')
+- Added caching for MeetingConfg.getFileTypes, MeetingConfig.getCategories,
+  ToolPloneMeeting.getGroupsForUser, IAnnexable.getAnnexesToPrint
+- Link between a MeetingFile and a MeetingFileType is no more a Reference
+- Added possibility to define sub-meetingFileTypes so a single MeetingFileType can have
+  several subtypes displayed in the UI under the same icon
+- Added possibility to define a correspondence of meetingFileTypes between different
+  meeting configurations so an item sent to another meeting config know what meeting file
+  type to use for original annexes
+- Added 'emergency' functionnality on items (ask/accept/refuse emergency with comments and history)
+- Added 'completeness' functionnality on items (evaulate if complete/incomplete with comments and history)
+- Refactored management of adviceIndex : index if advice can be added/edited, make use of another
+  workflow than meetingadvice_workflow possible, ...
+- Pass IAnnexable to a PodTemplate when rendering so we can easily integrate annexes in a generated document
+- Removed IAnnexable.getAnnexesInOrder, only use IAnnexable.getAnnexes that is always ordered
+- Added ajax switch in the UI for MeetingItem.budgetRelated displaying/hidding
+  the MeetingItem.budgetInfos field on the item view
+- Display PodTemplate description as plain/text on the PodTemplate view and in the title displayed
+  when hovering the template label on the meeting/item view.  Display tthis description on the list
+  of Pod Templates of the MeetingConfig as well
+- Use collective.datagridcolumns for the MeetingFileType.subTypes field
+- Refactored index 'indexAdvisers' to avoid relying on suffixes like '0' or '1', but
+  using readable suffixes like '_advice_not_given', '_advice_delay_exceeded' or by displaying
+  current advice workflow state as suffix
+
+3.2.0.1 (2014-03-06)
+--------------------
+- Bugfix release : adapted migration to 3.2.0
 - Make computation of advice delay aware of work days and holidays
 - Added caching for some methods called several times (ToolPloneMeeting.getMeetingGroups,
   ToolPloneMeeting.getMeetingConfig, MeetingConfig.getUserParam)
