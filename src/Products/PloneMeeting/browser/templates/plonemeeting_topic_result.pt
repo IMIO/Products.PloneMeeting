@@ -299,7 +299,7 @@
 
         <tal:comment replace="nothing">Actions</tal:comment>
         <td align="center" tal:condition="showActions">
-            <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel').render()" />
+            <tal:actions replace="structure obj/@@actions_panel" />
         </td>
         </tal:wakeUpObject>
         </tal:itemOrMeeting>

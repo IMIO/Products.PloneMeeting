@@ -252,6 +252,8 @@ class MeetingActionsPanelView(BaseActionsPanelView):
 
     def renderDeleteWholeMeeting(self):
         """
+          Special action on the meeting available to Managers that let delete
+          a whole meeting with linked items.
         """
         if self.member.has_role('Manager'):
             return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
