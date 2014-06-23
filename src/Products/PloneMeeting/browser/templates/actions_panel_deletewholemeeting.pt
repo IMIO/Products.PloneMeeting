@@ -3,18 +3,18 @@
 <td i18n:domain="plone" class="noPadding">
   <form name="deleteWholeMeetingForm" action="delete_givenuid"
         tal:define="dummy view/saveHasActions;">
-      <input type="hidden" name="selected_uid" tal:attributes="value context/UID" />
+      <input type="hidden" name="object_uid" tal:attributes="value context/UID" />
       <input type="hidden" name="wholeMeeting" value="True"/>
       <tal:comment replace="nothing">Icon</tal:comment>
       <img tal:condition="view/useIcons" style="cursor:pointer"
            title="delete_meeting_with_items" i18n:attributes="title"
            tal:attributes="src string: $portal_url/delete_many.gif"
-           onClick="javascript:confirmDeleteObject(this, 'wholeMeeting')"/>
+           onClick="javascript:confirmDeleteObject(this, 'plonemeeting_delete_meeting_confirm_message')"/>
 
       <tal:comment replace="nothing">Button</tal:comment>
       <input tal:condition="not: view/useIcons" type="button" i18n:attributes="value"
              value="delete_meeting_with_items"
-             onClick="javascript:confirmDeleteObject(this, 'wholeMeeting');" class="apButton apButtonAction apButtonAction_deleteWholeMeeting"/>
+             onClick="javascript:confirmDeleteObject(this, 'plonemeeting_delete_meeting_confirm_message');" class="apButton apButtonAction apButtonAction_deleteWholeMeeting"/>
   </form>
 </td>
 </tal:defines>

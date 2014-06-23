@@ -15,11 +15,14 @@ __docformat__ = 'plaintext'
 
 
 import logging
+logger = logging.getLogger('PloneMeeting')
+
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from Acquisition import aq_base
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -178,7 +181,6 @@ def onAdviceAdded(advice, event):
 
     # log
     userId = advice.portal_membership.getAuthenticatedMember().getId()
-    logger = logging.getLogger('PloneMeeting')
     logger.info('Advice at %s created by "%s".' %
                 (advice.absolute_url_path(), userId))
     # redirect to referer after add if it is not the edit form
@@ -255,3 +257,30 @@ def onItemRemoved(item, event):
     # if the item is linked to a meeting, remove the item from this meeting
     if item.hasMeeting():
         item.getMeeting().removeItem(item)
+
+
+def onMeetingRemoved(meeting, event):
+    '''When a meeting is removed, check if we need to remove every linked items,
+       this is the case if we have a 'wholeMeeting' value in the REQUEST.'''
+    # bypass this if we are actually removing the 'Plone Site'
+    if event.object.meta_type == 'Plone Site':
+        return
+    if 'wholeMeeting' in meeting.REQUEST and 'items_to_remove' in meeting.REQUEST:
+        logger.info('Removing %d item(s) linked to meeting at %s...' % (len(meeting.REQUEST.get('items_to_remove')),
+                                                                        meeting.absolute_url()))
+        for item in meeting.REQUEST.get('items_to_remove'):
+            unrestrictedRemoveGivenObject(item)
+
+
+def onMeetingWillBeRemoved(meeting, event):
+    '''When a meeting will be removed, if we are removing the 'wholeMeeting',
+       aka, the meeting and items, we save the UID of the items in the REQUEST,
+       because in onMeetingRemoved, the references are already gone and we
+       do not have the items anymore...'''
+    # bypass this if we are actually removing the 'Plone Site'
+    if event.object.meta_type == 'Plone Site':
+        return
+    membershipTool = getToolByName(meeting, 'portal_membership')
+    member = membershipTool.getAuthenticatedMember()
+    if 'wholeMeeting' in meeting.REQUEST and member.has_role('Manager'):
+        meeting.REQUEST.set('items_to_remove', meeting.getItems() + meeting.getLateItems())

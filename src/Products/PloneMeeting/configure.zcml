@@ -48,8 +48,7 @@
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="Products.PloneMeeting.MeetingItem.MeetingItem"
            factory=".adapters.ContentDeletableAdapter"
-           provides="imio.actionspanel.interfaces.IContentDeletable"
-            />
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- add the blob field to MeetingFile -->
   <adapter

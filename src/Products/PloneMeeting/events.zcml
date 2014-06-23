@@ -28,6 +28,14 @@
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onMeetingTransition"/>
 
+  <subscriber for=".interfaces.IMeeting
+                   zope.container.interfaces.IObjectRemovedEvent"
+              handler=".events.onMeetingRemoved"/>
+
+  <subscriber for=".interfaces.IMeeting
+                   imio.actionspanel.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onMeetingWillBeRemoved"/>
+
   <subscriber for=".interfaces.IMeetingGroup
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onMeetingGroupTransition"/>
