@@ -1404,7 +1404,13 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             itemsGetter = self.getLateItems
             itemsSetter = self.setLateItems
             items = itemsGetter()
-        items.remove(item)
+        try:
+            items.remove(item)
+        except ValueError:
+            # in case this is called by onItemRemoved, the item
+            # does not exist anymore and is no more in the items list
+            # so we pass
+            pass
         itemsSetter(items)
         # Update item numbers
         for anItem in itemsGetter():

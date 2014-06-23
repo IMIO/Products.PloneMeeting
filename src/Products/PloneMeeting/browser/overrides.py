@@ -139,27 +139,7 @@ class BaseActionsPanelView(ActionsPanelView):
     """
     def __init__(self, context, request):
         super(BaseActionsPanelView, self).__init__(context, request)
-        self.SECTIONS_TO_RENDER = ('renderTransitions',
-                                   'renderDelete',
-                                   'renderEdit',
-                                   'renderActions', )
-        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste', 'delete')
-
-    def renderDelete(self):
-        """
-          Render 'delete' action.
-        """
-        if self.mayDelete():
-            return ViewPageTemplateFile("templates/actions_panel_delete.pt")(self)
-        return ''
-
-    def mayDelete(self):
-        """
-          Check if current user may delete element.
-        """
-        isMeetingOrItem = self.context.meta_type in ('Meeting', 'MeetingItem')
-        return self.member.has_permission('Delete objects', self.context) and \
-            (isMeetingOrItem and self.context.wfConditions().mayDelete() or True)
+        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste')
 
     def mayEdit(self):
         """
@@ -216,7 +196,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         super(MeetingItemActionsPanelView, self).__init__(context, request)
         self.SECTIONS_TO_RENDER = ('renderTransitions',
                                    'renderArrows',
-                                   'renderDelete',
+                                   'renderOwnDelete',
                                    'renderEdit',
                                    'renderActions', )
 
@@ -245,7 +225,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
     def __init__(self, context, request):
         super(MeetingActionsPanelView, self).__init__(context, request)
         self.SECTIONS_TO_RENDER = ['renderTransitions',
-                                   'renderDelete',
+                                   'renderOwnDelete',
                                    'renderDeleteWholeMeeting',
                                    'renderEdit',
                                    'renderActions', ]

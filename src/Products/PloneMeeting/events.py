@@ -230,3 +230,28 @@ def onAdviceRemoved(advice, event):
         logger = logging.getLogger('PloneMeeting')
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 
+
+def onAnnexRemoved(annex, event):
+    '''When an annex is removed, we need to update item (parent) annexIndex.'''
+    # bypass this if we are actually removing the 'Plone Site'
+    if event.object.meta_type == 'Plone Site':
+        return
+
+    item = annex.getParent()
+    IAnnexable(item).updateAnnexIndex(annex, removeAnnex=True)
+    item.updateHistory('delete',
+                       annex,
+                       decisionRelated=annex.findRelatedTo() == 'item_decision' and True or False)
+    if item.willInvalidateAdvices():
+        item.updateAdvices(invalidate=True)
+
+
+def onItemRemoved(item, event):
+    '''When an item is removed, if it is linked to a meeting, warn it.'''
+    # bypass this if we are actually removing the 'Plone Site'
+    if event.object.meta_type == 'Plone Site':
+        return
+
+    # if the item is linked to a meeting, remove the item from this meeting
+    if item.hasMeeting():
+        item.getMeeting().removeItem(item)

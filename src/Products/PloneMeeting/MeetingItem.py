@@ -61,7 +61,7 @@ from Products.PloneMeeting.utils import \
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
-
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 # PloneMeetingError-related constants -----------------------------------------
 ITEM_REF_ERROR = 'There was an error in the TAL expression for defining the ' \
     'format of an item reference. Please check this in your meeting config. ' \
@@ -2144,13 +2144,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             logger.warn(REC_ITEM_ERROR % (item.id,
                                           WRONG_TRANSITION % lastTransition))
             sendMail(None, item, 'recurringItemBadTransition')
-            # We do not use delete_givenuid here but removeGivenObject
+            # We do not use delete_givenuid here but unrestrictedRemoveGivenObject
             # that act as an unrestricted method because the item could be
             # not accessible by the MeetingManager.  In the case for example
             # where a recurring item is created with a proposingGroup the
             # MeetingManager is not in as a creator...
             # we must be sure that the item is removed in every case.
-            item.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
+            unrestrictedRemoveGivenObject(item)
             return True
         else:
             wfTool = getToolByName(item, 'portal_workflow')
@@ -2189,7 +2189,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     item.acl_users.portal_role_manager.removeRoleFromPrincipal('Manager', member.getId())
                 logger.warn(REC_ITEM_ERROR % (item.id, str(wfe)))
                 sendMail(None, item, 'recurringItemWorkflowError')
-                item.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(item)
+                unrestrictedRemoveGivenObject(item)
                 return True
 
     security.declarePublic('mayBeLinkedToTasks')
@@ -3507,16 +3507,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             event.update(kwargs)
             # Add the event to item's history
             self.itemHistory.append(event)
-
-    security.declareProtected('Delete objects', 'removeAllAnnexes')
-    def removeAllAnnexes(self):
-        '''Removes all annexes linked to this item.'''
-        # We can use manage_delObjects because the container is a MeetingItem.
-        # As much as possible, use delete_givenuid.
-        for annex in self.objectValues('MeetingFile'):
-            id = annex.getId()
-            self.manage_delObjects([id])
-            logger.info('Annex at %s/%s deleted' % (self.absolute_url_path(), id))
 
     security.declareProtected('Modify portal content', 'updateLocalRoles')
     def updateLocalRoles(self):

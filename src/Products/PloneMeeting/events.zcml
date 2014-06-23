@@ -8,13 +8,21 @@
                    zope.container.interfaces.IObjectAddedEvent"
               handler=".events.onItemAdded"/>
 
-  <subscriber for=".interfaces.IMeeting
-                   zope.container.interfaces.IObjectAddedEvent"
-              handler=".events.onMeetingAdded"/>
+  <subscriber for=".interfaces.IMeetingItem
+                   zope.container.interfaces.IObjectRemovedEvent"
+              handler=".events.onItemRemoved"/>
+
+  <subscriber for=".interfaces.IMeetingItem
+                   zope.lifecycleevent.ObjectMovedEvent"
+              handler=".events.onItemMoved" />
 
   <subscriber for=".interfaces.IMeetingItem
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onItemTransition"/>
+
+  <subscriber for=".interfaces.IMeeting
+                   zope.container.interfaces.IObjectAddedEvent"
+              handler=".events.onMeetingAdded"/>
 
   <subscriber for=".interfaces.IMeeting
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
@@ -46,26 +54,22 @@
               handler=".events.onAdviceRemoved"/>
 
   <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
-  <subscriber
-    for=".interfaces.IMeetingFile
-         Products.Archetypes.interfaces.IObjectInitializedEvent"
-    handler=".MeetingFile.convertToImages" />
+  <subscriber for=".interfaces.IMeetingFile
+                   Products.Archetypes.interfaces.IObjectInitializedEvent"
+              handler=".MeetingFile.convertToImages" />
 
   <!-- when an item is duplicated, convert annexes if necessary -->
-  <subscriber
-    for=".interfaces.IMeetingFile
-         OFS.interfaces.IObjectClonedEvent"
-    handler=".MeetingFile.prepareClonedAnnexForConversion" />
-
-  <subscriber
-    for=".interfaces.IMeetingItem
-         zope.lifecycleevent.ObjectMovedEvent"
-    handler=".events.onItemMoved" />
+  <subscriber for=".interfaces.IMeetingFile
+                   OFS.interfaces.IObjectClonedEvent"
+              handler=".MeetingFile.prepareClonedAnnexForConversion" />
 
   <!-- when collective.documentviewer conversion finished, check that everything is right -->
-  <subscriber
-    for=".interfaces.IMeetingFile
-         collective.documentviewer.interfaces.IConversionFinishedEvent"
-    handler=".MeetingFile.checkAfterConversion" />
+  <subscriber for=".interfaces.IMeetingFile
+                   collective.documentviewer.interfaces.IConversionFinishedEvent"
+              handler=".MeetingFile.checkAfterConversion" />
+
+  <subscriber for=".interfaces.IMeetingFile
+                   zope.container.interfaces.IObjectRemovedEvent"
+              handler=".events.onAnnexRemoved"/>
 
 </configure>

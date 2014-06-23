@@ -237,3 +237,26 @@ class AnnexableAdapter(object):
                 else:
                     res += annexes
         return res
+
+
+class ContentDeletableAdapter(object):
+    """
+      Manage the mayDelete for content types of PloneMeeting (Meeting, MeetingItem and MeetingFile).
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self):
+        '''See docstring in interfaces.py.'''
+        # Determine if the object can be deleted or not
+        if self.context.meta_type == 'MeetingFile':
+            parent = self.context.getParent()
+            mayDelete = True
+            if parent.meta_type == 'MeetingItem':
+                mayDelete = parent.wfConditions().mayDeleteAnnex(self.context)
+        else:
+            try:
+                mayDelete = self.context.wfConditions().mayDelete()
+            except AttributeError:
+                mayDelete = True
+        return mayDelete

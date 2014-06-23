@@ -27,6 +27,7 @@ from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
 from zope.annotation.interfaces import IAnnotations
 from Products.statusmessages.interfaces import IStatusMessage
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -105,10 +106,10 @@ class testWorkflows(PloneMeetingTestCase):
         pmManagerFolder = self.getMeetingFolder()
         item = self.create('MeetingItem')
         # BeforeDeleteException is the only exception catched by @@delete_givenuid because we manage it ourself
-        # so @@delete_givenuid add a relevant portal message but accessing removeGivenObject directly
+        # so @@delete_givenuid add a relevant portal message but accessing unrestrictedRremoveGivenObject directly
         # raises the BeforeDeleteException
         self.assertRaises(BeforeDeleteException,
-                          self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject,
+                          unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         # check that @@delete_givenuid add relevant portalMessage
         # first remove eventual statusmessages
@@ -128,7 +129,7 @@ class testWorkflows(PloneMeetingTestCase):
         meetingDate = DateTime('2008/06/12 08:00:00')
         meeting = self.create('Meeting', date=meetingDate)
         self.assertRaises(BeforeDeleteException,
-                          self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject,
+                          unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         self.failUnless(hasattr(pmManagerFolder, item.getId()))
         self.failUnless(hasattr(pmManagerFolder, meeting.getId()))
@@ -138,7 +139,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEquals(len(pmManagerFolder.objectValues()), 1)
         # Try to remove the folder again but with a contained meeting only
         self.assertRaises(BeforeDeleteException,
-                          self.portal.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject,
+                          unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         # Remove the meeting
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())

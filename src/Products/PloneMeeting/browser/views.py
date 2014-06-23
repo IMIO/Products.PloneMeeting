@@ -263,3 +263,25 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         """
         tool = getToolByName(self.context, 'portal_plonemeeting')
         tool._updateAllAdvices()
+
+
+class DeleteHistoryEvent(BrowserView):
+    """
+      Delete an event in an object's history.
+    """
+    def __call__(self, object_uid, event_time):
+        # Get the object
+        # try to get it from the portal_catalog
+        catalog_brains = self.context.portal_catalog(UID=object_uid)
+        # if not found, try to get it from the uid_catalog
+        if not catalog_brains:
+            catalog_brains = self.context.uid_catalog(UID=object_uid)
+        # if not found at all, raise
+        if not catalog_brains:
+            raise KeyError('The given uid could not be found!')
+        obj = catalog_brains[0].getObject()
+
+        # now get the event to delete and delete it...
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool.deleteHistoryEvent(obj, event_time)
+        return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])

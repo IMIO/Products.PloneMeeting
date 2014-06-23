@@ -134,7 +134,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_CloneItemWithContentNotRemovableByPermission(self):
         '''Clones a given item in parent item folder. Here we test that even
            if the contained objects are not removable, they are removed.
-           Now we use removeGivenObject to remove contained objects of
+           Now we use unrestrictedRemoveGivenObject to remove contained objects of
            copied items.'''
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

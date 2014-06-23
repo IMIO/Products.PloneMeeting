@@ -69,6 +69,7 @@ from Products.PloneMeeting.utils import getCustomAdapter, \
 from Products.PloneMeeting.model.adaptations import performModelAdaptations, performWorkflowAdaptations
 import logging
 logger = logging.getLogger('PloneMeeting')
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 
 # Some constants ---------------------------------------------------------------
 MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
@@ -1696,7 +1697,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if not copyAnnexes:
                 # Delete the annexes that have been copied.
                 for annex in newItem.objectValues('MeetingFile'):
-                    self.restrictedTraverse('@@pm_unrestricted_methods').removeGivenObject(annex)
+                    unrestrictedRemoveGivenObject(annex)
             else:
                 # Recreate the references to annexes: the references can NOT be kept
                 # on copy because it would be references to original annexes

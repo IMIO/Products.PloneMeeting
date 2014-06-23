@@ -49,15 +49,6 @@ function getEnclosingForm(elem) {
   while (node.nodeName != "FORM") { node = node.parentNode; }
   return node;
 }
-/* Function that shows a popup that asks the user if he really wants to delete
-   some object. If confirmed, the form where p_theElement lies is posted. */
-function confirmDeleteObject(theElement, objectType){
-    var msg = window.plonemeeting_delete_confirm_message;
-    if (objectType == 'wholeMeeting') {
-      msg = window.plonemeeting_delete_meeting_confirm_message;
-    }
-    if (confirm(msg)) { getEnclosingForm(theElement).submit(); }
-}
 
 /* The functions below are derived from Plone's dropdown.js for using a dropdown
    menu that is specific to the block of icons showing annexes. */

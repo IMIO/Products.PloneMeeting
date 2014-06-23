@@ -26,11 +26,19 @@
         tal:attributes="class python: odd and 'even' or 'odd'" valign="top">
       <td tal:condition="isDataChange">
         <i i18n:translate="data_change" i18n:domain="PloneMeeting"></i>
-        <img tal:define="member context/@@plone_portal_state/member;
-                         portal_url context/@@plone_portal_state/portal_url;"
-             tal:condition="python: member.has_role('Manager')" style="cursor:pointer"
-             tal:attributes="src string:$portal_url/delete_icon.png;
-                             onClick python: 'deleteEvent(\'%s\', \'%s\')' % (context.UID(), event['time'])"/>
+        <form name="deleteEventForm"
+              action="delete_history_event"
+              tal:define="member context/@@plone_portal_state/member;
+                          portal_url context/@@plone_portal_state/portal_url;"
+              tal:condition="python: member.has_role('Manager')"
+              tal:attributes="action string:${context/absolute_url}/delete_history_event">
+            <input type="hidden" name="object_uid" tal:attributes="value context/UID" />
+            <input type="hidden" name="event_time" tal:attributes="value event/time" />
+            <tal:comment replace="nothing">Icon</tal:comment>
+            <img i18n:attributes="title" title="Delete"
+                 tal:attributes="src string: $portal_url/delete_icon.png"
+                 onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
+        </form>
       </td>
       <td class="#"
           tal:condition="not: isDataChange"

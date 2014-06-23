@@ -388,13 +388,13 @@ document.location.reload(true);
   content type than Item or Meeting.
 </tal:comment>
 <div metal:define-macro="showTransitions" i18n:domain="PloneMeeting">
-    <tal:actions replace="structure python: context.restrictedTraverse('@@actions_panel').render(useIcons=False,
-                                                                                                 showTransitions=True,
-                                                                                                 appendTypeNameToTransitionLabel=True,
-                                                                                                 showArrows=False,
-                                                                                                 showEdit=False,
-                                                                                                 showDelete=False,
-                                                                                                 showActions=False,)" />
+    <tal:actions replace="structure python: context.restrictedTraverse('@@actions_panel')(useIcons=False,
+                                                                                          showTransitions=True,
+                                                                                          appendTypeNameToTransitionLabel=True,
+                                                                                          showArrows=False,
+                                                                                          showEdit=False,
+                                                                                          showDelete=False,
+                                                                                          showActions=False,)" />
     <tal:back define="parent context/getParentNode;
                       parentIsTool python: parent.meta_type == 'ToolPloneMeeting'">
       <div class="pm_back_to_tool_link" tal:condition="python: parentIsTool or (parent.getParentNode().meta_type == 'MeetingConfig')">
