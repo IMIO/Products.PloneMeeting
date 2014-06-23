@@ -233,7 +233,7 @@
        </td>
        <td tal:content="annex/getObjSize"></td>
        <td tal:condition="python:member.has_permission('Delete objects', annex)">
-           <tal:actions replace="structure python: annex.restrictedTraverse('@@actions_panel').render(showIcons=True)" />
+           <tal:actions replace="structure python: annex.restrictedTraverse('@@actions_panel')(showIcons=True)" />
        </td>
        </span>
      </tr>
