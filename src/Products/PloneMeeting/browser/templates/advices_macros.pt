@@ -120,12 +120,12 @@
                     </td>
                     <td align="right" width="20px" class="noPadding">
                       <form action="deleteAdvice" name="deleteAdvice" tal:attributes="action python: meetingItem.absolute_url() + '/@@delete_givenuid'">
-                        <input type="hidden" value="#" name="selected_uid" tal:attributes="value advice/advice_uid">
+                        <input type="hidden" value="#" name="object_uid" tal:attributes="value advice/advice_uid">
                         <img style="cursor:pointer"
                              tal:attributes="src string:$portal_url/delete_icon.png;"
                              i18n:attributes="title"
                              title="Delete advice"
-                             onclick="javascript:confirmDeleteObject(this)" />
+                             onclick="javascript:confirmDeleteObject(this, 'delete_confirm_message')" />
                       </form>
                     </td>
                   </tr>
