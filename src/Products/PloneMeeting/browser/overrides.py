@@ -5,6 +5,7 @@ from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 
 from imio.actionspanel.browser.views import ActionsPanelView
+from imio.actionspanel.browser.views import DeleteGivenUidView
 
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
@@ -304,3 +305,19 @@ class Utils(BrowserView):
             nvalues.append(vocab_value)
         value = ', '.join(nvalues)
         return value
+
+
+class PMDeleteGivenUidView(DeleteGivenUidView):
+    '''Redefine the _computeBackURL.'''
+
+    def _computeBackURL(self):
+        '''Compute exact back url because as the parent as a view that does
+           a redirection also, we loose portal_messages...  So here, we compute the
+           url the view of the parent would redirect to...
+        '''
+        mc = self.context.portal_plonemeeting.getMeetingConfig(self.context)
+        # if we are outside PloneMeeting, then use default DeleteGivenUidView behaviour
+        if not mc:
+            return super(PMDeleteGivenUidView, self)._computeBackURL()
+        app = self.context.portal_plonemeeting.getPloneMeetingFolder(mc.id)
+        return app.restrictedTraverse('@@meetingfolder_redirect_view').getFolderRedirectUrl()

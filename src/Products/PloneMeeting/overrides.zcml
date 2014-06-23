@@ -75,6 +75,14 @@
         permission="plone.app.controlpanel.Overview"
         />
 
+    <!-- Override the delete_givenuid view of imio.actionspanel -->
+    <browser:page
+        for="*"
+        name="delete_givenuid"
+        class=".browser.overrides.PMDeleteGivenUidView"
+        layer="imio.actionspanel.interfaces.IActionsPanelLayer"
+        permission="zope2.View" />
+
     <configure package="imio.actionspanel">
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingItem"
@@ -82,7 +90,6 @@
             class="Products.PloneMeeting.browser.overrides.MeetingItemActionsPanelView"
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            allowed_attributes="render"
             permission="zope2.View" />
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeeting"
@@ -90,7 +97,6 @@
             class="Products.PloneMeeting.browser.overrides.MeetingActionsPanelView"
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            allowed_attributes="render"
             permission="zope2.View" />
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingFile"
@@ -98,7 +104,6 @@
             class="Products.PloneMeeting.browser.overrides.BaseActionsPanelView"
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            allowed_attributes="render"
             permission="zope2.View" />
     </configure>
 
