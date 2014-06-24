@@ -1455,18 +1455,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Information about each sub-folder that will be created within a meeting
     # config.
     subFoldersInfo = {
-        TOOL_FOLDER_CATEGORIES: ('Categories', 'MeetingCategory', 'categories',
+        TOOL_FOLDER_CATEGORIES: ('Categories', ['MeetingCategory', ], 'categories',
                                  'CategoryDescriptor'),
-        TOOL_FOLDER_CLASSIFIERS: ('Classifiers', 'MeetingCategory',
+        TOOL_FOLDER_CLASSIFIERS: ('Classifiers', ['MeetingCategory', ],
                                   'classifiers', 'CategoryDescriptor'),
-        TOOL_FOLDER_RECURRING_ITEMS: ('Recurring items', 'itemType', None, ''),
-        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', 'itemType', None, ''),
+        TOOL_FOLDER_RECURRING_ITEMS: ('Recurring items', ['itemType', ], None, ''),
+        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', ['Folder', 'itemType'], None, ''),
         'topics': ('Topics', 'Topic', None, ''),
-        TOOL_FOLDER_FILE_TYPES: ('Meeting file types', 'MeetingFileType',
+        TOOL_FOLDER_FILE_TYPES: ('Meeting file types', ['MeetingFileType', ],
                                  'meetingFileTypes', 'MeetingFileTypeDescriptor'),
-        TOOL_FOLDER_POD_TEMPLATES: ('Document templates', 'PodTemplate',
+        TOOL_FOLDER_POD_TEMPLATES: ('Document templates', ['PodTemplate', ],
                                     'podTemplates', 'PodTemplateDescriptor'),
-        TOOL_FOLDER_MEETING_USERS: ('Meeting users', 'MeetingUser',
+        TOOL_FOLDER_MEETING_USERS: ('Meeting users', ['MeetingUser', ],
                                     'meetingUsers', 'MeetingUserDescriptor')
     }
 
@@ -2778,14 +2778,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             folder = getattr(self, folderId)
             folder.setTitle(folderInfo[0])
             folder.setConstrainTypesMode(1)
-            allowedType = folderInfo[1]
-            if allowedType == 'itemType':
-                allowedType = self.getItemTypeName()
-            folder.setLocallyAllowedTypes([allowedType])
-            folder.setImmediatelyAddableTypes([allowedType])
+            allowedTypes = folderInfo[1]
+            if 'itemType' in allowedTypes:
+                allowedTypes.remove('itemType')
+                allowedTypes.append(self.getItemTypeName())
+            folder.setLocallyAllowedTypes(allowedTypes)
+            folder.setImmediatelyAddableTypes(allowedTypes)
             # call processForm passing dummy values so existing values are not touched
             folder.processForm(values={'dummy': None})
-
 
     def _manageEnableAnnexToPrint(self):
         '''

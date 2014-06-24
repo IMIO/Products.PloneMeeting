@@ -59,6 +59,7 @@ indexInfo = {
              # MeetingUser-related indexes
              'getConfigId': 'FieldIndex',
              'indexUsages': 'KeywordIndex',
+             'isDefinedInTool': 'BooleanIndex',
             }
 # Metadata to create in portal_catalog, it has to correspond to an index in indexInfo
 metadataInfo = ('getTitle2', 'getDate', 'getProposingGroup', )

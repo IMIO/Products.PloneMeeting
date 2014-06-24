@@ -398,7 +398,7 @@ class testMeeting(PloneMeetingTestCase):
                         ({'meeting_config': '%s' % cfg2Id,
                           'trigger_workflow_transitions_until': '__nothing__'}, ))
         self.changeUser('pmManager')
-        self._removeRecurringItems(self.meetingConfig)
+        self._removeItemsDefinedInTool(self.meetingConfig)
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
         data = ({'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
                 {'otherMeetingConfigsClonableTo': ()},
@@ -433,7 +433,7 @@ class testMeeting(PloneMeetingTestCase):
                         ({'meeting_config': '%s' % cfg1Id,
                           'trigger_workflow_transitions_until': '__nothing__'}, ))
         self.changeUser('pmManager')
-        self._removeRecurringItems(self.meetingConfig)
+        self._removeItemsDefinedInTool(self.meetingConfig)
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
         data = ({'otherMeetingConfigsClonableTo': ('%s' % cfg1Id, ),
                  'category': 'events'},

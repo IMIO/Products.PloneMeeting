@@ -330,16 +330,22 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         thecache = cache_chooser(methodId)
         thecache.ramcache.invalidate(methodId)
 
-    def _removeRecurringItems(self, meetingConfig):
+    def _removeItemsDefinedInTool(self, meetingConfig):
         """
-          Helper method for removing every recurring items of a given p_meetingConfig
+          Helper method for removing every recurring items and item templates of a given p_meetingConfig
         """
         currentUser = self.portal.portal_membership.getAuthenticatedMember().getId()
         self.changeUser('admin')
+        # remove recurring items
         recurringItemsIds = []
         for item in meetingConfig.recurringitems.objectValues():
             recurringItemsIds.append(item.getId())
         meetingConfig.recurringitems.manage_delObjects(ids=recurringItemsIds)
+        # remove item templates
+        itemTemplateIds = []
+        for item in meetingConfig.itemtemplates.objectValues():
+            itemTemplateIds.append(item.getId())
+        meetingConfig.itemtemplates.manage_delObjects(ids=itemTemplateIds)
         self.changeUser(currentUser)
 
     def _turnUserIntoPrereviewer(self, member):

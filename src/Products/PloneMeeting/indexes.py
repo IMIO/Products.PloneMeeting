@@ -7,6 +7,8 @@
 # GNU General Public License (GPL)
 #
 
+from OFS.interfaces import IItem
+
 from plone.indexer import indexer
 
 from Products.CMFCore.utils import getToolByName
@@ -49,6 +51,15 @@ def getDeliberation(obj):
       Make sure to use 'text/plain' version of getDeliberation field
     """
     return obj.getDeliberation(mimetype='text/plain')
+
+
+@indexer(IItem)
+def isDefinedInTool(obj):
+    """
+      Do elements defined in the tool visible by catalog searches only
+      when an admin is in the tool...
+    """
+    return ('portal_plonemeeting' in obj.absolute_url())
 
 
 @indexer(IMeetingItem)

@@ -1216,7 +1216,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                                           'reverse': '0'}, ))
         # remove recurring items if any as we are playing with item number here under
-        self._removeRecurringItems(self.meetingConfig)
+        self._removeItemsDefinedInTool(self.meetingConfig)
         # a user create an item and we insert it into a meeting
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

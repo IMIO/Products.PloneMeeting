@@ -160,10 +160,8 @@ class testPerformances(PloneMeetingTestCase):
             for ploneGroup in mGroup.getPloneGroups():
                 for memberId in ploneGroup.getGroupMemberIds():
                     ploneGroup.removeMember(memberId)
-        ids_to_remove = []
-        for item in self.meetingConfig.recurringitems.objectValues():
-            ids_to_remove.append(item.getId())
-        self.meetingConfig.recurringitems.manage_delObjects(ids=ids_to_remove)
+        # remove items defined in the tool
+        self._removeItemsDefinedInTool()
 
         ids_to_remove = []
         for group in self.tool.objectValues('MeetingGroup'):
@@ -286,13 +284,10 @@ class testPerformances(PloneMeetingTestCase):
 
     def _setupForMeetingCategories(self, number_of_categories, withUsingGroups=False):
         self.changeUser('admin')
+        # remove items in the tool
+        self._removeItemsDefinedInTool()
         # remove existing categoriesgroups and add our own
         # make what necessary for categories to be removable...
-        ids_to_remove = []
-        for item in self.meetingConfig.recurringitems.objectValues():
-            ids_to_remove.append(item.getId())
-        self.meetingConfig.recurringitems.manage_delObjects(ids=ids_to_remove)
-
         ids_to_remove = []
         for category in self.meetingConfig.categories.objectValues('MeetingCategory'):
             ids_to_remove.append(category.getId())

@@ -180,6 +180,9 @@ class Migrate_To_3_2_1(Migrator):
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
+        # items in the configuration are now indexed, so clear and rebuild
+        # by default, only portal_catalog is updated by refreshDatabase
+        self.refreshDatabase()
         self.finish()
 
 

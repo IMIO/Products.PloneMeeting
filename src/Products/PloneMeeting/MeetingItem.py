@@ -3447,24 +3447,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         logger.info('Item at %s edited by "%s".' %
                     (self.absolute_url_path(), userId))
 
-    security.declareProtected(ModifyPortalContent, 'indexObject')
-    def indexObject(self):
-        """
-          Override so items defined in the tool are not indexed.
-        """
-        if self.isDefinedInTool():
-            return
-        CatalogMultiplex.indexObject(self)
-
-    security.declareProtected(ModifyPortalContent, 'reindexObject')
-    def reindexObject(self, idxs=None):
-        """
-          Override so items defined in the tool are not indexed.
-        """
-        if self.isDefinedInTool():
-            return
-        CatalogMultiplex.reindexObject(self, idxs)
-
     security.declarePublic('updateHistory')
     def updateHistory(self, action, subObj, **kwargs):
         '''Adds an event to the item history. p_action may be 'add' or 'delete'.
