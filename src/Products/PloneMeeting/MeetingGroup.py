@@ -293,7 +293,8 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             mgId = self.getId()
             # In the configuration
             for cfg in self.portal_plonemeeting.objectValues('MeetingConfig'):
-                for item in cfg.recurringitems.objectValues('MeetingItem'):
+                for item in (cfg.recurringitems.objectValues('MeetingItem') +
+                             cfg.itemtemplates.objectValues('MeetingItem')):
                     if item.getProposingGroup() == mgId or \
                        mgId in item.getAssociatedGroups():
                         raise BeforeDeleteException(

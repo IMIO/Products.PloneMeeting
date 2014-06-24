@@ -160,7 +160,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # 4) removing a used group in the configuration fails too
         # remove item because it uses 'vendors'
         item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
-        self.assertEquals(self.meetingConfig.recurringitems.template2.getProposingGroup(), 'vendors')
+        self.assertEquals(self.meetingConfig.itemtemplates.template2.getProposingGroup(), 'vendors')
         # then fails because corresponding Plone groups are not empty...
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['vendors', ])
@@ -177,10 +177,10 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message,
                           translate('can_not_delete_meetinggroup_config_meetingitem',
                                     domain='plone',
-                                    mapping={'url': self.meetingConfig.recurringitems.template2.absolute_url()},
+                                    mapping={'url': self.meetingConfig.itemtemplates.template2.absolute_url()},
                                     context=self.portal.REQUEST))
         # so remove the item in the config (it could work by changing the proposingGroup too...)
-        self.meetingConfig.recurringitems.manage_delObjects(['template2', ])
+        self.meetingConfig.itemtemplates.manage_delObjects(['template2', ])
         # now it works...
         self.tool.manage_delObjects(['vendors', ])
         # the group is actually removed
@@ -194,7 +194,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # delete the 'vendors' group so we are sure that methods and conditions
         # we need to remove every items using the 'vendors' group before being able to remove it...
         self.changeUser('admin')
-        self.meetingConfig.recurringitems.manage_delObjects(['template2', ])
+        self.meetingConfig.itemtemplates.manage_delObjects(['template2', ])
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', ))
         self.meetingConfig2.setSelectableCopyGroups(('developers_reviewers', ))
