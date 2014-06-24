@@ -1460,6 +1460,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         TOOL_FOLDER_CLASSIFIERS: ('Classifiers', 'MeetingCategory',
                                   'classifiers', 'CategoryDescriptor'),
         TOOL_FOLDER_RECURRING_ITEMS: ('Recurring items', 'itemType', None, ''),
+        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', 'itemType', None, ''),
         'topics': ('Topics', 'Topic', None, ''),
         TOOL_FOLDER_FILE_TYPES: ('Meeting file types', 'MeetingFileType',
                                  'meetingFileTypes', 'MeetingFileTypeDescriptor'),
@@ -2720,18 +2721,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Register the portal types that are specific to this meeting config.
         self.registerPortalTypes()
         # Create the subfolders
-        for folderId, folderInfo in self.subFoldersInfo.iteritems():
-            self.invokeFactory('Folder', folderId)
-            folder = getattr(self, folderId)
-            folder.setTitle(folderInfo[0])
-            folder.setConstrainTypesMode(1)
-            allowedType = folderInfo[1]
-            if allowedType == 'itemType':
-                allowedType = self.getItemTypeName()
-            folder.setLocallyAllowedTypes([allowedType])
-            folder.setImmediatelyAddableTypes([allowedType])
-            # call processForm passing dummy values so existing values are not touched
-            folder.processForm(values={'dummy': None})
+        self._createSubFolders()
         # Set a property allowing to know in which MeetingConfig we are
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
         # Create the topics related to this meeting config
@@ -2773,6 +2763,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
         self._manageEnableAnnexToPrint()
         self.adapted().onEdit(isCreated=False)  # Call sub-product code if any
+
+    def _createSubFolders(self):
+        '''
+          Create necessary subfolders for the MeetingConfig.
+        '''
+        for folderId, folderInfo in self.subFoldersInfo.iteritems():
+            # if a folder already exists, we continue
+            # this is done because this method is used as helper
+            # method during migrations (while adding an extra new folder)
+            if folderId in self.objectIds('ATFolder'):
+                continue
+            self.invokeFactory('Folder', folderId)
+            folder = getattr(self, folderId)
+            folder.setTitle(folderInfo[0])
+            folder.setConstrainTypesMode(1)
+            allowedType = folderInfo[1]
+            if allowedType == 'itemType':
+                allowedType = self.getItemTypeName()
+            folder.setLocallyAllowedTypes([allowedType])
+            folder.setImmediatelyAddableTypes([allowedType])
+            # call processForm passing dummy values so existing values are not touched
+            folder.processForm(values={'dummy': None})
+
 
     def _manageEnableAnnexToPrint(self):
         '''
@@ -3647,10 +3660,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         cat.processForm(values={'dummy': None})
         return cat
 
-    security.declarePrivate('addRecurringItem')
-    def addRecurringItem(self, descr):
-        '''Adds a recurring item from a RecurringItemDescriptor.'''
-        folder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
+    security.declarePrivate('addItemToConfig')
+    def addItemToConfig(self, descr, isRecurring=True):
+        '''Adds a recurring item or item template
+           from a RecurringItemDescriptor or a ItemTemplateDescriptor
+           depending on p_isRecurring.'''
+        if isRecurring:
+            folder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
+        else:
+            folder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES)
         data = descr.__dict__
         folder.invokeFactory(self.getItemTypeName(), **data)
         item = getattr(folder, descr.id)
@@ -3744,10 +3762,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def getItems(self, usage='as_recurring_item'):
         '''Gets the items defined in the configuration, for some p_usage(s).'''
         res = []
-        itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
+        if usage == 'as_recurring_item':
+            itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
+        else:
+            itemsFolder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES)
         for item in itemsFolder.objectValues('MeetingItem'):
-            if usage in item.getUsages():
-                res.append(item)
+            res.append(item)
         return res
 
     security.declarePrivate('createUser')

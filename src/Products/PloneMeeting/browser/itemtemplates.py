@@ -1,6 +1,6 @@
 from Products.Five.browser import BrowserView
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
+from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FOR_TEMPLATE
 
@@ -49,7 +49,7 @@ class ItemTemplateView(BrowserView):
         itemId = rq.get('templateItem', None)
         if not itemId:
             return None
-        itemsFolder = getattr(self.meetingConfig, TOOL_FOLDER_RECURRING_ITEMS)
+        itemsFolder = getattr(self.meetingConfig, TOOL_FOLDER_ITEM_TEMPLATES)
         templateItem = getattr(itemsFolder, itemId, None)
         if not templateItem:
             return None

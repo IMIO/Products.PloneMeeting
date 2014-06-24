@@ -13,6 +13,27 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_2_1(Migrator):
 
+    def _moveItemTemplatesToOwnFolder(self):
+        '''Item templates used to be in the recurringitems folder,
+           now item templates are in the itemtemplates folder of the MeetingConfig.
+           Before, we needed the MeetingItem.usages field to know if an item was
+           a recurring item or an item template, this field disappeared now.'''
+        logger.info('Moving item templates to their own folder for each MeetingConfig...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # already migrated?
+            if 'itemtemplates' in cfg.objectIds('Folder'):
+                return
+            # create the 'itemtemplates' folder for the MeetingConfig
+            cfg._createSubFolders()
+            item_ids_to_move = []
+            for item in cfg.recurringitems.objectValues('MeetingItem'):
+                if 'as_template_item' in item.usages:
+                    item_ids_to_move.append(item.getId())
+                # remove the 'usages' attribute that is no more used
+                delattr(item, 'usages')
+            cuttedData = cfg.recurringitems.manage_cutObjects(item_ids_to_move)
+            cfg.itemtemplates.manage_pasteObjects(cuttedData)
+
     def _updateMeetingConfigsToCloneToAttributeOnMeetingConfigs(self):
         '''MeetingConfig.meetingConfigsToCloneTo is now a DataGridField, move to it.'''
         logger.info('Updating every MeetingConfig.meetingConfigsToCloneTo attributes...')
@@ -145,6 +166,7 @@ class Migrate_To_3_2_1(Migrator):
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
+        self._moveItemTemplatesToOwnFolder()
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
         self._updateInsertingMethodsAttributeOnMeetingConfigs()
         self._updateAnnexesMeetingFileType()
@@ -165,17 +187,18 @@ class Migrate_To_3_2_1(Migrator):
 def migrate(context):
     '''This migration function:
 
-       1) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
-       2) Update every MeetingConfig.sortingMethodOnAddItem attribute
+       1) Move item templates in the MeetingConfig to their own folder (itemtemplates);
+       2) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
+       3) Update every MeetingConfig.sortingMethodOnAddItem attribute
           (moved to MeetingConfig.insertingMethodOnAddItem DataGridField);
-       3) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
-       4) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
-       5) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
-       6) Update advices to store 'comment' as utf-8 and not as unicode;
-       7) Initialize new field MeetingItem.completenessComment;
-       8) Update 'Add File' permission on each meetingConfig folder;
-       9) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
-       10) Reinstall PloneMeeting.
+       4) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
+       5) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
+       6) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
+       7) Update advices to store 'comment' as utf-8 and not as unicode;
+       8) Initialize new field MeetingItem.completenessComment;
+       9) Update 'Add File' permission on each meetingConfig folder;
+       10) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
+       11) Reinstall PloneMeeting.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------

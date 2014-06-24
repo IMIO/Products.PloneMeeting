@@ -378,21 +378,21 @@
 
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
     <tal:itemInConfig condition="context/isDefinedInTool">
-      <b><span i18n:translate="PloneMeeting_label_usages" />&nbsp:</b>
-      <ul><li tal:repeat="usage context/getUsages" tal:content="usage" i18n:translate=""></li></ul><br />
 
-      <tal:templateUsingGroups condition="python: 'as_template_item' in context.getUsages()">
+      <tal:templateUsingGroups condition="python: context.getParentNode().getId() == 'itemtemplates'">
         <b><span i18n:translate="PloneMeeting_label_templateUsingGroups" />&nbsp:</b><br />
         <span metal:use-macro="python: here.widget('templateUsingGroups', mode='view')" /><p>&nbsp;</p>
+        <a tal:define="config python: context.getParentNode().getParentNode()"
+           tal:attributes="href python: config.absolute_url() + '?pageName=data#itemTemplates'" i18n:translate="back"></a>
       </tal:templateUsingGroups>
 
-      <tal:transitionsForRecurring condition="python: 'as_recurring_item' in context.getUsages()">
+      <tal:transitionsForRecurring condition="python: context.getParentNode().getId() == 'recurringitems'">
         <b><span i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe" />&nbsp:</b><br />
         <span metal:use-macro="python: here.widget('meetingTransitionInsertingMe', mode='view')" /><p>&nbsp;</p>
+        <a tal:define="config python: context.getParentNode().getParentNode()"
+           tal:attributes="href python: config.absolute_url() + '?pageName=data#recItems'" i18n:translate="back"></a>
       </tal:transitionsForRecurring>
 
-      <a tal:define="config python: context.getParentNode().getParentNode()"
-         tal:attributes="href python: config.absolute_url() + '?pageName=data#recItems'" i18n:translate="back"></a>
     </tal:itemInConfig>
 
     <tal:comment replace="nothing">Tasks</tal:comment>

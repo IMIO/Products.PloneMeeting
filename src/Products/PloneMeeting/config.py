@@ -160,6 +160,7 @@ TOOL_ID = "portal_plonemeeting"
 TOOL_FOLDER_CATEGORIES = 'categories'
 TOOL_FOLDER_CLASSIFIERS = 'classifiers'
 TOOL_FOLDER_RECURRING_ITEMS = "recurringitems"
+TOOL_FOLDER_ITEM_TEMPLATES = "itemtemplates"
 TOOL_FOLDER_FILE_TYPES = 'meetingfiletypes'
 TOOL_FOLDER_POD_TEMPLATES = 'podtemplates'
 TOOL_FOLDER_MEETING_USERS = 'meetingusers'

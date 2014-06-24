@@ -172,15 +172,14 @@ recItem2 = RecurringItemDescriptor(
     '', category='developers', description='<p>This is the second recurring item.</p>',
     decision='Second recurring item approved')
 # item templates
-template1 = RecurringItemDescriptor(
+template1 = ItemTemplateDescriptor(
     'template1', 'Template1',
     '', category='developers', description='<p>This is template1.</p>',
-    decision='<p>Template1 decision</p>', usages=['as_template_item', ])
-template2 = RecurringItemDescriptor(
+    decision='<p>Template1 decision</p>')
+template2 = ItemTemplateDescriptor(
     'template2', 'Template2',
     'vendors', category='developers', description='<p>This is template2.</p>',
-    decision='<p>Template1 decision</p>', usages=['as_template_item', ],
-    templateUsingGroups=['vendors', ])
+    decision='<p>Template1 decision</p>', templateUsingGroups=['vendors', ])
 
 # File types
 overheadAnalysis = MeetingFileTypeDescriptor(
@@ -210,7 +209,8 @@ meetingPma.itemAdviceViewStates = ['presented', ]
 meetingPma.transitionReinitializingDelays = 'backToItemCreated'
 meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism', 'User interface'))
 meetingPma.sortAllItemTags = True
-meetingPma.recurringItems = (recItem1, recItem2, template1, template2, )
+meetingPma.recurringItems = (recItem1, recItem2, )
+meetingPma.itemTemplates = (template1, template2, )
 # use same values as meetingPga for powerObserversStates
 meetingPma.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
 meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')

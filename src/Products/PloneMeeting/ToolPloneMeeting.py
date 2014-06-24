@@ -786,7 +786,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for descr in configData.classifiers:
             cfg.addCategory(descr, True)
         for descr in configData.recurringItems:
-            cfg.addRecurringItem(descr)
+            cfg.addItemToConfig(descr)
+        for descr in configData.itemTemplates:
+            cfg.addItemToConfig(descr, isRecurring=False)
         for descr in configData.meetingFileTypes:
             cfg.addFileType(descr, source)
         for descr in configData.podTemplates:

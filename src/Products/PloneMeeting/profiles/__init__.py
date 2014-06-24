@@ -66,8 +66,7 @@ class RecurringItemDescriptor(Descriptor):
 
     def __init__(self, id, title, proposingGroup, description='', category='',
                  associatedGroups=(), decision='', itemKeywords='', itemTags=(),
-                 meetingTransitionInsertingMe='_init_',
-                 usages=['as_recurring_item'], templateUsingGroups=[]):
+                 meetingTransitionInsertingMe='_init_'):
         self.id = id
         self.setBilingual('title', title)
         # when usage is 'as_template_item', the proposingGroup can be empty ('')
@@ -78,8 +77,25 @@ class RecurringItemDescriptor(Descriptor):
         self.setBilingual('decision', decision)
         self.itemKeywords = itemKeywords
         self.itemTags = itemTags
-        self.usages = usages
         self.meetingTransitionInsertingMe = meetingTransitionInsertingMe
+
+
+class ItemTemplateDescriptor(Descriptor):
+    excludedFields = ['title']
+
+    def __init__(self, id, title, proposingGroup, description='', category='',
+                 associatedGroups=(), decision='', itemKeywords='', itemTags=(),
+                 templateUsingGroups=[]):
+        self.id = id
+        self.setBilingual('title', title)
+        # when usage is 'as_template_item', the proposingGroup can be empty ('')
+        self.proposingGroup = proposingGroup
+        self.setBilingual('description', description)
+        self.category = category
+        self.associatedGroups = associatedGroups
+        self.setBilingual('decision', decision)
+        self.itemKeywords = itemKeywords
+        self.itemTags = itemTags
         self.templateUsingGroups = templateUsingGroups
 
 
@@ -410,6 +426,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.categories = []  # ~[CategoryDescriptor]~
         self.classifiers = []  # ~[CategoryDescriptor]~
         self.recurringItems = []  # ~[RecurringItemDescriptor]~
+        self.itemTemplates = []  # ~[ItemTemplateDescriptor]~
         self.meetingFileTypes = []
 
         # Tasks-related parameters ---------------------------------------------

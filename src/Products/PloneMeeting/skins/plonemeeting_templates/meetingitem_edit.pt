@@ -149,9 +149,8 @@
       <tr valign="top">
       </tr>
       <tr valign="top">
-        <td width="33%"><metal:field use-macro="python:here.widget('usages', mode='edit')"/></td>
-        <td width="34%"><metal:field use-macro="python:here.widget('templateUsingGroups', mode='edit')"/></td>
-        <td width="33%"><metal:field use-macro="python:here.widget('meetingTransitionInsertingMe', mode='edit')"/></td>
+        <td><metal:field use-macro="python:here.widget('templateUsingGroups', mode='edit')"/></td>
+        <td><metal:field use-macro="python:here.widget('meetingTransitionInsertingMe', mode='edit')"/></td>
       </tr>
     </table>
     <metal:field use-macro="python:here.widget('itemAssembly', mode='edit')"/>

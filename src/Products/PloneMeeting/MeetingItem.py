@@ -759,24 +759,11 @@ schema = Schema((
         default_method="getDefaultToDiscuss",
     ),
     LinesField(
-        name='usages',
-        default=('as_recurring_item',),
-        widget=MultiSelectionWidget(
-            condition='python: here.isDefinedInTool()',
-            label='Usages',
-            label_msgid='PloneMeeting_label_usages',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=True,
-        multiValued=1,
-        vocabulary='listItemUsages',
-    ),
-    LinesField(
         name='templateUsingGroups',
         widget=MultiSelectionWidget(
             description="TemplateUsingGroups",
             description_msgid="template_using_groups_descr",
-            condition="python: here.isDefinedInTool()",
+            condition="python: here.isDefinedInTool() and here.getParentNode().getId() == 'itemtemplates'",
             label='Templateusinggroups',
             label_msgid='PloneMeeting_label_templateUsingGroups',
             i18n_domain='PloneMeeting',
@@ -788,7 +775,7 @@ schema = Schema((
     StringField(
         name='meetingTransitionInsertingMe',
         widget=SelectionWidget(
-            condition='python: here.isDefinedInTool()',
+            condition="python: here.isDefinedInTool() and here.getParentNode().getId() == 'recurringitems'",
             description="MeetingTransitionInsertingMe",
             description_msgid="meeting_transition_inserting_me_descr",
             label='Meetingtransitioninsertingme',
@@ -1123,8 +1110,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def validate_proposingGroup(self, value):
         '''If self.isDefinedInTool, the proposingGroup is mandatory if used
            as a recurring item.'''
-        usages = self.REQUEST.get('usages', [])
-        if 'as_recurring_item' in usages and not value:
+        if self.isDefinedInTool() and self.getParentNode().getId() == 'recurringitems' and not value:
             return translate('proposing_group_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_optionalAdvisers')
@@ -1686,17 +1672,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemAbsents(self):
         '''Not required anymore because field "itemAbsents" is never shown.'''
         return []
-
-    security.declarePublic('listItemUsages')
-    def listItemUsages(self):
-        '''If this item is defined as a special item in a meeting configuration,
-           this method returns the list of possible usages for the item.'''
-        d = 'PloneMeeting'
-        res = DisplayList((
-            ("as_recurring_item", translate('as_recurring_item', domain=d, context=self.REQUEST)),
-            ("as_template_item", translate('as_template_item', domain=d, context=self.REQUEST)),
-        ))
-        return res
 
     security.declarePublic('listPrivacyValues')
     def listPrivacyValues(self):
