@@ -43,13 +43,6 @@ function ploneMeetingSelectOnMouseOutItem(obj) {
   obj.className = obj.className.replace("ploneMeetingSelectItem ploneMeetingSelectItemUnselected", "ploneMeetingSelectItem");
 }
 
-function getEnclosingForm(elem) {
-  // Gets the form that surrounds the HTML p_elem.
-  var node = elem.parentNode;
-  while (node.nodeName != "FORM") { node = node.parentNode; }
-  return node;
-}
-
 /* The functions below are derived from Plone's dropdown.js for using a dropdown
    menu that is specific to the block of icons showing annexes. */
 function findParent(node, className) {
