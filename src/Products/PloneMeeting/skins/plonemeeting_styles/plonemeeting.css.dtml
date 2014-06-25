@@ -727,6 +727,15 @@ dl.searchResults cite {
     display: none;
 }
 
+/* hide some parts of the screen in the configuration of itemtemplates */
+body[class*="itemtemplates"] #plone-contentmenu-workflow,
+body[class*="itemtemplates"] a#plone-contentmenu-settings,
+body[class*="itemtemplates"] a.link-parent,
+body[class*="itemtemplates"] #viewlet-below-content-title,
+body[class*="itemtemplates"] .documentDescription {
+    display: none !important;
+}
+
 .overlay-history .pb-ajax > div {
     width: 97%;
 }
