@@ -1455,18 +1455,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Information about each sub-folder that will be created within a meeting
     # config.
     subFoldersInfo = {
-        TOOL_FOLDER_CATEGORIES: ('Categories', ['MeetingCategory', ], 'categories',
+        TOOL_FOLDER_CATEGORIES: ('Categories', ('MeetingCategory', ), 'categories',
                                  'CategoryDescriptor'),
-        TOOL_FOLDER_CLASSIFIERS: ('Classifiers', ['MeetingCategory', ],
+        TOOL_FOLDER_CLASSIFIERS: ('Classifiers', ('MeetingCategory', ),
                                   'classifiers', 'CategoryDescriptor'),
-        TOOL_FOLDER_RECURRING_ITEMS: ('Recurring items', ['itemType', ], None, ''),
-        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', ['Folder', 'itemType'], None, ''),
-        'topics': ('Topics', 'Topic', None, ''),
-        TOOL_FOLDER_FILE_TYPES: ('Meeting file types', ['MeetingFileType', ],
+        TOOL_FOLDER_RECURRING_ITEMS: ('Recurring items', ('itemType', ), None, ''),
+        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', ('Folder', 'itemType'), None, ''),
+        'topics': ('Topics', ('Topic', ), None, ''),
+        TOOL_FOLDER_FILE_TYPES: ('Meeting file types', ('MeetingFileType', ),
                                  'meetingFileTypes', 'MeetingFileTypeDescriptor'),
-        TOOL_FOLDER_POD_TEMPLATES: ('Document templates', ['PodTemplate', ],
+        TOOL_FOLDER_POD_TEMPLATES: ('Document templates', ('PodTemplate', ),
                                     'podTemplates', 'PodTemplateDescriptor'),
-        TOOL_FOLDER_MEETING_USERS: ('Meeting users', ['MeetingUser', ],
+        TOOL_FOLDER_MEETING_USERS: ('Meeting users', ('MeetingUser', ),
                                     'meetingUsers', 'MeetingUserDescriptor')
     }
 
@@ -2778,7 +2778,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             folder = getattr(self, folderId)
             folder.setTitle(folderInfo[0])
             folder.setConstrainTypesMode(1)
-            allowedTypes = folderInfo[1]
+            allowedTypes = list(folderInfo[1])
             if 'itemType' in allowedTypes:
                 allowedTypes.remove('itemType')
                 allowedTypes.append(self.getItemTypeName())
@@ -3099,6 +3099,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Topic params are not sufficient, use a specific method.
                 # keep topics defined paramaters
                 kwargs = {}
+                kwargs['isDefinedInTool'] = False
                 for criterion in topic.listSearchCriteria():
                     # Only take criterion with a defined value into account
                     criterionValue = criterion.value
@@ -3118,6 +3119,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 params = topic.buildQuery()
                 params['sort_on'] = sortKey
                 params['sort_order'] = sortOrder
+                params['isDefinedInTool'] = False
                 if filterKey:
                     params[filterKey] = prepareSearchValue(filterValue)
                 brains = self.portal_catalog(**params)

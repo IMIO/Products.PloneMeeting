@@ -72,6 +72,7 @@ class Searcher:
         res['portal_type'] = self.meetingConfig.getItemTypeName()
         res['created'] = {'query': dateInterval, 'range': 'minmax'}
         res['sort_on'] = self.sortKey or 'created'
+        res['isDefinedInTool'] = False
         if self.keywords:
             # What fields need to be queried?
             kTarget = self.searchParams.get('item_keywords_target', 'all')
