@@ -801,7 +801,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         if not 'hide_decisions_when_under_writing' in self.meetingConfig.listWorkflowAdaptations():
             return
         login(self.portal, 'admin')
-        self._removeRecurringItems(self.meetingConfig)
+        self._removeItemsDefinedInTool(self.meetingConfig)
         login(self.portal, 'pmManager')
         # check while the wfAdaptation is not activated
         self._hide_decisions_when_under_writing_inactive()

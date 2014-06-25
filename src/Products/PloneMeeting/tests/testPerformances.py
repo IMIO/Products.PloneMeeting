@@ -161,7 +161,8 @@ class testPerformances(PloneMeetingTestCase):
                 for memberId in ploneGroup.getGroupMemberIds():
                     ploneGroup.removeMember(memberId)
         # remove items defined in the tool
-        self._removeItemsDefinedInTool()
+        self._removeItemsDefinedInTool(self.meetingConfig)
+        self._removeItemsDefinedInTool(self.meetingConfig2)
 
         ids_to_remove = []
         for group in self.tool.objectValues('MeetingGroup'):
@@ -285,7 +286,7 @@ class testPerformances(PloneMeetingTestCase):
     def _setupForMeetingCategories(self, number_of_categories, withUsingGroups=False):
         self.changeUser('admin')
         # remove items in the tool
-        self._removeItemsDefinedInTool()
+        self._removeItemsDefinedInTool(self.meetingConfig)
         # remove existing categoriesgroups and add our own
         # make what necessary for categories to be removable...
         ids_to_remove = []
