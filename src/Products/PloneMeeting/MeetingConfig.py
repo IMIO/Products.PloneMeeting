@@ -2453,6 +2453,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         i = -1
         registeredFactoryTypes = self.portal_factory.getFactoryTypes().keys()
         factoryTypesToRegister = []
+        site_properties = self.portal_properties.site_properties
         for metaTypeName in self.metaTypes:
             i += 1
             portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
@@ -2486,6 +2487,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     toolPolicy = ppw.portal_plonemeeting_policy
                     toolPolicy.setChain(portalTypeName,
                                         ('plonemeeting_onestate_workflow',))
+                    # Update the typesUseViewActionInListings property of site_properties
+                    # so MeetingItem types are in it
+                    if not portalTypeName in site_properties.typesUseViewActionInListings:
+                        site_properties.typesUseViewActionInListings = site_properties.typesUseViewActionInListings + (portalTypeName, )
 
         # Copy actions from the base portal type
         self.updatePortalTypes()
