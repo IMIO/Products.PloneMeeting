@@ -13,6 +13,37 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_2_1(Migrator):
 
+    def _finishMeetingFolderViewRemoval(self):
+        '''Now that we removed the 'meetingfolder_view', we need to :
+        - remove it from available view_methods for portal_type 'Folder';
+        - remove the 'Copy item' action on the 'MeetingItem' portal_type;
+        - remove PM 'paste' and 'copy' specific actions from folder_buttons.'''
+        logger.info('Finalizing \'meetingfolder_view\' removal...')
+        folderType = self.portal.portal_types.Folder
+        if 'meetingfolder_view' in folderType.view_methods:
+            view_methods = list(folderType.view_methods)
+            view_methods.remove('meetingfolder_view')
+            folderType.view_methods = tuple(view_methods)
+
+        itemType = self.portal.portal_types.MeetingItem
+        actionIds = [action.id for action in itemType._actions]
+        if 'copyitem' in actionIds:
+            actions = []
+            for action in itemType._actions:
+                if not action.getId() == 'copyitem':
+                    actions.append(action)
+            itemType._actions = tuple(actions)
+
+        actions_to_remove = []
+        folder_buttons = self.portal.portal_actions.folder_buttons
+        if 'paste_plonemeeting' in folder_buttons:
+            actions_to_remove.append('paste_plonemeeting')
+        if 'copy_plonemeeting' in folder_buttons:
+            actions_to_remove.append('copy_plonemeeting')
+        if actions_to_remove:
+            folder_buttons.manage_delObjects(actions_to_remove)
+        logger.info('Done.')
+
     def _moveItemTemplatesToOwnFolder(self):
         '''Item templates used to be in the recurringitems folder,
            now item templates are in the itemtemplates folder of the MeetingConfig.
@@ -21,7 +52,7 @@ class Migrate_To_3_2_1(Migrator):
         logger.info('Moving item templates to their own folder for each MeetingConfig...')
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             # already migrated?
-            if 'itemtemplates' in cfg.objectIds('Folder'):
+            if 'itemtemplates' in cfg.objectIds('ATFolder'):
                 return
             # create the 'itemtemplates' folder for the MeetingConfig
             cfg._createSubFolders()
@@ -33,6 +64,7 @@ class Migrate_To_3_2_1(Migrator):
                 delattr(item, 'usages')
             cuttedData = cfg.recurringitems.manage_cutObjects(item_ids_to_move)
             cfg.itemtemplates.manage_pasteObjects(cuttedData)
+        logger.info('Done.')
 
     def _updateMeetingConfigsToCloneToAttributeOnMeetingConfigs(self):
         '''MeetingConfig.meetingConfigsToCloneTo is now a DataGridField, move to it.'''
@@ -166,6 +198,7 @@ class Migrate_To_3_2_1(Migrator):
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
+        self._finishMeetingFolderViewRemoval()
         self._moveItemTemplatesToOwnFolder()
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
         self._updateInsertingMethodsAttributeOnMeetingConfigs()
@@ -190,18 +223,20 @@ class Migrate_To_3_2_1(Migrator):
 def migrate(context):
     '''This migration function:
 
-       1) Move item templates in the MeetingConfig to their own folder (itemtemplates);
-       2) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
-       3) Update every MeetingConfig.sortingMethodOnAddItem attribute
+       1) Finalize removal of the 'meetingfolder_view' view;
+       2) Move item templates in the MeetingConfig to their own folder (itemtemplates);
+       3) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
+       4) Update every MeetingConfig.sortingMethodOnAddItem attribute
           (moved to MeetingConfig.insertingMethodOnAddItem DataGridField);
-       4) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
-       5) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
-       6) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
-       7) Update advices to store 'comment' as utf-8 and not as unicode;
-       8) Initialize new field MeetingItem.completenessComment;
-       9) Update 'Add File' permission on each meetingConfig folder;
-       10) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
-       11) Reinstall PloneMeeting.
+       5) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
+       6) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
+       7) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
+       8) Update advices to store 'comment' as utf-8 and not as unicode;
+       9) Initialize new field MeetingItem.completenessComment;
+       10) Update 'Add File' permission on each meetingConfig folder;
+       11) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
+       12) Reinstall PloneMeeting;
+       12) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------

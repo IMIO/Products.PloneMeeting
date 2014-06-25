@@ -33,9 +33,15 @@ from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
 from zope.annotation import IAnnotations
 from zope.component import getGlobalSiteManager
+from zope.component import getUtility
+from zope.component import getMultiAdapter
+from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
+from plone.app.portlets.portlets import navigation
+from plone.portlets.interfaces import IPortletManager
+from plone.portlets.interfaces import IPortletAssignmentMapping
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.utils import getToolByName
@@ -2781,6 +2787,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             self.invokeFactory('Folder', folderId)
             folder = getattr(self, folderId)
+            # special case for folder 'itemtemplates' for wich we want
+            # to display the 'navigation' portlet and use the 'folder_contents' layout
+            if folderId == 'itemtemplates':
+                # add navigation portlet
+                manager = getUtility(IPortletManager, name=u"plone.leftcolumn")
+                portletAssignmentMapping = getMultiAdapter((folder, manager), IPortletAssignmentMapping, context=folder)
+                navPortlet = navigation.Assignment(bottomLevel=0,
+                                                   topLevel=0,
+                                                   includeTop=True,
+                                                   root='/portal_plonemeeting/%s/itemtemplates' % self.getId())
+                nameChooser = INameChooser(portletAssignmentMapping)
+                name = nameChooser.chooseName(None, navPortlet)
+                portletAssignmentMapping[name] = navPortlet
+                # use folder_contents layout
+                folder.setLayout('folder_contents')
             folder.setTitle(folderInfo[0])
             folder.setConstrainTypesMode(1)
             allowedTypes = list(folderInfo[1])

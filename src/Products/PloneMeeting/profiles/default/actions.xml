@@ -51,28 +51,6 @@
    <object name="change_state" meta_type="CMF Action">
     <property name="visible">False</property>
    </object>
-   <object name="paste_plonemeeting" meta_type="CMF Action" i18n:domain="PloneMeeting">
-    <property name="title" i18n:translate="">Paste PloneMeeting</property>
-    <property name="description" i18n:translate=""></property>
-    <property name="url_expr">string:paste_items:method</property>
-    <property name="icon_expr"></property>
-    <property name="available_expr">python: object.cb_dataValid() and portal.portal_plonemeeting.getMeetingConfig(object)</property>
-    <property name="permissions">
-     <element value="View"/>
-    </property>
-    <property name="visible">True</property>
-   </object>
-   <object name="copy_plonemeeting" meta_type="CMF Action" i18n:domain="PloneMeeting">
-    <property name="title" i18n:translate="">Copy PloneMeeting</property>
-    <property name="description" i18n:translate=""></property>
-    <property name="url_expr">string:folder_copyitems:method</property>
-    <property name="icon_expr">string:$portal_url/copy_icon.gif</property>
-    <property name="available_expr">python: portal.portal_plonemeeting.getMeetingConfig(object)</property>
-    <property name="permissions">
-     <element value="Copy or Move"/>
-    </property>
-    <property name="visible">True</property>
-   </object>
   </object>
 
   <!-- Manage object_buttons actions. -->

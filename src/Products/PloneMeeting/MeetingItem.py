@@ -763,7 +763,7 @@ schema = Schema((
         widget=MultiSelectionWidget(
             description="TemplateUsingGroups",
             description_msgid="template_using_groups_descr",
-            condition="python: here.isDefinedInTool() and here.getParentNode().getId() == 'itemtemplates'",
+            condition="python: here.isDefinedInTool() and 'itemtemplates' in here.absolute_url()",
             label='Templateusinggroups',
             label_msgid='PloneMeeting_label_templateUsingGroups',
             i18n_domain='PloneMeeting',
@@ -775,7 +775,7 @@ schema = Schema((
     StringField(
         name='meetingTransitionInsertingMe',
         widget=SelectionWidget(
-            condition="python: here.isDefinedInTool() and here.getParentNode().getId() == 'recurringitems'",
+            condition="python: here.isDefinedInTool() and 'recurringitems' in here.absolute_url()",
             description="MeetingTransitionInsertingMe",
             description_msgid="meeting_transition_inserting_me_descr",
             label='Meetingtransitioninsertingme',
@@ -1262,6 +1262,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns True if current user may ask emergency for an item.'''
         # by default, everybody able to edit the item can ask emergency
         item = self.getSelf()
+        if item.isDefinedInTool():
+            return False
+
         membershipTool = getToolByName(item, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
         if member.has_permission(ModifyPortalContent, item):
@@ -1286,7 +1289,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # user must be able to edit current item
         item = self.getSelf()
         if item.isDefinedInTool():
-            return
+            return False
 
         membershipTool = getToolByName(item, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
@@ -1841,7 +1844,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showAnnexesTab')
     def showAnnexesTab(self, decisionRelated):
         '''Must we show the "Annexes" (or "Decision-related annexes") tab ?'''
-        if self.isTemporary():
+        if self.isTemporary() or self.isDefinedInTool():
             return False
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         if meetingConfig.getFileTypes(relatedTo=(decisionRelated and 'item_decision' or 'item')):
@@ -3678,22 +3681,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if tool.getPloneDiskAware() or not tool.userIsAmong('creators') or not self.isPrivacyViewable():
             return False
         return True
-
-    security.declarePublic('showCopyItemAction')
-    def showCopyItemAction(self):
-        '''Condition for displaying the 'copyitem' action in the interface.
-           Return True if the user can copy the item.'''
-        # Conditions for being able to see the "copy an item" action:
-        # - portal_plonemeeting.getPloneDiskAware is True
-        # - the duplication is enabled in the config
-        # - the user is creator of the item.proposingGroup
-        tool = self.portal_plonemeeting
-        if not tool.getPloneDiskAware():
-            return False
-        for meetingGroup in tool.getGroupsForUser(suffix="creators"):
-            # Check if the user is creator for the proposing group
-            if self.getProposingGroup() == meetingGroup.id:
-                return True
 
     security.declareProtected('Modify portal content', 'setClassifier')
     def setClassifier(self, value, **kwargs):

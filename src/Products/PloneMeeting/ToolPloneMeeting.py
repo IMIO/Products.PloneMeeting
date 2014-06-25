@@ -1586,25 +1586,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res[:params['sort_limit']]
         return res
 
-    security.declarePublic('checkMayPasteItems')
-    def checkMayPasteItems(self, destFolder, copiedData, copyAnnexes=False,
-                           newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
-                           applyPaste=True):
-        '''Check that we can paste the items in copiedData.
-           We can paste if items come from the same meetingConfig.
-           Used in the paste_items.cpy script.'''
-        itemPaths = CopySupport._cb_decode(copiedData)[1]
-        meetingConfig = self.getMeetingConfig(destFolder)
-        itemTypeName = meetingConfig.getItemTypeName()
-        for itemPath in itemPaths:
-            # we use unrestrictedTraverse because the item's parent (folder) could
-            # not be readable but the item well...
-            item = self.unrestrictedTraverse('/'.join(itemPath))
-            if not item.portal_type == itemTypeName:
-                raise ValueError("cannot_paste_item_from_other_mc")
-        if applyPaste:
-            self.pasteItems(destFolder, copiedData, copyAnnexes, newOwnerId, copyFields)
-
     security.declarePrivate('pasteItems')
     def pasteItems(self, destFolder, copiedData, copyAnnexes=False,
                    newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None):
@@ -1825,31 +1806,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getSpecificMailContext(self, event, translationMapping):
         '''See doc in interfaces.py.'''
         pass
-
-    security.declarePublic('deleteObjectsByPaths')
-    def deleteObjectsByPaths(self, paths):
-        '''This method is used by the meetingfolder_view. We receive a list of
-           p_paths and we try to remove the elements using deletegiven_uid.'''
-        failure = {}
-        success = []
-        # Use the portal for traversal in case we have relative paths
-        portal = getToolByName(self, 'portal_url').getPortalObject()
-        traverse = portal.restrictedTraverse
-        try:
-            for path in paths:
-                obj = traverse(path)
-                # Check here that we have 'Delete objects' on the object.
-                if not self.portal_membership.checkPermission(DeleteObjects, obj):
-                    raise Exception("can_not_delete_object")
-                res = portal.delete_givenuid(obj.UID())
-                if not "object_deleted" in res:
-                    # Take the last part of the url+portalMessage wich is the
-                    # untranslated i18n msgid.
-                    raise Exception(res.split('=')[-1])
-                success.append('%s (%s)' % (obj.title_or_id(), path))
-        except Exception, e:
-            failure = e
-        return success, failure
 
     security.declarePublic('readCookie')
     def readCookie(self, key):

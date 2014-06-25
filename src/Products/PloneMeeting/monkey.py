@@ -22,6 +22,7 @@ def DefinedInToolAwareCatalog():
             path_translated = self.REQUEST.get('PATH_TRANSLATED', '')
             # do not return items of tool if using application
             if 'livesearch_reply' in path_translated or \
+               '@@search' in path_translated or \
                'updated_search' in path_translated or \
                'plonemeeting_topic_view' in path_translated or \
                'search_form' in path_translated:

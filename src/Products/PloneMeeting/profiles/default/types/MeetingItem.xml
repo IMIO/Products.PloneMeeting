@@ -86,15 +86,10 @@
          visible="True">
   <permission value="Copy or Move"/>
  </action>
- <action title="CopyItem"
-         i18n:attributes="title"
-         action_id="copyitem"
-         category="object_buttons"
-         condition_expr="python:object.showCopyItemAction()"
-         url_expr="string:${object_url}/copy_items"
-         visible="True">
-  <permission value="Copy or Move"/>
+ <action action_id="copyitem"
+         remove="True">
  </action>
+
 <!-- ##code-section FOOT -->
 <!-- ##/code-section FOOT -->
 </object>

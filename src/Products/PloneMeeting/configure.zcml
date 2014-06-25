@@ -82,6 +82,13 @@
 
 
   <!-- ##code-section configure.zcml.core -->
-  <!-- ##/code-section configure.zcml.core -->
+  <!-- Make ToolPloneMeeting and MeetingConfig types portlet-aware -->
+  <class class="Products.PloneMeeting.ToolPloneMeeting.ToolPloneMeeting">
+    <implements interface="plone.portlets.interfaces.ILocalPortletAssignable" />
+  </class>
+  <class class="Products.PloneMeeting.MeetingConfig.MeetingConfig">
+    <implements interface="plone.portlets.interfaces.ILocalPortletAssignable" />
+  </class>
+ <!-- ##/code-section configure.zcml.core -->
 
 </configure>

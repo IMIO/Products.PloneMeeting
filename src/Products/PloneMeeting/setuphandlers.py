@@ -33,7 +33,7 @@ from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.utils import updateIndexes
 
-folderViews = ('meetingfolder_redirect_view', 'meetingfolder_view')
+folderViews = ('meetingfolder_redirect_view', 'folder_contents', )
 pmGroupProperties = ('meetingRole', 'meetingGroupId')
 noSearchTypes = ('Folder',)
 # Indexes used by PloneMeeting
@@ -151,7 +151,7 @@ def postInstall(context):
     # Create or update indexes
     updateIndexes(site, indexInfo, logger, metadataInfo)
 
-    # We add meetingfolder_redirect_view and meetingfolder_view to the list of
+    # We add meetingfolder_redirect_view and folder_contents to the list of
     # available views for type "Folder".
     portalType = site.portal_types.Folder
     available_views = list(portalType.getAvailableViewMethods(None))
