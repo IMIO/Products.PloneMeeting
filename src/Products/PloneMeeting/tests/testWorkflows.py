@@ -450,7 +450,7 @@ class testWorkflows(PloneMeetingTestCase):
         # when every recurring items are inserted, this will be at the very end
         # of the meeting presented items
         # the first recurring item of the config is inserted on '_init_'
-        firstRecurringItem = self.meetingConfig.getItems(usage='as_recurring_item')[0]
+        firstRecurringItem = self.meetingConfig.getItems(recurring=True)[0]
         self.assertTrue(firstRecurringItem.getMeetingTransitionInsertingMe() == '_init_')
         firstRecurringItem.setPrivacy('secret')
         self.changeUser('pmManager')

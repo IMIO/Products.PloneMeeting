@@ -553,7 +553,7 @@ def addRecurringItemsIfRelevant(meeting, transition):
        p_meeting.'''
     recItems = []
     meetingConfig = meeting.portal_plonemeeting.getMeetingConfig(meeting)
-    for item in meetingConfig.getItems(usage=('as_recurring_item')):
+    for item in meetingConfig.getItems(recurring=True):
         if item.getMeetingTransitionInsertingMe() == transition:
             recItems.append(item)
     if recItems:

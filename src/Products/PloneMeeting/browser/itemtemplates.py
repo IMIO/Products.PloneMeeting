@@ -68,7 +68,7 @@ class ItemTemplateView(BrowserView):
         cfg = self.getCurrentMeetingConfig()
         res = []
         if cfg:
-            templates = cfg.getItems(usage='as_template_item')
+            templates = cfg.getItems(recurring=False)
             if templates:
                 #check if the current user can use the template
                 tool = self.getPloneMeetingTool()

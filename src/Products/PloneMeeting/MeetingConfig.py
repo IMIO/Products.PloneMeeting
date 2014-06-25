@@ -3787,10 +3787,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return getattr(self.meetingusers.aq_base, userId, None)
 
     security.declarePublic('getItems')
-    def getItems(self, usage='as_recurring_item'):
+    def getItems(self, recurring=True):
         '''Gets the items defined in the configuration, for some p_usage(s).'''
         res = []
-        if usage == 'as_recurring_item':
+        if recurring:
             itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
         else:
             itemsFolder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES)
