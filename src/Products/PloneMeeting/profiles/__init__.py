@@ -194,7 +194,7 @@ class GroupDescriptor(Descriptor):
     get = classmethod(get)
 
     def __init__(self, id, title, acronym, description='',
-                 active=True, asCopyGroupOn='python:False', ):
+                 active=True, asCopyGroupOn='', ):
         self.id = id
         self.setBilingual('title', title)
         self.acronym = acronym
