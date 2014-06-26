@@ -4,6 +4,9 @@ logger = logging.getLogger('PloneMeeting')
 
 from persistent.list import PersistentList
 from Acquisition import aq_base
+
+from zope.i18n import translate
+
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
 from Products.PloneMeeting.migrations import Migrator
@@ -196,6 +199,22 @@ class Migrate_To_3_2_1(Migrator):
                 item.completeness_changes_history = PersistentList()
         logger.info('Done.')
 
+    def _translateFoldersOfMeetingConfigs(self):
+        '''Folders added in each MeetingConfigs were not translated, now it is the case...'''
+        logger.info('Translating folders of each MeetingConfigs...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            for folder in cfg.objectValues('ATFolder'):
+                if folder.Title() == u'Recurring items':
+                    folder.setTitle('RecurringItems')
+                if folder.Title() == u'Meeting file types':
+                    folder.setTitle('MeetingFileTypes')
+                folder.setTitle(translate(folder.Title(),
+                                          domain="PloneMeeting",
+                                          context=self.portal.REQUEST,
+                                          default=folder.Title()))
+                folder.reindexObject()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
         self._finishMeetingFolderViewRemoval()
@@ -209,6 +228,7 @@ class Migrate_To_3_2_1(Migrator):
         self._initMeetingItemCompletenessCommentHTMLField()
         self._updateAddFilePermissionOnMeetingConfigFolders()
         self._addChangesHistoryToItems()
+        self._translateFoldersOfMeetingConfigs()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -235,8 +255,10 @@ def migrate(context):
        9) Initialize new field MeetingItem.completenessComment;
        10) Update 'Add File' permission on each meetingConfig folder;
        11) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
-       12) Reinstall PloneMeeting;
-       12) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       12) Translate folders stored in each MeetingConfigs (recurringitems, itemtemplates, categories, ...);
+       13) Clean registries as we removed some css;
+       14) Reinstall PloneMeeting;
+       15) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------
