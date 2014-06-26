@@ -41,7 +41,6 @@ from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
 from plone.memoize import ram
-from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
@@ -2402,9 +2401,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # check if the found automatic adviser is not already in the self.adviceIndex
                 # but with a manually changed delay, aka 'delay_for_automatic_adviser_changed_manually' is True
                 storedCustomAdviser = self.adviceIndex.get(customAdviser['group'], {})
+                delay_for_automatic_adviser_changed_manually = 'delay_for_automatic_adviser_changed_manually' in storedCustomAdviser and \
+                                                               storedCustomAdviser['delay_for_automatic_adviser_changed_manually'] or False
                 if storedCustomAdviser and \
                    not storedCustomAdviser['row_id'] == customAdviser['row_id'] and \
-                   storedCustomAdviser['delay_for_automatic_adviser_changed_manually'] and \
+                   delay_for_automatic_adviser_changed_manually and \
                    not storedCustomAdviser['optional']:
                     # we have an automatic advice for relevant group but not for current row_id
                     # check if it is from a linked row in the MeetingConfig.customAdvisers
