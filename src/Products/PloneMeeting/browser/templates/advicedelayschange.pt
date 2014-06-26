@@ -16,7 +16,7 @@
     <input type="hidden" name="new_advice_row_id" tal:attributes="value view/request/new_advice_row_id"/>
     <input type="hidden" name="current_advice_row_id" tal:attributes="value view/request/current_advice_row_id"/>
     <tal:comment replace="nothing">Optional comment</tal:comment>
-    <p class="popups_field_descr" i18n:translate="change_advice_delay_warning_msg">You are about to change delay for this advice to <span style="font-weight: bold;" i18n:name="new_advice_delay" i18n:domain="PloneMeeting" i18n:translate="" tal:content="python: view.cfg._dataForCustomAdviserRowId(view.request.get('new_advice_row_id'))['delay']">advice delay</span>, are you sure to want to proceed?</p>
+    <p class="popups_field_descr" i18n:translate="">You are about to change delay for this advice to <span style="font-weight: bold;" i18n:name="new_advice_delay" i18n:domain="PloneMeeting" i18n:translate="" tal:content="python: view.cfg._dataForCustomAdviserRowId(view.request.get('new_advice_row_id'))['delay']">advice delay</span> days, you can enter a comment if necessary.</p>
     <label for="comment" i18n:translate="advice_change_delay_comment">Comment</label>
     <textarea name="comment" rows="8"></textarea><br/><br/>
     <div align="center">

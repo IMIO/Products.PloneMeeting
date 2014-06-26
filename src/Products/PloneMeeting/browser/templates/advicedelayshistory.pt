@@ -22,7 +22,7 @@
         <table class="listing nosort" style="width: 100%">
          <thead>
           <tr i18n:domain="plone">
-            <th i18n:translate="listingheader_action" width="100px">Action</th>
+            <th i18n:translate="listingheader_action" width="300px">Action</th>
             <th i18n:translate="listingheader_performed_by" width="125px">Performed by</th>
             <th i18n:translate="listingheader_date_and_time" width="125px">Date and time</th>
             <th i18n:translate="history_details" i18n:domain="PloneMeeting">Details</th>
@@ -34,10 +34,9 @@
                           comment historyInfo/comment|nothing;"
               tal:attributes="class python: odd and 'even' or 'odd'" valign="top">
             <td class="#"
-                tal:define="actionTitle python: historyInfo['action']">
-                <span tal:content="actionTitle"
-                      i18n:translate=""
-                      tal:attributes="class string:item_${historyInfo/action};">Action</span>
+                tal:define="from python: historyInfo['action'][0];
+                            to python: historyInfo['action'][1];">
+                <span i18n:translate="">Change delay for this advice from <span i18n:name="from" tal:content="from">10</span> days to <span i18n:name="to" tal:content="to">20</span> days.</span>
             </td>
             <td tal:define="actorid python:historyInfo.get('actor');
                             actor python:context.portal_membership.getMemberInfo(actorid);

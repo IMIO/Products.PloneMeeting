@@ -165,7 +165,7 @@ class ChangeAdviceDelayView(BrowserView):
             # add a line to the item's emergency_change_history
             membershipTool = getToolByName(self.context, 'portal_membership')
             member = membershipTool.getAuthenticatedMember()
-            history_data = {'action': newAdviceData['delay'],
+            history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
                             'actor': member.getId(),
                             'time': DateTime(),
                             'comment': self.request.get('comment', '')}
