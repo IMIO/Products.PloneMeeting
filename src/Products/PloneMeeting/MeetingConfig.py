@@ -1465,10 +1465,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  'CategoryDescriptor'),
         TOOL_FOLDER_CLASSIFIERS: ('Classifiers', ('MeetingCategory', ),
                                   'classifiers', 'CategoryDescriptor'),
-        TOOL_FOLDER_RECURRING_ITEMS: ('Recurring items', ('itemType', ), None, ''),
+        TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems', ('itemType', ), None, ''),
         TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', ('Folder', 'itemType'), None, ''),
         'topics': ('Topics', ('Topic', ), None, ''),
-        TOOL_FOLDER_FILE_TYPES: ('Meeting file types', ('MeetingFileType', ),
+        TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes', ('MeetingFileType', ),
                                  'meetingFileTypes', 'MeetingFileTypeDescriptor'),
         TOOL_FOLDER_POD_TEMPLATES: ('Document templates', ('PodTemplate', ),
                                     'podTemplates', 'PodTemplateDescriptor'),
@@ -2802,7 +2802,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portletAssignmentMapping[name] = navPortlet
                 # use folder_contents layout
                 folder.setLayout('folder_contents')
-            folder.setTitle(folderInfo[0])
+            folder.setTitle(translate(folderInfo[0],
+                                      domain="PloneMeeting",
+                                      context=self.REQUEST,
+                                      default=folderInfo[0]))
             folder.setConstrainTypesMode(1)
             allowedTypes = list(folderInfo[1])
             if 'itemType' in allowedTypes:
