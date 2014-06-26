@@ -3792,10 +3792,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         if recurring:
             itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
+            for item in itemsFolder.objectValues('MeetingItem'):
+                res.append(item)
         else:
             itemsFolder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES)
-        for item in itemsFolder.objectValues('MeetingItem'):
-            res.append(item)
+            catalogTool = getToolByName(self, 'portal_catalog')
+            # those elements are in the configuration, we have to set isDefinedInTool to True
+            brains = catalogTool(meta_type='MeetingItem',
+                                 path={'query': '/'.join(self.getPhysicalPath()) + '/itemtemplates'},
+                                 isDefinedInTool=True)
+            for brain in brains:
+                res.append(brain.getObject())
         return res
 
     security.declarePrivate('createUser')

@@ -16,10 +16,10 @@
           tal:attributes="action python:context.absolute_url() + '/@@createitemfromtemplate'">
     <i align="center" i18n:translate="choose_item_template"></i><br/><br/>
     <tal:templateItems repeat="templateItem view/getTemplateItems">
-      <input type="radio" class="noborder" name="templateItem"
+      <input type="radio" class="noborder" name="templateUID"
              tal:define="isStart repeat/templateItem/start;"
              tal:attributes="id templateItem/id;
-                             value templateItem/id;
+                             value templateItem/UID;
                              checked python: isStart and True or default;"/>
       <label tal:attributes="for templateItem/id" tal:content="templateItem/Title"></label><br/>
     </tal:templateItems><br />

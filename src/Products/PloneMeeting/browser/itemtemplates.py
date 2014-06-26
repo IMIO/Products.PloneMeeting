@@ -1,6 +1,5 @@
 from Products.Five.browser import BrowserView
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FOR_TEMPLATE
 
@@ -46,13 +45,11 @@ class ItemTemplateView(BrowserView):
            this meeting configuration. Item id is in the request.'''
         rq = self.request
         # Find the template ID within the meeting configuration
-        itemId = rq.get('templateItem', None)
-        if not itemId:
+        templateUID = rq.get('templateUID', None)
+        if not templateUID:
             return None
-        itemsFolder = getattr(self.meetingConfig, TOOL_FOLDER_ITEM_TEMPLATES)
-        templateItem = getattr(itemsFolder, itemId, None)
-        if not templateItem:
-            return None
+        catalog = getToolByName(self.context, 'portal_catalog')
+        templateItem = catalog(UID=templateUID)[0].getObject()
         # Create the new item by duplicating the template item
         membershipTool = getToolByName(self.context, 'portal_membership')
         user = membershipTool.getAuthenticatedMember()
@@ -74,7 +71,7 @@ class ItemTemplateView(BrowserView):
                 tool = self.getPloneMeetingTool()
                 membershipTool = getToolByName(self.portal, 'portal_membership')
                 member = membershipTool.getAuthenticatedMember()
-                memberGroups = tool.getGroupsForUser(member.getId())
+                memberGroups = tool.getGroupsForUser(member.getId(), suffix="creators")
                 memberGroupIds = [group.id for group in memberGroups]
                 for template in templates:
                     templateRestrictedGroups = template.getTemplateUsingGroups()
