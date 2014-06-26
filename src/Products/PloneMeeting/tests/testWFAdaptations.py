@@ -698,6 +698,9 @@ class testWFAdaptations(PloneMeetingTestCase):
                 cloned_state_permission_with_meetingmanager.append('MeetingManager')
             else:
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
+            # 'Delete objects' is only given to ['Manager', 'MeetingManager']
+            if permission == 'Delete objects':
+                cloned_state_permission_with_meetingmanager = ['Manager', 'MeetingManager']
             self.assertEquals(cloned_state_permission_with_meetingmanager,
                               new_state_permissions[permission])
 
@@ -744,6 +747,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             if permission == CUSTOM_PERMISSION:
                 cloned_state_permission_with_meetingmanager = \
                     adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[CUSTOM_PERMISSION]
+            # 'Delete objects' is only given to ['Manager', 'MeetingManager']
+            if permission == 'Delete objects':
+                cloned_state_permission_with_meetingmanager = ['Manager', 'MeetingManager']
             self.assertEquals(tuple(cloned_state_permission_with_meetingmanager),
                               tuple(new_state_permissions[permission]))
 
