@@ -518,8 +518,8 @@
          <span i18n:translate="ItemTemplates"></span>
         </legend>
         <p class="discreet" i18n:translate="item_templates_descr"></p>
-        <p><a href="itemtemplates">Manage item templates</a></p>
-        <p><a href="itemtemplates">Consult entire item templates tree</a></p>
+        <p><img src="manage.png"
+                tal:attributes="src string:${portal_url}/manage.png;"/>&nbsp;<a href="itemtemplates" i18n:translate="">Manage item templates</a></p>
       </fieldset>
     </tal:data>
 
