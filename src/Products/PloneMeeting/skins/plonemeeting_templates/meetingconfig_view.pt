@@ -515,7 +515,7 @@
       <a name="itemTemplates"></a>
       <fieldset>
         <legend>
-         <span i18n:translate="ItemTemplates"></span>
+         <span i18n:translate="Item templates"></span>
         </legend>
         <p class="discreet" i18n:translate="item_templates_descr"></p>
         <p><img src="manage.png"
