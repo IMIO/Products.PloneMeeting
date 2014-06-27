@@ -3095,6 +3095,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['item_viewable_by_advisers'] = False
                 adviceInfo['advice_addable'] = False
                 adviceInfo['advice_editable'] = False
+                adviceInfo['delay_changes_history'] = []
             self.adviceIndex[groupId].update(adviceInfo)
 
         # Clean-up advice-related local roles and granted permissions.
