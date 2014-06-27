@@ -2460,6 +2460,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         registeredFactoryTypes = self.portal_factory.getFactoryTypes().keys()
         factoryTypesToRegister = []
         site_properties = self.portal_properties.site_properties
+
         for metaTypeName in self.metaTypes:
             i += 1
             portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
@@ -2494,7 +2495,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     toolPolicy.setChain(portalTypeName,
                                         ('plonemeeting_onestate_workflow',))
                     # Update the typesUseViewActionInListings property of site_properties
-                    # so MeetingItem types are in it
+                    # so MeetingItem types are in it, this is usefull when managing item templates
+                    # in the MeetingConfig because folders there have the 'folder_contents' layout
                     if not portalTypeName in site_properties.typesUseViewActionInListings:
                         site_properties.typesUseViewActionInListings = site_properties.typesUseViewActionInListings + (portalTypeName, )
 

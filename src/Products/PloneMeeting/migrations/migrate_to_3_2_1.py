@@ -215,6 +215,23 @@ class Migrate_To_3_2_1(Migrator):
                 folder.reindexObject()
         logger.info('Done.')
 
+    def _addItemTypesToTypesUseViewActionInListings(self):
+        '''Add MeetingItem portal_types to site_properties.typesUseViewActionInListings
+           so items are displayed correctly in itemtemplates folder where 'folder_contents' view
+           is used.'''
+        logger.info('Adding MeetingItem portal_types to typesUseViewActionInListings...')
+        portal_types = getToolByName(self.portal, 'portal_types')
+        site_properties = getToolByName(self.portal, 'portal_properties').site_properties
+        for typeInfo in portal_types.listTypeInfo():
+            if typeInfo.content_meta_type == 'MeetingItem':
+                # Update the typesUseViewActionInListings property of site_properties
+                # so MeetingItem types are in it
+                portalTypeName = typeInfo.getId()
+                if not portalTypeName in site_properties.typesUseViewActionInListings:
+                    site_properties.typesUseViewActionInListings = \
+                        site_properties.typesUseViewActionInListings + (portalTypeName, )
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
         self._finishMeetingFolderViewRemoval()
@@ -229,6 +246,7 @@ class Migrate_To_3_2_1(Migrator):
         self._updateAddFilePermissionOnMeetingConfigFolders()
         self._addChangesHistoryToItems()
         self._translateFoldersOfMeetingConfigs()
+        self._addItemTypesToTypesUseViewActionInListings()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -256,9 +274,10 @@ def migrate(context):
        10) Update 'Add File' permission on each meetingConfig folder;
        11) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
        12) Translate folders stored in each MeetingConfigs (recurringitems, itemtemplates, categories, ...);
-       13) Clean registries as we removed some css;
-       14) Reinstall PloneMeeting;
-       15) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       13) Add item portal_types to site_properties.typesUseViewActionInListings;
+       14) Clean registries as we removed some css;
+       15) Reinstall PloneMeeting;
+       16) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------
