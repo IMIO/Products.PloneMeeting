@@ -298,7 +298,7 @@
                     <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                   </a>
                   <!-- Delete the file type -->
-                  <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
+                  <input type="hidden" name="object_uid" tal:attributes="value obj/UID" />
                   <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete_icon.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
@@ -365,7 +365,7 @@
                   <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                 </a>
                 <!-- Delete the category -->
-                  <input type="hidden" name="selected_uid" tal:attributes="value obj/UID"/>
+                  <input type="hidden" name="object_uid" tal:attributes="value obj/UID"/>
                     <img title="label_remove" i18n:attributes="title"
                          tal:attributes="src string:$portal_url/delete_icon.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
@@ -434,7 +434,7 @@
                   <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                 </a>
                 <!-- Delete the category -->
-                  <input type="hidden" name="selected_uid" tal:attributes="value obj/UID"/>
+                  <input type="hidden" name="object_uid" tal:attributes="value obj/UID"/>
                     <img title="label_remove" i18n:attributes="title"
                          tal:attributes="src string:$portal_url/delete_icon.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
@@ -496,7 +496,7 @@
                   <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                 </a>
                 <!-- Delete the item -->
-                  <input type="hidden" name="selected_uid" tal:attributes="value obj/UID"/>
+                  <input type="hidden" name="object_uid" tal:attributes="value obj/UID"/>
                     <img title="label_remove" i18n:attributes="title"
                          tal:attributes="src string:$portal_url/delete_icon.png"
                          onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
@@ -712,7 +712,7 @@
                     <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                   </a>
                   <!-- Delete the topic -->
-                  <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
+                  <input type="hidden" name="object_uid" tal:attributes="value obj/UID" />
                   <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete_icon.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
@@ -960,7 +960,7 @@
             <img src="edit.gif" title="label_edit" i18n:attributes="title" />
           </a>
           <!-- Delete the user -->
-            <input type="hidden" name="selected_uid" tal:attributes="value obj/UID"/>
+            <input type="hidden" name="object_uid" tal:attributes="value obj/UID"/>
               <img title="label_remove" i18n:attributes="title"
                    tal:attributes="src string:$portal_url/delete_icon.png"
                    onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
@@ -1040,7 +1040,7 @@
                     <img src="edit.gif" title="label_edit" i18n:attributes="title" />
                   </a>
                   <tal:comment replace="nothing">Delete it</tal:comment>
-                  <input type="hidden" name="selected_uid" tal:attributes="value obj/UID" />
+                  <input type="hidden" name="object_uid" tal:attributes="value obj/UID" />
                   <img title="label_remove" i18n:attributes="title"
                        tal:attributes="src string:$portal_url/delete_icon.png"
                        onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
