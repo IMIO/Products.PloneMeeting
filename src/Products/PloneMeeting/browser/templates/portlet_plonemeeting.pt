@@ -190,27 +190,6 @@
   </tal:decisions>
 </table>
 
-<tal:comment replace="nothing">Here we define code corresponding to popups</tal:comment>
-<tal:comment replace="nothing">All this will be removed when corresponding functionnalities will be adapted.
-"deleteDialog" is for managing elements history (removing an element from an history) and byebye user is about MeetingUsers management</tal:comment>
-<div id="hsGrey" class="hsGrey"></div>
-<div id="deleteDialog" class="hsDialog">
-  <form id="deleteForm" method="post"
-        tal:attributes="action python:tool.absolute_url() + '/delete_givenuid'">
-    <input type="hidden" name="selected_uid" id="objectUid"/>
-    <tal:comment replace="nothing">
-      Event time below is only required when deleting an event in an
-      object's history.
-    </tal:comment>
-    <input type="hidden" name="event_time" id="eventTime"/>
-    <div align="center" i18n:translate="plonemeeting_delete_confirm_message"></div><br/>
-    <div align="center">
-      <input type="submit" value="Ok" i18n:attributes="value" i18n:domain="plone"/>
-      <input type="button" onClick="javascript:closeDialog('deleteDialog')"
-             value="label_cancel" i18n:attributes="value" i18n:domain="plone"/>
-    </div>
-  </form>
-</div>
 <script language="javascript" tal:content="tool/getJavascriptMessages"></script>
 </dl>
 </body>

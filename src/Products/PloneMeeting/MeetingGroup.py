@@ -200,7 +200,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         self.portal_groups.addGroup(groupId, title=groupTitle)
         self.portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
         group = self.portal_groups.getGroupById(groupId)
-        group.setProperties(meetingRole=MEETINGROLES[groupSuffix],
+        group.setProperties(meetingRole=MEETINGROLES.get(groupSuffix, ''),
                             meetingGroupId=self.id)
 
     def getOrder(self, associatedGroupIds=None, onlyActive=True):

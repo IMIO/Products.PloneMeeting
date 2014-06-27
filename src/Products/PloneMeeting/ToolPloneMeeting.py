@@ -2165,9 +2165,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            messages for all pages.'''
         args = {'domain': 'PloneMeeting', 'context': self.REQUEST}
         res = ''
-        for msg in ('plonemeeting_delete_confirm_message',
-                    'plonemeeting_delete_meeting_confirm_message',
-                    'no_selected_items', 'are_you_sure'):
+        for msg in ('plonemeeting_delete_meeting_confirm_message',
+                    'no_selected_items',
+                    'are_you_sure'):
             res += 'var %s = "%s";\n' % (msg, translate(msg, **args))
         # escape_for_js from portal_skins/plone_scripts/translate.py does the .replace() here above
         return res.replace("'", "\\'")

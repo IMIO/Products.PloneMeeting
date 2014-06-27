@@ -125,7 +125,7 @@
                              tal:attributes="src string:$portal_url/delete_icon.png;"
                              i18n:attributes="title"
                              title="Delete advice"
-                             onclick="javascript:confirmDeleteObject(this, 'delete_confirm_message')" />
+                             onclick="javascript:confirmDeleteObject(this)" />
                       </form>
                     </td>
                   </tr>
