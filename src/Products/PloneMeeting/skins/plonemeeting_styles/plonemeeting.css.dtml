@@ -742,6 +742,11 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     display: inline !important;
 }
 
+/* hide every dropdown menus on items */
+body.template-meetingitem_view ul#contentActionMenus {
+    display: none;
+}
+
 .overlay-history .pb-ajax > div {
     width: 97%;
 }
