@@ -974,6 +974,11 @@ div a.advice_delay_change_value {
     color: red;
 }
 
+/* skin a bit the fancytree used for item templates */
+#content ul.ui-fancytree.fancytree-container {
+    margin-left: 0;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

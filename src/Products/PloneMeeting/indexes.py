@@ -62,6 +62,24 @@ def isDefinedInTool(obj):
     return ('portal_plonemeeting' in obj.absolute_url())
 
 
+@indexer(IItem)
+def templateUsingGroups(obj):
+    """
+      Index used to build the item templates tree.
+      If not attribute 'templateUsingGroups' (so not a MeetingItem)
+      or a MeetingItem with no selected templateUsingGroups.
+      In the query, we will query '__nothing_selected__' + groups the current
+      user is creator for.
+    """
+    if obj.meta_type == 'MeetingItem':
+        templateUsingGroups = obj.getTemplateUsingGroups()
+        return templateUsingGroups and templateUsingGroups or ('__nothing_selected__', )
+    elif obj.portal_type == 'Folder':
+        return ('__folder_in_itemtemplates__', )
+    else:
+        return ()
+
+
 @indexer(IMeetingItem)
 def indexAdvisers(obj):
     """

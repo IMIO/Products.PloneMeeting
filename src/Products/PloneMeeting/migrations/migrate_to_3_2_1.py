@@ -56,7 +56,7 @@ class Migrate_To_3_2_1(Migrator):
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             # already migrated?
             if 'itemtemplates' in cfg.objectIds('ATFolder'):
-                return
+                continue
             # create the 'itemtemplates' folder for the MeetingConfig
             cfg._createSubFolders()
             item_ids_to_move = []

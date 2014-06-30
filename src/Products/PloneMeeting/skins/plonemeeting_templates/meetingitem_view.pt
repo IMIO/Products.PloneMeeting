@@ -380,13 +380,15 @@
     <tal:itemInConfig condition="context/isDefinedInTool">
 
       <tal:templateUsingGroups condition="python: 'itemtemplates' in context.absolute_url()">
-        <b><span i18n:translate="PloneMeeting_label_templateUsingGroups" />&nbsp:</b><br />
+        <span class="discreet item_attribute_label"
+              i18n:translate="PloneMeeting_label_templateUsingGroups">Template using groups</span>&nbsp:<br />
         <span metal:use-macro="python: here.widget('templateUsingGroups', mode='view')" /><p>&nbsp;</p>
         <a tal:attributes="href python: meetingConfig.absolute_url() + '?pageName=data#itemTemplates'" i18n:translate="back"></a>
       </tal:templateUsingGroups>
 
       <tal:transitionsForRecurring condition="python: context.getParentNode().getId() == 'recurringitems'">
-        <b><span i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe" />&nbsp:</b><br />
+        <span class="discreet item_attribute_label"
+              i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe" />&nbsp:<br />
         <span metal:use-macro="python: here.widget('meetingTransitionInsertingMe', mode='view')" /><p>&nbsp;</p>
         <a tal:attributes="href python: meetingConfig.absolute_url() + '?pageName=data#recItems'" i18n:translate="back"></a>
       </tal:transitionsForRecurring>

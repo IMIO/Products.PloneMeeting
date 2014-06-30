@@ -11,23 +11,52 @@
 
   <metal:fill fill-slot="main">
 
-    <h1 class="documentFirstHeading" tal:content="python: view.getCurrentMeetingConfig().Title()">Title</h1>
+    <h1 class="documentFirstHeading" i18n:translate="">Create an item from an item template</h1>
+    <link href="fancytree/ui.fancytree.css" rel="stylesheet" type="text/css">
+    <script src="fancytree/jquery.fancytree.min.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        $(function(){
+            $("#tree").fancytree({
+                click: function(event, data) {
+                    // on click on an element, if not a folder
+                    // redirect to given url
+                    if ( !data.node.isFolder() ) {
+                        window.location=data.node.data.href;}
+                },
+            });
+
+            $("#treeToggleExpand").click(function(e) {
+                e.preventDefault();
+                $("#tree").fancytree("getRootNode").visit(function(node) {
+                    node.setExpanded(true);
+                });
+            });
+            $("#treeToggleCollapse").click(function(e) {
+                e.preventDefault();
+                $("#tree").fancytree("getRootNode").visit(function(node) {
+                    node.setExpanded(false);
+                });
+            });
+
+        });
+    </script>
+    <tal:displayShowHideAllLinks condition="view/displayShowHideAllLinks">
+        <a href="#" id="treeToggleExpand" i18n:translate="tree_show_all">Show all</a>&nbsp;/&nbsp;<a href="#" id="treeToggleCollapse" i18n:translate="tree_hide_all">Hide all</a>
+    </tal:displayShowHideAllLinks>
+    <div id="tree">
+        <ul>
+            <tal:block replace="structure view/createTemplatesTree" />
+        </ul>
+    </div>
+
+    <br />
     <form id="itemTemplatesForm" method="post"
           tal:attributes="action python:context.absolute_url() + '/@@createitemfromtemplate'">
-    <i align="center" i18n:translate="choose_item_template"></i><br/><br/>
-    <tal:templateItems repeat="templateItem view/getTemplateItems">
-      <input type="radio" class="noborder" name="templateUID"
-             tal:define="isStart repeat/templateItem/start;"
-             tal:attributes="id templateItem/id;
-                             value templateItem/UID;
-                             checked python: isStart and True or default;"/>
-      <label tal:attributes="for templateItem/id" tal:content="templateItem/Title"></label><br/>
-    </tal:templateItems><br />
-    <div align="center">
-      <input type="hidden" name="form.HTTP_REFERER" value="#" tal:attributes="value context/REQUEST/HTTP_REFERER" />
-      <input type="submit" name="form.buttons.save" class="context" value="create_meeting_item" i18n:attributes="value" />
-      <input type="submit" name="form.buttons.cancel" class="context" value="Close" i18n:attributes="value" i18n:domain="plone" />
-    </div>
+        <div align="center">
+          <input type="hidden" name="form.HTTP_REFERER" value="#" tal:attributes="value context/REQUEST/HTTP_REFERER" />
+          <input type="submit" name="form.buttons.cancel" class="context" value="Close" i18n:attributes="value" i18n:domain="plone" />
+        </div>
     </form>
 
   </metal:fill>

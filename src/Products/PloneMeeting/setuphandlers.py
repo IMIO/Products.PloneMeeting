@@ -60,6 +60,7 @@ indexInfo = {
              'getConfigId': 'FieldIndex',
              'indexUsages': 'KeywordIndex',
              'isDefinedInTool': 'BooleanIndex',
+             'templateUsingGroups': 'KeywordIndex',
             }
 # Metadata to create in portal_catalog, it has to correspond to an index in indexInfo
 metadataInfo = ('getTitle2', 'getDate', 'getProposingGroup', )
