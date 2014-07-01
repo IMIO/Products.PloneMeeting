@@ -3468,29 +3468,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            We add a 'folder_' or a 'topic_' suffix to precise the kind of view.
         '''
         res = []
-        tool = getToolByName(self, 'portal_plonemeeting')
-        if tool.getPloneDiskAware():
-            # Add the folder views available in portal_type.Folder
-            type_info = self.portal_types.getTypeInfo('Folder')
-            available_views = type_info.getAvailableViewMethods(type_info)
-            for view in available_views:
-                # View "meetingfolder_redirect_view" is simply a view that
-                # checks which view must be shown as PloneMeeting folder view
-                # and redirects the user to the correct view. But it is a view
-                # in itself; the user may not choose it.
-                if view != 'meetingfolder_redirect_view':
-                    # Get the title by accessing the template
-                    # This title is managed by title_or_id and retrieved from
-                    # the .pt.metadata file
-                    method = getattr(self, view, None)
-                    if method is not None:
-                        # A method might be a template, script or method
-                        try:
-                            title = method.aq_inner.aq_explicit.title_or_id()
-                        except AttributeError:
-                            title = view
-                    res.append(('folder_' + view,
-                                translate(title, domain="plone", context=self.REQUEST)))
         # Add the topic-based views
         if not hasattr(self.aq_base, 'topics'):
             # This can be the case if we are creating this meeting config.
