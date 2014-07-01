@@ -106,17 +106,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    BooleanField(
-        name='ploneDiskAware',
-        default=defValues.ploneDiskAware,
-        widget=BooleanField._properties['widget'](
-            description="PloneDiskAware",
-            description_msgid="plone_disk_aware_descr",
-            label='Plonediskaware',
-            label_msgid='PloneMeeting_label_ploneDiskAware',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
     StringField(
         name='meetingFolderTitle',
         default=defValues.meetingFolderTitle,
@@ -823,10 +812,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         allowedTypes = [meetingConfig.getItemTypeName(),
                         meetingConfig.getMeetingTypeName()] + ['File', 'Folder', 'MeetingFile']
         mc_folder.setLocallyAllowedTypes(allowedTypes)
-        if self.getPloneDiskAware():
-            mc_folder.setImmediatelyAddableTypes(allowedTypes[:-1])
-        else:
-            mc_folder.setImmediatelyAddableTypes([])
+        mc_folder.setImmediatelyAddableTypes([])
         # Define permissions on this folder. Some remarks:
         # * We override here default permissions/roles mappings as initially
         #   defined in config.py through calls to Products.CMFCore.permissions.

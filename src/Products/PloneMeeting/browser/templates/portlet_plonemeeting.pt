@@ -11,7 +11,6 @@
                 meetingConfig view/getCurrentMeetingConfig;
                 meetingFolder view/getPloneMeetingFolder;
                 templateItems view/templateItems;
-                ploneDiskAware tool/getPloneDiskAware;
                 portal_url tool/getSiteUrl;
                 member tool/getUser">
 
@@ -52,7 +51,7 @@
         <tal:comment replace="nothing">Create a new item</tal:comment>
         <a href="#"
         style="display: inline;"
-           tal:condition="python: userIsAmongCreators and not ploneDiskAware"
+           tal:condition="userIsAmongCreators"
            tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=MeetingItem${meetingConfig/getShortName};">
          <img tal:attributes="src string: $portal_url/new.png"
               title="create_meeting_item" i18n:attributes="title"/>
@@ -60,7 +59,7 @@
         <tal:comment replace="nothing">Create a new item from a template</tal:comment>
         <a class="link-overlay-pm" style="display: inline; padding-left: 0;"
            href="@@createitemfromtemplate" tal:attributes="href string:${meetingFolder/absolute_url}/@@createitemfromtemplate"
-           tal:condition="python: userIsAmongCreators and templateItems and not ploneDiskAware">
+           tal:condition="python: userIsAmongCreators and templateItems">
         <img  style="cursor:pointer"
              tal:attributes="src string: $portal_url/new_from.png"
              title="create_meeting_item_from_template"
@@ -91,7 +90,7 @@
       <td class="portletSection" i18n:translate="portletmeetings_title"></td>
       <td style="text-align: right; padding-right: 1em;">
         <tal:comment replace="nothing">Create a new meeting</tal:comment>
-        <img style="cursor:pointer" tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', context) and not ploneDiskAware"
+        <img style="cursor:pointer" tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', context)"
              tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=Meeting%s\'' % (meetingFolder.absolute_url(), meetingConfig.getShortName());
                              src string: $portal_url/new.png"
              title="create_meeting" i18n:attributes="title"/>
