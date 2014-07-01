@@ -1,27 +1,26 @@
 <tal:master define="children options/children | nothing;
                     expandRootLevel options/expandRootLevel | nothing"
             i18n:domain="plone">
+    <metal:main define-macro="nav_main">
+        <tal:navitem repeat="node children">
+            <li tal:define="children    node/children;
+                            item        node/item;
+                            item_title  item/Title;
+                            itemUID     item/UID;
+                            isFolder    python: item.portal_type == 'Folder';
+                            expandedClass    python: expandRootLevel and ' expanded' or ''"
+                tal:attributes="class python: isFolder and 'folder' + expandedClass or expandedClass">
 
-<metal:main define-macro="nav_main">
-<tal:navitem repeat="node children">
-<li tal:define="children    node/children;
-                item        node/item;
-                item_title  item/Title;
-                itemUID     item/UID;
-                isFolder    python: item.portal_type == 'Folder';
-                expandedClass    python: expandRootLevel and ' expanded' or ''"
-    tal:attributes="class python: isFolder and 'folder' + expandedClass or expandedClass">
+                    <a href="#"
+                       class="expanded"
+                       tal:attributes="href string:${view/context/absolute_url}/@@createitemfromtemplate?templateUID=${itemUID};">
+                        <span tal:content="item_title">Item title</span>
+                    </a>
+                    <ul>
+                        <span tal:replace="structure python:view.recurse(children=children)" />
+                    </ul>
 
-        <a href="#"
-           class="expanded"
-           tal:attributes="href string:${view/context/absolute_url}/@@createitemfromtemplate?templateUID=${itemUID};">
-            <span tal:content="item_title">Item title</span>
-        </a>
-        <ul>
-            <span tal:replace="structure python:view.recurse(children=children)" />
-        </ul>
-
-</li>
-</tal:navitem>
-</metal:main>
+            </li>
+        </tal:navitem>
+    </metal:main>
 </tal:master>
