@@ -8,8 +8,8 @@
     <configure zcml:condition="installed collective.profiler">
       <include package="collective.profiler"/>
       <profiler:timecall
-           class="Products.PloneMeeting.MeetingConfig.MeetingConfig"
-           method="getItems" />
+           class="Products.PloneMeeting.MeetingItem.MeetingItem"
+           method="getGivenAdvices" />
     </configure>
 
 </configure>

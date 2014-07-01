@@ -1070,6 +1070,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return res
     getRawDecision = getDecision
+
     security.declarePublic('getMotivation')
     def getMotivation(self, **kwargs):
         '''Overridden version of 'motivation' field accessor. It allows to manage
@@ -1087,6 +1088,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return self.getField('motivation').get(self, **kwargs)
     getRawMotivation = getMotivation
+
     security.declarePublic('getDeliberation')
     def getDeliberation(self, **kwargs):
         '''Returns the entire deliberation depending on fields used.'''
@@ -1837,16 +1839,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('attributeIsUsed')
     def attributeIsUsed(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        return (name in meetingConfig.getUsedItemAttributes())
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return (name in cfg.getUsedItemAttributes())
 
     security.declarePublic('showAnnexesTab')
     def showAnnexesTab(self, decisionRelated):
         '''Must we show the "Annexes" (or "Decision-related annexes") tab ?'''
         if self.isTemporary() or self.isDefinedInTool():
             return False
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        if meetingConfig.getFileTypes(relatedTo=(decisionRelated and 'item_decision' or 'item')):
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if cfg.getFileTypes(relatedTo=(decisionRelated and 'item_decision' or 'item')):
             return True
         return False
 
@@ -1862,12 +1866,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('queryState')
     def queryState(self):
         '''In what state am I ?'''
-        return self.portal_workflow.getInfoFor(self, 'review_state')
+        wfTool = getToolByName(self, 'portal_workflow')
+        return wfTool.getInfoFor(self, 'review_state')
 
     security.declarePublic('getWorkflowName')
     def getWorkflowName(self):
         '''What is the name of my workflow ?'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         return cfg.getItemWorkflow()
 
     security.declarePublic('getLastEvent')
@@ -1941,6 +1947,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                    includeReplacements=includeReplacements)
         return res
 
+    security.declarePublic('redefinedItemAssemblies')
     def redefinedItemAssemblies(self, usedItemAttributes):
         '''
           Helper method that returns list of redefined assembly attributes if assembly of item has been redefined,
@@ -2263,11 +2270,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise PloneMeetingError(INSERT_ITEM_ERROR)
         return res
 
-    def get_findOneLevelFor_cachekey(method, self, insertMethod, item):
+    def _findOneLevelFor_cachekey(method, self, insertMethod, item):
         '''cachekey method for self._findOneLevelFor.'''
         return (insertMethod, str(item.REQUEST.debug))
 
-    @ram.cache(get_findOneLevelFor_cachekey)
+    @ram.cache(_findOneLevelFor_cachekey)
     def _findOneLevelFor(self, insertMethod, item):
         '''
           Find the size of a complete set of given p_insertMethod.
@@ -3596,14 +3603,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('isCopiesEnabled')
     def isCopiesEnabled(self):
         '''Is the "copies" functionality enabled for this meeting config?'''
-        meetingconfig = self.portal_plonemeeting.getMeetingConfig(self)
-        return meetingconfig.getUseCopies()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return cfg.getUseCopies()
 
     security.declarePublic('isVotesEnabled')
     def isVotesEnabled(self):
         '''Returns True if the votes are enabled.'''
-        meetingconfig = self.portal_plonemeeting.getMeetingConfig(self)
-        return meetingconfig.getUseVotes()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return cfg.getUseVotes()
 
     security.declarePublic('getSiblingItemUid')
     def getSiblingItemUid(self, whichItem):
@@ -3679,8 +3688,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # - the user is creator in some group;
         # - the user must be able to see the item if it is private.
         # The user will duplicate the item in his own folder.
-        tool = self.portal_plonemeeting
-        if tool.getPloneDiskAware() or not tool.userIsAmong('creators') or not self.isPrivacyViewable():
+        tool = getToolByName(self, 'portal_plonemeeting')
+        if not tool.userIsAmong('creators') or not self.isPrivacyViewable():
             return False
         return True
 
