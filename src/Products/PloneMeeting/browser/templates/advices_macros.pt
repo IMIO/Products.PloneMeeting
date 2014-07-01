@@ -68,7 +68,8 @@
                                style="display: inline;"
                                href="@@advice-delay-changes-history"
                                tal:attributes="href string:${meetingItem/absolute_url}/@@advice-delay-changes-history?advice=${advice/id}">
-                                <img src="advice_delay_changes_history.gif" />
+                                <img src="history.gif"
+                                     tal:attributes="src string:${portal_url}/history.gif"/>
                             </a>
                          </acronym>
                     </legend>
