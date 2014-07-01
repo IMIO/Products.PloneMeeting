@@ -993,16 +993,18 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def getDefaultAttendees(self):
         '''The default attendees are the active MeetingUsers in the
            corresponding meeting configuration.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        return [u.id for u in meetingConfig.getMeetingUsers()]
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return [u.id for u in cfg.getMeetingUsers()]
 
     security.declarePublic('getDefaultSignatories')
     def getDefaultSignatories(self):
         '''The default signatories are the active MeetingUsers having usage
            "signer" and whose "signatureIsDefault" is True.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         res = []
-        for user in meetingConfig.getMeetingUsers(usages=('signer',)):
+        for user in cfg.getMeetingUsers(usages=('signer',)):
             if user.getSignatureIsDefault():
                 res.append(user.id)
         return res
@@ -1086,7 +1088,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if not hasattr(self.aq_base, 'entrances'):
             return res
         if theObjects:
-            cfg = self.portal_plonemeeting.getMeetingConfig(self)
+            tool = getToolByName(self, 'portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
         itemNumber = item.getItemNumber(relativeTo='meeting')
         for userId, number in self.entrances.iteritems():
             if (when == 'before' and number < itemNumber) or \
@@ -1129,7 +1132,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if not hasattr(self.aq_base, 'departures'):
             return res
         if theObjects:
-            cfg = self.portal_plonemeeting.getMeetingConfig(self)
+            tool = getToolByName(self, 'portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
         itemNumber = item.getItemNumber(relativeTo='meeting')
         if when == 'after':
             itemNumber += 1
@@ -1328,7 +1332,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def getBeforeFrozenState(self):
         '''Predecessor of state "frozen" in a meeting can be "published" or
            "created", depending on workflow adaptations.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         if 'no_publication' in cfg.getWorkflowAdaptations():
             return 'created'
         return 'published'
@@ -1342,21 +1347,22 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # list of items or to the list of "late" items. Note that I get
         # the list of items *in order* in the case I need to insert the item
         # at another place than at the end.
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         isLate = item.wfConditions().isLateFor(self)
         if isLate and not forceNormal:
             items = self.getItemsInOrder(late=True)
             itemsSetter = self.setLateItems
-            toDiscussValue = meetingConfig.getToDiscussLateDefault()
+            toDiscussValue = cfg.getToDiscussLateDefault()
         else:
             items = self.getItemsInOrder(late=False)
             itemsSetter = self.setItems
-            toDiscussValue = meetingConfig.getToDiscussDefault()
+            toDiscussValue = cfg.getToDiscussDefault()
         # Set the correct value for the 'toDiscuss' field if required
-        if meetingConfig.getToDiscussSetOnItemInsert():
+        if cfg.getToDiscussSetOnItemInsert():
             item.setToDiscuss(toDiscussValue)
         # At what place must we insert the item in the list ?
-        insertMethods = meetingConfig.getInsertingMethodsOnAddItem()
+        insertMethods = cfg.getInsertingMethodsOnAddItem()
         # wipe out insert methods as stored value is a DataGridField
         # and we only need a tuple of insert methods
         insertAtTheEnd = False
@@ -1423,29 +1429,34 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         meeting = self.getSelf()
         if meeting.queryState() not in ('created', 'frozen', 'published', 'decided'):
             return []
-        meetingConfig = meeting.portal_plonemeeting.getMeetingConfig(meeting)
+        tool = getToolByName(meeting, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
         # First, get meetings accepting items for which the date is lower or
         # equal to the date of this meeting (self)
         meetings = meeting.portal_catalog(
-            portal_type=meetingConfig.getMeetingTypeName(),
+            portal_type=cfg.getMeetingTypeName(),
             getDate={'query': meeting.getDate(), 'range': 'max'}, )
         meetingUids = [b.getObject().UID() for b in meetings]
         meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
         # Then, get the items whose preferred meeting is None or is among
         # those meetings.
-        itemsUids = meeting.portal_catalog(
-            portal_type=meetingConfig.getItemTypeName(),
+        brains = meeting.portal_catalog(
+            portal_type=cfg.getItemTypeName(),
             review_state='validated',
             getPreferredMeeting=meetingUids,
             sort_on="modified")
-        if meeting.queryState() in ('published', 'frozen', 'decided'):
+        if meeting.queryState() in MEETING_NOT_CLOSED_STATES:
             # Oups. I can only take items which are "late" items.
             res = []
-            for uid in itemsUids:
-                if uid.getObject().wfConditions().isLateFor(meeting):
-                    res.append(uid)
+            meetingUID = meeting.UID()
+            for brain in brains:
+                # first bypass brains for which preferredMeeting is not current meeting
+                if not brain.getPreferredMeeting == meetingUID:
+                    continue
+                if brain.getObject().wfConditions().isLateFor(meeting):
+                    res.append(brain)
         else:
-            res = itemsUids
+            res = brains
         return res
 
     security.declarePrivate('getDefaultAssembly')

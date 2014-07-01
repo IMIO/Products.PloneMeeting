@@ -1226,17 +1226,22 @@ def updateIndexes(portal, indexInfo, logger, metadataInfo=()):
                 logger.info('Existing index "%s" of type "%s" was removed:'
                             ' we need to recreate it with type "%s".' %
                             (indexName, oldType, indexType))
+        needToReindexIndex = False
         if indexName not in zopeCatalog.indexes:
             # We need to create this index
+            needToReindexIndex = True
             if indexType != 'ZCTextIndex':
                 catalog.addIndex(indexName, indexType)
             else:
                 catalog.addIndex(indexName, indexType, extra=ZCTextIndexInfo)
-            if indexName in metadataInfo and not indexName in catalog.schema():
-                catalog.addColumn(indexName)
+            logger.info('Created index "%s" of type "%s"...' % (indexName, indexType))
+        if indexName in metadataInfo and not indexName in catalog.schema():
+            needToReindexIndex = True
+            catalog.addColumn(indexName)
+            logger.info('Added metadata "%s"...' % indexName)
+        if needToReindexIndex:
             # Indexing database content based on this index.
             catalog.reindexIndex(indexName, portal.REQUEST)
-            logger.info('Created index "%s" of type "%s"...' % (indexName, indexType))
 
 
 # ------------------------------------------------------------------------------

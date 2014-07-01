@@ -210,6 +210,9 @@ NOT_ENCODED_VOTE_VALUE = 'not_yet'
 NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
 NOT_GIVEN_ADVICE_VALUE = 'not_given'
 
+# In those states, the meeting is not closed.
+MEETING_NOT_CLOSED_STATES = ('published', 'frozen', 'decided', 'decisions_published')
+
 # mapping definintions regarding the 'return_to_proposing_group' wfAdaptation
 # this is used in MeetingItem.mayBackToMeeting and may vary upon used workflow
 # the key is the transition triggerable on the item and the values are states

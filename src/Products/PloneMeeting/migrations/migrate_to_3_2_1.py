@@ -204,9 +204,9 @@ class Migrate_To_3_2_1(Migrator):
         logger.info('Translating folders of each MeetingConfigs...')
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             for folder in cfg.objectValues('ATFolder'):
-                if folder.Title() == u'Recurring items':
+                if folder.Title() == 'Recurring items':
                     folder.setTitle('RecurringItems')
-                if folder.Title() == u'Meeting file types':
+                if folder.Title() == 'Meeting file types':
                     folder.setTitle('MeetingFileTypes')
                 folder.setTitle(translate(folder.Title(),
                                           domain="PloneMeeting",

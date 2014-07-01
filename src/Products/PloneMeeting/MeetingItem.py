@@ -93,9 +93,6 @@ class MeetingItemWorkflowConditions:
     implements(IMeetingItemWorkflowConditions)
     security = ClassSecurityInfo()
 
-    # In those states, the meeting is not closed.
-    meetingNotClosedStates = ('published', 'frozen', 'decided', 'decisions_published')
-
     def __init__(self, item):
         self.context = item
 
@@ -222,7 +219,7 @@ class MeetingItemWorkflowConditions:
         isLateItem = self.context.isLate()
         if (currentState == 'presented') and pubObjIsMeeting:
             if (meetingState == 'created') or \
-               (isLateItem and (meetingState in self.meetingNotClosedStates)):
+               (isLateItem and (meetingState in MEETING_NOT_CLOSED_STATES)):
                 return True
         elif (currentState == 'itempublished') and pubObjIsMeeting:
             if isLateItem:
@@ -240,7 +237,7 @@ class MeetingItemWorkflowConditions:
             # See (*) above: done when meeting goes from 'frozen' to
             # 'published' or 'created'.
         elif currentState in ('accepted', 'refused', 'delayed'):
-            if meetingState in self.meetingNotClosedStates:
+            if meetingState in MEETING_NOT_CLOSED_STATES:
                 return True
         elif currentState == 'confirmed':
             if meetingState != 'closed':
@@ -301,7 +298,7 @@ class MeetingItemWorkflowConditions:
     def meetingIsPublished(self):
         res = False
         if self.context.hasMeeting() and \
-           (self.context.getMeeting().queryState() in self.meetingNotClosedStates):
+           (self.context.getMeeting().queryState() in MEETING_NOT_CLOSED_STATES):
             res = True
         return res
 
@@ -341,7 +338,7 @@ class MeetingItemWorkflowConditions:
 
     security.declarePublic('isLateFor')
     def isLateFor(self, meeting):
-        if meeting and (meeting.queryState() in self.meetingNotClosedStates) and \
+        if meeting and (meeting.queryState() in MEETING_NOT_CLOSED_STATES) and \
            (meeting.UID() == self.context.getPreferredMeeting()):
             itemValidationDate = self._getDateOfAction(self.context, 'validate')
             meetingFreezingDate = self._getDateOfAction(meeting, 'freeze')
