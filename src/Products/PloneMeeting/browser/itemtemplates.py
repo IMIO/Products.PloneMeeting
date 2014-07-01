@@ -57,8 +57,8 @@ class ItemTemplateView(BrowserView):
         templateItem = catalog(UID=templateUID)[0].getObject()
         # Create the new item by duplicating the template item
         membershipTool = getToolByName(self.context, 'portal_membership')
-        user = membershipTool.getAuthenticatedMember()
-        newItem = templateItem.clone(newOwnerId=user.id,
+        member = membershipTool.getAuthenticatedMember()
+        newItem = templateItem.clone(newOwnerId=member.id,
                                      cloneEventAction='create_meeting_item_from_template',
                                      destFolder=self.context,
                                      copyFields=DEFAULT_COPIED_FIELDS + EXTRA_COPIED_FIELDS_FOR_TEMPLATE)
@@ -111,7 +111,14 @@ class ItemTemplateView(BrowserView):
         itemTemplatesPath = '/'.join(self.getCurrentMeetingConfig().itemtemplates.getPhysicalPath())
         query['path'] = {'query': itemTemplatesPath}
         query['isDefinedInTool'] = True
-        query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', )
+        # templateUsingGroups, it is an index present on every elements (items and folders)
+        # of the MeetingConfig.itemtemplates, items with none selected has '__nothing_selected__'
+        # folders in the itemtemplates folder have '__folder_in_itemtemplates__' and items
+        # with selected values have the id of the relevant MeetingGroups
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        memberGroups = [group.getId() for group in self.getPloneMeetingTool().getGroupsForUser(member.getId(), suffix="creators")]
+        query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + tuple(memberGroups)
         query['meta_type'] = 'MeetingItem'
         itemTemplates = self.context.portal_catalog(**query)
         # we need to keep the itemTemplatesPath
