@@ -64,6 +64,13 @@ jQuery(function($) {
             }
         }
   });
+    // Content history popup
+    $('a.overlay-history').prepOverlay({
+       subtype: 'ajax',
+       filter: 'h2, #content-history',
+       urlmatch: '@@historyview',
+       urlreplace: '@@contenthistorypopup'
+    });
 });
 
 jQuery(function($) {

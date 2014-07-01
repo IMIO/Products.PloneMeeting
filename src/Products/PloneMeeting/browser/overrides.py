@@ -199,7 +199,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                                    'renderArrows',
                                    'renderOwnDelete',
                                    'renderEdit',
-                                   'renderActions', )
+                                   'renderActions',
+                                   'renderHistory', )
 
     def renderArrows(self):
         """
@@ -209,6 +210,12 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             self.totalNbOfItems = self.kwargs['totalNbOfItems']
             return ViewPageTemplateFile("templates/actions_panel_arrows.pt")(self)
         return ''
+
+    def showHistoryForContext(self):
+        """
+          History on items is shown without condition.
+        """
+        return True
 
     @memoize_contextless
     def mayChangeOrder(self):
