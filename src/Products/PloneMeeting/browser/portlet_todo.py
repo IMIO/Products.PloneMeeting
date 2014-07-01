@@ -76,7 +76,7 @@ class Renderer(base.Renderer):
         tool = self.getPloneMeetingTool()
         if tool.isPloneMeetingUser() and tool.isInPloneMeeting(context) and \
            (meetingConfig.getToDoListTopics()) and \
-           (meetingConfig.getTopicsForPortletToDo()):
+           (self.getTopicsForPortletToDo()):
             return True
         return False
 
@@ -113,6 +113,8 @@ class Renderer(base.Renderer):
     def getTopicsForPortletToDo(self):
         ''' Returns a list of topics to display in portlet_todo.'''
         cfg = self.getCurrentMeetingConfig()
+        if not cfg:
+            return []
         allTopics = cfg.getTopics('Meeting') + cfg.getTopics('MeetingItem')
         # Keep only relevant topics
         return [t for t in allTopics if t in cfg.getToDoListTopics()]
