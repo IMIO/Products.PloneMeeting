@@ -6,6 +6,7 @@
 
   <!-- ##code-section configure.zcml.header -->
   <include file="events.zcml" />
+  <include file="profiling.zcml" />
   <include package=".browser" />
   <include package=".content" />
   <include package="Products.CMFPlacefulWorkflow"/>

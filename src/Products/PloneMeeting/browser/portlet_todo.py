@@ -111,10 +111,11 @@ class Renderer(base.Renderer):
 
     @memoize
     def getTopicsForPortletToDo(self):
-        """
-          Returns the available topics in the current context
-        """
-        return self.getCurrentMeetingConfig().getTopicsForPortletToDo()
+        ''' Returns a list of topics to display in portlet_todo.'''
+        cfg = self.getCurrentMeetingConfig()
+        allTopics = cfg.getTopics('Meeting') + cfg.getTopics('MeetingItem')
+        # Keep only relevant topics
+        return [t for t in allTopics if t in cfg.getToDoListTopics()]
 
     @memoize
     def getBrainsForPortletTodo(self, topic):

@@ -3458,13 +3458,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 cache[key] = data
         return data
 
-    security.declarePublic('getAdvicesIconsWidth')
-    def getAdvicesIconsWidth(self):
-        '''Returns the estimated size of the "advices icons" block corresponding
-           to this meeting config.'''
-        usedValues = len(self.getUsedAdviceTypes())
-        return 5 + (usedValues*26) + 15
-
     security.declarePublic('listMeetingAppAvailableViews')
     def listMeetingAppAvailableViews(self):
         '''Returns a list of views available when a user clicks on a particular
@@ -3523,25 +3516,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((role, role))
         return DisplayList(tuple(res))
 
-    security.declarePublic('getPloneGroups')
-    def getPloneGroups(self, suffixes=[]):
-        '''Returns the list of Plone groups that are related to a MeetingGroup.
-           If p_suffixes is defined, we limit the search to Plone groups having
-           those suffixes. (_creators, _advisers, ...).'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        meetingGroups = tool.getMeetingGroups()
-        res = []
-        # If no p_suffix is given, we use all possible suffixes.
-        if not suffixes:
-            suffixes = MEETING_GROUP_SUFFIXES
-        for mg in meetingGroups:
-            for groupSuffix in suffixes:
-                groupId = mg.getPloneGroupId(groupSuffix)
-                ploneGroup = self.portal_groups.getGroupById(groupId)
-                if ploneGroup:
-                    res.append(ploneGroup)
-        return res
-
     security.declarePublic('getAvailablePodTemplates')
     def getAvailablePodTemplates(self, obj):
         '''Returns the list of POD templates that the currently logged in user
@@ -3572,10 +3546,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns a list of groups that can be selected on an item as copy for
            the item.'''
         res = []
-        # Get every Plone group related to a MeetingGroup
-        meetingPloneGroups = self.getPloneGroups()
-        for group in meetingPloneGroups:
-            res.append((group.id, group.getProperty('title')))
+        tool = getToolByName(self, 'portal_plonemeeting')
+        meetingGroups = tool.getMeetingGroups()
+        for mg in meetingGroups:
+            meetingPloneGroups = mg.getPloneGroups()
+            for ploneGroup in meetingPloneGroups:
+                res.append((ploneGroup.id, ploneGroup.getProperty('title')))
         return DisplayList(tuple(res))
 
     security.declarePublic('getSelf')
@@ -3647,13 +3623,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getCustomFields')
     def getCustomFields(self, cols):
         return getCustomSchemaFields(schema, self.schema, cols)
-
-    security.declarePublic('getTopicsForPortletToDo')
-    def getTopicsForPortletToDo(self):
-        ''' Returns a list of topics to display in portlet_todo.'''
-        allTopics = self.getTopics('Meeting') + self.getTopics('MeetingItem')
-        # Keep only relevant topics
-        return [t for t in allTopics if t in self.getToDoListTopics()]
 
     security.declarePublic('isUsingMeetingUsers')
     def isUsingMeetingUsers(self):

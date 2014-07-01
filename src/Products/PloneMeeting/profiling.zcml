@@ -1,0 +1,15 @@
+<configure
+   xmlns="http://namespaces.zope.org/zope"
+   xmlns:profiler="http://namespaces.plone.org/profiler"
+   xmlns:zcml="http://namespaces.zope.org/zcml"
+   xmlns:five="http://namespaces.zope.org/five"
+   xmlns:i18n="http://namespaces.zope.org/i18n">
+
+    <configure zcml:condition="installed collective.profiler">
+      <include package="collective.profiler"/>
+      <profiler:timecall
+           class="Products.PloneMeeting.MeetingConfig.MeetingConfig"
+           method="getItems" />
+    </configure>
+
+</configure>
