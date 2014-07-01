@@ -29,8 +29,12 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   meeting config basis so we know the "workflow path to present an item"
 - Added possibility for advisers to hide their advice when it is under redaction
 - Added possibility to easily change an advice delay from the advice popup view
-  using a drop down box displaying available delays
+  using a drop down box displaying available delays, with comments regarding changed delay and history
 - When creating an item from a template, keep every informations defined on the template
+- Optimized management of item templates, separated recurring items and item templates in two different
+  folders (old 'recurringitems' now only contains recurring items and new 'itemtemplates' folder contains
+  item templates), added possibility to organize item templates in folders.  Items templates displayed
+  to the item creator shows this organization in folders using a 'fancytree'
 - In MeetingConfig custom advisers, added possibility to restrict the selection of a custom
   adviser using a TAL expression (column 'Available on') and added a way to specify in that
   two or more custom advisers are linked together (column 'Is linked to previous row?')
