@@ -1,3 +1,6 @@
+from zope.component import getMultiAdapter
+from plone.memoize.instance import memoize
+
 from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.navtree import NavtreeStrategyBase
 
@@ -6,9 +9,6 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FOR_TEMPLATE
-
-from zope.component import getMultiAdapter
-from plone.memoize.instance import memoize
 
 
 class ItemTemplateView(BrowserView):
