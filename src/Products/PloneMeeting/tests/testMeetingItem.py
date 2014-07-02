@@ -41,6 +41,7 @@ from Products.statusmessages.interfaces import IStatusMessage
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -1165,7 +1166,7 @@ class testMeetingItem(PloneMeetingTestCase):
           is about inserting it in a living meeting.  An item is supposed late when
           the date of validation is newer than the date of freeze of the meeting
           we want to insert the item in.  A late item can be inserted in a meeting when
-          the meeting is in MeetingItem.meetingNotClosedStates states.
+          the meeting is in MEETING_NOT_CLOSED_STATES states.
         '''
         # no matter who create the item, do everything as MeetingManager
         self.changeUser('pmManager')
@@ -1186,12 +1187,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(lateItem.wfConditions().isLateFor(meeting))
         # set preferredMeeting so it is considered as late now...
         lateItem.setPreferredMeeting(meeting.UID())
-        # if the meeting is not in relevant states (MeetingItem.meetingNotClosedStates),
+        # if the meeting is not in relevant states (MEETING_NOT_CLOSED_STATES),
         # the item is not considered as late...
         self.backToState(meeting, 'created')
         self.failIf(lateItem.wfConditions().isLateFor(meeting))
         # now make the item considered as late item again and test
-        # every states of MeetingItem.meetingNotClosedStates
+        # every states of MEETING_NOT_CLOSED_STATES
         self.freezeMeeting(meeting)
         self.backToState(lateItem, 'itemcreated')
         self.validateItem(lateItem)
@@ -1200,7 +1201,7 @@ class testMeetingItem(PloneMeetingTestCase):
         for tr in self.TRANSITIONS_FOR_CLOSING_MEETING_2:
             if tr in self.transitions(meeting):
                 self.do(meeting, tr)
-            if meeting.queryState() in lateItem.wfConditions().meetingNotClosedStates:
+            if meeting.queryState() in MEETING_NOT_CLOSED_STATES:
                 self.failUnless(lateItem.wfConditions().isLateFor(meeting))
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
