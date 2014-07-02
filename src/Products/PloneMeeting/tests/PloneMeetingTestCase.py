@@ -366,7 +366,9 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
     def transitions(self, obj):
         '''Returns the list of transitions that the current user may trigger
            on p_obj.'''
-        return [t['id'] for t in self.wfTool.getTransitionsFor(obj)]
+        res = [t['id'] for t in self.wfTool.getTransitionsFor(obj)]
+        res.sort()
+        return res
 
     # sub-products-related tests methods ---------------------------------------
     # tests here under are only executed by sub-products
