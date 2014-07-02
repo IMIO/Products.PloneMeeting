@@ -1027,8 +1027,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     ##code-section class-header #fill in your manual code here
     itemPositiveDecidedStates = ('accepted', )
-    meetingTransitionsAcceptingRecurringItems = ('_init_', 'publish', 'freeze',
-                                                 'decide')
+    meetingTransitionsAcceptingRecurringItems = ('_init_', 'publish', 'freeze', 'decide')
     beforePublicationStates = ('itemcreated', 'proposed', 'prevalidated',
                                'validated')
     ##/code-section class-header
