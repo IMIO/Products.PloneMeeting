@@ -2762,10 +2762,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return bool(userAdviserGroupIds.intersection(powerAdviserGroupIds))
 
     security.declarePublic('hasAdvices')
-    def hasAdvices(self):
-        '''Is there at least one given advice on this item?'''
+    def hasAdvices(self, toGive=False):
+        '''Is there at least one given advice on this item?
+           If p_toGive is True, it contrary returns if there
+           is still an advice to be given.'''
         for advice in self.adviceIndex.itervalues():
-            if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
+            if toGive and advice['type'] == NOT_GIVEN_ADVICE_VALUE:
+                return True
+            if not toGive and not advice['type'] == NOT_GIVEN_ADVICE_VALUE:
                 return True
         return False
 
@@ -2941,7 +2945,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            to be given, a key is removed for every advice that does not need to
            be given anymore. If p_invalidate = True, it means that advice
            invalidation is enabled and someone has modified the item: it means
-           that all advices must be "not_given" again.
+           that all advices must be NOT_GIVEN_ADVICE_VALUE again.
            If p_triggered_by_transition is given, we know that the advices are
            updated because of a workflow transition, we receive the transition name.'''
         # no sense to compute automatic advice on items defined in the configuration
@@ -3162,7 +3166,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
                     self.REQUEST.set('mayGiveAdvice', True)
                 # make sure the delay is reinitialized if advice not already given
-                if self.adviceIndex[groupId]['delay'] and self.adviceIndex[groupId]['type'] == 'not_given':
+                if self.adviceIndex[groupId]['delay'] and self.adviceIndex[groupId]['type'] == NOT_GIVEN_ADVICE_VALUE:
                     self.adviceIndex[groupId]['delay_started_on'] = None
                 continue
 
