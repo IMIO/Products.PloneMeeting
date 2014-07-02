@@ -32,7 +32,6 @@ from zope.lifecycleevent import ObjectModifiedEvent
 from zope.schema.interfaces import RequiredMissing
 from zope.schema.interfaces import IVocabularyFactory
 
-from plone.app.testing import login
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
@@ -57,7 +56,7 @@ class testAdvices(PloneMeetingTestCase):
            In the configuration, an item an advice is asked on is viewable
            in state 'proposed' and 'validated'.'''
         # creator for group 'developers'
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
@@ -69,28 +68,28 @@ class testAdvices(PloneMeetingTestCase):
         item2.setOptionalAdvisers(('developers',))
         item3 = self.create('MeetingItem', **data)
         # at this state, the item is not viewable by the advisers
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         self.failIf(self.hasPermission(View, item1))
         self.failIf(self.hasPermission(View, item2))
         self.failIf(self.hasPermission(View, item3))
         # propose the items
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         for item in (item1, item2, item3):
             self.proposeItem(item)
         # now the item (item1) to advice is viewable because 'pmReviewer2' has an advice to add
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
         self.failIf(self.hasPermission(View, (item2, item3)))
-        login(self.portal, 'pmReviewer1')
+        self.changeUser('pmReviewer1')
         # validate the items
         for item in (item1, item2, item3):
             self.validateItem(item)
         # item1 still viewable because 'pmReviewer2' can still edit advice
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
         self.failIf(self.hasPermission(View, (item2, item3)))
         # present the items
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
         self.create('Meeting', date=meetingDate)
         for item in (item1, item2, item3):
@@ -99,7 +98,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(item2.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
         self.assertEquals(item3.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
         # item1 still viewable because the item an advice is asked for is still viewable in the 'presented' state...
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
         self.failIf(self.hasPermission(View, (item2, item3)))
         # now put the item back to itemcreated so it is no more viewable
@@ -114,7 +113,7 @@ class testAdvices(PloneMeetingTestCase):
            MeetingItem.getAdvicesGroupsInfosForUser returns 2 lists : first with addable advices and
            the second with editable/deletable advices.'''
         # creator for group 'developers'
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
@@ -127,9 +126,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(item1.displayAdvices(), True)
         # 'pmCreator1' has no addable nor editable advice to give
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         self.failIf(self.hasPermission(View, item1))
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         self.proposeItem(item1)
         # a user able to View the item can not add an advice, even if he tries...
         self.assertRaises(Unauthorized,
@@ -137,7 +136,7 @@ class testAdvices(PloneMeetingTestCase):
                           item1,
                           'meetingadvice')
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         # 'pmReviewer2' has one advice to give for 'vendors' and no advice to edit
         self._cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
@@ -187,11 +186,11 @@ class testAdvices(PloneMeetingTestCase):
         # given advice is correctly stored
         self.assertEquals(item1.adviceIndex['vendors']['type'], 'positive')
         self.assertEquals(item1.adviceIndex['vendors']['comment'], u'My comment')
-        login(self.portal, 'pmReviewer1')
+        self.changeUser('pmReviewer1')
         self.validateItem(item1)
         # now 'pmReviewer2' can't add (already given) an advice
         # but he can still edit the advice he just gave
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], ['vendors', ]))
         given_advice = getattr(item1, item1.adviceIndex['vendors']['advice_id'])
@@ -204,17 +203,17 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertRaises(Unauthorized, item1.restrictedTraverse('@@delete_givenuid'), item1.meetingadvice.UID())
         # put the item back in a state where 'pmReviewer2' can remove the advice
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         self.backToState(item1, self.WF_STATE_NAME_MAPPINGS['proposed'])
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         # remove the advice
         item1.restrictedTraverse('@@delete_givenuid')(item1.meetingadvice.UID())
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         # remove the fact that we asked the advice
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         item1.setOptionalAdvisers([])
         item1.at_post_edit_script()
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
 
     def test_pm_CanNotEditAnotherGroupAdvice(self):
@@ -223,7 +222,7 @@ class testAdvices(PloneMeetingTestCase):
           do anything else but see advice given by group2 even when 'advices' are addable/editable.
         '''
         # create an item and ask advice of 'vendors'
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('vendors', 'developers', ))
         item.at_post_edit_script()
@@ -264,7 +263,7 @@ class testAdvices(PloneMeetingTestCase):
           if it was not asked.
         '''
         # create an item and ask advice of 'vendors'
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         item1.setOptionalAdvisers(('vendors',))
         item1.at_post_edit_script()
@@ -287,7 +286,7 @@ class testAdvices(PloneMeetingTestCase):
         self.meetingConfig.setItemAdviceStates(itemAdviceStates)
         self.meetingConfig.setItemAdviceEditStates(itemAdviceEditStates)
         self.meetingConfig.setItemAdviceViewStates(itemAdviceViewStates)
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
@@ -297,7 +296,7 @@ class testAdvices(PloneMeetingTestCase):
         item1 = self.create('MeetingItem', **data)
         self.assertEquals(item1.displayAdvices(), True)
         # check than the adviser can see the item
-        login(self.portal, 'pmReviewer2')
+        self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         self.failUnless(self.hasPermission(AddAdvice, item1))
@@ -308,7 +307,7 @@ class testAdvices(PloneMeetingTestCase):
         # activate advice invalidation in state 'validated'
         self.meetingConfig.setEnableAdviceInvalidation(True)
         self.meetingConfig.setItemAdviceInvalidateStates((self.WF_STATE_NAME_MAPPINGS['validated'],))
-        login(self.portal, 'pmCreator1')
+        self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
