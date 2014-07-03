@@ -995,11 +995,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getUser')
     def getUser(self, userId=None):
         '''Returns the Zope User object for user having p_userId.'''
-        pm = self.portal_membership
+        membershipTool = getToolByName(self, 'portal_membership')
         if not userId:
-            return pm.getAuthenticatedMember()
+            return membershipTool.getAuthenticatedMember()
         else:
-            return pm.getMemberById(userId)
+            return membershipTool.getMemberById(userId)
 
     security.declarePublic('getUserName')
     def getUserName(self, userId):
