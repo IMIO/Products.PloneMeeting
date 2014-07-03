@@ -79,7 +79,7 @@ class Migrate_To_3_2_1(Migrator):
                 for v in meetingConfigsToCloneTo:
                     newValue.append({'meeting_config': v,
                                      'trigger_workflow_transitions_until': '__nothing__'})
-            cfg.setMeetingConfigsToCloneTo(newValue)
+                cfg.setMeetingConfigsToCloneTo(newValue)
         logger.info('Done.')
 
     def _updateInsertingMethodsAttributeOnMeetingConfigs(self):
