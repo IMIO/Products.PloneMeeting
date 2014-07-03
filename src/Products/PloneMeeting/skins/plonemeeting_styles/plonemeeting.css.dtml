@@ -982,6 +982,10 @@ div a.advice_delay_change_value {
 /* skin a bit the fancytree used for item templates */
 #content ul.ui-fancytree.fancytree-container {
     margin-left: 0;
+    white-space: normal;
+}
+#content span.fancytree-node {
+    display: flex;
 }
 
 /* </dtml-with> */
