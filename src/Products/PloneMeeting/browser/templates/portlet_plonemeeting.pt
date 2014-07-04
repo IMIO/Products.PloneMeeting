@@ -49,7 +49,7 @@
       <td class="portletSection" i18n:translate="PloneMeeting_label_items"></td>
       <td style="text-align: right; padding-right: 0.5em;">
         <tal:comment replace="nothing">Create a new item</tal:comment>
-        <a href="#"
+        <a id=newItemCreation href="#"
         style="display: inline;"
            tal:condition="userIsAmongCreators"
            tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=MeetingItem${meetingConfig/getShortName};">
@@ -57,7 +57,7 @@
               title="create_meeting_item" i18n:attributes="title"/>
         </a>
         <tal:comment replace="nothing">Create a new item from a template</tal:comment>
-        <a class="link-overlay-pm" style="display: inline; padding-left: 0;"
+        <a id=newTemplateItemCreation class="link-overlay-pm" style="display: inline; padding-left: 0;"
            href="@@createitemfromtemplate" tal:attributes="href string:${meetingFolder/absolute_url}/@@createitemfromtemplate"
            tal:condition="python: userIsAmongCreators and templateItems">
         <img  style="cursor:pointer"
