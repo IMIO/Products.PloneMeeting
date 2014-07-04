@@ -1213,6 +1213,13 @@ class testMeetingItem(PloneMeetingTestCase):
           together...
         """
         self.changeUser('admin')
+        # make sure 'itemAssembly' and 'itemSignatures' are not in usedItemAttributes
+        usedItemAttributes = list(self.meetingConfig.getUsedItemAttributes())
+        if 'itemAssembly' in usedItemAttributes:
+            usedItemAttributes.remove('itemAssembly')
+        if 'itemSignatures' in usedItemAttributes:
+            usedItemAttributes.remove('itemSignatures')
+        self.meetingConfig.setUsedItemAttributes(tuple(usedItemAttributes))
         # make items inserted in a meeting inserted in this order
         self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                                           'reverse': '0'}, ))
