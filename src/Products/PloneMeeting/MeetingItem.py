@@ -2948,7 +2948,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            that all advices must be NOT_GIVEN_ADVICE_VALUE again.
            If p_triggered_by_transition is given, we know that the advices are
            updated because of a workflow transition, we receive the transition name.'''
-        # no sense to compute automatic advice on items defined in the configuration
+        # bypass advice update if we are pasting items containing advices
+        if self.REQUEST.get('currentlyPastingItems', False):
+            return
+
         isDefinedInTool = self.isDefinedInTool()
         if isDefinedInTool:
             self.adviceIndex = PersistentMapping()
@@ -2991,6 +2994,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._removeEveryContainedAdvices()
 
         # Compute automatic
+        # no sense to compute automatic advice on items defined in the configuration
         if isDefinedInTool:
             automaticAdvisers = []
         else:
@@ -3163,6 +3167,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # add a comment for this transition triggered by the application,
                     # we want to show why it was triggered : item state change or delay exceeded
                     wf_comment = _('advice_wf_changed_triggered_by_application')
+                    import ipdb; ipdb.set_trace()
                     wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
                     self.REQUEST.set('mayGiveAdvice', True)
                 # make sure the delay is reinitialized if advice not already given

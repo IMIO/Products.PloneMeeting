@@ -1577,6 +1577,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                    newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.'''
+        # warn that we are pasting items
+        # so it is not necessary to perform some methods
+        # like updating advices as it will be removed here under
+        self.REQUEST.set('currentlyPastingItems', True)
         meetingConfig = self.getMeetingConfig(destFolder)
         # Current user may not have the right to create object in destFolder.
         # We will grant him the right temporarily
@@ -1588,6 +1592,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # as annexes are actually pasted then removed if not copyAnnexes
         # we have to do this to prevent annexes being converted uselessly...
         self.REQUEST.set('copyAnnexes', copyAnnexes)
+
         # Perform the paste
         pasteResult = destFolder.manage_pasteObjects(copiedData)
         # Restore the previous local roles for this user
@@ -1720,6 +1725,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Append the new item to the result.
             newItem.reindexObject()
             res.append(newItem)
+        self.REQUEST.set('currentlyPastingItems', False)
         return res
 
     def _updateMeetingFileTypesAfterSentToOtherMeetingConfig(self, annex):
