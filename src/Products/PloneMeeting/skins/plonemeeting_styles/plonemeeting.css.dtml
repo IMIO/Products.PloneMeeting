@@ -984,6 +984,11 @@ div a.advice_delay_change_value {
     margin-left: 0;
     white-space: normal;
 }
+/* redefine because overrided by base.css... */
+#content ul.fancytree-container ul {
+    margin: 0;
+}
+
 #content span.fancytree-node {
     display: flex;
 }
