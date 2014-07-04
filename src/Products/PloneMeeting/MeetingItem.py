@@ -3167,7 +3167,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # add a comment for this transition triggered by the application,
                     # we want to show why it was triggered : item state change or delay exceeded
                     wf_comment = _('advice_wf_changed_triggered_by_application')
-                    import ipdb; ipdb.set_trace()
                     wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
                     self.REQUEST.set('mayGiveAdvice', True)
                 # make sure the delay is reinitialized if advice not already given
