@@ -141,6 +141,11 @@ class BaseActionsPanelView(ActionsPanelView):
     def __init__(self, context, request):
         super(BaseActionsPanelView, self).__init__(context, request)
         self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste')
+        self.IGNORABLE_HISTORY_COMMENTS = self.IGNORABLE_HISTORY_COMMENTS + \
+            ('create_meeting_item_from_template_comments',
+             'create_from_predecessor_comments',
+             'Duplicate and keep link_comments',
+             'Duplicate_comments')
 
     def mayEdit(self):
         """
