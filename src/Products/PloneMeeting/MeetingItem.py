@@ -3168,7 +3168,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # we want to show why it was triggered : item state change or delay exceeded
                     wf_comment = _('advice_wf_changed_triggered_by_application')
                     wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
-                    self.REQUEST.set('mayGiveAdvice', True)
+                    self.REQUEST.set('mayGiveAdvice', False)
                 # make sure the delay is reinitialized if advice not already given
                 if self.adviceIndex[groupId]['delay'] and self.adviceIndex[groupId]['type'] == NOT_GIVEN_ADVICE_VALUE:
                     self.adviceIndex[groupId]['delay_started_on'] = None
