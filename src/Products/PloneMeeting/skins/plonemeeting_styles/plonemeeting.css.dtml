@@ -628,6 +628,8 @@ div.itemSignaturesEditable {
 
 /* make the textarea displayed in the manage itemAssembly/itemSignatures having a higher height */
 #form #form-widgets-item_assembly,
+#form #form-widgets-item_excused,
+#form #form-widgets-item_absents,
 #form #form-widgets-item_signatures {
     height: 200px;
 }
