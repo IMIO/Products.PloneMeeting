@@ -147,9 +147,9 @@ class MeetingAdvice(Container):
            during MeetingItem.updateAdvices.  Make sure MeetingItem.updateAdvices can trigger
            it but nobody else.'''
         # the transition is protected by the presence of a key 'mayGiveAdvice' in the REQUEST
-        if not self.REQUEST.get('mayGiveAdvice', False):
-            return False
-        return True
+        if self.REQUEST.get('mayGiveAdvice', False):
+            return True
+        return False
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
