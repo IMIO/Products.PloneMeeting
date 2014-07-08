@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<atcttool
+    xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+ <topic_indexes i18n:domain="plone">
+  <index name="portal_type" enabled="True" />
+ </topic_indexes>
+</atcttool>

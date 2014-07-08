@@ -1488,7 +1488,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     topicsInfo = (
         # My items
         ('searchmyitems',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ('Creator', 'ATCurrentAuthorCriterion', None),),
          'created',
          '',
@@ -1496,7 +1496,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # All (visible) items
         ('searchallitems',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          '',
@@ -1504,7 +1504,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Items in copy : need a script to do this search
         ('searchallitemsincopy',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchItemsInCopy',
@@ -1513,7 +1513,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Items to prevalidate : need a script to do this search
         ('searchitemstoprevalidate',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchItemsToPrevalidate',
@@ -1521,7 +1521,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Items to validate : need a script to do this search
         ('searchitemstovalidate',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchItemsToValidate',
@@ -1529,7 +1529,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Items to advice : need a script to do this search
         ('searchallitemstoadvice',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchItemsToAdvice',
@@ -1538,7 +1538,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Items to advice with delay : need a script to do this search
         ('searchitemstoadvicewithdelay',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchItemsToAdviceWithDelay',
@@ -1547,7 +1547,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Items to advice with exceeded delay : need a script to do this search
         ('searchitemstoadvicewithdexceededelay',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchItemsToAdviceWithExceededDelay',
@@ -1556,7 +1556,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Advised items : need a script to do this search
         ('searchalladviseditems',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchAdvisedItems',
@@ -1565,7 +1565,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Advised items with delay : need a script to do this search
         ('searchalladviseditemswithdelay',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchAdvisedItemsWithDelay',
@@ -1574,7 +1574,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Items to correct : search items in state 'returned_to_proposing_group'
         ('searchitemstocorrect',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ('review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
          ),
          'created',
@@ -1584,7 +1584,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # Corrected items : search items for wich previous_review_state was 'returned_to_proposing_group'
         ('searchcorrecteditems',
-        (('Type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ('previous_review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
          ),
          'created',
@@ -1594,7 +1594,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # All not-yet-decided meetings
         ('searchallmeetings',
-        (('Type', 'ATPortalTypeCriterion', ('Meeting',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('Meeting',)),
          ),
          'getDate',
          '',
@@ -1602,7 +1602,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
         # All decided meetings
         ('searchalldecisions',
-        (('Type', 'ATPortalTypeCriterion', ('Meeting',)),
+        (('portal_type', 'ATPortalTypeCriterion', ('Meeting',)),
          ),
          'getDate',
          '',
@@ -2913,7 +2913,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
                    ['delay__' + g.getId() + '_advice_not_given' for g in groups]
         # Create query parameters
-        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+        params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
@@ -2936,7 +2936,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # this search will only return 'delay-aware' advices
         groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups]
         # Create query parameters
-        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+        params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
@@ -2960,7 +2960,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # this search will only return 'delay-aware' advices for wich delay is exceeded
         groupIds = ['delay__' + g.getId() + '_advice_delay_exceeded' for g in groups]
         # Create query parameters
-        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+        params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
@@ -2990,7 +2990,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             groupIds += [g.getId() + '_%s' % adviceState for g in groups]
             groupIds += groupIds + ['delay__' + groupId for groupId in groupIds]
         # Create query parameters
-        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+        params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
@@ -3018,7 +3018,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for adviceState in adviceStates:
             groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
         # Create query parameters
-        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+        params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
                   'sort_on': sortKey,
@@ -3036,7 +3036,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries all items for which the current user is in copyGroups.'''
         member = self.portal_membership.getAuthenticatedMember()
         userGroups = self.portal_groups.getGroupsForPrincipal(member)
-        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+        params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'getCopyGroups' use 'OR' by default
                   'getCopyGroups': userGroups,
                   'sort_on': sortKey,
@@ -3062,7 +3062,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'getProposingGroup': ('group_id_2', ), 'review_state': ('validated', )},),
             }
         '''
-        params = {'Type': unicode(self.getItemTypeName(), 'utf-8'),
+        params = {'portal_type': self.getItemTypeName(),
                   'sort_on': sortKey,
                   'sort_order': sortOrder
                   }
