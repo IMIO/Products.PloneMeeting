@@ -1837,15 +1837,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 res = True
         return res
 
-    security.declarePublic('showItemAdvices')
-    def showItemAdvices(self):
-        '''See doc in interfaces.py.'''
-        res = False
-        meeting = self.getSelf()
-        if not meeting.adapted().isDecided():
-            res = True
-        return res
-
     security.declarePublic('getFrozenDocuments')
     def getFrozenDocuments(self):
         '''Gets the documents related to this meeting that were frozen.'''

@@ -473,9 +473,6 @@ class IMeetingDocumentation:
            of this meeting? The default implementation for this method
            returns True when the meeting has started (based on meeting.date or
            meeting.startDate if used).'''
-    def showItemAdvices():
-        '''Under what circumstances must I show the "Advices" column on the
-           meeting.'''
     def onEdit(isCreated):
         '''This method is called every time a meeting is created or updated.'''
 
