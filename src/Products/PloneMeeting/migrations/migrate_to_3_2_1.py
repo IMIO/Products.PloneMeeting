@@ -10,7 +10,6 @@ from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
 from Products.PloneMeeting.migrations import Migrator
-from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 
 
 # The migration class ----------------------------------------------------------
@@ -159,19 +158,6 @@ class Migrate_To_3_2_1(Migrator):
         self.tool._updateAllAdvices()
         logger.info('Done.')
 
-    def _initMeetingItemCompletenessCommentHTMLField(self):
-        '''Initialize the new field MeetingItem.completenessComment for existing items.'''
-        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
-        logger.info('Initializing new field MeetingItem.completenessComment for %d MeetingItem objects...' % len(brains))
-        for brain in brains:
-            item = brain.getObject()
-            forceHTMLContentTypeForEmptyRichFields(item)
-        logger.info('Initializing new field MeetingItem.completenessComment for items of MeetingConfigs...')
-        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
-            for item in cfg.recurringitems.objectValues('MeetingItem'):
-                forceHTMLContentTypeForEmptyRichFields(item)
-        logger.info('Done.')
-
     def _updateAddFilePermissionOnMeetingConfigFolders(self):
         '''Update 'Add File' permission on each meetingConfig folder.'''
         logger.info('Updating the \'Add File\' permission for every meetingConfig folders...')
@@ -255,7 +241,6 @@ class Migrate_To_3_2_1(Migrator):
         self._addRestrictedPowerObserverGroupsByMeetingConfig()
         self._addAdvicesNewFieldHiddenDuringRedaction()
         self._updateAdvices()
-        self._initMeetingItemCompletenessCommentHTMLField()
         self._updateAddFilePermissionOnMeetingConfigFolders()
         self._addChangesHistoryToItems()
         self._translateFoldersOfMeetingConfigs()
@@ -284,15 +269,14 @@ def migrate(context):
        6) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
        7) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
        8) Update advices to store 'comment' as utf-8 and not as unicode;
-       9) Initialize new field MeetingItem.completenessComment;
-       10) Update 'Add File' permission on each meetingConfig folder;
-       11) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
-       12) Translate folders stored in each MeetingConfigs (recurringitems, itemtemplates, categories, ...);
-       13) Add item portal_types to site_properties.typesUseViewActionInListings;
-       14) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
-       15) Clean registries as we removed some css;
-       16) Reinstall PloneMeeting;
-       17) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       9) Update 'Add File' permission on each meetingConfig folder;
+       10) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
+       11) Translate folders stored in each MeetingConfigs (recurringitems, itemtemplates, categories, ...);
+       12) Add item portal_types to site_properties.typesUseViewActionInListings;
+       13) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
+       14) Clean registries as we removed some css;
+       15) Reinstall PloneMeeting;
+       16) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------

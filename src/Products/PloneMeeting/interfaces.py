@@ -234,8 +234,8 @@ class IMeetingItemDocumentation:
            state.  If this method returns True, it means that an error occured
            while adding the recurring item to the meeting.'''
     def mayWriteCompleteness():
-        '''This manage the condition that check if MeetingItem.complentess and
-           MeetingItem.completenessComment may be edited by the current user.'''
+        '''This manage the condition that check if MeetingItem.complentess
+           may be edited by the current user.'''
     def mayBeLinkedToTasks():
         '''This method returns True if this meeting item fulfills conditions
            such that it can be associated to tasks. In the default

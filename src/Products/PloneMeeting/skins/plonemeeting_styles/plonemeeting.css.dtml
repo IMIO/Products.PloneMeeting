@@ -866,15 +866,10 @@ select#optionalAdvisers option[disabled] {
     margin-bottom: 0;
 }
 
-/* show label of completenessComment in red on the item edit form */
-#archetypes-fieldname-completenessComment label {
-    color: #FF0000;
-}
 
 .item_completeness_incomplete,
 #content a.item_completeness_incomplete:link,
-#content a.item_completeness_incomplete:visited,
-#hook_completenessComment legend {
+#content a.item_completeness_incomplete:visited {
     vertical-align: middle;
     display: inline;
     color: red;

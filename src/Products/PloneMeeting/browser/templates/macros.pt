@@ -332,8 +332,7 @@ document.location.reload(true);
 
 
 <tal:comment replace="nothing">
-  This macro manage the completeness informations of an item, so the 2 fields
-  MeetingItem.completeness and MeetingItem.completenessComment.
+  This macro manage the completeness informations of an item, MeetingItem.completeness
 </tal:comment>
 <metal:itemCompleteness define-macro="itemCompleteness">
 
@@ -374,10 +373,6 @@ document.location.reload(true);
                      tal:attributes="src string:${portal_url}/pb_close_small.png"/>
             </div>
         </div>
-        <tal:field condition="python: currentCompleteness == 'completeness_incomplete'"
-                   define="fieldName python: 'completenessComment'; ajaxEdit python:True">
-           <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-        </tal:field>
     </tal:defines>
 
 </metal:itemCompleteness>
