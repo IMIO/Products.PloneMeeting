@@ -103,12 +103,14 @@ def indexAdvisers(obj):
 
     def _computeSuffixFor(groupId, advice):
         '''
+          Compute the suffix that will be appended depending on advice state.
         '''
         # still not given but still giveable?  Not giveable?  Delay exceeded?
         if advice['type'] == NOT_GIVEN_ADVICE_VALUE:
             delayIsExceeded = isDelayAware and obj.getDelayInfosForAdvice(groupId)['delay_status'] == 'timed_out'
             if delayIsExceeded:
-                return '_advice_delay_exceeded'  # delay is exceeded, advice was not given
+                # delay is exceeded, advice was not given
+                return '_advice_delay_exceeded'
             else:
                 # does the relevant group may add the advice in current item state?
                 meetingGroup = getattr(tool, groupId)
