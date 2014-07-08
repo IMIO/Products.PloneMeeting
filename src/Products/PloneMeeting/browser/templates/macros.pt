@@ -325,7 +325,8 @@ document.location.reload(true);
   </tal:notMayEdit>
 
   <tal:displayBudgetInfos condition="context/getBudgetRelated"
-                          define="fieldName string:budgetInfos;">
+                          define="fieldName string:budgetInfos;
+                                  ajaxEdit string:True;">
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:displayBudgetInfos>
 </metal:budgetInfos>
