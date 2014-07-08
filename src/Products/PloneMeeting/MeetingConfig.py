@@ -469,8 +469,7 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="insertingMethodsOnAddItem",
             description_msgid="inserting_methods_on_add_item_descr",
-            columns={'insertingMethod': SelectColumn("Inserting method", vocabulary="listInsertingMethods", col_description="Select the inserting method, methods will be applied in given order, you can not select twice same inserting method."),
-                     'reverse': SelectColumn("Reverse inserting method?", vocabulary="listBooleanVocabulary", col_description="Reverse order of selected inserting method?", default='0')},
+            columns={'insertingMethod': SelectColumn("Inserting method", vocabulary="listInsertingMethods", col_description="Select the inserting method, methods will be applied in given order, you can not select twice same inserting method."), 'reverse': SelectColumn("Reverse inserting method?", vocabulary="listBooleanVocabulary", col_description="Reverse order of selected inserting method?", default='0')},
             label='Insertingmethodsonadditem',
             label_msgid='PloneMeeting_label_insertingMethodsOnAddItem',
             i18n_domain='PloneMeeting',

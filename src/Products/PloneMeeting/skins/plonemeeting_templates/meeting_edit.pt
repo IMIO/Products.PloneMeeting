@@ -281,7 +281,6 @@
                    condition="python: context.showObs('preObservations')">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
-        <metal:field use-macro="python:here.widget('allItemsAtOnce', mode='edit')"/>
 
         <tal:comment replace="nothing">For the admin only</tal:comment>
         <fieldset tal:condition="python: member.has_role('Manager')">

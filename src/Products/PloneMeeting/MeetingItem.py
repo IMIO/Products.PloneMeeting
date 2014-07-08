@@ -771,7 +771,7 @@ schema = Schema((
     StringField(
         name='meetingTransitionInsertingMe',
         widget=SelectionWidget(
-            condition="python: here.isDefinedInTool() and 'recurringitems' in here.absolute_url()",
+            condition="python: here.isDefinedInTool() and here.getParentNode().getId() == 'recurringitems'",
             description="MeetingTransitionInsertingMe",
             description_msgid="meeting_transition_inserting_me_descr",
             label='Meetingtransitioninsertingme',

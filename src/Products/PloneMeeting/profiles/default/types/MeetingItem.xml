@@ -86,10 +86,6 @@
          visible="True">
   <permission value="Copy or Move"/>
  </action>
- <action action_id="copyitem"
-         remove="True">
- </action>
-
 <!-- ##code-section FOOT -->
 <!-- ##/code-section FOOT -->
 </object>

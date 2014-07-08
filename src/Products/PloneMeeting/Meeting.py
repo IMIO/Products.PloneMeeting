@@ -23,8 +23,8 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-from xml.dom import minidom
 from appy.gen import No
+import UserList
 from collections import OrderedDict
 from App.class_init import InitializeClass
 from DateTime import DateTime
@@ -37,7 +37,7 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions, IMeetingWorkflowActions
-from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, kupuFieldIsEmpty, \
+from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
     fieldIsEmpty, KUPU_EMPTY_VALUES, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
     kupuEquals, getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
@@ -373,103 +373,6 @@ class MeetingWorkflowActions:
             wfTool.doActionFor(item, 'backTo' + previousState)
 
 InitializeClass(MeetingWorkflowActions)
-
-
-# Validators -------------------------------------------------------------------
-class AllItemsParserError(Exception):
-    '''Raised when the AllItemsParser encounters a problem.'''
-
-
-class AllItemsParser:
-    '''Parses the 'allItemsAtOnce' field.'''
-    def __init__(self, fieldContent, meeting):
-        doc = minidom.parseString("<x>%s</x>" % fieldContent)
-        self.root = doc.firstChild
-        # We remove empty nodes added by Firefox
-        self.removeSpaceTextNodes()
-        self.meeting = meeting
-        # Some parser error messages
-        try:
-            d = 'PloneMeeting'
-            self.CORRUPTED_BODY = meeting.translate('corruptedBody', domain=d)
-            self.CORRUPTED_TITLE = meeting.translate('corruptedTitle', domain=d)
-        except AttributeError:
-            self.CORRUPTED_BODY = 'Corrupted body.'
-            self.CORRUPTED_TITLE = 'Corrupted title.'
-
-    def removeSpaceTextNodes(self):
-        '''Removes emtpy nodes added by Firefox'''
-        # Position on the first node
-        child = self.root.firstChild
-        while child:
-            # We save the next node
-            next = child.nextSibling
-            if child.nodeType == child.TEXT_NODE:
-                # Is is an empty node ?
-                if child.toxml().isspace():
-                    # Remove it
-                    child.parentNode.removeChild(child)
-            # Go to the next child
-            child = next
-
-    def parse(self, onItem=None):
-        '''Parses (DOM parsing) the XHTML content of a Kupu field. Raises
-           AllItemsParserError exceptions if parsing fails. Each time an item
-           is parsed, a method p_onItem (if given) is called with args:
-           itemNumber, itemTitle, itemBody.'''
-        itemNumbers = []
-        child = self.root.firstChild
-        while child:
-            # Parse the item's number and title
-            if (child.nodeType == child.TEXT_NODE) or \
-               (not child.hasAttribute('id')) or \
-               (child.attributes['id'].value != 'itemTitle'):
-                raise AllItemsParserError(self.CORRUPTED_BODY)
-            if (not child.firstChild) or \
-               (child.firstChild.nodeType != child.TEXT_NODE):
-                raise AllItemsParserError(self.CORRUPTED_TITLE)
-            # Field must have the form "<number>. <title>"
-            numberedTitle = child.firstChild.data
-            # Parse number
-            number = None
-            dotIndex = numberedTitle.find('.')
-            if dotIndex == -1:
-                raise AllItemsParserError(self.CORRUPTED_TITLE)
-            try:
-                number = int(numberedTitle[:dotIndex])
-                itemNumbers.append(number)
-            except ValueError:
-                raise AllItemsParserError(self.CORRUPTED_TITLE)
-            # Parse title
-            title = numberedTitle[dotIndex+1:].strip()
-            if not title:
-                raise AllItemsParserError(self.CORRUPTED_TITLE)
-            # Parse body (description or decision)
-            child = child.nextSibling
-            if (not child) or (child.nodeType == child.TEXT_NODE) or \
-               (not child.hasAttribute('id')) or \
-               (child.attributes['id'].value != 'itemBody'):
-                raise AllItemsParserError(self.CORRUPTED_BODY)
-            body = ''
-            bodyChild = child.firstChild
-            while bodyChild:
-                body += bodyChild.toxml().strip()
-                bodyChild = bodyChild.nextSibling
-            if self.meeting.adapted().isDecided() and kupuFieldIsEmpty(body):
-                raise AllItemsParserError(self.meeting.translate(
-                    'corruptedContent', domain='PloneMeeting'))
-            child = child.nextSibling
-            # Call callback method if defined.
-            if onItem:
-                onItem(number, title, body)
-        nbOfItems = len(self.meeting.getRawItems()) + \
-            len(self.meeting.getRawLateItems())
-        if set(itemNumbers) != set(range(1, nbOfItems+1)):
-            raise AllItemsParserError(
-                self.meeting.translate(
-                    'corruptedNumbers', domain='PloneMeeting'))
-
-import UserList
 
 
 class BunchOfItems(UserList.UserList):
@@ -809,23 +712,6 @@ schema = Schema((
         multiValued=True,
         relationship="MeetingLateItems",
     ),
-    TextField(
-        name='allItemsAtOnce',
-        widget=RichWidget(
-            condition="python: here.showAllItemsAtOnce()",
-            parastyles=["Title|h2|itemTitle", "Body|div|itemBody"],
-            description_msgid="all_items_explanation",
-            description="AllItemsAtOnce",
-            label='Allitemsatonce',
-            label_msgid='PloneMeeting_label_allItemsAtOnce',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type="text/html",
-        allowable_content_types=('text/html',),
-        default_output_type="text/x-html-safe",
-        optional=False,
-        edit_accessor="getAllItemsAtOnce",
-    ),
     IntegerField(
         name='meetingNumber',
         default=-1,
@@ -932,25 +818,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         rq = self.REQUEST
         if (value == 'other') and not rq.get('place_other', None):
             return self.i18n('place_other_required')
-
-    security.declarePrivate('validate_allItemsAtOnce')
-    def validate_allItemsAtOnce(self, value):
-        '''Checks validity of content of field "allItemsAtOnce".
-
-           This field is a temporary buffer (a rich text field) that contains
-           numbers, titles and descriptions (or decisions) of all the items
-           of a meeting. This allows a MeetingManager to modify all those things
-           at once.
-
-           This validator ensures that the user does not break things like the
-           structure of each item, the numbering scheme, etc.
-        '''
-        if not self.attributeIsUsed('allItemsAtOnce'):
-            return
-        try:
-            AllItemsParser(value, self).parse()
-        except AllItemsParserError, aipe:
-            return aipe.args[0]
 
     security.declarePublic('listAssemblyMembers')
     def listAssemblyMembers(self):
@@ -1859,92 +1726,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Shortcut for translating p_msg in domain PloneMeeting.'''
         return translate(msg, domain=domain, context=self.REQUEST)
 
-    security.declarePublic('showAllItemsAtOnce')
-    def showAllItemsAtOnce(self):
-        '''Must I show the rich text field that allows to edit all "normal" and
-           "late" items at once ?'''
-        if not self.attributeIsUsed('allItemsAtOnce'):
-            return False
-        # I must have 'write' permissions on every item in order to do this.
-        if self.getItems():
-            if self.adapted().isDecided():
-                writePerms = (ModifyPortalContent, WriteDecision)
-            else:
-                writePerms = (ModifyPortalContent,)
-            currentUser = self.portal_membership.getAuthenticatedMember()
-            for item in self.getAllItems():
-                for perm in writePerms:
-                    if not currentUser.has_permission(perm, item):
-                        return False
-            return True
-        else:
-            return False
-
-    security.declarePublic('getAllItemsAtOnce')
-    def getAllItemsAtOnce(self):
-        '''Creates the content of the "allItemsAtOnce" field from "normal" and
-           "late" meeting items presented in this meeting.'''
-        if not self.attributeIsUsed('allItemsAtOnce'):
-            return ''
-        text = []
-        itemNumber = 0
-        for itemsList in (self.getItemsInOrder(),
-                          self.getItemsInOrder(late=True)):
-            for item in itemsList:
-                itemNumber += 1
-                text.append('<h2 id="itemTitle">%d. %s</h2>' % (itemNumber, item.Title()))
-                text.append('<div id="itemBody">')
-                if self.adapted().isDecided():
-                    itemBody = item.getDeliberation()
-                else:
-                    itemBody = item.Description()
-                if not itemBody:
-                    itemBody = KUPU_EMPTY_VALUES[0]
-                text.append(itemBody)
-                text.append('</div>')
-        text = "\n".join(text)
-        self.getField('allItemsAtOnce').set(self, text)
-        return text
-
-    security.declarePublic('updateItem')
-    def updateItem(self, itemNumber, itemTitle, itemBody):
-        '''Updates the item having number p_itemNumber with new p_itemTitle and
-           p_itemBody that come from the 'allItemsAtOnce' field.'''
-        item = self.getItemByNumber(itemNumber)
-        itemChanged = False
-        if not kupuEquals(item.Title(), itemTitle):
-            item.setTitle(itemTitle)
-            itemChanged = True
-        if self.adapted().isDecided():
-            # I must update the decision.
-            item.setDecision(itemBody)
-        else:
-            if not kupuEquals(item.Description(), itemBody):
-                item.setDescription(itemBody)
-                itemChanged = True
-        if itemChanged:
-            item.pm_modification_date = DateTime()  # Now
-            item.at_post_edit_script()
-        if (not itemChanged) and self.adapted().isDecided():
-            # In this case, I must not call at_post_edit_script (which will a.o.
-            # remember access on this item) but I must still transform rich text
-            # fields because the decison field was updated.
-            transformAllRichTextFields(item)
-
-    security.declarePublic('setAllItemsAtOnce')
-    def setAllItemsAtOnce(self, value):
-        '''p_value is the content of the 'allItemsAtOnce' field, with all items
-           numbers, titles and descriptions/decisions in one Kupu field. This
-           method updates all the corresponding MeetingItem objects.'''
-        try:
-            AllItemsParser(value, self).parse(onItem=self.updateItem)
-        except AllItemsParserError:
-            pass  # Normally it should never happen because the validator parsed
-                  # p_value some milliseconds earlier.
-        # Re-initialise the "allItemsAtOnce" field to blank (the next time it
-        # will be shown to the user, it will be updated at this moment).
-        self.getField('allItemsAtOnce').set(self, '')
-
     security.declarePublic('getSpecificDocumentContext')
     def getSpecificDocumentContext(self):
         '''See doc in interfaces.py.'''
@@ -2187,6 +1968,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return _('PloneMeeting_label_attendees')
         else:
             return _('meeting_assembly')
+
 
 
 registerType(Meeting, PROJECTNAME)
