@@ -95,6 +95,8 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
       Overrides the DocumentBylineViewlet to hide it for some layouts.
     '''
 
+    index = ViewPageTemplateFile("templates/document_byline.pt")
+
     def show(self):
         oldShow = super(PloneMeetingDocumentBylineViewlet, self).show()
         if not oldShow:
@@ -117,6 +119,15 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
         if self.context.portal_type == 'meetingadvice' and 'ajax_load' in self.request:
             return False
         return True
+
+    def highlight_history_link(self):
+        """
+          If a comment was added to last event of the object history,
+          we highlight the link (set a css class on it) so user eye is drawn to it.
+        """
+        # use method historyLastEventHasComments from imio.actionspanel that does the job
+        actions_panel = self.context.restrictedTraverse('@@actions_panel')
+        return actions_panel.historyLastEventHasComments()
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):

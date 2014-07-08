@@ -1,9 +1,3 @@
-/* In the documentby_line, remove the link to the creator... */
-removeLinkOnByLine = function() {
-    tagToHandle = $('#plone-document-byline a')[0];
-    $(tagToHandle).replaceWith('<span>' + $(tagToHandle).html() + '</span>');
-}
-
 /* Disable some elements from the optionalAdvisers list box
    Actually we add 2 special values that are help messages related to delay-aware advisers,
    these shoul not be selectable. */
@@ -19,5 +13,4 @@ disableSomeOptionsFromOptionalAdvisers = function() {
     });
 }
 
-jQuery(document).ready(removeLinkOnByLine);
 jQuery(document).ready(disableSomeOptionsFromOptionalAdvisers);
