@@ -4088,7 +4088,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             #show that the linked item is not of the same portal_type
             if not predecessor.portal_type == item.portal_type:
                 predecessorCfg = tool.getMeetingConfig(predecessor)
-                title = "(%s) " % predecessorCfg.Title() + title
+                title = "%s - " % predecessorCfg.Title() + title
             #only replace last occurence because title appear in the "title" tag,
             #could be the same as the last part of url (id), ...
             splittedColoredLink = coloredLink.split(originalTitle)
