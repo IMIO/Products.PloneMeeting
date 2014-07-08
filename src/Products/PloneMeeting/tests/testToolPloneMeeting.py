@@ -26,6 +26,7 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
 from Products.CMFCore.permissions import ManagePortal
+from Products.CMFCore.utils import getToolByName
 
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -352,6 +353,79 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
         # the MFT now should be the given subType otherMCCorrespondences
         self.assertTrue(annex.getMeetingFileType() == subTypeMC1Correspondence.split('__filetype__')[1])
+
+    def test_pm_UpdateDelayAwareAdvices(self):
+        '''
+          Test that the maintenance task updating delay-aware advices works...
+          This is supposed to update delay-aware advices that are still addable/editable.
+        '''
+        # create different items having relevant advices :
+        # item1 : no advice
+        # item2 : one optional advice, one automatic advice, none delay-aware
+        # item3 : one delay-aware advice
+        catalog = getToolByName(self.portal, 'portal_catalog')
+        self.changeUser('admin')
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '5',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'group': 'vendors',
+              'gives_auto_advice_on': 'here/getBudgetRelated',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '',
+              'delay_label': ''}, ])
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        query['meta_type'] = 'MeetingItem'
+
+        self.changeUser('pmManager')
+        # no advice
+        self.create('MeetingItem')
+        # if we use the query, it will return nothing for now...
+        self.assertTrue(not catalog(**query))
+
+        # no delay-aware advice
+        itemWithNonDelayAwareAdvices = self.create('MeetingItem', **{'budgetRelated': True})
+        # the automatic advice has been added
+        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['vendors']['optional'] is False)
+        itemWithNonDelayAwareAdvices.setOptionalAdvisers(('developers', ))
+        itemWithNonDelayAwareAdvices.at_post_edit_script()
+        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['developers']['optional'] is True)
+
+        # one delay-aware advice addable
+        itemWithDelayAwareAdvice = self.create('MeetingItem')
+        itemWithDelayAwareAdvice.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
+        itemWithDelayAwareAdvice.at_post_edit_script()
+        self.proposeItem(itemWithDelayAwareAdvice)
+        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
+        # this time the element is returned
+        self.assertTrue(len(catalog(**query)) == 1)
+        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        # if item3 is no more giveable, the query will not return it anymore
+        self.validateItem(itemWithDelayAwareAdvice)
+        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(not catalog(**query))
+        # back to proposed, add it
+        self.backToState(itemWithDelayAwareAdvice, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        createContentInContainer(itemWithDelayAwareAdvice,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
+        # an editable item will found by the query
+        self.assertTrue(len(catalog(**query)) == 1)
+        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        # makes it no more editable
+        self.backToState(itemWithDelayAwareAdvice, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
+        self.assertTrue(not catalog(**query))
 
 
 def test_suite():

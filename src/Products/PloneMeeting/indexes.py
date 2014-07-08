@@ -97,9 +97,6 @@ def indexAdvisers(obj):
     """
     if not hasattr(obj, 'adviceIndex'):
         return ''
-    tool = getToolByName(obj, 'portal_plonemeeting')
-    cfg = tool.getMeetingConfig(obj)
-    item_state = obj.queryState()
 
     def _computeSuffixFor(groupId, advice):
         '''
@@ -107,15 +104,14 @@ def indexAdvisers(obj):
         '''
         # still not given but still giveable?  Not giveable?  Delay exceeded?
         if advice['type'] == NOT_GIVEN_ADVICE_VALUE:
-            delayIsExceeded = isDelayAware and obj.getDelayInfosForAdvice(groupId)['delay_status'] == 'timed_out'
+            delayIsExceeded = isDelayAware and \
+                obj.getDelayInfosForAdvice(groupId)['delay_status'] == 'timed_out'
             if delayIsExceeded:
                 # delay is exceeded, advice was not given
                 return '_advice_delay_exceeded'
             else:
                 # does the relevant group may add the advice in current item state?
-                meetingGroup = getattr(tool, groupId)
-                itemAdviceStates = meetingGroup.getItemAdviceStates(cfg)
-                if item_state in itemAdviceStates:
+                if advice['advice_addable']:
                     return '_advice_not_given'
                 else:
                     return '_advice_not_giveable'

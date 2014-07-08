@@ -7,6 +7,7 @@ from plone.memoize.instance import memoize
 
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.config import ADVICE_STATES_STILL_EDITABLE
 
 
 class PloneMeetingTopicView(BrowserView):
@@ -252,17 +253,38 @@ class ChangeItemOrderView(BrowserView):
 class UpdateDelayAwareAdvicesView(BrowserView):
     """
       This is a view that is called as a maintenance task by Products.cron4plone.
-      It will be launched at 0:00 each night and update advices on each items so
-      delay-aware advices that are using clear day are updated at the very beginning
-      of the day.  It will also update the indexAdvisers portal_catalog index.
+      As we use clear days to compute advice delays, it will be launched at 0:00
+      each night and update relevant items containing delay-aware advices still addable/editable.
+      It will also update the indexAdvisers portal_catalog index.
     """
     def __call__(self):
-        """
-          Update every items adviceIndex and update portal_catalog indexAdvisers index.
-          The view itself is protected by the 'Manage portal' permission.
-        """
         tool = getToolByName(self.context, 'portal_plonemeeting')
-        tool._updateAllAdvices()
+        query = self._computeQuery()
+        tool._updateAllAdvices(query=query)
+
+    def _computeQuery(self):
+        '''
+          Compute the catalog query to execute to get only relevant items to update,
+          so items with delay-aware advices still addable/editable.
+        '''
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        # compute the indexAdvisers index, take every groups, including disabled ones
+        # then constuct every possibles cases, by default there is 2 possible values :
+        # delay__groupId1__advice_not_given, delay__groupId1__advice_under_edit
+        # delay__groupId2__advice_not_given, delay__groupId2__advice_under_edit
+        # ...
+        meetingGroups = tool.getMeetingGroups(onlyActive=False)
+        groupIds = [meetingGroup.getId() for meetingGroup in meetingGroups]
+        indexAdvisers = []
+        for groupId in groupIds:
+            # advice giveable but not given
+            indexAdvisers.append("delay__%s_advice_not_given" % groupId)
+            # now advice given and still editable
+            for advice_state in ADVICE_STATES_STILL_EDITABLE:
+                indexAdvisers.append("delay__%s_%s" % (groupId, advice_state))
+        query = {}
+        query['indexAdvisers'] = indexAdvisers
+        return query
 
 
 class DeleteHistoryEvent(BrowserView):

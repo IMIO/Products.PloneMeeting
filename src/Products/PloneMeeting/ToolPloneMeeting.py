@@ -53,7 +53,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
 from plone.memoize import ram
 from Products.CMFCore.utils import getToolByName, _checkPermission
-from Products.CMFCore.permissions import DeleteObjects, View
+from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.PloneBatch import Batch
 from Products.DCWorkflow.Transitions import TRIGGER_USER_ACTION
@@ -2259,14 +2259,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''UI action that calls _updateAllAdvices.'''
         if not self.isManager(realManagers=True):
             raise Unauthorized
-        self._updateAllAdvices()
+        self._updateAllAdvices(True)
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
-    def _updateAllAdvices(self):
-        '''Update adviceIndex for every items.'''
+    def _updateAllAdvices(self, query={}):
+        '''Update adviceIndex for every items.
+           If a p_query is given, it will be used by the portal_catalog query
+           we do to restrict update of advices to some subsets of items...'''
         catalog = getToolByName(self, 'portal_catalog')
-        brains = catalog(meta_type='MeetingItem')
+        if not 'meta_type' in query:
+            query['meta_type'] = 'MeetingItem'
+        brains = catalog(**query)
         numberOfBrains = len(brains)
         i = 1
         for brain in brains:

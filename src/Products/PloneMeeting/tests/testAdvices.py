@@ -39,6 +39,8 @@ from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAdvice
+from Products.PloneMeeting.config import ADVICE_STATES_STILL_EDITABLE
+from Products.PloneMeeting.config import ADVICE_STATES_NO_MORE_EDITABLE
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -805,51 +807,6 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
         self.assertTrue(not self.hasPermission(ModifyPortalContent, advice))
 
-    def test_pm_UpdateDelayAwareAdvicesView(self):
-        '''Test the maintenance task view that will update delay-aware advisers at midnight (0:00)
-           at the end of a clear day to keep everything consistent.'''
-        # configure one delay-aware optional adviser
-        self.meetingConfig.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
-              'group': 'vendors',
-              'gives_auto_advice_on': '',
-              'for_item_created_from': '2012/01/01',
-              'for_item_created_until': '',
-              'delay': '5',
-              'delay_label': ''}, ])
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
-        item.at_post_edit_script()
-        self.proposeItem(item)
-        self.changeUser('pmReviewer2')
-        # by default, advice is giveable as delay is not exceeded
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] > 0)
-        self.assertTrue(self.hasPermission(AddAdvice, item))
-        # so make delay exceeded, until advices are not updated
-        # the state is still somewhat inconsistent as the user as still the AddAdvice permission
-        item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
-        # the state is not consistent as advices have not been updated
-        # delay is exceeded...
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] == 5)
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
-        # ... but user has still the permission to add it?! ;-)
-        self.assertTrue(self.hasPermission(AddAdvice, item))
-        # make things consistent by calling the @@update-delay-aware-advices view
-        # this view is automatically called by cron4plone every days at 0:00
-        # the view is only accessible to Managers
-        self.assertRaises(Unauthorized, self.portal.restrictedTraverse, '@@update-delay-aware-advices')
-        self.changeUser('admin')
-        # call the view as admin
-        self.portal.restrictedTraverse('@@update-delay-aware-advices')()
-        # now that advices have been updated, the state is coherent
-        self.changeUser('pmReviewer2')
-        # delay is still exceeded...
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] == 5)
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
-        # ... but now the user does not have the permission to add the advice anymore
-        self.assertTrue(not self.hasPermission(AddAdvice, item))
-
     def test_pm_MeetingGroupDefinedItemAdviceStatesValuesOverridesMeetingConfigValues(self):
         '''Advices are giveable/editable/viewable depending on defined item states on the MeetingConfig,
            these states can be overrided locally for a particular MeetingGroup so this particluar MeetingGroup
@@ -1256,6 +1213,20 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['row_id'] == 'unique_id_789')
         self.assertTrue(item.adviceIndex['vendors']['delay'] == '20')
         self.assertTrue(item.adviceIndex['vendors']['delay_for_automatic_adviser_changed_manually'] is True)
+
+    def test_pm_ConfigAdviceStates(self):
+        '''
+          This test that states defined in config.py in two constants
+          ADVICE_STATES_STILL_EDITABLE and ADVICE_STATES_NO_MORE_EDITABLE
+          consider every states of the workflow used for content_type 'meetingadvice'.
+        '''
+        adviceWF = self.wfTool.getWorkflowsFor('meetingadvice')
+        # we have only one workflow for 'meetingadvice'
+        self.assertTrue(len(adviceWF) == 1)
+        adviceWF = adviceWF[0]
+        everyStates = adviceWF.states.keys()
+        statesOfConfig = ADVICE_STATES_STILL_EDITABLE + ADVICE_STATES_NO_MORE_EDITABLE
+        self.assertTrue(set(everyStates) == set(statesOfConfig))
 
 
 def test_suite():
