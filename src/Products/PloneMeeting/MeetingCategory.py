@@ -205,10 +205,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         '''See documentation in interfaces.py.'''
         cat = self.getSelf()
         tool = getToolByName(cat, 'portal_plonemeeting')
-        try:
-            wfTool = self.portal_workflow
-        except AttributeError:
-            wfTool = self.context.portal_workflow
+        wfTool = getToolByName(cat, 'portal_workflow')
         state = wfTool.getInfoFor(cat, 'review_state')
         isUsing = True
         usingGroups = self.getUsingGroups()

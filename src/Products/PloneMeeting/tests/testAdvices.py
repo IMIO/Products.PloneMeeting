@@ -36,11 +36,13 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
 from Products.CMFCore.permissions import AddPortalContent
+from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import ADVICE_STATES_STILL_EDITABLE
 from Products.PloneMeeting.config import ADVICE_STATES_NO_MORE_EDITABLE
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -211,12 +213,62 @@ class testAdvices(PloneMeetingTestCase):
         # remove the advice
         item1.restrictedTraverse('@@delete_givenuid')(item1.meetingadvice.UID())
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
-        # remove the fact that we asked the advice
+
+        # if advices are disabled in the meetingConfig, getAdvicesGroupsInfosForUser is emtpy
+        self.changeUser('admin')
+        self.meetingConfig.setUseAdvices(False)
+        self.changeUser('pmReviewer2')
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
+        self.changeUser('admin')
+        self.meetingConfig.setUseAdvices(True)
+
+        # activate advices again and this time remove the fact that we asked the advice
+        self.changeUser('pmReviewer2')
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         self.changeUser('pmManager')
         item1.setOptionalAdvisers([])
         item1.at_post_edit_script()
         self.changeUser('pmReviewer2')
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
+
+    def test_pm_AddAnnexToAdvice(self):
+        '''
+          Test that we can add annexes to an advice.
+        '''
+        # advice are addable/editable when item is 'proposed'
+        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
+                                                    self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
+        # an advice can be given when an item is 'proposed'
+        self.proposeItem(item)
+        # add advice for 'vendors'
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'positive',
+                                             'advice_comment': RichTextValue(u'My comment')})
+        # annexes are addable if advice is editable
+        self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
+        self.assertTrue(self.hasPermission(DeleteObjects, advice))
+        annex = self.addAnnex(advice, relatedTo='advice')
+        self.assertTrue(len(IAnnexable(advice).getAnnexes()) == 1)
+        self.assertTrue(IAnnexable(advice).getAnnexes()[0].UID() == annex.UID())
+        # annex is removable
+        self.assertTrue(self.hasPermission(DeleteObjects, annex))
+        # if we validate the item, the advice is no more editable
+        # and annexes are no more addable/removable
+        self.changeUser('pmManager')
+        self.validateItem(item)
+        self.changeUser('pmReviewer2')
+        self.assertTrue(not self.hasPermission(ModifyPortalContent, advice))
+        self.assertTrue(not self.hasPermission(DeleteObjects, advice))
+        self.assertTrue(not self.hasPermission(DeleteObjects, annex))
 
     def test_pm_CanNotEditAnotherGroupAdvice(self):
         '''
@@ -230,7 +282,7 @@ class testAdvices(PloneMeetingTestCase):
         item.at_post_edit_script()
         # an advice can be given when an item is 'proposed'
         self.proposeItem(item)
-        # add advice for 'vednors'
+        # add advice for 'developers'
         self.changeUser('pmAdviser1')
         developers_advice = createContentInContainer(item,
                                                      'meetingadvice',
@@ -550,7 +602,14 @@ class testAdvices(PloneMeetingTestCase):
               'gives_auto_advice_on': 'item/getBudgetRelated',
               'for_item_created_from': '2012/01/01',
               'delay': '',
-              'delay_label': ''}, ])
+              'delay_label': ''},
+             # an non automatic advice configuration
+             {'row_id': 'unique_id_789',
+              'group': 'developers',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'delay': '10',
+              'delay_label': ''}])
         # one wrong condition (raising an error when evaluated) and one returning False
         self.failIf(item.getAutomaticAdvisers())
         # now make the second row expression return True, set item.budgetRelated
@@ -813,11 +872,15 @@ class testAdvices(PloneMeetingTestCase):
            will be able to add an advice in different states than one defined globally on the MeetingConfig.'''
         # by default, nothing defined on the MeetingGroup, the MeetingConfig states are used
         vendors = self.tool.vendors
+        # getItemAdviceStates on a MeetingGroup returns values of the meetingConfig
+        # if nothing is defined on the meetingGroup
         self.assertTrue(not vendors.getItemAdviceStates())
         # make advice giveable when item is proposed
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.assertTrue(vendors.getItemAdviceStates(cfg) == cfg.getItemAdviceStates())
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         # ask 'vendors' advice
@@ -832,8 +895,11 @@ class testAdvices(PloneMeetingTestCase):
         # that advice is giveable when item is 'validated', it will not be anymore
         # in 'proposed' state, but well in 'validated' state
         self.changeUser('admin')
-        vendors.setItemAdviceStates(("%s__state__%s" % (self.meetingConfig.getId(),
+        vendors.setItemAdviceStates(("%s__state__%s" % (cfg.getId(),
                                                         self.WF_STATE_NAME_MAPPINGS['validated'])))
+        # no more using values defined on the meetingConfig
+        self.assertTrue(not vendors.getItemAdviceStates(cfg) == cfg.getItemAdviceStates())
+        self.assertTrue(vendors.getItemAdviceStates(cfg) == (self.WF_STATE_NAME_MAPPINGS['validated'], ))
         item.at_post_create_script()
         self.changeUser('pmReviewer2')
         self.assertTrue(not 'vendors' in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
@@ -843,6 +909,18 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertTrue(item.queryState() == self.WF_STATE_NAME_MAPPINGS['validated'])
         self.assertTrue('vendors' in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
+
+        # it is the same for itemAdviceEditStates and itemAdviceViewStates
+        self.assertTrue(vendors.getItemAdviceEditStates(cfg) == cfg.getItemAdviceEditStates())
+        self.assertTrue(vendors.getItemAdviceViewStates(cfg) == cfg.getItemAdviceViewStates())
+        vendors.setItemAdviceEditStates(("%s__state__%s" % (cfg.getId(),
+                                                            self.WF_STATE_NAME_MAPPINGS['validated'])))
+        vendors.setItemAdviceViewStates(("%s__state__%s" % (cfg.getId(),
+                                                            self.WF_STATE_NAME_MAPPINGS['validated'])))
+        self.assertTrue(not vendors.getItemAdviceEditStates(cfg) == cfg.getItemAdviceEditStates())
+        self.assertTrue(vendors.getItemAdviceEditStates(cfg) == (self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        self.assertTrue(not vendors.getItemAdviceViewStates(cfg) == cfg.getItemAdviceViewStates())
+        self.assertTrue(vendors.getItemAdviceViewStates(cfg) == (self.WF_STATE_NAME_MAPPINGS['validated'], ))
 
     def test_pm_PowerAdvisers(self):
         '''Power advisers are users that can give an advice even when not asked...'''
@@ -1113,6 +1191,13 @@ class testAdvices(PloneMeetingTestCase):
         # now define a 'available_on' for third row
         # first step, something that is False
         customAdvisers[2]['available_on'] = 'python:False'
+        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
+        self.meetingConfig.processForm({'dummy': ''})
+        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
+                        [('unique_id_456', '10', u''), ])
+        # a wrong TAL expression for 'available_on' does not break anything
+        customAdvisers[2]['available_on'] = 'python:here.someUnexistingMethod()'
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
         self.meetingConfig.processForm({'dummy': ''})

@@ -157,10 +157,10 @@ class testWorkflows(PloneMeetingTestCase):
         item1 = self.create('MeetingItem', title='The first item')
         self.addAnnex(item1)
         # The creator cannot add a decision annex on created item
-        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         self.do(item1, 'propose')
         # The creator cannot add a decision annex on proposed item
-        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         self.failIf(self.transitions(item1))  # He may trigger no more action
         # pmManager creates a meeting
         self.changeUser('pmManager')
@@ -176,22 +176,22 @@ class testWorkflows(PloneMeetingTestCase):
         # pmReviewer1 validates item1 and adds an annex to it
         self.changeUser('pmReviewer1')
         # The reviewer cannot add a decision annex on proposed item
-        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         self.do(item1, 'validate')
         # The reviewer cannot add a decision annex on validated item
-        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         self.addAnnex(item1)
         # pmManager inserts item1 into the meeting and publishes it
         self.changeUser('pmManager')
         # The meetingManager can add annexes, decision-related or not
         managerAnnex = self.addAnnex(item1)
-        self.addAnnex(item1, decisionRelated=True)
+        self.addAnnex(item1, relatedTo='item_decision')
         self.portal.restrictedTraverse('@@delete_givenuid')(managerAnnex.UID())
         self.do(item1, 'present')
         self.changeUser('pmCreator1')
         someAnnex = self.addAnnex(item1)
         # The creator cannot add a decision annex on presented item
-        self.assertRaises(Unauthorized, self.addAnnex, item1, decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmCreator2 cannot view the annex created by pmCreator1
         self.changeUser('pmCreator2')
         self.failIf(self.hasPermission('View', someAnnex))
@@ -224,15 +224,15 @@ class testWorkflows(PloneMeetingTestCase):
         # Now reviewers can't add annexes anymore
         self.changeUser('pmReviewer2')
         self.failIf(self.hasPermission('PloneMeeting: Add annex', item2))
-        self.assertRaises(Unauthorized, self.addAnnex, item2, decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item2, relatedTo='item_decision')
         self.changeUser('pmReviewer1')
         self.assertRaises(Unauthorized, self.addAnnex, item2)
-        self.assertRaises(Unauthorized, self.addAnnex, item2, decisionRelated=True)
+        self.assertRaises(Unauthorized, self.addAnnex, item2, relatedTo='item_decision')
         # pmManager adds a decision for item2, decides and closes the meeting
         self.changeUser('pmManager')
         item2.setDecision(self.decisionText)
         item3.setDecision(self.decisionText)
-        self.addAnnex(item2, decisionRelated=True)
+        self.addAnnex(item2, relatedTo='item_decision')
         # check that a delayed item is duplicated
         self.assertEquals(len(item3.getBRefs('ItemPredecessor')), 0)
         self.do(item3, 'delay')
@@ -400,6 +400,15 @@ class testWorkflows(PloneMeetingTestCase):
         # a recurring item is added during the 'decide' transition
         self.failIf(len(meeting.getItems()) != 4)
         self.failIf(len(meeting.getLateItems()) != 3)
+
+    def test_pm_NoDefinedRecurringItems(self):
+        '''When no recurring items exist in the meetingConfig, we can add a meeting,
+           it is created with no recurring items linked to it.'''
+        # creating a meeting also works if no recurring items is defined in the configuration
+        self.changeUser('pmManager')
+        self._removeItemsDefinedInTool(self.meetingConfig)
+        meetingWithoutRecurringItems = self.create('Meeting', date='2008/12/11 09:00:00')
+        self.assertTrue(meetingWithoutRecurringItems.getAllItems() == [])
 
     def test_pm_RecurringItemsBypassSecutiry(self):
         '''Tests that recurring items are addable by a MeetingManager even if by default,

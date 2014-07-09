@@ -194,8 +194,9 @@ meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Godefroid Chapelle, Gaetan Deberdt, Gaetan Delannay'
 meetingPma.signatures = 'Bill Gates, Steve Jobs'
 meetingPma.categories = [development, research]
-meetingPma.meetingFileTypes = [
-    financialAnalysis, overheadAnalysis, itemAnnex, decisionAnnex, marketingAnalysis]
+meetingPma.meetingFileTypes = [financialAnalysis, overheadAnalysis,
+                               itemAnnex, decisionAnnex, marketingAnalysis,
+                               adviceAnnex, adviceLegalAnalysis]
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
@@ -231,13 +232,14 @@ meetingPga.assembly = 'Bill Gates, Steve Jobs'
 meetingPga.signatures = 'Bill Gates, Steve Jobs'
 meetingPga.categories = [deployment, maintenance, development, events,
                          research, projects, marketing, subproducts]
-meetingPga.meetingFileTypes = [
-    financialAnalysis, legalAnalysis, budgetAnalysis, itemAnnex,
-    decisionAnnex, adviceAnnex, adviceLegalAnalysis]
+meetingPga.meetingFileTypes = [financialAnalysis, legalAnalysis,
+                               budgetAnalysis, itemAnnex,
+                               decisionAnnex, adviceAnnex, adviceLegalAnalysis]
 meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
 meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
+meetingPga.itemTemplates = (template1, template2, )
 meetingPga.useAdvices = False
 meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
 meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')

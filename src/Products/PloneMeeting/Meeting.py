@@ -24,7 +24,6 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 from appy.gen import No
-import UserList
 from collections import OrderedDict
 from App.class_init import InitializeClass
 from DateTime import DateTime
@@ -38,8 +37,8 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions, IMeetingWorkflowActions
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
-    fieldIsEmpty, KUPU_EMPTY_VALUES, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
-    kupuEquals, getMeetingUsers, getFieldVersion, getDateFromDelta, \
+    fieldIsEmpty, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
+    getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting import PMMessageFactory as _
@@ -373,81 +372,6 @@ class MeetingWorkflowActions:
             wfTool.doActionFor(item, 'backTo' + previousState)
 
 InitializeClass(MeetingWorkflowActions)
-
-
-class BunchOfItems(UserList.UserList):
-    '''This class represents a bunch of items collected by method
-       Meeting.getGroupedItems.'''
-    def insertItem(self, indexes, item):
-        '''This method inserts p_item into a sub-buch at index p_indexes.
-           If p_indexes is a list of indexes instead of a single integer value,
-           it means that the item must be inserted into sub-sub-*-bunches.'''
-        # Get the index of the sub-bunch where to insert p_item.
-        if type(indexes) in (int, long):
-            index = indexes
-            nextIndexes = None
-        else:
-            index = indexes[0]
-            nextIndexes = indexes[1:]
-        # Lenghten self if needed
-        while len(self) <= index:
-            self.append(None)
-        # Insert the item in the sub-bunch
-        if self[index] is None:
-            # The sub-bunch does not exist. Create it.
-            self[index] = BunchOfItems()
-        if nextIndexes:
-            self[index].insertItem(nextIndexes, item)
-        else:
-            # I must append the p_item in this bunch.
-            self[index].append(item)
-
-
-class ItemsIterator:
-    '''Method Meeting.getGroupedItems allows to produce lists of items which are
-       structured into any level of upper-lists (see class BunchOfItems above).
-       Sometimes, one may need to iterate, in order (depth-first search)), over
-       all items of such tree. This is the purpose of this class.'''
-    def __init__(self, items):
-        self.items = items  # The tree of items.
-        self.indexes = []  # Where we are while walking p_items.
-
-    def _next(self, elems, depth):
-        '''Gets, within p_elems, the next item. We are at p_depth within
-           self.items.'''
-        if not elems:
-            return
-        if depth >= len(self.indexes):
-            # I've never walked at this depth. Create it within self.indexes
-            self.indexes.append(0)
-        # Get the element at the current index
-        i = self.indexes[depth]
-        if i >= len(elems):
-            # No more elements here. Try to get the next elem at the higher
-            # level
-            self.indexes[depth] = 0
-            if depth > 0:
-                self.indexes[depth-1] += 1
-                return self.next()
-        else:
-            elem = elems[i]
-            if elem.__class__.__name__ == 'MeetingItem':
-                # We have found the next element. Before returning it, update
-                # our indexes.
-                if i == len(elems)-1:
-                    # We have consumed all items at this level.
-                    self.indexes[depth] = 0
-                    if depth > 0:
-                        self.indexes[depth-1] += 1
-                else:
-                    self.indexes[depth] += 1
-                return elem
-            else:
-                return self._next(elem, depth+1)
-
-    def next(self):
-        '''Get the next item.'''
-        return self._next(self.items, 0)
 ##/code-section module-header
 
 schema = Schema((
@@ -1129,44 +1053,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             res = keptItems
         return res
 
-    security.declarePublic('getGroupedItems')
-    def getGroupedItems(self, expression, late=False, uids=[], deadline=None,
-                        finalizeExpression=None, context={}):
-        '''Similar to m_getItemsInOrder, but items are sub-structured into
-           BunchOfItems instances, which can themselves contain either items or
-           BunchOfItems instances.
-
-           p_expression is a Python expression that will be evaluated on every
-           item retrieved by m_getItemsInOrder. This expression will receive
-           "item", "previousItem", "meeting" and "previousIndexes" in its
-           context, and also variable "context" (in p_context) that can contain
-           additional, user-defined, context variables. The expression must
-           return, either:
-           * an integer value being the index, starting at 0, of the bunch into
-             which to insert this item. If this integer is -1, the item will
-             not be part of the result;
-           * or a list of integer values being the indexes of the bunches and
-             sub-bunches into which to insert this item.
-
-           If given, p_finalizeExpression will be evaluated after the final
-           result will have been computed. The expression context will contain
-           "res" (the result, that the expression can then modify) and
-           "meeting".'''
-        res = BunchOfItems()
-        meeting = self
-        previousItem = None
-        previousIndexes = None
-        for item in self.getItemsInOrder(late, uids, deadline=deadline):
-            exec 'indexes = %s' % expression
-            if indexes == -1:
-                continue
-            previousItem = item
-            previousIndexes = indexes
-            res.insertItem(indexes, item)
-        if finalizeExpression:
-            exec finalizeExpression
-        return res
-
     security.declarePublic('getJsItemUids')
     def getJsItemUids(self):
         '''Returns Javascript code for initializing a Javascript variable with
@@ -1294,7 +1180,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def getAvailableItems(self):
         '''Check docstring in IMeeting.'''
         meeting = self.getSelf()
-        if meeting.queryState() not in ('created', 'frozen', 'published', 'decided'):
+        if meeting.queryState() not in MEETING_STATES_ACCEPTING_ITEMS:
             return []
         tool = getToolByName(meeting, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
@@ -1746,8 +1632,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Inserts into this meeting some p_recurringItems. The newly created
            items are copied from recurring items (contained in the meeting
            config) to the folder containing this meeting.'''
-        if not recurringItems:
-            return
         sourceFolder = recurringItems[0].getParentNode()
         copiedData = sourceFolder.manage_copyObjects(
             ids=[ri.id for ri in recurringItems])

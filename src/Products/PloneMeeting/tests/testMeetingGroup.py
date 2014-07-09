@@ -33,6 +33,8 @@ class testMeetingGroup(PloneMeetingTestCase):
     def test_pm_CanNotRemoveUsedMeetingGroup(self):
         '''While removing a MeetingGroup, it should raise if it is used somewhere...'''
         self.changeUser('pmManager')
+        # make sure self.meetingConfig2 does not interact...
+        self._removeItemsDefinedInTool(self.meetingConfig2)
         # create an item
         item = self.create('MeetingItem')
         # default used proposingGroup is 'developers'
@@ -174,6 +176,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # 5) then fails because used by an item present in the configuration
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['vendors', ])
+        self.maxDiff = None
         self.assertEquals(cm.exception.message,
                           translate('can_not_delete_meetinggroup_config_meetingitem',
                                     domain='plone',
@@ -194,6 +197,8 @@ class testMeetingGroup(PloneMeetingTestCase):
         # delete the 'vendors' group so we are sure that methods and conditions
         # we need to remove every items using the 'vendors' group before being able to remove it...
         self.changeUser('admin')
+        # make sure self.meetingConfig2 does not interact...
+        self._removeItemsDefinedInTool(self.meetingConfig2)
         self.meetingConfig.itemtemplates.manage_delObjects(['template2', ])
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', ))

@@ -1105,9 +1105,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('validate_proposingGroup')
     def validate_proposingGroup(self, value):
-        '''If self.isDefinedInTool, the proposingGroup is mandatory if used
-           as a recurring item.'''
-        if self.isDefinedInTool() and self.getParentNode().getId() == 'recurringitems' and not value:
+        '''proposingGroup is mandatory in every cases, except for an itemtemplate.'''
+        if not value and not (self.isDefinedInTool() and 'itemtemplates' in self.absolute_url()):
             return translate('proposing_group_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_optionalAdvisers')
@@ -1728,17 +1727,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Is there a meeting tied to me?'''
         return self.getMeeting(brain=True) is not None
 
-    security.declarePublic('isLateFor')
+    security.declarePublic('isLate')
     def isLate(self):
         '''Am I included in a meeting as a late item?'''
         if self.reference_catalog.getBackReferences(self, 'MeetingLateItems'):
             return True
         return False
-
-    security.declarePublic('userMayModify')
-    def userMayModify(self):
-        '''Checks if the user has the right to update me.'''
-        return checkPermission(ModifyPortalContent, self)
 
     security.declarePublic('showCategory')
     def showCategory(self):
@@ -2238,7 +2232,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # So if we have insertMethods ['on_privacy', 'on_proposing_groups', 'on_categories']
             # if we have "2" privacies, "10 proposing groups" and "8 categories", the first
             # step here under will create the list [2, 10, 8]
-            for insertMethod in insertMethods[1:]:
+            for insertMethod in insertMethods:
                 oneLevels.append(item._findOneLevelFor(insertMethod['insertingMethod'], item))
             # now what we will do is build a list for wich last element is always "1"
             # and first elements are factorial of elements of the list
@@ -3359,7 +3353,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('isAdvicesEnabled')
     def isAdvicesEnabled(self):
         '''Is the "advices" functionality enabled for this meeting config?'''
-        return self.portal_plonemeeting.getMeetingConfig(self).getUseAdvices()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        return tool.getMeetingConfig(self).getUseAdvices()
 
     security.declarePublic('getAdviceHelpMessageFor')
     def getAdviceHelpMessageFor(self, **adviceInfos):

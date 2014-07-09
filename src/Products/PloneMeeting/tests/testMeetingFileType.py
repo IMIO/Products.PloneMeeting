@@ -24,6 +24,8 @@
 
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -99,7 +101,6 @@ class testMeetingFileType(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         mft = annex.getMeetingFileType(theRealObject=True)
-        self.changeUser('admin')
         # validate relatedTo
         self.assertEquals(mft.getRelatedTo(), 'item')
         # try to change the value to 'advice' or 'item_decision', it fails...
@@ -112,6 +113,27 @@ class testMeetingFileType(PloneMeetingTestCase):
         # but not changing value does validate correctly
         # validate returns nothing if validation was successful
         self.failIf(mft.validate_relatedTo('item'))
+
+        # do the test for an annex added on an advice
+        item.setOptionalAdvisers(('developers', ))
+        self.proposeItem(item)
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'developers',
+                                             'advice_type': u'positive',
+                                             'advice_comment': RichTextValue(u'My comment')})
+        # add an annex to the advice
+        advice_annex = self.addAnnex(advice, relatedTo='advice')
+        advice_mft = advice_annex.getMeetingFileType(theRealObject=True)
+        self.assertTrue(advice_mft.getRelatedTo() == 'advice')
+        # now changing related to of 'advice-annex' will fail
+        error_advice_related_msg = translate('cannot_change_inuse_advice_relatedto',
+                                             domain='PloneMeeting',
+                                             mapping={'item_url': item.absolute_url()},
+                                             context=item.REQUEST)
+        self.assertTrue(advice_mft.validate_relatedTo('item') == error_advice_related_msg)
+        self.assertTrue(advice_mft.validate_relatedTo('item_decision') == error_advice_related_msg)
+        self.failIf(advice_mft.validate_relatedTo('advice'))
 
 
 def test_suite():

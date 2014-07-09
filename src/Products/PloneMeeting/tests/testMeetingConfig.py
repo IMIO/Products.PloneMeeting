@@ -939,7 +939,6 @@ class testMeetingConfig(PloneMeetingTestCase):
            - if categories are not used, we can not select the 'on_categories' method;
            - fi the 'toDiscuss' field is not used, we can not select the 'on_to_discuss' method.'''
         cfg = self.meetingConfig
-
         # first test when using 'at_the_end' and something else
         at_the_end_error_msg = _('inserting_methods_at_the_end_not_alone_error')
         values = ({'insertingMethod': 'at_the_end',
@@ -996,6 +995,43 @@ class testMeetingConfig(PloneMeetingTestCase):
         # but validates if 'toDiscuss' in 'usedItemAttributes' found in the REQUEST
         self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss + ['toDiscuss', ])
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+        # if we have a 'orderindex_' key with value 'template_row_marker'
+        # it validates, it is the case when using DataGridField in the UI
+        # here it works even if 'at_the_end' is used together with 'on_to_discuss'
+        # as the 'at_the_end' value has the 'orderindex_' key
+        values = ({'insertingMethod': 'on_to_discuss',
+                   'reverse': '0'},
+                  {'insertingMethod': 'at_the_end',
+                   'orderindex_': 'template_row_marker',
+                   'reverse': '0'})
+        self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+
+    def test_pm_GetAvailablePodTemplates(self):
+        '''We can define a condition and a permission on a PodTemplate
+           influencing if it will be returned by MeetingConfig.getAvailablePodTemplates.'''
+        cfg = self.meetingConfig
+        # Create an item as creator
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        podTemplates = cfg.getAvailablePodTemplates(item)
+        self.assertEquals(len(podTemplates), 1)
+        self.assertEquals(podTemplates[0].Title(), 'Meeting item')
+        self.validateItem(item)
+        meeting = self.create('Meeting', date='2008/06/23 15:39:00')
+        podTemplates = cfg.getAvailablePodTemplates(meeting)
+        self.assertEquals(len(podTemplates), 1)
+        self.assertEquals(podTemplates[0].Title(), 'Meeting agenda')
+        self.presentItem(item)
+        item.setDecision('Decision')
+        self.decideMeeting(meeting)
+        podTemplates = cfg.getAvailablePodTemplates(meeting)
+        self.assertEquals(len(podTemplates), 2)
+        self.assertEquals(podTemplates[1].Title(), 'Meeting decisions')
+        # now set a permission 'pmManager' does not have
+        # for second pod template available for meeting
+        podTemplate = podTemplates[0]
+        podTemplate.setPodPermission('Manage portal')
+        self.assertTrue(len(cfg.getAvailablePodTemplates(meeting)) == 1)
 
 
 def test_suite():

@@ -108,6 +108,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         self.annexFile = 'INSTALL.TXT'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
+        self.annexFileTypeAdvice = 'advice-annex'
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()
@@ -261,7 +262,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             os.remove(newAnnexPath)
 
     def addAnnex(self, item, annexType=None, annexTitle=None,
-                 decisionRelated=False):
+                 relatedTo='item'):
         '''Adds an annex to p_item. The uploaded file has name p_annexPath,
            which is a path relative to the folder that corresponds to package
            Products.PloneMeeting. If None is provided, a default file is
@@ -278,10 +279,12 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         annexFile = FileUpload(TestFile(
             file(os.path.join(self.pmFolder, annexPath)), annexPath))
         if annexType is None:
-            if decisionRelated:
-                annexType = self.annexFileTypeDecision
-            else:
+            if relatedTo == 'item':
                 annexType = self.annexFileType
+            elif relatedTo == 'item_decision':
+                annexType = self.annexFileTypeDecision
+            elif relatedTo == 'advice':
+                annexType = self.annexFileTypeAdvice
         fileType = getattr(self.meetingConfig.meetingfiletypes, annexType)
         if annexTitle is None:
             annexTitle = fileType.getPredefinedTitle() or 'Annex title'
@@ -290,10 +293,10 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         IAnnexable(item).addAnnex(idCandidate,
                                   annexTitle,
                                   annexFile,
-                                  decisionRelated and 'item_decision' or 'item',
+                                  relatedTo,
                                   meetingFileTypeUID=fileType.UID())
         # Find the last created annex
-        annexUid = IAnnexable(item).getAnnexesByType(decisionRelated and 'item_decision' or 'item',
+        annexUid = IAnnexable(item).getAnnexesByType(relatedTo,
                                                      makeSubLists=False,
                                                      typesIds=[annexType])[-1]['UID']
         theAnnex = item.uid_catalog(UID=annexUid)[0].getObject()

@@ -334,12 +334,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.at_post_edit_script()
         login(self.portal, 'pmManager')
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
+        self.assertTrue(not item.isClonableToOtherMeetingConfigs())
 
         # ok, activate it and send it!
         login(self.portal, 'admin')
         self.meetingConfig.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
                                                         'trigger_workflow_transitions_until': '__nothing__'}, ))
         self.meetingConfig.at_post_edit_script()
+        self.assertTrue(item.isClonableToOtherMeetingConfigs())
         login(self.portal, 'pmManager')
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         item.cloneToOtherMeetingConfig(otherMeetingConfigId)
@@ -351,7 +353,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.tool.getPloneMeetingFolder(otherMeetingConfigId)
         # try again
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         item.cloneToOtherMeetingConfig(otherMeetingConfigId)
         # the item as been sent to another mc
@@ -514,8 +516,8 @@ class testMeetingItem(PloneMeetingTestCase):
             self.do(meeting, transition)
             self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         if with_annexes:
-            decisionAnnex1 = self.addAnnex(item, decisionRelated=True)
-            decisionAnnex2 = self.addAnnex(item, annexType='marketing-annex', decisionRelated=True)
+            decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
+            decisionAnnex2 = self.addAnnex(item, annexType='marketing-annex', relatedTo='item_decision')
         self.do(item, 'accept')
         # Get the new item
         annotations = IAnnotations(item)
@@ -807,6 +809,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
         # check that local_roles are correct
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['vendors_reviewers'])
+        # if a wrong TAL expression is used, it does not break anything upon item at_post_edit_script
+        self.tool.vendors.setAsCopyGroupOn("python: item.someUnexistingMethod()")
+        i5.at_post_edit_script()
 
     def test_pm_AddAutoCopyGroupsIsCreated(self):
         '''Test the addAutoCopyGroups functionnality when using the parameter 'isCreated'
@@ -1146,6 +1151,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('View', secretItem))
         self.failUnless(self.hasPermission('View', publicItem))
         self.failIf(secretItem.isPrivacyViewable())
+        # if we try to clone a not privacy viewable item, it raises Unauthorized
+        self.assertRaises(Unauthorized, secretItem.onDuplicate)
+        self.assertRaises(Unauthorized, secretItem.onDuplicateAndKeepLink)
+        self.assertRaises(Unauthorized, secretItem.checkPrivacyViewable)
         self.failUnless(publicItem.isPrivacyViewable())
         # a user in the same proposingGroup can fully access the secret item
         self.changeUser('pmCreator1')
@@ -1621,6 +1630,12 @@ class testMeetingItem(PloneMeetingTestCase):
                            'group': 'developers',
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
+                           'delay': '10'},
+                          # this is not an optional advice configuration
+                          {'row_id': 'unique_id_000',
+                           'group': 'developers',
+                           'gives_auto_advice_on': 'here/getBudgetRelated',
+                           'for_item_created_from': '2012/01/01',
                            'delay': '10'}, ]
         cfg.setCustomAdvisers(customAdvisers)
         # a special key is prepended that will be disabled in the UI
@@ -1646,6 +1661,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # here, first element is not available because 'available_on' is python:False
         customAdvisers[1]['for_item_created_until'] = ''
         customAdvisers[0]['available_on'] = 'python:False'
+        cfg.setCustomAdvisers(customAdvisers)
+        self.assertEquals(item.listOptionalAdvisers().keys(),
+                          ['not_selectable_value_delay_aware_optional_advisers',
+                           'developers__rowid__unique_id_456',
+                           'not_selectable_value_non_delay_aware_optional_advisers',
+                           'developers',
+                           'vendors'])
+        # a wrong expression will not break the advisers
+        # but the customAdviser is simply not taken into account
+        customAdvisers[0]['available_on'] = 'python: here.someMissingMethod(some_parameter=False)'
         cfg.setCustomAdvisers(customAdvisers)
         self.assertEquals(item.listOptionalAdvisers().keys(),
                           ['not_selectable_value_delay_aware_optional_advisers',
@@ -1770,6 +1795,51 @@ class testMeetingItem(PloneMeetingTestCase):
         # the given advice is not considered as an optional advice
         self.assertEquals(item.adviceIndex['developers']['optional'], False)
         self.failIf(item.validate_optionalAdvisers(()))
+
+    def test_pm_Validate_category(self):
+        """
+          MeetingItem.category is mandatory if categories are used.
+        """
+        # make sure we use categories
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        self.assertTrue(not self.meetingConfig2.getUseGroupsAsCategories())
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # categories are used
+        self.assertTrue(item.showCategory())
+        cat_required_msg = translate('category_required',
+                                     domain='PloneMeeting',
+                                     context=self.portal.REQUEST)
+        self.assertTrue(item.validate_category('') == cat_required_msg)
+        # if a category is given, it does validate
+        aCategoryId = self.meetingConfig2.getCategories()[0].getId()
+        self.failIf(item.validate_category(aCategoryId))
+
+        # if item isDefinedInTool, the category is not required
+        itemInTool = self.meetingConfig2.getItems(recurring=False)[0]
+        self.failIf(itemInTool.validate_category(''))
+
+    def test_pm_Validate_proposingGroup(self):
+        """
+          MeetingItem.proposingGroup is mandatory excepted for item templates.
+        """
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        proposing_group_required_msg = translate('proposing_group_required',
+                                                 domain='PloneMeeting',
+                                                 context=self.portal.REQUEST)
+        self.assertTrue(item.validate_proposingGroup('') == proposing_group_required_msg)
+        self.failIf(item.validate_proposingGroup('developers'))
+
+        # if item isDefinedInTool, the proposing group is not required if it is an item template
+        # required for a recurring item
+        recurringItem = self.meetingConfig.getItems(recurring=True)[0]
+        self.assertTrue(recurringItem.validate_proposingGroup('') == proposing_group_required_msg)
+        self.failIf(recurringItem.validate_proposingGroup('developers'))
+        # not required for an item template
+        itemTemplate = self.meetingConfig.getItems(recurring=False)[0]
+        self.failIf(itemTemplate.validate_proposingGroup(''))
+        self.failIf(itemTemplate.validate_proposingGroup('developers'))
 
 
 def test_suite():
