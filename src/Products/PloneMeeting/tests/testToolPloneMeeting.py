@@ -22,6 +22,8 @@
 # 02110-1301, USA.
 #
 
+from DateTime import DateTime
+
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
@@ -35,6 +37,36 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 
 class testToolPloneMeeting(PloneMeetingTestCase):
     '''Tests the ToolPloneMeeting class methods.'''
+
+    def test_pm_GetMeetingConfig(self):
+        '''Test the ToolPloneMeeting.getMeetingConfig method :
+           - returns relevant meetingConfig when called on an item/meeting/...;
+           - returns None if called outside the application.'''
+        cfgId = self.meetingConfig.getId()
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertTrue(self.tool.getMeetingConfig(item).getId() == cfgId)
+        annex = self.addAnnex(item)
+        self.assertTrue(self.tool.getMeetingConfig(annex).getId() == cfgId)
+        meeting = self.create('Meeting', date=DateTime('2012/05/05'))
+        self.assertTrue(self.tool.getMeetingConfig(meeting).getId() == cfgId)
+        # returns None if called with an element outside the application
+        self.assertTrue(not self.tool.getMeetingConfig(self.portal))
+
+    def test_pm_GetDefaultMeetingConfig(self):
+        '''Test the ToolPloneMeeting.getDefaultMeetingConfig method
+           that returns the default meetingConfig.'''
+        # must be connected to access MeetingConfigs
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.meetingConfig.getIsDefault())
+        self.assertTrue(not self.meetingConfig2.getIsDefault())
+        self.assertTrue(self.tool.getDefaultMeetingConfig().getId() == self.meetingConfig.getId())
+        # if we change default config, it works
+        self.meetingConfig2.setIsDefault(True)
+        self.meetingConfig2.at_post_edit_script()
+        self.assertTrue(not self.meetingConfig.getIsDefault())
+        self.assertTrue(self.meetingConfig2.getIsDefault())
+        self.assertTrue(self.tool.getDefaultMeetingConfig().getId() == self.meetingConfig2.getId())
 
     def test_pm_GetMeetingGroup(self):
         '''Return the meeting group containing the plone group

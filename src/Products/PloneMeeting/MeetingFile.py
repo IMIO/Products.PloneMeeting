@@ -30,6 +30,7 @@ import os.path
 import time
 import unicodedata
 from Acquisition import aq_base
+from AccessControl import Unauthorized
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 from plone.memoize.instance import memoize
@@ -227,6 +228,15 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         self.portal_plonemeeting.rememberAccess(self.UID())
         return ATBlob.index_html(self, REQUEST, RESPONSE)
 
+    security.declareProtected(View, 'download')
+    def download(self, REQUEST=None, RESPONSE=None):
+        """Download the file"""
+        parent = self.getParent()
+        if parent.meta_type == 'MeetingItem' and not parent.adapted().isPrivacyViewable():
+            raise Unauthorized
+        self.portal_plonemeeting.rememberAccess(self.UID())
+        return ATBlob.download(self, REQUEST, RESPONSE)
+
     security.declarePublic('at_post_create_script')
     def at_post_create_script(self):
         # We define here a PloneMeeting-specific modification date for this
@@ -306,11 +316,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     security.declarePublic('adapted')
     def adapted(self):
         return getCustomAdapter(self)
-
-    security.declarePublic('queryState')
-    def queryState(self):
-        '''In what state am I ?'''
-        return self.portal_workflow.getInfoFor(self, 'review_state')
 
     security.declareProtected('Modify portal content', 'onEdit')
     def onEdit(self, isCreated):

@@ -2028,6 +2028,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         for mctct in values:
+            # do not consider 'template_row_marker'
+            if mctct.get('orderindex_', None) == 'template_row_marker':
+                continue
             # first make sure the selected transition correspond to the selected meeting_config
             if not mctct['trigger_workflow_transitions_until'] == '__nothing__' and \
                not mctct['trigger_workflow_transitions_until'].startswith(mctct['meeting_config']):

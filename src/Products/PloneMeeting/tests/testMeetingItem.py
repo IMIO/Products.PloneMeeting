@@ -302,6 +302,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setCategory('development')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
+        # if we try to clone to other meeting config, it raises Unauthorized
+        self.assertRaises(Unauthorized, item.cloneToOtherMeetingConfig, otherMeetingConfigId)
         # propose the item
         self.proposeItem(item)
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -1130,11 +1132,13 @@ class testMeetingItem(PloneMeetingTestCase):
         publicItem.setCategory('development')
         publicItem.setCopyGroups('vendors_reviewers')
         publicItem.reindexObject()
+        publicAnnex = self.addAnnex(publicItem)
         secretItem = self.create('MeetingItem')
         secretItem.setPrivacy('secret')
         secretItem.setCategory('development')
         secretItem.setCopyGroups('vendors_reviewers')
         secretItem.reindexObject()
+        secretAnnex = self.addAnnex(secretItem)
         self.create('Meeting', date=DateTime('2013/06/01 08:00:00'))
         self.presentItem(publicItem)
         self.presentItem(secretItem)
@@ -1155,7 +1159,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, secretItem.onDuplicate)
         self.assertRaises(Unauthorized, secretItem.onDuplicateAndKeepLink)
         self.assertRaises(Unauthorized, secretItem.checkPrivacyViewable)
+        # if we try to download an annex of a private item, it raises Unauthorized
+        self.assertRaises(Unauthorized, secretAnnex.index_html)
+        self.assertRaises(Unauthorized, secretAnnex.download)
+        # no problem to access the publicItem and publicAnnex
         self.failUnless(publicItem.isPrivacyViewable())
+        self.assertTrue(publicAnnex.index_html())
+        self.assertTrue(publicAnnex.download())
         # a user in the same proposingGroup can fully access the secret item
         self.changeUser('pmCreator1')
         self.failUnless(secretItem.isPrivacyViewable())

@@ -405,6 +405,52 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.getToDiscuss() for item in meeting.getItemsInOrder()],
                           [False, False, False, False, True, True, True, True, True, True, True])
 
+    def test_pm_InsertItemInToDiscussThenProposingGroup(self):
+        '''Test when inserting first 'on_to_discuss' then 'on_proposing_group'.'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_to_discuss',
+                                                          'reverse': '0'},
+                                                         {'insertingMethod': 'on_proposing_groups',
+                                                          'reverse': '0'},))
+        # make sure toDiscuss is not set on item insertion in a meeting
+        self.meetingConfig.setToDiscussSetOnItemInsert(False)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2014/01/01'))
+        data = ({'proposingGroup': 'developers',
+                 'toDiscuss': True},
+                {'proposingGroup': 'vendors',
+                 'toDiscuss': True},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': False},
+                {'proposingGroup': 'vendors',
+                 'toDiscuss': False},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': True},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': False},
+                {'proposingGroup': 'developers',
+                 'toDiscuss': True},
+                {'proposingGroup': 'vendors',
+                 'toDiscuss': True},
+                {'proposingGroup': 'vendors',
+                 'toDiscuss': False}, )
+        for itemData in data:
+            item = self.create('MeetingItem', **itemData)
+            self.presentItem(item)
+
+        # items are correctly sorted first toDiscuss/proposingGroup then not toDiscuss/proposingGroup
+        self.assertEquals([(item.getToDiscuss(), item.getProposingGroup()) for item in meeting.getItemsInOrder()],
+                          [(True, 'developers'),
+                           (True, 'developers'),
+                           (True, 'developers'),
+                           (True, 'developers'),
+                           (True, 'developers'),
+                           (True, 'vendors'),
+                           (True, 'vendors'),
+                           (False, 'developers'),
+                           (False, 'developers'),
+                           (False, 'vendors'),
+                           (False, 'vendors')])
+
     def test_pm_InsertItemOnToOtherMCToCloneTo(self):
         '''Sort method tested here is "on_other_mc_to_clone_to".'''
         self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_other_mc_to_clone_to',

@@ -581,6 +581,38 @@ class testAdvices(PloneMeetingTestCase):
         # 'developers' asked advice is still in item.optionalAdvisers
         self.assertTrue('developers' in item.getOptionalAdvisers())
 
+    def test_pm_GivenDelayAwareAutomaticAdviceLeftEvenIfItemConditionChanged(self):
+        '''This test that if an automatic advice is asked because a condition
+           on the item is True, the automatic advice is given then the condition
+           on the item changes, the advice is kept.'''
+        self.meetingConfig.setCustomAdvisers([{'row_id': 'unique_id_123',
+                                               'group': 'vendors',
+                                               'gives_auto_advice_on': 'item/getBudgetRelated',
+                                               'for_item_created_from': '2012/01/01',
+                                               'delay': '10'}, ])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setBudgetRelated(True)
+        item.at_post_edit_script()
+        # the automatic advice is asked
+        self.assertTrue('vendors' in item.adviceIndex)
+        self.assertTrue(not item.adviceIndex['vendors']['optional'])
+        self.assertTrue(item.getAutomaticAdvisers()[0]['meetingGroupId'] == 'vendors')
+        # now give the advice
+        self.proposeItem(item)
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        item.setBudgetRelated(False)
+        item.at_post_edit_script()
+        # the automatic advice is still there even if no more returned by getAutomaticAdvisers
+        self.assertTrue('vendors' in item.adviceIndex)
+        self.assertTrue(not item.adviceIndex['vendors']['optional'])
+        self.assertTrue(not item.getAutomaticAdvisers())
+
     def test_pm_GetAutomaticAdvisers(self):
         '''Test the getAutomaticAdvisers method that compute automatic advices to ask.'''
         self.changeUser('pmCreator1')

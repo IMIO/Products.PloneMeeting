@@ -51,7 +51,12 @@ class testAnnexes(PloneMeetingTestCase):
         self.addAnnex(item, annexType=mft3.getId())
         return item, mft1, mft2, mft3
 
-    def test_pm_getAnnexesByType(self):
+    def test_pm_GetLastInsertedAnnex(self):
+        '''Test the getLastInsertedAnnex method.'''
+        item, mft1, mft2, mft3 = self._setupAnnexes()
+        self.assertTrue(IAnnexable(item).getLastInsertedAnnex().UID() == item.objectValues('MeetingFile')[-1].UID())
+
+    def test_pm_GetAnnexesByType(self):
         '''Test the getAnnexesByType method that returns
            annexes grouped by MeetingFileType.'''
         item, mft1, mft2, mft3 = self._setupAnnexes()
@@ -71,7 +76,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(annexesByType[2][1]['meetingFileTypeObjectUID'] == mft3.UID())
         self.assertTrue(len(annexesByType[2]) == 2)
 
-    def test_pm_getAnnexesByTypeAnnexConfidentiality(self):
+    def test_pm_GetAnnexesByTypeAnnexConfidentiality(self):
         '''Test the getAnnexesByType method when annex confidentiality is enabled.
            A confidential annex is not visible by restricted power observers.'''
         item, mft1, mft2, mft3 = self._setupAnnexes()

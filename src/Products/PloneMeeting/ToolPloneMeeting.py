@@ -1545,33 +1545,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         batch = Batch(brains, b_size, int(b_start), orphan=0)
         return batch
 
-    security.declarePrivate('_decodeParamValue')
-    def _decodeParam(self, name, value):
-        '''Decodes parameter with a given p_name encoded with the type of the
-           p_value.'''
-        decodedName = name[2:]
-        if name.startswith('s_') or name.startswith('u_'):
-            decodedValue = value
-        else:
-            decodedValue = eval(value)
-        return decodedName, decodedValue
-
-    security.declarePublic('distantSearch')
-    def distantSearch(self):
-        '''This method is executed by a distant site for querying this site's
-           portal_catalog.'''
-        # Decode parameters from the request
-        params = {}
-        for param, value in self.REQUEST.form.iteritems():
-            if param == 'do':
-                continue
-            decodedParam, decodedValue = self._decodeParam(param, value)
-            params[decodedParam] = decodedValue
-        res = self.portal_catalog(**params)
-        if 'sort_limit' in params:
-            res = res[:params['sort_limit']]
-        return res
-
     security.declarePrivate('pasteItems')
     def pasteItems(self, destFolder, copiedData, copyAnnexes=False,
                    newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None):

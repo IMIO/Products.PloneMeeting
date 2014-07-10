@@ -376,6 +376,28 @@ class testMeetingConfig(PloneMeetingTestCase):
         # if both colmuns are filled, it validated too obviously
         customAdvisers[0]['delay'] = '10'
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
+        # if a 'orderindex_' key with value 'template_row_marker' is found
+        # it validates the row, it is the case when using the UI to manage the
+        # DataGridField, this row is not saved
+        # append something that should not validate
+        customAdvisers.append({'row_id': '',
+                               'group': 'vendors',
+                               # empty
+                               'gives_auto_advice_on': '',
+                               'for_item_created_from': '',
+                               'for_item_created_until': '',
+                               'gives_auto_advice_on_help_message': '',
+                               # empty
+                               'delay': '',
+                               'delay_left_alert': '',
+                               'delay_label': '',
+                               'available_on': '',
+                               'is_linked_to_previous_row': '0', },)
+        # test that like that it does not validate
+        self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == empty_columns_msg)
+        # but when a 'orderindex_' key with value 'template_row_marker' found, it validates
+        customAdvisers[1]['orderindex_'] = 'template_row_marker'
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
 
     def test_pm_Validate_customAdvisersDateColumns(self):
         '''Test the MeetingConfig.customAdvisers validate method.
@@ -404,16 +426,19 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_date_msg)
         # not a date, wrong format (YYYY/MM/DD) or extra blank are not valid dates
         wrong_dates = ['wrong', '2013/20/05', '2013/02/05 ', ]
+        right_date = '2013/12/31'
         # if wrong syntax, it fails
         for wrong_date in wrong_dates:
             customAdvisers[0]['for_item_created_from'] = wrong_date
             self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_date_msg)
+            # set a right date for 'for_item_created_from' so we are sure that
+            # validation fails because of 'for_item_created_until'
+            customAdvisers[0]['for_item_created_from'] = right_date
             customAdvisers[0]['for_item_created_until'] = wrong_date
             self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_date_msg)
         # with a valid date, then it works, set back 'for_item_created_until' to ''
         # his special behaviour will be tested later in this test
         customAdvisers[0]['for_item_created_until'] = ''
-        customAdvisers[0]['for_item_created_from'] = '2013/12/31'
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
         # 'for_item_create_until' date must be in the future
@@ -645,10 +670,10 @@ class testMeetingConfig(PloneMeetingTestCase):
            - first row can not be linked to previous row...;
            - can not be set on a row that is not delay-aware;
            - can not be set if linked row is not delay-aware;
+           - can not be set if linked row is for another group;
            - can be changed if row is not in use.'''
         cfg = self.meetingConfig
         # the validate method returns a translated message if the validation failed
-        # wrong date format, should be YYYY/MM/DD
         customAdvisers = [{'row_id': 'unique_id_123',
                            'group': 'vendors',
                            'gives_auto_advice_on': 'python:True',
@@ -661,12 +686,13 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
         groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
+
+        # check that 'is_linked_to_previous_row'
+        # can not be set on the first row
         first_row_msg = translate('custom_adviser_first_row_can_not_be_linked_to_previous',
                                   domain='PloneMeeting',
                                   mapping={'groupName': groupName},
                                   context=self.portal.REQUEST)
-        # check that 'is_linked_to_previous_row'
-        # can not be set on the first row
         customAdvisers[0]['is_linked_to_previous_row'] = '1'
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           first_row_msg)
@@ -685,6 +711,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                                'delay_label': '',
                                'available_on': '',
                                'is_linked_to_previous_row': '1'})
+
+        # check that 'is_linked_to_previous_row'
+        # can only be set on a row that is actually a delay-aware row
         row_not_delay_aware_msg = translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser',
                                             domain='PloneMeeting',
                                             mapping={'groupName': groupName},
@@ -703,6 +732,19 @@ class testMeetingConfig(PloneMeetingTestCase):
                                                      context=self.portal.REQUEST)
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           previous_row_not_delay_aware_msg)
+
+        # check that if previous row use another group, it does not validate
+        # make first row a delay-aware advice, then change group
+        customAdvisers[0]['delay'] = '10'
+        customAdvisers[0]['group'] = 'developers'
+        self.assertTrue(not customAdvisers[0]['group'] == customAdvisers[1]['group'])
+        previous_row_not_same_group_msg = translate('custom_adviser_can_not_is_linked_to_previous_row_with_other_group',
+                                                    domain='PloneMeeting',
+                                                    mapping={'groupName': groupName},
+                                                    context=self.portal.REQUEST)
+        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
+                          previous_row_not_same_group_msg)
+
         # check that 'is_linked_to_previous_row' value can be changed
         # while NOT already in use by created items
         customAdvisers = [{'row_id': 'unique_id_123',
@@ -1006,6 +1048,45 @@ class testMeetingConfig(PloneMeetingTestCase):
                    'reverse': '0'})
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
+    def test_pm_Validate_meetingConfigsToCloneTo(self):
+        '''Test the MeetingConfig.meetingConfigsToCloneTo validation.
+           We will test that :
+           - same config to clone to is not selected several times;
+           - the same inserting method is not selected twice;
+           - if transition selected does not correspond to the WF used by the meeting config to clone to;
+           - an icon is mandatory when cloning to another config, if the icon is not found, it will not validate.'''
+        cfg = self.meetingConfig
+        cfg2Id = self.meetingConfig2.getId()
+        # define nothing, it validates
+        self.failIf(cfg.validate_meetingConfigsToCloneTo([]))
+
+        # check that we can not select several times same meeting config to clone to
+        values = ({'meeting_config': '%s' % cfg2Id,
+                   'trigger_workflow_transitions_until': '__nothing__'},
+                  {'meeting_config': '%s' % cfg2Id,
+                   'trigger_workflow_transitions_until': '__nothing__'})
+        two_rows_error_msg = _('can_not_define_two_rows_for_same_meeting_config')
+        self.assertTrue(cfg.validate_meetingConfigsToCloneTo(values) == two_rows_error_msg)
+
+        # check that value selected in 'trigger_workflow_transitions_until' correspond
+        # to a value of the wf used for the corresponding selected 'meeting_config'
+        values = ({'meeting_config': '%s' % cfg2Id,
+                   'trigger_workflow_transitions_until': 'wrong-config-id.a_wf_transition'},)
+        wrong_wf_transition_error_msg = _('transition_not_from_selected_meeting_config')
+        self.assertTrue(cfg.validate_meetingConfigsToCloneTo(values) == wrong_wf_transition_error_msg)
+
+        # if a key 'orderindex_' with value 'template_row_marker' is found, the row is ignored
+        values = ({'meeting_config': '%s' % cfg2Id,
+                   'trigger_workflow_transitions_until': 'wrong-config-id.a_wf_transition',
+                   'orderindex_': 'template_row_marker'},)
+        self.failIf(cfg.validate_meetingConfigsToCloneTo(values))
+
+        # with a right configuration, it can fails if a corresponding icon is not found
+        # indeed, an icon has to exist to manage the action in the UI
+        values = ({'meeting_config': '%s' % cfg2Id,
+                   'trigger_workflow_transitions_until': '%s.present' % cfg2Id},)
+        self.failIf(cfg.validate_meetingConfigsToCloneTo(values))
+
     def test_pm_GetAvailablePodTemplates(self):
         '''We can define a condition and a permission on a PodTemplate
            influencing if it will be returned by MeetingConfig.getAvailablePodTemplates.'''
@@ -1032,6 +1113,17 @@ class testMeetingConfig(PloneMeetingTestCase):
         podTemplate = podTemplates[0]
         podTemplate.setPodPermission('Manage portal')
         self.assertTrue(len(cfg.getAvailablePodTemplates(meeting)) == 1)
+
+    def test_pm_AddingExistingTopicDoesNotBreak(self):
+        '''
+          Check that we can call MeetingConfig.createTopics and that if
+          a topic already exist, it does not break.
+        '''
+        # try to add a topic name 'searchmyitems' that already exist...
+        self.assertTrue(hasattr(self.meetingConfig.topics, 'searchmyitems'))
+        topicInfo = self.meetingConfig.topicsInfo[0]
+        self.assertTrue(topicInfo[0] == 'searchmyitems')
+        self.meetingConfig.createTopics((topicInfo, ))
 
 
 def test_suite():

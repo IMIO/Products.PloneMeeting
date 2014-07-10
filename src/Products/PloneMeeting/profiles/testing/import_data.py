@@ -187,7 +187,7 @@ overheadAnalysis = MeetingFileTypeDescriptor(
     'overheadAnalysis.png', '')
 
 meetingPma = MeetingConfigDescriptor(
-    'plonemeeting-assembly', 'PloneMeeting assembly', 'PloneMeeting assembly')
+    'plonemeeting-assembly', 'PloneMeeting assembly', 'PloneMeeting assembly', isDefault=True)
 meetingPma.shortName = 'Pma'
 meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Arnaud Hubaux, Jean-Michel Abe, Stephan Geulette, ' \
@@ -225,8 +225,7 @@ meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',
 
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(
-    'plonegov-assembly', 'PloneGov assembly', 'PloneGov assembly',
-    isDefault=True)
+    'plonegov-assembly', 'PloneGov assembly', 'PloneGov assembly')
 meetingPga.shortName = 'Pga'
 meetingPga.assembly = 'Bill Gates, Steve Jobs'
 meetingPga.signatures = 'Bill Gates, Steve Jobs'
