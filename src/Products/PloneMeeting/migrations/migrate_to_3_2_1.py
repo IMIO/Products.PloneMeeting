@@ -231,6 +231,17 @@ class Migrate_To_3_2_1(Migrator):
                     criterion.field = u'portal_type'
         logger.info('Done.')
 
+    def _removeSignatureNotAloneTransformType(self):
+        '''Vocabulary for field MeetingConfig.xhtmlTransformTypes does not contains the term
+           'signatureNotAlone' anymore, make sure existing meetingConfigs do not use it.'''
+        logger.info('Updating xhtmlTransformTypes for each MeetingConfig...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            xhtmlTransformTypes = list(cfg.getXhtmlTransformTypes())
+            if 'signatureNotAlone' in xhtmlTransformTypes:
+                xhtmlTransformTypes.remove('signatureNotAlone')
+                cfg.setXhtmlTransformTypes(xhtmlTransformTypes)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
         self._finishMeetingFolderViewRemoval()
@@ -246,6 +257,7 @@ class Migrate_To_3_2_1(Migrator):
         self._translateFoldersOfMeetingConfigs()
         self._addItemTypesToTypesUseViewActionInListings()
         self._adaptTopicsPortalTypeCriterion()
+        self._removeSignatureNotAloneTransformType()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -274,9 +286,10 @@ def migrate(context):
        11) Translate folders stored in each MeetingConfigs (recurringitems, itemtemplates, categories, ...);
        12) Add item portal_types to site_properties.typesUseViewActionInListings;
        13) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
-       14) Clean registries as we removed some css;
-       15) Reinstall PloneMeeting;
-       16) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       14) Remove 'signatureNotAlone' from selectable MeetingConfig.xhtmlTransformTypes;
+       15) Clean registries as we removed some css;
+       16) Reinstall PloneMeeting;
+       17) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------

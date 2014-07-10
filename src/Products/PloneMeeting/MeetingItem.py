@@ -1042,7 +1042,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return getFieldContent(self, 'title', force)
 
     security.declarePublic('getDecision')
-    def getDecision(self, keepWithNext=False, **kwargs):
+    def getDecision(self, keepWithNext=True, **kwargs):
         '''Overridden version of 'decision' field accessor. It allows to specify
            p_keepWithNext=True. In that case, the last paragraph of bullet in
            field "decision" will get a specific CSS class that will keep it with
@@ -1086,9 +1086,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     getRawMotivation = getMotivation
 
     security.declarePublic('getDeliberation')
-    def getDeliberation(self, **kwargs):
+    def getDeliberation(self, keepWithNext=True, **kwargs):
         '''Returns the entire deliberation depending on fields used.'''
-        return self.getMotivation(**kwargs) + self.getDecision(**kwargs)
+        return self.getMotivation(**kwargs) + self.getDecision(keepWithNext=keepWithNext, **kwargs)
 
     security.declarePrivate('validate_category')
     def validate_category(self, value):

@@ -3289,7 +3289,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = 'PloneMeeting'
         res = DisplayList((
             ("removeBlanks", translate('rich_text_remove_blanks', domain=d, context=self.REQUEST)),
-            ("signatureNotAlone", translate('rich_text_signature_not_alone', domain=d, context=self.REQUEST)),
         ))
         return res
 
