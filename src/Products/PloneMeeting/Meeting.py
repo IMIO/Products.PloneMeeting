@@ -71,13 +71,6 @@ class MeetingWorkflowConditions:
     def __init__(self, meeting):
         self.context = meeting
 
-    def _atLeastOneDecisionIsTaken(self):
-        '''Returns True if at least one decision was taken on an item (excepted
-           the decision to delay an item, which is a "non-decision").'''
-        for item in self.context.getAllItems(ordered=True):
-            if item.queryState() not in self.notDecidedStatesPlusDelayed:
-                return True
-
     def _decisionsAreArchivable(self):
         '''Returns True all the decisions may be archived.'''
         for item in self.context.getAllItems(ordered=True):
@@ -90,13 +83,6 @@ class MeetingWorkflowConditions:
         for item in self.context.getAllItems(ordered=True):
             if item.queryState() == 'confirmed':
                 return True
-
-    def _allItemsAreDelayed(self):
-        '''Are all items contained in this meeting delayed ?'''
-        for item in self.context.getAllItems(ordered=True):
-            if not item.queryState() == 'delayed':
-                return False
-        return True
 
     security.declarePublic('mayAcceptItems')
     def mayAcceptItems(self):

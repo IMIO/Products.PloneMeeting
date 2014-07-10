@@ -39,10 +39,11 @@ from zope.interface import implements
 from Products.CMFCore.utils import getToolByName
 from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
-import Products.PloneMeeting
 from Products.PloneMeeting import PloneMeetingError
-from Products.PloneMeeting.config import *
-from Products.PloneMeeting.interfaces import *
+from Products.PloneMeeting.config import TOOL_ID
+from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
+    IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, IPodTemplateCustom, \
+    IToolPloneMeetingCustom, IMeetingUserCustom, IAnnexable, IAdvicesUpdatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -91,6 +92,7 @@ def getInterface(interfaceName):
             point = '.'
         packageName += '%s%s' % (point, elem)
     try:
+        res = None
         exec 'import %s' % packageName
         exec 'res = %s.%s' % (packageName, interfaceName)
         return res
@@ -111,6 +113,7 @@ def getWorkflowAdapter(obj, conditions):
         interfaceMethod += 'Conditions'
     else:
         interfaceMethod += 'Actions'
+    interfaceLongName = None
     exec 'interfaceLongName = meetingConfig.%sInterface()' % interfaceMethod
     return getInterface(interfaceLongName)(obj)
 
@@ -631,23 +634,6 @@ def getCustomSchemaFields(baseSchema, completedSchema, cols):
 
 
 # ------------------------------------------------------------------------------
-def allowManagerToCreateIn(folder):
-    '''Allows me (Manager) to create meeting and items in p_folder.'''
-    folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'],
-                            ('Manager', 'MeetingMember',), acquire=0)
-    folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'],
-                            ('Manager', 'MeetingManager',), acquire=0)
-
-
-def disallowManagerToCreateIn(folder):
-    '''Disallows me (Manager) to create meeting and items in p_folder.'''
-    folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'],
-                            ('MeetingMember',), acquire=0)
-    folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'],
-                            ('MeetingManager',), acquire=0)
-
-
-# ------------------------------------------------------------------------------
 def getDateFromRequest(day, month, year, start):
     '''This method produces a DateTime instance from info coming from a request.
        p_hour and p_month may be ommitted. p_start is a bool indicating if the
@@ -832,9 +818,9 @@ def getFieldContent(obj, name, force=None, sep='-', **kwargs):
         return field.get(obj)
     else:
         # Get the name of the 2 languages
-        firstLanguage = self.portal_languages.getDefaultLanguage()[0:2]
+        firstLanguage = obj.portal_languages.getDefaultLanguage()[0:2]
         userLanguage = tool.getUserLanguage()
-        if (userLanguage not in languages) or (userLanguage == firstLanguage):
+        if userLanguage == firstLanguage:
             return field.get(obj)
         else:
             return obj.getField(field.getName()+'2').get(obj, **kwargs)

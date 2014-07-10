@@ -801,6 +801,22 @@ class testMeeting(PloneMeetingTestCase):
                                     domain='PloneMeeting',
                                     context=self.request))
 
+    def test_pm_Validate_place(self):
+        """
+          Test the Meeting.placve validator "validate_place" : if place is 'other',
+          a 'place_other' value must be found in the REQUEST.
+        """
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2012/05/05'))
+        place_other_required = translate('place_other_required',
+                                         domain='PloneMeeting',
+                                         context=self.request)
+        self.assertTrue(meeting.validate_place('other') == place_other_required)
+        # if a 'place_other' is found in the request, it validates
+        self.request.set('place_other', 'Some other place')
+        # if the validation is ok, it returns nothing...
+        self.assertTrue(not meeting.validate_place('other'))
+
     def test_pm_TitleAndPlaceCorrectlyUpdatedOnEdit(self):
         '''
           Test the Meeting.at_post_edit_script method.
@@ -824,6 +840,54 @@ class testMeeting(PloneMeetingTestCase):
         meeting.at_post_edit_script()
         self.assertTrue(meeting.Title() == self.tool.formatDate(meeting.getDate()))
         self.assertTrue(meeting.getPlace() == 'Yet another place')
+
+    def test_pm_GetItemsInOrder(self):
+        '''Test the Meeting.getItemsInOrder method.'''
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        itemsInOrder = meeting.getItemsInOrder()
+        self.assertTrue(len(itemsInOrder) == 7)
+        itemUids = [item.UID() for item in itemsInOrder]
+
+        # ask a batch of 5 elements
+        batchedItemsInOrder = meeting.getItemsInOrder(batchSize=5)
+        self.assertTrue(len(batchedItemsInOrder) == 5)
+        self.assertTrue(itemUids[0:5] == [item.UID() for item in batchedItemsInOrder])
+
+        # ask batch of 5 elements beginning at 6 (so 2 last ones)
+        batchedItemsInOrderStartingAt2 = meeting.getItemsInOrder(batchSize=5, startNumber=6)
+        self.assertTrue(len(batchedItemsInOrderStartingAt2) == 2)
+        self.assertTrue(itemUids[5:7] == [item.UID() for item in batchedItemsInOrderStartingAt2])
+
+        # remove some items UID then pass it to getItemsInOrder
+        itemUids.pop(4)
+        itemUids.pop(2)
+        itemUids.pop(0)
+        # we removed 3 items
+        self.assertTrue(len(meeting.getItemsInOrder(uids=itemUids)) == 4)
+        # ask a batch of 2 elements
+        self.assertTrue(len(meeting.getItemsInOrder(uids=itemUids)) == 4)
+
+    def test_pm_GetItemByNumber(self):
+        '''Test the Meeting.getItemByNumber method.'''
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        itemsInOrder = meeting.getItemsInOrder()
+        self.assertTrue(len(itemsInOrder) == 7)
+        itemUids = [item.UID() for item in itemsInOrder]
+        self.assertTrue(meeting.getItemByNumber(2).UID() == itemUids[1])
+        self.assertTrue(meeting.getItemByNumber(1).UID() == itemUids[0])
+        self.assertTrue(meeting.getItemByNumber(5).UID() == itemUids[4])
+        self.assertTrue(not meeting.getItemByNumber(8))
+        # it also take late items into account
+        self.freezeMeeting(meeting)
+        item = self.create('MeetingItem')
+        item.setPreferredMeeting(meeting.UID())
+        self.presentItem(item)
+        # if we ask 8th item, so the late item, it works
+        lateItemsInOrder = meeting.getItemsInOrder(late=True)
+        self.assertTrue(len(lateItemsInOrder) == 1)
+        self.assertTrue(meeting.getItemByNumber(8).UID() == lateItemsInOrder[0].UID())
 
 
 def test_suite():

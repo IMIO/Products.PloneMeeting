@@ -223,8 +223,6 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
                obj.getCategory():
                 aCategory = cfg.getCategories()[0].getId()
                 obj.setCategory(aCategory)
-        # Some attributes in attrs are not taken into account.
-        # The setAttributes method can set attrs after the object is created.
         if hasattr(obj.aq_inner, 'processForm'):
             # at_post_create_script is called by processForm
             # but processForm manage the _at_creation_flag
@@ -232,25 +230,6 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         # make sure we do not have permission check cache problems...
         self.cleanMemoize()
         return obj
-
-    def setAttributes(self, obj, **attrs):
-        '''Set the attributes contained in p_attrs on an object p_obj. Some
-           attributes cannot be set in invokeFactory because related permissions
-           are given in at_post_create or for unknown reasons.'''
-        metatype = obj.meta_type
-        if not metatype in self.schemas:
-            print "Metatype %s not present in schemas %s" % \
-                  (metatype, self.schemas)
-            return
-        schema = self.schemas[metatype]
-        for key in attrs.keys():
-            if not key in schema:
-                print "Field %s not present in schema %s" % (key, metatype)
-                continue
-            field = schema[key]
-            field.getMutator(obj)(attrs[key])
-        if hasattr(obj.aq_inner, 'at_post_edit_script'):
-            obj.at_post_edit_script()
 
     def _cleanExistingTmpAnnexFile(self):
         '''While adding in annex (see code around shutil in addAnnex),
@@ -324,8 +303,6 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
 
         if 'plone.memoize' in annotations:
             annotations['plone.memoize'].clear()
-        if obj and hasattr(aq_base(obj), '_memojito_'):
-            delattr(obj, '_memojito_')
 
     def _cleanRamCacheFor(self, methodId):
         '''Clean ram.cache for given methodId.'''
