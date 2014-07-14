@@ -673,13 +673,17 @@ class testMeeting(PloneMeetingTestCase):
         self.freezeMeeting(m1)
         self.assertTrue(not m1.getAvailableItems())
         # turn i2 into a late item
-        self.backToState(i2, self.WF_STATE_NAME_MAPPINGS['proposed'])
-        i2.setPreferredMeeting(m1.UID())
-        i2.reindexObject()
-        self.validateItem(i2)
-        # i1 is a late item
-        self.assertTrue(i2.wfConditions().isLateFor(m1))
-        self.assertTrue([item.UID for item in m1.getAvailableItems()] == [i2.UID()])
+        proposedState = self.WF_STATE_NAME_MAPPINGS['proposed']
+        # if current workflow does not use late items, we pass this test...
+        i2Wf = self.wfTool.getWorkflowsFor(i2)[0]
+        if proposedState in i2Wf.states.keys():
+            self.backToState(i2, proposedState)
+            i2.setPreferredMeeting(m1.UID())
+            i2.reindexObject()
+            self.validateItem(i2)
+            # i1 is a late item
+            self.assertTrue(i2.wfConditions().isLateFor(m1))
+            self.assertTrue([item.UID for item in m1.getAvailableItems()] == [i2.UID()])
 
         # if a meeting is not in a MEETING_STATES_ACCEPTING_ITEMS state
         # it can not accept any kind of items, getAvailableItems returns []
