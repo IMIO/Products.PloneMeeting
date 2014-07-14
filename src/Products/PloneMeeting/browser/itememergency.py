@@ -23,6 +23,7 @@ class ItemEmergencyView(BrowserView):
         # now check if user can ask emergency if it is not already the case
         if not self.context.adapted().mayAskEmergency():
             emergencyKeys.remove('emergency_asked')
+            emergencyKeys.remove('no_emergency')
         # now check if user can accept/refuse and asked emergency if it is not already the case
         if not self.context.adapted().mayAcceptOrRefuseEmergency() or not currentEmergency == 'emergency_asked':
             emergencyKeys.remove('emergency_accepted')

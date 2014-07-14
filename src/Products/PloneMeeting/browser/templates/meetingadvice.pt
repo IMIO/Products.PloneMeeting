@@ -14,9 +14,6 @@
     the advice is displayed in an overlay because every vielwets are hidden in overlays...</tal:comment>
     <div tal:condition="python: 'ajax_load' in context.REQUEST" id="viewlet-below-content-title">
         <div tal:replace="structure provider:plone.belowcontenttitle" />
-        <script type="text/javascript">
-        jQuery(document).ready(removeLinkOnByLine);
-        </script>
     </div>
 
     <div tal:condition="python: not 'ajax_load' in context.REQUEST">
