@@ -144,7 +144,7 @@
              and its description.</tal:comment>
           <tal:forItem condition="python: (resultMetaType == 'MeetingItem')">
             <tal:wakeUpItem define="meetingItem brain/getObject;
-                                    isPrivacyViewable meetingItem/isPrivacyViewable">
+                                    isPrivacyViewable python: meetingItem.adapted().isPrivacyViewable()">
             <tal:comment replace="nothing">Icon to display</tal:comment>
             <tal:showTitle replace="structure python: tool.getColoredLink(meetingItem, showColors, highlight=isFake, inMeeting=True)"/>
             <span tal:condition="python: not meetingItem.fieldIsEmpty('description')"
@@ -257,7 +257,7 @@
 
         <tal:comment replace="nothing">Advices</tal:comment>
         <td tal:condition="showAdvices " align="center" style="padding-left: 0; padding-right: 0;" tal:define="meetingItem python: obj">
-          <tal:show condition="obj/isPrivacyViewable">
+          <tal:show condition="python: obj.adapted().isPrivacyViewable()">
             <div metal:use-macro="obj/@@advices-macros/advicesIcons"></div>
           </tal:show>
         </td>

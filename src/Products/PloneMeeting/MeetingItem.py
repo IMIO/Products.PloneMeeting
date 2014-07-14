@@ -1508,16 +1508,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def isPrivacyViewable(self):
         '''Check doc in interfaces.py.'''
         # Checking the 'privacy condition' is only done if privacy is 'secret'.
-        privacy = self.getPrivacy()
+        item = self.getSelf()
+        privacy = item.getPrivacy()
         if privacy == 'public':
             return True
         # Bypass privacy check for super users
-        tool = getToolByName(self, 'portal_plonemeeting')
-        if tool.isPowerObserverForCfg(tool.getMeetingConfig(self)):
+        tool = getToolByName(item, 'portal_plonemeeting')
+        if tool.isPowerObserverForCfg(tool.getMeetingConfig(item)):
             return True
         # Checks that the user belongs to the proposing group.
-        proposingGroup = self.getProposingGroup()
-        user = self.portal_membership.getAuthenticatedMember()
+        proposingGroup = item.getProposingGroup()
+        membershipTool = getToolByName(item, 'portal_membership')
+        user = membershipTool.getAuthenticatedMember()
         for ploneGroup in user.getGroups():
             if ploneGroup.startswith('%s_' % proposingGroup):
                 return True
@@ -1525,7 +1527,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('checkPrivacyViewable')
     def checkPrivacyViewable(self):
         '''Raises Unauthorized if the item is not privacy-viewable.'''
-        if not self.isPrivacyViewable():
+        if not self.adapted().isPrivacyViewable():
             raise Unauthorized
 
     security.declarePublic('getExtraFieldsToCopyWhenCloning')
@@ -3688,7 +3690,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # - the user must be able to see the item if it is private.
         # The user will duplicate the item in his own folder.
         tool = getToolByName(self, 'portal_plonemeeting')
-        if not tool.userIsAmong('creators') or not self.isPrivacyViewable():
+        if not tool.userIsAmong('creators') or not self.adapted().isPrivacyViewable():
             return False
         return True
 
@@ -3735,7 +3737,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            will be the default value for this field.'''
         # first check that we are not trying to clone an item the we
         # can not access because of privacy status
-        if not self.isPrivacyViewable():
+        if not self.adapted().isPrivacyViewable():
             raise Unauthorized
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = self.portal_plonemeeting

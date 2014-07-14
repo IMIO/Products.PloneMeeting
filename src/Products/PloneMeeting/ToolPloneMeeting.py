@@ -1136,7 +1136,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          translate(msgid, domain="PloneMeeting", mapping=mapping,
                                    context=self.REQUEST).encode('utf-8')) + content
             # Is this a not-privacy-viewable item?
-            if (objClassName == 'MeetingItem') and not obj.isPrivacyViewable():
+            if (objClassName == 'MeetingItem') and not obj.adapted().isPrivacyViewable():
                 isPrivacyViewable = False
         else:
             # It is an annex entry in an annexIndex

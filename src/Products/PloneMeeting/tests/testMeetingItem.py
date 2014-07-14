@@ -1154,7 +1154,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # pmReviewer2 can access the item but the item is not privacyViewable
         self.failUnless(self.hasPermission('View', secretItem))
         self.failUnless(self.hasPermission('View', publicItem))
-        self.failIf(secretItem.isPrivacyViewable())
+        self.failIf(secretItem.adapted().isPrivacyViewable())
         # if we try to clone a not privacy viewable item, it raises Unauthorized
         self.assertRaises(Unauthorized, secretItem.onDuplicate)
         self.assertRaises(Unauthorized, secretItem.onDuplicateAndKeepLink)
@@ -1163,21 +1163,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, secretAnnex.index_html)
         self.assertRaises(Unauthorized, secretAnnex.download)
         # no problem to access the publicItem and publicAnnex
-        self.failUnless(publicItem.isPrivacyViewable())
+        self.failUnless(publicItem.adapted().isPrivacyViewable())
         self.assertTrue(publicAnnex.index_html())
         self.assertTrue(publicAnnex.download())
         # a user in the same proposingGroup can fully access the secret item
         self.changeUser('pmCreator1')
-        self.failUnless(secretItem.isPrivacyViewable())
-        self.failUnless(publicItem.isPrivacyViewable())
+        self.failUnless(secretItem.adapted().isPrivacyViewable())
+        self.failUnless(publicItem.adapted().isPrivacyViewable())
         # MeetingManager
         self.changeUser('pmManager')
-        self.failUnless(secretItem.isPrivacyViewable())
-        self.failUnless(publicItem.isPrivacyViewable())
+        self.failUnless(secretItem.adapted().isPrivacyViewable())
+        self.failUnless(publicItem.adapted().isPrivacyViewable())
         # PowerObserver
         self.changeUser('powerobserver1')
-        self.failUnless(secretItem.isPrivacyViewable())
-        self.failUnless(publicItem.isPrivacyViewable())
+        self.failUnless(secretItem.adapted().isPrivacyViewable())
+        self.failUnless(publicItem.adapted().isPrivacyViewable())
 
     def test_pm_IsLateFor(self):
         '''

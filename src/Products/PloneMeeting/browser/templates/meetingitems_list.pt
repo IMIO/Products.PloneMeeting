@@ -147,7 +147,7 @@
       <tr tal:define="global itemNumber python:itemNumber+1;
                       UID meetingItem/UID;
                       uidclass string:UID_$UID;
-                      isPrivacyViewable meetingItem/isPrivacyViewable;
+                      isPrivacyViewable python: meetingItem.adapted().isPrivacyViewable();
                       privacy meetingItem/getPrivacy"
           tal:attributes="class string:$uidclass meeting_item_privacy_$privacy"
           valign="top">
