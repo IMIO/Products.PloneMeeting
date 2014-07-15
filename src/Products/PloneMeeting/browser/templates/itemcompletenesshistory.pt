@@ -25,7 +25,7 @@
             <th i18n:translate="listingheader_action" width="100px">Action</th>
             <th i18n:translate="listingheader_performed_by" width="125px">Performed by</th>
             <th i18n:translate="listingheader_date_and_time" width="125px">Date and time</th>
-            <th i18n:translate="history_details" i18n:domain="PloneMeeting">Details</th>
+            <th i18n:translate="history_comments" i18n:domain="PloneMeeting">Comments</th>
           </tr>
          </thead>
          <tbody>

@@ -1818,7 +1818,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in utils.py.'''
         return hasHistory(self, fieldName)
 
-    security.declarePublic('getHistory')
+    security.declarePrivate('getHistory')
     def getHistory(self, *args, **kwargs):
         '''See doc in utils.py.'''
         return getHistory(self, *args, **kwargs)

@@ -40,6 +40,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
 from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
     IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, IPodTemplateCustom, \
@@ -1001,6 +1002,17 @@ def getHistory(obj, startNumber=0, batchSize=5):
     history.reverse()
     stopIndex = startNumber + batchSize - 1
     i = -1
+    # if MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup is True
+    # we will have to hide the history comments if current user is not part of the proposing group
+    userMayAccessComment = True
+    tool = getToolByName(obj, 'portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    if cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
+       obj.meta_type == 'MeetingItem' and \
+       not tool.isManager():
+        userMeetingGroupIds = [mGroup.getId() for mGroup in tool.getGroupsForUser()]
+        if not obj.getProposingGroup() in userMeetingGroupIds:
+            userMayAccessComment = False
     while (i+1) < len(history):
         i += 1
         # Keep only events in range startNumber:startNumber+batchSize
@@ -1045,6 +1057,13 @@ def getHistory(obj, startNumber=0, batchSize=5):
                     event['changes'][name] = val
                 else:
                     event['changes'][name] = oldValue
+        else:
+            # workflow history event
+            # hide comment if user may not access it
+            if not userMayAccessComment:
+                # We take a copy, because we will modify it.
+                event = history[i].copy()
+                event['comments'] = "<span class='discreet'>Only members of the proposing group may access history comments.</span>"
         res.append(event)
     return {'events': res, 'totalNumber': len(history)}
 

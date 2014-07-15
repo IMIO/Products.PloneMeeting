@@ -372,6 +372,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.useCopies = False
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
+        self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
 
         # GUI-related parameters -----------------------------------------------
         # When the system displays the list of all meetings (the "all meetings"
