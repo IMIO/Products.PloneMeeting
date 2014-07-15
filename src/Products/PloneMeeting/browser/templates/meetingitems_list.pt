@@ -64,13 +64,14 @@
 
       <tal:comment replace="nothing">Title</tal:comment>
       <th class="pm_meeting_listing_th_title">
-        <span i18n:translate="listingheader_title"></span><span
-          id="pmDescription" name="pmDescription" class="pmExpanded"
-          tal:condition="python: not isDecided" i18n:translate="and_description"
-          tal:attributes="style python:'display: %s' % descrsStyle"></span><span
-          tal:condition="python: isDecided" i18n:translate="and_decision"
-          id="pmDescription" name="pmDescription" class="pmExpanded"
-          tal:attributes="style python:'display: %s' % descrsStyle"></span>
+        <tal:comment replace="nothing">Empty comments here above is to have pretty html without having a space inserted between 2 spans</tal:comment>
+        <span i18n:translate="listingheader_item_title"></span><!--
+        --><span id="pmDescription" name="pmDescription" class="pmExpanded"
+              tal:condition="python: not isDecided" i18n:translate="and_description"
+              tal:attributes="style python:'display: %s' % descrsStyle"></span><!--
+        --><span tal:condition="python: isDecided" i18n:translate="and_decision"
+              id="pmDescription" name="pmDescription" class="pmExpanded"
+              tal:attributes="style python:'display: %s' % descrsStyle"></span>
       </th>
 
       <tal:comment replace="nothing">Creator</tal:comment>
