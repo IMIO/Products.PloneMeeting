@@ -483,8 +483,8 @@ schema = Schema((
         name='description',
         widget=RichWidget(
             rows=15,
+            label_msgid="PloneMeeting_label_itemDescription",
             label='Description',
-            label_msgid='PloneMeeting_label_description',
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",

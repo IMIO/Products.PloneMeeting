@@ -60,7 +60,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_description',
             i18n_domain='PloneMeeting',
         ),
-        default_output_type="text/plain",
+        default_output_type='text/plain',
         default_content_type='text/plain',
         accessor="Description",
     ),
@@ -477,3 +477,4 @@ def freezePodDocumentsIfRelevant(obj, transition):
                     logger.warn(CANT_WRITE_DOC % (
                         user.id, fileId, obj.absolute_url(), podTemplate.id))
 ##/code-section module-footer
+

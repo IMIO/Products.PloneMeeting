@@ -950,9 +950,9 @@ schema = Schema((
             description="ToDoListTopics",
             description_msgid="to_do_list_topics",
             startup_directory="topics",
-            base_query={'isDefinedInTool': True},
             show_results_without_query=True,
             restrict_browsing_to_startup_directory=True,
+            base_query={'isDefinedInTool': True},
             label='Todolisttopics',
             label_msgid='PloneMeeting_label_toDoListTopics',
             i18n_domain='PloneMeeting',
@@ -2092,6 +2092,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST,
                              default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
                                      'every values selected in the \'itemAdvicesStates\' field!')
+        # added a pass to avoid generation problems with AGX...
+        pass
 
     security.declarePrivate('validate_insertingMethodsOnAddItem')
     def validate_insertingMethodsOnAddItem(self, values):
@@ -3837,3 +3839,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+
