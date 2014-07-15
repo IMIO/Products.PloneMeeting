@@ -720,6 +720,13 @@ dl.searchResults cite {
     display: none;
 }
 
+/* manage label on the search_form */
+body.template-search_form #content label {
+    display: inline-block;
+    margin-bottom: 0.5em;
+    vertical-align: text-top;
+}
+
 #showItemsDecidedTransitions{
     float:right;
 }

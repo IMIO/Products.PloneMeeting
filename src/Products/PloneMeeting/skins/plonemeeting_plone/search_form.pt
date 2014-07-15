@@ -137,7 +137,7 @@
                 </select>
                </span>
                <a tal:attributes="onclick python: 'return plone.jscalendar.show(\'#pmSearchForm_from_0\', %s, %s)' % (yearMin, yearMax)">
-                <img title="Calendar" tal:attributes="src string: $portal_url/popup_calendar.gif">
+                <img title="Calendar" style="vertical-align: inherit; cursor: pointer;" tal:attributes="src string: $portal_url/popup_calendar.png">
                </a>
              </td>
             </tr>
@@ -188,7 +188,7 @@
                 </select>
                </span>
                <a tal:attributes="onclick python: 'return plone.jscalendar.show(\'#pmSearchForm_to_0\', %s, %s)' % (yearMin, yearMax)">
-                <img title="Calendar" tal:attributes="src string: $portal_url/popup_calendar.gif">
+                <img title="Calendar" style="vertical-align: inherit; cursor: pointer;" tal:attributes="src string: $portal_url/popup_calendar.png">
                </a>
              </td>
             </tr>
@@ -218,7 +218,7 @@
           <label for="item_getDeliberation" i18n:translate="PloneMeeting_label_deliberation" class="noborder"></label>&nbsp;
 
           <input type="radio" name="item_keywords_target" value="all" id="item_all" checked="checked"/>
-          <label for="item_all" i18n:translate="hs_all" class="noborder"></label><br/><br/>
+          <label for="item_all" i18n:translate="hs_all" class="noborder"></label><br/>
         </td>
       </tr>
       <tr name="item_criteria">
@@ -229,7 +229,7 @@
                  tal:define="groupInfos tool/getMeetingGroupsForSearch">
             <tr valign="top">
               <td> <tal:comment replace="nothing">Proposing groups</tal:comment>
-                <label for="proposingGroups" i18n:translate="PloneMeeting_label_proposingGroup"></label><br/><br/>
+                <label for="proposingGroups" i18n:translate="PloneMeeting_label_proposingGroup"></label><br/>
                 <select name="proposingGroups" multiple="multiple" size="7">
                   <option tal:repeat="groupInfo python:groupInfos[0]"
                           tal:attributes="value python: groupInfo[0]; title python: groupInfo[1]"
@@ -259,7 +259,7 @@
               <tal:comment replace="nothing">Item state</tal:comment>
               <td tal:define="searchItemStates tool/getSearchItemStates"
                   tal:condition="python: not isArchiveSite and searchItemStates">
-                <label i18n:translate="item_state"></label><br/><br/>
+                <label i18n:translate="item_state"></label><br/>
                 <select name="itemState" multiple="multiple" size="7">
                   <tal:options repeat="stateInfo python: currentMeetingConfig.listItemStates().items()">
                    <option tal:condition="python: stateInfo[0] in searchItemStates"
