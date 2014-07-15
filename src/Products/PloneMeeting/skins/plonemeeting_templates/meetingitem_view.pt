@@ -331,44 +331,38 @@
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
     <table width="100%" cellpadding="1" cellspacing="1"
-           tal:define="hasAnnexes python: context.hasAnnexesWhere(relatedTo='item');
+           tal:define="hasAnnexes context/hasAnnexesWhere;
                        hasAnnexesDecision python: context.hasAnnexesWhere(relatedTo='item_decision');
-                       hasAdvices python: (meetingConfig.getUseAdvices() and context.displayAdvices())"
-           tal:condition="python: hasAnnexes or hasAnnexesDecision or hasAdvices">
-     <tr style="vertical-align: top;">
-      <td class="itemAnnexesCell" width="50%" tal:condition="python: hasAnnexes or hasAnnexesDecision">
-       <fieldset style="margin: 0;">
-        <legend i18n:translate="existing_annexes">Annexes</legend>
-        <table class="no-style-table" cellpadding="0" cellspacing="0">
-         <tr tal:define="obj python: context">
-           <td tal:define="relatedTo string:item">
-            <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
-           </td>
-           <td tal:define="relatedTo string:item_decision"
-               tal:condition="python: member.has_permission('PloneMeeting: Read decision annex', context) and hasAnnexesDecision">
-             <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
-           </td>
-         </tr>
-        </table>
-       </fieldset>
-      </td>
-      <td class="itemAdvicesAloneCell" width="50%" tal:condition="python: not (hasAnnexes or hasAnnexesDecision) and hasAdvices">
-       <tal:comment replace="nothing">
-         Display an empty panel of annexes. Else, advices popup menus will go out of the screen.
-       </tal:comment>
-       <fieldset style="margin: 0;">
-        <legend i18n:translate="existing_annexes">Annexes</legend>
-        <div i18n:translate="no_annexes" class="discreet">No annexes</div>
-       </fieldset>
-      </td>
-      <tal:comment replace="nothing">Advices</tal:comment>
-      <td class="itemAdvicesCell" width="50%" tal:condition="hasAdvices">
-       <fieldset style="margin: 0;" tal:define="meetingItem python: context">
-        <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
-        <metal:advices use-macro="context/@@advices-macros/macros/advicesIcons"/>
-       </fieldset>
-      </td>
-     </tr>
+                       hasAdvices python: (meetingConfig.getUseAdvices() and context.displayAdvices())">
+        <tr style="vertical-align: top;">
+            <td class="itemAnnexesCell" width="50%">
+                <fieldset style="margin: 0;">
+                    <legend i18n:translate="existing_annexes">Annexes</legend>
+                    <table width="100%" class="no-style-table" cellpadding="0" cellspacing="0" style="margin: 0;">
+                        <tr tal:define="obj python: context">
+                            <td tal:define="relatedTo string:item" tal:condition="hasAnnexes">
+                                <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
+                            </td>
+                            <td tal:define="relatedTo string:item_decision"
+                                tal:condition="python: member.has_permission('PloneMeeting: Read decision annex', context) and hasAnnexesDecision">
+                                <metal:annexes use-macro="obj/@@annexes-macros/annexesIcons"/>
+                            </td>
+                            <td tal:condition="python: not hasAnnexes and not hasAnnexesDecision">
+                                <span>-</span>
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+            </td>
+
+            <tal:comment replace="nothing">Advices</tal:comment>
+            <td class="itemAdvicesCell" width="50%">
+                <fieldset style="margin: 0;" tal:define="meetingItem python: context">
+                <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
+                    <metal:advices use-macro="context/@@advices-macros/macros/advicesIcons"/>
+                </fieldset>
+            </td>
+        </tr>
     </table>
 
     <tal:comment replace="nothing">Observations</tal:comment>
