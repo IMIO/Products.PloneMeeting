@@ -950,6 +950,7 @@ schema = Schema((
             description="ToDoListTopics",
             description_msgid="to_do_list_topics",
             startup_directory="topics",
+            base_query={'isDefinedInTool': True},
             show_results_without_query=True,
             restrict_browsing_to_startup_directory=True,
             label='Todolisttopics',

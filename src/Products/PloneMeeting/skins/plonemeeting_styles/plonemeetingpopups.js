@@ -18,7 +18,9 @@ jQuery(function($) {
             onClose : function (e) {
                 // make sure CKeditor instances are destroyed because
                 // it can not be initialized twice
-                CKEDITOR.instances['form.widgets.advice_comment'].destroy();
+                if (CKEDITOR.instances['form.widgets.advice_comment']) {
+                    CKEDITOR.instances['form.widgets.advice_comment'].destroy();
+                }
                 return true;
             }
         }
