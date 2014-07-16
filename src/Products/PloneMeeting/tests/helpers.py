@@ -200,7 +200,7 @@ class PloneMeetingTestingHelpers:
         if state in self.WF_STATE_NAME_MAPPINGS:
             state = self.WF_STATE_NAME_MAPPINGS[state]
         # do things as admin to avoid permission issues
-        currentUser = self.portal.portal_membership.getAuthenticatedMember().getId()
+        currentUser = self.member.getId()
         self.changeUser('admin')
         while not itemOrMeeting.queryState() == state:
             if not useDefinedWfPath:
@@ -214,7 +214,7 @@ class PloneMeetingTestingHelpers:
     def _doTransitionsFor(self, itemOrMeeting, transitions):
         """Helper that just trigger given p_transitions on given p_itemOrMeeting."""
         # do things as admin to avoid permission issues
-        currentUser = self.portal.portal_membership.getAuthenticatedMember().getId()
+        currentUser = self.member.getId()
         self.changeUser('admin')
         for tr in transitions:
             if tr in self.transitions(itemOrMeeting):

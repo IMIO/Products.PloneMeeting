@@ -79,7 +79,7 @@ class testVotes(PloneMeetingTestCase):
 
     def _checkVotesConsultableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
         '''Helper method for checking that a user can consult votes.'''
-        originalUserId = self.portal.portal_membership.getAuthenticatedMember().getId()
+        originalUserId = self.member.getId()
         for userId in userIds:
             self.changeUser(userId)
             self.failUnless(item.mayConsultVotes())
@@ -91,7 +91,7 @@ class testVotes(PloneMeetingTestCase):
                                                           'pmReviewer1',
                                                           'pmManager', ]):
         '''Helper method for checking that a user can NOT consult votes.'''
-        originalUserId = self.portal.portal_membership.getAuthenticatedMember().getId()
+        originalUserId = self.member.getId()
         for userId in userIds:
             self.changeUser(userId)
             self.failIf(item.mayConsultVotes())
@@ -138,7 +138,7 @@ class testVotes(PloneMeetingTestCase):
             self._checkVotesEditableFor(item1, userIds=['pmManager', ])
             self._checkVotesNotEditableFor(item1, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', ])
             if m1.queryState() == lastState:
-                raise Exception, "Infinite loop...  Not able to find a 'decided' state for the Meeting 'm1'."
+                raise Exception("Infinite loop...  Not able to find a 'decided' state for the Meeting 'm1'.")
             else:
                 lastState = m1.queryState()
         # close the meeting so votes are not editable anymore by anybody
@@ -147,7 +147,7 @@ class testVotes(PloneMeetingTestCase):
 
     def _checkVotesNotEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
         '''Helper method for checking that a user can NOT edit votes.'''
-        originalUserId = self.portal.portal_membership.getAuthenticatedMember().getId()
+        originalUserId = self.member.getId()
         for userId in userIds:
             self.changeUser(userId)
             self.failIf(item.mayEditVotes())
@@ -155,7 +155,7 @@ class testVotes(PloneMeetingTestCase):
 
     def _checkVotesEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
         '''Helper method for checking that a user can edit votes.'''
-        originalUserId = self.portal.portal_membership.getAuthenticatedMember().getId()
+        originalUserId = self.member.getId()
         for userId in userIds:
             self.changeUser(userId)
             self.failUnless(item.mayEditVotes())

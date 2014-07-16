@@ -27,8 +27,6 @@ from DateTime.DateTime import _findLocalTimeZoneName
 
 from zope.i18n import translate
 
-from plone.app.testing import login
-
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -46,7 +44,7 @@ class testMeeting(PloneMeetingTestCase):
               (with useGroupsAsCategories=True);
            b) plonemeeting-assembly: on_proposing_groups.
            Sort methods tested here are "on_categories" and "on_proposing_groups".'''
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         for meetingConfig in (self.meetingConfig.getId(), self.meetingConfig2.getId()):
             if meetingConfig == self.meetingConfig.getId():
                 # There are 2 recurring items in self.meetingConfig
@@ -88,7 +86,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.getId() for item in meeting.getItemsInOrder()],
@@ -540,7 +538,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_RemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.getId() for item in meeting.getItemsInOrder()],
                           ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
@@ -558,7 +556,7 @@ class testMeeting(PloneMeetingTestCase):
     def test_pm_MeetingNumbers(self):
         '''Tests that meetings receive correctly their numbers from the config
            when they are published.'''
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         m1 = self._createMeetingWithItems()
         self.assertEquals(self.meetingConfig.getLastMeetingNumber(), 0)
         self.assertEquals(m1.getMeetingNumber(), -1)
@@ -572,7 +570,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_NumberOfItems(self):
         '''Tests that number of items returns number of normal and late items.'''
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # by default, 7 normal items and none late
         self.assertTrue(meeting.numberOfItems() == 7)
@@ -596,7 +594,7 @@ class testMeeting(PloneMeetingTestCase):
           - with no preferred meeting
           - items for wich the preferredMeeting is not a future meeting
         """
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         for meetingConfig in (self.meetingConfig.getId(), self.meetingConfig2.getId()):
             self.setMeetingConfig(meetingConfig)
             self._checkAvailableItems()
@@ -605,7 +603,7 @@ class testMeeting(PloneMeetingTestCase):
         """Helper method for test_pm_AvailableItems."""
         #create 3 meetings
         #we can do every steps as a MeetingManager
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
         m1 = self.create('Meeting', date=meetingDate)
         meetingDate = DateTime('2008/06/19 08:00:00')
@@ -696,7 +694,7 @@ class testMeeting(PloneMeetingTestCase):
           Test the functionnality to present several items at once
         """
         # create a meeting with items, unpresent presented items
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # remove every presented items so we can
         # present them at once
@@ -723,7 +721,7 @@ class testMeeting(PloneMeetingTestCase):
           Test the functionnality to decide several items at once
         """
         #create a meeting
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         self.freezeMeeting(meeting)
         itemUids = []
@@ -755,7 +753,7 @@ class testMeeting(PloneMeetingTestCase):
         otherTimeZone = (currentTimeZone is _findLocalTimeZoneName(0)) and \
             _findLocalTimeZoneName(1) or _findLocalTimeZoneName(0)
         # create a meeting
-        login(self.portal, 'pmManager')
+        self.changeUser('pmManager')
         meetingDate1 = '2013/01/01 12:00 %s' % currentTimeZone
         # value to validate is without GMT+x
         meetingDate1Value = '2013/01/01 12:00'

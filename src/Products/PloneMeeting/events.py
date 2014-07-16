@@ -162,8 +162,11 @@ def onMeetingAdded(meeting, event):
 
 def onAdviceAdded(advice, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
-    # update advice_row_id
-    advice._updateAdviceRowId()
+    # update advice_row_id if it was not already done before
+    # for example in a onAdviceTransition event handler that is called
+    # before the onAdviceAdded...
+    if not advice.advice_row_id:
+        advice._updateAdviceRowId()
 
     # Add a place to store annexIndex
     advice.annexIndex = PersistentList()

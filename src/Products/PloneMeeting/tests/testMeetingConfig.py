@@ -276,7 +276,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
         self.changeUser('pmReviewer1')
         # define pmReviewer1 as a prereviewer
-        self._turnUserIntoPrereviewer(self.portal.portal_membership.getAuthenticatedMember())
+        self._turnUserIntoPrereviewer(self.member)
         # change again to 'pmReviewer1' so changes in his groups are taken into account
         self.changeUser('pmReviewer1')
         # the next available transition is 'prevalidate'

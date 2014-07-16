@@ -17,11 +17,11 @@
       <tal:i18n i18n:translate="label_by_author">
       by
       <tal:comment replace="nothing">XXX change by PloneMeeting, hide link to author, use a <span> instead
-      <a href="#"
+      <!--a href="#"
          tal:attributes="href string:${context/@@plone_portal_state/navigation_root_url}/author/${creator_id}"
          tal:content="view/authorname"
          tal:omit-tag="python:view.author() is None"
-         i18n:name="author">Roland Barthes</a>
+         i18n:name="author">Roland Barthes</a-->
       </tal:comment>
       <span i18n:name="author"
             tal:content="view/authorname"

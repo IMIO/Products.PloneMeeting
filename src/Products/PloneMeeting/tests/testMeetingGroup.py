@@ -24,6 +24,7 @@
 
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -85,12 +86,13 @@ class testMeetingGroup(PloneMeetingTestCase):
         # before from groups he is in, a special "not found" user will still be assigned to the groups...
         # to test, add a new user, assign it to the developers_creators group, remove the user
         # it should not complain about 'can_not_delete_meetinggroup_plonegroup'
-        self.portal.portal_membership.addMember(id='new_test_user',
-                                                password='12345',
-                                                roles=('Member', ),
-                                                domains=())
+        membershipTool = getToolByName(self.portal, 'portal_membership')
+        membershipTool.addMember(id='new_test_user',
+                                 password='12345',
+                                 roles=('Member', ),
+                                 domains=())
         self.portal.portal_groups.addPrincipalToGroup('new_test_user', 'developers_creators')
-        self.portal.portal_membership.deleteMembers(('new_test_user', ))
+        membershipTool.deleteMembers(('new_test_user', ))
         # now we have a 'not found' user in developers_creators
         self.assertTrue(('new_test_user', '<new_test_user: not found>') in
                         self.portal.acl_users.source_groups.listAssignedPrincipals('developers_creators'))

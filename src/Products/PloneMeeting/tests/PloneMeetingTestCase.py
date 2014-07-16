@@ -22,7 +22,6 @@
 
 import unittest2
 import os.path
-from Acquisition import aq_base
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
 
@@ -36,6 +35,7 @@ from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
 from plone.memoize.interfaces import ICacheChooser
 
+from Products.CMFCore.utils import getToolByName
 from Products.PloneTestCase.setup import _createHomeFolder
 
 import Products.PloneMeeting
@@ -115,8 +115,8 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
 
     def createUser(self, username, roles):
         '''Creates a user named p_username with some p_roles.'''
-        pms = self.portal.portal_membership
-        pms.addMember(username, 'password', [], [])
+        membershipTool = getToolByName(self.portal, 'portal_membership')
+        membershipTool.addMember(username, 'password', [], [])
         setRoles(self.portal, username, roles)
         _createHomeFolder(self.portal, username)
 
@@ -161,6 +161,8 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         logout()
         self.cleanMemoize()
         login(self.portal, loginName)
+        membershipTool = getToolByName(self.portal, 'portal_membership')
+        self.member = membershipTool.getAuthenticatedMember()
 
     def _generateId(self, ploneFolder):
         '''Generate an id for creating an object in p_ploneFolder.'''
@@ -314,7 +316,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         """
           Helper method for removing every recurring items and item templates of a given p_meetingConfig
         """
-        currentUser = self.portal.portal_membership.getAuthenticatedMember().getId()
+        currentUser = self.member.getId()
         self.changeUser('admin')
         # remove recurring items
         recurringItemsIds = []
