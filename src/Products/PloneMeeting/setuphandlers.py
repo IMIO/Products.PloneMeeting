@@ -60,7 +60,8 @@ indexInfo = {
              'getConfigId': 'FieldIndex',
              'indexUsages': 'KeywordIndex',
              'isDefinedInTool': 'BooleanIndex',
-             'templateUsingGroups': 'KeywordIndex', }
+             'templateUsingGroups': 'KeywordIndex',
+             'getCompleteness': 'KeywordIndex', }
 # Metadata to create in portal_catalog, it has to correspond to an index in indexInfo
 metadataInfo = ('getTitle2', 'getDate', 'getProposingGroup', 'getPreferredMeeting')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
