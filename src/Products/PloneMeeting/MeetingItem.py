@@ -1445,8 +1445,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check docstring in interfaces.py.'''
         item = self.getSelf()
         res = []
-        mc = item.portal_plonemeeting.getMeetingConfig(item)
-        usedItemAttributes = mc.getUsedItemAttributes()
+        tool = getToolByName(item, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        usedItemAttributes = cfg.getUsedItemAttributes()
         if not inMeeting:
             # Item is in the list of available items for p_meeting. Check if we
             # must show a deadline- or late-related icon.
@@ -1481,7 +1482,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # Append a tuple with name of the icon and a list containing
                 # the msgid and the mapping as a dict
                 res.append(("%s.png" %
-                            mc._getCloneToOtherMCActionId(clonedToOtherMCId, mc.getId()),
+                            cfg._getCloneToOtherMCActionId(clonedToOtherMCId, cfg.getId()),
                             ('sentto_othermeetingconfig',
                                 {
                                     'meetingConfigTitle': getattr(item.portal_plonemeeting,
@@ -1493,6 +1494,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if 'oralQuestion' in usedItemAttributes:
             if item.getOralQuestion():
                 res.append(('oralQuestion.png', 'this_item_is_an_oral_question'))
+        if 'emergency' in usedItemAttributes:
+            # display an icon if emergency asked/accepted/refused
+            itemEmergency = item.getEmergency()
+            if itemEmergency == 'emergency_asked':
+                res.append(('emergency_asked.png', 'emergency_asked'))
+            elif itemEmergency == 'emergency_accepted':
+                res.append(('emergency_accepted.png', 'emergency_accepted'))
+            elif itemEmergency == 'emergency_refused':
+                res.append(('emergency_refused.png', 'emergency_refused'))
         return res
 
     def _getOtherMeetingConfigsImAmClonedIn(self):
