@@ -2223,6 +2223,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
+    security.declarePublic('getCustomAdviceMessageFor')
+    def getCustomAdviceMessageFor(self, advice):
+        '''See doc in interfaces.py.'''
+        return {'displayDefaultComplementaryMessage': True,
+                'customAdviceMessage': None}
+
     security.declarePublic('getInsertOrder')
     def getInsertOrder(self, insertMethods, meeting, late):
         '''When inserting an item into a meeting, depending on the sort method

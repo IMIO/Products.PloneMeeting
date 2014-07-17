@@ -176,83 +176,95 @@
                     </td>
                   </tr>
                 </table>
-                <span class="discreet"
-                   tal:condition="python: adviceType == 'not_given' and advice['advice_addable'] and not advice['delay_infos']"
-                   i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet.
-                </span>
-                <tal:adviceGiveableWithDelay condition="python: adviceType == 'not_given' and advice['advice_addable'] and advice['delay_infos']">
-                    <span class="discreet"
-                          tal:condition="python: advice['delay_infos']['delay_status'] in ['still_time', 'still_time_but_alert']"
-                          i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet, it can still be given until the <span tal:attributes="class string:advice_delay_${advice/delay_infos/delay_status}"
-                                                                                                                      i18n:name="advice_delay_limit_date"
-                                                                                                                      tal:content="advice/delay_infos/limit_date_localized"></span>.
-                    </span>
-                </tal:adviceGiveableWithDelay>
-                <tal:adviceNoMoreGiveableBecauseDelayExceeded condition="python: adviceType == 'not_given' and not advice['advice_addable'] and advice['delay_infos'] and advice['delay_infos']['delay_status'] == 'timed_out'">
-                    <span class="discreet"
-                          i18n:translate="">This advice can not be given anymore, it was asked the <span class="advice_delay_timed_out"
-                                                                                                         i18n:name="advice_delay_started_on"
-                                                                                                         tal:content="advice/delay_infos/delay_started_on_localized">2013/05/05</span>
-                                            and could be given until the <span class="advice_delay_timed_out"
-                                                                               i18n:name="advice_delay_limit_date"
-                                                                               tal:content="advice/delay_infos/limit_date_localized">2013/05/15</span>.
-                    </span>
-                </tal:adviceNoMoreGiveableBecauseDelayExceeded>
-                <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not advice['item_viewable_by_advisers']">
-                    <span class="discreet"
-                       i18n:translate="">This item is not viewable by the advisers of this group in the current review state (<span i18n:name="item_review_state"
-                                                                                                                                   i18n:translate=""
-                                                                                                                                   i18n:domain="plone"
-                                                                                                                                   tal:content="item_review_state"
-                                                                                                                                   tal:attributes="class string:label-state-${item_review_state}"></span>).</span>
-                    <br /><span tal:condition="advice/delay_infos"
-                                class="discreet"
-                                i18n:translate="">Once viewable, the adviser will have <span style="font-weight: bold;" i18n:name="advice_delay" tal:content="advice/delay_infos/delay">15</span> days to give the advice.</span>
-                </tal:itemsStillNotViewableToAdvisers>
-                <tal:itemViewableButNoMoreAdviseableWithoutDelay condition="python: adviceType == 'not_given' and advice['item_viewable_by_advisers'] and not advice['delay_infos'] and not advice['advice_addable']">
-                    <span class="discreet"
-                       i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
-                                                                                                       i18n:translate=""
-                                                                                                       i18n:domain="plone"
-                                                                                                       tal:content="item_review_state"
-                                                                                                       tal:attributes="class string:label-state-${item_review_state}"></span>)</span>.
+                <tal:complementaryInfoMessageDefines define="customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
+                                                             displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
+                                                             customAdviceMessage customMessageInfos/customAdviceMessage;">
+                <tal:complementaryInfoMessage condition="displayDefaultComplementaryMessage">
+                    <tal:adviceGiveableWithoutDelay condition="python: adviceType == 'not_given' and advice['advice_addable'] and not advice['delay_infos']">
+                        <span class="discreet"
+                              i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet.
+                        </span>
+                    </tal:adviceGiveableWithoutDelay>
+                    <tal:adviceGiveableWithDelay condition="python: adviceType == 'not_given' and advice['advice_addable'] and advice['delay_infos']">
+                        <span class="discreet"
+                              tal:condition="python: advice['delay_infos']['delay_status'] in ['still_time', 'still_time_but_alert']"
+                              i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet, it can still be given until the <span tal:attributes="class string:advice_delay_${advice/delay_infos/delay_status}"
+                                                                                                                          i18n:name="advice_delay_limit_date"
+                                                                                                                          tal:content="advice/delay_infos/limit_date_localized"></span>.
+                        </span>
+                    </tal:adviceGiveableWithDelay>
+                    <tal:adviceNoMoreGiveableBecauseDelayExceeded condition="python: adviceType == 'not_given' and not advice['advice_addable'] and advice['delay_infos'] and advice['delay_infos']['delay_status'] == 'timed_out'">
+                        <span class="discreet"
+                              i18n:translate="">This advice can not be given anymore, it was asked the <span class="advice_delay_timed_out"
+                                                                                                             i18n:name="advice_delay_started_on"
+                                                                                                             tal:content="advice/delay_infos/delay_started_on_localized">2013/05/05</span>
+                                                and could be given until the <span class="advice_delay_timed_out"
+                                                                                   i18n:name="advice_delay_limit_date"
+                                                                                   tal:content="advice/delay_infos/limit_date_localized">2013/05/15</span>.
+                        </span>
+                    </tal:adviceNoMoreGiveableBecauseDelayExceeded>
+                    <tal:itemsStillNotViewableToAdvisers condition="python: adviceType == 'not_given' and not advice['item_viewable_by_advisers']">
+                        <span class="discreet"
+                           i18n:translate="">This item is not viewable by the advisers of this group in the current review state (<span i18n:name="item_review_state"
+                                                                                                                                       i18n:translate=""
+                                                                                                                                       i18n:domain="plone"
+                                                                                                                                       tal:content="item_review_state"
+                                                                                                                                       tal:attributes="class string:label-state-${item_review_state}"></span>).</span>
+                        <br /><span tal:condition="advice/delay_infos"
+                                    class="discreet"
+                                    i18n:translate="">Once viewable, the adviser will have <span style="font-weight: bold;" i18n:name="advice_delay" tal:content="advice/delay_infos/delay">15</span> days to give the advice.</span>
+                    </tal:itemsStillNotViewableToAdvisers>
+                    <tal:itemViewableButNoMoreAdviseableWithoutDelay condition="python: adviceType == 'not_given' and advice['item_viewable_by_advisers'] and not advice['delay_infos'] and not advice['advice_addable']">
+                        <span class="discreet"
+                           i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
+                                                                                                           i18n:translate=""
+                                                                                                           i18n:domain="plone"
+                                                                                                           tal:content="item_review_state"
+                                                                                                           tal:attributes="class string:label-state-${item_review_state}"></span>)</span>.
 
-                </tal:itemViewableButNoMoreAdviseableWithoutDelay>
-                <tal:itemViewableButNoMoreAdviseableWithDelay condition="python: adviceType == 'not_given' and advice['item_viewable_by_advisers'] and advice['delay_infos'] and not advice['delay_infos']['delay_status'] == 'timed_out' and not advice['advice_addable']">
-                    <span class="discreet"
-                       i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
-                                                                                                       i18n:translate=""
-                                                                                                       i18n:domain="plone"
-                                                                                                       tal:content="item_review_state"
-                                                                                                       tal:attributes="class string:label-state-${item_review_state}"></span>)
-                    </span>,
-                    <span class="discreet"
-                          i18n:translate="possibility_to_advice_stopped_on">the possiblity to give an advice was stopped on
-                         <span style="font-weight: bold;"
-                               i18n:name="advice_delay_stopped_on"
-                               tal:content="advice/delay_infos/delay_stopped_on_localized" />
-                    </span>,
-                    <span tal:attributes="class string:discreet advice_delay_${advice/delay_infos/delay_status_when_stopped};"
-                          i18n:translate="delay_left_when_stopped"
-                          tal:condition="python: advice['delay_infos']['delay_when_stopped'] > 0"> at this moment, there was
-                         <span i18n:name="delay_when_stopped"
-                               tal:content="advice/delay_infos/delay_when_stopped">
-                              10
-                         </span> day(s) left to give the advice.
-                    </span>
-                    <span tal:attributes="class string:discreet advice_delay_${advice/delay_infos/delay_status_when_stopped};"
-                          i18n:translate="delay_exceeded_when_stopped"
-                          tal:condition="python: advice['delay_infos']['delay_when_stopped'] <= 0 and advice['delay_started_on']"> at this moment, the delay exceeded
-                         <span i18n:name="delay_when_stopped"
-                               tal:content="python: -(advice['delay_infos']['delay_when_stopped'])">
-                              10
-                         </span><img src="logo.png" /> day(s).
-                    </span>
-                    <span i18n:translate=""
-                          tal:attributes="class string:discreet advice_delay_${advice/delay_infos/delay_status_when_stopped};"
-                          tal:condition="python: advice['delay_stopped_on'] and not advice['delay_started_on']">the advice was asked after this date.
-                    </span>
-                </tal:itemViewableButNoMoreAdviseableWithDelay>
+                    </tal:itemViewableButNoMoreAdviseableWithoutDelay>
+                    <tal:itemViewableButNoMoreAdviseableWithDelay condition="python: adviceType == 'not_given' and advice['item_viewable_by_advisers'] and advice['delay_infos'] and not advice['delay_infos']['delay_status'] == 'timed_out' and not advice['advice_addable']">
+                        <span class="discreet"
+                           i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
+                                                                                                           i18n:translate=""
+                                                                                                           i18n:domain="plone"
+                                                                                                           tal:content="item_review_state"
+                                                                                                           tal:attributes="class string:label-state-${item_review_state}"></span>)
+                        </span>,
+                        <span class="discreet"
+                              i18n:translate="possibility_to_advice_stopped_on">the possiblity to give an advice was stopped on
+                             <span style="font-weight: bold;"
+                                   i18n:name="advice_delay_stopped_on"
+                                   tal:content="advice/delay_infos/delay_stopped_on_localized" />
+                        </span>,
+                        <span tal:attributes="class string:discreet advice_delay_${advice/delay_infos/delay_status_when_stopped};"
+                              i18n:translate="delay_left_when_stopped"
+                              tal:condition="python: advice['delay_infos']['delay_when_stopped'] > 0"> at this moment, there was
+                             <span i18n:name="delay_when_stopped"
+                                   tal:content="advice/delay_infos/delay_when_stopped">
+                                  10
+                             </span> day(s) left to give the advice.
+                        </span>
+                        <span tal:attributes="class string:discreet advice_delay_${advice/delay_infos/delay_status_when_stopped};"
+                              i18n:translate="delay_exceeded_when_stopped"
+                              tal:condition="python: advice['delay_infos']['delay_when_stopped'] <= 0 and advice['delay_started_on']"> at this moment, the delay exceeded
+                             <span i18n:name="delay_when_stopped"
+                                   tal:content="python: -(advice['delay_infos']['delay_when_stopped'])">
+                                  10
+                             </span><img src="logo.png" /> day(s).
+                        </span>
+                        <span i18n:translate=""
+                              tal:attributes="class string:discreet advice_delay_${advice/delay_infos/delay_status_when_stopped};"
+                              tal:condition="python: advice['delay_stopped_on'] and not advice['delay_started_on']">the advice was asked after this date.
+                        </span>
+                    </tal:itemViewableButNoMoreAdviseableWithDelay>
+                </tal:complementaryInfoMessage>
+                <tal:customAdviceMessage condition="customAdviceMessage">
+                    <tal:block replace="customAdviceMessage" />
+                </tal:customAdviceMessage>
+
+                </tal:complementaryInfoMessageDefines>
+
                 </tal:notHiddenUnderRedaction>
                 </fieldset>
               </li>
