@@ -16,12 +16,14 @@
     <script src="fancytree/jquery.fancytree.min.js" type="text/javascript"></script>
 
     <script type="text/javascript">
+        var alreadyClickedOnTemplate = false;
         $(function(){
             $("#tree").fancytree({
                 click: function(event, data) {
                     // on click on an element, if not a folder
                     // redirect to given url
-                    if ( !data.node.isFolder() ) {
+                    if ( !data.node.isFolder() && !alreadyClickedOnTemplate) {
+                        alreadyClickedOnTemplate = true;
                         window.location=data.node.data.href;}
                 },
             });
