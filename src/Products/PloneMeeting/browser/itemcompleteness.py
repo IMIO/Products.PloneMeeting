@@ -71,6 +71,8 @@ class ChangeItemCompletenessView(BrowserView):
                             'time': DateTime(),
                             'comment': self.request.get('comment', '')}
             self.context.completeness_changes_history.append(history_data)
+            # update item
+            self.context.at_post_edit_script()
             self.request.response.redirect(self.context.absolute_url())
         return self.index()
 
