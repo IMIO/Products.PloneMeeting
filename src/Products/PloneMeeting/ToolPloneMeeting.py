@@ -2232,7 +2232,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''UI action that calls _updateAllAdvices.'''
         if not self.isManager(realManagers=True):
             raise Unauthorized
-        self._updateAllAdvices(True)
+        self._updateAllAdvices()
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
