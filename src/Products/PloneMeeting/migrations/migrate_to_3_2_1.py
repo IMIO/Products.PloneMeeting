@@ -261,7 +261,9 @@ class Migrate_To_3_2_1(Migrator):
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
-        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
+        # reinstall imio.actionspanel so actionspanel.css is taken into account
+        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
+                                 u'profile-imio.actionspanel:default'])
         # items in the configuration are now indexed, so clear and rebuild
         # by default, only portal_catalog is updated by refreshDatabase
         self.refreshDatabase()
