@@ -176,7 +176,7 @@
                     </td>
                   </tr>
                 </table>
-                <tal:complementaryInfoMessageDefines define="customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
+                <tal:complementaryInfoMessageDefines define="customMessageInfos python: meetingItem.adapted().getCustomAdviceMessageFor(advice);
                                                              displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
                                                              customAdviceMessage customMessageInfos/customAdviceMessage;">
                 <tal:complementaryInfoMessage condition="displayDefaultComplementaryMessage">
