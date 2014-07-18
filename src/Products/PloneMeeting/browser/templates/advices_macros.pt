@@ -260,7 +260,7 @@
                     </tal:itemViewableButNoMoreAdviseableWithDelay>
                 </tal:complementaryInfoMessage>
                 <tal:customAdviceMessage condition="customAdviceMessage">
-                    <tal:block replace="customAdviceMessage" />
+                    <tal:block replace="structure customAdviceMessage" />
                 </tal:customAdviceMessage>
 
                 </tal:complementaryInfoMessageDefines>
