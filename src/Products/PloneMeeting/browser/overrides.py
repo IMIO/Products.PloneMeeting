@@ -180,8 +180,7 @@ class BaseActionsPanelView(ActionsPanelView):
             toConfirm = cfg.getTransitionsToConfirm()
         return toConfirm
 
-    @memoize_contextless
-    def _redirectToUrl(self):
+    def _redirectToViewableUrl(self):
         """
           Return the url the user must be redirected to.
           This is relevant for Meeting and MeetingItem.
