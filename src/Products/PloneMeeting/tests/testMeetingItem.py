@@ -473,7 +473,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
         if with_annexes:
             # Add annexes
-            annex1 = self.addAnnex(item, annexType=self.annexFileType)
+            annex1 = self.addAnnex(item)
             annex2 = self.addAnnex(item, annexType='overhead-analysis')
         # Propose the item
         self.proposeItem(item)

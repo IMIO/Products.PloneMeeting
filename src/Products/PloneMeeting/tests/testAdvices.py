@@ -391,7 +391,7 @@ class testAdvices(PloneMeetingTestCase):
         # check that advices are still there
         self.failUnless(item.hasAdvices())
         # adding an annex or editing a field thru ajax does not invalidate the item
-        annex1 = self.addAnnex(item, annexType=self.annexFileType)
+        annex1 = self.addAnnex(item)
         self.failUnless(item.hasAdvices())
         item.setFieldFromAjax('decision', item.getDecision() + '<p>Another new line</p>')
         # validate the item
@@ -418,7 +418,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(item.getGivenAdvices())
         # adding an annex will invalidate advices
         self.failUnless(item.willInvalidateAdvices())
-        annex1 = self.addAnnex(item, annexType=self.annexFileType)
+        annex1 = self.addAnnex(item)
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
