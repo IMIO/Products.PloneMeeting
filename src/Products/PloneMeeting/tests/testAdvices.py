@@ -973,9 +973,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
 
         # now add 2 holidays, one passed date and one date that will change delay
-        # a date 2 days after the 'delay_started_on'
+        # a date next day after the 'delay_started_on'
         delay_started_on = item.adviceIndex['vendors']['delay_started_on']
-        holiday_changing_delay = '%s' % (delay_started_on + timedelta(2)).strftime('%Y/%m/%d')
+        holiday_changing_delay = '%s' % (delay_started_on + timedelta(1)).strftime('%Y/%m/%d')
         self.tool.setHolidays(({'date': '2012/05/06'},
                                {'date': holiday_changing_delay}, ))
         # the method getHolidaysAs_datetime is ram.cached, check that it is correct when changed
@@ -1002,13 +1002,20 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'].weekday() == 3)
 
         # test that the advice may still be added the last day
+        # to avoid that current day (aka last day) is a weekend or holiday or unavailable day
+        # or so, we just remove everything that increase/decrease delay
+        self.tool.setDelayUnavailableEndDays([])
+        self.tool.setHolidays([])
+        self.tool.setWorkingDays(('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun', ))
+        self.tool.setModificationDate(DateTime())
         # change 'delay_started_on' manually and check that last day, the advice is 'still_giveable'
-        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(9)
+        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(7)
         item.updateAdvices()
-        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] > datetime.now())
+        # we are the last day
+        self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'].day == datetime.now().day)
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
         # one day more and it is not giveable anymore...
-        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(10)
+        item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(8)
         item.updateAdvices()
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] < datetime.now())
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'timed_out')
