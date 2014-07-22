@@ -118,7 +118,7 @@ class testMeeting(PloneMeetingTestCase):
                           ['o3', 'o4', 'o5', 'o6', newItem.getId(), 'o2'])
         # now test while inserting items using a disabled category
         # remove newItem, change his category for a disabled one and present it again
-        self.backToState(newItem, 'proposed')
+        self.backToState(newItem, self.WF_STATE_NAME_MAPPINGS['validated'])
         self.assertTrue(not newItem.hasMeeting())
         newItem.setCategory('development')
         self.assertTrue(newItem.getCategory(), u'developement')
