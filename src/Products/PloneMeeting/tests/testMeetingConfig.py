@@ -231,7 +231,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
         self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates(('proposed', ))
+        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         item.setCopyGroups(('vendors_reviewers',))
         item.at_post_edit_script()
         self.changeUser('pmReviewer2')
@@ -250,9 +250,13 @@ class testMeetingConfig(PloneMeetingTestCase):
            a user ***really*** has to prevalidate.
            Items to prevalidate are items in state 'proposed' when wfAdaptation
            'pre_validation' is active, and for wich current user is really reviewer.'''
-        # activate the 'pre_validation' wfAdaptation
-        self.meetingConfig.setWorkflowAdaptations('pre_validation')
         logger = logging.getLogger('PloneMeeting: testing')
+        # activate the 'pre_validation' wfAdaptation if it exists in current profile...
+        if not 'pre_validation' in self.meetingConfig.listWorkflowAdaptations():
+            logger.info("Could not launch test 'test_pm_SearchItemsToPrevalidate' because"
+                        "wfAdaptation 'pre_validation' is not available for current profile.")
+            return
+        self.meetingConfig.setWorkflowAdaptations('pre_validation')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         # create an item
         self.changeUser('pmCreator1')
@@ -271,7 +275,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
         self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates(('proposed', ))
+        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         item.setCopyGroups(('vendors_reviewers',))
         item.at_post_edit_script()
         self.changeUser('pmReviewer2')

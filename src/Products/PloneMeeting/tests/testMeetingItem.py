@@ -463,13 +463,13 @@ class testMeetingItem(PloneMeetingTestCase):
             annex1 = self.addAnnex(item, annexType=self.annexFileType)
             annex2 = self.addAnnex(item, annexType='overhead-analysis')
         # Propose the item
-        self.do(item, item.wfConditions().transitionsForPresentingAnItem[0])
+        self.proposeItem(item)
         if with_advices:
             # add a normal and a delay-aware advice
             self.changeUser('admin')
             self.meetingConfig.setUseAdvices(True)
-            self.meetingConfig.setItemAdviceStates(['proposed', ])
-            self.meetingConfig.setItemAdviceEditStates(['proposed', 'validated', ])
+            self.meetingConfig.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+            self.meetingConfig.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ])
             self.meetingConfig.setItemAdviceViewStates(['presented', ])
             self.meetingConfig.setCustomAdvisers(
                 [{'row_id': 'unique_id_123',
@@ -875,7 +875,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                                        BUDGETIMPACTEDITORS_GROUP_SUFFIX))
         # we will let copyGroups view items when in state 'validated'
         self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates(('proposed', 'validated', ))
+        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
         self.meetingConfig.setItemBudgetInfosStates(('validated', ))
         # first make sure the permission associated with MeetingItem.budgetInfos.write_permission is the right one
         self.assertTrue(MeetingItem.schema['budgetInfos'].write_permission == WriteBudgetInfos)
