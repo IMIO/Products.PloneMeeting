@@ -253,7 +253,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         logger = logging.getLogger('PloneMeeting: testing')
         # activate the 'pre_validation' wfAdaptation if it exists in current profile...
         if not 'pre_validation' in self.meetingConfig.listWorkflowAdaptations():
-            logger.info("Could not launch test 'test_pm_SearchItemsToPrevalidate' because"
+            logger.info("Could not launch test 'test_pm_SearchItemsToPrevalidate' because "
                         "wfAdaptation 'pre_validation' is not available for current profile.")
             return
         self.meetingConfig.setWorkflowAdaptations('pre_validation')

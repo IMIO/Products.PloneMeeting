@@ -442,8 +442,6 @@ class testWorkflows(PloneMeetingTestCase):
         MeetingItemWorkflowConditions.useHardcodedTransitionsForPresentingAnItem = oldValue1
         MeetingItemWorkflowConditions.transitionsForPresentingAnItem = oldValue2
 
-
-
     def test_pm_DeactivateMeetingGroup(self):
         '''Deactivating a MeetingGroup will remove every Plone groups from
            every MeetingConfig.selectableCopyGroups field.'''
