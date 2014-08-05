@@ -26,6 +26,7 @@ import logging
 
 from DateTime.DateTime import DateTime
 
+from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -270,20 +271,20 @@ class testWFAdaptations(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEquals(item.queryState(), 'itemcreated')
         # we have transitions
-        self.failUnless(self.hasPermission('Delete objects', item))
+        self.failUnless(self.hasPermission(DeleteObjects, item))
         self.do(item, 'propose')
-        self.failIf(self.hasPermission('Delete objects', item))
+        self.failIf(self.hasPermission(DeleteObjects, item))
         self.changeUser('pmReviewer2')
         # the Reviewer can delete
-        self.failUnless(self.hasPermission('Delete objects', item))
+        self.failUnless(self.hasPermission(DeleteObjects, item))
         self.do(item, 'validate')
-        self.failIf(self.hasPermission('Delete objects', item))
+        self.failIf(self.hasPermission(DeleteObjects, item))
         self.changeUser('pmManager')
         # the MeetingManager can delete
-        self.failUnless(self.hasPermission('Delete objects', item))
+        self.failUnless(self.hasPermission(DeleteObjects, item))
         # God can delete too...
         self.changeUser('admin')
-        self.failUnless(self.hasPermission('Delete objects', item))
+        self.failUnless(self.hasPermission(DeleteObjects, item))
 
     def _only_creator_may_delete_active(self):
         '''Tests while 'only_creator_may_delete' wfAdaptation is active.
@@ -296,9 +297,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # the item is when it is 'itemcreated'
         for state in wf.states.values():
             if state.id == 'itemcreated':
-                self.assertEquals(state.permission_roles['Delete objects'], ('MeetingMember', 'Manager'))
+                self.assertEquals(state.permission_roles[DeleteObjects], ('MeetingMember', 'Manager'))
             else:
-                self.assertEquals(state.permission_roles['Delete objects'], ('Manager', ))
+                self.assertEquals(state.permission_roles[DeleteObjects], ('Manager', ))
 
     def test_pm_WFA_no_global_observation(self):
         '''Test the workflowAdaptation 'no_global_observation'.'''
@@ -698,7 +699,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
             # 'Delete objects' is only given to ['Manager', 'MeetingManager']
-            if permission == 'Delete objects':
+            if permission == DeleteObjects:
                 cloned_state_permission_with_meetingmanager = ['Manager', 'MeetingManager']
             self.assertEquals(cloned_state_permission_with_meetingmanager,
                               new_state_permissions[permission])
@@ -725,12 +726,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # we define the custom permissions and we run the wfAdaptation again...
         adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {'PloneMeeting: Write item observations':
                                                                     ['Manager', 'MeetingManager', 'MeetingMember', ]}
-        # clean wf, remove added state and transitions then apply wfAdaptations again
-        for transition in itemWF.states['returned_to_proposing_group'].transitions:
-            del itemWF.transitions[transition]
-        del itemWF.transitions['return_to_proposing_group']
-        del itemWF.states['returned_to_proposing_group']
-        performWorkflowAdaptations(self.portal, self.meetingConfig, self.logger)
+        self._reApplyWFAdaptationReturnToProposingGroup(itemWF)
         # now our custom permission must be taken into account but other permissions should be the same than
         # the ones defined in the state to clone permissions of
         cloned_state_permissions = itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles
@@ -747,10 +743,27 @@ class testWFAdaptations(PloneMeetingTestCase):
                 cloned_state_permission_with_meetingmanager = \
                     adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[CUSTOM_PERMISSION]
             # 'Delete objects' is only given to ['Manager', 'MeetingManager']
-            if permission == 'Delete objects':
+            # if it was not defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+            if permission == DeleteObjects:
                 cloned_state_permission_with_meetingmanager = ['Manager', 'MeetingManager']
             self.assertEquals(tuple(cloned_state_permission_with_meetingmanager),
                               tuple(new_state_permissions[permission]))
+        # if 'Delete objects' was defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+        # the defined permissions are kept.  For example, only give 'Delete objects' to 'Manager'
+        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[DeleteObjects] = ['Manager']
+        self._reApplyWFAdaptationReturnToProposingGroup(itemWF)
+        new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
+        self.assertEquals(('Manager', ),
+                          tuple(new_state_permissions[DeleteObjects]))
+
+    def _reApplyWFAdaptationReturnToProposingGroup(self, itemWF):
+        '''Re-apply the 'return_to_proposing_group' WF adaptation,
+           remove added state and transitions then apply wfAdaptations again.'''
+        for transition in itemWF.states['returned_to_proposing_group'].transitions:
+            del itemWF.transitions[transition]
+        del itemWF.transitions['return_to_proposing_group']
+        del itemWF.states['returned_to_proposing_group']
+        performWorkflowAdaptations(self.portal, self.meetingConfig, self.logger)
 
     def _return_to_proposing_group_active_wf_functionality(self):
         '''Tests the workflow functionality of using the 'return_to_proposing_group' wfAdaptation.'''
