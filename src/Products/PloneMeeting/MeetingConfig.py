@@ -1368,7 +1368,7 @@ schema = Schema((
         widget=BooleanField._properties['widget'](
             description="HideItemHistoryCommentsToUsersOutsideProposingGroup",
             description_msgid="hide_item_history_comments_to_users_outside_proposing_group_descr",
-            label='Hideiemhistorycommentstousersoutsideproposinggroup',
+            label='Hideitemhistorycommentstousersoutsideproposinggroup',
             label_msgid='PloneMeeting_label_hideItemHistoryCommentsToUsersOutsideProposingGroup',
             i18n_domain='PloneMeeting',
         ),
@@ -3851,3 +3851,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+
