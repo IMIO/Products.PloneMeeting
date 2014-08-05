@@ -40,7 +40,6 @@ from Products.CMFCore.utils import getToolByName
 from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
 from Products.PloneMeeting import PloneMeetingError
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
     IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, IPodTemplateCustom, \
@@ -215,20 +214,6 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         return value is None
     else:
         return not value
-
-
-def kupuEquals(fieldContent, valueFromDomParsing):
-    '''Is the content of Kupu field p_fieldContent equal to
-       p_valueFromDomString? The latter is not a str but unicode;
-       differences like <br/> and <br />  and some whitespace are
-       ignored.'''
-    v1 = fieldContent.strip().replace('<br />', '<br/>')
-    v2 = valueFromDomParsing.encode('utf-8')
-    if (v1 == '<p></p>') and (v2 == '<p/>'):
-        res = True
-    else:
-        res = (v1 == v2)
-    return res
 
 
 def checkPermission(permission, obj):
