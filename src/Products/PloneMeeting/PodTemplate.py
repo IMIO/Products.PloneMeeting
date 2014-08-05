@@ -444,7 +444,7 @@ def freezePodDocumentsIfRelevant(obj, transition):
     '''p_transitions just occurred on p_obj. Is there any document that needs
        to be generated in the database from a POD template?'''
     tool = getToolByName(obj, 'portal_plonemeeting')
-    membershipTool = getToolByName(obj, 'portal_plonemeeting')
+    membershipTool = getToolByName(obj, 'portal_membership')
     meetingConfig = tool.getMeetingConfig(obj)
     user = membershipTool.getAuthenticatedMember()
     podTemplatesFolder = getattr(meetingConfig, TOOL_FOLDER_POD_TEMPLATES)
