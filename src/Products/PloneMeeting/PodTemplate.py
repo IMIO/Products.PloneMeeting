@@ -443,12 +443,13 @@ CANT_WRITE_DOC = 'User "%s" was not authorized to create file "%s" ' \
 def freezePodDocumentsIfRelevant(obj, transition):
     '''p_transitions just occurred on p_obj. Is there any document that needs
        to be generated in the database from a POD template?'''
-    meetingConfig = obj.portal_plonemeeting.getMeetingConfig(obj)
-    user = obj.portal_membership.getAuthenticatedMember()
+    tool = getToolByName(obj, 'portal_plonemeeting')
+    membershipTool = getToolByName(obj, 'portal_plonemeeting')
+    meetingConfig = tool.getMeetingConfig(obj)
+    user = membershipTool.getAuthenticatedMember()
     podTemplatesFolder = getattr(meetingConfig, TOOL_FOLDER_POD_TEMPLATES)
     for podTemplate in podTemplatesFolder.objectValues():
-        if (transition == podTemplate.getFreezeEvent()) and \
-           podTemplate.isApplicable(obj):
+        if (transition == podTemplate.getFreezeEvent()) and podTemplate.isApplicable(obj):
             # I must dump a document in the DB based on this template and
             # object.
             fileId = podTemplate.getDocumentId(obj)
@@ -470,11 +471,10 @@ def freezePodDocumentsIfRelevant(obj, transition):
                 except PloneMeetingError, pme:
                     # Probably some problem while contacting OpenOffice.
                     logger.warn(str(pme))
-                    portal = obj.portal_url.getPortalObject()
+                    portal = getToolByName(obj, 'portal_url').getPortalObject()
                     sendMail([portal.getProperty('email_from_address')],
                              obj, "documentGenerationFailed")
                 except Unauthorized:
                     logger.warn(CANT_WRITE_DOC % (
-                        user.id, fileId, obj.absolute_url(), podTemplate.id))
+                        user.getId(), fileId, obj.absolute_url(), podTemplate.getId()))
 ##/code-section module-footer
-
