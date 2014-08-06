@@ -173,18 +173,6 @@ def getCurrentMeetingObject(context):
     return obj
 
 
-def getOsTempFolder():
-    tmp = '/tmp'
-    if os.path.exists(tmp) and os.path.isdir(tmp):
-        res = tmp
-    elif 'TMP' in os.environ:
-        res = os.environ['TMP']
-    elif 'TEMP' in os.environ:
-        res = os.environ['TEMP']
-    else:
-        raise "Sorry, I can't find a temp folder on your machine."
-    return res
-
 # How to know if a Kupu field is "empty" ---------------------------------------
 KUPU_EMPTY_VALUES = ('<p></p>', '<p> </p>', '<p><br/></p>', '<p><br /></p>',
                      '<p><br /><br /></p>', '<p> </p>', '<p><b> </b></p>',

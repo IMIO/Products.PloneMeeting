@@ -27,6 +27,7 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
+import tempfile
 import time
 import unicodedata
 from Acquisition import aq_base
@@ -39,7 +40,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.MimetypesRegistry.common import MimeTypeException
 from collective.documentviewer.async import asyncInstalled
 from Products.PloneMeeting.interfaces import IAnnexable
-from Products.PloneMeeting.utils import getCustomAdapter, getOsTempFolder, sendMailIfRelevant
+from Products.PloneMeeting.utils import getCustomAdapter, sendMailIfRelevant
 
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -327,7 +328,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         '''Dumps me on disk, in a temp folder, with some unique name
            including time.time(). This method returns the absolute filename
            of the dumped file.'''
-        tempFolder = getOsTempFolder()
+        tempFolder = tempfile.gettempdir()
         fileName = unicodedata.normalize(
             'NFKD', self.getFilename().decode('utf-8'))
         fileName = fileName.encode("ascii", "ignore").replace(' ', '')

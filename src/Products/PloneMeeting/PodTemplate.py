@@ -24,6 +24,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import os
+import tempfile
 import time
 import appy.pod
 from appy.pod.renderer import Renderer
@@ -31,8 +32,7 @@ from appy.shared.utils import normalizeString
 from StringIO import StringIO
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.interfaces import IAnnexable
-from Products.PloneMeeting.utils import clonePermissions, getCustomAdapter, \
-    getOsTempFolder, sendMail, getFieldContent
+from Products.PloneMeeting.utils import clonePermissions, getCustomAdapter, sendMail, getFieldContent
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.PageTemplates.Expressions import getEngine
 from Products.CMFCore.utils import getToolByName
@@ -277,7 +277,7 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
             itemUids = itemUids.split(',')
         # Temporary file where to generate the result
         tempFileName = '%s/%s_%f.%s' % (
-            getOsTempFolder(), obj.UID(), time.time(), self.getPodFormat())
+            tempfile.gettempdir(), obj.UID(), time.time(), self.getPodFormat())
         # Define parameters to pass to the appy.pod renderer
         currentUser = self.portal_membership.getAuthenticatedMember()
         podContext = {'self': obj, 'adap': obj.adapted(),
