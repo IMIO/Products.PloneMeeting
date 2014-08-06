@@ -1192,49 +1192,6 @@ def prepareSearchValue(value):
 
 
 # ------------------------------------------------------------------------------
-class ZCTextIndexInfo:
-    '''Silly class used for storing information about a ZCTextIndex.'''
-    lexicon_id = "plone_lexicon"
-    index_type = 'Okapi BM25 Rank'
-
-
-def updateIndexes(portal, indexInfo, logger, metadataInfo=()):
-    '''This method creates or updates, in a p_portal, definitions of indexes
-       in its portal_catalog, based on index-related information given in
-       p_indexInfo. p_indexInfo is a dictionary of the form
-       {s_indexName:s_indexType}. Here are some examples of index types:
-       "FieldIndex", "ZCTextIndex", "DateIndex".
-       p_metadataInfo is a list of metadata to create from given p_indexInfo.'''
-    catalog = portal.portal_catalog
-    zopeCatalog = catalog._catalog
-    for indexName, indexType in indexInfo.iteritems():
-        # If this index already exists but with a different type, remove it.
-        if (indexName in zopeCatalog.indexes):
-            oldType = zopeCatalog.indexes[indexName].__class__.__name__
-            if oldType != indexType:
-                catalog.delIndex(indexName)
-                logger.info('Existing index "%s" of type "%s" was removed:'
-                            ' we need to recreate it with type "%s".' %
-                            (indexName, oldType, indexType))
-        needToReindexIndex = False
-        if indexName not in zopeCatalog.indexes:
-            # We need to create this index
-            needToReindexIndex = True
-            if indexType != 'ZCTextIndex':
-                catalog.addIndex(indexName, indexType)
-            else:
-                catalog.addIndex(indexName, indexType, extra=ZCTextIndexInfo)
-            logger.info('Created index "%s" of type "%s"...' % (indexName, indexType))
-        if indexName in metadataInfo and not indexName in catalog.schema():
-            needToReindexIndex = True
-            catalog.addColumn(indexName)
-            logger.info('Added metadata "%s"...' % indexName)
-        if needToReindexIndex:
-            # Indexing database content based on this index.
-            catalog.reindexIndex(indexName, portal.REQUEST)
-
-
-# ------------------------------------------------------------------------------
 tokens = (('<li', -1), ('</li>', 5))
 crlf = ('\r', '\n')
 

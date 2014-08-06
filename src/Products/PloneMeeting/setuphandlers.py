@@ -31,7 +31,8 @@ from Products.cron4plone.browser.configlets.cron_configuration import ICronConfi
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
-from Products.PloneMeeting.utils import updateIndexes
+from imio.helpers.catalog import addOrUpdateIndexes
+from imio.helpers.catalog import addOrUpdateColumns
 
 folderViews = ('meetingfolder_redirect_view', 'folder_contents', )
 pmGroupProperties = ('meetingRole', 'meetingGroupId')
@@ -39,31 +40,31 @@ noSearchTypes = ('Folder',)
 # Indexes used by PloneMeeting
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''
-indexInfo = {
-             # MeetingItem-related indexes
-             'getTitle2': 'ZCTextIndex',
-             'getCategory': 'FieldIndex',
-             'getItemIsSigned': 'FieldIndex',
-             'getRawClassifier': 'FieldIndex',
-             'getProposingGroup': 'FieldIndex',
-             'getAssociatedGroups': 'KeywordIndex',
-             'getPreferredMeeting': 'FieldIndex',
-             'getDeliberation': 'ZCTextIndex',
-             'getCopyGroups': 'KeywordIndex',
-             'indexAdvisers': 'KeywordIndex',
-             'previous_review_state': 'FieldIndex',
-             # Meeting-related indexes
-             'getDate': 'DateIndex',
-             # MeetingFile-related indexes
-             'indexExtractedText': 'ZCTextIndex',
-             # MeetingUser-related indexes
-             'getConfigId': 'FieldIndex',
-             'indexUsages': 'KeywordIndex',
-             'isDefinedInTool': 'BooleanIndex',
-             'templateUsingGroups': 'KeywordIndex',
-             'getCompleteness': 'KeywordIndex', }
+indexInfos = {
+              # MeetingItem-related indexes
+              'getTitle2': ('ZCTextIndex', {}),
+              'getCategory': ('FieldIndex', {}),
+              'getItemIsSigned': ('FieldIndex', {}),
+              'getRawClassifier': ('FieldIndex', {}),
+              'getProposingGroup': ('FieldIndex', {}),
+              'getAssociatedGroups': ('KeywordIndex', {}),
+              'getPreferredMeeting': ('FieldIndex', {}),
+              'getDeliberation': ('ZCTextIndex', {}),
+              'getCopyGroups': ('KeywordIndex', {}),
+              'indexAdvisers': ('KeywordIndex', {}),
+              'previous_review_state': ('FieldIndex', {}),
+              'isDefinedInTool': ('BooleanIndex', {}),
+              'templateUsingGroups': ('KeywordIndex', {}),
+              'getCompleteness': ('KeywordIndex', {}),
+              # Meeting-related indexes
+              'getDate': ('DateIndex', {}),
+              # MeetingFile-related indexes
+              'indexExtractedText': ('ZCTextIndex', {}),
+              # MeetingUser-related indexes
+              'getConfigId': ('FieldIndex', {}),
+              'indexUsages': ('KeywordIndex', {}), }
 # Metadata to create in portal_catalog, it has to correspond to an index in indexInfo
-metadataInfo = ('getTitle2', 'getDate', 'getProposingGroup', 'getPreferredMeeting')
+columnInfos = ('getTitle2', 'getDate', 'getProposingGroup', 'getPreferredMeeting', 'getAssembly')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # Index "indexUsages" does not use Archetype-generated getter "getUsages"
 # because in this case, both fields MeetingUser.usages and MeetingItem.usages
@@ -150,7 +151,8 @@ def postInstall(context):
     site = context.getSite()
 
     # Create or update indexes
-    updateIndexes(site, indexInfo, logger, metadataInfo)
+    addOrUpdateIndexes(site, indexInfos)
+    addOrUpdateColumns(site, columnInfos)
 
     # We add meetingfolder_redirect_view and folder_contents to the list of
     # available views for type "Folder".
