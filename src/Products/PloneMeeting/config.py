@@ -233,7 +233,7 @@ RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposi
                                       'backTo_itempublished_from_returned_to_proposing_group':
                                       ['published', ],
                                       'backTo_itemfrozen_from_returned_to_proposing_group':
-                                      ['frozen', 'decided', ],
+                                      ['frozen', 'decided', 'decisions_published', ],
                                       'NO_MORE_RETURNABLE_STATES': ['closed', 'archived', ]
                                       }
 
