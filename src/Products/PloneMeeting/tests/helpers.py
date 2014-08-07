@@ -194,8 +194,6 @@ class PloneMeetingTestingHelpers:
         if state in BACK_TO_WF_PATH:
             transitions = BACK_TO_WF_PATH[state]
             useDefinedWfPath = True
-        else:
-            transitions = self.transitions(itemOrMeeting)
         # check if a mapping exist for state name
         if state in self.WF_STATE_NAME_MAPPINGS:
             state = self.WF_STATE_NAME_MAPPINGS[state]
