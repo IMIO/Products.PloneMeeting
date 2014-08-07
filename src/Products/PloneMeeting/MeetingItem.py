@@ -47,6 +47,7 @@ from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalConten
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions, \
     IMeetingItemWorkflowActions

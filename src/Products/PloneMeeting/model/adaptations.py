@@ -33,6 +33,21 @@ RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
 RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}  # {'PloneMeeting: Write item observations': ['Manager', 'MeetingManager', 'MeetingMember', ]}
 # states of the meeting from wich an item can be 'returned_to_proposing_group'
 RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
+# mapping definintions regarding the 'return_to_proposing_group' wfAdaptation
+# this is used in MeetingItem.mayBackToMeeting and may vary upon used workflow
+# the key is the transition triggerable on the item and the values are states
+# of the linked meeting in wich this transition can be triggered
+# the last key 'no_more_returnable_state' specify states in wich the item is no more
+# returnable to the meeting...
+# these mappings are easily overridable by a subproduct...
+RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposing_group':
+                                      ['created', ],
+                                      'backTo_itempublished_from_returned_to_proposing_group':
+                                      ['published', ],
+                                      'backTo_itemfrozen_from_returned_to_proposing_group':
+                                      ['frozen', 'decided', 'decisions_published', ],
+                                      'NO_MORE_RETURNABLE_STATES': ['closed', 'archived', ]
+                                      }
 
 viewPermissions = ('View', 'Access contents information')
 WF_APPLIED = 'Workflow change "%s" applied for meetingConfig "%s".'
