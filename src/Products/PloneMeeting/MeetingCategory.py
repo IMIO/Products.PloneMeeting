@@ -134,19 +134,20 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
             parent = parent.getParentNode()
         return parent
 
+    def isClassifier(self):
+        '''Return True if current category is a classifier,
+           False if it is a normal category.'''
+        return self.getParentNode().getId() == 'classifiers'
+
     def getOrder(self, onlySelectable=True):
         '''At what position am I among all the active categories of my
            folder in the meeting config?  If p_onlySelectable is passed to
            MeetingConfig.getCategories, see doc string in MeetingConfig.'''
         try:
-            folderId = self.getParentNode().getId()
-            classifiers = False
-            if folderId == 'classifiers':
-                classifiers = True
             # to avoid problems with categories that are disabled or
             # restricted to some groups, we pass onlySelectable=False
             i = self.getMeetingConfig().getCategories(
-                classifiers=classifiers, onlySelectable=onlySelectable).index(self)
+                classifiers=self.isClassifier(), onlySelectable=onlySelectable).index(self)
         except ValueError:
             i = None
         return i
@@ -262,7 +263,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
                 continue
             otherMCId = otherMCObj.getId()
             otherMCTitle = otherMCObj.Title()
-            for category in otherMCObj.getCategories():
+            for category in otherMCObj.getCategories(classifiers=self.isClassifier()):
                 res.append(('%s.%s' % (otherMCId, category.getId()),
                             '%s -> %s' % (otherMCTitle, category.Title())))
         return DisplayList(tuple(res))
