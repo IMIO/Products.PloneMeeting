@@ -134,9 +134,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         for item in meeting.getItems():
             item.setDecision('<p>Dummy decision</p>')
         # freeze the meeting to be able to add late items
-        if 'publish' in self.transitions(meeting):
-            self.do(meeting, 'publish')
-        self.do(meeting, 'freeze')
+        self.freezeMeeting(meeting)
         # create 4 items that will be late
         late1 = self.create('MeetingItem')
         late1.setPreferredMeeting(meeting.UID())
@@ -193,11 +191,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view = item.restrictedTraverse('@@change_item_order')
         self.assertTrue(meeting.wfConditions().mayChangeItemsOrder())
         view('down')
-        if 'publish' in self.transitions(meeting):
-            self.do(meeting, 'publish')
-            self.assertTrue(meeting.wfConditions().mayChangeItemsOrder())
-            view('down')
-        self.do(meeting, 'freeze')
+        self.freezeMeeting(meeting)
         self.assertTrue(meeting.wfConditions().mayChangeItemsOrder())
         view('down')
         # add decision to items so meeting can be decided
