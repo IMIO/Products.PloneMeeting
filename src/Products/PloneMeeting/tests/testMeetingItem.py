@@ -421,9 +421,7 @@ class testMeetingItem(PloneMeetingTestCase):
             newUID = annotations[annotationKey]
 
     def test_pm_SendItemToOtherMCActions(self):
-        """
-          Test how actions are managed in portal_actions when sendItemToOtherMC functionnality is activated.
-        """
+        '''Test how actions are managed in portal_actions when sendItemToOtherMC functionnality is activated.'''
         # check MeetingConfig behaviour :
         # while activating a meetingConfig to send items to, an action is created.
         # While deactivated, theses actions disappear
@@ -450,13 +448,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
 
     def _setupSendItemToOtherMC(self, with_annexes=False, with_advices=False):
-        """
+        '''
           This will do the setup of testing the send item to other MC functionnality.
           This will create an item, present it in a meeting and send it to another meeting.
           If p_with_annexes is True, it will create 2 annexes and 2 decision annexes.
           If p_with_advices is True, it will create 2 advices, one normal and one delay-aware.
           It returns a dict with several informations.
-        """
+        '''
         # Activate the functionnality
         self.changeUser('admin')
         self.meetingConfig.setUseGroupsAsCategories(False)
@@ -804,7 +802,7 @@ class testMeetingItem(PloneMeetingTestCase):
         i5.at_post_edit_script()
         self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
         # even if removed from the config, existing copyGroups are not changed
-        self.tool.vendors.setAsCopyGroupOn("")
+        self.tool.vendors.setAsCopyGroupOn('')
         i5.at_post_edit_script()
         self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
         # check that local_roles are correct
@@ -1221,11 +1219,11 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
 
     def test_pm_ManageItemAssemblyAndSignatures(self):
-        """
+        '''
           This tests the form that manage itemAssembly and that can apply it on several items.
           The behaviour of itemAssembly and itemSignatures is the same that is why we test it
           together...
-        """
+        '''
         self.changeUser('admin')
         # make sure 'itemAssembly' and 'itemSignatures' are not in usedItemAttributes
         usedItemAttributes = list(self.meetingConfig.getUsedItemAttributes())
@@ -1394,13 +1392,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, formSignatures.update)
 
     def test_pm_GetItemNumber(self):
-        """Test the MeetingItem.getItemNumber method.
-           This only apply when the item is in a meeting.
-           Check docstring of MeetingItem.getItemNumber.
-           MeetingItem.getItemNumber(relativeTo='meetingConfig') use a memoized
-           call, so we need to cleanMemoize before calling it if the meeting firstItemNumber changed,
-           so if the meeting as been closed.
-        """
+        '''
+          Test the MeetingItem.getItemNumber method.
+          This only apply when the item is in a meeting.
+          Check docstring of MeetingItem.getItemNumber.
+          MeetingItem.getItemNumber(relativeTo='meetingConfig') use a memoized
+          call, so we need to cleanMemoize before calling it if the meeting firstItemNumber changed,
+          so if the meeting as been closed.
+        '''
         self.changeUser('pmManager')
         # create an item
         item = self.create('MeetingItem')
@@ -1501,11 +1500,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
 
     def test_pm_ListMeetingsAcceptingItems(self):
-        """
+        '''
           This is the vocabulary for the field "preferredMeeting".
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
-        """
+        '''
         self.changeUser('pmManager')
         # create some meetings
         m1 = self._createMeetingWithItems(meetingDate=DateTime('2013/05/13'))
@@ -1544,11 +1543,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(m2UID not in item.listMeetingsAcceptingItems().keys())
 
     def test_pm_ListCopyGroups(self):
-        """
+        '''
           This is the vocabulary for the field "copyGroups".
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
-        """
+        '''
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -1566,11 +1565,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item.listCopyGroups().keys(), ['vendors_reviewers', ])
 
     def test_pm_ListAssociatedGroups(self):
-        """
+        '''
           This is the vocabulary for the field "associatedGroups".
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
-        """
+        '''
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -1590,11 +1589,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item.listAssociatedGroups().keys(), ['vendors', ])
 
     def test_pm_ListOptionalAdvisersVocabulary(self):
-        """
+        '''
           This is the vocabulary for the field "optionalAdvisers".
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
-        """
+        '''
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -1614,10 +1613,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item.listOptionalAdvisers().keys(), ['vendors', ])
 
     def test_pm_ListOptionalAdvisersDelayAwareAdvisers(self):
-        """
+        '''
           Test how the optionalAdvisers vocabulary behaves while
           managing delay-aware advisers.
-        """
+        '''
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -1685,7 +1684,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            'vendors'])
 
     def test_pm_Validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
-        """
+        '''
           This test the 'optionalAdvisers' field validate method.
           Make sure we can not select more than one optional advice concerning
           the same group.  In case we use 'delay-aware' advisers, we could select
@@ -1693,7 +1692,7 @@ class testMeetingItem(PloneMeetingTestCase):
           We could also select 2 'delay-aware' advisers for the same group as we can
           define several delays for the same group.
           Check also
-        """
+        '''
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -1716,10 +1715,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
 
     def test_pm_Validate_optionalAdvisersCanNotUnselectAlreadyGivenAdvice(self):
-        """
+        '''
           This test the 'optionalAdvisers' field validate method.
           Make sure that if we unselect an adviser, it is not an already given advice.
-        """
+        '''
         # make advice givable when item is 'itemcreated'
         self.meetingConfig.setItemAdviceStates(('itemcreated', ))
         self.meetingConfig.setItemAdviceEditStates(('itemcreated', ))
@@ -1802,9 +1801,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item.validate_optionalAdvisers(()))
 
     def test_pm_Validate_category(self):
-        """
-          MeetingItem.category is mandatory if categories are used.
-        """
+        '''MeetingItem.category is mandatory if categories are used.'''
         # make sure we use categories
         self.setMeetingConfig(self.meetingConfig2.getId())
         self.assertTrue(not self.meetingConfig2.getUseGroupsAsCategories())
@@ -1825,9 +1822,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(itemInTool.validate_category(''))
 
     def test_pm_Validate_proposingGroup(self):
-        """
-          MeetingItem.proposingGroup is mandatory excepted for item templates.
-        """
+        '''MeetingItem.proposingGroup is mandatory excepted for item templates.'''
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         proposing_group_required_msg = translate('proposing_group_required',
@@ -1845,6 +1840,17 @@ class testMeetingItem(PloneMeetingTestCase):
         itemTemplate = self.meetingConfig.getItems(recurring=False)[0]
         self.failIf(itemTemplate.validate_proposingGroup(''))
         self.failIf(itemTemplate.validate_proposingGroup('developers'))
+
+    def test_pm_GetDeliberation(self):
+        '''Test different behaviours of getDeliberation.  getDeliberation concatenate motivation and decision.'''
+        # item.getDeliberation always works, no matter motivation/decision is used, empty, ...
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setMotivation('<p>My motivation</p>')
+        item.setDecision('<p>My decision</p>')
+        self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
+        self.assertTrue(item.getDeliberation(separate=True) == item.getMotivation() +
+                        '<p>&nbsp;</p>' + item.getDecision())
 
 
 def test_suite():

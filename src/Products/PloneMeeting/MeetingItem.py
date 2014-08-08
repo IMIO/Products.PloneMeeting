@@ -57,7 +57,7 @@ from Products.PloneMeeting.utils import \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
-    forceHTMLContentTypeForEmptyRichFields, workday, networkdays
+    forceHTMLContentTypeForEmptyRichFields, workday, networkdays, KUPU_EMPTY_VALUES
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -1087,9 +1087,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     getRawMotivation = getMotivation
 
     security.declarePublic('getDeliberation')
-    def getDeliberation(self, keepWithNext=True, **kwargs):
+    def getDeliberation(self, keepWithNext=True, separate=False, **kwargs):
         '''Returns the entire deliberation depending on fields used.'''
-        return self.getMotivation(**kwargs) + self.getDecision(keepWithNext=keepWithNext, **kwargs)
+        motivation = self.getMotivation(**kwargs).strip()
+        decision = self.getDecision(keepWithNext=keepWithNext, **kwargs).strip()
+        # do add a separation blank line between motivation and decision
+        # if p_separate is True and if motivation is used...
+        if separate and motivation:
+            hasSeparation = False
+            # check if there is not already an empty line at the bottom of 'motivation'
+            for value in KUPU_EMPTY_VALUES:
+                if motivation.endswith(value) or motivation == value:
+                    hasSeparation = True
+                    break
+            if not hasSeparation:
+                motivation = motivation + '<p>&nbsp;</p>'
+        return motivation + decision
 
     security.declarePrivate('validate_category')
     def validate_category(self, value):
