@@ -353,6 +353,18 @@
               <td>
                 <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
+                <tal:additionalInformations define="context python: obj">
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('usingGroups');"
+                          tal:condition="obj/getUsingGroups">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('categoryMappingsWhenCloningToOtherMC');"
+                          tal:condition="obj/getCategoryMappingsWhenCloningToOtherMC">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                </tal:additionalInformations>
               </td>
               <td i18n:domain="plone">
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
@@ -421,6 +433,18 @@
               <td tal:define="descr obj/Description">
                 <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
                 <div class="discreet" tal:condition="descr" tal:content="descr"></div>
+                <tal:additionalInformations define="context python: obj">
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('usingGroups');"
+                          tal:condition="obj/getUsingGroups">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('categoryMappingsWhenCloningToOtherMC');"
+                          tal:condition="obj/getCategoryMappingsWhenCloningToOtherMC">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                </tal:additionalInformations>
               </td>
               <td tal:content="obj/getCategoryId"></td>
               <td i18n:domain="plone">
@@ -1033,7 +1057,23 @@
               <td>
                 <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
-
+                <tal:additionalInformations define="context python: obj">
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('podCondition');"
+                          tal:condition="obj/getPodCondition">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('freezeEvent');"
+                          tal:condition="obj/getFreezeEvent">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('mailingLists');"
+                          tal:condition="obj/getMailingLists">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                </tal:additionalInformations>
               </td>
               <td i18n:domain="plone">
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
