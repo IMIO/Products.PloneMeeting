@@ -125,9 +125,32 @@
                         repeat="obj python: context.objectValues('MeetingGroup')">
               <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active'"
                   tal:attributes="class python: not isActive and 'state-inactive' or ''">
-                <td tal:define="descr obj/Description">
+                <td tal:define="descr obj/Description;
+                                itemAdviceStates obj/getItemAdviceStates;">
                   <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
                   <div class="discreet" tal:condition="descr" tal:content="descr"></div>
+                  <tal:additionalInformations define="context python: obj">
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('itemAdviceStates');"
+                          tal:condition="obj/getItemAdviceStates">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('itemAdviceEditStates');"
+                          tal:condition="obj/getItemAdviceEditStates">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('itemAdviceViewStates');"
+                          tal:condition="obj/getItemAdviceViewStates">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                    <span class="discreet"
+                          tal:define="field python:obj.getField('asCopyGroupOn');"
+                          tal:condition="obj/getAsCopyGroupOn">
+                      <metal:field use-macro="context/widgets/field/macros/view" />
+                    </span>
+                  </tal:additionalInformations>
                 </td>
                 <td tal:content="obj/getAcronym"></td>
                 <td i18n:domain="plone">

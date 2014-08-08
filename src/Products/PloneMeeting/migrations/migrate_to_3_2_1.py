@@ -242,31 +242,41 @@ class Migrate_To_3_2_1(Migrator):
                 cfg.setXhtmlTransformTypes(xhtmlTransformTypes)
         logger.info('Done.')
 
+    def _cleanMeetingGroupsAsCopyGroupOn(self):
+        '''Now that MeetingGroup.asCopyGroupOn is displayed on the list of groups on the
+           ToolPloneMeeting view, empty it so it is not displayed uselessly...'''
+        logger.info('Cleaning every MeetingGroup.asCopyGroupOn...')
+        for mGroup in self.tool.getMeetingGroups(onlyActive=False):
+            if mGroup.getAsCopyGroupOn().strip().replace(' ', '') in ('', 'python:False'):
+                mGroup.setAsCopyGroupOn('')
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
-        self._finishMeetingFolderViewRemoval()
-        self._moveItemTemplatesToOwnFolder()
-        self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
-        self._updateInsertingMethodsAttributeOnMeetingConfigs()
-        self._updateAnnexesMeetingFileType()
-        self._addRestrictedPowerObserverGroupsByMeetingConfig()
-        self._addAdvicesNewFieldHiddenDuringRedaction()
-        self._updateAdvices()
-        self._updateAddFilePermissionOnMeetingConfigFolders()
-        self._addChangesHistoryToItems()
-        self._translateFoldersOfMeetingConfigs()
-        self._addItemTypesToTypesUseViewActionInListings()
-        self._adaptTopicsPortalTypeCriterion()
-        self._removeSignatureNotAloneTransformType()
+        #self._finishMeetingFolderViewRemoval()
+        #self._moveItemTemplatesToOwnFolder()
+        #self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
+        #self._updateInsertingMethodsAttributeOnMeetingConfigs()
+        #self._updateAnnexesMeetingFileType()
+        #self._addRestrictedPowerObserverGroupsByMeetingConfig()
+        #self._addAdvicesNewFieldHiddenDuringRedaction()
+        #self._updateAdvices()
+        #self._updateAddFilePermissionOnMeetingConfigFolders()
+        #self._addChangesHistoryToItems()
+        #self._translateFoldersOfMeetingConfigs()
+        #self._addItemTypesToTypesUseViewActionInListings()
+        #self._adaptTopicsPortalTypeCriterion()
+        #self._removeSignatureNotAloneTransformType()
+        self._cleanMeetingGroupsAsCopyGroupOn()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # reinstall imio.actionspanel so actionspanel.css is taken into account
-        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
-                                 u'profile-imio.actionspanel:default'])
+        #self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
+        #                         u'profile-imio.actionspanel:default'])
         # items in the configuration are now indexed, so clear and rebuild
         # by default, only portal_catalog is updated by refreshDatabase
-        self.refreshDatabase()
+        #self.refreshDatabase()
         self.finish()
 
 
@@ -289,9 +299,10 @@ def migrate(context):
        12) Add item portal_types to site_properties.typesUseViewActionInListings;
        13) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
        14) Remove 'signatureNotAlone' from selectable MeetingConfig.xhtmlTransformTypes;
-       15) Clean registries as we removed some css;
-       16) Reinstall PloneMeeting;
-       17) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       15) Clean every MeetingGroup.asCopyGroupOn values;
+       16) Clean registries as we removed some css;
+       17) Reinstall PloneMeeting;
+       18) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_2_1(context).run()
 # ------------------------------------------------------------------------------
