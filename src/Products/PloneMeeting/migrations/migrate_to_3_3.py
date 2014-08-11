@@ -13,7 +13,7 @@ from Products.PloneMeeting.migrations import Migrator
 
 
 # The migration class ----------------------------------------------------------
-class Migrate_To_3_2_1(Migrator):
+class Migrate_To_3_3(Migrator):
 
     def _finishMeetingFolderViewRemoval(self):
         '''Now that we removed the 'meetingfolder_view', we need to :
@@ -304,5 +304,5 @@ def migrate(context):
        17) Reinstall PloneMeeting;
        18) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
-    Migrate_To_3_2_1(context).run()
+    Migrate_To_3_3(context).run()
 # ------------------------------------------------------------------------------
