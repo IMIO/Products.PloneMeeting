@@ -3081,9 +3081,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries all items of groups of the current user, no matter wich suffix
            of the group the user is in.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        userGroups = tool.getGroupsForUser()
+        userGroupIds = [mGroup.getId() for mGroup in tool.getGroupsForUser()]
         params = {'portal_type': self.getItemTypeName(),
-                  'getProposingGroup': userGroups,
+                  'getProposingGroup': userGroupIds,
                   'sort_on': sortKey,
                   'sort_order': sortOrder, }
         # Manage filter

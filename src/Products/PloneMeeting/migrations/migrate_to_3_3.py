@@ -251,6 +251,38 @@ class Migrate_To_3_3(Migrator):
                 mGroup.setAsCopyGroupOn('')
         logger.info('Done.')
 
+    def _addMissingTopics(self):
+        '''Add the new topic 'searchitemsofmygroups'.'''
+        logger.info('Adding new topic \'searchitemsofmygroups\' to every MeetingConfigs...')
+        newTopicsInfo = (
+            # Items to advice with delay : need a script to do this search
+            ('searchitemsofmygroups',
+            (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+             ),
+             'created',
+             'searchItemsOfMyGroups',
+             "python: here.portal_plonemeeting.getGroupsForUser()",
+             ),
+        )
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            if hasattr(cfg.topics, 'searchitemsofmygroups'):
+                continue
+            # createTopics manage the fact that the topic already exists
+            cfg.createTopics(newTopicsInfo)
+            # now reorder so 'searchitemsofmygroups' is under 'searchmyitems'
+            # find delta, we need to insert it after the 'searchmyitems' topic
+            if not hasattr(cfg.topics, 'searchmyitems'):
+                logger.error('Unable to find topic \'searchmyitems\' !!!  '
+                             'New \'searchitemsofmygroups\' topic will be left at the bottom of available topics!')
+                return
+            myItemsTopic = cfg.topics.searchmyitems
+            everyTopicIds = cfg.topics.objectIds()
+            myItemsTopicPosition = everyTopicIds.index(myItemsTopic.getId())
+            itemsOfMyGroupsTopicPosition = everyTopicIds.index('searchitemsofmygroups')
+            delta = itemsOfMyGroupsTopicPosition - myItemsTopicPosition - 1
+            cfg.topics.moveObjectsUp('searchitemsofmygroups', delta=delta)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.2.1...')
         self._finishMeetingFolderViewRemoval()
@@ -268,6 +300,7 @@ class Migrate_To_3_3(Migrator):
         self._adaptTopicsPortalTypeCriterion()
         self._removeSignatureNotAloneTransformType()
         self._cleanMeetingGroupsAsCopyGroupOn()
+        self._addMissingTopics()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -300,9 +333,10 @@ def migrate(context):
        13) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
        14) Remove 'signatureNotAlone' from selectable MeetingConfig.xhtmlTransformTypes;
        15) Clean every MeetingGroup.asCopyGroupOn values;
-       16) Clean registries as we removed some css;
-       17) Reinstall PloneMeeting;
-       18) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       16) Add new topic 'searchitemsofmygroups';
+       17) Clean registries as we removed some css;
+       18) Reinstall PloneMeeting;
+       19) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_3(context).run()
 # ------------------------------------------------------------------------------
