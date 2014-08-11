@@ -1506,6 +1506,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          '',
          "python: here.portal_plonemeeting.userIsAmong('creators')",
          ),
+        # Item of my groups, items of the groups I am in
+        ('searchitemsofmygroups',
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsOfMyGroups',
+         "python: here.portal_plonemeeting.getGroupsForUser()",
+         ),
         # All (visible) items
         ('searchallitems',
         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
@@ -3051,11 +3059,31 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('searchItemsInCopy')
     def searchItemsInCopy(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Queries all items for which the current user is in copyGroups.'''
-        member = self.portal_membership.getAuthenticatedMember()
-        userGroups = self.portal_groups.getGroupsForPrincipal(member)
+        membershipTool = getToolByNamer(self, 'portal_membership')
+        groupsTool = getToolByNamer(self, 'portal_groups')
+        member = membershipTool.getAuthenticatedMember()
+        userGroups = groupsTool.getGroupsForPrincipal(member)
         params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'getCopyGroups' use 'OR' by default
                   'getCopyGroups': userGroups,
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder, }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(filterValue)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
+
+    security.declarePublic('searchItemsOfMyGroups')
+    def searchItemsOfMyGroups(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Queries all items of groups of the current user, no matter wich suffix
+           of the group the user is in.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        userGroups = tool.getGroupsForUser()
+        params = {'portal_type': self.getItemTypeName(),
+                  'getProposingGroup': userGroups,
                   'sort_on': sortKey,
                   'sort_order': sortOrder, }
         # Manage filter
@@ -3851,4 +3879,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-
