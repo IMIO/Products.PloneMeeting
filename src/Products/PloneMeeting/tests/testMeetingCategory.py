@@ -23,9 +23,9 @@
 #
 
 from OFS.ObjectManager import BeforeDeleteException
-from zope.i18n import translate
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+
+from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testMeetingCategory(PloneMeetingTestCase):
@@ -87,9 +87,7 @@ class testMeetingCategory(PloneMeetingTestCase):
         values = (aCatInMC.listCategoriesOfOtherMCs().keys()[0], )
         self.failIf(aCatInMC.validate_categoryMappingsWhenCloningToOtherMC(values))
         # but not 2 for the same meetingConfig...
-        error_msg = translate('error_can_not_select_several_cat_for_same_mc',
-                              domain='PloneMeeting',
-                              context=self.portal.REQUEST)
+        error_msg = _('error_can_not_select_several_cat_for_same_mc')
         values = (aCatInMC.listCategoriesOfOtherMCs().keys()[0],
                   aCatInMC.listCategoriesOfOtherMCs().keys()[1])
         self.assertTrue(aCatInMC.validate_categoryMappingsWhenCloningToOtherMC(values) == error_msg)

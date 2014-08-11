@@ -3059,8 +3059,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('searchItemsInCopy')
     def searchItemsInCopy(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Queries all items for which the current user is in copyGroups.'''
-        membershipTool = getToolByNamer(self, 'portal_membership')
-        groupsTool = getToolByNamer(self, 'portal_groups')
+        membershipTool = getToolByName(self, 'portal_membership')
+        groupsTool = getToolByName(self, 'portal_groups')
         member = membershipTool.getAuthenticatedMember()
         userGroups = groupsTool.getGroupsForPrincipal(member)
         params = {'portal_type': self.getItemTypeName(),

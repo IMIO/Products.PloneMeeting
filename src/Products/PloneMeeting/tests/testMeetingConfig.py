@@ -987,7 +987,9 @@ class testMeetingConfig(PloneMeetingTestCase):
            - fi the 'toDiscuss' field is not used, we can not select the 'on_to_discuss' method.'''
         cfg = self.meetingConfig
         # first test when using 'at_the_end' and something else
-        at_the_end_error_msg = _('inserting_methods_at_the_end_not_alone_error')
+        at_the_end_error_msg = translate('inserting_methods_at_the_end_not_alone_error',
+                                         domain='PloneMeeting',
+                                         context=self.request)
         values = ({'insertingMethod': 'at_the_end',
                    'reverse': '0'},
                   {'insertingMethod': 'on_proposing_groups',
@@ -995,7 +997,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == at_the_end_error_msg)
 
         # test when using several times same inserting method
-        several_times_error_msg = _('inserting_methods_can_not_select_several_times_same_method_error')
+        several_times_error_msg = translate('inserting_methods_can_not_select_several_times_same_method_error',
+                                            domain='PloneMeeting',
+                                            context=self.request)
         values = ({'insertingMethod': 'on_proposing_groups',
                    'reverse': '0'},
                   {'insertingMethod': 'on_proposing_groups',
@@ -1003,7 +1007,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == several_times_error_msg)
 
         # test when selecting 'on_categories' without using categories
-        not_using_categories_error_msg = _('inserting_methods_not_using_categories_error')
+        not_using_categories_error_msg = translate('inserting_methods_not_using_categories_error',
+                                                   domain='PloneMeeting',
+                                                   context=self.request)
         values = ({'insertingMethod': 'on_categories',
                    'reverse': '0'}, )
         self.assertTrue(cfg.getUseGroupsAsCategories() is True)
@@ -1021,7 +1027,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
         # test when selecting 'on_to_discuss' without using the 'toDiscuss' field
-        not_using_categories_error_msg = _('inserting_methods_not_using_to_discuss_error')
+        not_using_categories_error_msg = translate('inserting_methods_not_using_to_discuss_error',
+                                                   domain='PloneMeeting',
+                                                   context=self.request)
         values = ({'insertingMethod': 'on_to_discuss',
                    'reverse': '0'}, )
         self.assertTrue('toDiscuss' in cfg.getUsedItemAttributes())
