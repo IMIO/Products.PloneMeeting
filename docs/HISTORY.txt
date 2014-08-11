@@ -83,6 +83,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   where it is listed (ToolPloneMeeting view and MeetingConfig view)
 - Display annexes and advices fieldset on the item view in any cases, not hidding when empty
   or so, when no annex or no advice, a simple '-' is displayed in the fieldset
+- Added topic to 'search items of my groups', returning every items of groups a user is
+  in, no matter what role the user has in the group (creator, reviewer, adviser, ...)
 
 3.2.0.1 (2014-03-06)
 --------------------
