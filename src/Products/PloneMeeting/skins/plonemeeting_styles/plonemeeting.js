@@ -554,21 +554,23 @@ function toggleIcon(UID, img_tag, baseUrl, viewName, baseSelector) {
     // special management for the toggle budgetRelated where we need to display
     // or hide the budgetInfos field.  If budgetRelated, we show it but we insert it under
     // the current span because if we insert it into the span, the quick edit does not work...
-    if ((viewName == '@@toggle_budget_related') && (img_tag.indexOf('nameBudgetRelatedNo') > 0)) {
+    if (viewName == '@@toggle_budget_related') {
+        if (img_tag.indexOf('nameBudgetRelatedNo') > 0) {
         // we display the budgetInfos field if necessary
         var $hook_budgetInfos = $('<div id="hook_budgetInfos"></p>');
         askAjaxChunk('hook_budgetInfos', 'POST', baseUrl, '@@pm-macros', 'displayBudgetInfos', {});
         $hook_budgetInfos.hide();
         $hook_budgetInfos.insertAfter($span);
         $hook_budgetInfos.fadeIn("normal");
-    }
-    else {
-        // find the 'hook_budgetInfos' and removes it
-        $hook_budgetInfos = $('#hook_budgetInfos');
-        $hook_budgetInfos.fadeOut("normal", function() {
-               $(this).remove();
-           });
+        }
+        else {
+            // find the 'hook_budgetInfos' and removes it
+            $hook_budgetInfos = $('#hook_budgetInfos');
+            $hook_budgetInfos.fadeOut("normal", function() {
+                   $(this).remove();
+               });
         };
+    };
   };
 }
 
