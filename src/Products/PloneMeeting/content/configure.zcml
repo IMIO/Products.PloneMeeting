@@ -4,7 +4,7 @@
     i18n_domain="Products.PloneMeeting">
 
     <!-- We need to grok here for plone.directives to work...
-         We put this in this configure.zcml because it is removed from main configure.zcml by aarchgenxml... -->
+         We put this in this configure.zcml because it is removed from main configure.zcml by archgenxml... -->
     <include package="five.grok" />
     <grok:grok package="." />
 
