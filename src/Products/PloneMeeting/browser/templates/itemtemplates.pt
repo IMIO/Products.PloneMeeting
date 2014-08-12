@@ -12,8 +12,6 @@
   <metal:fill fill-slot="main">
 
     <h1 class="documentFirstHeading" i18n:translate="">Create an item from an item template</h1>
-    <link href="fancytree/ui.fancytree.css" rel="stylesheet" type="text/css">
-    <script src="fancytree/jquery.fancytree.min.js" type="text/javascript"></script>
 
     <script type="text/javascript">
         var alreadyClickedOnTemplate = false;
