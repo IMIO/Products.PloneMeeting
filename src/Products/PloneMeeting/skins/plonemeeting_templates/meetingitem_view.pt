@@ -291,7 +291,7 @@
                                      tal:attributes="src string:${portal_url}/edit.gif" />
                             </a>
                         </dt>
-                        <dd class="collapsibleContent discreet">
+                        <dd class="collapsibleContent">
                             <tal:itemSignatures replace="structure python: context.getItemSignatures().replace('\n', '<br />')">Signatures</tal:itemSignatures>
                         </dd>
                     </dl>
