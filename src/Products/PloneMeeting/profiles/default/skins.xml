@@ -21,7 +21,7 @@
 
  <skin-path name="*">
   <layer name="plonemeeting_images"
-         insert-after="imioapps_templates" />
+         insert-after="imioapps_styles" />
   <layer name="plonemeeting_plone"
          insert-after="plonemeeting_images" />
   <layer name="plonemeeting_styles"
