@@ -18,15 +18,15 @@
  <object name="plonemeeting_templates"
          meta_type="Filesystem Directory View"
          directory="PloneMeeting/skins/plonemeeting_templates"/>
- 
+
  <skin-path name="*">
-  <layer insert-after="custom" 
+  <layer insert-after="imioapps_templates"
          name="plonemeeting_images"/>
-  <layer insert-after="custom" 
+  <layer insert-after="custom"
          name="plonemeeting_plone"/>
-  <layer insert-after="custom" 
+  <layer insert-after="custom"
          name="plonemeeting_styles"/>
-  <layer insert-after="custom" 
+  <layer insert-after="custom"
          name="plonemeeting_templates"/>
  </skin-path>
 
