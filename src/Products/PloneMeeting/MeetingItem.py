@@ -1251,15 +1251,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            As the item signature comes after the item is decided/closed,
            we use an unrestricted call in @@toggle_item_is_signed that is protected by
            this method.'''
-        #bypass for the Manager role
-        if 'Manager' in member.getRoles():
-            return True
         item = self.getSelf()
         tool = getToolByName(item, 'portal_plonemeeting')
         # Only MeetingManagers can sign an item if it is decided
         if not item.showItemIsSigned() or \
            not tool.isManager():
             return False
+
+        # bypass for the Manager role
+        if 'Manager' in member.getRoles():
+            return True
+
         # If the meeting is in a closed state, the item can only be signed but
         # not "unsigned".  This way, a final state 'signed' exists for the item
         if item.getMeeting().queryState() in Meeting.meetingClosedStates and \
