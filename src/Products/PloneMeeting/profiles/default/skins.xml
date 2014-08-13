@@ -20,14 +20,14 @@
          directory="PloneMeeting/skins/plonemeeting_templates"/>
 
  <skin-path name="*">
-  <layer insert-after="imioapps_templates"
-         name="plonemeeting_images"/>
-  <layer insert-after="custom"
-         name="plonemeeting_plone"/>
-  <layer insert-after="custom"
-         name="plonemeeting_styles"/>
-  <layer insert-after="custom"
-         name="plonemeeting_templates"/>
+  <layer name="plonemeeting_images"
+         insert-after="imioapps_templates" />
+  <layer name="plonemeeting_plone"
+         insert-after="plonemeeting_images" />
+  <layer name="plonemeeting_styles"
+         insert-after="plonemeeting_plone" />
+  <layer name="plonemeeting_templates"
+         insert-after="plonemeeting_styles" />
  </skin-path>
 
 </object>
