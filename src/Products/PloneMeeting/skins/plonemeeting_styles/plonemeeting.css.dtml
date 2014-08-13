@@ -733,7 +733,6 @@ body.template-search_form #content label {
 body[class*="itemtemplates"] #plone-contentmenu-workflow,
 body[class*="itemtemplates"] a#plone-contentmenu-settings,
 body[class*="itemtemplates"] a.link-parent,
-body[class*="itemtemplates"] #viewlet-below-content-title,
 body[class*="itemtemplates"] .documentDescription,
 body[class*="itemtemplates"] #plone-contentmenu-actions,
 body[class*="itemtemplates"] #plone-contentmenu-display {
