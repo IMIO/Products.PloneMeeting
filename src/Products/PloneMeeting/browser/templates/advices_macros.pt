@@ -168,13 +168,6 @@
                         </tal:defines>
                     </td>
                   </tr>
-                  <tr tal:condition="python: advice['type'] != 'not_given' and advice['delay'] and not advice['hidden_during_redaction']">
-                    <td colspan="4">
-                         <div i18n:translate="" class="discreet" style="text-align: right;">This advice was asked on <span i18n:name="advice_asked_on_date" tal:content="python: context.toLocalizedTime(advice['delay_started_on'])">2013/05/08</span>
-                         and was given on <span i18n:name="advice_given_on_date" tal:content="python: context.toLocalizedTime(advice['advice_given_on'])">2013/05/08</span>.
-                         </div>
-                    </td>
-                  </tr>
                 </table>
                 <tal:complementaryInfoMessageDefines define="customMessageInfos python: meetingItem.adapted().getCustomAdviceMessageFor(advice);
                                                              displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
@@ -266,6 +259,10 @@
                 </tal:complementaryInfoMessageDefines>
 
                 </tal:notHiddenUnderRedaction>
+                <div tal:condition="python: advice['delay'] and advice['delay_started_on']" class="discreet" style="text-align: right;">
+                   <span i18n:translate="">Asked on <span i18n:name="advice_asked_on_date" tal:content="python: context.toLocalizedTime(advice['delay_started_on'])">2013/05/08</span></span>
+                   <span tal:condition="python: advice['type'] != 'not_given' and not advice['hidden_during_redaction']"> - <span i18n:translate="">Given on <span i18n:name="advice_given_on_date" tal:content="python: context.toLocalizedTime(advice['advice_given_on'])">2013/05/08</span></span></span>
+                </div>
                 </fieldset>
               </li>
             </ul>
