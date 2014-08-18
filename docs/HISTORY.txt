@@ -11,6 +11,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 ----------------
 - Moved to Products.CMFPlone 4.3.3
 - Moved to collective.ckeditor 4.2.0
+- Depends on plonetheme.imioapps to manage default skin (plonemeetingskin)
+- Moved from communesplone.iconified_document_actions to collective.iconifieddocumentactions
 - Moved management of indexes and metadatas (utils.updateIndexes) to imio.helpers and depends on that package now
 - Removed field Meeting.allItemsAtOnce and relative code
 - Refactored mechanism when inserting an item in a meeting : it is now possible
@@ -36,7 +38,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Optimized management of item templates, separated recurring items and item templates in two different
   folders (old 'recurringitems' now only contains recurring items and new 'itemtemplates' folder contains
   item templates), added possibility to organize item templates in folders.  Items templates displayed
-  to the item creator shows this organization in folders using a 'fancytree'
+  to the item creator shows this organization in folders using a 'fancytree', depends on collective.js.fancytree
 - In MeetingConfig custom advisers, added possibility to restrict the selection of a custom
   adviser using a TAL expression (column 'Available on') and added a way to specify in that
   two or more custom advisers are linked together (column 'Is linked to previous row?')
