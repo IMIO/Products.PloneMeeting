@@ -1730,16 +1730,23 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            meetings in the previous p_searchMeetingsInterval, which is a number
            of days. If no meeting is found, the method returns None.'''
         meetingDate = self.getDate()
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         meetingTypeName = cfg.getMeetingTypeName()
-        allMeetings = self.portal_catalog(portal_type=meetingTypeName,
-                                          getDate={'query': meetingDate-searchMeetingsInterval,
-                                          'range': 'min'}, sort_on='getDate',
-                                          sort_order='reverse')
-        indexDate = self.portal_catalog.Indexes['getDate']
-        for meeting in allMeetings:
-            if indexDate.getEntryForObject(meeting.getRID()) < meetingDate:
-                return meeting.getObject()
+        catalog = getToolByName(self.context, 'portal_catalog')
+        # find every meetings before searchMeetingsInterval days before self
+        brains = catalog(portal_type=meetingTypeName,
+                         getDate={'query': meetingDate - searchMeetingsInterval,
+                         'range': 'min'}, sort_on='getDate',
+                         sort_order='reverse')
+        res = None
+        for brain in brains:
+            if brain.getDate < meetingDate:
+                res = brain
+                break
+        if res:
+            res = res.getObject()
+        return res
 
     security.declarePublic('getNextMeeting')
     def getNextMeeting(self):
