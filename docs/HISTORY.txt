@@ -87,6 +87,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   or so, when no annex or no advice, a simple '-' is displayed in the fieldset
 - Added topic to 'search items of my groups', returning every items of groups a user is
   in, no matter what role the user has in the group (creator, reviewer, adviser, ...)
+- MeetingItem.onDuplicated and MeetingItem.onDuplicatedFromConfig hooks are now zope.event events
 
 3.2.0.1 (2014-03-06)
 --------------------
