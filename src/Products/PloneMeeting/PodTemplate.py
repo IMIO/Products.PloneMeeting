@@ -449,11 +449,12 @@ def freezePodDocumentsIfRelevant(obj, transition):
     user = membershipTool.getAuthenticatedMember()
     podTemplatesFolder = getattr(meetingConfig, TOOL_FOLDER_POD_TEMPLATES)
     for podTemplate in podTemplatesFolder.objectValues():
-        if (transition == podTemplate.getFreezeEvent()) and podTemplate.isApplicable(obj):
+        if transition == podTemplate.getFreezeEvent() and podTemplate.isApplicable(obj):
             # I must dump a document in the DB based on this template and
             # object.
             fileId = podTemplate.getDocumentId(obj)
-            existingDoc = getattr(obj, fileId, None)
+            folder = obj.aq_inner.aq_parent
+            existingDoc = getattr(folder, fileId, None)
             # If the doc was already generated, we do not rewrite it.
             # This way, if some doc generations crash, when retrying them
             # the already generated docs are not generated again.
@@ -461,8 +462,8 @@ def freezePodDocumentsIfRelevant(obj, transition):
                 try:
                     docContent = podTemplate.generateDocument(obj,
                                                               forBrowser=False)
-                    obj.invokeFactory('File', id=fileId, file=docContent)
-                    doc = getattr(obj, fileId)
+                    folder.invokeFactory('File', id=fileId, file=docContent)
+                    doc = getattr(folder, fileId)
                     mr = getToolByName(obj, 'mimetypes_registry')
                     mimetype = mr.lookupExtension(podTemplate.getPodFormat())
                     doc.setFormat(mimetype.normalized())
