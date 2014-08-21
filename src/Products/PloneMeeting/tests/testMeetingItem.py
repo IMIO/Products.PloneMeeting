@@ -842,6 +842,44 @@ class testMeetingItem(PloneMeetingTestCase):
         # this time it is now added again as the expression is only True at item creation time
         self.assertTrue(item2.getCopyGroups() == ())
 
+    def test_pm_AddAutoCopyGroupsWrongExpressionDoesNotBreak(self):
+        '''If the TAL expression defined on a MeetingGroup.asCopyGroupOn is wrong, it does not break.'''
+        # Use the 'meetingConfig2' where copies are enabled
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        self.changeUser('pmManager')
+        # By default, adding an item does not add any copyGroup
+        item = self.create('MeetingItem')
+        # activate copy groups at initial wf state
+        initial_state = self.wfTool[item.getWorkflowName()].initial_state
+        self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
+        self.failIf(item.getCopyGroups())
+        # set a correct expression so vendors is set as copy group
+        self.tool.vendors.setAsCopyGroupOn("python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
+        item.at_post_edit_script()
+        self.assertTrue(item.getCopyGroups() == ('vendors_reviewers', ))
+        # with a wrong TAL expression (syntax or content) it does not break
+        self.tool.vendors.setAsCopyGroupOn("python: item.someUnexistingMethod()")
+        item.at_post_edit_script()
+        # no matter the expression is wrong now, when a group is added in copy, it is left
+        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        self.tool.vendors.setAsCopyGroupOn("python: some syntax error")
+        item.at_post_edit_script()
+        # no matter the expression is wrong now, when a group is added in copy, it is left
+        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        # if it is a right TAL expression but that does not returns usable sufixes, it does not break neither
+        self.tool.vendors.setAsCopyGroupOn("python: item.getId() and True or True")
+        item.at_post_edit_script()
+        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        self.tool.vendors.setAsCopyGroupOn("python: item.getId() and 'some_wrong_string' or 'some_wrong_string'")
+        item.at_post_edit_script()
+        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        self.tool.vendors.setAsCopyGroupOn("python: item.getId()")
+        item.at_post_edit_script()
+        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        self.tool.vendors.setAsCopyGroupOn("python: 123")
+        item.at_post_edit_script()
+        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+
     def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
            Only 'power observers' corresponding local role local should be impacted.

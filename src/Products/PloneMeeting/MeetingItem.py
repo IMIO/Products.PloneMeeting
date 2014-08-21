@@ -2530,10 +2530,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             suffixes = False
             try:
                 suffixes = Expression(mGroup.getAsCopyGroupOn())(ctx)
-            except Exception, e:
-                logger.warning(AS_COPYGROUP_CONDITION_ERROR % str(e))
-            if suffixes:
-                # The expression returns a list a Plone group suffixes
+                # The expression is supposed to return a list a Plone group suffixes
                 # check that the real linked Plone groups are selectable
                 for suffix in suffixes:
                     ploneGroupId = mGroup.getPloneGroupId(suffix)
@@ -2545,6 +2542,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         logger.warning(AS_COPYGROUP_RES_ERROR % (suffix,
                                                                  mGroup.id,
                                                                  cfg.id))
+            except Exception, e:
+                logger.warning(AS_COPYGROUP_CONDITION_ERROR % str(e))
         # Add the automatic copyGroups to the existing manually selected ones
         self.setCopyGroups(set(self.getCopyGroups()).union(set(res)))
         return res
