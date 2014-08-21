@@ -330,16 +330,18 @@ class Utils(BrowserView):
 
 
 class PMDeleteGivenUidView(DeleteGivenUidView):
-    '''Redefine the _computeBackURL.'''
+    '''Redefine the _findViewablePlace.'''
 
-    def _computeBackURL(self):
-        '''Compute exact back url because as the parent as a view that does
+    def _findViewablePlace(self, obj):
+        '''When removing an item/meeting from his view (not from a listing),
+           we need to compute exact back url because as the parent has a view that does
            a redirection also, we loose portal_messages...  So here, we compute the
            url the view of the parent would redirect to...
         '''
-        mc = self.context.portal_plonemeeting.getMeetingConfig(self.context)
+        tool = getToolByName(obj, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(obj)
         # if we are outside PloneMeeting, then use default DeleteGivenUidView behaviour
-        if not mc:
-            return super(PMDeleteGivenUidView, self)._computeBackURL()
-        app = self.context.portal_plonemeeting.getPloneMeetingFolder(mc.id)
+        if not cfg:
+            return super(PMDeleteGivenUidView, self)._findViewablePlace(obj)
+        app = tool.getPloneMeetingFolder(cfg.getId())
         return app.restrictedTraverse('@@meetingfolder_redirect_view').getFolderRedirectUrl()
