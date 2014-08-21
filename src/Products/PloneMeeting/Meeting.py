@@ -30,6 +30,7 @@ from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
 from OFS.ObjectManager import BeforeDeleteException
 from zope.component import getMultiAdapter
+from zope.event import notify
 from zope.i18n import translate
 from Products.CMFCore.permissions import ReviewPortalContent, ModifyPortalContent
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
@@ -1630,7 +1631,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             adap = newItem.adapted()
             error = adap.addRecurringItemToMeeting(self)
             if not error:
-                adap.onDuplicatedFromConfig('as_recurring_item')
+                notify(ItemDuplicatedFromConfigEvent(newItem, 'as_recurring_item'))
                 newItem.reindexObject()
 
     security.declarePublic('fieldIsEmpty')

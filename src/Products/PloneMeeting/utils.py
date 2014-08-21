@@ -43,7 +43,8 @@ from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
     IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, IPodTemplateCustom, \
-    IToolPloneMeetingCustom, IMeetingUserCustom, IAnnexable, IAdvicesUpdatedEvent
+    IToolPloneMeetingCustom, IMeetingUserCustom, IAnnexable, \
+    IAdvicesUpdatedEvent, IItemDuplicatedEvent, IItemDuplicatedFromConfigEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -1290,3 +1291,19 @@ class AdvicesUpdatedEvent(ObjectEvent):
 
     def __init__(self, object):
         self.object = object
+
+
+class ItemDuplicatedEvent(ObjectEvent):
+    implements(IItemDuplicatedEvent)
+
+    def __init__(self, object, newItem):
+        self.object = object
+        self.newItem = newItem
+
+
+class ItemDuplicatedFromConfigEvent(ObjectEvent):
+    implements(IItemDuplicatedFromConfigEvent)
+
+    def __init__(self, object, usage):
+        self.object = object
+        self.usage = usage

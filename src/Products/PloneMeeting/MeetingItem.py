@@ -58,7 +58,7 @@ from Products.PloneMeeting.utils import \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
     forceHTMLContentTypeForEmptyRichFields, workday, networkdays, KUPU_EMPTY_VALUES
-from Products.PloneMeeting.utils import AdvicesUpdatedEvent
+from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
@@ -3772,8 +3772,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.adapted().isPrivacyViewable():
             raise Unauthorized
         # Get the PloneMeetingFolder of the current user as destFolder
-        tool = self.portal_plonemeeting
-        userId = self.portal_membership.getAuthenticatedMember().getId()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        membershipTool = getToolByName(self, 'portal_membership')
+        userId = membershipTool.getAuthenticatedMember().getId()
         # Do not use "not destFolder" because destFolder is an ATBTreeFolder
         # and an empty ATBTreeFolder will return False while testing destFolder.
         if destFolder is None:
@@ -3784,33 +3785,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
         # Check if an external plugin want to add some fieldsToCopy
         copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning()
-        res = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
-                              newOwnerId=newOwnerId, copyFields=copyFields,
-                              newPortalType=newPortalType)[0]
+        newItem = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
+                                  newOwnerId=newOwnerId, copyFields=copyFields,
+                                  newPortalType=newPortalType)[0]
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
             # because it was cleaned by ToolPloneMeeting.pasteItems.
-            wfName = self.portal_workflow.getWorkflowsFor(res)[0].id
-            firstEvent = res.workflow_history[wfName][0]
+            wfTool = getToolByName(self, 'portal_workflow')
+            wfName = wfTool.getWorkflowsFor(newItem)[0].id
+            firstEvent = newItem.workflow_history[wfName][0]
             cloneEvent = firstEvent.copy()
             # to be translated, cloneEventAction_comments must be in the 'PloneMeeting' domain
             # so it is displayed in content_history together with wf transitions
             cLabel = cloneEventAction + '_comments'
             cloneEvent['comments'] = cLabel
-            # to be translated, cloneEventAction must be in the 'plone' domain
-            # so it is displayed in content_history together with wf transitions
             cloneEvent['action'] = cloneEventAction
             cloneEvent['actor'] = userId
-            res.workflow_history[wfName] = (firstEvent, cloneEvent)
-        # Call plugin-specific code when relevant
-        res.adapted().onDuplicated(self)
-        res.reindexObject()
+            newItem.workflow_history[wfName] = (firstEvent, cloneEvent)
+        # notify that item has been duplicated so subproducts
+        # may interact if necessary
+        notify(ItemDuplicatedEvent(self, newItem))
+        newItem.reindexObject()
         logger.info('Item at %s cloned (%s) by "%s" from %s.' %
-                    (res.absolute_url_path(),
+                    (newItem.absolute_url_path(),
                      cloneEventAction,
                      userId,
                      self.absolute_url_path()))
-        return res
+        return newItem
 
     security.declarePublic('cloneToOtherMeetingConfig')
     def cloneToOtherMeetingConfig(self, destMeetingConfigId):
@@ -4001,16 +4002,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage(
             translate('item_duplicated_and_link_kept', domain='PloneMeeting', context=self.REQUEST))
         return self.REQUEST.RESPONSE.redirect(newItem.absolute_url())
-
-    security.declareProtected('Modify portal content', 'onDuplicated')
-    def onDuplicated(self, original):
-        '''See doc in interfaces.py.'''
-        pass
-
-    security.declareProtected('Modify portal content', 'onDuplicatedFromConfig')
-    def onDuplicatedFromConfig(self, usage):
-        '''See doc in interfaces.py.'''
-        pass
 
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):

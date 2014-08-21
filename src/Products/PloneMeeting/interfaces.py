@@ -12,6 +12,16 @@ class IAdvicesUpdatedEvent(IObjectEvent):
     """
 
 
+class IItemDuplicatedEvent(IObjectEvent):
+    """
+    """
+
+
+class IItemDuplicatedFromConfigEvent(IObjectEvent):
+    """
+    """
+
+
 class IRedirect(Interface):
     """
     """
@@ -301,18 +311,6 @@ class IMeetingItemDocumentation:
     def onDiscussChanged(toDiscuss):
         '''This method is called when value of field "toDiscuss" (p_toDiscuss)
            has changed on an item.'''
-
-    def onDuplicated(original):
-        '''This method is called whenever an item is duplicated. p_self is the
-           duplicated object, p_original is the original. This method does not
-           need to reindex the duplicated object, it will be done afterwards.'''
-
-    def onDuplicatedFromConfig(usage):
-        '''This method is called whenever an item is duplicated from an item
-           from the configuration: either a recurring item
-           (p_usage=='as_recurring_item') or a template item
-           (p_usage=='as_template_item'). The default implementation of this
-           method does nothing. p_self is the duplicated item.'''
 
     def isPrivacyViewable():
         '''Privacy acts as a simple filter in front of workflow-based security.
