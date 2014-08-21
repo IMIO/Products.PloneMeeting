@@ -20,6 +20,10 @@
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onItemTransition"/>
 
+  <subscriber for=".interfaces.IMeetingItem
+                   Products.PloneMeeting.interfaces.IItemDuplicatedEvent"
+              handler=".events.onItemDuplicated"/>
+
   <subscriber for=".interfaces.IMeeting
                    zope.container.interfaces.IObjectAddedEvent"
               handler=".events.onMeetingAdded"/>

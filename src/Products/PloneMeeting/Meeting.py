@@ -41,7 +41,8 @@ from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
     fieldIsEmpty, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
     getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
-    setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields
+    setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields, \
+    ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting import PMMessageFactory as _
 import logging
 logger = logging.getLogger('PloneMeeting')

@@ -2576,6 +2576,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  destMeetingConfigId,
                                  meetingConfigId)
 
+    def _getCloneToOtherMCActionTitle(self, destMeetingConfigId, meetingConfigId):
+        '''Returns the title of the action used for the cloneToOtherMC
+           functionnality'''
+        return 'create_to_%s_from_%s' % (destMeetingConfigId, meetingConfigId)
+
     def _updateCloneToOtherMCActions(self):
         '''Manage the visibility of the object_button action corresponding to
            the clone/send item to another meetingConfig functionality.
@@ -2591,7 +2596,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
                         'object.adapted().mayCloneToOtherMeetingConfig("%s")' \
                         % configId
-            actionName = 'create_to_%s_from_%s' % (configId, self.getId())
+            actionName = self._getCloneToOtherMCActionTitle(configId, self.getId())
             item_portal_type.addAction(id=actionId,
                                        name=actionName,
                                        category='object_buttons',

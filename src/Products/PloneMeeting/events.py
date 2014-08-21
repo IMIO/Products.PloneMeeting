@@ -20,6 +20,7 @@ logger = logging.getLogger('PloneMeeting')
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from Acquisition import aq_base
+from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
@@ -260,6 +261,40 @@ def onItemRemoved(item, event):
     # if the item is linked to a meeting, remove the item from this meeting
     if item.hasMeeting():
         item.getMeeting().removeItem(item)
+
+
+def onItemDuplicated(item, event):
+    '''When an item is duplicated, if it was sent from a MeetingConfig to
+       another, we will add a line in the original item history specifying that
+       it was sent to another meetingConfig.  The 'new item' already have
+       a line added to his workflow_history.'''
+    # if item and event.newItem portal_types are not the same
+    # it means that item was sent to another meetingConfig
+    newItem = event.newItem
+    if item.portal_type == newItem:
+        return
+    # add a line to the original item history
+    tool = getToolByName(item, 'portal_plonemeeting')
+    membershipTool = getToolByName(item, 'portal_membership')
+    memberId = membershipTool.getAuthenticatedMember().getId()
+    wfTool = getToolByName(item, 'portal_workflow')
+    wfName = wfTool.getWorkflowsFor(item)[0].id
+    newItemConfig = tool.getMeetingConfig(newItem)
+    itemConfig = tool.getMeetingConfig(item)
+    label = translate('sentto_othermeetingconfig',
+                      domain="PloneMeeting",
+                      context=item.REQUEST,
+                      mapping={'meetingConfigTitle': newItemConfig.Title()})
+    action = translate(newItemConfig._getCloneToOtherMCActionTitle(newItemConfig.getId(), itemConfig.getId()),
+                       domain="plone",
+                       context=item.REQUEST)
+    # copy last event and adapt it
+    lastEvent = item.workflow_history[wfName][-1]
+    newEvent = lastEvent.copy()
+    newEvent['comments'] = label
+    newEvent['action'] = action
+    newEvent['actor'] = memberId
+    item.workflow_history[wfName] = item.workflow_history[wfName] + (newEvent, )
 
 
 def onMeetingRemoved(meeting, event):
