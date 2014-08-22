@@ -1099,9 +1099,14 @@ def transformAllRichTextFields(obj, onlyField=None):
 # ------------------------------------------------------------------------------
 def removeBlanks(xhtmlContent):
     '''This method will remove any blank line in p_xhtmlContent.'''
-    for emptyPara in KUPU_EMPTY_VALUES:
-        xhtmlContent = xhtmlContent.replace(emptyPara, '')
-    return xhtmlContent
+    import lxml.html
+    tree = lxml.html.fromstring(unicode(xhtmlContent, 'utf-8'))
+    for el in tree:
+        if el.text.strip() == u'':
+            el.getparent().remove(el)
+    # while lxml.html.fromstring, a <div> is added around the entire HTML
+    # so what we want is the HTML without this surrounding tag, just take children
+    return ''.join([lxml.html.tostring(x, encoding='utf-8') for x in tree.iterchildren()])
 
 
 # ------------------------------------------------------------------------------
