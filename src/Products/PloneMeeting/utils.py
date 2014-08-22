@@ -36,6 +36,7 @@ from AccessControl import getSecurityManager
 from zope.i18n import translate
 from zope.component.interfaces import ObjectEvent
 from zope.interface import implements
+from imio.helpers.xhtml import removeBlanks, xhtmlContentIsEmpty
 from Products.CMFCore.utils import getToolByName
 from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
@@ -47,6 +48,9 @@ from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom,
     IAdvicesUpdatedEvent, IItemDuplicatedEvent, IItemDuplicatedFromConfigEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
+
+KEEP_WITH_NEXT_STYLES = {'para': 'pmParaKeepWithNext',
+                         'item': 'podItemKeepWithNext'}
 
 # PloneMeetingError-related constants ------------------------------------------
 WRONG_INTERFACE_NAME = 'Wrong interface name "%s". You must specify the full ' \
@@ -174,20 +178,6 @@ def getCurrentMeetingObject(context):
     return obj
 
 
-# How to know if a Kupu field is "empty" ---------------------------------------
-KUPU_EMPTY_VALUES = ('<p></p>', '<p> </p>', '<p><br/></p>', '<p><br /></p>',
-                     '<p><br /><br /></p>', '<p> </p>', '<p><b> </b></p>',
-                     '<p><b></b></p>', '<p/>', '<p />', '<p>&nbsp;</p>')
-                    # The 2 '<p> </p>' are different (2 different blank chars)
-KEEP_WITH_NEXT_STYLES = {'para': 'pmParaKeepWithNext',
-                         'item': 'podItemKeepWithNext'}
-
-
-def kupuFieldIsEmpty(kupuContent):
-    if not kupuContent or (kupuContent.strip() in KUPU_EMPTY_VALUES):
-        return True
-
-
 def fieldIsEmpty(name, obj, useParamValue=False, value=None):
     '''If field named p_name on p_obj empty ? The method checks emptyness of
        given p_value if p_useParamValue is True instead.'''
@@ -198,7 +188,7 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         value = field.get(obj)
     widgetName = field.widget.getName()
     if widgetName == 'RichWidget':
-        return kupuFieldIsEmpty(value)
+        return xhtmlContentIsEmpty(value)
     elif widgetName == 'BooleanWidget':
         return value is None
     else:
@@ -1002,7 +992,7 @@ def getHistory(obj, startNumber=0, batchSize=5):
             for name, oldValue in history[i]['changes'].iteritems():
                 widgetName = obj.getField(name).widget.getName()
                 if widgetName == 'RichWidget':
-                    if kupuFieldIsEmpty(oldValue):
+                    if xhtmlContentIsEmpty(oldValue):
                         val = '-'
                     else:
                         newValue = findNewValue(obj, name, history, i-1)
@@ -1087,26 +1077,13 @@ def transformAllRichTextFields(obj, onlyField=None):
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
         if ("%s.%s" % (obj.meta_type, field.getName()) in fieldsToTransform) and \
-           not kupuFieldIsEmpty(fieldContent):
-            for transform in transformTypes:
-                exec 'fieldContent = %s(fieldContent)' % transform
+           not xhtmlContentIsEmpty(fieldContent):
+            if 'removeBlanks' in transformTypes:
+                fieldContent = removeBlanks(fieldContent)
         # Apply custom transformations if defined
         field.set(obj, obj.adapted().transformRichTextField(
                   field.getName(), fieldContent))
         field.setContentType(obj, field.default_content_type)
-
-
-# ------------------------------------------------------------------------------
-def removeBlanks(xhtmlContent):
-    '''This method will remove any blank line in p_xhtmlContent.'''
-    import lxml.html
-    tree = lxml.html.fromstring(unicode(xhtmlContent, 'utf-8'))
-    for el in tree:
-        if el.text.strip() == u'':
-            el.getparent().remove(el)
-    # while lxml.html.fromstring, a <div> is added around the entire HTML
-    # so what we want is the HTML without this surrounding tag, just take children
-    return ''.join([lxml.html.tostring(x, encoding='utf-8') for x in tree.iterchildren()])
 
 
 # ------------------------------------------------------------------------------
