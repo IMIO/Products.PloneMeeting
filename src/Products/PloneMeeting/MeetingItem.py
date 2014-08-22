@@ -24,6 +24,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import cgi
+import lxml.html
 import re
 from datetime import datetime
 from collections import OrderedDict
@@ -57,7 +58,7 @@ from Products.PloneMeeting.utils import \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
-    forceHTMLContentTypeForEmptyRichFields, workday, networkdays, KUPU_EMPTY_VALUES
+    forceHTMLContentTypeForEmptyRichFields, workday, networkdays
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -1096,10 +1097,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if separate and motivation:
             hasSeparation = False
             # check if there is not already an empty line at the bottom of 'motivation'
-            for value in KUPU_EMPTY_VALUES:
-                if motivation.endswith(value) or motivation == value:
-                    hasSeparation = True
-                    break
+            # take last node and check if it is empty
+            # surround xhtmlContent with a special tag so we are sure that tree is always
+            # a list of children of this special tag
+            xhtmlContent = "<special_tag>%s</special_tag>" % motivation
+            tree = lxml.html.fromstring(unicode(xhtmlContent, 'utf-8'))
+            children = tree.getchildren()
+            if children and not children[-1].text:
+                hasSeparation = True
+
             if not hasSeparation:
                 motivation = motivation + '<p>&nbsp;</p>'
         return motivation + decision
