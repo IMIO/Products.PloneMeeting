@@ -1889,6 +1889,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
         self.assertTrue(item.getDeliberation(separate=True) == item.getMotivation() +
                         '<p>&nbsp;</p>' + item.getDecision())
+        # if there is no motivation, we do not insert a blank line even if separate is True
+        item.setMotivation('')
+        self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
+        self.assertTrue(item.getDeliberation(separate=True) == item.getMotivation() + item.getDecision())
 
 
 def test_suite():
