@@ -3425,7 +3425,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                   domain="PloneMeeting",
                                                   context=self.REQUEST),
                                         unicode(adviceInfos['gives_auto_advice_on_help_message'], 'utf-8') or '-')
-
+        # if it is a delay-aware advice, display the number of days to give the advice
+        # like that, when the limit decrease (3 days left), we still have the info
+        # about original number of days to give advice
+        if adviceInfos['delay']:
+            help_msg += "\n%s" % translate('Days to give advice',
+                                           domain="PloneMeeting",
+                                           mapping={'daysToGiveAdvice': adviceInfos['delay']},
+                                           context=self.REQUEST)
         return help_msg
 
     security.declarePrivate('at_post_create_script')
