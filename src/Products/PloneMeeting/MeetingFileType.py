@@ -350,13 +350,16 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
             catalog = getToolByName(self, 'portal_catalog')
             brains = catalog(portal_type='MeetingFile')
-            mftUID = self.UID()
+            # build mftUIDs made of mft UID and subTypes fake UIDs
+            UID = self.UID()
+            mftUIDs = [UID, ]
+            for subType in self.getSubTypes():
+                mftUIDs.append("%s__subtype__%s" % (UID, subType['row_id']))
             for brain in brains:
                 annex = brain.getObject()
-                if annex.getMeetingFileType() == mftUID:
+                if annex.getMeetingFileType() in mftUIDs:
                     raise BeforeDeleteException("can_not_delete_meetingfiletype_meetingfile")
         BaseContent.manage_beforeDelete(self, item, container)
-
 
 
 registerType(MeetingFileType, PROJECTNAME)

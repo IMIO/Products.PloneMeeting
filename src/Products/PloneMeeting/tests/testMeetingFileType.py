@@ -51,6 +51,31 @@ class testMeetingFileType(PloneMeetingTestCase):
         item.manage_delObjects([annex.getId(), ])
         meetingFileTypesFolder.manage_delObjects([meetingFileType.getId(), ])
 
+    def test_pm_CanNotRemoveLinkedSubMeetingFileType(self):
+        '''While removing a MeetingFileType, it should raise if a subType it is used by a MeetingFile...'''
+        mftData = self.meetingConfig.getFileTypes('item')[0]
+        mft = self.portal.uid_catalog(UID=mftData['id'])[0].getObject()
+        mft.setSubTypes(({'row_id': 'unique_row_id_123',
+                          'title': 'Annex sub type',
+                          'predefinedTitle': 'Annex sub type predefined title',
+                          'otherMCCorrespondences': (),
+                          'isActive': '1', }, ))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item, )
+        # modify annex fileType to use the defined subType
+        annex.setMeetingFileType('%s__subtype__unique_row_id_123' % mft.UID())
+        self.changeUser('admin')
+        # if we try to remove this meetingFileType, it raises an Exception
+        # because one of it's subTypes is in use
+        meetingFileTypesFolder = mft.aq_inner.aq_parent
+        self.assertRaises(BeforeDeleteException,
+                          meetingFileTypesFolder.manage_delObjects,
+                          [mft.getId(), ])
+        # if we remove the MeetingFile linked to the MeetingFileType subType, we can remove it
+        item.manage_delObjects([annex.getId(), ])
+        meetingFileTypesFolder.manage_delObjects([mft.getId(), ])
+
     def test_pm_validate_subTypes(self):
         '''Test the MeetingFileType.subTypes validation.
            A subType can not be removed if in use.'''
