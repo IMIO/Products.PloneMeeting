@@ -1001,8 +1001,11 @@ span#content-history.highlight-history-link a {
     padding-left: 0;
 }
 #content ul.item-predecessors li:before {
-    content: "4";
+    content: "n";
     font-family: "Webdings";
+    font-size: 0.4em;
+    padding-right: 0.5em;
+    vertical-align: top;
     color: &dtml-discreetColor;;;
 }
 #content ul.item-predecessors li {
