@@ -271,7 +271,7 @@ def onItemDuplicated(item, event):
     # if item and event.newItem portal_types are not the same
     # it means that item was sent to another meetingConfig
     newItem = event.newItem
-    if item.portal_type == newItem:
+    if item.portal_type == newItem.portal_type:
         return
     # add a line to the original item history
     tool = getToolByName(item, 'portal_plonemeeting')
