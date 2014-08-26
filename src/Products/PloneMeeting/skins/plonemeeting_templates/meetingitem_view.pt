@@ -174,9 +174,12 @@
                         i18n:translate="PloneMeeting_label_predecessor"></span>:&nbsp;&nbsp;
                   </div>
                 </td>
-                <td><tal:predecessors tal:repeat="predecessor predecessors">
-                     <tal:predecessor replace="structure predecessor" /><br />
-                    </tal:predecessors>
+                <td>
+                    <ul class="item-predecessors">
+                        <li tal:repeat="predecessor predecessors">
+                            <tal:predecessor replace="structure predecessor" />
+                        </li>
+                    </ul>
                 </td>
               </tr>
             </table>

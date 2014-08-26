@@ -995,6 +995,19 @@ span#content-history.highlight-history-link a {
     font-weight: bold;
 }
 
+#content ul.item-predecessors {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+#content ul.item-predecessors li:before {
+    content: "4";
+    font-family: "Webdings";
+    color: &dtml-discreetColor;;;
+}
+#content ul.item-predecessors li {
+    line-height: 1em;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
