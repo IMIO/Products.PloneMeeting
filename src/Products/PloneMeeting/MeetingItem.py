@@ -1028,7 +1028,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     schema = MeetingItem_schema
 
     ##code-section class-header #fill in your manual code here
-    itemPositiveDecidedStates = ('accepted', )
     meetingTransitionsAcceptingRecurringItems = ('_init_', 'publish', 'freeze', 'decide')
     beforePublicationStates = ('itemcreated', 'proposed', 'prevalidated',
                                'validated')
@@ -1363,8 +1362,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns True is the current item can be cloned to another
            meetingConfig. This method is used as a condition for showing
            or not the 'otherMeetingConfigsClonableTo' field.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        if meetingConfig.getMeetingConfigsToCloneTo():
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if cfg.getMeetingConfigsToCloneTo():
             return True
         return False
 
@@ -3963,6 +3963,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            cloned to another meetingConfigFolder.'''
         return SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY + destMeetingConfigId
 
+    security.declarePublic('itemPositiveDecidedStates')
+    def itemPositiveDecidedStates(self):
+        '''See doc in interfaces.py.'''
+        return ('accepted', )
+
     security.declarePublic('mayCloneToOtherMeetingConfig')
     def mayCloneToOtherMeetingConfig(self, destMeetingConfigId):
         '''Checks that we can clone the item to another meetingConfigFolder.
@@ -3971,7 +3976,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Check that the item is in the correct state and that it has not
         # already be cloned to this other meetingConfig.
         item = self.getSelf()
-        if not item.queryState() in item.itemPositiveDecidedStates or not \
+        if not item.queryState() in item.adapted().itemPositiveDecidedStates() or not \
            destMeetingConfigId in item.getOtherMeetingConfigsClonableTo() or \
            item._checkAlreadyClonedToOtherMC(destMeetingConfigId):
             return False

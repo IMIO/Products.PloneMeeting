@@ -407,9 +407,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals([action['action'] for action in newItem.workflow_history[itemWorkflow]],
                           [None, 'create_to_%s_from_%s' % (otherMeetingConfigId, meetingConfigId)])
         # now check that the item is sent to another meetingConfig for each
-        # MeetingItem.itemPositiveDecidedStates
+        # item.itemPositiveDecidedStates() state
         # by default, the only positive state is 'accepted'
-        for state in MeetingItem.itemPositiveDecidedStates:
+        for state in item.adapted().itemPositiveDecidedStates():
             self.changeUser('pmCreator1')
             self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
             self.changeUser('pmManager')

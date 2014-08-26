@@ -26,7 +26,6 @@ from Products.CMFCore.utils import getToolByName
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable
-from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
 from Products.PloneMeeting.utils import sendMailIfRelevant, addRecurringItemsIfRelevant, sendAdviceToGiveMailIfRelevant
 
@@ -77,7 +76,7 @@ def onItemTransition(item, event):
     else:
         action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     # check if we need to send the item to another meetingConfig
-    if item.queryState() in MeetingItem.itemPositiveDecidedStates:
+    if item.queryState() in item.adapted().itemPositiveDecidedStates():
         otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
             # if already cloned to another MC, pass.  This could be the case

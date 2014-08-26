@@ -311,7 +311,6 @@ class IMeetingItemDocumentation:
     def onDiscussChanged(toDiscuss):
         '''This method is called when value of field "toDiscuss" (p_toDiscuss)
            has changed on an item.'''
-
     def isPrivacyViewable():
         '''Privacy acts as a simple filter in front of workflow-based security.
            It means that, if someone has the "View" permission on an item, he
@@ -330,13 +329,15 @@ class IMeetingItemDocumentation:
            which is the proposing group for the item. Note that
            isPrivacyViewable is automatically True if the item has field
            privacy=False.'''
-
     def getExtraFieldsToCopyWhenCloning():
         '''While cloning an item (to another MeetingConfig or not), some fields are selected
            to be copied to the new cloned items.  If we want to add some arbitrary
            fields like fields coming from a SchemaExtender, we can specify this
            with this method that will returns a list of extra field ids to copy to
            the cloned item.'''
+    def itemPositiveDecidedStates():
+        '''Return a tuple containing item states considered as 'positive'
+           like 'accepted' for example.'''
 
 
 class IMeetingItemWorkflowConditions(Interface):
