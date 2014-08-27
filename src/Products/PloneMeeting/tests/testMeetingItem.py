@@ -263,7 +263,7 @@ class testMeetingItem(PloneMeetingTestCase):
         #2. check with a Meeting
         #3. check with a MeetingFile
 
-    def test_pm_ListProposingGroup(self):
+    def test_pm_ListProposingGroups(self):
         '''Check that the user is creator for the proposing groups.'''
         # test that if a user is cretor for a group but only reviewer for
         # another, it only returns the groups the user is creator for...  This
@@ -279,7 +279,11 @@ class testMeetingItem(PloneMeetingTestCase):
         _createHomeFolder(self.portal, 'pmReviewer1')
         self.changeUser('pmReviewer1')
         item = self.create('MeetingItem')
-        self.assertEquals(tuple(item.listProposingGroup()), ('vendors', ))
+        self.assertTrue(item.listProposingGroups().keys() == ['vendors', ])
+        # a 'Manager' will be able to select any proposing group
+        # no matter he is a creator or not
+        self.changeUser('admin')
+        self.assertTrue(item.listProposingGroups().sortedByKey().keys() == ['developers', 'vendors', ])
 
     def test_pm_SendItemToOtherMC(self):
         '''Test the send an item to another meetingConfig functionnality'''

@@ -581,7 +581,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_proposingGroup',
             i18n_domain='PloneMeeting',
         ),
-        vocabulary='listProposingGroup',
+        vocabulary='listProposingGroups',
     ),
     LinesField(
         name='associatedGroups',
@@ -1637,8 +1637,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append((meetingConfigId, getattr(tool, meetingConfigId).Title()))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listProposingGroup')
-    def listProposingGroup(self):
+    security.declarePublic('listProposingGroups')
+    def listProposingGroups(self):
         '''Return the MeetingGroup(s) that may propose this item. If no group is
            set yet, this method returns the MeetingGroup(s) the user belongs
            to. If a group is already set, it is returned.
@@ -1647,7 +1647,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         groupId = self.getField('proposingGroup').get(self)
         isDefinedInTool = self.isDefinedInTool()
-        res = tool.getSelectableGroups(isDefinedInTool=isDefinedInTool,
+        # bypass for Managers, pass idDefinedInTool to True so Managers
+        # can select any available MeetingGroup
+        isManager = tool.isManager(realManagers=True)
+        res = tool.getSelectableGroups(isDefinedInTool=(isDefinedInTool or isManager),
                                        existingGroupId=groupId)
         # add a 'make_a_choice' value when the item is in the tool
         if isDefinedInTool:

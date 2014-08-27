@@ -212,7 +212,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         usingGroups = self.getUsingGroups()
         # If we have an item, do one additional check
         if usingGroups and not tool.isManager(realManagers=True):
-            # listProposingGroup takes isDefinedInTool into account
+            # listProposingGroups takes isDefinedInTool into account
             proposingGroupIds = tool.getSelectableGroups(userId=userId)
             keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
             # Check intersection between self.usingGroups and groups for wich

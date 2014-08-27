@@ -216,7 +216,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # create an item so we can test vocabularies
         item = self.create('MeetingItem')
         self.assertTrue('developers' in item.listAssociatedGroups())
-        self.assertTrue('developers' in item.listProposingGroup())
+        self.assertTrue('developers' in item.listProposingGroups())
         self.assertTrue('developers_reviewers' in item.listCopyGroups())
         self.assertTrue('developers' in item.listOptionalAdvisers())
         self.assertTrue(self.tool.userIsAmong('creators'))
@@ -229,7 +229,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers' not in item.listAssociatedGroups())
         # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...
         item.setProposingGroup('')
-        self.assertTrue('developers' not in item.listProposingGroup())
+        self.assertTrue('developers' not in item.listProposingGroups())
         self.assertTrue('developers_reviewers' not in item.listCopyGroups())
         self.assertTrue('developers' not in item.listOptionalAdvisers())
         self.assertTrue(not self.tool.userIsAmong('creators'))
