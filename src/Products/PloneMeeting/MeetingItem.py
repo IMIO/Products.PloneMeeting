@@ -1454,21 +1454,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res = None
         return res
 
-    security.declarePublic('getMeetingsAcceptingItems')
-    def getMeetingsAcceptingItems(self,
-                                  review_states=('created', 'published', 'frozen', 'decided'),
-                                  inTheFuture=False):
-        '''Check docstring in interfaces.py.'''
+    def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
+        '''Overrides the default method so we only display meetings that are
+           in the 'created' or 'frozen' state.'''
         item = self.getSelf()
-        meetingPortalType = item.portal_plonemeeting.getMeetingConfig(
-            item).getMeetingTypeName()
+        tool = getToolByName(item, 'portal_plonemeeting')
+        catalog = getToolByName(item, 'portal_catalog')
+        meetingPortalType = tool.getMeetingConfig(item).getMeetingTypeName()
+        # If the current user is a meetingManager (or a Manager),
+        # he is able to add a meetingitem to a 'decided' meeting.
+        # except if we specifically restricted given p_review_states.
+        if review_states == ('created', 'frozen') and tool.isManager():
+            review_states += ('decided', 'published', )
+
         query = {'portal_type': meetingPortalType,
                  'review_state': review_states,
                  'sort_on': 'getDate'}
+
         if inTheFuture:
             query['getDate'] = {'query': DateTime(), 'range': 'min'}
 
-        res = item.portal_catalog.unrestrictedSearchResults(**query)
+        res = catalog.unrestrictedSearchResults(**query)
         # Published, frozen and decided meetings may still accept "late" items.
         return res
 

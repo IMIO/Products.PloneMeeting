@@ -1898,6 +1898,31 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
         self.assertTrue(item.getDeliberation(separate=True) == item.getMotivation() + item.getDecision())
 
+    def test_pm_GetMeetingsAcceptingItems(self):
+        """Test the MeetingItem.getMeetingsAcceptingItems method."""
+        self.changeUser('pmManager')
+        #create 4 meetings with items so we can play the workflow
+        #will stay 'created'
+        m1 = self.create('Meeting', date=DateTime('2013/02/01 08:00:00'))
+        #go to state 'frozen'
+        m2 = self.create('Meeting', date=DateTime('2013/02/08 08:00:00'))
+        self.freezeMeeting(m2)
+        #go to state 'decided'
+        m3 = self.create('Meeting', date=DateTime('2013/02/15 08:00:00'))
+        self.decideMeeting(m3)
+        #go to state 'closed'
+        m4 = self.create('Meeting', date=DateTime('2013/02/22 08:00:00'))
+        self.closeMeeting(m4)
+        item = self.create('MeetingItem')
+        #getMeetingsAcceptingItems should only return meetings
+        #that are 'created', 'frozen' or 'decided' for the meetingManager
+        self.assertEquals([m.id for m in item.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
+        #getMeetingsAcceptingItems should only return meetings
+        #that are 'created' or 'frozen' for the meetingMember
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEquals([m.id for m in item.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
