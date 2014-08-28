@@ -29,6 +29,7 @@ from zope.i18n import translate
 
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
 class testMeeting(PloneMeetingTestCase):
@@ -669,7 +670,7 @@ class testMeeting(PloneMeetingTestCase):
         self.setCurrentMeeting(m1)
         self.presentItem(i1)
         self.freezeMeeting(m1)
-        self.assertTrue(not m1.getAvailableItems())
+        self.assertTrue(not m1.adapted().getAvailableItems())
         # turn i2 into a late item
         proposedState = self.WF_STATE_NAME_MAPPINGS['proposed']
         # if current workflow does not use late items, we pass this test...
@@ -681,13 +682,13 @@ class testMeeting(PloneMeetingTestCase):
             self.validateItem(i2)
             # i1 is a late item
             self.assertTrue(i2.wfConditions().isLateFor(m1))
-            self.assertTrue([item.UID for item in m1.getAvailableItems()] == [i2.UID()])
+            self.assertTrue([item.UID for item in m1.adapted().getAvailableItems()] == [i2.UID()])
 
         # if a meeting is not in a MEETING_STATES_ACCEPTING_ITEMS state
         # it can not accept any kind of items, getAvailableItems returns []
         self.closeMeeting(m1)
         self.assertTrue(not m1.queryState() in MEETING_STATES_ACCEPTING_ITEMS)
-        self.assertTrue(not m1.getAvailableItems())
+        self.assertTrue(not m1.adapted().getAvailableItems())
 
     def test_pm_PresentSeveralItems(self):
         """
@@ -742,6 +743,47 @@ class testMeeting(PloneMeetingTestCase):
         for item in allItems[:-1]:
             self.assertEquals(item.queryState(), 'accepted')
         self.assertEquals(allItems[-1].queryState(), 'itemfrozen')
+
+    def test_pm_PresentItemToMeeting(self):
+        '''Test the functionnality to present an item.
+           It will be presented to the meeting :
+           - corresponding to the currently published meeting;
+           - as normal item to the next available meeting with date in the future.
+        '''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting', date='2014/01/01')
+        # create Meeting here above set meeting as current meeting object
+        self.assertTrue(getCurrentMeetingObject(item).UID() == meeting.UID())
+        # if we present the item, it will be presented in the published meeting
+        self.presentItem(item)
+        self.assertTrue(item.queryState() == 'presented')
+        self.assertTrue(item.getMeeting().UID() == meeting.UID())
+        # remove item from meeting
+        self.backToState(item, 'validated')
+        self.assertTrue(not item.hasMeeting())
+        self.assertTrue(item.queryState() == 'validated')
+        # now unset current meeting
+        item.REQUEST['PUBLISHED'] = item
+        # as no current meeting and no meeting in the future, the item
+        # may not be presented
+        self.assertTrue(not item.wfConditions().mayPresent())
+        # MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject returns nothing
+        # as no meeting in the future
+        self.assertTrue(not item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
+        # clean RAM cache for MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
+        # and set meeting date in the future
+        self._cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
+        meeting.setDate(DateTime() + 2)
+        meeting.reindexObject(idxs=['getDate', ])
+        # now item may be presented in the meeting
+        self.assertTrue(item.wfConditions().mayPresent())
+        # there is a meeting to insert into
+        self.assertTrue(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
+        # present it
+        self.presentItem(item)
+        self.assertTrue(item.queryState() == 'presented')
+        self.assertTrue(item.getMeeting().UID() == meeting.UID())
 
     def test_pm_Validate_date(self):
         """

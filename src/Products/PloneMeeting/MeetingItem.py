@@ -157,7 +157,7 @@ class MeetingItemWorkflowConditions:
         # Indeed, an item may only be presented within a meeting.
         res = False
         if checkPermission(ReviewPortalContent, self.context) and \
-           self._publishedObjectIsMeeting():
+           (self._publishedObjectIsMeeting() or self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()):
             res = True  # Until now
             # Verify if all automatic advices have been given on this item.
             if self.context.enforceAdviceMandatoriness() and \
@@ -392,6 +392,11 @@ class MeetingItemWorkflowActions:
            item should be inserted as a late item, it is nevertheless inserted
            as a normal item.'''
         meeting = getCurrentMeetingObject(self.context)
+        # if we were not on a meeting view, we will present
+        # the item in the next available meeting
+        if not meeting:
+            # find meetings accepting items in the future
+            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
         meeting.insertItem(self.context, forceNormal=forceNormal)
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
@@ -1450,17 +1455,41 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getMeetingsAcceptingItems')
-    def getMeetingsAcceptingItems(self, review_states=('created', 'published', 'frozen', 'decided')):
+    def getMeetingsAcceptingItems(self,
+                                  review_states=('created', 'published', 'frozen', 'decided'),
+                                  inTheFuture=False):
         '''Check docstring in interfaces.py.'''
         item = self.getSelf()
         meetingPortalType = item.portal_plonemeeting.getMeetingConfig(
             item).getMeetingTypeName()
-        res = item.portal_catalog.unrestrictedSearchResults(
-            portal_type=meetingPortalType,
-            review_state=review_states,
-            sort_on='getDate')
+        query = {'portal_type': meetingPortalType,
+                 'review_state': review_states,
+                 'sort_on': 'getDate'}
+        if inTheFuture:
+            query['getDate'] = {'query': DateTime(), 'range': 'min'}
+
+        res = item.portal_catalog.unrestrictedSearchResults(**query)
         # Published, frozen and decided meetings may still accept "late" items.
         return res
+
+    def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
+        '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
+        # do only recompute once by REQUEST
+        return str(self.REQUEST.debug)
+
+    @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey)
+    def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self):
+        '''Return the meeting the item will be inserted into in case the 'present'
+           transition from another view than the meeting view.'''
+        # first, find meetings in the future still accepting items
+        # but that are not in MEETING_NOT_CLOSED_STATES
+        brains = self.adapted().getMeetingsAcceptingItems(inTheFuture=True)
+        for brain in brains:
+            # presenting an item from another place than the relevant meeting view
+            # will insert it as a normal item to the very next available meeting
+            if not brain.review_state in MEETING_NOT_CLOSED_STATES:
+                return brain.getObject()
+        return None
 
     security.declarePublic('getIcons')
     def getIcons(self, inMeeting, meeting):
@@ -3920,7 +3949,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # find next meeting accepting items, only query meetings that
                         # are in the initial workflow state
                         initial_state = wfTool[destMeetingConfig.getMeetingWorkflow()].initial_state
-                        meetingsAcceptingItems = newItem.getMeetingsAcceptingItems(review_states=(initial_state, ))
+                        meetingsAcceptingItems = newItem.adapted().getMeetingsAcceptingItems(review_states=(initial_state, ))
                         # we only keep meetings that are in the
                         if not meetingsAcceptingItems:
                             plone_utils.addPortalMessage(_('could_not_present_item_no_meeting_accepting_items',
