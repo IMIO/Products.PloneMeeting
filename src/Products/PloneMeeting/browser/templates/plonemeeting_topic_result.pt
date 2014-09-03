@@ -10,7 +10,7 @@
                  showColors     python: meetingConfig.getParentNode().showColorsForUser();
                  resultMetaType python: topic.getProperty('meeting_topic_type', 'MeetingFile');
                  searchResults  python: meetingConfig.getTopicResults(topic, isFake);
-                 batch searchResults">
+                 batch searchResults;">
 
   <tal:comment replace="nothing">This macro is normally used to display the
     results of a topic (="here"). But we also reuse it to display a custom
@@ -147,13 +147,7 @@
                                     isPrivacyViewable python: meetingItem.adapted().isPrivacyViewable()">
             <tal:comment replace="nothing">Icon to display</tal:comment>
             <tal:showTitle replace="structure python: tool.getColoredLink(meetingItem, showColors, highlight=isFake, inMeeting=True)"/>
-            <span tal:condition="python: not meetingItem.fieldIsEmpty('description')"
-                  id="pmDescription" name="pmDescription" class="pmExpanded"
-                  tal:attributes="style python:'display: %s' % descrsStyle">
-              <span tal:condition="isFake"
-                    tal:content="structure python: tool.highlight(meetingItem.Description())"></span>
-              <span tal:condition="not: isFake" tal:replace="structure meetingItem/Description"></span>
-            </span>
+            <metal:itemMoreInfos use-macro="here/@@pm-macros/itemMoreInfos" />
             <tal:comment replace="nothing">Annexes</tal:comment>
             <table class="no-style-table" cellpadding="0" cellspacing="0" align="right"
                    tal:define="showAnnexes python: 'annexes' in visibleColumns;
@@ -176,8 +170,12 @@
                 </td>
               </tr>
             </table>
-            <tal:budget condition="python: showBudgetInfos and isPrivacyViewable and meetingItem.getBudgetRelated()">
-             <br/><div tal:replace="structure meetingItem/getBudgetInfos"></div>
+            <tal:budget condition="python: showBudgetInfos and isPrivacyViewable and meetingItem.getBudgetRelated() and not meetingItem.fieldIsEmpty('budgetInfos')">
+                <span tal:define="field python: meetingItem.getField('budgetInfos');
+                                  mode string:view;
+                                  context python: meetingItem;">
+                <span metal:use-macro="context/widgets/field/macros/view" />
+            </span>
             </tal:budget>
             </tal:wakeUpItem>
           </tal:forItem>

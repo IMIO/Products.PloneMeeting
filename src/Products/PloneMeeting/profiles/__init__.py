@@ -19,7 +19,7 @@
 # 02110-1301, USA.
 
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-DEFAULT_USER_PASSWORD = 'meeting'
+from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 
 
 class Descriptor:
@@ -224,7 +224,7 @@ class MeetingConfigDescriptor(Descriptor):
     multiSelectFields = ('usedItemAttributes', 'historizedItemAttributes',
                          'recordItemHistoryStates', 'usedMeetingAttributes',
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
-                         'itemsListVisibleColumns', 'itemColumns', 'meetingColumns',
+                         'itemsListVisibleColumns', 'itemsListVisibleFields', 'itemColumns', 'meetingColumns',
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
                          'mailItemEvents', 'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates',
                          'itemDecidedStates', 'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
@@ -395,7 +395,9 @@ class MeetingConfigDescriptor(Descriptor):
         # In the meetingitems_list.pt, you can choose which columns are shown
         self.itemsListVisibleColumns = ['state', 'categoryOrProposingGroup',
                                         'annexes', 'annexesDecision', 'actions']
-
+        # what fields of the item will be displayed in the items listings
+        # while clicking on the show more infos action (glasses icon)
+        self.itemsListVisibleFields = ['description', 'decision']
         # In item-related topic results, what columns are shown?
         self.itemColumns = ['creationDate', 'creator', 'state', 'annexes',
                             'annexesDecision', 'advices', 'actions', 'meeting']

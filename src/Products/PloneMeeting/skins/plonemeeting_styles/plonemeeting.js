@@ -235,44 +235,31 @@ function computeStartNumberFrom(itemNumber, totalNbOfItems, batchSize) {
   return res;
 }
 
-// Function that, depending on p_mustShow, shows or hides the descriptions.
-function setDescriptionsVisiblity(mustShow) {
-  // First, update every description of every item
-  var pmDescriptions = document.getElementsByName('pmDescription');
-  for (var i=0; i<pmDescriptions.length; i++) {
-    var elem = pmDescriptions[i];
-    if (mustShow) { // Show the descriptions
-      addClassName(elem, 'pmExpanded');
-      elem.style.display = 'inline';
-    }
-    else { // Hide the descriptions
-      removeClassName(elem, 'pmExpanded');
-      elem.style.display = 'none';
-    }
-  }
-  // Then, change the action icon/text and update the cookie
-  var toggleElement = document.getElementById('document-action-toggledescriptions');
-  if (mustShow) {
-    if (toggleElement.tagName == 'IMG') {
-      toggleElement.src = toggleElement.src.replace('/expandDescrs.gif',
-                                                    '/collapseDescrs.gif');
-    }
-    createCookie('pmShowDescriptions', 'true');
-  }
-  else {
-    if (toggleElement.tagName == 'IMG') {
-      toggleElement.src = 'expandDescrs.gif';
-      toggleElement.src = toggleElement.src.replace('/collapseDescrs.gif',
-                                                    '/expandDescrs.gif');
-    }
-    createCookie('pmShowDescriptions', 'false');
-  }
-};
-
 // Function that toggles the descriptions visibility
 function toggleMeetingDescriptions() {
   if (readCookie('pmShowDescriptions')=='true') setDescriptionsVisiblity(false);
   else setDescriptionsVisiblity(true);
+};
+
+// Function that, depending on p_mustShow, shows or hides the descriptions.
+function setDescriptionsVisiblity(mustShow) {
+
+  // hide or show every pmMoreInfo element
+  var $pmMoreInfos = $('.pmMoreInfo');
+
+
+  // show/hide the infos and update the cookie
+  if (mustShow) {
+    $pmMoreInfos.fadeIn("fast");
+    $pmMoreInfos.show()
+    createCookie('pmShowDescriptions', 'true');
+  }
+  else {
+    $pmMoreInfos.fadeOut("fast", function() {
+           $(this).hide();
+       });
+    createCookie('pmShowDescriptions', 'false');
+  }
 };
 
 // Function that toggles the persons visibility
@@ -552,22 +539,18 @@ function toggleIcon(UID, img_tag, baseUrl, viewName, baseSelector) {
         });
     };
     // special management for the toggle budgetRelated where we need to display
-    // or hide the budgetInfos field.  If budgetRelated, we show it but we insert it under
-    // the current span because if we insert it into the span, the quick edit does not work...
+    // or hide the budgetInfos field.  If budgetRelated, we show it, either we hide it...
+    $hook_budgetInfos = $('#hook_budgetInfos');
     if (viewName == '@@toggle_budget_related') {
         if (img_tag.indexOf('nameBudgetRelatedNo') > 0) {
-        // we display the budgetInfos field if necessary
-        var $hook_budgetInfos = $('<div id="hook_budgetInfos"></p>');
-        askAjaxChunk('hook_budgetInfos', 'POST', baseUrl, '@@pm-macros', 'displayBudgetInfos', {});
-        $hook_budgetInfos.hide();
-        $hook_budgetInfos.insertAfter($span);
-        $hook_budgetInfos.fadeIn("normal");
+        $('#hideBudgetInfosIfNotBudgetRelated')[0].style.display = 'block';
+        $hook_budgetInfos.fadeIn("fast");
+        $hook_budgetInfos.show();
         }
         else {
             // find the 'hook_budgetInfos' and removes it
-            $hook_budgetInfos = $('#hook_budgetInfos');
-            $hook_budgetInfos.fadeOut("normal", function() {
-                   $(this).remove();
+            $hook_budgetInfos.fadeOut("fast", function() {
+                   $(this).hide();
                });
         };
     };

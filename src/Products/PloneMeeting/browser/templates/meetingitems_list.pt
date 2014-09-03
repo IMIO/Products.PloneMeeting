@@ -64,14 +64,7 @@
 
       <tal:comment replace="nothing">Title</tal:comment>
       <th class="pm_meeting_listing_th_title">
-        <tal:comment replace="nothing">Empty comments here above is to have pretty html without having a space inserted between 2 spans</tal:comment>
-        <span i18n:translate="listingheader_item_title"></span><!--
-        --><span id="pmDescription" name="pmDescription" class="pmExpanded"
-              tal:condition="python: not isDecided" i18n:translate="and_description"
-              tal:attributes="style python:'display: %s' % descrsStyle"></span><!--
-        --><span tal:condition="python: isDecided" i18n:translate="and_decision"
-              id="pmDescription" name="pmDescription" class="pmExpanded"
-              tal:attributes="style python:'display: %s' % descrsStyle"></span>
+        <span i18n:translate="listingheader_item_title"></span>
       </th>
 
       <tal:comment replace="nothing">Creator</tal:comment>
@@ -226,14 +219,7 @@
         <td tal:define="global shownItems python:shownItems+1" valign="top" class="pmLinks">
           <tal:comment replace="nothing">The title itself</tal:comment>
           <span tal:replace="structure python: tool.getColoredLink(meetingItem, showColors, inMeeting=itemsNumbering, meeting=meeting)"></span>
-          <span id="pmDescription" name="pmDescription" class="pmExpanded"
-                tal:attributes="style python:'display: %s' % descrsStyle">
-            <span tal:condition="python: not meetingItem.fieldIsEmpty('description')"
-                  tal:content="structure meetingItem/Description"></span>
-            <tal:comment replace="nothing">We have to check that the current user can see the decision field too...</tal:comment>
-            <i tal:condition="python: isDecided and not meetingItem.fieldIsEmpty('decision') and member.has_permission('PloneMeeting: Read decision', meetingItem)"
-               tal:content="structure meetingItem/getDeliberation"></i>
-          </span>
+            <metal:itemMoreInfos use-macro="here/@@pm-macros/itemMoreInfos" />
           <tal:comment replace="nothing">Item reference, annexes and decision-related annexes</tal:comment>
           <table class="no-style-table" cellpadding="0" cellspacing="0" width="100%">
            <tr valign="bottom">

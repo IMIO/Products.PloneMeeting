@@ -870,6 +870,21 @@ schema = Schema((
         default=defValues.meetingColumns,
         enforceVocabulary=False,
     ),
+    LinesField(
+        name='itemsListVisibleFields',
+        widget=MultiSelectionWidget(
+            description="ItemsListVisibleFields",
+            description_msgid="items_list_visible_fields_descr",
+            label='Itemslistvisiblefields',
+            label_msgid='PloneMeeting_label_itemsListVisibleFields',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listItemsListVisibleFields',
+        default=defValues.itemsListVisibleFields,
+        enforceVocabulary=False,
+    ),
     IntegerField(
         name='maxShownAvailableItems',
         default=defValues.maxShownAvailableItems,
@@ -2268,10 +2283,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.listItemRelatedColumns()
         return DisplayList(tuple(res))
 
+    def listItemsListVisibleFields(self):
+        '''
+        '''
+        res = []
+        for field in MeetingItem.schema.fields():
+            fieldName = field.getName()
+            if fieldName in ITEMS_LIST_VISIBLE_FIELDS:
+                res.append((fieldName,
+                            '%s (%s)' % (translate(field.widget.label_msgid,
+                                                   domain=field.widget.i18n_domain,
+                                                   context=self.REQUEST),
+                                         fieldName)
+                            ))
+        return res
+
     security.declarePrivate('listItemColumns')
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.append(('meeting', translate('Meeting',
+        res.append(('meeting', translate('presented_in_meeting',
                                          domain='PloneMeeting',
                                          context=self.REQUEST)))
         res.append(('preferredMeeting', translate('PloneMeeting_label_preferredMeeting',

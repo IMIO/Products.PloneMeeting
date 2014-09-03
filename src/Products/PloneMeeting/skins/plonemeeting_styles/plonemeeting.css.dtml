@@ -1,5 +1,5 @@
 /* <dtml-var "enableHTTPCompression(request=REQUEST, debug=1)"> */
-/* <dtml-with base_properties> */
+/* <dtml-with imioapps_properties> */
 /* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
 
 fieldset {line-height: 1em; margin: 0.5em 0; }
@@ -98,6 +98,14 @@ p {
     border: 1px solid black !important;
 }
 
+/* used for extra infos displayed on items listings or on the meeting view when using 'glasses icon action' */
+body.template-plonemeeting_topic_view label.formQuestion > span,
+body.template-plonemeeting_topic_view label.formQuestion,
+body.template-meeting_view label.formQuestion > span,
+body.template-meeting_view label.formQuestion {
+    font-style: italic;
+    color: &dtml-discreetColor;;
+}
 table.no-style-table td {
     border: 0 !important;
     padding: 0 !important;
@@ -1005,7 +1013,7 @@ span#content-history.highlight-history-link a {
     font-family: "Webdings";
     font-size: 0.4em;
     padding-right: 0.5em;
-    vertical-align: top;
+    vertical-align: text-bottom;
     color: &dtml-discreetColor;;;
 }
 #content ul.item-predecessors li {

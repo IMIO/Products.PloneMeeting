@@ -234,6 +234,13 @@ DELAY_UNAVAILABLE_WEEKDAY_NUMBER = 5
 # Define the weekday mnemonics to match the date.weekday function
 PY_DATETIME_WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
+# fields available in the MeetingConfig.itemsListVisibleFields vocabulary
+ITEMS_LIST_VISIBLE_FIELDS = ('description', 'detailedDescription',
+                             'budgetInfos', 'motivation', 'decision', )
+
+# default user password used when sample users are added to a PloneMeeting during install
+DEFAULT_USER_PASSWORD = 'meeting'
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

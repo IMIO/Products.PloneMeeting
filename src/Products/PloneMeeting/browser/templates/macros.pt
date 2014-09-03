@@ -324,10 +324,14 @@ document.location.reload(true);
     </tal:notBudgetRelated>
   </tal:notMayEdit>
 
-  <tal:displayBudgetInfos condition="context/getBudgetRelated"
-                          define="fieldName string:budgetInfos;
+  <tal:displayBudgetInfos define="fieldName string:budgetInfos;
                                   ajaxEdit string:True;">
-    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    <span id="hideBudgetInfosIfNotBudgetRelated"
+          style="display: none;"
+          tal:define="defaultDisplay python: context.getBudgetRelated() and 'block' or 'none';"
+          tal:attributes="style string:display:${defaultDisplay};">
+        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </span>
   </tal:displayBudgetInfos>
 </metal:budgetInfos>
 
@@ -818,3 +822,25 @@ The name is form.button.cancel because it correspond to the overlay close select
    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
 </tal:field>
 </metal:displayBudgetInfos>
+
+<metal:itemMoreInfos define-macro="itemMoreInfos" i18n:domain="PloneMeeting">
+<tal:comment replace="nothing">Macro that display more informations about item depending
+on what is defined in MeetingConfig.itemsListVisibleFields, when user click on the glasses icon action.
+Fields are only displayed if :
+- not empty;
+- not already in visibleColumns (that can be the case for budgetInfos);
+- foe bufgetInfos, if budgetRelated is True.</tal:comment>
+    <span name="pmDescription"
+          class="pmMoreInfo"
+          tal:attributes="style python:'display: %s' % descrsStyle"
+          tal:define="mode string:view;
+                      context python: meetingItem;">
+        <tal:loop repeat="visibleField meetingConfig/getItemsListVisibleFields">
+            <span tal:define="field python: meetingItem.getField(visibleField);"
+                  tal:condition="python: not meetingItem.fieldIsEmpty(visibleField) and ((visibleField == 'budgetInfos' and
+                                 meetingItem.getBudgetRelated() or not visibleField == 'budgetInfos') and True or False) and not visibleField in visibleColumns">
+                <span metal:use-macro="context/widgets/field/macros/view" />
+            </span>
+        </tal:loop>
+    </span>
+</metal:itemMoreInfos>
