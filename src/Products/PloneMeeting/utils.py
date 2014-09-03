@@ -832,7 +832,8 @@ def getLastEvent(obj, transition, notBefore='transfer'):
        is the combined history of this item from several sites, and we want
        to search only within history of the "last" site, so we want to ignore
        everything that occurrred before the last "transfer" transition.'''
-    history = obj.workflow_history[obj.getWorkflowName()]
+    wfTool = getToolByName(obj, 'portal_workflow')
+    history = obj.workflow_history[wfTool.getWorkflowsFor(obj)[0].getId()]
     i = len(history)-1
     while i >= 0:
         event = history[i]
