@@ -88,6 +88,14 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added topic to 'search items of my groups', returning every items of groups a user is
   in, no matter what role the user has in the group (creator, reviewer, adviser, ...)
 - MeetingItem.onDuplicated and MeetingItem.onDuplicatedFromConfig hooks are now zope.event events
+- It is now possible to define in MeetingConfig.itemsListVisibleFields which fields of the items
+  will be shown/hidden when using the 'glasses' icon action.  Those extra informations about
+  the items are displayed in the items listings (my items, all items, ...) and in the different
+  listings of the meeting view (available items, presented items and late items)
+- An item can now be presented in a meeting from anywhere in the application
+  (listings of items, item view, ...), clicking on the 'present' action will present
+  the item to the next available meeting.  Before, the 'present' action was only shown in the
+  list of available items of the meeting view
 
 3.2.0.1 (2014-03-06)
 --------------------
