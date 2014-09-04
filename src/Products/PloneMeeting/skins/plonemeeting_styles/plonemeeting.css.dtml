@@ -98,6 +98,11 @@ p {
     border: 1px solid black !important;
 }
 
+/* make sure table borders in pmMoreInfo (when using glasses icon) are displayed */
+#content span.pmMoreInfo td {
+    border: 1px solid black;
+}
+
 /* used for extra infos displayed on items listings or on the meeting view when using 'glasses icon action' */
 body.template-plonemeeting_topic_view label.formQuestion > span,
 body.template-plonemeeting_topic_view label.formQuestion,
