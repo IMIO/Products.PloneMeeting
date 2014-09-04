@@ -250,8 +250,7 @@ function setDescriptionsVisiblity(mustShow) {
 
   // show/hide the infos and update the cookie
   if (mustShow) {
-    $pmMoreInfos.fadeIn("fast");
-    $pmMoreInfos.show()
+    $pmMoreInfos.hide().fadeIn("fast");
     createCookie('pmShowDescriptions', 'true');
   }
   else {
