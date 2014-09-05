@@ -1565,7 +1565,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getWorkflowName')
     def getWorkflowName(self):
         '''What is the name of my workflow ?'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         return cfg.getMeetingWorkflow()
 
     security.declarePublic('getLastEvent')
