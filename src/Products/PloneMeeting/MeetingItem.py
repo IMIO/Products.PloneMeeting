@@ -25,6 +25,7 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 import cgi
 import lxml.html
+import random
 import re
 from datetime import datetime
 from collections import OrderedDict
@@ -1432,6 +1433,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeeting_cachekey(method, self, brain=False):
         '''cachekey method for self.getMeeting.'''
+        # convenience for testing...  It makes ramcache disabled for this method in testing
+        if self.REQUEST.URL in ('http://foo', 'http://nohost'):
+            return random.random()
+
         return (self, str(self.REQUEST.debug), brain)
 
     security.declarePublic('getMeeting')
@@ -1942,6 +1947,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def queryState_cachekey(method, self):
         '''cachekey method for self.queryState.'''
+        # convenience for testing...  It makes ramcache disabled for this method in testing
+        if self.REQUEST.URL in ('http://foo', 'http://nohost'):
+            return random.random()
+
         return (self, str(self.REQUEST.debug))
 
     security.declarePublic('queryState')

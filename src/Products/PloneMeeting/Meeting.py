@@ -23,6 +23,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
+import random
 from appy.gen import No
 from collections import OrderedDict
 from App.class_init import InitializeClass
@@ -1553,6 +1554,10 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     def queryState_cachekey(method, self):
         '''cachekey method for self.queryState.'''
+        # convenience for testing...  It makes ramcache disabled for this method in testing
+        if self.REQUEST.URL in ('http://foo', 'http://nohost'):
+            return random.random()
+
         return (self, str(self.REQUEST.debug))
 
     security.declarePublic('queryState')

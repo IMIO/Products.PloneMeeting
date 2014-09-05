@@ -1303,6 +1303,8 @@ class testMeetingItem(PloneMeetingTestCase):
                                                  ('itemAssembly', 'itemSignatures', ))
         self.meetingConfig.setUsedMeetingAttributes(self.meetingConfig.getUsedMeetingAttributes() +
                                                     ('assembly', 'signatures', ))
+        # MeetingItem.attributeIsUsed is RAMCached
+        self._cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         # current user must be at least MeetingManager to use this
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, formAssembly.update)
