@@ -25,3 +25,8 @@ class PloneMeetingTopicResultMacros(BrowserView):
 class AdvicesMacros(BrowserView):
     """
     """
+
+
+class NavigateMacros(BrowserView):
+    """
+    """

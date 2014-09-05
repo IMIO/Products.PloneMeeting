@@ -352,6 +352,12 @@
         class=".macros.AdvicesMacros"
         template="templates/advices_macros.pt"
         permission="zope2.View"/>
+    <browser:page
+        name="navigate-macros"
+        for="*"
+        class=".macros.NavigateMacros"
+        template="templates/navigate_macros.pt"
+        permission="zope2.View"/>
     <!-- Annexes -->
     <browser:page
         name="annexes-macros"

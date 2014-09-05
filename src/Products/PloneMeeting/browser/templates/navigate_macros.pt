@@ -39,7 +39,7 @@
       <tal:comment replace="nothing">Go to the last page</tal:comment>
       <td tal:define="lastPageIsIncomplete python: totalNbOfItems % batchSize;
                       nbOfCompletePages python: totalNbOfItems/batchSize;
-                      nbOfCountedPages python: test(lastPageIsIncomplete, nbOfCompletePages, nbOfCompletePages-1);
+                      nbOfCountedPages python: lastPageIsIncomplete and nbOfCompletePages or nbOfCompletePages-1;
                       lastNumber python: (nbOfCountedPages*batchSize)+1"
           tal:condition="python: (startItem != lastNumber) and (startItem != lastNumber-batchSize)">
         <img tal:attributes="src string: $portal_url/arrowRightDouble.png;
@@ -174,7 +174,7 @@
       <tal:comment replace="nothing">Go to the last page</tal:comment>
       <td tal:define="lastPageIsIncomplete python: wholeSize % batchSize;
                       nbOfCompletePages python: wholeSize/batchSize;
-                      nbOfCountedPages python: test(lastPageIsIncomplete, nbOfCompletePages, nbOfCompletePages-1);
+                      nbOfCountedPages python: lastPageIsIncomplete and nbOfCompletePages or nbOfCompletePages-1;
                       lastNumber python: (nbOfCountedPages*batchSize)+1"
           tal:condition="python: (startNumber != lastNumber) and (startNumber != lastNumber-batchSize)">
         <img tal:attributes="src string: $portal_url/arrowRightDouble.png;
@@ -218,7 +218,7 @@
    <tal:comment replace="nothing">Go to the last page</tal:comment>
    <td tal:define="lastPageIsIncomplete python: totalNumber % batchSize;
                      nbOfCompletePages python: totalNumber/batchSize;
-                     nbOfCountedPages python: test(lastPageIsIncomplete, nbOfCompletePages, nbOfCompletePages-1);
+                     nbOfCountedPages python: lastPageIsIncomplete and nbOfCompletePages or nbOfCompletePages-1;
                      sNumber python: (nbOfCountedPages*batchSize)"
        tal:condition="python: (startNumber != sNumber) and (startNumber != sNumber-batchSize)">
     <img style="cursor:pointer" title="goto_next" i18n:attributes="title"
@@ -247,7 +247,7 @@
   <tal:filter define="filterIndex filterIndex | nothing" condition="filterIndex">
     <input type="text" size="10"
            tal:attributes="id python: '%s_%s' % (request['hookId'], filterIndex);
-                           value python: test(request.get('filterKey', '')==filterIndex, request.get('filterValue', ''), '')"/>
+                           value python: request.get('filterKey', '')==filterIndex and request.get('filterValue', '') or ''"/>
     <img tal:attributes="src string: $portal_url/funnel.png;
                          onClick python: 'askSearchResult(%s, \'%s\', \'%s\', \'%s\')' % (jsParams, request.get('sortKey', ''), request.get('sortOrder', ''), filterIndex)"
          title="filter_by_a_key" i18n:attributes="title" style="cursor:pointer"/>

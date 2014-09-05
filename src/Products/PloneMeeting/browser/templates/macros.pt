@@ -676,7 +676,7 @@ document.location.reload(true);
 
   <tal:comment replace="nothing">Table containing the history</tal:comment>
   <tal:history condition="objs">
-  <metal:nav use-macro="context/hs_navigate/macros/simple"/>
+  <metal:nav use-macro="here/@@navigate-macros/simple"/>
   <table class="listing nosort">
     <tr i18n:domain="plone">
       <th i18n:translate="listingheader_action"/>

@@ -22,7 +22,7 @@
   <tal:comment replace="nothing">Show the result.</tal:comment>
   <div onmouseover="javascript:initializePMOverlays()" class="ajax-pm-frame" tal:condition="searchResults">
 
-    <div metal:use-macro="context/hs_navigate/macros/search"/>
+    <div metal:use-macro="context/@@navigate-macros/search"/>
     <tal:comment replace="nothing">The table containing the result</tal:comment>
     <table class="listing nosort" cellpadding="0" cellspacing="0" width="100%"
       tal:define="descrsStyle         python: tool.readCookie('pmShowDescriptions') == 'false' and 'none' or 'inline';
@@ -40,28 +40,28 @@
       <tal:comment replace="nothing">Title</tal:comment>
       <th class="pm_listing_th_title" tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
         <span i18n:translate="listingheader_item_title"></span>
-        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+        <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
       </th>
 
       <tal:comment replace="nothing">Creator</tal:comment>
       <th class="pm_listing_th_creator" tal:condition="python: 'creator' in visibleColumns"
           tal:define="fieldIndex string:Creator">
         <span i18n:translate="pm_creator"></span>
-        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+        <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
       </th>
 
       <tal:comment replace="nothing">Creation date</tal:comment>
       <th class="pm_listing_th_creationDate" tal:condition="python: 'creationDate' in visibleColumns"
           tal:define="fieldIndex string:created">
         <span i18n:translate="pm_creation_date"></span>
-        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+        <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
       </th>
 
       <tal:comment replace="nothing">State</tal:comment>
       <th class="pm_listing_th_state" tal:condition="python: 'state' in visibleColumns"
           tal:define="fieldIndex string:review_state">
         <span i18n:translate="State"></span>
-        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+        <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
       </th>
 
       <tal:comment replace="nothing">Columns specific to items</tal:comment>
@@ -77,12 +77,12 @@
         <tal:category condition="python: not meetingConfig.getUseGroupsAsCategories()"
                       define="fieldIndex string:getCategory">
           <span i18n:translate="MeetingCategory"></span>
-          <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+          <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
         </tal:category>
         <tal:group condition="meetingConfig/getUseGroupsAsCategories"
                    define="fieldIndex string:getProposingGroup">
           <span i18n:translate="PloneMeeting_label_proposingGroup"></span>
-          <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+          <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
         </tal:group>
       </th>
 
@@ -90,7 +90,7 @@
       <th class="pm_listing_th_proposingGroup" tal:condition="python: 'proposingGroup' in visibleColumns">
        <tal:group define="fieldIndex string:getProposingGroup">
         <span i18n:translate="PloneMeeting_label_proposingGroup"></span>
-        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+        <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
        </tal:group>
       </th>
 
@@ -98,7 +98,7 @@
       <th class="pm_listing_th_proposingGroupAcronym" tal:condition="python: 'proposingGroupAcronym' in visibleColumns"
           tal:define="fieldIndex string:getProposingGroup">
         <span i18n:translate="PloneMeeting_label_proposingGroup"></span>
-        <metal:sortAndFilter use-macro="context/hs_navigate/macros/sortAndFilter"/>
+        <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
       </th>
 
       <tal:comment replace="nothing">Associated groups</tal:comment>
@@ -308,6 +308,6 @@
   <span class="discreet" tal:condition="python: not searchResults"
      tal:content="python: tool.translate('search_%s_empty' % resultMetaType, domain='PloneMeeting')">
   </span>
-  <div metal:use-macro="context/hs_navigate/macros/search" />
+        <metal:sortAndFilter use-macro="context/@@navigate-macros/search"/>
 
 </metal:result>

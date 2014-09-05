@@ -45,7 +45,7 @@
              showActions python: ('actions' in visibleColumns) and member.has_permission('Modify portal content', meeting);
              showCheckboxes python: itemsNumbering or ((not itemsNumbering) and (len(meetingItems)&gt;1))">
 
-   <metal:navigate use-macro="context/hs_navigate/macros/meetingItems"/>
+   <metal:sortAndFilter use-macro="context/@@navigate-macros/meetingItems"/>
 
    <div onmouseover="javascript:initializePMOverlaysOnMeeting()" class="ajax-pm-frame">
 
@@ -343,7 +343,9 @@
     <tr tal:condition="not: shownItems"><td colspan="30" class="discreet" i18n:translate="no_shown_items">No shown items</td></tr>
    </table>
    </div>
-   <metal:navigate use-macro="context/hs_navigate/macros/meetingItems"/>
+
+   <metal:sortAndFilter use-macro="context/@@navigate-macros/meetingItems"/>
+
    </tal:items>
   </tal:meetingItems>
 </metal:items>
