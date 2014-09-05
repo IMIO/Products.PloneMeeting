@@ -1430,12 +1430,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = meetingConfig.getToDiscussDefault()
         return res
 
+    def getMeeting_cachekey(method, self, brain=False):
+        '''cachekey method for self.getMeeting.'''
+        return (self, str(self.REQUEST.debug), brain)
+
     security.declarePublic('getMeeting')
+    @ram.cache(getMeeting_cachekey)
     def getMeeting(self, brain=False):
         '''Returns the linked meeting if it exists.'''
         # getBRefs returns linked *objects* through a relationship defined in
         # a ReferenceField, while reference_catalog.getBackReferences returns
         # *brains*.
+
         if brain:  # Faster
             res = self.reference_catalog.getBackReferences(self, 'MeetingItems')
         else:
@@ -1455,8 +1461,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
-        '''Overrides the default method so we only display meetings that are
-           in the 'created' or 'frozen' state.'''
+        '''This returns meetings that are still accepting items.'''
         item = self.getSelf()
         tool = getToolByName(item, 'portal_plonemeeting')
         catalog = getToolByName(item, 'portal_catalog')
@@ -1474,9 +1479,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if inTheFuture:
             query['getDate'] = {'query': DateTime(), 'range': 'min'}
 
-        res = catalog.unrestrictedSearchResults(**query)
-        # Published, frozen and decided meetings may still accept "late" items.
-        return res
+        return catalog.unrestrictedSearchResults(**query)
 
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
@@ -1802,7 +1805,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('isLate')
     def isLate(self):
         '''Am I included in a meeting as a late item?'''
-        if self.reference_catalog.getBackReferences(self, 'MeetingLateItems'):
+        refCatalog = getToolByName(self, 'reference_catalog')
+        if refCatalog.getBackReferences(self, 'MeetingLateItems'):
             return True
         return False
 
@@ -1810,8 +1814,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showCategory(self):
         '''I must not show the "category" field if I use groups for defining
            categories.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        return not meetingConfig.getUseGroupsAsCategories()
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return not cfg.getUseGroupsAsCategories()
 
     security.declarePublic('listCategories')
     def listCategories(self):
@@ -1898,14 +1903,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Shortcut for translating p_msg in domain PloneMeeting.'''
         return translate(msg, domain=domain, context=self.REQUEST)
 
+    def attributeIsUsed_cachekey(method, self, name):
+        '''cachekey method for self.attributeIsUsed.'''
+        return (name, str(self.REQUEST.debug))
+
     security.declarePublic('attributeIsUsed')
+    @ram.cache(attributeIsUsed_cachekey)
     def attributeIsUsed(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return (name in cfg.getUsedItemAttributes())
 
+    def showAnnexesTab_cachekey(method, self, decisionRelated):
+        '''cachekey method for self.showAnnexesTab.'''
+        return (decisionRelated, str(self.REQUEST.debug))
+
     security.declarePublic('showAnnexesTab')
+    @ram.cache(showAnnexesTab_cachekey)
     def showAnnexesTab(self, decisionRelated):
         '''Must we show the "Annexes" (or "Decision-related annexes") tab ?'''
         if self.isTemporary() or self.isDefinedInTool():
@@ -2414,7 +2429,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Get optional advisers but with same format as getAutomaticAdvisers
            so it can be handled easily by the updateAdvices method.
            We need to return a list of dict with relevant informations.'''
-
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
@@ -2731,7 +2745,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            currently logged user may, on this item:
            - add an advice;
            - edit or delete an advice.'''
-        tool = self.portal_plonemeeting
+        tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # Advices must be enabled
         if not cfg.getUseAdvices():
@@ -3433,12 +3447,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return data
 
-    security.declarePublic('isAdvicesEnabled')
-    def isAdvicesEnabled(self):
-        '''Is the "advices" functionality enabled for this meeting config?'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        return tool.getMeetingConfig(self).getUseAdvices()
-
     security.declarePublic('getAdviceHelpMessageFor')
     def getAdviceHelpMessageFor(self, **adviceInfos):
         '''Build a specific help message for the given advice_id.  We will compute
@@ -3689,6 +3697,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._v_previousData = rememberPreviousData(self)
         return BaseFolder.processForm(self, *args, **kwargs)
 
+    security.declarePublic('isAdvicesEnabled')
+    def isAdvicesEnabled(self):
+        '''Is the "advices" functionality enabled for this meeting config?'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        return tool.getMeetingConfig(self).getUseAdvices()
+
     security.declarePublic('isCopiesEnabled')
     def isCopiesEnabled(self):
         '''Is the "copies" functionality enabled for this meeting config?'''
@@ -3768,7 +3782,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return DisplayList(tuple(res)).sortedByValue()
 
+    def showDuplicateItemAction_cachekey(method, self, brain=False):
+        '''cachekey method for self.showDuplicateItemAction.'''
+        return str(self.REQUEST.debug)
+
     security.declarePublic('showDuplicateItemAction')
+    @ram.cache(showDuplicateItemAction_cachekey)
     def showDuplicateItemAction(self):
         '''Condition for displaying the 'duplicate' action in the interface.
            Returns True if the user can duplicate the item.'''
@@ -4581,8 +4600,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return _('attendees_for_item')
         else:
             return _('PloneMeeting_label_itemAssembly')
-
-
 
 registerType(MeetingItem, PROJECTNAME)
 # end of class MeetingItem
