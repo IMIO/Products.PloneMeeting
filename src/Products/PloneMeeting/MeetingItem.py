@@ -1925,7 +1925,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return bool([annex for annex in self.annexIndex if annex['relatedTo'] == relatedTo])
 
+    def queryState_cachekey(method, self):
+        '''cachekey method for self.queryState.'''
+        return (self, str(self.REQUEST.debug))
+
     security.declarePublic('queryState')
+    @ram.cache(queryState_cachekey)
     def queryState(self):
         '''In what state am I ?'''
         wfTool = getToolByName(self, 'portal_workflow')

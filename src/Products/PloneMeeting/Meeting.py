@@ -32,6 +32,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
+from plone.memoize import ram
 from Products.CMFCore.permissions import ReviewPortalContent, ModifyPortalContent
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -1550,10 +1551,16 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         return (name in meetingConfig.getUsedMeetingAttributes())
 
+    def queryState_cachekey(method, self):
+        '''cachekey method for self.queryState.'''
+        return (self, str(self.REQUEST.debug))
+
     security.declarePublic('queryState')
+    @ram.cache(queryState_cachekey)
     def queryState(self):
         '''In what state am I ?'''
-        return self.portal_workflow.getInfoFor(self, 'review_state')
+        wfTool = getToolByName(self, 'portal_workflow')
+        return wfTool.getInfoFor(self, 'review_state')
 
     security.declarePublic('getWorkflowName')
     def getWorkflowName(self):
