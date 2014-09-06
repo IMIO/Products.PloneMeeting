@@ -45,6 +45,7 @@ from Products.PloneMeeting.config import ADVICE_STATES_NO_MORE_EDITABLE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import cleanRamCacheFor
 
 
 class testAdvices(PloneMeetingTestCase):
@@ -142,7 +143,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
         self.changeUser('pmReviewer2')
         # 'pmReviewer2' has one advice to give for 'vendors' and no advice to edit
-        self._cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([('vendors', u'Vendors')], []))
         self.assertEquals(item1.hasAdvices(), False)
         # fields 'advice_type' and 'advice_group' are mandatory

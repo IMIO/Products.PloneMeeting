@@ -251,8 +251,8 @@ def onAnnexRemoved(annex, event):
         item.updateAdvices(invalidate=True)
 
 
-def onItemRemoved(item, event):
-    '''When an item is removed, if it is linked to a meeting, warn it.'''
+def onItemWillBeRemoved(item, event):
+    '''When an item will be removed, if it is linked to a meeting, warn it.'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return

@@ -23,7 +23,6 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-import random
 from appy.gen import No
 from collections import OrderedDict
 from App.class_init import InitializeClass
@@ -44,7 +43,7 @@ from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
     getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields, \
-    ItemDuplicatedFromConfigEvent
+    ItemDuplicatedFromConfigEvent, cleanRamCacheFor
 from Products.PloneMeeting import PMMessageFactory as _
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -1139,6 +1138,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             items.append(item)
             item.setItemNumber(len(items))
         itemsSetter(items)
+        # invalidate RAMCache for MeetingItem.getMeeting
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
 
     security.declareProtected("Modify portal content", 'removeItem')
     def removeItem(self, item):
@@ -1165,6 +1166,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         for anItem in itemsGetter():
             if anItem.getItemNumber() > itemNumber:
                 anItem.setItemNumber(anItem.getItemNumber()-1)
+        # invalidate RAMCache for MeetingItem.getMeeting
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
 
     security.declarePublic('getAvailableItems')
     def getAvailableItems(self):
@@ -1554,11 +1557,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     def queryState_cachekey(method, self):
         '''cachekey method for self.queryState.'''
-        # convenience for testing...  It makes ramcache disabled for this method in testing
-        if self.REQUEST.URL in ('http://foo', 'http://nohost'):
-            return random.random()
-
-        return (self, str(self.REQUEST.debug))
+        return self.workflow_history
 
     security.declarePublic('queryState')
     @ram.cache(queryState_cachekey)

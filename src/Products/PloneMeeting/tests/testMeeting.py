@@ -29,6 +29,7 @@ from zope.i18n import translate
 
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import cleanRamCacheFor
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
@@ -773,7 +774,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(not item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
         # clean RAM cache for MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
         # and set meeting date in the future
-        self._cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         meeting.setDate(DateTime() + 2)
         meeting.reindexObject(idxs=['getDate', ])
         # now item may be presented in the meeting

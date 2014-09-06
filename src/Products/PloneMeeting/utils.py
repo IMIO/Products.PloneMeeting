@@ -34,8 +34,10 @@ from email import Encoders
 from DateTime import DateTime
 from AccessControl import getSecurityManager
 from zope.i18n import translate
+from zope.component import getUtility
 from zope.component.interfaces import ObjectEvent
 from zope.interface import implements
+from plone.memoize.interfaces import ICacheChooser
 from imio.helpers.xhtml import removeBlanks, xhtmlContentIsEmpty
 from Products.CMFCore.utils import getToolByName
 from Products.MailHost.MailHost import MailHostError
@@ -178,6 +180,13 @@ def getCurrentMeetingObject(context):
     if obj and not obj.meta_type == 'Meeting':
         obj = None
     return obj
+
+
+def cleanRamCacheFor(methodId):
+    '''Clean ram.cache for given methodId.'''
+    cache_chooser = getUtility(ICacheChooser)
+    thecache = cache_chooser(methodId)
+    thecache.ramcache.invalidate(methodId)
 
 
 def fieldIsEmpty(name, obj, useParamValue=False, value=None):

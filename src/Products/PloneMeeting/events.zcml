@@ -9,8 +9,8 @@
               handler=".events.onItemAdded"/>
 
   <subscriber for=".interfaces.IMeetingItem
-                   zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onItemRemoved"/>
+                   imio.actionspanel.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onItemWillBeRemoved"/>
 
   <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.ObjectMovedEvent"

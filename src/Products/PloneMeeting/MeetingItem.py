@@ -25,7 +25,6 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 import cgi
 import lxml.html
-import random
 import re
 from datetime import datetime
 from collections import OrderedDict
@@ -1433,10 +1432,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeeting_cachekey(method, self, brain=False):
         '''cachekey method for self.getMeeting.'''
-        # convenience for testing...  It makes ramcache disabled for this method in testing
-        if self.REQUEST.URL in ('http://foo', 'http://nohost'):
-            return random.random()
-
         return (self, str(self.REQUEST.debug), brain)
 
     security.declarePublic('getMeeting')
@@ -1447,16 +1442,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # a ReferenceField, while reference_catalog.getBackReferences returns
         # *brains*.
 
+        refCatalog = getToolByName(self, 'reference_catalog')
+
         if brain:  # Faster
-            res = self.reference_catalog.getBackReferences(self, 'MeetingItems')
+            res = refCatalog.getBackReferences(self, 'MeetingItems')
         else:
             res = self.getBRefs('MeetingItems')
         if res:
             res = res[0]
         else:
             if brain:
-                res = self.reference_catalog.getBackReferences(
-                    self, 'MeetingLateItems')
+                res = refCatalog.getBackReferences(self, 'MeetingLateItems')
             else:
                 res = self.getBRefs('MeetingLateItems')
             if res:
@@ -1947,11 +1943,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def queryState_cachekey(method, self):
         '''cachekey method for self.queryState.'''
-        # convenience for testing...  It makes ramcache disabled for this method in testing
-        if self.REQUEST.URL in ('http://foo', 'http://nohost'):
-            return random.random()
-
-        return (self, str(self.REQUEST.debug))
+        return self.workflow_history
 
     security.declarePublic('queryState')
     @ram.cache(queryState_cachekey)

@@ -25,7 +25,6 @@ import os.path
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
 
-from zope.component import getUtility
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
 
@@ -33,7 +32,6 @@ from zope.annotation.interfaces import IAnnotations
 
 from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
-from plone.memoize.interfaces import ICacheChooser
 
 from Products.CMFCore.utils import getToolByName
 from Products.PloneTestCase.setup import _createHomeFolder
@@ -46,6 +44,7 @@ from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
+from Products.PloneMeeting.utils import cleanRamCacheFor
 
 # Force application logging level to DEBUG so we can use logger in tests
 import sys
@@ -208,7 +207,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
             if not 'proposingGroup' in attrs.keys():
-                self._cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
+                cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
                 proposingGroup = self.tool.getGroupsForUser(suffix="creators")
                 if len(proposingGroup):
                     attrs.update({'proposingGroup': proposingGroup[0].id})
@@ -305,12 +304,6 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
 
         if 'plone.memoize' in annotations:
             annotations['plone.memoize'].clear()
-
-    def _cleanRamCacheFor(self, methodId):
-        '''Clean ram.cache for given methodId.'''
-        cache_chooser = getUtility(ICacheChooser)
-        thecache = cache_chooser(methodId)
-        thecache.ramcache.invalidate(methodId)
 
     def _removeItemsDefinedInTool(self, meetingConfig):
         """

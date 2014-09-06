@@ -26,6 +26,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import cleanRamCacheFor
 
 
 class testMeetingGroup(PloneMeetingTestCase):
@@ -224,7 +225,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.changeUser('admin')
         developers = self.tool.developers
         self.do(developers, 'deactivate')
-        self._cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.changeUser('pmManager')
         self.assertTrue('developers' not in item.listAssociatedGroups())
         # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...

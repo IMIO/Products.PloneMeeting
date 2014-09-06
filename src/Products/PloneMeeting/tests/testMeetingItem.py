@@ -44,6 +44,7 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import cleanRamCacheFor
 
 
 class testMeetingItem(PloneMeetingTestCase):
@@ -1304,7 +1305,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.setUsedMeetingAttributes(self.meetingConfig.getUsedMeetingAttributes() +
                                                     ('assembly', 'signatures', ))
         # MeetingItem.attributeIsUsed is RAMCached
-        self._cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         # current user must be at least MeetingManager to use this
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, formAssembly.update)
