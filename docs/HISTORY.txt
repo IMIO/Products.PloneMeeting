@@ -96,6 +96,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   (listings of items, item view, ...), clicking on the 'present' action will present
   the item to the next available meeting.  Before, the 'present' action was only shown in the
   list of available items of the meeting view
+- On the item view, display the navigation widget also at the bottom of the view, just
+  above the actions buttons
 
 3.2.0.1 (2014-03-06)
 --------------------
