@@ -1458,7 +1458,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # create a meeting with items
         meeting = self._createMeetingWithItems()
         self.presentItem(item)
-        # the item is inserted in 5th position so is stored itemNumber is 5
+        # the item is inserted in 5th position so stored itemNumber is 5
         self.assertTrue(item.getField('itemNumber').get(item) == 5)
         # it is the same than calling with relativeTo='itemsList' and relativeTo='meeting'
         self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
@@ -1543,6 +1543,25 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
         self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
         self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        # if we remove one item, other items number is correct
+        # remove normal item number 3 and check others
+        self.changeUser('admin')
+        # we have 8 items, if we remove item number 5, others are correct
+        self.assertTrue(len(meeting.getItemsInOrder()) == 8)
+        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem in meeting.getItemsInOrder()] ==
+                        [1, 2, 3, 4, 5, 6, 7, 8])
+        # 1 late item
+        self.assertTrue(len(meeting.getItemsInOrder(late=True)) == 1)
+        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem in meeting.getItemsInOrder(late=True)] ==
+                        [9, ])
+        # item is 5th of normal items
+        self.assertTrue(item.UID() == meeting.getItemsInOrder()[4].UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
+        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem in meeting.getItemsInOrder()] ==
+                        [1, 2, 3, 4, 5, 6, 7])
+        # and late items are correct too
+        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem in meeting.getItemsInOrder(late=True)] ==
+                        [8, ])
 
     def test_pm_ListMeetingsAcceptingItems(self):
         '''
