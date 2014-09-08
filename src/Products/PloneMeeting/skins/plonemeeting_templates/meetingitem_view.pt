@@ -238,6 +238,13 @@
               <span tal:condition="python: not meeting">-</span>
             </div>
 
+            <tal:comment replace="nothing">Send to authority?</tal:comment>
+            <div class="discreet" tal:condition="python: 'sendToAuthority' in usedAttrs">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_sendToAuthority"></span>:&nbsp;&nbsp;
+                <span metal:use-macro="python: here.widget('sendToAuthority', mode='view')" />
+            </div>
+
             <tal:comment replace="nothing">Other MeetingConfigs Clonable To</tal:comment>
             <div class="discreet"
                  tal:condition="python: otherMCs or context.isClonableToOtherMeetingConfigs()"

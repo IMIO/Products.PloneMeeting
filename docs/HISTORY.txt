@@ -52,6 +52,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   type to use for original annexes
 - Added 'emergency' functionnality on items (ask/accept/refuse emergency with comments and history)
 - Added 'completeness' functionnality on items (evaulate if complete/incomplete with comments and history)
+- Added 'Send to authority?' boolean field on items
 - Refactored management of adviceIndex : index if advice can be added/edited, make use of another
   workflow than meetingadvice_workflow possible, ...
 - Pass IAnnexable to a PodTemplate when rendering so we can easily integrate annexes in a generated document

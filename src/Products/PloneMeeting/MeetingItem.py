@@ -926,6 +926,19 @@ schema = Schema((
         multiValued=True,
         relationship="ManuallyLinkedItem",
     ),
+    BooleanField(
+        name='sendToAuthority',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            condition="python: here.attributeIsUsed('sendToAuthority')",
+            description="SendToAuthority",
+            description_msgid="send_to_authority_descr",
+            label='Sendtoauthority',
+            label_msgid='PloneMeeting_label_sendToAuthority',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+    ),
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
