@@ -808,6 +808,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return getMeetingUsers(self, 'attendees', theObjects, includeDeleted,
                                meetingForRepls=meetingForRepls)
 
+    security.declarePublic('getExcused')
     def getExcused(self, theObjects=False):
         '''See docstring in previous method.'''
         return getMeetingUsers(self, 'excused', theObjects, True)
