@@ -302,16 +302,18 @@
   </tal:date>
   </div>
 
-  <tal:comment replace="nothing">Assembly.  Backward compatibility for people that used the 'assembly' field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
-  <tal:assemblyFields condition="python: 'assembly' in usedAttrs">
+  <tal:comment replace="nothing">Assembly and signatures.  Backward compatibility for people that used the 'assembly' or 'signatures'
+   field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
+  <tal:assemblyFields condition="python: 'assembly' in usedAttrs or 'signatures' in usedAttrs">
   <table class="no-style-table discreet"
          style="width: auto;"
          tal:define="usedAssemblyFields python: ((context.getAssembly() and True) or 'assembly' in usedAttrs,
                                                  (context.getAssemblyExcused() and True) or 'assemblyExcused' in usedAttrs,
-                                                 (context.getAssemblyAbsents() and True) or 'assemblyAbsents' in usedAttrs).count(True);
+                                                 (context.getAssemblyAbsents() and True) or 'assemblyAbsents' in usedAttrs,
+                                                 (context.getSignatures() and True) or 'signatures' in usedAttrs).count(True);
                      colWidthPercentage python: int(100/usedAssemblyFields);">
     <tr>
-        <td width="33%"
+        <td width="25%"
             style="padding-right: 0.3em !important;"
             tal:attributes="width string:${colWidthPercentage}%">
             <fieldset tal:condition="python: 'assembly' in usedAttrs or context.getAssembly()">
@@ -319,7 +321,7 @@
                 <span tal:replace="structure context/getStrikedAssembly"/>
             </fieldset>
         </td>
-        <td width="33%"
+        <td width="25%"
             style="padding-right: 0.3em !important;"
             tal:condition="python: 'assemblyExcused' in usedAttrs or context.getAssemblyExcused()"
             tal:attributes="width string:${colWidthPercentage}%">
@@ -328,12 +330,21 @@
                 <span tal:replace="structure python: context.getAssemblyExcused() or '-'"/>
             </fieldset>
         </td>
-        <td width="33%"
+        <td width="25%"
             tal:condition="python: 'assemblyAbsents' in usedAttrs or context.getAssemblyAbsents()"
+            style="padding-right: 0.3em !important;"
             tal:attributes="width string:${colWidthPercentage}%">
             <fieldset>
                 <legend i18n:translate="PloneMeeting_label_assemblyAbsents">Assembly</legend>
                 <span tal:replace="structure python: context.getAssemblyAbsents() or '-'"/>
+            </fieldset>
+        </td>
+        <td width="25%"
+            tal:condition="python: 'signatures' in usedAttrs or context.getSignatures()"
+            tal:attributes="width string:${colWidthPercentage}%">
+            <fieldset>
+                <legend i18n:translate="PloneMeeting_label_signatures">Signatures</legend>
+                <span tal:replace="structure python: context.getSignatures().replace('\r\n', '<br/>').replace('\n', '<br/>') or '-'"/>
             </fieldset>
         </td>
     </tr>
@@ -397,12 +408,6 @@
     </tr>
     </tbody>
   </table>
-
-  <tal:comment replace="nothing">Signatures. Backward compatibility for people that used the 'signatures' field</tal:comment>
-  <div class="discreet" tal:condition="python: ('signatures' in usedAttrs) or context.getSignatures()">
-    <b i18n:translate="meeting_signatures"></b>&nbsp;&nbsp;
-       <span tal:replace="structure python: context.getSignatures().replace('\r\n', '<br/>').replace('\n', '<br/>')"/>
-  </div>
 
   <div class="discreet">
   <tal:comment replace="nothing">Pre-meeting info</tal:comment>

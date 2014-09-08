@@ -162,7 +162,6 @@
             <td width="50%"><metal:field use-macro="python:here.widget('deadlineFreeze', mode='edit')"/></td>
           </tr>
         </table>
-        <metal:field use-macro="python:here.widget('signatures', mode='edit')"/>
         <metal:field use-macro="python:here.widget('assembly', mode='edit')"/>
         <metal:field use-macro="python:here.widget('assemblyExcused', mode='edit')"/>
         <metal:field use-macro="python:here.widget('assemblyAbsents', mode='edit')"/>
@@ -261,6 +260,9 @@
           </tbody>
         </table>
         </tal:users>
+
+        <metal:field use-macro="python:here.widget('signatures', mode='edit')"/>
+
         <tal:comment replace="nothing">Information for the pre-meeting</tal:comment>
         <fieldset tal:condition="python: 'preMeetingDate' in usedAttrs and not context.isTemporary()">
           <legend i18n:translate="pre_meeting" i18n:domain="PloneMeeting"></legend>
