@@ -181,7 +181,7 @@
           </tal:forItem>
           <tal:comment replace="nothing">Title for a meeting (uncolored)</tal:comment>
           <a tal:condition="python: resultMetaType == 'Meeting'"
-             id="pmNoNewContent" tal:content="python: tool.formatDate(brain, prefixed=True)"
+             id="pmNoNewContent" tal:content="python: tool.formatMeetingDate(brain, prefixed=True)"
                                  tal:attributes="href brain/getURL"></a>
           <tal:comment replace="nothing">Title for anything else (ie, an annex)</tal:comment>
           <a tal:condition="python: resultMetaType not in ('MeetingItem', 'Meeting')"
@@ -264,7 +264,7 @@
         <td tal:condition="showRelatedMeeting" align="center" style="padding-left: 0.2em; padding-right: 0.2em;">
           <tal:tiedMeeting define="meetingBrain python: obj.getMeeting(brain=True)">
             <a tal:condition="python: meetingBrain and member.has_permission('View', meetingBrain)"
-               tal:content="python: tool.formatDate(meetingBrain.getDate(), withHour=True)"
+               tal:content="python: tool.formatMeetingDate(meetingBrain, withHour=True)"
                tal:attributes="href python: meetingBrain.absolute_url()[:meetingBrain.absolute_url().find('/at_references/')]"></a>
             <span tal:condition="not: meetingBrain">-</span>
           </tal:tiedMeeting>
@@ -278,7 +278,7 @@
             </tal:whatever>
             <tal:meeting condition="not: whatever">
               <a tal:condition="meetingBrain"
-                 tal:content="python: tool.formatDate(meetingBrain[0])"
+                 tal:content="python: tool.formatMeetingDate(meetingBrain[0])"
                  tal:attributes="href python: meetingBrain[0].getURL()"
                  tal:on-error="python: '-'"></a>
               <span tal:condition="not: meetingBrain">-</span>

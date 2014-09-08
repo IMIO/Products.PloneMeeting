@@ -9,7 +9,7 @@
   <metal:title fill-slot="content-title">
   <tal:comment replace="nothing">Title, with number of items</tal:comment>
   <h1 class="documentFirstHeading">
-    <span tal:content="python: context.portal_plonemeeting.formatDate(context.getDate(), prefixed=True)"
+    <span tal:content="python: context.portal_plonemeeting.formatMeetingDate(context, prefixed=True)"
           tal:omit-tag="">Meeting title</span>&nbsp;-
     <span tal:condition="python:not here.adapted().isDecided()"
           tal:content="python: here.translate('agenda', domain='PloneMeeting')"></span>
@@ -33,8 +33,8 @@
                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
                   iStartNumber python: context.getBatchStartNumber(late=False);
                   lStartNumber python: context.getBatchStartNumber(late=True);
-                  showColors context/portal_plonemeeting/showColorsForUser;
-                  showPage context/portal_plonemeeting/showMeetingView;
+                  showColors tool/showColorsForUser;
+                  showPage tool/showMeetingView;
                   showLateItems python: context.mustShowLateItems(iStartNumber, meetingConfig.getMaxShownMeetingItems());
                   usedAttrs meetingConfig/getUsedMeetingAttributes;
                   useUserReplacements meetingConfig/getUseUserReplacements;

@@ -1286,18 +1286,19 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # interface languages (and because Plone requires a title). At every
         # place in HS/PM, we always deduce the meeting "title" based on its date
         # and the required formatting.
-        tool = self.portal_plonemeeting
+        tool = getToolByName(self, 'portal_plonemeeting')
         if "secondLanguageCfg" in tool.getModelAdaptations():
             # We will create a bilingual title
-            firstLanguage = self.portal_languages.getDefaultLanguage()[0:2]
+            languages = getToolByName(self, 'portal_languages')
+            firstLanguage = languages.getDefaultLanguage()[0:2]
             secondLanguage = tool.findSecondLanguage()[0:2]
             if not secondLanguage:
                 raise TypeError(NO_SECOND_LANGUAGE_ERROR)
-            date1 = tool.formatDate(self.getDate(), lang=firstLanguage)
-            date2 = tool.formatDate(self.getDate(), lang=secondLanguage)
+            date1 = tool.formatMeetingDate(self, lang=firstLanguage)
+            date2 = tool.formatMeetingDate(self, lang=secondLanguage)
             self.setTitle('%s / %s' % (date1, date2))
         else:
-            self.setTitle(tool.formatDate(self.getDate()))
+            self.setTitle(tool.formatMeetingDate(self))
 
     security.declarePrivate('updatePlace')
     def updatePlace(self):

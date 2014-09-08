@@ -873,17 +873,17 @@ class testMeeting(PloneMeetingTestCase):
         self.request.set('place', 'other')
         self.request.set('place_other', 'Another place')
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
-        self.assertTrue(meeting.Title() == self.tool.formatDate(meeting.getDate()))
+        self.assertTrue(meeting.Title() == self.tool.formatMeetingDate(meeting))
         self.assertTrue(meeting.getPlace() == 'Another place')
         # now check that upon edition, title and place fields are correct
         self.request.set('place_other', 'Yet another place')
         meeting.setDate(DateTime('2014/06/06'))
         # for now, title and date are not updated
-        self.assertTrue(not meeting.Title() == self.tool.formatDate(meeting.getDate()))
+        self.assertTrue(not meeting.Title() == self.tool.formatMeetingDate(meeting))
         self.assertTrue(not meeting.getPlace() == 'Yet another place')
         # at_post_edit_script takes care of updating title and place
         meeting.at_post_edit_script()
-        self.assertTrue(meeting.Title() == self.tool.formatDate(meeting.getDate()))
+        self.assertTrue(meeting.Title() == self.tool.formatMeetingDate(meeting))
         self.assertTrue(meeting.getPlace() == 'Yet another place')
 
     def test_pm_GetItemsInOrder(self):

@@ -1639,7 +1639,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # save meetingUIDs, it will be necessary here under
         for meetingBrain in self.adapted().getMeetingsAcceptingItems():
             res.append((meetingBrain.UID,
-                        tool.formatDate(meetingBrain, withHour=True)))
+                        tool.formatMeetingDate(meetingBrain, withHour=True)))
         # if one preferred meeting was already defined on self, add it
         # to the vocabulary or editing an older item could loose that information
         preferredMeetingUID = self.getPreferredMeeting()
@@ -1653,7 +1653,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if brains:
                 preferredMeetingBrain = brains[0]
                 res.append((preferredMeetingBrain.UID,
-                            tool.formatDate(preferredMeetingBrain, withHour=True)))
+                            tool.formatMeetingDate(preferredMeetingBrain, withHour=True)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingTransitions')
@@ -4203,7 +4203,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting = predecessor.getMeeting()
             #display the meeting date if the item is linked to a meeting
             if meeting:
-                title = "%s (%s)" % (title, tool.formatDate(meeting.getDate()).encode('utf-8'))
+                title = "%s (%s)" % (title, tool.formatMeetingDate(meeting).encode('utf-8'))
             #show that the linked item is not of the same portal_type
             if not predecessor.portal_type == item.portal_type:
                 predecessorCfg = tool.getMeetingConfig(predecessor)

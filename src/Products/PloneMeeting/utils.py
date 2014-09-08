@@ -313,7 +313,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     })
     if obj.meta_type == 'Meeting':
         translationMapping['meetingTitle'] = obj.Title().decode(enc)
-        translationMapping['meetingLongTitle'] = tool.formatDate(obj.getDate(), prefixed=True)
+        translationMapping['meetingLongTitle'] = tool.formatMeetingDate(obj, prefixed=True)
         translationMapping['meetingState'] = translate(obj.queryState(),
                                                        domain='plone',
                                                        context=obj.REQUEST)
@@ -332,7 +332,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         meeting = obj.getMeeting(brain=True)
         if meeting:
             translationMapping['meetingTitle'] = meeting.Title().decode(enc)
-            translationMapping['meetingLongTitle'] = tool.formatDate(meeting.getDate(), prefixed=True)
+            translationMapping['meetingLongTitle'] = tool.formatMeetingDate(meeting, prefixed=True)
             translationMapping['itemNumber'] = obj.getItemNumber(
                 relativeTo='meeting')
     # Update the translationMapping with a sub-product-specific
@@ -955,14 +955,17 @@ def findNewValue(obj, name, history, stopIndex):
 def getHistoryTexts(obj, event):
     '''Returns a tuple (insertText, deleteText) containing texts to show on,
        respectively, inserted and deleted chunks of text.'''
-    userName = obj.portal_plonemeeting.getUserName(event['actor'])
+    tool = getToolByName(obj, 'portal_plonemeeting')
+    toLocalizedTime = obj.restrictedTraverse('@@plone').toLocalizedTime
+    userName = tool.getUserName(event['actor'])
     mapping = {'userName': userName.decode('utf-8')}
     res = []
     for type in ('insert', 'delete'):
-        msg = translate('history_%s' % type, mapping=mapping,
-                        domain='PloneMeeting', context=obj.REQUEST)
-        date = obj.portal_plonemeeting.formatDate(event['time'],
-                                                  short=True, withHour=True)
+        msg = translate('history_%s' % type,
+                        mapping=mapping,
+                        domain='PloneMeeting',
+                        context=obj.REQUEST)
+        date = toLocalizedTime(event['time'], long_format=True)
         msg = '%s: %s' % (date, msg)
         res.append(msg.encode('utf-8'))
     return res

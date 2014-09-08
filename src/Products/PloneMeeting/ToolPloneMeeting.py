@@ -1905,10 +1905,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     return True
         return False
 
-    security.declarePublic('formatDate')
-    def formatDate(self, aDate, lang=None, short=False, withHour=False,
-                   prefixed=None):
-        '''Returns p_aDate as formatted by the user-defined date format defined
+    security.declarePublic('formatMeetingDate')
+    def formatMeetingDate(self, meeting, lang=None, short=False,
+                          withHour=False, prefixed=False):
+        '''Returns p_meeting.getDate as formatted by the user-defined date format defined
            in field dateFormat.
            - If p_lang is specified, it translates translatable elements (if
              any), like day of week or month, in p_lang. Else, it translates it
@@ -1917,36 +1917,34 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
              of month is replaced with a number)
            - If p_prefix is True, the translated prefix "Meeting of" is
              prepended to the result.'''
-        # Get the date to format. aDate may have different formats: it may be
-        # a DateTime instance, a string or a meeting brain.
-        if isinstance(aDate, basestring):
-            aDate = DateTime(aDate)
-        elif aDate.__class__.__name__ == 'mybrains':
+        # Received meeting could be a brain or an object
+        if meeting.__class__.__name__ == 'mybrains':
             # It is a meeting brain, take the 'getDate' metadata
-            aDate = aDate.getDate
-        elif aDate.__class__.__name__ == 'FakeBrain':
-            aDate = aDate.Date
+            date = meeting.getDate
+        else:
+            # received meeting is a Meeting instance
+            date = meeting.getDate()
         # Get the format for the rendering of p_aDate
         if short:
             fmt = '%d/%m/%Y'
         else:
             fmt = self.getDateFormat()
-        if withHour and (aDate._hour or aDate._minute):
+        if withHour and (date._hour or date._minute):
             fmt += ' (%H:%M)'
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to
         # translated names of days and months.
         # Manage day of week
-        dow = translate(weekdaysIds[aDate.dow()], target_language=lang,
+        dow = translate(weekdaysIds[date.dow()], target_language=lang,
                         domain='plonelocales', context=self.REQUEST)
         fmt = fmt.replace('%dt', dow.lower())
         fmt = fmt.replace('%DT', dow)
         # Manage month
-        month = translate(monthsIds[aDate.month()], target_language=lang,
+        month = translate(monthsIds[date.month()], target_language=lang,
                           domain='plonelocales', context=self.REQUEST)
         fmt = fmt.replace('%mt', month.lower())
         fmt = fmt.replace('%MT', month)
         # Resolve all other, standard, symbols
-        res = aDate.strftime(fmt)
+        res = date.strftime(fmt)
         # Finally, prefix the date with "Meeting of" when required.
         if prefixed:
             res = translate('meeting_of', domain='PloneMeeting', context=self.REQUEST) + ' ' + res

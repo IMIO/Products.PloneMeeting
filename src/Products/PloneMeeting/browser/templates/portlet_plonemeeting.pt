@@ -113,7 +113,7 @@
       <td class="portletCell">
         <a tal:attributes="href meetingBrain/getURL;
                            class python: context.absolute_url().startswith(meetingBrain.getURL()) and 'portletSelected' or ''"
-           tal:content="python:tool.formatDate(meetingBrain, short=True, withHour=True)"></a>
+           tal:content="python:tool.formatMeetingDate(meetingBrain, short=True, withHour=True)"></a>
       </td>
     </tr>
 
@@ -125,7 +125,7 @@
           <option i18n:translate="make_a_choice"
                   tal:attributes="value python:meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=searchallmeetings'"></option>
           <option tal:repeat="meetingBrain meetingBrains"
-                  tal:content="python:tool.formatDate(meetingBrain, short=True, withHour=True)"
+                  tal:content="python:tool.formatMeetingDate(meetingBrain, short=True, withHour=True)"
                   tal:attributes="value meetingBrain/getURL;
                                   selected python:context.absolute_url().startswith(meetingBrain.getURL())"></option>
         </select>
@@ -157,7 +157,7 @@
      <td class="portletCell">
       <a tal:attributes="href meetingBrain/getURL;
                          class python: context.absolute_url().startswith(meetingBrain.getURL()) and 'portletSelected' or ''"
-         tal:content="python:tool.formatDate(meetingBrain, short=True, withHour=True)"></a>
+         tal:content="python:tool.formatMeetingDate(meetingBrain, short=True, withHour=True)"></a>
      </td>
     </tr>
 
@@ -169,7 +169,7 @@
           <option i18n:translate="make_a_choice"
                   tal:attributes="value python:meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=searchalldecisions'"></option>
           <option tal:repeat="meetingBrain meetingBrains"
-                  tal:content="python:tool.formatDate(meetingBrain, short=True, withHour=True)"
+                  tal:content="python:tool.formatMeetingDate(meetingBrain, short=True, withHour=True)"
                   tal:attributes="value meetingBrain/getURL;
                                   selected python:context.absolute_url().startswith(meetingBrain.getURL())"></option>
         </select>
