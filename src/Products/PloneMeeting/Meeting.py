@@ -1703,6 +1703,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             user = self.portal_membership.getAuthenticatedMember()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException("can_not_delete_meeting_container")
+        # wer are removing the meeting
+        if item.meta_type == 'Meeting':
+            membershipTool = getToolByName(item, 'portal_membership')
+            member = membershipTool.getAuthenticatedMember()
+            if 'wholeMeeting' in item.REQUEST and member.has_role('Manager'):
+                item.REQUEST.set('items_to_remove', item.getItems() + item.getLateItems())
         BaseContent.manage_beforeDelete(self, item, container)
 
     security.declarePublic('showVotes')

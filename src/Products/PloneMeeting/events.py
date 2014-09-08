@@ -251,17 +251,6 @@ def onAnnexRemoved(annex, event):
         item.updateAdvices(invalidate=True)
 
 
-def onItemWillBeRemoved(item, event):
-    '''When an item will be removed, if it is linked to a meeting, warn it.'''
-    # bypass this if we are actually removing the 'Plone Site'
-    if event.object.meta_type == 'Plone Site':
-        return
-
-    # if the item is linked to a meeting, remove the item from this meeting
-    if item.hasMeeting():
-        item.getMeeting().removeItem(item)
-
-
 def onItemDuplicated(item, event):
     '''When an item is duplicated, if it was sent from a MeetingConfig to
        another, we will add a line in the original item history specifying that
@@ -307,17 +296,3 @@ def onMeetingRemoved(meeting, event):
                                                                         meeting.absolute_url()))
         for item in meeting.REQUEST.get('items_to_remove'):
             unrestrictedRemoveGivenObject(item)
-
-
-def onMeetingWillBeRemoved(meeting, event):
-    '''When a meeting will be removed, if we are removing the 'wholeMeeting',
-       aka, the meeting and items, we save the UID of the items in the REQUEST,
-       because in onMeetingRemoved, the references are already gone and we
-       do not have the items anymore...'''
-    # bypass this if we are actually removing the 'Plone Site'
-    if event.object.meta_type == 'Plone Site':
-        return
-    membershipTool = getToolByName(meeting, 'portal_membership')
-    member = membershipTool.getAuthenticatedMember()
-    if 'wholeMeeting' in meeting.REQUEST and member.has_role('Manager'):
-        meeting.REQUEST.set('items_to_remove', meeting.getItems() + meeting.getLateItems())
