@@ -62,13 +62,6 @@
         permission="zope2.View"
         />
     <browser:page
-        for="*"
-        name="at_utils"
-        class=".browser.overrides.Utils"
-        allowed_interface="Products.Archetypes.interfaces.utils.IUtils"
-        permission="zope2.View"
-        />
-    <browser:page
         name="overview-controlpanel"
         for="Products.CMFPlone.interfaces.IPloneSiteRoot"
         class=".browser.overrides.PloneMeetingOverviewControlPanel"
