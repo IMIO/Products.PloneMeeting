@@ -28,8 +28,9 @@ __docformat__ = 'plaintext'
 
 # ------------------------------------------------------------------------------
 from zExceptions import BadRequest
-from Products.PloneMeeting.config import *
+from Products.PloneMeeting.config import registerClasses, PROJECTNAME
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
+from Products.PloneMeeting.ToolPloneMeeting import PloneMeetingError, MEETING_CONFIG_ERROR
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -103,6 +104,10 @@ class ToolInitializer:
                 continue
             # initialize the attribute on the meetingConfig and call _updateCloneToOtherMCActions
             cfg = getattr(self.tool, mConfigId)
+            # validate the MeetingConfig.meetingConfigsToCloneTo data that we are about to set
+            error = cfg.validate_meetingConfigsToCloneTo(savedMeetingConfigsToCloneTo[mConfigId])
+            if error:
+                raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
             cfg.setMeetingConfigsToCloneTo(savedMeetingConfigsToCloneTo[mConfigId])
             cfg._updateCloneToOtherMCActions()
         # finally, create the current user (admin) member area
