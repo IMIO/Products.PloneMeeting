@@ -11,7 +11,7 @@
          name="pm_menu_advice_change_delay"
          class="pmDropdown"
          tal:attributes="id string:pm_menu_${menuId};">
-        <div style="clear: left;" tal:repeat="delay selectableDelays">
+        <div style="clear: left; display: table;" tal:repeat="delay selectableDelays">
             <img style="float: left; padding-right: 0.3em;"
                  src="blue_arrow.gif"
                  tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>

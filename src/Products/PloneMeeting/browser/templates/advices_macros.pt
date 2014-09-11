@@ -70,7 +70,7 @@
                                title="History"
                                i18n:domain="plone"
                                i18n:attributes="title"
-                               style="display: inline;"
+                               style="display: inline-block;"
                                href="@@advice-delay-changes-history"
                                tal:attributes="href string:${meetingItem/absolute_url}/@@advice-delay-changes-history?advice=${advice/id}">
                                 <img src="++resource++imio.actionspanel/history.gif"
