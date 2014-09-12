@@ -3354,7 +3354,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
         # notify that advices have been updated so subproducts
         # may interact if necessary
-        notify(AdvicesUpdatedEvent(self))
+        notify(AdvicesUpdatedEvent(self, triggered_by_transition=triggered_by_transition))
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
     security.declarePublic('getDelayInfosForAdvice')
