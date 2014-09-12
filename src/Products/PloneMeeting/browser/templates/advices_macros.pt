@@ -18,7 +18,7 @@
                                             plone_view context/@@plone;
                                             isRealManager python: tool.isManager(realManagers=True);
                                             item_review_state meetingItem/queryState;
-                                            adviceFileTypes python: meetingConfig.getFileTypes('advice')">
+                                            adviceFileTypes python: meetingConfig.getFileTypes('advice');">
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
       <td tal:condition="advicesToAdd" class="noPadding">
         <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
@@ -47,7 +47,10 @@
                                       mGroup python: getattr(tool, advice['id']);
                                       memberIsAdviserForGroup python:  advice['id'] in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')];
                                       obj python: advice.get('advice_id', None) and getattr(meetingItem, advice['advice_id']) or None;
-                                      mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');">
+                                      mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');
+                                      customMessageInfos python: meetingItem.adapted().getCustomAdviceMessageFor(advice);
+                                      displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
+                                      customAdviceMessage customMessageInfos/customAdviceMessage;">
                     <legend>
                          <span tal:condition="advice/delay">
                               <img src="advice_with_delay_big.png"
@@ -78,24 +81,14 @@
                             </a>
                          </acronym>
                     </legend>
-                <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
-                    <p>
-                        <span class="advice_hidden_during_redaction discreet" i18n:translate="">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</span>
-                        &nbsp;<span tal:condition="advice/delay_infos"
-                                    class="advice_hidden_during_redaction discreet"
-                                    i18n:translate="">This advice must not be 'hidden during redaction' anymore before <span i18n:name="limit_date" tal:content="advice/delay_infos/limit_date_localized">limit date</span> or it will be considered not given.
-                        </span>
-                    </p>
-                </tal:hiddenUnderRedaction>
-                <tal:underRedactionNoMoreEditable condition="python: adviceType == 'considered_not_given_hidden_during_redaction'">
-                  <p class="discreet" style="color: red;" i18n:translate="">This advice is considered 'Not given' because it was still under redaction when the ability to write the advice was removed to advisers of the group. If you need this advice to be considered, contact relevant meeting managers.</p>
-                </tal:underRedactionNoMoreEditable>
-                <tal:notHiddenUnderRedaction condition="python: memberIsAdviserForGroup or mayEdit or not adviceType in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')">
-                    <tal:advice-change-delay
-                      tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
-                                  dummy python: context.REQUEST.set('advice_change_delay_cfg', meetingConfig);
-                                  dummy python: context.REQUEST.set('advice_change_delay_mayEdit', mayEdit);"
-                      replace="structure meetingItem/@@advice-available-delays/index" />
+
+                <tal:notHiddenUnderRedactionOrManagable condition="python: memberIsAdviserForGroup or mayEdit or not adviceType in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')">
+
+                <tal:advice-change-delay
+                  tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
+                              dummy python: context.REQUEST.set('advice_change_delay_cfg', meetingConfig);
+                              dummy python: context.REQUEST.set('advice_change_delay_mayEdit', mayEdit);"
+                  replace="structure meetingItem/@@advice-available-delays/index" />
 
                 <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%">
                   <tr tal:condition="mayEdit">
@@ -169,9 +162,6 @@
                     </td>
                   </tr>
                 </table>
-                <tal:complementaryInfoMessageDefines define="customMessageInfos python: meetingItem.adapted().getCustomAdviceMessageFor(advice);
-                                                             displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
-                                                             customAdviceMessage customMessageInfos/customAdviceMessage;">
                 <tal:complementaryInfoMessage condition="displayDefaultComplementaryMessage">
                     <tal:adviceGiveableWithoutDelay condition="python: adviceType == 'not_given' and advice['advice_addable'] and not advice['delay_infos']">
                         <span class="discreet"
@@ -252,13 +242,29 @@
                         </span>
                     </tal:itemViewableButNoMoreAdviseableWithDelay>
                 </tal:complementaryInfoMessage>
+                </tal:notHiddenUnderRedactionOrManagable>
+
+
+                <tal:complementaryInfoMessage condition="displayDefaultComplementaryMessage">
+                <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
+                    <p>
+                        <span class="advice_hidden_during_redaction discreet" i18n:translate="">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</span>
+                        &nbsp;<span tal:condition="advice/delay_infos"
+                                    class="advice_hidden_during_redaction discreet"
+                                    i18n:translate="">This advice must not be 'hidden during redaction' anymore before <span i18n:name="limit_date" tal:content="advice/delay_infos/limit_date_localized">limit date</span> or it will be considered not given.
+                        </span>
+                    </p>
+                </tal:hiddenUnderRedaction>
+
+                <tal:underRedactionNoMoreEditable condition="python: adviceType == 'considered_not_given_hidden_during_redaction'">
+                  <p class="discreet" style="color: red;" i18n:translate="">This advice is considered 'Not given' because it was still under redaction when the ability to write the advice was removed to advisers of the group. If you need this advice to be considered, contact relevant meeting managers.</p>
+                </tal:underRedactionNoMoreEditable>
+                </tal:complementaryInfoMessage>
+
                 <tal:customAdviceMessage condition="customAdviceMessage">
                     <tal:block replace="structure customAdviceMessage" />
                 </tal:customAdviceMessage>
 
-                </tal:complementaryInfoMessageDefines>
-
-                </tal:notHiddenUnderRedaction>
                 <div tal:condition="python: advice['delay'] and advice['delay_started_on']" class="discreet" style="text-align: right;">
                    <span i18n:translate="">Asked on <span i18n:name="advice_asked_on_date" tal:content="python: context.toLocalizedTime(advice['delay_started_on'])">2013/05/08</span></span>
                    <span tal:condition="python: advice['type'] != 'not_given' and not advice['hidden_during_redaction']"> - <span i18n:translate="">Given on <span i18n:name="advice_given_on_date" tal:content="python: context.toLocalizedTime(advice['advice_given_on'])">2013/05/08</span></span></span>
