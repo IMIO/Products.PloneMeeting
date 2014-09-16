@@ -3200,6 +3200,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 sortCriterion = topic.getSortCriterion()
                 if sortCriterion:
                     sortKey = sortCriterion.Field()
+                    sortOrder = sortCriterion.reversed and 'reverse' or None
                 else:
                     sortKey = 'created'
             methodId = topic.getProperty(TOPIC_SEARCH_SCRIPT, None)
