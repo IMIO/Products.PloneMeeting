@@ -25,6 +25,7 @@ class ItemCompletenessView(BrowserView):
             completenessKeys.remove('completeness_complete')
             completenessKeys.remove('completeness_incomplete')
             completenessKeys.remove('completeness_not_yet_evaluated')
+            completenessKeys.remove('completeness_evaluation_not_required')
         # now check if user can set to 'completeness_evaluation_asked_again'
         if not self.context.adapted().mayAskCompletenessEvalAgain():
             completenessKeys.remove('completeness_evaluation_asked_again')

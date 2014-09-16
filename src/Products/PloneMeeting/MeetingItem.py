@@ -1808,6 +1808,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             ("completeness_evaluation_asked_again", translate('completeness_evaluation_asked_again',
                                                               domain=d,
                                                               context=self.REQUEST)),
+            ("completeness_evaluation_not_required", translate('completeness_evaluation_not_required',
+                                                               domain=d,
+                                                               context=self.REQUEST)),
         ))
         return res
 
@@ -2866,15 +2869,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return bool(userAdviserGroupIds.intersection(powerAdviserGroupIds))
 
     security.declarePublic('hasAdvices')
-    def hasAdvices(self, toGive=False):
+    def hasAdvices(self, toGive=False, adviceIdsToBypass=()):
         '''Is there at least one given advice on this item?
            If p_toGive is True, it contrary returns if there
-           is still an advice to be given.'''
+           is still an advice to be given.
+           If some p_adviceIdsToBypass are given, these will not be taken
+           into account as giveable.'''
         for advice in self.adviceIndex.itervalues():
-            if toGive and advice['type'] == NOT_GIVEN_ADVICE_VALUE:
+            if advice['id'] in adviceIdsToBypass:
+                continue
+            if (toGive and advice['type'] == NOT_GIVEN_ADVICE_VALUE) or \
+               (not toGive and not advice['type'] == NOT_GIVEN_ADVICE_VALUE):
                 return True
-            if not toGive and not advice['type'] == NOT_GIVEN_ADVICE_VALUE:
-                return True
+
         return False
 
     security.declarePublic('hasAdvices')

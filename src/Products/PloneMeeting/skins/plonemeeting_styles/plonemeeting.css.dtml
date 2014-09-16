@@ -886,6 +886,13 @@ select#optionalAdvisers option[disabled] {
     display: inline;
     color: red;
 }
+.item_completeness_evaluation_not_required,
+#content a.item_completeness_evaluation_not_required:link,
+#content a.item_completeness_evaluation_not_required:visited {
+    vertical-align: middle;
+    display: inline;
+    color: black;
+}
 /* generated class used in object's history */
 .transition-completeness_incomplete {
     color: red;
@@ -924,6 +931,7 @@ a.item_completeness_incomplete,
 a.item_completeness_complete,
 a.item_completeness_not_yet_evaluated,
 a.item_completeness_evaluation_asked_again,
+a.item_completeness_evaluation_not_required,
 a.item_no_emergency,
 a.item_emergency_asked,
 a.item_emergency_accepted,
@@ -963,6 +971,7 @@ div a.advice_delay_change_value {
 .item_completeness_complete.Editable,
 .item_completeness_not_yet_evaluated.Editable,
 .item_completeness_evaluation_asked_again.Editable,
+.item_completeness_evaluation_not_required.Editable,
 .item_no_emergency.Editable,
 .item_emergency_asked.Editable,
 .item_emergency_accepted.Editable,
