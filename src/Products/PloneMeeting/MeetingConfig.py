@@ -1571,6 +1571,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
          ),
+        # Items to advice without delay : need a script to do this search
+        ('searchitemstoadvicewithoutdelay',
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchItemsToAdviceWithoutDelay',
+         "python: here.portal_plonemeeting.getMeetingConfig(here)."
+         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+         ),
         # Items to advice with delay : need a script to do this search
         ('searchitemstoadvicewithdelay',
         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
@@ -2968,10 +2977,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries all items for which the current user must give an advice.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '0' at the end of every group id: we want "not given" advices.
-        # this search will also return 'delay-aware' advices
+        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
+        # this search will return 'not delay-aware' and 'delay-aware' advices
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
                    ['delay__' + g.getId() + '_advice_not_given' for g in groups]
+        # Create query parameters
+        params = {'portal_type': self.getItemTypeName(),
+                  # KeywordIndex 'indexAdvisers' use 'OR' by default
+                  'indexAdvisers': groupIds,
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder,
+                  }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(filterValue)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
+
+    security.declarePublic('searchItemsToAdviceWithoutDelay')
+    def searchItemsToAdviceWithoutDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Queries items for which the current user must give a delay-aware advice.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        groups = tool.getGroupsForUser(suffix='advisers')
+        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
+        # this search will only return 'not delay-aware' advices
+        groupIds = [g.getId() + '_advice_not_given' for g in groups]
         # Create query parameters
         params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
@@ -2992,7 +3024,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Queries items for which the current user must give a delay-aware advice.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '_not_given' at the end of every group id: we want "not given" advices.
+        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
         groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups]
         # Create query parameters

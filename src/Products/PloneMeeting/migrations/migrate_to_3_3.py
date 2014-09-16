@@ -252,8 +252,8 @@ class Migrate_To_3_3(Migrator):
         logger.info('Done.')
 
     def _addMissingTopics(self):
-        '''Add the new topic 'searchitemsofmygroups'.'''
-        logger.info('Adding new topic \'searchitemsofmygroups\' to every MeetingConfigs...')
+        '''Add the new topics.'''
+        logger.info('Adding new topics to every MeetingConfigs...')
         newTopicsInfo = (
             # Items to advice with delay : need a script to do this search
             ('searchitemsofmygroups',
@@ -263,28 +263,55 @@ class Migrate_To_3_3(Migrator):
              'searchItemsOfMyGroups',
              "python: here.portal_plonemeeting.getGroupsForUser()",
              ),
+            # Items to advice without delay : need a script to do this search
+            ('searchitemstoadvicewithoutdelay',
+            (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+             ),
+             'created',
+             'searchItemsToAdviceWithoutDelay',
+             "python: here.portal_plonemeeting.getMeetingConfig(here)."
+             "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+             ),
         )
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            hasSearchItemsOfMyGroups = False
+            hasSearchItemsToAdvifceWithoutDelay = False
             if hasattr(cfg.topics, 'searchitemsofmygroups'):
-                continue
+                hasSearchItemsOfMyGroups = True
+            if hasattr(cfg.topics, 'searchitemstoadvicewithoutdelay'):
+                hasSearchItemsToAdvifceWithoutDelay = True
             # createTopics manage the fact that the topic already exists
             cfg.createTopics(newTopicsInfo)
-            # now reorder so 'searchitemsofmygroups' is under 'searchmyitems'
-            # find delta, we need to insert it after the 'searchmyitems' topic
-            if not hasattr(cfg.topics, 'searchmyitems'):
-                logger.error('Unable to find topic \'searchmyitems\' !!!  '
-                             'New \'searchitemsofmygroups\' topic will be left at the bottom of available topics!')
-                return
-            myItemsTopic = cfg.topics.searchmyitems
-            everyTopicIds = cfg.topics.objectIds()
-            myItemsTopicPosition = everyTopicIds.index(myItemsTopic.getId())
-            itemsOfMyGroupsTopicPosition = everyTopicIds.index('searchitemsofmygroups')
-            delta = itemsOfMyGroupsTopicPosition - myItemsTopicPosition - 1
-            cfg.topics.moveObjectsUp('searchitemsofmygroups', delta=delta)
+            if not hasSearchItemsOfMyGroups:
+                # now reorder so 'searchitemsofmygroups' is under 'searchmyitems'
+                # find delta, we need to insert it after the 'searchmyitems' topic
+                if not hasattr(cfg.topics, 'searchmyitems'):
+                    logger.error('Unable to find topic \'searchmyitems\' !!!  '
+                                 'New \'searchitemsofmygroups\' topic will be left at the bottom of available topics!')
+                    continue
+                myItemsTopic = cfg.topics.searchmyitems
+                everyTopicIds = cfg.topics.objectIds()
+                myItemsTopicPosition = everyTopicIds.index(myItemsTopic.getId())
+                itemsOfMyGroupsTopicPosition = everyTopicIds.index('searchitemsofmygroups')
+                delta = itemsOfMyGroupsTopicPosition - myItemsTopicPosition - 1
+                cfg.topics.moveObjectsUp('searchitemsofmygroups', delta=delta)
+            if not hasSearchItemsToAdvifceWithoutDelay:
+                # now reorder so 'searchitemstoadvicewithoutdelay' is under 'searchallitemstoadvice'
+                # find delta, we need to insert it after the 'searchallitemstoadvice' topic
+                if not hasattr(cfg.topics, 'searchallitemstoadvice'):
+                    logger.error('Unable to find topic \'searchallitemstoadvice\' !!!  '
+                                 'New \'searchitemstoadvicewithoutdelay\' topic will be left at the bottom of available topics!')
+                    continue
+                allAdvicesTopic = cfg.topics.searchallitemstoadvice
+                everyTopicIds = cfg.topics.objectIds()
+                allAdvicesTopicPosition = everyTopicIds.index(allAdvicesTopic.getId())
+                advicesWithoutDelayTopicPosition = everyTopicIds.index('searchitemstoadvicewithoutdelay')
+                delta = advicesWithoutDelayTopicPosition - allAdvicesTopicPosition - 1
+                cfg.topics.moveObjectsUp('searchitemstoadvicewithoutdelay', delta=delta)
         logger.info('Done.')
 
     def run(self):
-        logger.info('Migrating to PloneMeeting 3.2.1...')
+        logger.info('Migrating to PloneMeeting 3.3...')
         self._finishMeetingFolderViewRemoval()
         self._moveItemTemplatesToOwnFolder()
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
