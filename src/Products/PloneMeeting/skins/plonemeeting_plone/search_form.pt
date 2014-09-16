@@ -218,7 +218,7 @@
           <label for="item_getDeliberation" i18n:translate="PloneMeeting_label_deliberation" class="noborder"></label>&nbsp;
 
           <input type="radio" name="item_keywords_target" value="all" id="item_all" checked="checked"/>
-          <label for="item_all" i18n:translate="hs_all" class="noborder"></label><br/>
+          <label for="item_all" i18n:domain="plone" i18n:translate="label_all" class="noborder"></label><br/>
         </td>
       </tr>
       <tr name="item_criteria">
