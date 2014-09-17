@@ -66,13 +66,13 @@
     <tr valign="top">
      <td width="50%">
       <div style="position: relative">
-       <span class="hsLanguage" tal:content="firstLanguage" tal:condition="isRich"></span>
+       <span class="pmLanguage" tal:content="firstLanguage" tal:condition="isRich"></span>
        <metal:f use-macro="python:context.widget(fieldName, mode='edit')"/>
       </div>
      </td>
      <td width="50%">
       <div style="position: relative">
-       <span class="hsLanguage" tal:content="secondLanguage" tal:condition="isRich"></span>
+       <span class="pmLanguage" tal:content="secondLanguage" tal:condition="isRich"></span>
        <metal:f use-macro="python:context.widget(fieldName+'2', mode='edit')"/>
       </div>
      </td>
@@ -137,7 +137,7 @@ document.location.reload(true);
 
  <fieldset>
   <legend>
-    <span tal:condition="lang" class="hsLanguage" tal:content="lang"></span>
+    <span tal:condition="lang" class="pmLanguage" tal:content="lang"></span>
     <span tal:replace="python: field.widget.Label(context)"></span>
     <img style="cursor:pointer" tal:condition="mayEdit"
          tal:attributes="src string:$portal_url/edit.gif;
@@ -402,32 +402,6 @@ document.location.reload(true);
                  i18n:translate="back">Back to parent</a>
       </div>
     </tal:back>
-</div>
-
-<tal:comment replace="nothing">
-  This macro redirects the user to its default page.
-</tal:comment>
-<div metal:define-macro="hsRedirect" i18n:domain="PloneMeeting"
-     tal:define="tool python: context.portal_plonemeeting;
-                 isHsUser tool/isPloneMeetingUser">
-
-  <span tal:condition="isHsUser">
-    <tal:redirect
-      define="meetingConfig python: tool.getDefaultMeetingConfig();
-              meetingFolder python: tool.getPloneMeetingFolder(meetingConfig.getId());
-              dummy         python: request.RESPONSE.redirect(meetingFolder.absolute_url())"/>
-  </span>
-  <span tal:condition="not: isHsUser" i18n:translate="notPloneMeetingUser"></span>
-</div>
-
-<div metal:define-macro="hsWelcome" i18n:domain="PloneMeeting" tal:define="frontPage python: getattr(context, 'front-page', None)">
-  <tal:comment replace="nothing">Try to get a document called plonemeeting-welcome at the root of the site, either display a default message</tal:comment>
-  <tal:hasFrontPageDocument condition="frontPage">
-    <p tal:replace="structure frontPage/getText">Welcome text</p>
-  </tal:hasFrontPageDocument>
-  <tal:noFrontPageDocument condition="not: frontPage">
-    <p><span i18n:translate="">hs_welcome_body</span></p>
-  </tal:noFrontPageDocument>
 </div>
 
 <div id="meeting_users_"

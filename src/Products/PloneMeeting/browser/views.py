@@ -60,17 +60,26 @@ class PloneMeetingRedirectToAppView(BrowserView):
         '''
           Add a specific portal_message if we have no active meetingConfig to redirect the connected member to.
         '''
-        if not self.defaultMeetingConfig() and self.portal_state.member().has_role('Manager'):
-            self.portal.plone_utils.addPortalMessage( \
+        defaultMeetingConfig = self.defaultMeetingConfig()
+        if not self.defaultMeetingConfig() and \
+           self.portal.portal_membership.getAuthenticatedMember().has_role('Manager'):
+            self.portal.plone_utils.addPortalMessage(
                 translate('Please specify a default meeting config upon active existing '
                           'meeting configs to be automaatically redirected to it.',
                           domain='PloneMeeting',
                           context=self.request), type='warning')
+        # redirect the user to the default meeting config if possible
+        if defaultMeetingConfig:
+            import ipdb; ipdb.set_trace()
+            pmFolder = self.getPloneMeetingTool().getPloneMeetingFolder(defaultMeetingConfig.getId())
+            return self.request.RESPONSE.redirect(pmFolder.absolute_url())
+
         return self.index()
 
     @memoize
     def defaultMeetingConfig(self):
-        '''Returns the default MeetingConfig.'''
+        '''Returns the default MeetingConfig.
+           getDefaultMeetingConfig takes care of current member being able to access the MeetingConfig.'''
         return self.getPloneMeetingTool().getDefaultMeetingConfig()
 
     @memoize
@@ -85,6 +94,12 @@ class PloneMeetingFolderView(BrowserView):
       Either use a 'real' folder view (folder_listing, ...) or we use the plonemeeting_topic_view that
       use a specific topicId
     """
+    def __call__(self):
+        '''
+          Redirect to the right url.
+        '''
+        return self.request.RESPONSE.redirect(self.getFolderRedirectUrl())
+
     def getFolderRedirectUrl(self):
         """
           Return the link to redirect the user to.

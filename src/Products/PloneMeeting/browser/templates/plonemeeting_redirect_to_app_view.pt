@@ -16,12 +16,16 @@
   </metal:description>
 
   <metal:fill fill-slot="content-core">
-     <metal:main_macro define-macro="body" tal:define="defaultMeetingConfig view/defaultMeetingConfig;
-                                                       member context/@@plone_portal_state/member;">
-       <tal:block condition="python: member.getId() and defaultMeetingConfig and context.portal_plonemeeting.getPloneMeetingFolder(defaultMeetingConfig.getId()).portal_type != 'Plone Site'">
-         <span metal:use-macro="here/@@pm-macros/hsRedirect"/>
-       </tal:block>
-       <span metal:use-macro="here/@@pm-macros/hsWelcome"/>
+     <metal:main_macro define-macro="body"
+                       tal:define="frontPage python: getattr(context, 'front-page', None)">
+
+    <tal:comment replace="nothing">Try to get the 'front-page' at the root of the site, either display a default message</tal:comment>
+    <tal:hasFrontPageDocument condition="frontPage">
+      <p tal:replace="structure frontPage/getText">Welcome text</p>
+    </tal:hasFrontPageDocument>
+    <tal:noFrontPageDocument condition="not: frontPage">
+      <p><span i18n:translate="">hs_welcome_body</span></p>
+    </tal:noFrontPageDocument>
 
      </metal:main_macro>
   </metal:fill>

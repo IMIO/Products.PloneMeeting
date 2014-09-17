@@ -466,8 +466,8 @@ div.hsGrey {
 
 .hsActions {position: relative; top: 1.7em; right: 1.3em; z-index:10;}
 .hsCatId {font-style: italic; }
-.hsLanguage {position: absolute; right: 15px; font-style: italic; font-size: 95%;}
-legend .hsLanguage {top: -0.3em; right: 5px;}
+.pmLanguage {position: absolute; right: 15px; font-style: italic; font-size: 95%;}
+legend .pmLanguage {top: -0.3em; right: 5px;}
 
 .pmDropdown {
     display:none;
