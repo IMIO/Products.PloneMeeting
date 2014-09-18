@@ -70,7 +70,6 @@ class PloneMeetingRedirectToAppView(BrowserView):
                           context=self.request), type='warning')
         # redirect the user to the default meeting config if possible
         if defaultMeetingConfig:
-            import ipdb; ipdb.set_trace()
             pmFolder = self.getPloneMeetingTool().getPloneMeetingFolder(defaultMeetingConfig.getId())
             return self.request.RESPONSE.redirect(pmFolder.absolute_url())
 
