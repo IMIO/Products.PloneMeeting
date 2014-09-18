@@ -19,7 +19,10 @@ portal_url = getToolByName(context, 'portal_url')()
 # XXX begin changes by PloneMeeting, define advanced_search_url
 tool = getToolByName(context, 'portal_plonemeeting')
 from Products.PloneMeeting.utils import getCurrentMeetingObject
-mc = tool.getMeetingConfig(getCurrentMeetingObject(context))
+currentMeetingObject = getCurrentMeetingObject(context)
+mc = None
+if currentMeetingObject:
+    mc = tool.getMeetingConfig(currentMeetingObject)
 advanced_search_url = mc and (tool.getPloneMeetingFolder(mc.getId()).absolute_url() + '/search_form') or (portal_url + '/@@search')
 # XXX end changes by PloneMeeting
 pretty_title_or_id = ploneUtils.pretty_title_or_id

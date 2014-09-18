@@ -95,12 +95,22 @@
                     <td class="noPadding" width="auto">
                     </td>
                     <td align="right" width="20px" class="noPadding">
-                    <a href="edit"
-                       class="link-overlay-pm-advice"
-                       tal:attributes="href string:${item_url}/${advice/advice_id}/edit">
-                      <img i18n:attributes="title" title="advice_edit"
-                           tal:attributes="src string:$portal_url/edit.gif;" />
-                    </a>
+                        <tal:editableOrLocked define="adviceIsLocked python: obj and obj.wl_isLocked() or False;">
+                            <a href="edit"
+                               tal:condition="not: adviceIsLocked"
+                               class="link-overlay-pm-advice"
+                               tal:attributes="href string:${item_url}/${advice/advice_id}/edit">
+                              <img i18n:attributes="title" title="advice_edit"
+                                   tal:attributes="src string:$portal_url/edit.gif;" />
+                            </a>
+                            <a href="view"
+                               tal:condition="adviceIsLocked"
+                               tal:attributes="href string:${item_url}/${advice/advice_id}/view">
+                              <img i18n:attributes="title" title="Locked"
+                                   i18n:domain="plone"
+                                   tal:attributes="src string:$portal_url/lock_icon.png;" />
+                            </a>
+                        </tal:editableOrLocked>
                     </td>
                     <td align="right" width="20px" class="noPadding">
                     <a href="view"

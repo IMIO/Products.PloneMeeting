@@ -18,6 +18,15 @@ function advicePopup() {
                 if (CKEDITOR.instances['form.widgets.advice_comment']) {
                     CKEDITOR.instances['form.widgets.advice_comment'].destroy();
                 }
+                // unlock current element
+                // compute url, find link to advice edit and remove trailing '/edit'
+                var rel_num = this.getOverlay().attr('id');
+                advice_url = $("[rel='#" + rel_num + "']").attr('href')
+                // remove '/edit'
+                advice_url = advice_url.slice(0, -5);
+                // now we have the edit link, take the href and remove the '/edit'
+                $.ajax({
+                    url: advice_url + "/@@plone_lock_operations/safe_unlock", });
                 return true;
             }
         }
