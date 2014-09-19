@@ -60,6 +60,11 @@ class IMeetingAdvice(Interface):
         output_mime_type='text/html',
         allowed_mime_types=('text/html',),
     )
+    advice_reference = schema.TextLine(
+        title=_(u"Advice reference"),
+        description=_("Enter a reference for this advice if necessary."),
+        required=False,
+    )
     form.mode(advice_row_id='hidden')
     advice_row_id = schema.TextLine(
         title=_(u"Advice row id"),
