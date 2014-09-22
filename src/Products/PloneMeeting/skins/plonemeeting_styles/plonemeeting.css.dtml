@@ -247,7 +247,7 @@ tr.even table.advices td {
     cursor: pointer;
 }
 
-#content .actionMenuAX .actionMenuContentAX ul {
+#content .actionMenuAX .actionMenuContentAX ul:first-child {
     display: block;
     background-color: white;
     border: 1px solid #CCCCCC;
