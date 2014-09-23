@@ -1686,7 +1686,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             userGroups = self.getGroupsForUser(userId=newOwnerId, suffix="creators")
             if newItem.getProposingGroup(True) not in userGroups:
                 if userGroups:
-                    newItem.setProposingGroup(userGroups[0].id)
+                    newItem.setProposingGroup(userGroups[0].getId())
 
             # call at_post_create_script again that updates the local roles (so removes role
             # 'Manager' that we've set above) by calling MeetingItem.updateLocalRoles,

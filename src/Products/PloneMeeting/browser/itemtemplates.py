@@ -27,7 +27,7 @@ class ItemTemplateView(BrowserView):
 
     def __call__(self):
         # check that the user can actually create an item from a template
-        if not self.getTemplateItems():
+        if not self.getItemTemplates():
             self.request.RESPONSE.redirect(self.context.absolute_url())
         form = self.request.form
         templateUID = form.get('templateUID', None)
@@ -65,7 +65,7 @@ class ItemTemplateView(BrowserView):
         return newItem
 
     @memoize
-    def getTemplateItems(self):
+    def getItemTemplates(self):
         '''Gets the list of template items from the config.'''
         cfg = self.getCurrentMeetingConfig()
         res = []

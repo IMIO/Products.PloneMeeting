@@ -3863,9 +3863,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            duplicating an item).  p_copyFields will contains a list of fields
            we want to keep value of, if not in this list, the new field value
            will be the default value for this field.'''
-        # first check that we are not trying to clone an item the we
-        # can not access because of privacy status
-        if not self.adapted().isPrivacyViewable():
+        # first check that we are not trying to clone an item
+        # we can not access because of privacy status
+        # do thsi check if we are not creating an item from an itemTemplate
+        # for wich there is no proposingGroup selected or it will not be
+        # privacyViewable and using such an item template will always fail...
+        if self.getProposingGroup() and not self.adapted().isPrivacyViewable():
             raise Unauthorized
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = getToolByName(self, 'portal_plonemeeting')

@@ -10,7 +10,6 @@ from plone.portlets.interfaces import IPortletDataProvider
 
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.PloneMeeting.browser.itemtemplates import ItemTemplateView
 
 from zope.i18nmessageid import MessageFactory
 _ = MessageFactory('PloneMeeting')
@@ -68,7 +67,7 @@ class Renderer(base.Renderer):
         '''Returns the current PM folder.'''
         cfg = self.getCurrentMeetingConfig()
         if cfg:
-            return self.getPloneMeetingTool().getPloneMeetingFolder(cfg.id)
+            return self.getPloneMeetingTool().getPloneMeetingFolder(cfg.getId())
 
     @memoize
     def getCurrentDateTime(self):
@@ -78,7 +77,7 @@ class Renderer(base.Renderer):
     @memoize
     def templateItems(self):
         '''Check if there are item templates defined or not.'''
-        return ItemTemplateView(self.context, self.request).getTemplateItems()
+        return self.getPloneMeetingFolder().restrictedTraverse('createitemfromtemplate').getItemTemplates()
 
 
 class AddForm(base.AddForm):
