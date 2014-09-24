@@ -1085,6 +1085,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return res
     getRawDecision = getDecision
+
     security.declarePublic('getMotivation')
     def getMotivation(self, **kwargs):
         '''Overridden version of 'motivation' field accessor. It allows to manage
@@ -1102,6 +1103,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return self.getField('motivation').get(self, **kwargs)
     getRawMotivation = getMotivation
+
     security.declarePublic('getDeliberation')
     def getDeliberation(self, keepWithNext=True, separate=False, **kwargs):
         '''Returns the entire deliberation depending on fields used.'''
@@ -1840,7 +1842,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Is there a meeting tied to me?'''
         return self.getMeeting(brain=True) is not None
 
-    security.declarePublic('isLateFor')
+    security.declarePublic('isLate')
     def isLate(self):
         '''Am I included in a meeting as a late item?'''
         refCatalog = getToolByName(self, 'reference_catalog')
