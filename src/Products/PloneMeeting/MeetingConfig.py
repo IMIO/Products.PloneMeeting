@@ -1390,6 +1390,18 @@ schema = Schema((
         schemata="advices",
     ),
     BooleanField(
+        name='restrictAccessToSecretItems',
+        default=defValues.restrictAccessToSecretItems,
+        widget=BooleanField._properties['widget'](
+            description="RestrictAccessToSecretItems",
+            description_msgid="restrict_access_to_secret_items_descr",
+            label='Restrictaccesstosecretitems',
+            label_msgid='PloneMeeting_label_restrictAccessToSecretItems',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+    ),
+    BooleanField(
         name='useVotes',
         default=defValues.useVotes,
         widget=BooleanField._properties['widget'](

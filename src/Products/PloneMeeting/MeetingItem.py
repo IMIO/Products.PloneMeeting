@@ -926,19 +926,6 @@ schema = Schema((
         multiValued=True,
         relationship="ManuallyLinkedItem",
     ),
-    BooleanField(
-        name='sendToAuthority',
-        default=False,
-        widget=BooleanField._properties['widget'](
-            condition="python: here.attributeIsUsed('sendToAuthority')",
-            description="SendToAuthority",
-            description_msgid="send_to_authority_descr",
-            label='Sendtoauthority',
-            label_msgid='PloneMeeting_label_sendToAuthority',
-            i18n_domain='PloneMeeting',
-        ),
-        optional=True,
-    ),
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
@@ -951,6 +938,19 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listOtherMeetingConfigsClonableTo',
+    ),
+    BooleanField(
+        name='sendToAuthority',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            condition="python: here.attributeIsUsed('sendToAuthority')",
+            description="SendToAuthority",
+            description_msgid="send_to_authority_descr",
+            label='Sendtoauthority',
+            label_msgid='PloneMeeting_label_sendToAuthority',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
     ),
     StringField(
         name='privacy',
@@ -1085,7 +1085,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return res
     getRawDecision = getDecision
-
     security.declarePublic('getMotivation')
     def getMotivation(self, **kwargs):
         '''Overridden version of 'motivation' field accessor. It allows to manage
@@ -1103,7 +1102,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return self.getField('motivation').get(self, **kwargs)
     getRawMotivation = getMotivation
-
     security.declarePublic('getDeliberation')
     def getDeliberation(self, keepWithNext=True, separate=False, **kwargs):
         '''Returns the entire deliberation depending on fields used.'''
@@ -1588,7 +1586,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(k.replace(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY, ''))
         return res
 
+    def isPrivacyViewable_cachekey(method, self):
+        '''cachekey method for self.isPrivacyViewable.'''
+        item = self.getSelf()
+        return (item, str(item.REQUEST.debug))
+
     security.declarePublic('isPrivacyViewable')
+    @ram.cache(isPrivacyViewable_cachekey)
     def isPrivacyViewable(self):
         '''Check doc in interfaces.py.'''
         # Checking the 'privacy condition' is only done if privacy is 'secret'.
@@ -1596,16 +1600,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         privacy = item.getPrivacy()
         if privacy == 'public':
             return True
-        # Bypass privacy check for super users
+        # check if privacy needs to be checked...
         tool = getToolByName(item, 'portal_plonemeeting')
-        if tool.isPowerObserverForCfg(tool.getMeetingConfig(item)):
+        cfg = tool.getMeetingConfig(item)
+        if not cfg.getRestrictAccessToSecretItems():
             return True
-        # Checks that the user belongs to the proposing group.
+        # Bypass privacy check for super users
+        if tool.isPowerObserverForCfg(cfg):
+            return True
+        # Check that the user belongs to the proposing group.
         proposingGroup = item.getProposingGroup()
         membershipTool = getToolByName(item, 'portal_membership')
         user = membershipTool.getAuthenticatedMember()
-        for ploneGroup in user.getGroups():
+        userGroups = user.getGroups()
+        for ploneGroup in userGroups:
             if ploneGroup.startswith('%s_' % proposingGroup):
+                return True
+        # Check if the user is in the copyGroups
+        if set(item.getCopyGroups()).intersection(userGroups):
+            return True
+        # Check if the user has advices to add or give for item
+        # we have userGroups, get groups he is adviser for and
+        # check if in item.adviceIndex
+        userAdviserGroups = [userGroup for userGroup in userGroups if userGroup.endswith('_advisers')]
+        for userAdviserGroup in userAdviserGroups:
+            meetingGroupId = userAdviserGroup.replace('_advisers', '')
+            if meetingGroupId in item.adviceIndex and \
+               item.adviceIndex[meetingGroupId]['item_viewable_by_advisers']:
                 return True
 
     security.declarePublic('checkPrivacyViewable')
@@ -1819,7 +1840,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Is there a meeting tied to me?'''
         return self.getMeeting(brain=True) is not None
 
-    security.declarePublic('isLate')
+    security.declarePublic('isLateFor')
     def isLate(self):
         '''Am I included in a meeting as a late item?'''
         refCatalog = getToolByName(self, 'reference_catalog')
@@ -4629,6 +4650,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return _('attendees_for_item')
         else:
             return _('PloneMeeting_label_itemAssembly')
+
+
 
 registerType(MeetingItem, PROJECTNAME)
 # end of class MeetingItem

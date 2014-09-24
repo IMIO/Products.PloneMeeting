@@ -228,9 +228,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
 
     def showHistoryForContext(self):
         """
-          History on items is shown without condition.
+          History on items is shown if item isPrivacyViewable without condition.
         """
-        return True
+        return bool(self.context.isPrivacyViewable())
 
     @memoize_contextless
     def mayChangeOrder(self):

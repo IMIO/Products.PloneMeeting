@@ -307,6 +307,9 @@
           <tal:show condition="isPrivacyViewable">
             <div metal:use-macro="here/@@advices-macros/advicesIcons"></div>
           </tal:show>
+          <tal:doNotShow condition="not: isPrivacyViewable">
+            -
+          </tal:doNotShow>
         </td>
 
         <tal:comment replace="nothing">"itemIsSigned" field</tal:comment>

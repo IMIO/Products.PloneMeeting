@@ -1152,13 +1152,20 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_IsPrivacyViewable(self):
         '''
           Test who can access an item when it's privacy is 'secret'.
-          By default, only members of the proposing group and super users
-          (MeetingManager, Manager, PowerObservers) can access the item.
-          Use copyGroups to test this.
+          Finally, only members for wich we give an explicit access can access the item :
+          - members of the proposing group;
+          - super users (MeetingManager, Manager, PowerObservers);
+          - copy groups;
+          - advisers.
+          This is usefull in workflows where there is a 'publication' step where items are accessible
+          by everyone but we want to control access to secret items nevertheless.
         '''
         self.setMeetingConfig(self.meetingConfig2.getId())
-        # we will use the copyGroups to check who can fully access item and who can not
-        self.meetingConfig.setItemCopyGroupsStates(('presented', ))
+        # copyGroups can access item
+        self.meetingConfig.setItemCopyGroupsStates(('validated', ))
+        # activate privacy check
+        self.meetingConfig.setRestrictAccessToSecretItems(True)
+        self.meetingConfig.setItemCopyGroupsStates(('validated', ))
         # make powerobserver1 a PowerObserver
         self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' %
                                                       (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
@@ -1167,30 +1174,26 @@ class testMeetingItem(PloneMeetingTestCase):
         # add copyGroups that check that 'external' viewers can access the item but not isPrivacyViewable
         publicItem = self.create('MeetingItem')
         publicItem.setCategory('development')
-        publicItem.setCopyGroups('vendors_reviewers')
         publicItem.reindexObject()
         publicAnnex = self.addAnnex(publicItem)
         secretItem = self.create('MeetingItem')
         secretItem.setPrivacy('secret')
         secretItem.setCategory('development')
-        secretItem.setCopyGroups('vendors_reviewers')
         secretItem.reindexObject()
         secretAnnex = self.addAnnex(secretItem)
-        self.create('Meeting', date=DateTime('2013/06/01 08:00:00'))
-        self.presentItem(publicItem)
-        self.presentItem(secretItem)
-        # log in as a user that is in copyGroups
+        self.validateItem(publicItem)
+        self.validateItem(secretItem)
+
+        # for now both items are not accessible by 'pmReviewer2'
         self.changeUser('pmReviewer2')
-        # the user can see the item because he is in the copyGroups
-        # not because he is in the same proposing group
-        secretItemPloneGroupsOfProposingGroup = getattr(self.tool,
-                                                        secretItem.getProposingGroup()).getPloneGroups(idsOnly=True)
-        self.failIf(set(secretItemPloneGroupsOfProposingGroup).intersection
-                    (set(self.portal.portal_groups.getGroupsForPrincipal(self.member))))
-        # pmReviewer2 can access the item but the item is not privacyViewable
-        self.failUnless(self.hasPermission('View', secretItem))
-        self.failUnless(self.hasPermission('View', publicItem))
-        self.failIf(secretItem.adapted().isPrivacyViewable())
+        self.failIf(self.hasPermission('View', secretItem))
+        self.failIf(self.hasPermission('View', publicItem))
+        # give the 'Reader' role to 'pmReviewer2' so he can access the item
+        # this is a bit like a 'itempublished' state
+        secretItem.manage_addLocalRoles('pmReviewer2', ('Reader', ))
+        self.assertTrue(self.hasPermission('View', secretItem))
+        # but not isPrivacyViewable
+        self.assertTrue(not secretItem.adapted().isPrivacyViewable())
         # if we try to clone a not privacy viewable item, it raises Unauthorized
         self.assertRaises(Unauthorized, secretItem.onDuplicate)
         self.assertRaises(Unauthorized, secretItem.onDuplicateAndKeepLink)
@@ -1198,12 +1201,17 @@ class testMeetingItem(PloneMeetingTestCase):
         # if we try to download an annex of a private item, it raises Unauthorized
         self.assertRaises(Unauthorized, secretAnnex.index_html)
         self.assertRaises(Unauthorized, secretAnnex.download)
-        # no problem to access the publicItem and publicAnnex
+        # set 'copyGroups' for publicItem, 'pmReviewer2' will be able to access it
+        # and so it will be privacyViewable
+        publicItem.setCopyGroups('vendors_reviewers')
+        publicItem.at_post_edit_script()
+        self.assertTrue(self.hasPermission('View', publicItem))
         self.failUnless(publicItem.adapted().isPrivacyViewable())
         self.assertTrue(publicAnnex.index_html())
         self.assertTrue(publicAnnex.download())
         # a user in the same proposingGroup can fully access the secret item
         self.changeUser('pmCreator1')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
         self.failUnless(secretItem.adapted().isPrivacyViewable())
         self.failUnless(publicItem.adapted().isPrivacyViewable())
         # MeetingManager

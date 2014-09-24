@@ -326,9 +326,10 @@ class IMeetingItemDocumentation:
 
            The default implementation: isPrivacyViewable is True for any user
            belonging to any of the Plone groups related to the MeetingGroup
-           which is the proposing group for the item. Note that
-           isPrivacyViewable is automatically True if the item has field
-           privacy=False.'''
+           which is the proposing group for the item.
+           Copy groups and advisers will also be able to access the item.
+           Note that isPrivacyViewable is automatically True if the item has
+           field privacy=False.'''
     def getExtraFieldsToCopyWhenCloning():
         '''While cloning an item (to another MeetingConfig or not), some fields are selected
            to be copied to the new cloned items.  If we want to add some arbitrary

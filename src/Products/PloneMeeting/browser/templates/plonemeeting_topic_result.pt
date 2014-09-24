@@ -35,7 +35,7 @@
                   showItemIsSigned    python: not isFake and ('itemIsSigned' in visibleColumns);
                   showPrefMeeting     python: not isFake and ('preferredMeeting' in visibleColumns);
                   showBudgetInfos     python: not isFake and ('budgetInfos' in visibleColumns);
-                  showActions         python: not isFake and ('actions' in visibleColumns)">
+                  showActions         python: not isFake and ('actions' in visibleColumns);">
     <tr>
       <tal:comment replace="nothing">Title</tal:comment>
       <th class="pm_listing_th_title" tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
@@ -254,10 +254,15 @@
             tal:content="python: 'ip_%s' % obj.getPrivacy()" i18n:translate=""></td>
 
         <tal:comment replace="nothing">Advices</tal:comment>
-        <td tal:condition="showAdvices " align="center" style="padding-left: 0; padding-right: 0;" tal:define="meetingItem python: obj">
-          <tal:show condition="python: obj.adapted().isPrivacyViewable()">
+        <td tal:condition="showAdvices " align="center" style="padding-left: 0; padding-right: 0;"
+            tal:define="meetingItem python: obj;
+                        isPrivacyViewable python: obj.adapted().isPrivacyViewable();">
+          <tal:show condition="isPrivacyViewable">
             <div metal:use-macro="obj/@@advices-macros/advicesIcons"></div>
           </tal:show>
+          <tal:doNotShow condition="not: isPrivacyViewable">
+            -
+          </tal:doNotShow>
         </td>
 
         <tal:comment replace="nothing">Related meeting</tal:comment>
