@@ -230,7 +230,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
           History on items is shown if item isPrivacyViewable without condition.
         """
-        return bool(self.context.isPrivacyViewable())
+        return bool(self.context.adapted().isPrivacyViewable())
 
     @memoize_contextless
     def mayChangeOrder(self):
