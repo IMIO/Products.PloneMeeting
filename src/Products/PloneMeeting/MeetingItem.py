@@ -2867,6 +2867,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'advice_id': advice.getId(),
                                         'advice_uid': advice.UID(),
                                         'comment': advice.advice_comment and advice.advice_comment.output,
+                                        'observations': advice.advice_observations and advice.advice_observations.output,
+                                        'reference': advice.advice_reference,
                                         'row_id': advice.advice_row_id,
                                         'gives_auto_advice_on_help_message': gives_auto_advice_on_help_message,
                                         'delay': delay,
