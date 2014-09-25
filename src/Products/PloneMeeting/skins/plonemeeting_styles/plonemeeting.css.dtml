@@ -654,6 +654,12 @@ div.itemSignaturesEditable {
     text-align: center;
 }
 
+/* acronym displayed in tables, for example the acronym for proposing group on listing of items
+   this will avoid acronyms displayed on 2 lines messups */
+TD acronym {
+    line-height: 1.25em;
+}
+
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
 .pm_listing_th_actions, .pm_listing_th_toDiscuss, .pm_listing_th_itemIsSigned,
