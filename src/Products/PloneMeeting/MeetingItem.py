@@ -2875,6 +2875,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'delay_left_alert': delay_left_alert,
                                         'delay_label': delay_label,
                                         'advice_given_on': advice.created(),
+                                        'advice_given_on_localized': self.toLocalizedTime(advice.created()),
                                         'hidden_during_redaction': advice.advice_hide_during_redaction,
                                         }
         return res
@@ -2964,15 +2965,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 data[advId]['type'] = translate(data[advId]['type'],
                                                 domain='PloneMeeting',
                                                 context=self.REQUEST)
-                data[advId]['advice_given_on'] = data[advId]['advice_given_on'] and \
-                    data[advId]['advice_given_on'].strftime('%d/%m/%Y') or None
         else:
             data = self.adviceIndex[adviserId].copy()
             data['type'] = translate(data['type'],
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
-            data['advice_given_on'] = data['advice_given_on'] and \
-                data['advice_given_on'].strftime('%d/%m/%Y') or None
         return data
 
     security.declarePublic('printAdvicesInfos')
@@ -3201,6 +3198,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     d['delay_stopped_on'] = None
                 # advice_given_on will be filled by already given advices
                 d['advice_given_on'] = None
+                d['advice_given_on_localized'] = None
                 # save the fact that a delay for an automatically asked advice
                 # was changed manually.  Indeed, we need to know it because at next advice update,
                 # the normally auto asked advice must not interfer this manually managed advice.
