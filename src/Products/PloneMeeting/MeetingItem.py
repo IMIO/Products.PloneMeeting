@@ -3828,7 +3828,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showDuplicateItemAction_cachekey(method, self, brain=False):
         '''cachekey method for self.showDuplicateItemAction.'''
-        return str(self.REQUEST.debug)
+        return (self, str(self.REQUEST.debug))
 
     security.declarePublic('showDuplicateItemAction')
     @ram.cache(showDuplicateItemAction_cachekey)
