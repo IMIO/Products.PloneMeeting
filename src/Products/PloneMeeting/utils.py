@@ -1286,9 +1286,10 @@ def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 
-    def __init__(self, object, triggered_by_transition=None):
+    def __init__(self, object, triggered_by_transition=None, old_adviceIndex={}):
         self.object = object
         self.triggered_by_transition = triggered_by_transition
+        self.old_adviceIndex = old_adviceIndex
 
 
 class ItemDuplicatedEvent(ObjectEvent):

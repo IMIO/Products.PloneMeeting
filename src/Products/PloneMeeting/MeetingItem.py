@@ -28,6 +28,7 @@ import lxml.html
 import re
 from datetime import datetime
 from collections import OrderedDict
+from copy import deepcopy
 from appy.gen import No
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -3085,6 +3086,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.REQUEST.get('currentlyPastingItems', False):
             return
 
+        old_adviceIndex = deepcopy(self.adviceIndex.data)
+
         isDefinedInTool = self.isDefinedInTool()
         if isDefinedInTool:
             self.adviceIndex = PersistentMapping()
@@ -3384,7 +3387,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
         # notify that advices have been updated so subproducts
         # may interact if necessary
-        notify(AdvicesUpdatedEvent(self, triggered_by_transition=triggered_by_transition))
+        notify(AdvicesUpdatedEvent(self,
+                                   triggered_by_transition=triggered_by_transition,
+                                   old_adviceIndex=old_adviceIndex))
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
 
     security.declarePublic('getDelayInfosForAdvice')
