@@ -310,6 +310,22 @@ class Migrate_To_3_3(Migrator):
                 cfg.topics.moveObjectsUp('searchitemstoadvicewithoutdelay', delta=delta)
         logger.info('Done.')
 
+    def _cleanCKeditorCustomToolbar(self):
+        '''Make sure options 'AjaxSave' and 'Templates' are no more used...'''
+        logger.info('Cleaning CKeditor custom toolbar (removing options \'AjaxSave\' and \'Templates\')...')
+        ckeditor_props = self.portal.portal_properties.ckeditor_properties
+        # clean also '\n'
+        if ckeditor_props.toolbar == 'Custom' and \
+           "['AjaxSave','Templates'],\n" in ckeditor_props.toolbar_Custom:
+            customToolBar = ckeditor_props.toolbar_Custom.replace("['AjaxSave','Templates'],\n", '')
+            ckeditor_props.manage_changeProperties(toolbar_Custom=customToolBar)
+        # check in case '\n' was not there...
+        if ckeditor_props.toolbar == 'Custom' and \
+           "['AjaxSave','Templates']," in ckeditor_props.toolbar_Custom:
+            customToolBar = ckeditor_props.toolbar_Custom.replace("['AjaxSave','Templates'],", '')
+            ckeditor_props.manage_changeProperties(toolbar_Custom=customToolBar)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         self._finishMeetingFolderViewRemoval()
@@ -328,6 +344,7 @@ class Migrate_To_3_3(Migrator):
         self._removeSignatureNotAloneTransformType()
         self._cleanMeetingGroupsAsCopyGroupOn()
         self._addMissingTopics()
+        self._cleanCKeditorCustomToolbar()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
