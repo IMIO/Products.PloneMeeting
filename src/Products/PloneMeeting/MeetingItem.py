@@ -4031,7 +4031,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # find next meeting accepting items, only query meetings that
                         # are in the initial workflow state
                         initial_state = wfTool[destMeetingConfig.getMeetingWorkflow()].initial_state
-                        meetingsAcceptingItems = newItem.adapted().getMeetingsAcceptingItems(review_states=(initial_state, ))
+                        meetingsAcceptingItems = newItem.adapted().getMeetingsAcceptingItems(review_states=(initial_state, ),
+                                                                                             inTheFuture=True)
                         # we only keep meetings that are in the
                         if not meetingsAcceptingItems:
                             plone_utils.addPortalMessage(_('could_not_present_item_no_meeting_accepting_items',

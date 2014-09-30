@@ -637,7 +637,7 @@ class testMeetingItem(PloneMeetingTestCase):
            defined to be triggered on the resulting item.
            Test that :
            - we can validate an item;
-           - we can present an item to next available 'created' meeting;
+           - we can present an item to next available in the future 'created' meeting;
            - errors are managed.'''
         cfg = self.meetingConfig
         data = self._setupSendItemToOtherMC(with_advices=True)
@@ -691,7 +691,7 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = data['newItem']
         self.assertTrue(newItem.queryState() == 'validated')
 
-        # now try to present now item, it will be presented
+        # now try to present the item, it will be presented
         # to next available meeting in it's initial_state
         # first, if no meeting available, newItem will stop to previous
         # state, aka 'validated' and a status message is added
@@ -720,7 +720,8 @@ class testMeetingItem(PloneMeetingTestCase):
         lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
         self.assertTrue(lastPortalMessage.message == fail_to_present_msg)
 
-        # add a meeting where we will be able to present the item
+        # the item will only be presented if a meeting in it's initial state
+        # in the future is available.  Add a meeting with a date in the past
         self.create('Meeting',
                     date=DateTime('2008/06/12 08:00:00'),
                     meetingConfig=self.meetingConfig2)
@@ -731,7 +732,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
-        # this time it is correctly 'presented'
+        # the item could not be presented
+        self.assertTrue(newItem.queryState() == 'validated')
+        # now create a meeting 15 days in the future
+        futureDate = DateTime() + 15
+        self.create('Meeting',
+                    date=futureDate,
+                    meetingConfig=self.meetingConfig2)
+        self.changeUser('admin')
+        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        originalItem = data['originalItem']
+        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
+        self.changeUser('pmManager')
+        data = self._setupSendItemToOtherMC(with_advices=True)
+        newItem = data['newItem']
+        # the item could not be presented
         self.assertTrue(newItem.queryState() == 'presented')
 
     def test_pm_SendItemToOtherMCWithMappedCategories(self):
