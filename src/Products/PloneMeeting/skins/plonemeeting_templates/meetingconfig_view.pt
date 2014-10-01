@@ -587,7 +587,9 @@
           <td tal:define="field python:here.getField('transitionsForPresentingAnItem')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('onTransitionFieldTransforms')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td></td>
         </tr>
       </table>

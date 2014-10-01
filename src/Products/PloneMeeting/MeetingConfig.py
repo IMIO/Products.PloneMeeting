@@ -518,7 +518,7 @@ schema = Schema((
         ),
         schemata="data",
         multiValued=1,
-        vocabulary='listRichTextFields',
+        vocabulary='listAllRichTextFields',
         default=defValues.xhtmlTransformFields,
         enforceVocabulary=True,
     ),
@@ -753,7 +753,23 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="workflow",
-        vocabulary='listTransitionsForPresentingAnItem',
+        vocabulary='listEveryItemTransitions',
+    ),
+    DataGridField(
+        name='onTransitionFieldTransforms',
+        widget=DataGridField._properties['widget'](
+            description="OnTransitionFieldTransforms",
+            description_msgid="on_transition_field_transforms_descr",
+            columns={'transition': SelectColumn("On transition field transform transition", vocabulary="listEveryItemTransitions", col_description="The transition that will trigger the field transform."), 'field_name': SelectColumn("On transition field transform field name", vocabulary="listItemRichTextFields", col_description='The item field that will be transformed.'), 'tal_expression': Column("On transition field transform TAL expression", col_description='The TAL expression.  Element \'here\' represent the item.'), },
+            label='Ontransitionfieldtransforms',
+            label_msgid='PloneMeeting_label_onTransitionFieldTransforms',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        default=defValues.onTransitionFieldTransforms,
+        allow_oddeven=True,
+        columns=('transition', 'field_name', 'tal_expression', ),
+        allow_empty_rows=False,
     ),
     LinesField(
         name='meetingTopicStates',
@@ -3373,9 +3389,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(('%s.%s' % (cfgId, tr), text))
         return DisplayList(tuple(res)).sortedByValue()
 
-    security.declarePrivate('listTransitionsForPresentingAnItem')
-    def listTransitionsForPresentingAnItem(self):
-        '''Vocabulary for the transitionsForPresentingAnItem field.'''
+    security.declarePrivate('listEveryItemTransitions')
+    def listEveryItemTransitions(self):
+        '''Vocabulary that list every item WF transitions.'''
         return DisplayList(self.listTransitions('Item')).sortedByValue()
 
     security.declarePublic('listItemStates')
@@ -3386,25 +3402,31 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listMeetingStates(self):
         return DisplayList(tuple(self.listStates('Meeting'))).sortedByValue()
 
-    security.declarePublic('listRichTextFields')
-    def listRichTextFields(self):
+    security.declarePublic('listAllRichTextFields')
+    def listAllRichTextFields(self):
         '''Lists all rich-text fields belonging to classes MeetingItem and
            Meeting.'''
+        res = self._listRichTextFieldFor(MeetingItem) + self._listRichTextFieldFor(Meeting)
+        return DisplayList(tuple(res))
+
+    security.declarePublic('listItemRichTextFields')
+    def listItemRichTextFields(self):
+        '''Lists all rich-text fields belonging to MeetingItem schema.'''
+        res = self._listRichTextFieldFor(MeetingItem)
+        return DisplayList(tuple(res))
+
+    def _listRichTextFieldFor(self, baseClass):
+        '''
+        '''
         d = 'PloneMeeting'
         res = []
         for field in MeetingItem.schema.fields():
             fieldName = field.getName()
             if field.widget.getName() == 'RichWidget':
-                msg = '%s.%s -> %s' % ('MeetingItem', fieldName,
+                msg = '%s.%s -> %s' % (baseClass.__name__, fieldName,
                                        translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
-                res.append(('%s.%s' % ('MeetingItem', fieldName), msg))
-        for field in Meeting.schema.fields():
-            fieldName = field.getName()
-            if field.widget.getName() == 'RichWidget':
-                msg = '%s.%s -> %s' % ('Meeting', fieldName,
-                                       translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
-                res.append(('%s.%s' % ('Meeting', fieldName), msg))
-        return DisplayList(tuple(res))
+                res.append(('%s.%s' % (baseClass.__name__, fieldName), msg))
+        return res
 
     security.declarePublic('listTransformTypes')
     def listTransformTypes(self):

@@ -369,6 +369,7 @@ class MeetingConfigDescriptor(Descriptor):
         # also be able to enter the workflow comment.
         self.transitionsToConfirm = []
         self.transitionsForPresentingAnItem = []
+        self.onTransitionFieldTransforms = []
         self.useCopies = False
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]

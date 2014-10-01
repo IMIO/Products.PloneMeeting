@@ -44,7 +44,7 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.utils import cleanRamCacheFor
+from Products.PloneMeeting.utils import cleanRamCacheFor, DECISION_ERROR
 
 
 class testMeetingItem(PloneMeetingTestCase):
@@ -1967,6 +1967,72 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertEquals([m.id for m in item.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id])
+
+    def test_pm_onTransitionFieldTransforms(self):
+        '''On transition triggered, some transforms can be applied to item or meeting
+           rich text field depending on what is defined in MeetingConfig.onTransitionFieldTransforms.
+           This is used for example to adapt the text of the decision when an item is delayed or refused.
+           '''
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        self.decideMeeting(meeting)
+        # we will adapt item decision when the item is delayed
+        item1 = meeting.getItems()[0]
+        originalDecision = '<p>Current item decision.</p>'
+        item1.setDecision(originalDecision)
+        # for now, as nothing is defined, nothing happens when item is delayed
+        self.do(item1, 'delay')
+        self.assertTrue(item1.getDecision(keepWithNext=False) == originalDecision)
+        # configure onTransitionFieldTransforms and delay another item
+        delayedItemDecision = '<p>This item has been delayed.</p>'
+        self.meetingConfig.setOnTransitionFieldTransforms(
+            ({'transition': 'delay',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'string:%s' % delayedItemDecision},))
+        item2 = meeting.getItems()[1]
+        item2.setDecision(originalDecision)
+        self.do(item2, 'delay')
+        self.assertTrue(item2.getDecision(keepWithNext=False) == delayedItemDecision)
+        # if the item was duplicated (often the case when delaying an item), the duplicated
+        # item keep the original decision
+        duplicatedItem = item2.getBRefs('ItemPredecessor')[0]
+        # right duplicated item
+        self.assertTrue(duplicatedItem.getPredecessor() == item2)
+        self.assertTrue(duplicatedItem.getDecision(keepWithNext=False) == originalDecision)
+        # this work also when triggering any other item or meeting transition with every rich fields
+        item3 = meeting.getItems()[2]
+        self.meetingConfig.setOnTransitionFieldTransforms(
+            ({'transition': 'accept',
+              'field_name': 'MeetingItem.description',
+              'tal_expression': 'string:<p>My new description.</p>'},))
+        item3.setDescription('<p>My original description.</p>')
+        self.do(item3, 'accept')
+        self.assertTrue(item3.Description() == '<p>My new description.</p>')
+        # if ever an error occurs with the TAL expression, the transition
+        # is made but the rich text is not changed and a portal_message is displayed
+        self.meetingConfig.setOnTransitionFieldTransforms(
+            ({'transition': 'accept',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'some_wrong_tal_expression'},))
+        item4 = meeting.getItems()[3]
+        item4.setDecision('<p>My decision that will not be touched.</p>')
+        self.do(item4, 'accept')
+        # transition was triggered
+        self.assertTrue(item4.queryState() == 'accepted')
+        # original decision was not touched
+        self.assertTrue(item4.getDecision(keepWithNext=False) == '<p>My decision that will not be touched.</p>')
+        # a portal_message is displayed to the user that triggered the transition
+        messages = IStatusMessage(self.request).show()
+        self.assertTrue(messages[0].message == DECISION_ERROR % "'some_wrong_tal_expression'")
+        # works also with the meeting now
+        self.meetingConfig.setOnTransitionFieldTransforms(
+            ({'transition': 'close',
+              'field_name': 'Meeting.observations',
+              'tal_expression': 'python: here.getObservations() + "<p>One additional line of observation.</p>"'},))
+        meeting.setObservations('<p>My original observations.</p>')
+        self.closeMeeting(meeting)
+        self.assertTrue(meeting.getObservations() == '<p>My original observations.</p>'
+                        '<p>One additional line of observation.</p>')
 
 
 def test_suite():

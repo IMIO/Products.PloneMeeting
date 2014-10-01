@@ -59,6 +59,8 @@ WRONG_INTERFACE_NAME = 'Wrong interface name "%s". You must specify the full ' \
                        'interface package name.'
 WRONG_INTERFACE_PACKAGE = 'Could not find package "%s".'
 WRONG_INTERFACE = 'Interface "%s" not found in package "%s".'
+ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR = 'There was an error during transform of field \'%s\' of this item. ' \
+    'Please check TAL expression defined in the configuration.  Original exception: %s'
 
 # ------------------------------------------------------------------------------
 monthsIds = {1:  'month_jan', 2:  'month_feb', 3:  'month_mar', 4:  'month_apr',
@@ -1148,6 +1150,38 @@ def forceHTMLContentTypeForEmptyRichFields(obj):
     for field in obj.Schema().filterFields(default_content_type='text/html'):
         if not field.getRaw(obj):
             field.setContentType(obj, 'text/html')
+
+
+# ------------------------------------------------------------------------------
+def applyOnTransitionFieldTransform(obj, transitionId):
+    '''
+      Apply onTransitionFieldTransforms defined in the corresponding obj MeetingConfig.
+    '''
+    tool = getToolByName(obj, 'portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    idxs = []
+    for transform in cfg.getOnTransitionFieldTransforms():
+        tal_expr = transform['tal_expression'].strip()
+        if transform['transition'] == transitionId and \
+           transform['field_name'].split('.')[0] == obj.meta_type and \
+           transform['tal_expression'].strip():
+            from Products.CMFCore.Expression import Expression, createExprContext
+            portal_url = getToolByName(obj, 'portal_url')
+            portal = portal_url.getPortalObject()
+            ctx = createExprContext(obj.getParentNode(), portal, obj)
+            try:
+                res = Expression(tal_expr)(ctx)
+            except Exception, e:
+                obj.plone_utils.addPortalMessage(PloneMeetingError(ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
+                                                                   (transform['field_name'].split('.')[1], str(e))),
+                                                 type='warning')
+                return
+            field = obj.getField(transform['field_name'].split('.')[1])
+            field.set(obj, res, mimetype='text/html')
+            idxs.append(field.accessor)
+    if idxs and obj.meta_type == 'MeetingItem':
+        idxs.append('getDeliberation')
+        obj.reindexObject(idxs=idxs)
 
 
 # ------------------------------------------------------------------------------
