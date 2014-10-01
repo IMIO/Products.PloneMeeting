@@ -44,7 +44,7 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.utils import cleanRamCacheFor, DECISION_ERROR
+from Products.PloneMeeting.utils import cleanRamCacheFor, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 
 
 class testMeetingItem(PloneMeetingTestCase):
@@ -1968,7 +1968,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEquals([m.id for m in item.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id])
 
-    def test_pm_onTransitionFieldTransforms(self):
+    def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting
            rich text field depending on what is defined in MeetingConfig.onTransitionFieldTransforms.
            This is used for example to adapt the text of the decision when an item is delayed or refused.
@@ -2023,7 +2023,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item4.getDecision(keepWithNext=False) == '<p>My decision that will not be touched.</p>')
         # a portal_message is displayed to the user that triggered the transition
         messages = IStatusMessage(self.request).show()
-        self.assertTrue(messages[0].message == DECISION_ERROR % "'some_wrong_tal_expression'")
+        self.assertTrue(messages[0].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % ('decision',
+                                                                                         "'some_wrong_tal_expression'"))
         # works also with the meeting now
         self.meetingConfig.setOnTransitionFieldTransforms(
             ({'transition': 'close',
