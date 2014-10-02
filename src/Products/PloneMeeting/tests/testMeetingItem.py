@@ -2025,15 +2025,6 @@ class testMeetingItem(PloneMeetingTestCase):
         messages = IStatusMessage(self.request).show()
         self.assertTrue(messages[0].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % ('decision',
                                                                                          "'some_wrong_tal_expression'"))
-        # works also with the meeting now
-        self.meetingConfig.setOnTransitionFieldTransforms(
-            ({'transition': 'close',
-              'field_name': 'Meeting.observations',
-              'tal_expression': 'python: here.getObservations() + "<p>One additional line of observation.</p>"'},))
-        meeting.setObservations('<p>My original observations.</p>')
-        self.closeMeeting(meeting)
-        self.assertTrue(meeting.getObservations() == '<p>My original observations.</p>'
-                        '<p>One additional line of observation.</p>')
 
 
 def test_suite():
