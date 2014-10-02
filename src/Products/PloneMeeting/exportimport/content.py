@@ -35,7 +35,8 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 
 # PloneMeeting-Error related constants -----------------------------------------
-MEETING_ID_EXISTS = 'The meeting config with id "%s" already exists.'
+MEETINGCONFIG_BADREQUEST_ERROR = 'There was an error during creation of MeetingConfig with id "%s". ' \
+                                 'Original error : "%s"'
 
 
 class ToolInitializer:
@@ -95,9 +96,9 @@ class ToolInitializer:
             mConfig.meetingConfigsToCloneTo = []
             try:
                 self.tool.createMeetingConfig(mConfig, source=self.profilePath)
-            except BadRequest:
-                # If we raise a BadRequest, it is that the id is already in use.
-                logger.warn(MEETING_ID_EXISTS % mConfig.id)
+            except BadRequest, e:
+                # If we raise a BadRequest, it is that the id is already in use or that the id is reserved.
+                logger.error(MEETINGCONFIG_BADREQUEST_ERROR % (mConfig.id, str(e)))
         # now that every meetingConfigs have been created, we can manage the meetingConfigsToCloneTo
         for mConfigId in savedMeetingConfigsToCloneTo:
             if not savedMeetingConfigsToCloneTo[mConfigId]:
