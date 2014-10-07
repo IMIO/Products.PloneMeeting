@@ -25,7 +25,6 @@
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
-from zope.annotation.interfaces import IAnnotations
 from Products.statusmessages.interfaces import IStatusMessage
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -113,7 +112,7 @@ class testWorkflows(PloneMeetingTestCase):
                           pmManagerFolder)
         # check that @@delete_givenuid add relevant portalMessage
         statusMessages = IStatusMessage(self.portal.REQUEST)
-        # no statusMessage for now
+        # for now we have no message
         self.assertEquals(len(statusMessages.show()), 0)
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
         # @@delete_givenuid added one statusMessage about BeforeDeleteException
