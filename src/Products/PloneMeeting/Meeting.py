@@ -226,88 +226,44 @@ class MeetingWorkflowActions:
 
     security.declarePrivate('doPublish')
     def doPublish(self, stateChange):
-        '''When publishing the meeting, I must set automatically all items
-           to "published", too.'''
+        '''When publishing the meeting, initialize the sequence number.'''
         self.initSequenceNumber()
-        for item in self.context.getItemsInOrder():
-            if item.queryState() == 'presented':
-                self.context.portal_workflow.doActionFor(item, 'itempublish')
-
-    security.declarePrivate('doPublish_decisions')
-    def doPublish_decisions(self, stateChange):
-        '''When the wfAdaptation 'hide_decisions_when_under_writing' is activated.'''
-        self._adaptEveryItemsOnMeetingClosure()
 
     security.declarePrivate('doFreeze')
     def doFreeze(self, stateChange):
-        '''When freezing the meeting, I must set automatically all items
-           to "itemfrozen", too.'''
+        '''When freezing the meeting, we initialize sequence number.'''
         self.initSequenceNumber()
-        wfTool = self.context.portal_workflow
-        for item in self.context.getAllItems(ordered=True):
-            if item.queryState() == 'presented':
-                try:
-                    wfTool.doActionFor(item, 'itempublish')
-                except WorkflowException:
-                    # This action may not exist due to a workflow adaptation.
-                    pass
-            itemAvailableTransitions = [t['id'] for t in wfTool.getTransitionsFor(item)]
-            if 'itemfreeze' in itemAvailableTransitions:
-                wfTool.doActionFor(item, 'itemfreeze')
 
     security.declarePrivate('doDecide')
     def doDecide(self, stateChange):
-        '''
-          Make sure every items are at 'itemfrozen' or 'itempublished', anyway the 'last' of
-          these 2 states.  This manage the fact that 'itemfrozen' or 'itempublished' can be in different
-          position in the workflow flow.
-          For convenience, this method will take care of workflows having 'itempublish'
-          and 'itemfreeze' transitions and this, in both ways ('itempublish' then 'itemfreeze' and
-          'itemfreeze' then 'itempublish').
-        '''
-        wfTool = getToolByName(self.context, 'portal_workflow')
-        for item in self.context.getAllItems(ordered=False):
-            itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
-                intersection(set(('itemfreeze', 'itempublish')))
-            while itemAvailableTransitions:
-                wfTool.doActionFor(item, itemAvailableTransitions.pop())
-                itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
-                    intersection(set(('itemfreeze', 'itempublish')))
-
-    def _adaptEveryItemsOnMeetingClosure(self):
-        """
-          Helper method for correctly settings items when the meeting is closed.
-        """
-        wfTool = getToolByName(self.context, 'portal_workflow')
-        # do this method a bit taking care of various behaviour
-        # so it does not need to be systematically overrided by an extension profile...
-        transitionsToTrigger = ('itemfreeze', 'itempublish', 'accept', 'confirm')
-        for item in self.context.getAllItems(ordered=False):
-            itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
-                intersection(set(transitionsToTrigger))
-            while itemAvailableTransitions:
-                wfTool.doActionFor(item, itemAvailableTransitions.pop())
-                itemAvailableTransitions = set([t['id'] for t in wfTool.getTransitionsFor(item)]).\
-                    intersection(set(transitionsToTrigger))
+        ''' '''
+        pass
 
     security.declarePrivate('doClose')
     def doClose(self, stateChange):
-        # All items in state "accepted" (that were thus not confirmed yet)
-        # are automatically set to "confirmed".
-        self._adaptEveryItemsOnMeetingClosure()
+        ''' '''
         # Set the firstItemNumber
         unrestrictedMethodsView = getMultiAdapter((self.context, self.context.REQUEST),
                                                   name='pm_unrestricted_methods')
         self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumberForMeeting(self.context))
 
+    security.declarePrivate('doPublish_decisions')
+    def doPublish_decisions(self, stateChange):
+        '''When the wfAdaptation 'hide_decisions_when_under_writing' is activated.'''
+        pass
+
     security.declarePrivate('doArchive')
     def doArchive(self, stateChange):
-        # All items must go to 'itemarchived' state.
-        for item in self.context.getAllItems(ordered=True):
-            self.context.portal_workflow.doActionFor(item, 'itemarchive')
+        ''' '''
+        pass
 
     security.declarePrivate('doRepublish')
     def doRepublish(self, stateChange):
+        pass
+
+    security.declarePrivate('doBackToCreated')
+    def doBackToCreated(self, stateChange):
+        ''' '''
         pass
 
     security.declarePrivate('doBackToDecided')
@@ -316,28 +272,16 @@ class MeetingWorkflowActions:
         # we need to reverse our action
         self.context.setFirstItemNumber(-1)
 
-    security.declarePrivate('doBackToCreated')
-    def doBackToCreated(self, stateChange):
-        wfTool = self.context.portal_workflow
-        for item in self.context.getItems():
-            # I do it only for "normal" items (not for "late" items)
-            # because we can't put a meeting back in "created" state if it
-            # contains "late" items (so here there will be no "late" items
-            # for this meeting). If we want to do it, we will need to
-            # unpresent each "late" item first.
-            if item.queryState() in ('itempublished', 'itemfrozen'):
-                wfTool.doActionFor(item, 'backToPresented')
-
     security.declarePrivate('doBackToPublished')
     def doBackToPublished(self, stateChange):
-        do = self.context.portal_workflow.doActionFor
+        wfTool = getToolByName(self.context, 'portal_workflow')
         for item in self.context.getItems():
             if item.queryState() == 'itemfrozen':
-                do(item, 'backToItemPublished')
+                wfTool.doActionFor(item, 'backToItemPublished')
         for item in self.context.getLateItems():
             if item.queryState() == 'itemfrozen':
-                do(item, 'backToItemPublished')
-                do(item, 'backToPresented')
+                wfTool.doActionFor(item, 'backToItemPublished')
+                wfTool.doActionFor(item, 'backToPresented')
                 # This way we "hide" again all late items.
 
     security.declarePrivate('doBackToDecisionsPublished')
@@ -1841,12 +1785,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return self.portal_plonemeeting.gotoReferer()
 
         uid_catalog = getToolByName(self, 'uid_catalog')
-        wf_tool = getToolByName(self, 'portal_workflow')
+        wfTool = getToolByName(self, 'portal_workflow')
         for uid in uids.split(','):
             if not uid:
                 continue
             obj = uid_catalog.searchResults(UID=uid)[0].getObject()
-            wf_tool.doActionFor(obj, 'present')
+            wfTool.doActionFor(obj, 'present')
 
         return self.portal_plonemeeting.gotoReferer()
 

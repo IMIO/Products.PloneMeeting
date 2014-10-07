@@ -771,6 +771,22 @@ schema = Schema((
         columns=('transition', 'field_name', 'tal_expression', ),
         allow_empty_rows=False,
     ),
+    DataGridField(
+        name='onMeetingTransitionItemTransitionToTrigger',
+        widget=DataGridField._properties['widget'](
+            description="OnMeetingTransitionItemTransitionToTrigger",
+            description_msgid="on_meeting_transition_item_transition_to_trigger_descr",
+            columns={'meeting_transition': SelectColumn("On meeting transition item transition to trigger meeting transition", vocabulary="listEveryMeetingTransitions", col_description="The transition triggered on the meeting."), 'item_transition': SelectColumn("On meeting transition item transition to trigger item transition", vocabulary="listEveryItemTransitions", col_description="The transition that will be triggered on every items of the meeting."), },
+            label='Onmeetingtransitionitemtransitiontotrigger',
+            label_msgid='PloneMeeting_label_onMeetingTransitionItemTransitionToTrigger',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        default=defValues.onMeetingTransitionItemTransitionToTrigger,
+        allow_oddeven=True,
+        columns=('meeting_transition', 'item_transition', ),
+        allow_empty_rows=False,
+    ),
     LinesField(
         name='meetingTopicStates',
         widget=MultiSelectionWidget(
@@ -3393,6 +3409,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listEveryItemTransitions(self):
         '''Vocabulary that list every item WF transitions.'''
         return DisplayList(self.listTransitions('Item')).sortedByValue()
+
+    security.declarePrivate('listEveryMeetingTransitions')
+    def listEveryMeetingTransitions(self):
+        '''Vocabulary that list every meeting WF transitions.'''
+        return DisplayList(self.listTransitions('Meeting')).sortedByValue()
 
     security.declarePublic('listItemStates')
     def listItemStates(self):

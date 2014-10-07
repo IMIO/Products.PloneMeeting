@@ -67,7 +67,7 @@ class PloneMeetingTestingHelpers:
         'backToItemCreated': 'backToItemCreated',
         'backToProposed': 'backToProposed', }
 
-    # in which state an item must be after an particular meeting transition?
+    # in which state an item must be after a particular meeting transition?
     ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'confirmed',
                                               'close': 'confirmed', }
 

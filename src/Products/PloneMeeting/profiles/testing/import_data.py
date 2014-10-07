@@ -201,6 +201,39 @@ meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
+meetingPma.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 'publish',
+                                                          'item_transition': 'itempublish'},
+
+                                                         {'meeting_transition': 'freeze',
+                                                          'item_transition': 'itempublish'},
+                                                         {'meeting_transition': 'freeze',
+                                                          'item_transition': 'itemfreeze'},
+
+                                                         {'meeting_transition': 'decide',
+                                                          'item_transition': 'itempublish'},
+                                                         {'meeting_transition': 'decide',
+                                                          'item_transition': 'itemfreeze'},
+
+                                                         {'meeting_transition': 'close',
+                                                          'item_transition': 'itempublish'},
+                                                         {'meeting_transition': 'close',
+                                                          'item_transition': 'itemfreeze'},
+                                                         {'meeting_transition': 'close',
+                                                          'item_transition': 'accept'},
+                                                         {'meeting_transition': 'close',
+                                                          'item_transition': 'confirm'},
+
+                                                         {'meeting_transition': 'publish_decisions',
+                                                          'item_transition': 'itempublish'},
+                                                         {'meeting_transition': 'publish_decisions',
+                                                          'item_transition': 'itemfreeze'},
+                                                         {'meeting_transition': 'publish_decisions',
+                                                          'item_transition': 'accept'},
+                                                         {'meeting_transition': 'publish_decisions',
+                                                          'item_transition': 'confirm'},
+
+                                                         {'meeting_transition': 'archive',
+                                                          'item_transition': 'itemarchive'},)
 meetingPma.insertingMethodsOnAddItem = ({'insertingMethod': 'on_proposing_groups', 'reverse': '0'}, )
 meetingPma.useGroupsAsCategories = True
 meetingPma.useAdvices = True
@@ -236,6 +269,39 @@ meetingPga.meetingFileTypes = [financialAnalysis, legalAnalysis,
                                decisionAnnex, adviceAnnex, adviceLegalAnalysis]
 meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
 meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
+meetingPga.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 'publish',
+                                                          'item_transition': 'itempublish'},
+
+                                                         {'meeting_transition': 'freeze',
+                                                          'item_transition': 'itempublish'},
+                                                         {'meeting_transition': 'freeze',
+                                                          'item_transition': 'itemfreeze'},
+
+                                                         {'meeting_transition': 'decide',
+                                                          'item_transition': 'itempublish'},
+                                                         {'meeting_transition': 'decide',
+                                                          'item_transition': 'itemfreeze'},
+
+                                                         {'meeting_transition': 'close',
+                                                          'item_transition': 'itempublish'},
+                                                         {'meeting_transition': 'close',
+                                                          'item_transition': 'itemfreeze'},
+                                                         {'meeting_transition': 'close',
+                                                          'item_transition': 'accept'},
+                                                         {'meeting_transition': 'close',
+                                                          'item_transition': 'confirm'},
+
+                                                         {'meeting_transition': 'publish_decisions',
+                                                          'item_transition': 'itempublish'},
+                                                         {'meeting_transition': 'publish_decisions',
+                                                          'item_transition': 'itemfreeze'},
+                                                         {'meeting_transition': 'publish_decisions',
+                                                          'item_transition': 'accept'},
+                                                         {'meeting_transition': 'publish_decisions',
+                                                          'item_transition': 'confirm'},
+
+                                                         {'meeting_transition': 'archive',
+                                                          'item_transition': 'itemarchive'},)
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
 meetingPga.itemTemplates = (template1, template2, )

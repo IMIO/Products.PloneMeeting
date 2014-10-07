@@ -112,10 +112,6 @@ class testWorkflows(PloneMeetingTestCase):
                           unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         # check that @@delete_givenuid add relevant portalMessage
-        # first remove eventual statusmessages
-        annotations = IAnnotations(self.portal.REQUEST)
-        if 'statusmessages' in annotations:
-            del annotations['statusmessages']
         statusMessages = IStatusMessage(self.portal.REQUEST)
         # no statusMessage for now
         self.assertEquals(len(statusMessages.show()), 0)
@@ -492,6 +488,26 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(developers, 'deactivate')
         self.assertTrue('developers_reviewers' not in self.meetingConfig.getSelectableCopyGroups())
         self.assertTrue('developers_reviewers' not in self.meetingConfig2.getSelectableCopyGroups())
+
+    def test_pm_meetingTransitionTriggerLinkedItemsTransitions(self):
+        '''Test the MeetingConfig.onMeetingTransitionItemTransitionToTrigger parameter :
+           when a transition is triggered on a meeting, we can define transitions that will be
+           automatically triggered on every items of the meeting.'''
+        self.changeUser('pmManager')
+        # create a meeting with items
+        meeting = self._createMeetingWithItems()
+        # for now, every items are 'presented'
+        for item in meeting.getItems():
+            self.assertTrue(item.queryState() == 'presented')
+        # when we freeze a meeting, we want every contained items to be frozen as well
+        self.freezeMeeting(meeting)
+        for item in meeting.getItems():
+            self.assertTrue(item.queryState() == 'itemfrozen')
+        # when we close a meeting, we want every items to be automatically accepted
+        # that is what is defined in the import_data of the testing profile
+        self.closeMeeting(meeting)
+        for item in meeting.getItems():
+            self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
 
 
 def test_suite():

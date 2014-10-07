@@ -27,7 +27,8 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
-from Products.PloneMeeting.utils import sendMailIfRelevant, addRecurringItemsIfRelevant, sendAdviceToGiveMailIfRelevant, applyOnTransitionFieldTransform
+from Products.PloneMeeting.utils import sendMailIfRelevant, addRecurringItemsIfRelevant, \
+    sendAdviceToGiveMailIfRelevant, applyOnTransitionFieldTransform, meetingTriggerTransitionOnLinkedItems
 
 podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 
@@ -60,6 +61,8 @@ def do(action, event):
         addRecurringItemsIfRelevant(event.object, event.transition.id)
         # Send mail if relevant
         sendMailIfRelevant(event.object, "meeting_state_changed_%s" % event.transition.id, 'View')
+        # apply on transition field transform if any
+        meetingTriggerTransitionOnLinkedItems(event.object, event.transition.id)
 
     # Freeze POD documents if needed
     podTransition = '%s_%s' % (podTransitionPrefixes[objectType],

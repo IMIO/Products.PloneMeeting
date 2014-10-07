@@ -40,6 +40,7 @@ from zope.interface import implements
 from plone.memoize.interfaces import ICacheChooser
 from imio.helpers.xhtml import removeBlanks, xhtmlContentIsEmpty
 from Products.CMFCore.utils import getToolByName
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
 from Products.PloneMeeting import PloneMeetingError
@@ -1182,6 +1183,29 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     if idxs and obj.meta_type == 'MeetingItem':
         idxs.append('getDeliberation')
         obj.reindexObject(idxs=idxs)
+
+
+# ------------------------------------------------------------------------------
+def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
+    '''
+      When the given p_transitionId is triggered on the given p_meeting,
+      check if we need to trigger workflow transition on linked items
+      defined in MeetingConfig.onMeetingTransitionItemTransitionToTrigger.
+    '''
+    tool = getToolByName(meeting, 'portal_plonemeeting')
+    cfg = tool.getMeetingConfig(meeting)
+    wfTool = getToolByName(meeting, 'portal_workflow')
+    # if we have a transition to trigger on every items, trigger it!
+    for config in cfg.getOnMeetingTransitionItemTransitionToTrigger():
+        if config['meeting_transition'] == transitionId:
+            # execute corresponding transition on every items
+            for item in meeting.getAllItems():
+                # do not fail if a transition could not be triggered, just add an
+                # info message to the log so configuration can be adapted to avoid this
+                try:
+                    wfTool.doActionFor(item, config['item_transition'])
+                except WorkflowException:
+                    pass
 
 
 # ------------------------------------------------------------------------------

@@ -226,6 +226,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'itemsListVisibleColumns', 'itemsListVisibleFields', 'itemColumns', 'meetingColumns',
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
+                         'onTransitionFieldTransforms', 'onMeetingTransitionItemTransitionToTrigger',
                          'mailItemEvents', 'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates',
                          'itemDecidedStates', 'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
                          'powerAdvisersGroups', 'itemPowerObserversStates', 'meetingPowerObserversStates',
@@ -370,6 +371,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.transitionsToConfirm = []
         self.transitionsForPresentingAnItem = []
         self.onTransitionFieldTransforms = []
+        self.onMeetingTransitionItemTransitionToTrigger = []
         self.useCopies = False
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
