@@ -33,7 +33,7 @@ class Searcher:
         self.sortOrder = sortOrder
         self.filterKey = filterKey
         self.filterValue = filterValue
-        self.searchParams = eval(self.rq.form['searchParams'])
+        self.searchParams = self.rq.SESSION['searchParams']
         self.keywords = None
 
     def getMultiValue(self, paramName):

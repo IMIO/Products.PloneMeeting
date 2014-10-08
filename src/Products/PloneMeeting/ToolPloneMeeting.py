@@ -1059,7 +1059,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def highlight(self, text):
         '''This method highlights parts of p_text corresponding to keywords if
            keywords are found in search params in the REQUEST.form.'''
-        searchParams = eval(self.REQUEST.form.get('searchParams', {}))
+        searchParams = self.REQUEST.SESSION.get('searchParams', None) 
         if not searchParams:
             return text
         keywords = searchParams.get('keywords', None)
@@ -2383,6 +2383,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return content.replace('[[', '<strike>').replace(']]', '</strike>'). \
             replace('<p>', '<p class="mltAssembly">')
 
+    security.declarePublic('storeSearchParams')
+    def storeSearchParams(self, form):
+        '''Stores, in the session, advanced-search-related parameters from the given p_form.'''
+        # In some specific cases (ie, when switching language), p_form is empty
+        # (or does only contain a single key) and must not be saved: we suppose
+        # a form was previously saved in the session.
+        if len(form) <= 1:
+            return
+        self.REQUEST.SESSION['searchParams'] = form.copy()
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

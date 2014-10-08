@@ -22,7 +22,8 @@
 
   <metal:main fill-slot="content-core"
      tal:define="tool python: context.portal_plonemeeting;
-                 searchParams request/form;
+                 dummy python: tool.storeSearchParams(request.form);
+                 searchParams request/SESSION/searchParams;
                  searchTypes searchParams/search_types|python:[];
                  meetingConfig python: tool.get(searchParams['search_config'])">
 
