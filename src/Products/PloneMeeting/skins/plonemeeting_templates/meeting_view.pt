@@ -87,6 +87,34 @@
         selectForm.submit();
     }
   }
+
+    // Function that allows to generate a meeting document containing selected items.
+    function removeSelectedItems() {
+        var atLeastOneSelected = false;
+        var uidList = '';
+        for (var uid in itemUids) {
+            if ((typeof itemUids[uid] == 'boolean') && itemUids[uid]) {
+                atLeastOneSelected = true;
+                uidList += uid + ',';
+            }
+        }
+        if (! atLeastOneSelected) {
+            alert(no_selected_items);
+        }
+        else {
+            // Ask confirmation then update the form and submit it if confirmed.
+            var msg = window.eval('sure_to_remove_selected_items');
+
+            if (confirm(msg)) {
+            var selectForm = document.forms['removeItemsForm'];
+            selectForm.uids.value = uidList;
+            selectForm.iStartNumber.value = iStartNumber;
+            selectForm.lStartNumber.value = lStartNumber;
+            selectForm.submit();
+            }
+        }
+    }
+
   function onImageButtonFocus(itemNumber) {
     var imageButtons = document.getElementsByName('moveImageButton');
     for (var i=0; i<imageButtons.length; i++) {

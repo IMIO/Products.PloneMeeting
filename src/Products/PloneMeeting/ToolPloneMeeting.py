@@ -1059,7 +1059,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def highlight(self, text):
         '''This method highlights parts of p_text corresponding to keywords if
            keywords are found in search params in the REQUEST.form.'''
-        searchParams = self.REQUEST.SESSION.get('searchParams', None) 
+        searchParams = self.REQUEST.SESSION.get('searchParams', None)
         if not searchParams:
             return text
         keywords = searchParams.get('keywords', None)
@@ -2130,6 +2130,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = ''
         for msg in ('plonemeeting_delete_meeting_confirm_message',
                     'no_selected_items',
+                    'sure_to_remove_selected_items',
                     'are_you_sure'):
             res += 'var %s = "%s";\n' % (msg, translate(msg, **args))
         # escape_for_js from portal_skins/plone_scripts/translate.py does the .replace() here above

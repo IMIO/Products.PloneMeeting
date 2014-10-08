@@ -693,7 +693,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_PresentSeveralItems(self):
         """
-          Test the functionnality to present several items at once
+          Test the functionnality to present several items at once in a meeting.
         """
         # create a meeting with items, unpresent presented items
         self.changeUser('pmManager')
@@ -717,6 +717,38 @@ class testMeeting(PloneMeetingTestCase):
         for item in items:
             self.assertEquals(item.queryState(), 'presented')
             self.assertTrue(item.hasMeeting())
+
+    def test_pm_RemoveSeveralItems(self):
+        """
+          Test the functionnality to remove several items at once from a meeting.
+        """
+        # create a meeting with items, unpresent presented items
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        # every items are 'presented'
+        for item in meeting.getItems():
+            self.assertTrue(item.queryState() == 'presented')
+        # remove every items
+        items = meeting.getItems()
+        meeting.removeSeveralItems(",".join([item.UID() for item in items]))
+        # every items are now 'validated'
+        for item in items:
+            self.assertTrue(item.queryState() == 'validated')
+
+        # if we call removeSeveralItems and we are not able to
+        # correct the items, it does not break
+        meeting2 = self._createMeetingWithItems()
+        items = meeting2.getItems()
+        self.closeMeeting(meeting2)
+        # every items are in a final state
+        for item in items:
+            self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
+        # we can not correct the items
+        self.assertTrue(not [tr for tr in self.transitions(items[0]) if tr.startswith('back')])
+        meeting2.removeSeveralItems(",".join([item.UID() for item in items]))
+        # items state was not changed
+        for item in items:
+            self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
 
     def test_pm_DecideSeveralItems(self):
         """

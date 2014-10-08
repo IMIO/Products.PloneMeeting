@@ -117,10 +117,10 @@
       <th class="pm_meeting_listing_th_actions" i18n:translate="heading_actions" tal:condition="showActions"></th>
 
       <tal:comment replace="nothing">Checkbox column for selecting items.</tal:comment>
-      <th class="pm_meeting_listing_th_checkBoxes" tal:condition="showCheckboxes">
+      <th class="pm_meeting_listing_th_checkBoxes" tal:condition="showCheckboxes" tal:attributes="style python: itemsNumbering and 'width: 50px' or 'width: 1%'">
         <img tal:condition="itemsNumbering" tal:attributes="src string: $portal_url/select_items.png"
              i18n:attributes="title" title="helpSelectItemsIcon"
-             onClick="javascript:toggleCheckboxes()" style="cursor:pointer"/>
+             onClick="javascript:toggleCheckboxes()" style="cursor:pointer; display: inline"/>
         <tal:comment replace="nothing">We show inside the column header the button
              for presenting several items at once</tal:comment>
         <form name="selectItemsForm" tal:condition="not: itemsNumbering"
@@ -133,6 +133,18 @@
             <img tal:attributes="src string: $portal_url/presentSeveral.png"/>
           </button>
         </form>
+        <form name="removeItemsForm" tal:condition="python: itemsNumbering and context.adapted().showRemoveSelectedItemsAction()"
+              style="display: inline;"
+              tal:attributes="action python: meeting.absolute_url_path() + '/removeSeveralItems'">
+          <input type="hidden" name="uids" value=""/>
+          <input type="hidden" name="iStartNumber"/>
+          <input type="hidden" name="lStartNumber"/>
+          <button type="button" class="noborder" title="remove_several_items"
+                  i18n:attributes="title" tal:attributes="onClick python: 'removeSelectedItems()'">
+            <img tal:attributes="src string: $portal_url/removeSeveral.png"/>
+          </button>
+        </form>
+
       </th>
 
     </tr>
