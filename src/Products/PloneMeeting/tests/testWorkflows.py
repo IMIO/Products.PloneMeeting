@@ -508,6 +508,21 @@ class testWorkflows(PloneMeetingTestCase):
         for item in meeting.getItems():
             self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
 
+        # now test that it also works with 'back transitions' : when a meeting goes
+        # back to 'created' from 'frozen', specify that every items must go back to 'presented'
+        meeting2 = self._createMeetingWithItems()
+        # for now, every items are 'presented'
+        for item in meeting2.getItems():
+            self.assertTrue(item.queryState() == 'presented')
+        self.freezeMeeting(meeting2)
+        # every items are now frozen
+        for item in meeting2.getItems():
+            self.assertTrue(item.queryState() == 'itemfrozen')
+        self.backToState(meeting2, 'created')
+        # every items are now back to presented
+        for item in meeting2.getItems():
+            self.assertTrue(item.queryState() == 'presented')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

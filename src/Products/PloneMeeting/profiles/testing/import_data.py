@@ -233,7 +233,13 @@ meetingPma.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 
                                                           'item_transition': 'confirm'},
 
                                                          {'meeting_transition': 'archive',
-                                                          'item_transition': 'itemarchive'},)
+                                                          'item_transition': 'itemarchive'},
+
+                                                         {'meeting_transition': 'backToCreated',
+                                                          'item_transition': 'backToItemPublished'},
+                                                         {'meeting_transition': 'backToCreated',
+                                                          'item_transition': 'backToPresented'},)
+
 meetingPma.insertingMethodsOnAddItem = ({'insertingMethod': 'on_proposing_groups', 'reverse': '0'}, )
 meetingPma.useGroupsAsCategories = True
 meetingPma.useAdvices = True
@@ -301,7 +307,13 @@ meetingPga.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 
                                                           'item_transition': 'confirm'},
 
                                                          {'meeting_transition': 'archive',
-                                                          'item_transition': 'itemarchive'},)
+                                                          'item_transition': 'itemarchive'},
+
+                                                         {'meeting_transition': 'backToCreated',
+                                                          'item_transition': 'backToItemPublished'},
+                                                         {'meeting_transition': 'backToCreated',
+                                                          'item_transition': 'backToPresented'},)
+
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
 meetingPga.itemTemplates = (template1, template2, )
