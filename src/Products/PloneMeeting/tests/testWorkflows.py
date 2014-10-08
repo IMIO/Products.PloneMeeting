@@ -488,7 +488,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertTrue('developers_reviewers' not in self.meetingConfig.getSelectableCopyGroups())
         self.assertTrue('developers_reviewers' not in self.meetingConfig2.getSelectableCopyGroups())
 
-    def test_pm_meetingTransitionTriggerLinkedItemsTransitions(self):
+    def test_pm_MeetingTransitionTriggerLinkedItemsTransitions(self):
         '''Test the MeetingConfig.onMeetingTransitionItemTransitionToTrigger parameter :
            when a transition is triggered on a meeting, we can define transitions that will be
            automatically triggered on every items of the meeting.'''
