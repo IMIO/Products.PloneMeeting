@@ -44,6 +44,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
 from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
     IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, IPodTemplateCustom, \
@@ -1195,6 +1196,8 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
     tool = getToolByName(meeting, 'portal_plonemeeting')
     cfg = tool.getMeetingConfig(meeting)
     wfTool = getToolByName(meeting, 'portal_workflow')
+    wf_comment = _('wf_transition_triggered_by_application')
+
     # if we have a transition to trigger on every items, trigger it!
     for config in cfg.getOnMeetingTransitionItemTransitionToTrigger():
         if config['meeting_transition'] == transitionId:
@@ -1203,7 +1206,7 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
                 # do not fail if a transition could not be triggered, just add an
                 # info message to the log so configuration can be adapted to avoid this
                 try:
-                    wfTool.doActionFor(item, config['item_transition'])
+                    wfTool.doActionFor(item, config['item_transition'], comment=wf_comment)
                 except WorkflowException:
                     pass
 

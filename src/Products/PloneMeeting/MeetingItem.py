@@ -3304,7 +3304,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.REQUEST.set('mayGiveAdvice', True)
                     # add a comment for this transition triggered by the application,
                     # we want to show why it was triggered : item state change or delay exceeded
-                    wf_comment = _('advice_wf_changed_triggered_by_application')
+                    wf_comment = _('wf_transition_triggered_by_application')
                     wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
                     self.REQUEST.set('mayGiveAdvice', False)
                 # make sure the delay is reinitialized if advice not already given
@@ -3345,7 +3345,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # make the guard_expr protecting 'backToAdviceUnderEdit' alright
                         self.REQUEST.set('mayBackToAdviceUnderEdit', True)
                         # add a comment for this transition triggered by the application
-                        wf_comment = _('advice_wf_changed_triggered_by_application')
+                        wf_comment = _('wf_transition_triggered_by_application')
                         wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit', comment=wf_comment)
                     except WorkflowException:
                         # if we have another workflow than default meetingadvice_workflow
@@ -3358,7 +3358,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if adviceObj and not adviceObj.queryState() == 'advice_given':
                     self.REQUEST.set('mayGiveAdvice', True)
                     # add a comment for this transition triggered by the application
-                    wf_comment = _('advice_wf_changed_triggered_by_application')
+                    wf_comment = _('wf_transition_triggered_by_application')
                     wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
                     self.REQUEST.set('mayGiveAdvice', False)
             # if item needs to be accessible by advisers, it is already
