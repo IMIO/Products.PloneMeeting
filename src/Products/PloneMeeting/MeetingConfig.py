@@ -1792,6 +1792,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Validate the transitionsForPresentingAnItem field.
            Check that the given sequence of transition if starting
            from the item workflow initial_state and ends to the 'presented' state.'''
+        # bypass validation when we are adding a new MeetingConfig thru UI
+        # because some fields are required on different schematas and it does not work...
+        if self.isTemporary():
+            return
         # we can not specify required=True in the Schema because of InAndOut widget
         # weird behaviour, so manage required ourselves...
         if not values or (len(values) == 1 and not values[0]):
