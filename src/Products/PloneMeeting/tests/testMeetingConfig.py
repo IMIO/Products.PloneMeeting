@@ -365,7 +365,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
         groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
-        empty_columns_msg = translate('custom_adviser_not_enough_colmuns_filled',
+        empty_columns_msg = translate('custom_adviser_not_enough_columns_filled',
                                       domain='PloneMeeting',
                                       mapping={'groupName': groupName},
                                       context=self.portal.REQUEST)
@@ -379,7 +379,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         customAdvisers[0]['delay'] = ''
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
-        # if both colmuns are filled, it validated too obviously
+        # if both columns are filled, it validated too obviously
         customAdvisers[0]['delay'] = '10'
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
         # if a 'orderindex_' key with value 'template_row_marker' is found
