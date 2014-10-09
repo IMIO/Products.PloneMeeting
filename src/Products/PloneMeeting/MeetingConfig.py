@@ -2307,6 +2307,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = [
             ("creator", translate('pm_creator', domain=d, context=self.REQUEST)),
             ("creationDate", translate('pm_creation_date', domain=d, context=self.REQUEST)),
+            ("modificationDate", translate('pm_modification_date', domain=d, context=self.REQUEST)),
             ("state", translate('item_state', domain=d, context=self.REQUEST)),
             ("categoryOrProposingGroup",
                 translate("category_or_proposing_group", domain=d, context=self.REQUEST)),

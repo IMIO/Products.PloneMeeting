@@ -73,6 +73,10 @@
               handler=".MeetingFile.checkAfterConversion" />
 
   <subscriber for=".interfaces.IMeetingFile
+                   zope.container.interfaces.IObjectAddedEvent"
+              handler=".events.onAnnexAdded"/>
+
+  <subscriber for=".interfaces.IMeetingFile
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onAnnexRemoved"/>
 

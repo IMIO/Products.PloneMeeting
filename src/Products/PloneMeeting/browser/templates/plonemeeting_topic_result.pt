@@ -25,7 +25,8 @@
     <div metal:use-macro="context/@@navigate-macros/search"/>
     <tal:comment replace="nothing">The table containing the result</tal:comment>
     <table class="listing nosort" cellpadding="0" cellspacing="0" width="100%"
-      tal:define="descrsStyle         python: tool.readCookie('pmShowDescriptions') == 'false' and 'none' or 'inline';
+      tal:define="toLocalizedTime     nocall: tool/@@plone/toLocalizedTime;
+                  descrsStyle         python: tool.readCookie('pmShowDescriptions') == 'false' and 'none' or 'inline';
                   visibleColumns      python: meetingConfig.getQueryColumns(resultMetaType);
                   sortKey             request/sortKey | nothing;
                   sortOrder           request/sortOrder | python:'asc';
@@ -54,6 +55,13 @@
       <th class="pm_listing_th_creationDate" tal:condition="python: 'creationDate' in visibleColumns"
           tal:define="fieldIndex string:created">
         <span i18n:translate="pm_creation_date"></span>
+        <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
+      </th>
+
+      <tal:comment replace="nothing">Modification date</tal:comment>
+      <th class="pm_listing_th_modificationDate" tal:condition="python: 'modificationDate' in visibleColumns"
+          tal:define="fieldIndex string:modified">
+        <span i18n:translate="pm_modification_date"></span>
         <metal:sortAndFilter use-macro="context/@@navigate-macros/sortAndFilter"/>
       </th>
 
@@ -194,7 +202,11 @@
 
         <tal:comment replace="nothing">Creation date</tal:comment>
         <td tal:condition="python: 'creationDate' in visibleColumns"
-            tal:content="python:tool.restrictedTraverse('@@plone').toLocalizedTime(brain.created,long_format=True)"></td>
+            tal:content="python: toLocalizedTime(brain.created, long_format=True)"></td>
+
+        <tal:comment replace="nothing">Modification date</tal:comment>
+        <td tal:condition="python: 'modificationDate' in visibleColumns"
+            tal:content="python: toLocalizedTime(brain.modified, long_format=True)"></td>
 
         <tal:comment replace="nothing">State</tal:comment>
         <td tal:condition="python: 'state' in visibleColumns"

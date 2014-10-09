@@ -673,7 +673,8 @@ TD acronym {
 .pm_meeting_listing_th_proposingGroup,
 .pm_meeting_listing_th_proposingGroupAcronym,
 .pm_meeting_listing_th_categoryOrProposingGroup,
-.pm_listing_th_creationDate {
+.pm_listing_th_creationDate,
+.pm_listing_th_modificationDate {
     width: 100px;
 }
 .pm_listing_th_relatedMeeting,

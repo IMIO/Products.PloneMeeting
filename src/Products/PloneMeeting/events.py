@@ -17,9 +17,10 @@ __docformat__ = 'plaintext'
 import logging
 logger = logging.getLogger('PloneMeeting')
 
+from Acquisition import aq_base
+from DateTime import DateTime
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
-from Acquisition import aq_base
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
@@ -68,6 +69,9 @@ def do(action, event):
     podTransition = '%s_%s' % (podTransitionPrefixes[objectType],
                                event.transition.id)
     freezePodDocumentsIfRelevant(event.object, podTransition)
+
+    # update modification date upon state change
+    event.object.setModificationDate(DateTime())
 
 
 def onItemTransition(item, event):
@@ -242,6 +246,12 @@ def onAdviceRemoved(advice, event):
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 
 
+def onAnnexAdded(annex, event):
+    '''When an annex is added, we need to update item modification date.'''
+    item = annex.getParent()
+    item.setModificationDate(DateTime())
+
+
 def onAnnexRemoved(annex, event):
     '''When an annex is removed, we need to update item (parent) annexIndex.'''
     # bypass this if we are actually removing the 'Plone Site'
@@ -255,6 +265,9 @@ def onAnnexRemoved(annex, event):
                        decisionRelated=annex.findRelatedTo() == 'item_decision' and True or False)
     if item.willInvalidateAdvices():
         item.updateAdvices(invalidate=True)
+
+    # update item modification date
+    item.setModificationDate(DateTime())
 
 
 def onItemDuplicated(item, event):
