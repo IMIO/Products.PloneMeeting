@@ -3,7 +3,7 @@
   <body>
     <div metal:fill-slot="main">
       <span tal:condition="not: request/came_from">
-        <span metal:use-macro="here/@@pm-macros/hsRedirect"></span>
+        <span tal:define="dummy here/@@plonemeeting_redirect_to_app_view" />
       </span>
     </div>
   </body>
