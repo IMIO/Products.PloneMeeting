@@ -1857,7 +1857,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             group = getattr(tool, customAdviser['group'])
             # a value is required either for the 'delay' or the 'gives_auto_advice_on' column
             if not customAdviser['delay'] and not customAdviser['gives_auto_advice_on']:
-                return translate('custom_adviser_not_enough_colmuns_filled',
+                return translate('custom_adviser_not_enough_columns_filled',
                                  domain='PloneMeeting',
                                  mapping={'groupName': unicode(group.Title(), 'utf-8'), },
                                  context=self.REQUEST)
