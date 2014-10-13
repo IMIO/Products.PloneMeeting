@@ -88,6 +88,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   or so, when no annex or no advice, a simple '-' is displayed in the fieldset
 - Added topic to 'search items of my groups', returning every items of groups a user is
   in, no matter what role the user has in the group (creator, reviewer, adviser, ...)
+- Added topic to 'validable items', returning every items the user may validate upon states
+  of the item reviewing process.  Adapted topic that search 'items to validate' to only return
+  items to validate of the highest hierarchic level of the current user
 - MeetingItem.onDuplicated and MeetingItem.onDuplicatedFromConfig hooks are now zope.event events
 - It is now possible to define in MeetingConfig.itemsListVisibleFields which fields of the items
   will be shown/hidden when using the 'glasses' icon action.  Those extra informations about
