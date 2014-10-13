@@ -268,7 +268,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
         self.meetingConfig.setUseCopies(True)
-        review_states = MEETINGREVIEWERS[MEETINGREVIEWERS.keys()[-1]]
+        review_states = MEETINGREVIEWERS[MEETINGREVIEWERS.keys()[0]]
         if 'prereviewers' in MEETINGREVIEWERS:
             review_states = ('prevalidated',)
         self.meetingConfig.setItemCopyGroupsStates(review_states)
