@@ -103,8 +103,8 @@ MEETING_GROUP_SUFFIXES = MEETINGROLES.keys()
 # list of reviewer roles, this needs to be defined in logical order because
 # we will also look for 'higher' reviewer level
 # the key is the group suffix and the value is a tuple of states of the items to review
-MEETINGREVIEWERS = OrderedDict([('prereviewers', 'proposed'),
-                                ('reviewers', 'proposed'), ])
+MEETINGREVIEWERS = OrderedDict([('reviewers', 'proposed'),
+                                ('prereviewers', 'proposed'), ])
 
 # This is the group created for each MeetingConfig where we store
 # users that will be able to see the meetings and items in states

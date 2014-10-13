@@ -141,9 +141,9 @@ developers.observers.append(pmManager)
 developers.advisers.append(pmAdviser1)
 developers.advisers.append(pmManager)
 # put pmReviewerLevel1 in first level of reviewers from what is in MEETINGREVIEWERS
-getattr(developers, MEETINGREVIEWERS.keys()[0]).append(pmReviewerLevel1)
+getattr(developers, MEETINGREVIEWERS.keys()[-1]).append(pmReviewerLevel1)
 # put pmReviewerLevel2 in second level of reviewers from what is in MEETINGREVIEWERS
-getattr(developers, MEETINGREVIEWERS.keys()[-1]).append(pmReviewerLevel2)
+getattr(developers, MEETINGREVIEWERS.keys()[0]).append(pmReviewerLevel2)
 
 vendors = GroupDescriptor('vendors', 'Vendors', 'Devil')
 vendors.creators.append(pmCreator2)
