@@ -360,33 +360,33 @@ class Migrate_To_3_3(Migrator):
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
-        #self._finishMeetingFolderViewRemoval()
-        #self._moveItemTemplatesToOwnFolder()
-        #self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
-        #self._updateInsertingMethodsAttributeOnMeetingConfigs()
-        #self._updateAnnexesMeetingFileType()
-        #self._addRestrictedPowerObserverGroupsByMeetingConfig()
-        #self._addAdvicesNewFieldHiddenDuringRedaction()
-        #self._updateAdvices()
-        #self._updateAddFilePermissionOnMeetingConfigFolders()
-        #self._addChangesHistoryToItems()
-        #self._translateFoldersOfMeetingConfigs()
-        #self._addItemTypesToTypesUseViewActionInListings()
-        #self._adaptTopicsPortalTypeCriterion()
-        #self._removeSignatureNotAloneTransformType()
-        #self._cleanMeetingGroupsAsCopyGroupOn()
+        self._finishMeetingFolderViewRemoval()
+        self._moveItemTemplatesToOwnFolder()
+        self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
+        self._updateInsertingMethodsAttributeOnMeetingConfigs()
+        self._updateAnnexesMeetingFileType()
+        self._addRestrictedPowerObserverGroupsByMeetingConfig()
+        self._addAdvicesNewFieldHiddenDuringRedaction()
+        self._updateAdvices()
+        self._updateAddFilePermissionOnMeetingConfigFolders()
+        self._addChangesHistoryToItems()
+        self._translateFoldersOfMeetingConfigs()
+        self._addItemTypesToTypesUseViewActionInListings()
+        self._adaptTopicsPortalTypeCriterion()
+        self._removeSignatureNotAloneTransformType()
+        self._cleanMeetingGroupsAsCopyGroupOn()
         self._updateTopics()
-        #self._cleanCKeditorCustomToolbar()
-        ## clean registries (js, css, portal_setup)
-        #self.cleanRegistries()
-        ## reinstall so versions are correctly shown in portal_quickinstaller
-        ## and new stuffs are added (indexes especially)
-        ## reinstall imio.actionspanel so actionspanel.css is taken into account
-        #self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
-        #                         u'profile-imio.actionspanel:default'])
-        ## items in the configuration are now indexed, so clear and rebuild
-        ## by default, only portal_catalog is updated by refreshDatabase
-        #self.refreshDatabase()
+        self._cleanCKeditorCustomToolbar()
+        # clean registries (js, css, portal_setup)
+        self.cleanRegistries()
+        # reinstall so versions are correctly shown in portal_quickinstaller
+        # and new stuffs are added (indexes especially)
+        # reinstall imio.actionspanel so actionspanel.css is taken into account
+        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
+                                 u'profile-imio.actionspanel:default'])
+        # items in the configuration are now indexed, so clear and rebuild
+        # by default, only portal_catalog is updated by refreshDatabase
+        self.refreshDatabase()
         self.finish()
 
 
