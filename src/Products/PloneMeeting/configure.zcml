@@ -50,6 +50,7 @@
   <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
   <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
+  <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
 
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="Products.PloneMeeting.MeetingItem.MeetingItem"

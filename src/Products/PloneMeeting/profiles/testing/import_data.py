@@ -18,7 +18,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-from Products.PloneMeeting.profiles import *
+from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.profiles import CategoryDescriptor
+from Products.PloneMeeting.profiles import GroupDescriptor
+from Products.PloneMeeting.profiles import ItemTemplateDescriptor
+from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from Products.PloneMeeting.profiles import MeetingFileTypeDescriptor
+from Products.PloneMeeting.profiles import MeetingUserDescriptor
+from Products.PloneMeeting.profiles import PloneGroupDescriptor
+from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+from Products.PloneMeeting.profiles import PodTemplateDescriptor
+from Products.PloneMeeting.profiles import RecurringItemDescriptor
+from Products.PloneMeeting.profiles import UserDescriptor
 
 # First meeting type: a fictitious PloneGov assembly ---------------------------
 
@@ -80,8 +91,12 @@ pmManager = UserDescriptor('pmManager', ['MeetingManager'], email="pmmanager@plo
 pmCreator1 = UserDescriptor('pmCreator1', [], email="pmcreator1@plonemeeting.org", fullname='M. PMCreator One')
 pmCreator1b = UserDescriptor('pmCreator1b', [], email="pmcreator1b@plonemeeting.org", fullname='M. PMCreator One bee')
 pmReviewer1 = UserDescriptor('pmReviewer1', [], email="pmreviewer1@plonemeeting.org", fullname='M. PMReviewer One')
+pmReviewerLevel1 = UserDescriptor('pmReviewerLevel1', [],
+                                  email="pmreviewerlevel1@plonemeeting.org", fullname='M. PMReviewer Level One')
 pmCreator2 = UserDescriptor('pmCreator2', [], email="pmcreator2@plonemeeting.org", fullname='M. PMCreator Two')
 pmReviewer2 = UserDescriptor('pmReviewer2', [], email="pmreviewer2@plonemeeting.org", fullname='M. PMReviewer Two')
+pmReviewerLevel2 = UserDescriptor('pmReviewerLevel2', [],
+                                  email="pmreviewerlevel2@plonemeeting.org", fullname='M. PMReviewer Level Two')
 pmAdviser1 = UserDescriptor('pmAdviser1', [], email="pmadviser1@plonemeeting.org", fullname='M. PMAdviser One')
 voter1 = UserDescriptor('voter1', [], email="voter1@plonemeeting.org", fullname='M. Voter One')
 voter2 = UserDescriptor('voter2', [], email="voter2@plonemeeting.org", fullname='M. Voter Two')
@@ -125,6 +140,10 @@ developers.observers.append(pmReviewer1)
 developers.observers.append(pmManager)
 developers.advisers.append(pmAdviser1)
 developers.advisers.append(pmManager)
+# put pmReviewerLevel1 in first level of reviewers from what is in MEETINGREVIEWERS
+getattr(developers, MEETINGREVIEWERS.keys()[0]).append(pmReviewerLevel1)
+# put pmReviewerLevel2 in second level of reviewers from what is in MEETINGREVIEWERS
+getattr(developers, MEETINGREVIEWERS.keys()[-1]).append(pmReviewerLevel2)
 
 vendors = GroupDescriptor('vendors', 'Vendors', 'Devil')
 vendors.creators.append(pmCreator2)

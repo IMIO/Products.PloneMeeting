@@ -251,9 +251,9 @@ class Migrate_To_3_3(Migrator):
                 mGroup.setAsCopyGroupOn('')
         logger.info('Done.')
 
-    def _addMissingTopics(self):
-        '''Add the new topics.'''
-        logger.info('Adding new topics to every MeetingConfigs...')
+    def _updateTopics(self):
+        '''Add the new topics, remove useless ones and adapt some too...'''
+        logger.info('Updating topics of every MeetingConfigs...')
         newTopicsInfo = (
             # Items to advice with delay : need a script to do this search
             ('searchitemsofmygroups',
@@ -272,14 +272,25 @@ class Migrate_To_3_3(Migrator):
              "python: here.portal_plonemeeting.getMeetingConfig(here)."
              "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
              ),
+            # Validable items : need a script to do this search
+            ('searchvalidableitems',
+            (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+             ),
+             'created',
+             'searchValidableItems',
+             "python: here.userIsAReviewer()",
+             ),
         )
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             hasSearchItemsOfMyGroups = False
             hasSearchItemsToAdvifceWithoutDelay = False
+            hasSearchValidableItems = False
             if hasattr(cfg.topics, 'searchitemsofmygroups'):
                 hasSearchItemsOfMyGroups = True
             if hasattr(cfg.topics, 'searchitemstoadvicewithoutdelay'):
                 hasSearchItemsToAdvifceWithoutDelay = True
+            if hasattr(cfg.topics, 'searchvalidableitems'):
+                hasSearchValidableItems = True
             # createTopics manage the fact that the topic already exists
             cfg.createTopics(newTopicsInfo)
             if not hasSearchItemsOfMyGroups:
@@ -308,6 +319,27 @@ class Migrate_To_3_3(Migrator):
                 advicesWithoutDelayTopicPosition = everyTopicIds.index('searchitemstoadvicewithoutdelay')
                 delta = advicesWithoutDelayTopicPosition - allAdvicesTopicPosition - 1
                 cfg.topics.moveObjectsUp('searchitemstoadvicewithoutdelay', delta=delta)
+            if not hasSearchValidableItems:
+                # now reorder so 'searchvalidableitems' is under 'searchitemstovalidate'
+                # find delta, we need to insert it after the 'searchitemstovalidate' topic
+                if not hasattr(cfg.topics, 'searchitemstovalidate'):
+                    logger.error('Unable to find topic \'searchitemstovalidate\' !!!  '
+                                 'New \'searchvalidableitems\' topic will be left at the bottom of available topics!')
+                    continue
+                itemsToValidateTopic = cfg.topics.searchitemstovalidate
+                everyTopicIds = cfg.topics.objectIds()
+                itemsToValidateTopicPosition = everyTopicIds.index(itemsToValidateTopic.getId())
+                validableItemsTopicPosition = everyTopicIds.index('searchvalidableitems')
+                delta = validableItemsTopicPosition - itemsToValidateTopicPosition - 1
+                cfg.topics.moveObjectsUp('searchvalidableitems', delta=delta)
+            # remove topic 'searchitemstoprevalidate'
+            if hasattr(cfg.topics, 'searchitemstoprevalidate'):
+                cfg.topics.manage_delObjects(['searchitemstoprevalidate', ])
+            # update condition of the 'searchitemstovalidate' topic
+            if hasattr(cfg.topics, 'searchitemstovalidate') and \
+               (cfg.topics.searchitemstovalidate.getProperty('topic_tal_expression') ==
+               "python: here.portal_plonemeeting.userIsAmong('reviewers')"):
+                cfg.topics.searchitemstovalidate.manage_changeProperties(topic_tal_expression="python: here.userIsAReviewer()")
         logger.info('Done.')
 
     def _cleanCKeditorCustomToolbar(self):
@@ -328,32 +360,33 @@ class Migrate_To_3_3(Migrator):
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
-        self._finishMeetingFolderViewRemoval()
-        self._moveItemTemplatesToOwnFolder()
-        self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
-        self._updateInsertingMethodsAttributeOnMeetingConfigs()
-        self._updateAnnexesMeetingFileType()
-        self._addRestrictedPowerObserverGroupsByMeetingConfig()
-        self._addAdvicesNewFieldHiddenDuringRedaction()
-        self._updateAdvices()
-        self._updateAddFilePermissionOnMeetingConfigFolders()
-        self._addChangesHistoryToItems()
-        self._translateFoldersOfMeetingConfigs()
-        self._addItemTypesToTypesUseViewActionInListings()
-        self._adaptTopicsPortalTypeCriterion()
-        self._removeSignatureNotAloneTransformType()
-        self._cleanMeetingGroupsAsCopyGroupOn()
-        self._addMissingTopics()
-        self._cleanCKeditorCustomToolbar()
-        # clean registries (js, css, portal_setup)
-        self.cleanRegistries()
-        # reinstall so versions are correctly shown in portal_quickinstaller
-        # reinstall imio.actionspanel so actionspanel.css is taken into account
-        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
-                                 u'profile-imio.actionspanel:default'])
-        # items in the configuration are now indexed, so clear and rebuild
-        # by default, only portal_catalog is updated by refreshDatabase
-        self.refreshDatabase()
+        #self._finishMeetingFolderViewRemoval()
+        #self._moveItemTemplatesToOwnFolder()
+        #self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
+        #self._updateInsertingMethodsAttributeOnMeetingConfigs()
+        #self._updateAnnexesMeetingFileType()
+        #self._addRestrictedPowerObserverGroupsByMeetingConfig()
+        #self._addAdvicesNewFieldHiddenDuringRedaction()
+        #self._updateAdvices()
+        #self._updateAddFilePermissionOnMeetingConfigFolders()
+        #self._addChangesHistoryToItems()
+        #self._translateFoldersOfMeetingConfigs()
+        #self._addItemTypesToTypesUseViewActionInListings()
+        #self._adaptTopicsPortalTypeCriterion()
+        #self._removeSignatureNotAloneTransformType()
+        #self._cleanMeetingGroupsAsCopyGroupOn()
+        self._updateTopics()
+        #self._cleanCKeditorCustomToolbar()
+        ## clean registries (js, css, portal_setup)
+        #self.cleanRegistries()
+        ## reinstall so versions are correctly shown in portal_quickinstaller
+        ## and new stuffs are added (indexes especially)
+        ## reinstall imio.actionspanel so actionspanel.css is taken into account
+        #self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
+        #                         u'profile-imio.actionspanel:default'])
+        ## items in the configuration are now indexed, so clear and rebuild
+        ## by default, only portal_catalog is updated by refreshDatabase
+        #self.refreshDatabase()
         self.finish()
 
 

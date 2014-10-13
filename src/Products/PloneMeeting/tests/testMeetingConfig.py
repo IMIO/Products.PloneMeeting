@@ -36,6 +36,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.config import TOPIC_SEARCH_FILTERS
+from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.utils import cleanRamCacheFor
 
@@ -234,20 +235,43 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_SearchItemsToValidate(self):
         '''Test the searchItemsToValidate method.  This should return a list of items
            a user ***really*** has to validate.
-           Items to validate are items in state 'proposed' or 'prevalidated' if wfAdaptation
-           'pre_validation' is used, and for wich current user is really reviewer.'''
+           Items to validate are items for which user is a reviewer and only regarding
+           his higher hierarchic level.
+           So a reviewer level 1 and level 2 will only see items in level 2, a reviewer in level
+           1 (only) will only see items in level 1.'''
+        # activate 'prevalidation' if necessary
+        if 'prereviewers' in MEETINGREVIEWERS:
+            self.meetingConfig.setWorkflowAdaptations('pre_validation')
+            logger = logging.getLogger('PloneMeeting: testing')
+            performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        # jump to first level of validation
+        self.do(item, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
+        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.changeUser('pmReviewerLevel1')
+        self.failUnless(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        # now as 'pmReviewerLevel2', the item should not be returned
+        # as he only see items of his highest hierarchic level
+        self.changeUser('pmReviewerLevel2')
+        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        # pass the item to second last level of hierarchy, where 'pmReviewerLevel2' is reviewer for
+        self.changeUser('pmReviewerLevel1')
+        # jump to last level of validation
         self.proposeItem(item)
         self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
-        self.changeUser('pmReviewer1')
+        self.changeUser('pmReviewerLevel2')
         self.failUnless(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+
         # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
         self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates(('proposed', ))
+        review_states = MEETINGREVIEWERS[MEETINGREVIEWERS.keys()[-1]]
+        if 'prereviewers' in MEETINGREVIEWERS:
+            review_states = ('prevalidated',)
+        self.meetingConfig.setItemCopyGroupsStates(review_states)
         item.setCopyGroups(('vendors_reviewers',))
         item.at_post_edit_script()
         self.changeUser('pmReviewer2')
@@ -261,50 +285,50 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.validateItem(item)
         self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
 
-    def test_pm_SearchItemsToPrevalidate(self):
-        '''Test the searchItemsToPrevalidate method.  This should return a list of items
-           a user ***really*** has to prevalidate.
-           Items to prevalidate are items in state 'proposed' when wfAdaptation
-           'pre_validation' is active, and for wich current user is really reviewer.'''
+    def test_pm_SearchValidableItems(self):
+        '''Test the searchValidableItems method.  This should return a list of items
+           a user could validate at any level.'''
         logger = logging.getLogger('PloneMeeting: testing')
         # activate the 'pre_validation' wfAdaptation if it exists in current profile...
-        if not 'pre_validation' in self.meetingConfig.listWorkflowAdaptations():
-            logger.info("Could not launch test 'test_pm_SearchItemsToPrevalidate' because "
-                        "wfAdaptation 'pre_validation' is not available for current profile.")
-            return
-        self.meetingConfig.setWorkflowAdaptations('pre_validation')
-        logger = logging.getLogger('PloneMeeting: testing')
-        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
-        # create an item
+        # if not, then MEETINGREVIEWERS must be at least 2 elements long
+        if not len(MEETINGREVIEWERS) > 1:
+            logger.info("Could not launch test 'test_pm_SearchValidableItems' because "
+                        "we need at least 2 levels of item validation.")
+        if 'pre_validation' in self.meetingConfig.listWorkflowAdaptations():
+            self.meetingConfig.setWorkflowAdaptations('pre_validation')
+            logger = logging.getLogger('PloneMeeting: testing')
+            performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        # create 2 items
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        self.proposeItem(item)
-        self.failIf(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
-        self.changeUser('pmReviewer1')
-        # define pmReviewer1 as a prereviewer
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        self.do(item1, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
+        item1.reindexObject()
+        self.do(item2, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
+        item2.reindexObject()
+        self.failIf(self.meetingConfig.searchValidableItems('', '', '', ''))
+        # as first level user, he will see items
+        self.changeUser('pmReviewerLevel1')
+        self.failUnless(len(self.meetingConfig.searchValidableItems('', '', '', '')) == 2)
+        # as second level user, he will not see items of first level also
+        self.changeUser('pmReviewerLevel2')
+        self.failIf(self.meetingConfig.searchValidableItems('', '', '', ''))
+
+        # define 'pmReviewerLevel2' as a prereviewer (first validation level reviewer)
         self._turnUserIntoPrereviewer(self.member)
-        # change again to 'pmReviewer1' so changes in his groups are taken into account
-        self.changeUser('pmReviewer1')
-        # the next available transition is 'prevalidate'
-        self.failUnless('prevalidate' in self.transitions(item))
-        self.failUnless(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
-        # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
-        # the search does returns him the item, it should not as he is just a reviewer
-        # but not able to really validate the new item
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates(('proposed', ))
-        item.setCopyGroups(('vendors_reviewers',))
-        item.at_post_edit_script()
-        self.changeUser('pmReviewer2')
-        # the user can see the item
-        self.failUnless(self.hasPermission('View', item))
-        # but the search will not return it
-        self.failIf(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
-        # if the item is prevalidated, it will not appear for pmReviewer1 anymore
-        self.changeUser('pmReviewer1')
-        self.failUnless(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
-        self.prevalidateItem(item)
-        self.failIf(self.meetingConfig.searchItemsToPrevalidate('', '', '', ''))
+        # change again to 'pmReviewerLevel2' so changes in his groups are taken into account
+        self.changeUser('pmReviewerLevel2')
+        # he can access first validation level items
+        self.failUnless(len(self.meetingConfig.searchValidableItems('', '', '', '')) == 2)
+        # move item1 to last validation level
+        self.proposeItem(item1)
+        item1.reindexObject()
+        # both items still returned by the search for 'pmReviewerLevel2'
+        self.failUnless(len(self.meetingConfig.searchValidableItems('', '', '', '')) == 2)
+        # but now, the search only returns item2 to 'pmReviewerLevel1'
+        self.changeUser('pmReviewerLevel1')
+        self.failUnless(len(self.meetingConfig.searchValidableItems('', '', '', '')) == 1)
+        self.failUnless(self.meetingConfig.searchValidableItems('', '', '', '')[0].UID == item2.UID())
 
     def test_pm_SearchItemsWithFilters(self):
         '''Test the searchItemsWithFilters method.  This should return a list of items

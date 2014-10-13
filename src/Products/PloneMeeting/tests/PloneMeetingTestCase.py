@@ -39,6 +39,7 @@ from Products.PloneTestCase.setup import _createHomeFolder
 import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
 #from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -328,8 +329,8 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
           Helper method for adding a given p_member to every '_prereviewers' group
           corresponding to every '_reviewers' group he is in.
         """
-        groups = [group for group in member.getGroups() if group.endswith('_reviewers')]
-        groups = [group.replace('reviewers', 'prereviewers') for group in groups]
+        groups = [group for group in member.getGroups() if group.endswith('_%s' % MEETINGREVIEWERS.keys()[-1])]
+        groups = [group.replace(MEETINGREVIEWERS.keys()[-1], MEETINGREVIEWERS.keys()[0]) for group in groups]
         for group in groups:
             self.portal.portal_groups.addPrincipalToGroup(member.getId(), group)
 

@@ -11,8 +11,6 @@ from OFS.interfaces import IItem
 
 from plone.indexer import indexer
 
-from Products.CMFCore.utils import getToolByName
-
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 
@@ -51,6 +49,15 @@ def getDeliberation(obj):
       Make sure to use 'text/plain' version of getDeliberation field
     """
     return obj.getDeliberation(mimetype='text/plain')
+
+
+@indexer(IMeetingItem)
+def reviewProcessInfo(obj):
+    """
+      Compute a reviewProcessInfo, this concatenate the proposingGroup
+      and the item review_state so it can be queryable in the catalog.
+    """
+    return '%s__reviewprocess__%s' % (obj.getProposingGroup(), obj.queryState())
 
 
 @indexer(IItem)

@@ -56,6 +56,7 @@ indexInfos = {
               'isDefinedInTool': ('BooleanIndex', {}),
               'templateUsingGroups': ('KeywordIndex', {}),
               'getCompleteness': ('KeywordIndex', {}),
+              'reviewProcessInfo': ('KeywordIndex', {}),
               # Meeting-related indexes
               'getDate': ('DateIndex', {}),
               # MeetingFile-related indexes

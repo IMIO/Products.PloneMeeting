@@ -1590,21 +1590,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
          ),
-        # Items to prevalidate : need a script to do this search
-        ('searchitemstoprevalidate',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToPrevalidate',
-         "python: 'pre_validation' in here.getWorkflowAdaptations() and here.portal_plonemeeting.userIsAmong('prereviewers')",
-         ),
         # Items to validate : need a script to do this search
         ('searchitemstovalidate',
         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchItemsToValidate',
-         "python: here.portal_plonemeeting.userIsAmong('reviewers')",
+         "python: here.userIsAReviewer()",
+         ),
+        # Validable items : need a script to do this search
+        ('searchvalidableitems',
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchValidableItems',
+         "python: here.userIsAReviewer()",
          ),
         # Items to advice : need a script to do this search
         ('searchallitemstoadvice',
@@ -2958,28 +2958,48 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            config.'''
         return 'Meeting%s' % self.getShortName()
 
+    security.declarePublic('userIsAReviewer')
+    def userIsAReviewer(self):
+        '''Is current user a reviewer?  So is current user among groups of MEETINGREVIEWERS?'''
+        member = self.portal_membership.getAuthenticatedMember()
+        groupIds = self.portal_groups.getGroupsForPrincipal(member)
+        strGroupIds = str(groupIds)
+        for reviewSuffix in MEETINGREVIEWERS.keys():
+            if "_%s'" % reviewSuffix in strGroupIds:
+                return True
+        return False
+
+    def _higherReviewerLevel(self, groupIds):
+        '''Return higher reviewer level found in given p_groupIds.'''
+        strGroupIds = str(groupIds)
+        for reviewSuffix in MEETINGREVIEWERS.keys():
+            if "_%s'" % reviewSuffix in strGroupIds:
+                return reviewSuffix
+
     security.declarePublic('searchItemsToValidate')
     def searchItemsToValidate(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Return a list of items that the user can validate.
-           Items to validate are items in state 'proposed' for wich the current user has the
-           permission to trigger the 'validate' workflow transition.  To avoid waking up the
-           object, we will check that the current user is in the _reviewers group corresponding
-           to the item proposing group (that is indexed).  So if the item proposing group is
-           'secretariat' and the user is member of 'secretariat_reviewers',
-           then he is able to validate the item.'''
+        '''Return a list of items that the user can validate regarding his highest hierarchic level.
+           So if a user is 'prereviewer' and 'reviewier', the search will only return items
+           in state corresponding to his 'reviewer' role.'''
         member = self.portal_membership.getAuthenticatedMember()
         groupIds = self.portal_groups.getGroupsForPrincipal(member)
         res = []
+        higherReviewerLevel = self._higherReviewerLevel(groupIds)
+        if not higherReviewerLevel:
+            return res
         for groupId in groupIds:
-            if groupId.endswith('_reviewers'):
+            if groupId.endswith('_%s' % higherReviewerLevel):
                 # append group name without suffix
-                res.append(groupId[:-10])
-        # if we use pre_validation, the state in which are items to validate is 'prevalidated'
-        # if not using the WFAdaptation 'pre_validation', the items are in state 'proposed'
-        usePreValidationWFAdaptation = 'pre_validation' in self.getWorkflowAdaptations()
+                res.append(groupId[:-len('_%s' % higherReviewerLevel)])
+        review_state = MEETINGREVIEWERS[higherReviewerLevel]
+        # specific management for workflows using the 'pre_validation' wfAdaptation
+        if higherReviewerLevel == 'reviewers' and \
+           'pre_validation' in self.getWorkflowAdaptations():
+            review_state = 'prevalidated'
+
         params = {'portal_type': self.getItemTypeName(),
                   'getProposingGroup': res,
-                  'review_state': usePreValidationWFAdaptation and ('prevalidated', ) or ('proposed', ),
+                  'review_state': review_state,
                   'sort_on': sortKey,
                   'sort_order': sortOrder
                   }
@@ -2991,25 +3011,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Perform the query in portal_catalog
         return self.portal_catalog(**params)
 
-    security.declarePublic('searchItemsToPrevalidate')
-    def searchItemsToPrevalidate(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Return a list of items that the user can prevalidate.
-           Items to prevalidate are items in state 'proposed' for wich the current user has the
-           permission to trigger the 'validate' workflow transition.  To avoid waking up the
-           object, we will check that the current user is in the _prereviewers group corresponding
-           to the item proposing group (that is indexed).  So if the item proposing group is
-           'secretariat' and the user is member of 'secretariat_prereviewers',
-           then he is able to prevalidate the item.'''
+    security.declarePublic('searchValidableItems')
+    def searchValidableItems(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Return a list of items that the user could validate.  So it returns every items the current
+           user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
+           and 'reviewer' for a group, the search will return items in both states.'''
         member = self.portal_membership.getAuthenticatedMember()
         groupIds = self.portal_groups.getGroupsForPrincipal(member)
-        res = []
+        reviewProcessInfos = []
         for groupId in groupIds:
-            if groupId.endswith('_prereviewers'):
-                # append group name without suffix
-                res.append(groupId[:-13])
+            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
+                # current user may be able to validate at at least
+                # one level of the entire validation process, we take it into account
+                if groupId.endswith('_%s' % reviewer_suffix):
+                    # specific management for workflows using the 'pre_validation' wfAdaptation
+                    if reviewer_suffix == 'reviewers' and \
+                       'pre_validation' in self.getWorkflowAdaptations():
+                        review_state = 'prevalidated'
+                    reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
+                                                                         review_state))
+        if not reviewProcessInfos:
+            return []
+
         params = {'portal_type': self.getItemTypeName(),
-                  'getProposingGroup': res,
-                  'review_state': 'proposed',
+                  'reviewProcessInfo': reviewProcessInfos,
                   'sort_on': sortKey,
                   'sort_order': sortOrder
                   }
