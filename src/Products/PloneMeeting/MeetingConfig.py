@@ -1595,7 +1595,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
-         'searchItemsToValidate',
+         'searchItemsToValidateOfHighestHierarchicLevel',
          "python: here.userIsAReviewer()",
          ),
         # Validable items : need a script to do this search
@@ -1703,7 +1703,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     meetingTopicsUsingMeetingConfigStates = ('searchallmeetings', 'searchalldecisions', )
     # Names of workflow adaptations.
     wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
-                     'only_creator_may_delete', 'pre_validation',
+                     'only_creator_may_delete', 'pre_validation',  'pre_validation_keep_reviewer_permissions',
                      'items_come_validated', 'archiving', 'no_publication',
                      'no_proposal', 'everyone_reads_all',
                      'creator_edits_unless_closed', 'local_meeting_managers',
@@ -2149,12 +2149,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             values.remove('')
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
         if 'items_come_validated' in values:
-            if ('creator_initiated_decisions' in values) or ('pre_validation' in values):
+            if 'creator_initiated_decisions' in values or \
+               'pre_validation' in values or \
+               'pre_validation_keep_reviewer_permissions' in values:
                 return msg
         if ('archiving' in values) and (len(values) > 1):
             # Archiving is incompatible with any other workflow adaptation
             return msg
-        if ('no_proposal' in values) and ('pre_validation' in values):
+        if 'no_proposal' in values and \
+           ('pre_validation' in values or 'pre_validation_keep_reviewer_permissions' in values):
+            return msg
+        if 'pre_validation' in values and 'pre_validation_keep_reviewer_permissions' in values:
             return msg
         # 'hide_decisions_when_under_writing' and 'no_publication' are not working together
         if ('hide_decisions_when_under_writing' in values) and ('no_publication' in values):
@@ -2969,32 +2974,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return True
         return False
 
-    def _higherReviewerLevel(self, groupIds):
-        '''Return higher reviewer level found in given p_groupIds.'''
+    def _highestReviewerLevel(self, groupIds):
+        '''Return highest reviewer level found in given p_groupIds.'''
         strGroupIds = str(groupIds)
         for reviewSuffix in MEETINGREVIEWERS.keys():
             if "_%s'" % reviewSuffix in strGroupIds:
                 return reviewSuffix
 
-    security.declarePublic('searchItemsToValidate')
-    def searchItemsToValidate(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+    security.declarePublic('searchItemsToValidateOfHighestHierarchicLevel')
+    def searchItemsToValidateOfHighestHierarchicLevel(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Return a list of items that the user can validate regarding his highest hierarchic level.
            So if a user is 'prereviewer' and 'reviewier', the search will only return items
            in state corresponding to his 'reviewer' role.'''
         member = self.portal_membership.getAuthenticatedMember()
         groupIds = self.portal_groups.getGroupsForPrincipal(member)
         res = []
-        higherReviewerLevel = self._higherReviewerLevel(groupIds)
-        if not higherReviewerLevel:
+        highestReviewerLevel = self._highestReviewerLevel(groupIds)
+        if not highestReviewerLevel:
             return res
         for groupId in groupIds:
-            if groupId.endswith('_%s' % higherReviewerLevel):
+            if groupId.endswith('_%s' % highestReviewerLevel):
                 # append group name without suffix
-                res.append(groupId[:-len('_%s' % higherReviewerLevel)])
-        review_state = MEETINGREVIEWERS[higherReviewerLevel]
+                res.append(groupId[:-len('_%s' % highestReviewerLevel)])
+        review_state = MEETINGREVIEWERS[highestReviewerLevel]
         # specific management for workflows using the 'pre_validation' wfAdaptation
-        if higherReviewerLevel == 'reviewers' and \
-           'pre_validation' in self.getWorkflowAdaptations():
+        if highestReviewerLevel == 'reviewers' and \
+           ('pre_validation' in self.getWorkflowAdaptations() or
+           'pre_validation_keep_reviewer_permissions' in self.getWorkflowAdaptations()):
             review_state = 'prevalidated'
 
         params = {'portal_type': self.getItemTypeName(),
@@ -3011,8 +3017,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Perform the query in portal_catalog
         return self.portal_catalog(**params)
 
-    security.declarePublic('searchValidableItems')
-    def searchValidableItems(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+    security.declarePublic('searchItemsToValidateOfMyReviewerGroups')
+    def searchItemsToValidateOfMyReviewerGroups(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Return a list of items that the user could validate.  So it returns every items the current
            user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
            and 'reviewer' for a group, the search will return items in both states.'''
@@ -3026,12 +3032,70 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 if groupId.endswith('_%s' % reviewer_suffix):
                     # specific management for workflows using the 'pre_validation' wfAdaptation
                     if reviewer_suffix == 'reviewers' and \
-                       'pre_validation' in self.getWorkflowAdaptations():
+                       ('pre_validation' in self.getWorkflowAdaptations() or
+                       'pre_validation_keep_reviewer_permissions' in self.getWorkflowAdaptations()):
                         review_state = 'prevalidated'
                     reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
                                                                          review_state))
         if not reviewProcessInfos:
             return []
+
+        params = {'portal_type': self.getItemTypeName(),
+                  'reviewProcessInfo': reviewProcessInfos,
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder
+                  }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(filterValue)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
+
+    security.declarePublic('searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels')
+    def searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''This will check for user highest reviewer level of each of his groups and return these items and
+           items of lower reviewer levels.
+           This search works if the workflow manage reviewer levels where higher reviewer level
+           can validate lower reviewer levels EVEN IF THE USER IS NOT IN THE CORRESPONDING PLONE SUBGROUP.
+           For example with a 3 levels reviewer workflow, called review1 (lowest level), review2 and review3 (highest level) :
+           - reviewer1 may validate items in reviewer1;
+           - reviewer2 may validate items in reviewer1 and reviewer2;
+           - reviewer3 may validate items in reviewer1, reviewer2 and reviewer3.
+           So get highest hierarchic level of each group of the user and take into account lowest levels too.'''
+        # search every highest reviewer level for each group of the user
+        tool = getToolByName(self, 'portal_plonemeeting')
+        membershipTool = getToolByName(self, 'portal_membership')
+        groupsTool = getToolByName(self, 'portal_groups')
+        userMeetingGroups = tool.getGroupsForUser()
+        member = membershipTool.getAuthenticatedMember()
+        groupIds = groupsTool.getGroupsForPrincipal(member)
+        reviewProcessInfos = []
+        for mGroup in userMeetingGroups:
+            ploneGroups = []
+            # find Plone groups of the mGroup the user is in
+            mGroupId = mGroup.getId()
+            for groupId in groupIds:
+                if groupId.startswith('%s_' % mGroupId):
+                    ploneGroups.append(groupId)
+            # now that we have Plone groups of the mGroup
+            # we can get highest hierarchic level and find sub levels
+            highestReviewerLevel = self._highestReviewerLevel(ploneGroups)
+            if not highestReviewerLevel:
+                continue
+            foundLevel = False
+            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
+                if not foundLevel and not reviewer_suffix == highestReviewerLevel:
+                    continue
+                foundLevel = True
+                # specific management for workflows using the 'pre_validation'/'pre_validation_keep_reviewer_permissions' wfAdaptation
+                if reviewer_suffix == 'reviewers' and \
+                   ('pre_validation' in self.getWorkflowAdaptations() or
+                   'pre_validation_keep_reviewer_permissions' in self.getWorkflowAdaptations()):
+                    review_state = 'prevalidated'
+                reviewProcessInfos.append('%s__reviewprocess__%s' % (mGroupId,
+                                                                     review_state))
 
         params = {'portal_type': self.getItemTypeName(),
                   'reviewProcessInfo': reviewProcessInfos,

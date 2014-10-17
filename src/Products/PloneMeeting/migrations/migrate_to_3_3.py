@@ -340,6 +340,11 @@ class Migrate_To_3_3(Migrator):
                (cfg.topics.searchitemstovalidate.getProperty('topic_tal_expression') ==
                "python: here.portal_plonemeeting.userIsAmong('reviewers')"):
                 cfg.topics.searchitemstovalidate.manage_changeProperties(topic_tal_expression="python: here.userIsAReviewer()")
+            # update srcipt used by the 'searchitemstovalidate' topic
+            if hasattr(cfg.topics, 'searchitemstovalidate') and \
+               (cfg.topics.searchitemstovalidate.getProperty('topic_search_script') ==
+               "searchItemsToValidate"):
+                cfg.topics.searchitemstovalidate.manage_changeProperties(topic_search_script="searchItemsToValidateOfHighestHierarchicLevel")
         logger.info('Done.')
 
     def _cleanCKeditorCustomToolbar(self):

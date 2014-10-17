@@ -68,7 +68,6 @@ class testMeetingConfig(PloneMeetingTestCase):
         # now propose the item
         self.changeUser('pmCreator1')
         self.proposeItem(item)
-        item.reindexObject()
         # only advisers can give an advice, so a creator for example will not see it
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 0)
@@ -117,7 +116,6 @@ class testMeetingConfig(PloneMeetingTestCase):
         item1 = self.create('MeetingItem')
         item1.setOptionalAdvisers(('developers',))
         self.proposeItem(item1)
-        item1.reindexObject()
         # give an advice
         self.changeUser('pmAdviser1')
         createContentInContainer(item1,
@@ -140,7 +138,6 @@ class testMeetingConfig(PloneMeetingTestCase):
         item2 = self.create('MeetingItem')
         item2.setOptionalAdvisers(('vendors',))
         self.proposeItem(item2)
-        item2.reindexObject()
         self.changeUser('pmManager')
         createContentInContainer(item2,
                                  'meetingadvice',
@@ -171,7 +168,6 @@ class testMeetingConfig(PloneMeetingTestCase):
         item1 = self.create('MeetingItem')
         item1.setOptionalAdvisers(('developers',))
         self.proposeItem(item1)
-        item1.reindexObject()
         # give a non delay-aware advice
         self.changeUser('pmAdviser1')
         createContentInContainer(item1,
@@ -197,7 +193,6 @@ class testMeetingConfig(PloneMeetingTestCase):
         item2 = self.create('MeetingItem')
         item2.setOptionalAdvisers(('developers__rowid__unique_id_123',))
         self.proposeItem(item2)
-        item2.reindexObject()
         self.changeUser('pmAdviser1')
         createContentInContainer(item2,
                                  'meetingadvice',
@@ -229,12 +224,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(self.meetingConfig.searchItemsInCopy('', '', '', ''))
         # propose the item, it will be listed
         self.proposeItem(item)
-        item.reindexObject()
         self.failUnless(self.meetingConfig.searchItemsInCopy('', '', '', ''))
 
-    def test_pm_SearchItemsToValidate(self):
-        '''Test the searchItemsToValidate method.  This should return a list of items
-           a user ***really*** has to validate.
+    def test_pm_SearchItemsToValidateOfHighestHierarchicLevel(self):
+        '''Test the searchItemsToValidateOfHighestHierarchicLevel method.
+           This should return a list of items a user ***really*** has to validate.
            Items to validate are items for which user is a reviewer and only regarding
            his higher hierarchic level.
            So a reviewer level 1 and level 2 will only see items in level 2, a reviewer in level
@@ -249,20 +243,20 @@ class testMeetingConfig(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # jump to first level of validation
         self.do(item, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
         self.changeUser('pmReviewerLevel1')
-        self.failUnless(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.failUnless(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
         # now as 'pmReviewerLevel2', the item should not be returned
         # as he only see items of his highest hierarchic level
         self.changeUser('pmReviewerLevel2')
-        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
         # pass the item to second last level of hierarchy, where 'pmReviewerLevel2' is reviewer for
         self.changeUser('pmReviewerLevel1')
         # jump to last level of validation
         self.proposeItem(item)
-        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
         self.changeUser('pmReviewerLevel2')
-        self.failUnless(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.failUnless(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
 
         # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
         # the search does returns him the item, it should not as he is just a reviewer
@@ -278,21 +272,23 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the user can see the item
         self.failUnless(self.hasPermission('View', item))
         # but the search will not return it
-        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
         # if the item is validated, it will not appear for pmReviewer1 anymore
         self.changeUser('pmReviewer1')
-        self.failUnless(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.failUnless(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
         self.validateItem(item)
-        self.failIf(self.meetingConfig.searchItemsToValidate('', '', '', ''))
+        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
 
-    def test_pm_SearchValidableItems(self):
-        '''Test the searchValidableItems method.  This should return a list of items
-           a user could validate at any level.'''
+    def test_pm_SearchItemsToValidateOfMyReviewerGroups(self):
+        '''Test the searchItemsToValidateOfMyReviewerGroups method.
+           This should return a list of items a user could validate at any level,
+           so not only his highest hierarchic level.  This will return finally every items
+           corresponding to Plone reviewer groups the user is in.'''
         logger = logging.getLogger('PloneMeeting: testing')
         # activate the 'pre_validation' wfAdaptation if it exists in current profile...
         # if not, then MEETINGREVIEWERS must be at least 2 elements long
         if not len(MEETINGREVIEWERS) > 1:
-            logger.info("Could not launch test 'test_pm_SearchValidableItems' because "
+            logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' because "
                         "we need at least 2 levels of item validation.")
         if 'pre_validation' in self.meetingConfig.listWorkflowAdaptations():
             self.meetingConfig.setWorkflowAdaptations('pre_validation')
@@ -303,32 +299,75 @@ class testMeetingConfig(PloneMeetingTestCase):
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
         self.do(item1, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        item1.reindexObject()
         self.do(item2, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        item2.reindexObject()
-        self.failIf(self.meetingConfig.searchValidableItems('', '', '', ''))
+        self.failIf(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', ''))
         # as first level user, he will see items
         self.changeUser('pmReviewerLevel1')
-        self.failUnless(len(self.meetingConfig.searchValidableItems('', '', '', '')) == 2)
+        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')) == 2)
         # as second level user, he will not see items of first level also
         self.changeUser('pmReviewerLevel2')
-        self.failIf(self.meetingConfig.searchValidableItems('', '', '', ''))
+        self.failIf(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', ''))
 
         # define 'pmReviewerLevel2' as a prereviewer (first validation level reviewer)
         self._turnUserIntoPrereviewer(self.member)
         # change again to 'pmReviewerLevel2' so changes in his groups are taken into account
         self.changeUser('pmReviewerLevel2')
         # he can access first validation level items
-        self.failUnless(len(self.meetingConfig.searchValidableItems('', '', '', '')) == 2)
+        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')) == 2)
         # move item1 to last validation level
         self.proposeItem(item1)
-        item1.reindexObject()
         # both items still returned by the search for 'pmReviewerLevel2'
-        self.failUnless(len(self.meetingConfig.searchValidableItems('', '', '', '')) == 2)
+        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')) == 2)
         # but now, the search only returns item2 to 'pmReviewerLevel1'
         self.changeUser('pmReviewerLevel1')
-        self.failUnless(len(self.meetingConfig.searchValidableItems('', '', '', '')) == 1)
-        self.failUnless(self.meetingConfig.searchValidableItems('', '', '', '')[0].UID == item2.UID())
+        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')) == 1)
+        self.failUnless(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')[0].UID == item2.UID())
+
+    def runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest(self):
+        '''
+          Helper method for activating the test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels
+          test when called from a subplugin.
+        '''
+        return False
+
+    def test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels(self):
+        '''Test the searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels method.
+           This will return items to validate of his highest hierarchic level and every levels
+           under, even if user is not in the corresponding Plone reviewer groups.'''
+        logger = logging.getLogger('PloneMeeting: testing')
+        # by default we use the 'pre_validation_keep_reviewer_permissions' to check
+        # this, but if a subplugin has the right workflow behaviour, this can works also
+        # so if we have 'pre_validation_keep_reviewer_permissions' apply it, either,
+        # check if self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest() is True
+        if not 'pre_validation_keep_reviewer_permissions' and not \
+           self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest():
+            logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels'"
+                        "because we need a correctly configured workflow.")
+        if 'pre_validation_keep_reviewer_permissions' in self.meetingConfig.listWorkflowAdaptations():
+            self.meetingConfig.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
+            logger = logging.getLogger('PloneMeeting: testing')
+            performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        # create 2 items
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        self.do(item1, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
+        self.do(item2, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
+        self.failIf(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', ''))
+        # as first level user, he will see items
+        self.changeUser('pmReviewerLevel1')
+        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 2)
+        # as second level user, he will also see items because items are from lower reviewer levels
+        self.changeUser('pmReviewerLevel2')
+        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 2)
+
+        # now propose item1, both items are still viewable to 'pmReviewerLevel2', but 'pmReviewerLevel1'
+        # will only see item of 'his' highest hierarchic level
+        self.proposeItem(item1)
+        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 2)
+        self.changeUser('pmReviewerLevel1')
+        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 1)
+        self.failUnless(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')[0].UID == item2.UID())
 
     def test_pm_SearchItemsWithFilters(self):
         '''Test the searchItemsWithFilters method.  This should return a list of items
@@ -357,15 +396,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs))
         # set vendors_item in right state
         self.proposeItem(vendors_item)
-        vendors_item.reindexObject()
         self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 1)
         # set developers_item to proposed, not listed...
         self.proposeItem(developers_item)
-        developers_item.reindexObject()
         self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 1)
         # now set developers_item to validated, it will be listed
         self.validateItem(developers_item)
-        developers_item.reindexObject()
         self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 2)
 
     def test_pm_Validate_customAdvisersEnoughData(self):

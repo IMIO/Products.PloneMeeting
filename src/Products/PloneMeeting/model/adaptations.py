@@ -71,6 +71,102 @@ def grantPermission(state, perm, role):
 def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=None):
     '''This function applies workflow changes as specified by the
        p_meetingConfig.'''
+
+    def _apply_pre_validation(keepReviewerPermissions=False):
+        """Helper method to apply the 'pre_validation' or 'pre_validation_keep_reviewer_permissions' wfAdaptation,
+           but keep MeetingReviewer permissions for state 'proposed'.
+        """
+        # Add role 'MeetingPreReviewer'
+        site = meetingConfig.getParentNode().getParentNode()
+        roleManager = site.acl_users.portal_role_manager
+        if 'MeetingPreReviewer' not in roleManager.listRoleIds():
+            allRoles = list(site.__ac_roles__)
+            roleManager.addRole('MeetingPreReviewer', 'MeetingPreReviewer', '')
+            allRoles.append('MeetingPreReviewer')
+            site.__ac_roles__ = tuple(allRoles)
+        # Create state "prevalidated"
+        wf = itemWorkflow
+        if 'prevalidated' not in wf.states:
+            wf.states.addState('prevalidated')
+        # Create new transitions linking the new state to existing ones
+        # ('proposed' and 'validated').
+        for tr in ('prevalidate', 'backToPrevalidated'):
+            if tr not in wf.transitions:
+                wf.transitions.addTransition(tr)
+        transition = wf.transitions['prevalidate']
+        transition.setProperties(
+            title='prevalidate',
+            new_state_id='prevalidated', trigger_type=1, script_name='',
+            actbox_name='prevalidate', actbox_url='', actbox_category='workflow',
+            props={'guard_expr': 'python:here.wfConditions().mayPrevalidate()'})
+        transition = wf.transitions['backToPrevalidated']
+        transition.setProperties(
+            title='backToPrevalidated',
+            new_state_id='prevalidated', trigger_type=1, script_name='',
+            actbox_name='backToPrevalidated', actbox_url='',
+            actbox_category='workflow',
+            props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
+        # Update connections between states and transitions
+        wf.states['proposed'].setProperties(
+            title='proposed', description='',
+            transitions=['backToItemCreated', 'prevalidate'])
+        wf.states['prevalidated'].setProperties(
+            title='prevalidated', description='',
+            transitions=['backToProposed', 'validate'])
+        wf.states['validated'].setProperties(
+            title='validated', description='',
+            transitions=['backToPrevalidated', 'present'])
+        # Initialize permission->roles mapping for new state "prevalidated",
+        # which is the same as state "proposed" in the previous setting.
+        proposed = wf.states['proposed']
+        prevalidated = wf.states['prevalidated']
+        for permission, roles in proposed.permission_roles.iteritems():
+            prevalidated.setPermission(permission, 0, roles)
+        # Update permission->roles mappings for states 'proposed' and
+        # 'prevalidated': 'proposed' is 'mainly managed' by
+        # 'MeetingPreReviewer', while 'prevalidated' is "mainly managed" by
+        # 'MeetingReviewer'.
+        for permission in proposed.permission_roles.iterkeys():
+            roles = list(proposed.permission_roles[permission])
+            if 'MeetingReviewer' not in roles:
+                continue
+            if not keepReviewerPermissions:
+                roles.remove('MeetingReviewer')
+            roles.append('MeetingPreReviewer')
+            proposed.setPermission(permission, 0, roles)
+        for permission in prevalidated.permission_roles.iterkeys():
+            roles = list(prevalidated.permission_roles[permission])
+            if 'MeetingPreReviewer' not in roles:
+                continue
+            roles.remove('MeetingPreReviewer')
+            roles.append('MeetingReviewer')
+            prevalidated.setPermission(permission, 0, roles)
+        # The previous update on state 'prevalidated' was a bit too restrictive:
+        # it prevents the PreReviewer from consulting the item once it has been
+        # prevalidated. So here we grant him back this right.
+        for viewPerm in ('View', 'Access contents information'):
+            grantPermission(prevalidated, viewPerm, 'MeetingPreReviewer')
+        # Update permission->role mappings for every other state, taking into
+        # account new role 'MeetingPreReviewer'. The idea is: later in the
+        # workflow, MeetingReviewer and MeetingPreReviewer are granted exactly
+        # the same rights.
+        for stateName in wf.states.keys():
+            if stateName in ('itemcreated', 'proposed', 'prevalidated'):
+                continue
+            state = wf.states[stateName]
+            for permission in state.permission_roles.iterkeys():
+                roles = state.permission_roles[permission]
+                if ('MeetingReviewer' in roles) and \
+                   ('MeetingPreReviewer' not in roles):
+                    grantPermission(state, permission, 'MeetingPreReviewer')
+        # Transition "backToPrevalidated" must be protected by a popup, like
+        # any other "correct"-like transition.
+        toConfirm = meetingConfig.getTransitionsToConfirm()
+        if 'MeetingItem.backToPrevalidated' not in toConfirm:
+            toConfirm = list(toConfirm)
+            toConfirm.append('MeetingItem.backToPrevalidated')
+            meetingConfig.setTransitionsToConfirm(toConfirm)
+
     # Hereafter, adaptations are applied in some meaningful sequence:
     # adaptations that perform important structural changes like adding or
     # removing states and transitions are applied first; adaptations that work
@@ -160,100 +256,19 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
     # It implies the creation of a new role "MeetingPreReviewer", and use of
     # MeetingGroup-related Plone groups suffixed with "_prereviewers".
     if 'pre_validation' in wfAdaptations:
-        # Add role 'MeetingPreReviewer'
-        site = meetingConfig.getParentNode().getParentNode()
-        roleManager = site.acl_users.portal_role_manager
-        if 'MeetingPreReviewer' not in roleManager.listRoleIds():
-            allRoles = list(site.__ac_roles__)
-            roleManager.addRole('MeetingPreReviewer', 'MeetingPreReviewer', '')
-            allRoles.append('MeetingPreReviewer')
-            site.__ac_roles__ = tuple(allRoles)
-        # Create state "prevalidated"
-        wf = itemWorkflow
-        if 'prevalidated' not in wf.states:
-            wf.states.addState('prevalidated')
-        # Create new transitions linking the new state to existing ones
-        # ('proposed' and 'validated').
-        for tr in ('prevalidate', 'backToPrevalidated'):
-            if tr not in wf.transitions:
-                wf.transitions.addTransition(tr)
-        transition = wf.transitions['prevalidate']
-        transition.setProperties(
-            title='prevalidate',
-            new_state_id='prevalidated', trigger_type=1, script_name='',
-            actbox_name='prevalidate', actbox_url='', actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayPrevalidate()'})
-        transition = wf.transitions['backToPrevalidated']
-        transition.setProperties(
-            title='backToPrevalidated',
-            new_state_id='prevalidated', trigger_type=1, script_name='',
-            actbox_name='backToPrevalidated', actbox_url='',
-            actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
-        # Update connections between states and transitions
-        wf.states['proposed'].setProperties(
-            title='proposed', description='',
-            transitions=['backToItemCreated', 'prevalidate'])
-        wf.states['prevalidated'].setProperties(
-            title='prevalidated', description='',
-            transitions=['backToProposed', 'validate'])
-        wf.states['validated'].setProperties(
-            title='validated', description='',
-            transitions=['backToPrevalidated', 'present'])
-        # Initialize permission->roles mapping for new state "prevalidated",
-        # which is the same as state "proposed" in the previous setting.
-        proposed = wf.states['proposed']
-        prevalidated = wf.states['prevalidated']
-        for permission, roles in proposed.permission_roles.iteritems():
-            prevalidated.setPermission(permission, 0, roles)
-        # Update permission->roles mappings for states 'proposed' and
-        # 'prevalidated': 'proposed' is 'mainly managed' by
-        # 'MeetingPreReviewer', while 'prevalidated' is "mainly managed" by
-        # 'MeetingReviewer'.
-        for permission in proposed.permission_roles.iterkeys():
-            roles = list(proposed.permission_roles[permission])
-            if 'MeetingReviewer' not in roles:
-                continue
-            roles.remove('MeetingReviewer')
-            roles.append('MeetingPreReviewer')
-            proposed.setPermission(permission, 0, roles)
-        for permission in prevalidated.permission_roles.iterkeys():
-            roles = list(prevalidated.permission_roles[permission])
-            if 'MeetingPreReviewer' not in roles:
-                continue
-            roles.remove('MeetingPreReviewer')
-            roles.append('MeetingReviewer')
-            prevalidated.setPermission(permission, 0, roles)
-        # The previous update on state 'prevalidated' was a bit too restrictive:
-        # it prevents the PreReviewer from consulting the item once it has been
-        # prevalidated. So here we grant him back this right.
-        for viewPerm in ('View', 'Access contents information'):
-            grantPermission(prevalidated, viewPerm, 'MeetingPreReviewer')
-        # Update permission->role mappings for every other state, taking into
-        # account new role 'MeetingPreReviewer'. The idea is: later in the
-        # workflow, MeetingReviewer and MeetingPreReviewer are granted exactly
-        # the same rights.
-        for stateName in wf.states.keys():
-            if stateName in ('itemcreated', 'proposed', 'prevalidated'):
-                continue
-            state = wf.states[stateName]
-            for permission in state.permission_roles.iterkeys():
-                roles = state.permission_roles[permission]
-                if ('MeetingReviewer' in roles) and \
-                   ('MeetingPreReviewer' not in roles):
-                    grantPermission(state, permission, 'MeetingPreReviewer')
-        # Transition "backToPrevalidated" must be protected by a popup, like
-        # any other "correct"-like transition.
-        toConfirm = meetingConfig.getTransitionsToConfirm()
-        if 'MeetingItem.backToPrevalidated' not in toConfirm:
-            toConfirm = list(toConfirm)
-            toConfirm.append('MeetingItem.backToPrevalidated')
-            meetingConfig.setTransitionsToConfirm(toConfirm)
+        _apply_pre_validation(keepReviewerPermissions=False)
         logger.info(WF_APPLIED % ("pre_validation", meetingConfig.getId()))
+
+    # same as the "pre_validation" here above but will make it possible for a
+    # user that is reviewer to validate items proposed to the prereviewer
+    # even if that reviewer is not in the Plone _prereviewers group
+    if 'pre_validation_keep_reviewer_permissions' in wfAdaptations:
+        _apply_pre_validation(keepReviewerPermissions=True)
+        logger.info(WF_APPLIED % ("pre_validation_keep_reviewer_permissions", meetingConfig.getId()))
 
     # "creator_initiated_decisions" means that decisions (field item.decision)
     # are already pre-encoded (as propositions) by the proposing group.
-    # (De-)activation of adaptation "pre_validation" impacts this one.
+    # (De-)activation of adaptation "pre_validation"/"pre_validation_keep_reviewer_permissions" impacts this one.
     if 'creator_initiated_decisions' in wfAdaptations:
         wf = itemWorkflow
         # Creator can read and write the "decision" field on item creation.
@@ -261,17 +276,20 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         grantPermission(wf.states['itemcreated'], ReadDecision, 'MeetingMember')
         # (Pre)reviewer can write the "decision" field once proposed.
         writer = 'MeetingReviewer'
-        if 'pre_validation' in wfAdaptations:
+        if 'pre_validation' in wfAdaptations or \
+           'pre_validation_keep_reviewer_permissions' in wfAdaptations:
             writer = 'MeetingPreReviewer'
         if 'proposed' in wf.states:
             grantPermission(wf.states['proposed'], WriteDecision, writer)
         # Reviewer can write the "decision" field once prevalidated
-        if 'pre_validation' in wfAdaptations:
+        if 'pre_validation' in wfAdaptations or \
+           'pre_validation_keep_reviewer_permissions' in wfAdaptations:
             grantPermission(wf.states['prevalidated'], WriteDecision,
                             'MeetingReviewer')
         # Group-related roles can read the decision during the whole process.
         groupRoles = ['MeetingMember', 'MeetingReviewer', 'MeetingObserverLocal']
-        if 'pre_validation' in wfAdaptations:
+        if 'pre_validation' in wfAdaptations or \
+           'pre_validation_keep_reviewer_permissions' in wfAdaptations:
             groupRoles.append('MeetingPreReviewer')
         for stateName in groupDecisionReadStates:
             if stateName not in wf.states:

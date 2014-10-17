@@ -58,6 +58,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                'no_publication',
                                'only_creator_may_delete',
                                'pre_validation',
+                               'pre_validation_keep_reviewer_permissions',
                                'return_to_proposing_group',
                                )))
 
@@ -162,6 +163,49 @@ class testWFAdaptations(PloneMeetingTestCase):
         # by default a 'propose' transition exists
         self.do(i1, 'propose')
         self.failUnless('prevalidate' in self.transitions(i1))
+        self.do(i1, 'prevalidate')
+        self.do(i1, 'validate')
+
+    def test_pm_WFA_pre_validation_keep_reviewer_permissions(self):
+        '''Test the workflowAdaptation 'pre_validation_keep_reviewer_permissions'.
+           Check the addition of a 'prevalidated' state in the item WF, moreover
+           the 'MeetingReviewer' will also be able to validate items proposed
+           to the prereviewer.'''
+        # ease override by subproducts
+        if not 'pre_validation_keep_reviewer_permissions' in self.meetingConfig.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._pre_validation_keep_reviewer_permissions_inactive()
+        # activate the wfAdaptation and check
+        self.meetingConfig.setWorkflowAdaptations('pre_validation_keep_reviewer_permissions')
+        logger = logging.getLogger('PloneMeeting: testing')
+        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        # define pmManager as a prereviewer
+        self._turnUserIntoPrereviewer(self.member)
+        self._pre_validation_keep_reviewer_permissions_active(self.member.getId())
+
+    def _pre_validation_keep_reviewer_permissions_inactive(self):
+        '''Tests while 'pre_validation' wfAdaptation is inactive.'''
+        i1 = self.create('MeetingItem')
+        # by default a 'propose' transition exists
+        self.do(i1, 'propose')
+        self.failIf('prevalidate' in self.transitions(i1))
+        self.do(i1, 'validate')
+
+    def _pre_validation_keep_reviewer_permissions_active(self, username):
+        '''Tests while 'pre_validation_keep_reviewer_permissions' wfAdaptation is active.'''
+        self.changeUser('pmManager')
+        i1 = self.create('MeetingItem')
+        self.do(i1, 'propose')
+        # a 'pmReviewerLevel1' may 'propose' the item but a 'pmReviewerLevel2' too
+        # even if 'pmReviewerLevel2' is not in the _prereviewers group
+        self.changeUser('pmReviewerLevel1')
+        self.failUnless('prevalidate' in self.transitions(i1))
+        self.assertTrue('developers_prereviewers' in self.member.getGroups())
+        self.changeUser('pmReviewerLevel2')
+        self.failUnless('prevalidate' in self.transitions(i1))
+        self.assertTrue(not 'developers_prereviewers' in self.member.getGroups())
         self.do(i1, 'prevalidate')
         self.do(i1, 'validate')
 
