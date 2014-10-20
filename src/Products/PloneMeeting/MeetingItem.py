@@ -64,6 +64,7 @@ from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+
 # PloneMeetingError-related constants -----------------------------------------
 ITEM_REF_ERROR = 'There was an error in the TAL expression for defining the ' \
     'format of an item reference. Please check this in your meeting config. ' \
@@ -377,7 +378,7 @@ class MeetingItemWorkflowActions:
         # If it is a "late" item, we must potentially send a mail to warn
         # MeetingManagers.
         preferredMeeting = self.context.getPreferredMeeting()
-        if preferredMeeting != 'whatever':
+        if preferredMeeting != ITEM_NO_PREFERRED_MEETING_VALUE:
             # Get the meeting from its UID
             uid_catalog = getToolByName(self.context, 'uid_catalog')
             brains = uid_catalog.searchResults(UID=preferredMeeting)
@@ -621,7 +622,7 @@ schema = Schema((
     ),
     StringField(
         name='preferredMeeting',
-        default='whatever',
+        default=ITEM_NO_PREFERRED_MEETING_VALUE,
         widget=SelectionWidget(
             condition="python: not here.isDefinedInTool()",
             label='Preferredmeeting',
@@ -1658,7 +1659,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listMeetingsAcceptingItems(self):
         '''Returns the (Display)list of meetings returned by
            m_getMeetingsAcceptingItems.'''
-        res = [('whatever', 'Any meeting')]
+        res = [(ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting')]
         tool = self.portal_plonemeeting
         # save meetingUIDs, it will be necessary here under
         for meetingBrain in self.adapted().getMeetingsAcceptingItems():
@@ -1973,10 +1974,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('hasAnnexesWhere')
-    def hasAnnexesWhere(self, relatedTo='whatever'):
+    def hasAnnexesWhere(self, relatedTo=ITEM_NO_PREFERRED_MEETING_VALUE):
         '''Have I some annexes?  If p_relatedTo is whatever, consider every annexes
            no matter their 'relatedTo', either, only consider relevant relatedTo annexes.'''
-        if relatedTo == 'whatever':
+        if relatedTo == ITEM_NO_PREFERRED_MEETING_VALUE:
             return bool(self.annexIndex)
         else:
             return bool([annex for annex in self.annexIndex if annex['relatedTo'] == relatedTo])

@@ -28,7 +28,7 @@ from DateTime.DateTime import _findLocalTimeZoneName
 from AccessControl import Unauthorized
 from zope.i18n import translate
 
-from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
+from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS, ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import cleanRamCacheFor
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -967,7 +967,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(len(lateItemsInOrder) == 1)
         self.assertTrue(meeting.getItemByNumber(8).UID() == lateItemsInOrder[0].UID())
 
-    def test_pm_removeWholeMeeting(self):
+    def test_pm_RemoveWholeMeeting(self):
         '''Test the 'remove whole meeting' functionnality, so removing a meeting
            including every items that are presented into it.
            The functionnality is only available to role 'Manager'.'''
@@ -981,7 +981,7 @@ class testMeeting(PloneMeetingTestCase):
         # as a non 'Manager', if 'wholeMeeting' is found in the REQUEST
         # it will raise Unauthorized
         self.request.set('wholeMeeting', True)
-        self.assertRaises(Unauthorized, meeting.restrictedTraverse('@@delete_givenuid'), meeting.UID())
+        self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), meeting.UID())
         # as a Manager, use the functionnality
         self.changeUser('admin')
         self.request.set('wholeMeeting', True)
@@ -989,6 +989,31 @@ class testMeeting(PloneMeetingTestCase):
         meeting.restrictedTraverse('@@delete_givenuid')(meeting.UID())
         # nothing left in the folder
         self.assertFalse(meetingParentFolder.objectValues())
+
+    def test_pm_RemovingMeetingUpdateItemsPreferredMeeting(self):
+        '''When a meeting is removed, if it was selected as preferredMeeting
+           for some items, these items are updated and preferredMeeting is set to 'whatever'.'''
+        # first make sure recurring items are not added
+        self.changeUser('admin')
+        self._removeItemsDefinedInTool(self.meetingConfig)
+        # create a meeting and an item, set the meeting as preferredMeeting for the item
+        # then when the meeting is removed, the item preferredMeeting is back to 'whatever'
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2014/01/01'))
+        meetingUID = meeting.UID()
+        item = self.create('MeetingItem')
+        item.setPreferredMeeting(meetingUID)
+        item.reindexObject(idxs=['getPreferredMeeting'])
+        items = self.portal.portal_catalog(getPreferredMeeting=meetingUID)
+        self.assertTrue(len(items) == 1)
+        self.assertTrue(items[0].UID == item.UID())
+        # now remove the meeting and check
+        self.portal.restrictedTraverse('@@delete_givenuid')(meetingUID)
+        items = self.portal.portal_catalog(getPreferredMeeting=meetingUID)
+        # no items found
+        self.assertFalse(items)
+        # the preferred meeting of the item is now 'whatever'
+        self.assertTrue(item.getPreferredMeeting() == ITEM_NO_PREFERRED_MEETING_VALUE)
 
 
 def test_suite():

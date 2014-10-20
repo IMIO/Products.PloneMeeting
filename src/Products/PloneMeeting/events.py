@@ -26,6 +26,7 @@ from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
 from Products.PloneMeeting.utils import sendMailIfRelevant, addRecurringItemsIfRelevant, \
@@ -317,3 +318,11 @@ def onMeetingRemoved(meeting, event):
         for item in meeting.REQUEST.get('items_to_remove'):
             unrestrictedRemoveGivenObject(item)
         meeting.REQUEST.set('items_to_remove', ())
+
+    # update items for which current meeting is selected as preferred meeting
+    catalog = getToolByName(meeting, 'portal_catalog')
+    brains = catalog(getPreferredMeeting=meeting.UID())
+    for brain in brains:
+        item = brain.getObject()
+        item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
+        item.reindexObject('getPreferredMeeting')
