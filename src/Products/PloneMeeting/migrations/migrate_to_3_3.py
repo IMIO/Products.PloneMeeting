@@ -110,7 +110,7 @@ class Migrate_To_3_3(Migrator):
 
     def _updateAnnexesMeetingFileType(self):
         '''MeetingFile.meetingFileType was a ReferenceField and is now a StringField, so update
-           existing annexes, we store now the id of the used meetingFileType.'''
+           existing annexes, we store now the UID of the used meetingFileType.'''
         logger.info('Updating every MeetingFile.meetingFileType attributes...')
         brains = self.portal.portal_catalog(portal_type='MeetingFile')
         refCat = getToolByName(self.portal, 'reference_catalog')
