@@ -103,6 +103,7 @@ MEETING_GROUP_SUFFIXES = MEETINGROLES.keys()
 # list of reviewer roles, this needs to be defined in logical order because
 # we will also look for 'higher' reviewer level
 # the key is the group suffix and the value is a tuple of states of the items to review
+# highest levels to lowest levels
 MEETINGREVIEWERS = OrderedDict([('reviewers', 'proposed'),
                                 ('prereviewers', 'proposed'), ])
 
