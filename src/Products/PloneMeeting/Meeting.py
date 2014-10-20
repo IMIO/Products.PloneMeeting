@@ -1649,7 +1649,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             user = self.portal_membership.getAuthenticatedMember()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException("can_not_delete_meeting_container")
-        # wer are removing the meeting
+        # we are removing the meeting
         if item.meta_type == 'Meeting':
             membershipTool = getToolByName(item, 'portal_membership')
             member = membershipTool.getAuthenticatedMember()

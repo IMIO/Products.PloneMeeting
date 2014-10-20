@@ -53,7 +53,13 @@
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
 
   <!-- IContentDeletable adapter override for PloneMeeting -->
+  <adapter for="Products.PloneMeeting.Meeting.Meeting"
+           factory=".adapters.ContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
   <adapter for="Products.PloneMeeting.MeetingItem.MeetingItem"
+           factory=".adapters.ContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="Products.PloneMeeting.MeetingFile.MeetingFile"
            factory=".adapters.ContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
 

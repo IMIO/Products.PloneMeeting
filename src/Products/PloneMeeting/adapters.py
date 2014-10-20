@@ -254,6 +254,14 @@ class ContentDeletableAdapter(object):
             mayDelete = True
             if parent.meta_type == 'MeetingItem':
                 mayDelete = parent.wfConditions().mayDeleteAnnex(self.context)
+        elif self.context.meta_type == 'Meeting' and 'wholeMeeting' in self.context.REQUEST:
+            # if we try to remove a 'Meeting' using the 'wholeMeeting' option
+            # we need to check that current user is a 'Manager'
+            member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+            if not member.has_role('Manager'):
+                return False
+            else:
+                return self.context.wfConditions().mayDelete()
         else:
             try:
                 mayDelete = self.context.wfConditions().mayDelete()

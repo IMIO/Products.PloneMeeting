@@ -25,6 +25,7 @@
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
 
+from AccessControl import Unauthorized
 from zope.i18n import translate
 
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
@@ -965,6 +966,29 @@ class testMeeting(PloneMeetingTestCase):
         lateItemsInOrder = meeting.getItemsInOrder(late=True)
         self.assertTrue(len(lateItemsInOrder) == 1)
         self.assertTrue(meeting.getItemByNumber(8).UID() == lateItemsInOrder[0].UID())
+
+    def test_pm_removeWholeMeeting(self):
+        '''Test the 'remove whole meeting' functionnality, so removing a meeting
+           including every items that are presented into it.
+           The functionnality is only available to role 'Manager'.'''
+        # create a meeting with several items
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        # the meeting contains items
+        self.assertTrue(len(meeting.getItems()))
+        meetingParentFolder = meeting.getParentNode()
+        self.assertTrue(set(meetingParentFolder.objectValues('MeetingItem')) == set(meeting.getItems()))
+        # as a non 'Manager', if 'wholeMeeting' is found in the REQUEST
+        # it will raise Unauthorized
+        self.request.set('wholeMeeting', True)
+        self.assertRaises(Unauthorized, meeting.restrictedTraverse('@@delete_givenuid'), meeting.UID())
+        # as a Manager, use the functionnality
+        self.changeUser('admin')
+        self.request.set('wholeMeeting', True)
+        # now if we remove the meeting, every items will be removed as well
+        meeting.restrictedTraverse('@@delete_givenuid')(meeting.UID())
+        # nothing left in the folder
+        self.assertFalse(meetingParentFolder.objectValues())
 
 
 def test_suite():

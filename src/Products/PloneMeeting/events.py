@@ -306,7 +306,8 @@ def onItemDuplicated(item, event):
 
 def onMeetingRemoved(meeting, event):
     '''When a meeting is removed, check if we need to remove every linked items,
-       this is the case if we have a 'wholeMeeting' value in the REQUEST.'''
+       this is the case if we have a 'wholeMeeting' value in the REQUEST.
+       Moreover, check that meeting is no more selected as preferred meeting for existing items.'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
@@ -315,3 +316,4 @@ def onMeetingRemoved(meeting, event):
                                                                         meeting.absolute_url()))
         for item in meeting.REQUEST.get('items_to_remove'):
             unrestrictedRemoveGivenObject(item)
+        meeting.REQUEST.set('items_to_remove', ())
