@@ -432,10 +432,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         """
         if value is True:
             # check if we need to generate relevant images using collective.documentviewer converter
-            qi = getToolByName(self, 'portal_quickinstaller')
-            if not qi.isProductInstalled('collective.documentviewer'):
-                raise Exception('The collective.documentviewer product is not installed! '
-                                'Please contact system administrator!')
             # if we want the annex to be printable, force the conversion to images (not 'redone' if already done...)
             convertToImages(self, None, force=True)
         # finally set the given value
