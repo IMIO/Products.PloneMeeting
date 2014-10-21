@@ -323,21 +323,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declarePrivate('dump')
-    def dump(self):
-        '''Dumps me on disk, in a temp folder, with some unique name
-           including time.time(). This method returns the absolute filename
-           of the dumped file.'''
-        tempFolder = tempfile.gettempdir()
-        fileName = unicodedata.normalize(
-            'NFKD', self.getFilename().decode('utf-8'))
-        fileName = fileName.encode("ascii", "ignore").replace(' ', '')
-        tempFileName = '%s/f%f.%s' % (tempFolder, time.time(), fileName)
-        f = file(tempFileName, 'w')
-        f.write(self.data)
-        f.close()
-        return tempFileName
-
     security.declarePublic('indexExtractedText')
     def indexExtractedText(self):
         '''This method extracts text from the binary content of this object
