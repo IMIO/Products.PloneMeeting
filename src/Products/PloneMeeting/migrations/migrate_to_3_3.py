@@ -8,7 +8,7 @@ from Acquisition import aq_base
 from zope.i18n import translate
 
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
+from Products.PloneMeeting.config import PLONEMEETING_UPDATERS, ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.migrations import Migrator
 
 
@@ -363,6 +363,22 @@ class Migrate_To_3_3(Migrator):
             ckeditor_props.manage_changeProperties(toolbar_Custom=customToolBar)
         logger.info('Done.')
 
+    def _checkItemsPreferredMeeting(self):
+        '''Make sure the getPreferredMeeting of every existing items is an existing Meeting UID.'''
+        # collect every meeting uids
+        brains = self.portal.portal_catalog(meta_type=('Meeting', ))
+        meetingUids = [brain.UID for brain in brains]
+        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
+        logger.info('Checking getPreferredMeeting for %d MeetingItem objects...' % len(brains))
+        for brain in brains:
+            if not brain.getPreferredMeeting == ITEM_NO_PREFERRED_MEETING_VALUE and \
+               not brain.getPreferredMeeting in meetingUids:
+                # we found a lost preferredMeeting, set it back to 'whatever'
+                item = brain.getObject()
+                item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
+                item.reindexObject(idxs=['getPreferredMeeting', ])
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         self._finishMeetingFolderViewRemoval()
@@ -382,6 +398,7 @@ class Migrate_To_3_3(Migrator):
         self._cleanMeetingGroupsAsCopyGroupOn()
         self._updateTopics()
         self._cleanCKeditorCustomToolbar()
+        self._checkItemsPreferredMeeting()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -415,10 +432,12 @@ def migrate(context):
        13) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
        14) Remove 'signatureNotAlone' from selectable MeetingConfig.xhtmlTransformTypes;
        15) Clean every MeetingGroup.asCopyGroupOn values;
-       16) Add new topic 'searchitemsofmygroups';
-       17) Clean registries as we removed some css;
-       18) Reinstall PloneMeeting;
-       19) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       16) Update topics;
+       17) Clean the CKeditor toolbar to remove 'Ajaxsave' and 'Templates' buttons;
+       18) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
+       19) Clean registries as we removed some css;
+       20) Reinstall PloneMeeting;
+       21) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_3(context).run()
 # ------------------------------------------------------------------------------

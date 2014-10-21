@@ -108,6 +108,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   MeetingItem.isPrivacyViewable check.  Moreover, the isPrivacyViewable check now takes into account
   every explicit access given to the item, so members of the proposing group, super users (Managers,
   MeetingManagers, power observer), copy groups and advisers will have full access to the item
+- Corrected bug where an item could be unpresentable if a preferredMeeting was selected on it
+  and this preferred meeting was deleted leading this item to not be taken into account by the
+  Meeting.getAvailableItems method
 
 3.2.0.1 (2014-03-06)
 --------------------
