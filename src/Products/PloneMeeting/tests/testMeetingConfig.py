@@ -1199,6 +1199,42 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(topicInfo[0] == 'searchmyitems')
         self.meetingConfig.createTopics((topicInfo, ))
 
+    def test_pm_GetTopics(self):
+        '''Test the MeetingConfig.getTopics method.  This returns topics depending on :
+           - topicType parameter (Meeting or MeetingItem);
+           - the evaluation of the TAL expression defined on the topic.
+        '''
+        self.changeUser('pmManager')
+        cfg = self.meetingConfig
+        numberOfItemRelatedTopics = len(cfg.getTopics('MeetingItem'))
+        # we have item related topics
+        self.assertTrue(numberOfItemRelatedTopics > 1)
+        # 2 topics related to meetings
+        self.assertTrue(len(cfg.getTopics('Meeting')) == 2)
+        # now deactivate one MeetingItem related topic and check that it is no more returned
+        topic = cfg.getTopics('MeetingItem')[0]
+        self.changeUser('admin')
+        self.do(topic, 'deactivate')
+        self.changeUser('pmManager')
+        self.cleanMemoize()
+        self.assertTrue(len(cfg.getTopics('MeetingItem')) == numberOfItemRelatedTopics - 1)
+        # if we define a wrong TAL expression on a topic, it is no more taken into account
+        topic = cfg.getTopics('MeetingItem')[0]
+        topic.manage_changeProperties(topic_tal_expression='context/wrong_expression_method')
+        self.cleanMemoize()
+        self.assertTrue(len(cfg.getTopics('MeetingItem')) == numberOfItemRelatedTopics - 2)
+        # test the fromPortletTodo parameter so we can have it in the TAL expression and take it into account
+        # define a TAL expression on a topic using the 'fromPortletTodo'
+        topic = cfg.getTopics('MeetingItem')[0]
+        # make it only be displayed in portlet_todo
+        topic.manage_changeProperties(topic_tal_expression='python: fromPortletTodo')
+        # if called from portlet_todo, it is taken into account
+        self.cleanMemoize()
+        self.assertTrue(len(cfg.getTopics('MeetingItem', fromPortletTodo=True)) == numberOfItemRelatedTopics - 2)
+        # else it is not...
+        self.cleanMemoize()
+        self.assertTrue(len(cfg.getTopics('MeetingItem', fromPortletTodo=False)) == numberOfItemRelatedTopics - 3)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

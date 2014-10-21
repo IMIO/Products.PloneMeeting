@@ -2725,13 +2725,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             stateCriterion.setValue(getStatesMethod())
 
     security.declarePublic('getTopics')
-    def getTopics(self, topicType):
+    def getTopics(self, topicType, fromPortletTodo=False):
         '''
           Gets topics related to type p_topicType ("MeetingItem",
            "Meeting").
+          If p_fromPortletTodo is True, it means that we are evaluating topics to display in the portlet_todo.
+          In this case, a variable 'fromPortletTodo' set to True will be passed to the
+          TOPIC_TAL_EXPRESSION so it is possible to use this variable to discriminate topics to display in portlet_plonemeeting
+          and/or in portel_todo.
           This is called to much times on the same page, we add some caching here...
         '''
-        key = "meeting-config-gettopics-%s" % topicType.lower() + self.UID()
+        key = "meeting-config-gettopics-%s" % topicType.lower() + self.UID() + str(fromPortletTodo)
         cache = IAnnotations(self.REQUEST)
         data = cache.get(key, None)
         if data is None:
@@ -2753,6 +2757,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ctx = createExprContext(self.topics,
                                             self.portal_url.getPortalObject(),
                                             topic)
+                    ctx.setGlobal('fromPortletTodo', fromPortletTodo)
                     try:
                         tal_res = Expression(tal_expr)(ctx)
                     except Exception:

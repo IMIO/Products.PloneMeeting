@@ -111,6 +111,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Corrected bug where an item could be unpresentable if a preferredMeeting was selected on it
   and this preferred meeting was deleted leading this item to not be taken into account by the
   Meeting.getAvailableItems method
+- It is now possible to display a topic in portlet_todo or in portlet_plonemeeting without having
+  it to be displayed in both portlets.  This is done because now the TAL expression evaluated as
+  condition to display the topic receive a 'fromPortletTodo' variable set to True or False and we
+  can so discriminate if we want the topic to be displayed in only one of both portlets
 
 3.2.0.1 (2014-03-06)
 --------------------

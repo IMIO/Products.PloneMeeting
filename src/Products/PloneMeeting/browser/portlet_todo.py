@@ -115,9 +115,8 @@ class Renderer(base.Renderer):
         cfg = self.getCurrentMeetingConfig()
         if not cfg:
             return []
-        allTopics = cfg.getTopics('Meeting') + cfg.getTopics('MeetingItem')
         # Keep only relevant topics
-        return [t for t in allTopics if t in cfg.getToDoListTopics()]
+        return [t for t in cfg.getTopics('MeetingItem', fromPortletTodo=True) if t in cfg.getToDoListTopics()]
 
     @memoize
     def getBrainsForPortletTodo(self, topic):
