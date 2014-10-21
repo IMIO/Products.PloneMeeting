@@ -79,7 +79,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   and we remove nasty jQuery that was hidding link to author (removeLinkOnByLine)
 - Make it possible to access item history directly from the item listings
   (using imio.actionspanel 'history' section)
-- Otpimized method that update advices nightly so only relevant items are updated, not
+- Optimized method that update advices nightly so only relevant items are updated, not
   every items like before (that was taking time for applications having several items)
 - Added profiling.zcml that allows to activate collective.profiler during development
 - Display every relevant informations about MeetingGroups, Categories and PodTemplates
