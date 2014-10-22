@@ -1565,13 +1565,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          '',
          "python: here.portal_plonemeeting.userIsAmong('creators')",
          ),
-        # Item of my groups, items of the groups I am in
+        # Items of my groups, items of the groups I am in
         ('searchitemsofmygroups',
         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
          ),
          'created',
          'searchItemsOfMyGroups',
          "python: here.portal_plonemeeting.getGroupsForUser()",
+         ),
+        # Items I take over
+        ('searchmyitemstakenover',
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ),
+         'created',
+         'searchMyItemsTakenOver',
+         "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
+         "and here.portal_plonemeeting.getGroupsForUser()",
          ),
         # All (visible) items
         ('searchallitems',
@@ -3294,6 +3303,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         userGroupIds = [mGroup.getId() for mGroup in tool.getGroupsForUser()]
         params = {'portal_type': self.getItemTypeName(),
                   'getProposingGroup': userGroupIds,
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder, }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(filterValue)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
+
+    security.declarePublic('searchMyItemsTakenOver')
+    def searchMyItemsTakenOver(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Queries all items that current user take over.'''
+        membershipTool = getToolByName(self, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        params = {'portal_type': self.getItemTypeName(),
+                  'getTakenOverBy': member.getId(),
                   'sort_on': sortKey,
                   'sort_order': sortOrder, }
         # Manage filter

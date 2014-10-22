@@ -1018,6 +1018,17 @@ schema = Schema((
         ),
         optional=True,
     ),
+    StringField(
+        name='takenOverBy',
+        widget=StringField._properties['widget'](
+            condition="python: here.attributeIsUsed('takenOverBy')",
+            visible="False",
+            label='Takenoverby',
+            label_msgid='PloneMeeting_label_takenOverBy',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+    ),
 
 ),
 )
@@ -1293,6 +1304,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            item.getItemIsSigned():
             return False
         return True
+
+    security.declarePublic('mayTakeOver')
+    def mayTakeOver(self, member):
+        '''Condition for editing 'takenOverBy' field.
+           As member may take an item over if he has the 'Review portal content' permission.'''
+        item = self.getSelf()
+        if checkPermission(ReviewPortalContent, item):
+            return True
+        return False
 
     security.declarePublic('mayAskEmergency')
     def mayAskEmergency(self):
@@ -1579,6 +1599,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(('emergency_accepted.png', 'emergency_accepted'))
             elif itemEmergency == 'emergency_refused':
                 res.append(('emergency_refused.png', 'emergency_refused'))
+        if 'takenOverBy' in usedItemAttributes:
+            takenOverBy = item.getTakenOverBy()
+            if takenOverBy:
+                res.append(('takenOverByYes.png', ('Taken over by ${fullname}',
+                                                   {'fullname': tool.getUserName(takenOverBy)})))
         return res
 
     def _getOtherMeetingConfigsImAmClonedIn(self):

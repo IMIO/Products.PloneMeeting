@@ -226,6 +226,23 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.proposeItem(item)
         self.failUnless(self.meetingConfig.searchItemsInCopy('', '', '', ''))
 
+    def test_pm_SearchMyItemsTakenOver(self):
+        '''Test the searchMyItemsTakenOver method.  This should return
+           a list of items a user has taken over.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # by default nothing is returned
+        self.failIf(self.meetingConfig.searchMyItemsTakenOver('', '', '', ''))
+        # now take item over
+        item.setTakenOverBy(self.member.getId())
+        item.reindexObject(idxs=['getTakenOverBy', ])
+        # now it is returned
+        self.failUnless(self.meetingConfig.searchMyItemsTakenOver('', '', '', ''))
+        # takenOverBy is set back to '' on each transition
+        self.proposeItem(item)
+        self.assertTrue(not item.getTakenOverBy())
+        self.failIf(self.meetingConfig.searchMyItemsTakenOver('', '', '', ''))
+
     def test_pm_SearchItemsToValidateOfHighestHierarchicLevel(self):
         '''Test the searchItemsToValidateOfHighestHierarchicLevel method.
            This should return a list of items a user ***really*** has to validate.

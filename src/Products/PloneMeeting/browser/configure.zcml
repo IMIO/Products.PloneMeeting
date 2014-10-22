@@ -132,6 +132,13 @@
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         permission="zope2.View" />
     <browser:page
+        name="toggle_item_taken_over_by"
+        attribute="toggle"
+        allowed_attributes="toggle"
+        class=".async.TakenOverBy"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        permission="zope2.View" />
+    <browser:page
         name="toggle_item_is_signed"
         attribute="toggle"
         allowed_attributes="toggle"

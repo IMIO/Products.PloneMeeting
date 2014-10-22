@@ -192,6 +192,15 @@
                <metal:itemIsSigned use-macro="here/@@pm-macros/itemIsSigned" />
               </tal:defines>
             </div>
+            <div class="discreet"
+                 tal:condition="python: 'takenOverBy' in usedAttrs">
+              <span class="item_attribute_label"
+                    i18n:translate="PloneMeeting_label_takenOverBy"></span>:&nbsp;&nbsp;
+              <tal:defines define="meetingItem python: context;
+                                   ajaxEdit python: True;">
+               <metal:itemIsSigned use-macro="here/@@pm-macros/takenOverBy" />
+              </tal:defines>
+            </div>
             <tal:comment replace="nothing">Item emergency</tal:comment>
             <div class="discreet" tal:condition="python: 'emergency' in usedAttrs">
                 <span class="item_attribute_label"

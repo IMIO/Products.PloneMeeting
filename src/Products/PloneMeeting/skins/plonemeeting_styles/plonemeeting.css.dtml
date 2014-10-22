@@ -609,6 +609,7 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 
 .budgetRelatedEditable,
 .toDiscussEditable,
+.takenOverByEditable,
 .itemIsSignedEditable,
 .annexToPrintEditable,
 .annexIsConfidentialEditable,
@@ -621,6 +622,10 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 #content span.budgetRelated {
     color: green;
 }
+#content span.takenOverByYesDescr {
+    color: green;
+}
+
 /* remove padding-bottom */
 .itemAssemblyEditable i,
 .itemSignaturesEditable i {

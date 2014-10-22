@@ -1,4 +1,5 @@
 from zope.component import getMultiAdapter
+from zope.i18n import translate
 from AccessControl import Unauthorized
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
@@ -125,8 +126,9 @@ class AnnexToPrint(BrowserView):
                 name = 'annexToPrintNo'
                 title_msgid = 'annex_to_print_yes_edit'
 
-            title = self.context.utranslate(title_msgid,
-                                            domain="PloneMeeting")
+            title = translate(title_msgid,
+                              domain="PloneMeeting",
+                              context=self.request)
             portal_url = self.portal_state.portal_url()
             src = "%s/%s" % (portal_url, filename)
             html = self.IMG_TEMPLATE % (src, title, name)
@@ -144,6 +146,75 @@ class AnnexToPrint(BrowserView):
                 type='error')
             self.request.RESPONSE.status = 500
             return
+
+
+class TakenOverBy(BrowserView):
+    """
+      View that switch the item 'takenOverBy' from None to current user and from current user to None.
+    """
+    IMG_TEMPLATE = u'<img class="takenOverByEditable" src="%s" title="%s" name="%s" />\n<span class="%s">%s</span>'
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
+        self.portal = self.portal_state.portal()
+
+    def toggle(self, takenOverByFrom):
+        member = self.portal_state.member()
+        if not self.context.adapted().mayTakeOver(member):
+            raise Unauthorized
+
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        takenOverBy = self.context.getTakenOverBy()
+        if takenOverBy and not takenOverBy == takenOverByFrom and not takenOverBy == member.getId():
+            plone_utils = getToolByName(self.context, 'plone_utils')
+            plone_utils.addPortalMessage(
+                self.context.translate("The item you tried to take over was already taken "
+                                       "over in between by ${fullname}. You can take it over "
+                                       "now if you are sure that the other user do not handle it.",
+                                       mapping={'fullname': tool.getUserName(takenOverBy)},
+                                       domain="PloneMeeting"),
+                type='warning')
+            self.request.RESPONSE.status = 500
+            return
+
+        # toggle value
+        if not takenOverBy:
+            self.context.setTakenOverBy(member.getId())
+        else:
+            self.context.setTakenOverBy('')
+
+        if takenOverBy:
+            filename = 'takenOverByNo.png'
+            name = 'takenOverByYes'
+            title_msgid = 'taken_over_by_no_edit'
+        else:
+            filename = 'takenOverByYes.png'
+            name = 'takenOverByNo'
+            title_msgid = 'taken_over_by_yes_edit'
+
+        title = translate(title_msgid,
+                          domain="PloneMeeting",
+                          context=self.request)
+        if not takenOverBy:
+            taken_over_by = translate('Taken over by ${fullname}',
+                                      mapping={'fullname': unicode(tool.getUserName(member.getId()), 'utf-8')},
+                                      domain="PloneMeeting",
+                                      default="Taken over by ${fullname}",
+                                      context=self.request)
+        else:
+            taken_over_by = translate('(Nobody)',
+                                      domain="PloneMeeting",
+                                      default="(Nobody)",
+                                      context=self.request)
+
+        portal_url = self.portal_state.portal_url()
+        src = "%s/%s" % (portal_url, filename)
+        css_class = takenOverBy and 'takenOverByNoDescr' or 'takenOverByYesDescr'
+        html = self.IMG_TEMPLATE % (src, title, name, css_class, taken_over_by)
+        self.context.reindexObject(idxs=['getTakenOverBy', ])
+        return html
 
 
 class AnnexIsConfidential(BrowserView):
@@ -179,8 +250,9 @@ class AnnexIsConfidential(BrowserView):
             name = 'isConfidentialNo'
             title_msgid = 'annex_is_confidential_yes_edit'
 
-        title = self.context.utranslate(title_msgid,
-                                        domain="PloneMeeting")
+        title = translate(title_msgid,
+                          domain="PloneMeeting",
+                          context=self.request)
         portal_url = self.portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
         html = self.IMG_TEMPLATE % (src, title, name)
@@ -222,10 +294,12 @@ class BudgetRelated(BrowserView):
             msgid = 'budget_related_yes_edit'
             img_title_msgid = 'budget_related_yes_img_title_edit'
 
-        label = self.context.utranslate(msgid,
-                                        domain="PloneMeeting")
-        img_title = self.context.utranslate(img_title_msgid,
-                                            domain="PloneMeeting")
+        label = translate(msgid,
+                          domain="PloneMeeting",
+                          context=self.request)
+        img_title = translate(img_title_msgid,
+                              domain="PloneMeeting",
+                              context=self.request)
         portal_url = self.portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
         budgetRelatedClass = beforeToggleBudgetRelated and 'notBudgetRelated' or 'budgetRelated'

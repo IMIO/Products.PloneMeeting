@@ -97,8 +97,10 @@ def onItemTransition(item, event):
     do(action, event)
     # update local roles regarding copyGroups when changing item's state
     item.updateCopyGroupsLocalRoles()
-    # update the 'previous_review_state' and 'reviewProcessInfo' indexes
-    item.reindexObject(idxs=['previous_review_state', 'reviewProcessInfo'])
+    # if 'takenOverBy' is used, it is reinitialized after a transition
+    item.setTakenOverBy('')
+    # update relevant indexes
+    item.reindexObject(idxs=['previous_review_state', 'reviewProcessInfo', 'getTakenOverBy', ])
 
 
 def onMeetingTransition(meeting, event):

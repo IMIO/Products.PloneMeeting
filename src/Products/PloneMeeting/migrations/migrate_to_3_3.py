@@ -263,6 +263,15 @@ class Migrate_To_3_3(Migrator):
              'searchItemsOfMyGroups',
              "python: here.portal_plonemeeting.getGroupsForUser()",
              ),
+            # Items I take over
+            ('searchmyitemstakenover',
+            (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+             ),
+             'created',
+             'searchMyItemsTakenOver',
+             "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
+             "and here.portal_plonemeeting.getGroupsForUser()",
+             ),
             # Items to advice without delay : need a script to do this search
             ('searchitemstoadvicewithoutdelay',
             (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
@@ -283,10 +292,13 @@ class Migrate_To_3_3(Migrator):
         )
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             hasSearchItemsOfMyGroups = False
+            hasSearchMyItemsTakenOver = False
             hasSearchItemsToAdvifceWithoutDelay = False
             hasSearchValidableItems = False
             if hasattr(cfg.topics, 'searchitemsofmygroups'):
                 hasSearchItemsOfMyGroups = True
+            if hasattr(cfg.topics, 'searchmyitemstakenover'):
+                hasSearchMyItemsTakenOver = True
             if hasattr(cfg.topics, 'searchitemstoadvicewithoutdelay'):
                 hasSearchItemsToAdvifceWithoutDelay = True
             if hasattr(cfg.topics, 'searchvalidableitems'):
@@ -306,6 +318,19 @@ class Migrate_To_3_3(Migrator):
                 itemsOfMyGroupsTopicPosition = everyTopicIds.index('searchitemsofmygroups')
                 delta = itemsOfMyGroupsTopicPosition - myItemsTopicPosition - 1
                 cfg.topics.moveObjectsUp('searchitemsofmygroups', delta=delta)
+            if not hasSearchMyItemsTakenOver:
+                # now reorder so 'searchmyitemstakenover' is under 'searchitemsofmygroups'
+                # find delta, we need to insert it after the 'searchitemsofmygroups' topic
+                if not hasattr(cfg.topics, 'searchitemsofmygroups'):
+                    logger.error('Unable to find topic \'searchitemsofmygroups\' !!!  '
+                                 'New \'searchmyitemstakenover\' topic will be left at the bottom of available topics!')
+                    continue
+                itemsOfMyGroupsTopic = cfg.topics.searchitemsofmygroups
+                everyTopicIds = cfg.topics.objectIds()
+                itemsOfMyGroupsTopicPosition = everyTopicIds.index(itemsOfMyGroupsTopic.getId())
+                myItemsTakenOverTopicPosition = everyTopicIds.index('searchmyitemstakenover')
+                delta = myItemsTakenOverTopicPosition - itemsOfMyGroupsTopicPosition - 1
+                cfg.topics.moveObjectsUp('searchmyitemstakenover', delta=delta)
             if not hasSearchItemsToAdvifceWithoutDelay:
                 # now reorder so 'searchitemstoadvicewithoutdelay' is under 'searchallitemstoadvice'
                 # find delta, we need to insert it after the 'searchallitemstoadvice' topic
