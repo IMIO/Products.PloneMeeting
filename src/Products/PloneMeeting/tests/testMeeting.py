@@ -990,8 +990,8 @@ class testMeeting(PloneMeetingTestCase):
         # nothing left in the folder
         self.assertFalse(meetingParentFolder.objectValues())
 
-    def test_pm_RemovingMeetingUpdateItemsPreferredMeeting(self):
-        '''When a meeting is removed, if it was selected as preferredMeeting
+    def test_pm_DeletingMeetingUpdateItemsPreferredMeeting(self):
+        '''When a meeting is deleted, if it was selected as preferredMeeting
            for some items, these items are updated and preferredMeeting is set to 'whatever'.'''
         # first make sure recurring items are not added
         self.changeUser('admin')
