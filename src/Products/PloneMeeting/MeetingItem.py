@@ -3876,36 +3876,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
         return True
 
-    security.declareProtected('Modify portal content', 'setClassifier')
-    def setClassifier(self, value, **kwargs):
-        if not value:
-            return
-        oldValue = self.getClassifier()
-        self.getField('classifier').set(self, value, **kwargs)
-        newValue = self.getClassifier()
-        if not oldValue or (oldValue.id != newValue.id):
-            # We must update the item count of the new classifier. We do NOT
-            # decrement the item count of the old classifier if it existed.
-            newValue.incrementItemsCount()
-
-    security.declareProtected('Modify portal content', 'setCategory')
-    def setCategory(self, newValue, **kwargs):
-        if not newValue:
-            return
-        oldValue = self.getCategory()
-        self.getField('category').set(self, newValue, **kwargs)
-        if not oldValue or (oldValue != newValue):
-            # We must update the item count of the new category. We do NOT
-            # decrement the item count of the old category if it existed.
-            try:
-                self.getCategory(True).incrementItemsCount()
-            except AttributeError:
-                # The category object has not been found. It probably means that
-                # the current category setter is called by Archetypes in the
-                # process of creating a temp object, so in this case we don't
-                # care about incrementing the items count.
-                pass
-
     security.declarePublic('clone')
     def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
               destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None):
@@ -3928,6 +3898,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         membershipTool = getToolByName(self, 'portal_membership')
         userId = membershipTool.getAuthenticatedMember().getId()
+        # make sure the newOwnerId exist (for example a user created an item, the
+        # user was deleted and we are now cloning his item)
+        if not membershipTool.getMemberById(newOwnerId):
+            newOwnerId = userId
         # Do not use "not destFolder" because destFolder is an ATBTreeFolder
         # and an empty ATBTreeFolder will return False while testing destFolder.
         if destFolder is None:

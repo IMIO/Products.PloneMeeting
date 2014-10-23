@@ -15,6 +15,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Moved from communesplone.iconified_document_actions to collective.iconifieddocumentactions
 - Moved management of indexes and metadatas (utils.updateIndexes) to imio.helpers and depends on that package now
 - Removed field Meeting.allItemsAtOnce and relative code
+- Removed field MeetingCategory.itemsCount and relative code
 - Refactored mechanism when inserting an item in a meeting : it is now possible
   to select successive sorting methods to apply on item insertion
 - Added management of absents and excused in separated plain text fields,

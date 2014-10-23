@@ -404,6 +404,18 @@ class Migrate_To_3_3(Migrator):
                 item.reindexObject(idxs=['getPreferredMeeting', ])
         logger.info('Done.')
 
+    def _removeMeetingCategoryItemsCountAttribute(self):
+        '''Remove the attribute 'itemsCount' on every MeetingCategories.'''
+        logger.info('Removing attribute \'itemsCount\' on every MeetingCategories...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            for category in cfg.categories.objectValues('MeetingCategory') + cfg.classifiers.objectValues('MeetingCategory'):
+                if hasattr(category, 'itemsCount'):
+                    delattr(category, 'itemsCount')
+                else:
+                    # already migrated
+                    break
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         self._finishMeetingFolderViewRemoval()
@@ -424,6 +436,7 @@ class Migrate_To_3_3(Migrator):
         self._updateTopics()
         self._cleanCKeditorCustomToolbar()
         self._checkItemsPreferredMeeting()
+        self._removeMeetingCategoryItemsCountAttribute()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -460,9 +473,10 @@ def migrate(context):
        16) Update topics;
        17) Clean the CKeditor toolbar to remove 'Ajaxsave' and 'Templates' buttons;
        18) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
-       19) Clean registries as we removed some css;
-       20) Reinstall PloneMeeting;
-       21) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       19) Remove MeetingCategory.itemsCount attribute;
+       20) Clean registries as we removed some css;
+       21) Reinstall PloneMeeting;
+       22) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_3(context).run()
 # ------------------------------------------------------------------------------

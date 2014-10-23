@@ -53,18 +53,6 @@ schema = Schema((
         ),
         searchable=True,
     ),
-    IntegerField(
-        name='itemsCount',
-        default=0,
-        widget=IntegerField._properties['widget'](
-            description="ItemsCount",
-            description_msgid="category_items_count_descr",
-            label='Itemscount',
-            label_msgid='PloneMeeting_label_itemsCount',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="metadata",
-    ),
     LinesField(
         name='usingGroups',
         widget=MultiSelectionWidget(
@@ -219,16 +207,6 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
             # the current user is creator
             isUsing = set(usingGroups).intersection(keys) != set()
         return isUsing and state == 'active'
-
-    def incrementItemsCount(self):
-        '''A new item has chosen me as a classifier or category. I must
-           increment my item counter. This method returns the new items
-           count.'''
-        if self.getItemsCount() is None:
-            self.setItemsCount(0)
-        newCount = self.getItemsCount() + 1
-        self.setItemsCount(newCount)
-        return newCount
 
     security.declarePublic('listUsingGroups')
     def listUsingGroups(self):
