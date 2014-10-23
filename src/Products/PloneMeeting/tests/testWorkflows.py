@@ -100,7 +100,7 @@ class testWorkflows(PloneMeetingTestCase):
            Check that removing an item or a meeting by is container fails.'''
         # make sure we do not have recurring items
         self.changeUser('pmManager')
-        self._removeItemsDefinedInTool(self.meetingConfig)
+        self._removeConfigObjectsFor(self.meetingConfig)
         # this is the folder that will contain create item and meeting
         pmManagerFolder = self.getMeetingFolder()
         item = self.create('MeetingItem')
@@ -401,7 +401,7 @@ class testWorkflows(PloneMeetingTestCase):
            it is created with no recurring items linked to it.'''
         # creating a meeting also works if no recurring items is defined in the configuration
         self.changeUser('pmManager')
-        self._removeItemsDefinedInTool(self.meetingConfig)
+        self._removeConfigObjectsFor(self.meetingConfig)
         meetingWithoutRecurringItems = self.create('Meeting', date='2008/12/11 09:00:00')
         self.assertTrue(meetingWithoutRecurringItems.getAllItems() == [])
 
@@ -412,7 +412,7 @@ class testWorkflows(PloneMeetingTestCase):
            For example here, we will add a recurring item for group 'developers' and
            we create a 'pmManagerRestricted' that will not be able to propose the item.'''
         self.changeUser('pmManager')
-        self._removeItemsDefinedInTool(self.meetingConfig)
+        self._removeConfigObjectsFor(self.meetingConfig)
         # just one recurring item added for 'developers'
         self.changeUser('admin')
         self.create('RecurringMeetingItem', title='Rec item developers',

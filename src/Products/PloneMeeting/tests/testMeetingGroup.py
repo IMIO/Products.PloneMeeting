@@ -36,7 +36,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         '''While removing a MeetingGroup, it should raise if it is used somewhere...'''
         self.changeUser('pmManager')
         # make sure self.meetingConfig2 does not interact...
-        self._removeItemsDefinedInTool(self.meetingConfig2)
+        self._removeConfigObjectsFor(self.meetingConfig2)
         # create an item
         item = self.create('MeetingItem')
         # default used proposingGroup is 'developers'
@@ -201,7 +201,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # we need to remove every items using the 'vendors' group before being able to remove it...
         self.changeUser('admin')
         # make sure self.meetingConfig2 does not interact...
-        self._removeItemsDefinedInTool(self.meetingConfig2)
+        self._removeConfigObjectsFor(self.meetingConfig2)
         self.meetingConfig.itemtemplates.manage_delObjects(['template2', ])
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', ))

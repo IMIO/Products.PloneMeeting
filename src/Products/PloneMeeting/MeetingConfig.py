@@ -3680,8 +3680,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''cachekey method for self.getFileTypes.'''
         # check last object modified and last time container was modified (element added or removed)
         # compare also with a list of elements review_state
-        return (int(max([mft.modified() for mft in self.meetingfiletypes.objectValues()])),
-                [mft.workflow_history.values()[0][-1]['review_state'] for mft in self.meetingfiletypes.objectValues()],
+        mfts = self.meetingfiletypes.objectValues()
+        if not mfts:
+            return 0
+        return (int(max([mft.modified() for mft in mfts])),
+                [mft.workflow_history.values()[0][-1]['review_state'] for mft in mfts],
                 self.meetingfiletypes._tree._p_mtime, relatedTo, typesIds, onlySelectable, includeSubTypes)
 
     security.declarePublic('getFileTypes')

@@ -1559,7 +1559,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # so it is not necessary to perform some methods
         # like updating advices as it will be removed here under
         self.REQUEST.set('currentlyPastingItems', True)
-        meetingConfig = self.getMeetingConfig(destFolder)
+        destMeetingConfig = self.getMeetingConfig(destFolder)
         # Current user may not have the right to create object in destFolder.
         # We will grant him the right temporarily
         loggedUserId = self.portal_membership.getAuthenticatedMember().getId()
@@ -1639,14 +1639,25 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     field.set(newItem, field.getDefault(newItem))
 
             # Set some default values that could not be initialized properly
-            toDiscussDefault = meetingConfig.getToDiscussDefault()
+            toDiscussDefault = destMeetingConfig.getToDiscussDefault()
             newItem.setToDiscuss(toDiscussDefault)
             if 'classifier' in copyFields:
                 newItem.getField('classifier').set(
                     newItem, copiedItem.getClassifier())
                     # No counter increment on related category.
             # Manage annexes.
-            if not copyAnnexes:
+            # we will remove annexes if copyAnnexes is False or if we could not find
+            # defined meetingFileTypes in the destMeetingConfig
+            noMeetingFileTypes = False
+            if not destMeetingConfig.getFileTypes():
+                noMeetingFileTypes = True
+                plone_utils = getToolByName(self, 'plone_utils')
+                msg = translate('annexes_not_kept_because_no_available_mft_warning',
+                                mapping={'cfg': destMeetingConfig.Title()},
+                                domain='PloneMeeting',
+                                context=self.REQUEST)
+                plone_utils.addPortalMessage(msg, 'warning')
+            if not copyAnnexes or noMeetingFileTypes:
                 # Delete the annexes that have been copied.
                 for annex in newItem.objectValues('MeetingFile'):
                     unrestrictedRemoveGivenObject(annex)
@@ -1657,9 +1668,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # moreover set a correct value for annex.toPrint
                 for annexTypeRelatedTo in ('item', 'item_decision'):
                     if annexTypeRelatedTo == 'item':
-                        toPrintDefault = meetingConfig.getAnnexToPrintDefault()
+                        toPrintDefault = destMeetingConfig.getAnnexToPrintDefault()
                     else:
-                        toPrintDefault = meetingConfig.getAnnexDecisionToPrintDefault()
+                        toPrintDefault = destMeetingConfig.getAnnexDecisionToPrintDefault()
                     oldAnnexes = IAnnexable(copiedItem).getAnnexes(relatedTo=annexTypeRelatedTo)
                     for oldAnnex in oldAnnexes:
                         newAnnex = getattr(newItem, oldAnnex.id)
@@ -1667,7 +1678,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         # to update every annex.meetingFileType because it still refers
                         # the meetingFileType in the old MeetingConfig the item is copied from
                         if newPortalType:
-                            self._updateMeetingFileTypesAfterSentToOtherMeetingConfig(newAnnex)
+                            if not self._updateMeetingFileTypesAfterSentToOtherMeetingConfig(newAnnex):
+                                raise Exception('Could not update meeting file type of copied annex at %s!'
+                                                % oldAnnex.absolute_url())
                         # initialize toPrint correctly regarding configuration
                         newAnnex.setToPrint(toPrintDefault)
                         # call processForm on the newAnnex so it is fully initialized

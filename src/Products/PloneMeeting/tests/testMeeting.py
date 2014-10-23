@@ -462,7 +462,7 @@ class testMeeting(PloneMeetingTestCase):
                         ({'meeting_config': '%s' % cfg2Id,
                           'trigger_workflow_transitions_until': '__nothing__'}, ))
         self.changeUser('pmManager')
-        self._removeItemsDefinedInTool(self.meetingConfig)
+        self._removeConfigObjectsFor(self.meetingConfig)
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
         data = ({'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
                 {'otherMeetingConfigsClonableTo': ()},
@@ -497,7 +497,7 @@ class testMeeting(PloneMeetingTestCase):
                         ({'meeting_config': '%s' % cfg1Id,
                           'trigger_workflow_transitions_until': '__nothing__'}, ))
         self.changeUser('pmManager')
-        self._removeItemsDefinedInTool(self.meetingConfig)
+        self._removeConfigObjectsFor(self.meetingConfig)
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
         data = ({'otherMeetingConfigsClonableTo': ('%s' % cfg1Id, ),
                  'category': 'events'},
@@ -995,7 +995,7 @@ class testMeeting(PloneMeetingTestCase):
            for some items, these items are updated and preferredMeeting is set to 'whatever'.'''
         # first make sure recurring items are not added
         self.changeUser('admin')
-        self._removeItemsDefinedInTool(self.meetingConfig)
+        self._removeConfigObjectsFor(self.meetingConfig)
         # create a meeting and an item, set the meeting as preferredMeeting for the item
         # then when the meeting is removed, the item preferredMeeting is back to 'whatever'
         self.changeUser('pmManager')

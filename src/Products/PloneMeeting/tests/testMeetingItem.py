@@ -591,6 +591,56 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType(),
                           defaultMC2ItemDecisionMFT['id'])
 
+    def test_pm_CloneItemToMCWithoutDefinedAnnexType(self):
+        '''When cloning an item to another meetingConfig or to the same meetingConfig,
+           if we have annexes on the original item and destination meetingConfig (that could be same
+           as original item or another) does not have annex types defined,
+           it does not fail but annexes are not kept and a portal message is displayed.'''
+        # first test when sending to another meetingConfig
+        # remove every fileTypes from meetingConfig2
+        self.changeUser('admin')
+        self._removeConfigObjectsFor(self.meetingConfig2, folders=['meetingfiletypes', ])
+        self.assertTrue(not self.meetingConfig2.getFileTypes(onlySelectable=False))
+        # a portal message will be added, for now there is no message
+        messages = IStatusMessage(self.request).show()
+        self.assertTrue(not messages)
+        # now create an item, add an annex and clone it to the other meetingConfig
+        data = self._setupSendItemToOtherMC(with_annexes=True)
+        originalItem = data['originalItem']
+        newItem = data['newItem']
+        # original item had annexes
+        self.assertTrue(IAnnexable(originalItem).getAnnexes())
+        # but new item does not have anymore
+        self.assertTrue(not IAnnexable(newItem).getAnnexes())
+        # moreover a message was added
+        messages = IStatusMessage(self.request).show()
+        expectedMessage = translate("annexes_not_kept_because_no_available_mft_warning",
+                                    mapping={'cfg': self.meetingConfig2.Title()},
+                                    domain='PloneMeeting',
+                                    context=self.request)
+        # 2 messages, the expected and the message 'item successfully sent to other mc'
+        self.assertTrue(messages[0].message == expectedMessage)
+
+        # now test when cloning locally, just disable every available mft
+        self.changeUser('admin')
+        for mft in self.meetingConfig.meetingfiletypes.objectValues():
+            if 'deactivate' in self.transitions(mft):
+                self.do(mft, 'deactivate')
+        # no available mft, try to clone newItem now
+        self.changeUser('pmManager')
+        # clean status message so we check that a new one is added
+        del IAnnotations(self.request)['statusmessages']
+        clonedItem = originalItem.clone(copyAnnexes=True)
+        # annexes were not kept
+        self.assertTrue(not IAnnexable(clonedItem).getAnnexes())
+        # moreover a message was added
+        messages = IStatusMessage(self.request).show()
+        expectedMessage = translate("annexes_not_kept_because_no_available_mft_warning",
+                                    mapping={'cfg': self.meetingConfig.Title()},
+                                    domain='PloneMeeting',
+                                    context=self.request)
+        self.assertTrue(messages[0].message == expectedMessage)
+
     def test_pm_SendItemToOtherMCWithAdvices(self):
         '''Test that sending an item to another MeetingConfig behaves normaly with advices.
            New item must not contains advices anymore and adviceIndex must be empty.'''
@@ -1302,7 +1352,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                                           'reverse': '0'}, ))
         # remove recurring items if any as we are playing with item number here under
-        self._removeItemsDefinedInTool(self.meetingConfig)
+        self._removeConfigObjectsFor(self.meetingConfig)
         # a user create an item and we insert it into a meeting
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

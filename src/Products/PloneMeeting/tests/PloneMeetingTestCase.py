@@ -308,22 +308,19 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         if 'plone.memoize' in annotations:
             annotations['plone.memoize'].clear()
 
-    def _removeItemsDefinedInTool(self, meetingConfig):
+    def _removeConfigObjectsFor(self, meetingConfig, folders=['recurringitems', 'itemtemplates']):
         """
-          Helper method for removing every recurring items and item templates of a given p_meetingConfig
+          Helper method for removing some objects from a given p_meetingConfig.
+          Given p_folders are folders of the meetingConfig to clean out.
         """
         currentUser = self.member.getId()
         self.changeUser('admin')
-        # remove recurring items
-        recurringItemsIds = []
-        for item in meetingConfig.recurringitems.objectValues():
-            recurringItemsIds.append(item.getId())
-        meetingConfig.recurringitems.manage_delObjects(ids=recurringItemsIds)
-        # remove item templates
-        itemTemplateIds = []
-        for item in meetingConfig.itemtemplates.objectValues():
-            itemTemplateIds.append(item.getId())
-        meetingConfig.itemtemplates.manage_delObjects(ids=itemTemplateIds)
+        for folder in folders:
+            configFolder = getattr(meetingConfig, folder)
+            objectIds_to_remove = []
+            for item in configFolder.objectValues():
+                objectIds_to_remove.append(item.getId())
+            configFolder.manage_delObjects(ids=objectIds_to_remove)
         self.changeUser(currentUser)
 
     def _turnUserIntoPrereviewer(self, member):

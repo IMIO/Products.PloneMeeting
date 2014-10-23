@@ -161,9 +161,10 @@ class testPerformances(PloneMeetingTestCase):
                 for memberId in ploneGroup.getGroupMemberIds():
                     ploneGroup.removeMember(memberId)
         # remove items defined in the tool
-        self._removeItemsDefinedInTool(self.meetingConfig)
-        self._removeItemsDefinedInTool(self.meetingConfig2)
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self._removeConfigObjectsFor(self.meetingConfig2)
 
+        # remove groups
         ids_to_remove = []
         for group in self.tool.objectValues('MeetingGroup'):
             ids_to_remove.append(group.getId())
@@ -285,14 +286,8 @@ class testPerformances(PloneMeetingTestCase):
 
     def _setupForMeetingCategories(self, number_of_categories, withUsingGroups=False):
         self.changeUser('admin')
-        # remove items in the tool
-        self._removeItemsDefinedInTool(self.meetingConfig)
-        # remove existing categoriesgroups and add our own
-        # make what necessary for categories to be removable...
-        ids_to_remove = []
-        for category in self.meetingConfig.categories.objectValues('MeetingCategory'):
-            ids_to_remove.append(category.getId())
-        self.meetingConfig.categories.manage_delObjects(ids=ids_to_remove)
+        # remove items in the tool and categories
+        self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', 'itemtemplates', 'categories'])
         # create categories
         for i in range(number_of_categories):
             catId = self.meetingConfig.categories.invokeFactory('MeetingCategory', id=i, title='Category %d' % i)
