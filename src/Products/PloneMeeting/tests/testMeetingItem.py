@@ -2026,6 +2026,67 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(messages[0].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % ('decision',
                                                                                          "'some_wrong_tal_expression'"))
 
+    def test_pm_TakenOverBy(self):
+        '''Test the view that manage the MeetingItem.takenOverBy toggle.
+           - by default, an item can be taken over by users having the 'Review portal content' permission;
+           - if so, it will save current user id in MeetingItem.takenOverBy;
+           - MeetingItem.takenOverBy is set back to '' on each meeting wf transition;
+           - if a user access an item and in between the item is taken over by another user,
+             when taking over the item, it is actually not taken over but a portal_message is displayed
+             explaining that the item was taken over in between.'''
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.adapted().mayTakeOver(self.member))
+        # for now, not taken over
+        self.assertTrue(not item.getTakenOverBy())
+        # take it over
+        view = item.restrictedTraverse('@@toggle_item_taken_over_by')
+        view.toggle(takenOverByFrom=item.getTakenOverBy())
+        self.assertTrue(item.getTakenOverBy() == self.member.getId())
+        # now propose it, it will not be taken over anymore
+        self.proposeItem(item)
+        self.assertTrue(not item.getTakenOverBy())
+        # moreover, as pmCreator1 does not have 'Review portal content'
+        # it can not be taken over
+        self.assertTrue(not item.adapted().mayTakeOver(self.member))
+        # if he tries so, he gets Unauthorized
+        self.assertRaises(Unauthorized, view.toggle, takenOverByFrom=item.getTakenOverBy())
+        # turn to a user than can take the item over
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.adapted().mayTakeOver(self.member))
+        # test that the user is warned if item was taken over in between
+        # we will do as if 'pmVirtualReviewer1' had taken the item over
+        item.setTakenOverBy('pmVirtualReviewer1')
+        # if actual taker does not correspond to takenOverByFrom, it fails
+        # and return a portal message to the user
+        messages = IStatusMessage(self.request).show()
+        self.assertTrue(not messages)
+        view.toggle(takenOverByFrom='')
+        # now we have a message
+        messages = IStatusMessage(self.request).show()
+        self.assertTrue(len(messages) == 1)
+        expectedMessage = translate("The item you tried to take over was already taken over in between by "
+                                    "${fullname}. You can take it over now if you are sure that the other "
+                                    "user do not handle it.",
+                                    mapping={'fullname': 'pmVirtualReviewer1'},
+                                    domain='PloneMeeting',
+                                    context=self.request)
+        self.assertTrue(messages[0].message == expectedMessage)
+        # not changed
+        self.assertTrue(item.getTakenOverBy() == 'pmVirtualReviewer1')
+        # and a message is displayed
+        # once warned, the item can be taken over
+        # but first time, the item is back to 'not taken over' then the user can take it over
+        view.toggle(takenOverByFrom=item.getTakenOverBy())
+        self.assertTrue(not item.getTakenOverBy())
+        # then now take it over
+        view.toggle(takenOverByFrom=item.getTakenOverBy())
+        self.assertTrue(item.getTakenOverBy() == self.member.getId())
+        # toggling it again will release the taking over again
+        view.toggle(takenOverByFrom=item.getTakenOverBy())
+        self.assertTrue(not item.getTakenOverBy())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
