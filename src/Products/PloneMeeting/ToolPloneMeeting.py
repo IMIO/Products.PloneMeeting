@@ -1010,6 +1010,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             fullName = user.getProperty('fullname')
             if fullName:
                 res = fullName
+        # fullname of a Zope user (admin) is returned as unicode
+        # and fullname of a Plone user is returned as utf-8...
+        # always return as utf-8!
+        if isinstance(res, unicode):
+            res = res.encode('utf-8')
         return res
 
     security.declarePublic('rememberAccess')

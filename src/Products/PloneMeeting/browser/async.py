@@ -173,7 +173,7 @@ class TakenOverBy(BrowserView):
                 self.context.translate("The item you tried to take over was already taken "
                                        "over in between by ${fullname}. You can take it over "
                                        "now if you are sure that the other user do not handle it.",
-                                       mapping={'fullname': tool.getUserName(takenOverBy)},
+                                       mapping={'fullname': unicode(tool.getUserName(takenOverBy), 'utf-8')},
                                        domain="PloneMeeting"),
                 type='warning')
             self.request.RESPONSE.status = 500
