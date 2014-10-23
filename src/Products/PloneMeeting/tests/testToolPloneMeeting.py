@@ -181,6 +181,26 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(hasattr(clonedItem.getParentNode(), 'o1'))
         self.assertTrue(hasattr(clonedItem.getParentNode(), 'copy_of_o1'))
 
+    def test_pm_CloneItemWithUnexistingNewOwnerId(self):
+        '''When cloning an item, if newOwnerId does not exist, it does not fail,
+           the user cloning the item is selected and new creator for the cloned item.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # now delete user 'pmCreator1' and clone the item with this
+        # 'pmCreator1' as newOwnerId
+        self.changeUser('admin')
+        self.portal.acl_users.source_users.removeUser('pmCreator1')
+        self.assertTrue(not 'pmCreator1' in self.portal.acl_users.source_users.listUserIds())
+        # now clone the item using 'pmCreator1' as newOwnerId
+        self.changeUser('pmManager')
+        clonedItem = item.clone(newOwnerId='pmCreator1')
+        self.assertTrue(clonedItem.Creator() == 'pmManager')
+        # it does not fail neither if we pass a userId that does not
+        # even have a meeting folder
+        self.assertTrue(not hasattr(self.portal.Members, 'unexisting_member_id'))
+        clonedItem = item.clone(newOwnerId='unexisting_member_id')
+        self.assertTrue(clonedItem.Creator() == 'pmManager')
+
     def test_pm_PasteItems(self):
         '''Paste objects (previously copied) in destFolder.'''
         self.changeUser('pmCreator1')
@@ -309,6 +329,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         annex = self.addAnnex(item)
         # now set a MFT UID existing in self.meetingConfig2
         anItemMFTOfMC2Data = self.meetingConfig2.getFileTypes(relatedTo='item')[0]
+        cfg = self.meetingConfig
+        uid_catalog = self.portal.uid_catalog
 
         # 1) normal MFT with no correspondence
         # so the default (first found) MFT will be used
@@ -317,11 +339,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
         # now annex.getMeetingFileType is the first relatedTo item MFT
         # of self.meetingConfig
-        self.assertTrue(annex.getMeetingFileType() == self.meetingConfig.getFileTypes(relatedTo='item')[0]['id'])
+        self.assertTrue(annex.getMeetingFileType() == cfg.getFileTypes(relatedTo='item')[0]['id'])
 
         # 2) subType MFT with no correspondence
         # so the default (first found) MFT will be used
-        anItemMFTOfMC2Obj = self.portal.uid_catalog(UID=anItemMFTOfMC2Data['id'])[0].getObject()
+        anItemMFTOfMC2Obj = uid_catalog(UID=anItemMFTOfMC2Data['id'])[0].getObject()
         anItemMFTOfMC2Obj.setSubTypes(({'row_id': 'unique_row_id_123',
                                         'title': 'Annex sub type',
                                         'predefinedTitle': 'Annex sub type predefined title',
@@ -332,28 +354,28 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(annex.getMeetingFileType() == subTypeIdOfMFTOfMC2)
         # after update, it will be linked to first available MFT...
         self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
-        self.assertTrue(annex.getMeetingFileType() == self.meetingConfig.getFileTypes(relatedTo='item')[0]['id'])
+        self.assertTrue(annex.getMeetingFileType() == cfg.getFileTypes(relatedTo='item')[0]['id'])
 
         # 3) normal MFT with correspondence, we will set the correspondence to
         # second relatedTo item of self.meetingConfig
-        mftMC1Correspondence = '%s__filetype__%s' % (self.meetingConfig.getId(),
-                                                     self.meetingConfig.getFileTypes(relatedTo='item')[1]['id'])
+        mftMC1Correspondence = '%s__filetype__%s' % (cfg.getId(),
+                                                     cfg.getFileTypes(relatedTo='item')[1]['id'])
         anItemMFTOfMC2Obj.setOtherMCCorrespondences((mftMC1Correspondence, ))
         annex.setMeetingFileType(anItemMFTOfMC2Obj.UID())
         self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
         # now annex.getMeetingFileType is the second relatedTo item MFT as defined as correspondence
-        self.assertTrue(annex.getMeetingFileType() == self.meetingConfig.getFileTypes(relatedTo='item')[1]['id'])
+        self.assertTrue(annex.getMeetingFileType() == cfg.getFileTypes(relatedTo='item')[1]['id'])
 
         # 4) normal MFT with correspondence to a subType, we will set the correspondence to
         # second relatedTo first subType item of self.meetingConfig
-        anItemMFTOfMC1Obj = self.portal.uid_catalog(UID=self.meetingConfig.getFileTypes(relatedTo='item')[1]['id'])[0].getObject()
+        anItemMFTOfMC1Obj = uid_catalog(UID=cfg.getFileTypes(relatedTo='item')[1]['id'])[0].getObject()
         anItemMFTOfMC1Obj.setSubTypes(({'row_id': 'unique_row_id_456',
                                         'title': 'Annex2 sub type',
                                         'predefinedTitle': 'Annex2 sub type predefined title',
                                         'otherMCCorrespondences': (),
                                         'isActive': '1', }, ))
-        subTypeMC1Correspondence = '%s__filetype__%s__subtype__unique_row_id_456' % (self.meetingConfig.getId(),
-                                   self.meetingConfig.getFileTypes(relatedTo='item')[1]['id'])
+        subTypeMC1Correspondence = '%s__filetype__%s__subtype__unique_row_id_456' % (cfg.getId(),
+                                   cfg.getFileTypes(relatedTo='item')[1]['id'])
         anItemMFTOfMC2Obj.setOtherMCCorrespondences((subTypeMC1Correspondence, ))
         annex.setMeetingFileType(anItemMFTOfMC2Obj.UID())
         self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
