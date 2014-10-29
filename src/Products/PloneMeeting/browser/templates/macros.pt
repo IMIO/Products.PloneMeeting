@@ -305,17 +305,27 @@ document.location.reload(true);
           tal:condition="not: takenOverBy"
           title="taken_over_by_no_edit"
           i18n:attributes="title"
-          tal:attributes="src string: $portal_url/takenOverByNo.png;
-                          onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_taken_over_by?takenOverByFrom='+takenOverBy+'\', baseSelector=\'#marker_toggle_takenoverby_\')'"
+          tal:attributes="onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_taken_over_by?takenOverByFrom='+takenOverBy+'\', baseSelector=\'#marker_toggle_takenoverby_\')'"
           i18n:translate="">
         (Nobody)
     </span>
   </span>
   <tal:canNotEdit condition="not: mayEdit">
-    <span tal:condition="takenOverBy" title="taken_over_by_yes" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/takenOverByYes.png"/>
-    <span tal:condition="not: takenOverBy" title="taken_over_by_no" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/takenOverByNo.png"/>
+    <span class="#"
+          tal:condition="takenOverBy"
+          title="taken_over_by_yes"
+          i18n:attributes="title"
+          tal:attributes="class python: takenOverByCurrentUser and 'takenOverByCurrentUser' or 'takenOverByOtherUser'"
+          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: context.portal_plonemeeting.getUserName(takenOverBy)">
+          Full name</span>
+    </span>
+    <span class="takenOverByNobody"
+          tal:condition="not: takenOverBy"
+          title="taken_over_by_no"
+          i18n:attributes="title"
+          i18n:translate="">
+        (Nobody)
+    </span>
   </tal:canNotEdit>
 </metal:takenOverBy>
 
