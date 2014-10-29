@@ -194,18 +194,19 @@ class TakenOverBy(BrowserView):
 
         css_class = 'takenOverByNobody'
         name = 'takenOverByNo'
-        title_msgid = 'taken_over_by_yes_edit'
+        title_msgid = 'taken_over_by_no_edit'
         if newlyTakenOverBy:
             if self.request['AUTHENTICATED_USER'].getId() == newlyTakenOverBy:
                 css_class = 'takenOverByCurrentUser'
             else:
                 css_class = 'takenOverByOtherUser'
             name = 'takenOverByYes'
-            title_msgid = 'taken_over_by_no_edit'
+            title_msgid = 'taken_over_by_yes_edit'
 
         title = translate(title_msgid,
                           domain="PloneMeeting",
                           context=self.request)
+
         if newlyTakenOverBy:
             taken_over_by = translate('Taken over by ${fullname}',
                                       mapping={'fullname': unicode(tool.getUserName(member.getId()),

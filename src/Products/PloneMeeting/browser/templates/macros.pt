@@ -312,6 +312,7 @@ document.location.reload(true);
   </span>
   <tal:canNotEdit condition="not: mayEdit">
     <span class="#"
+          style="cursor: help;"
           tal:condition="takenOverBy"
           title="taken_over_by_yes"
           i18n:attributes="title"
@@ -320,6 +321,7 @@ document.location.reload(true);
           Full name</span>
     </span>
     <span class="takenOverByNobody"
+          style="cursor: help;"
           tal:condition="not: takenOverBy"
           title="taken_over_by_no"
           i18n:attributes="title"
