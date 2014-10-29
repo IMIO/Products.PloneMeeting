@@ -322,6 +322,13 @@ tr.even table.advices td {
     cursor: default;
 }
 
+/* on the item view, display the annexes dropdown to the right
+   so it does not moves out of the screen on the left */
+body.template-meetingitem_view td.itemAnnexesCell dd.actionMenuContentAX {
+    left: -4em;
+    right: inherit;
+}
+
 /* collective.documentviewer : hide some elements... */
 
 .close-fullscreen, .DV-navigation {
