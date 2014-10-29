@@ -622,8 +622,20 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 #content span.budgetRelated {
     color: green;
 }
-#content span.takenOverByYesDescr {
+#content span.takenOverByNobody {
+    background: transparent url(&dtml-portal_url;/takenOverByNobody.png) no-repeat scroll 0 3px;
+    padding: 4px 0px 0px 18px;
+    color: $dtml-discreetColor;;
+}
+#content span.takenOverByCurrentUser {
+    background: transparent url(&dtml-portal_url;/takenOverByCurrentUser.png) no-repeat scroll 0 3px;
+    padding: 4px 0px 0px 18px;
     color: green;
+}
+#content span.takenOverByOtherUser {
+    background: transparent url(&dtml-portal_url;/takenOverByOtherUser.png) no-repeat scroll 0 3px;
+    padding: 4px 0px 0px 18px;
+    color: blue;
 }
 
 /* remove padding-bottom */

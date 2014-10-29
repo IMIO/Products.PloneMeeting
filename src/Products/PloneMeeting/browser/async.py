@@ -152,7 +152,7 @@ class TakenOverBy(BrowserView):
     """
       View that switch the item 'takenOverBy' from None to current user and from current user to None.
     """
-    IMG_TEMPLATE = u'<img class="takenOverByEditable" src="%s" title="%s" name="%s" />\n<span class="%s">%s</span>'
+    IMG_TEMPLATE = u'<span class="takenOverByEditable %s" title="%s" name="%s">\n%s\n</span>'
 
     def __init__(self, context, request):
         self.context = context
@@ -165,41 +165,51 @@ class TakenOverBy(BrowserView):
         if not self.context.adapted().mayTakeOver(member):
             raise Unauthorized
 
+        memberId = member.getId()
+
         tool = getToolByName(self.context, 'portal_plonemeeting')
-        takenOverBy = self.context.getTakenOverBy()
-        if takenOverBy and not takenOverBy == takenOverByFrom and not takenOverBy == member.getId():
+        currentlyTakenOverBy = self.context.getTakenOverBy()
+        if currentlyTakenOverBy and \
+           not currentlyTakenOverBy == takenOverByFrom and \
+           not currentlyTakenOverBy == memberId:
             plone_utils = getToolByName(self.context, 'plone_utils')
             plone_utils.addPortalMessage(
                 self.context.translate("The item you tried to take over was already taken "
                                        "over in between by ${fullname}. You can take it over "
                                        "now if you are sure that the other user do not handle it.",
-                                       mapping={'fullname': unicode(tool.getUserName(takenOverBy), 'utf-8')},
+                                       mapping={'fullname': unicode(tool.getUserName(currentlyTakenOverBy),
+                                                                    'utf-8')},
                                        domain="PloneMeeting"),
                 type='warning')
             self.request.RESPONSE.status = 500
             return
 
         # toggle value
-        if not takenOverBy:
-            self.context.setTakenOverBy(member.getId())
+        if not currentlyTakenOverBy:
+            self.context.setTakenOverBy(memberId)
+            newlyTakenOverBy = memberId
         else:
             self.context.setTakenOverBy('')
+            newlyTakenOverBy = ''
 
-        if takenOverBy:
-            filename = 'takenOverByNo.png'
+        css_class = 'takenOverByNobody'
+        name = 'takenOverByNo'
+        title_msgid = 'taken_over_by_yes_edit'
+        if newlyTakenOverBy:
+            if self.request['AUTHENTICATED_USER'].getId() == newlyTakenOverBy:
+                css_class = 'takenOverByCurrentUser'
+            else:
+                css_class = 'takenOverByOtherUser'
             name = 'takenOverByYes'
             title_msgid = 'taken_over_by_no_edit'
-        else:
-            filename = 'takenOverByYes.png'
-            name = 'takenOverByNo'
-            title_msgid = 'taken_over_by_yes_edit'
 
         title = translate(title_msgid,
                           domain="PloneMeeting",
                           context=self.request)
-        if not takenOverBy:
+        if newlyTakenOverBy:
             taken_over_by = translate('Taken over by ${fullname}',
-                                      mapping={'fullname': unicode(tool.getUserName(member.getId()), 'utf-8')},
+                                      mapping={'fullname': unicode(tool.getUserName(member.getId()),
+                                                                   'utf-8')},
                                       domain="PloneMeeting",
                                       default="Taken over by ${fullname}",
                                       context=self.request)
@@ -209,10 +219,7 @@ class TakenOverBy(BrowserView):
                                       default="(Nobody)",
                                       context=self.request)
 
-        portal_url = self.portal_state.portal_url()
-        src = "%s/%s" % (portal_url, filename)
-        css_class = takenOverBy and 'takenOverByNoDescr' or 'takenOverByYesDescr'
-        html = self.IMG_TEMPLATE % (src, title, name, css_class, taken_over_by)
+        html = self.IMG_TEMPLATE % (css_class, title, name, taken_over_by)
         self.context.reindexObject(idxs=['getTakenOverBy', ])
         return html
 

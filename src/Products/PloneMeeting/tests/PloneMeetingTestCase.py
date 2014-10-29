@@ -163,6 +163,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         login(self.portal, loginName)
         membershipTool = getToolByName(self.portal, 'portal_membership')
         self.member = membershipTool.getAuthenticatedMember()
+        self.portal.REQUEST['AUTHENTICATED_USER'] = self.member
 
     def _generateId(self, ploneFolder):
         '''Generate an id for creating an object in p_ploneFolder.'''

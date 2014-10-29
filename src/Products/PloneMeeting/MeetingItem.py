@@ -1602,8 +1602,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if 'takenOverBy' in usedItemAttributes:
             takenOverBy = item.getTakenOverBy()
             if takenOverBy:
-                res.append(('takenOverByYes.png', ('Taken over by ${fullname}',
-                                                   {'fullname': tool.getUserName(takenOverBy)})))
+                # if taken over, display a different icon if taken over by current user or not
+                takenOverByCurrentUser = self.REQUEST['AUTHENTICATED_USER'].getId() == takenOverBy and True or False
+                iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
+                res.append((iconName, ('Taken over by ${fullname}',
+                                       {'fullname': tool.getUserName(takenOverBy)})))
         return res
 
     def _getOtherMeetingConfigsImAmClonedIn(self):
