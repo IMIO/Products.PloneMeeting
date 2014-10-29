@@ -246,6 +246,9 @@ class IMeetingItemDocumentation:
     def mayWriteCompleteness():
         '''This manage the condition that check if MeetingItem.complentess
            may be edited by the current user.'''
+    def mayTakeOver():
+        '''This manage the condition that check if MeetingItem.takenOverBy
+           may be edited by the current user.'''
     def mayBeLinkedToTasks():
         '''This method returns True if this meeting item fulfills conditions
            such that it can be associated to tasks. In the default
