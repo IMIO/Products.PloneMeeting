@@ -1308,11 +1308,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayTakeOver')
     def mayTakeOver(self, member):
         '''Condition for editing 'takenOverBy' field.
-           As member may take an item over if he has the 'Review portal content' permission.'''
+           A member may take an item over if he his able to change the review_state.'''
         item = self.getSelf()
-        if checkPermission(ReviewPortalContent, item):
-            return True
-        return False
+        wfTool = getToolByName(item, 'portal_workflow')
+        return bool(wfTool.getTransitionsFor(item))
 
     security.declarePublic('mayAskEmergency')
     def mayAskEmergency(self):
