@@ -122,6 +122,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   step but that let users in Plone group _reviewers able to "pre-validate" without being in
   the _prereviewers group.  This let's make difference between real prereviewers and reviewers
   but let reviewers prereview nevertheless
+- Added an icon displayed before item title in listings that shows that an item will
+  be sent to another meeting configuration so we can see items that will be send and
+  items that have already been sent to another meeting configuration
 
 3.2.0.1 (2014-03-06)
 --------------------

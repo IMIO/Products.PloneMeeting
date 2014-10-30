@@ -2139,16 +2139,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('transition_not_from_selected_meeting_config',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-            # make sure the icon necessary for the action exists
+            # make sure the icons necessary for the action exists
+            # there is a 'item will be send' icon and a 'item is sent' icon
             configId = mctct['meeting_config']
-            iconname = \
-                '%s.png' % self._getCloneToOtherMCActionId(configId, self.getId())
-            #try to get the icon in portal_skins
-            if not getattr(self.portal_skins, iconname, None):
-                return translate('iconname_does_not_exist',
-                                 mapping={'iconname': iconname, },
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
+            actionId = self._getCloneToOtherMCActionId(configId, self.getId())
+            iconnames = ('%s.png' % actionId, 'will_be_%s.png' % actionId)
+            for iconname in iconnames:
+                # try to get the icon in portal_skins
+                if not getattr(self.portal_skins, iconname, None):
+                    return translate('iconname_does_not_exist',
+                                     mapping={'iconname': iconname, },
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
 
     security.declarePrivate('validate_workflowAdaptations')
     def validate_workflowAdaptations(self, values):

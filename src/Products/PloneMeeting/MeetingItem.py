@@ -1585,6 +1585,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                 }
                              )
                             ))
+            # if not already cloned to another mc, maybe it will be?
+            if not clonedToOtherMCIds:
+                otherMeetingConfigsClonableTo = item.getOtherMeetingConfigsClonableTo()
+                for otherMeetingConfigClonableTo in otherMeetingConfigsClonableTo:
+                    # Append a tuple with name of the icon and a list containing
+                    # the msgid and the mapping as a dict
+                    res.append(("will_be_%s.png" %
+                                cfg._getCloneToOtherMCActionId(otherMeetingConfigClonableTo, cfg.getId()),
+                                ('will_be_sentto_othermeetingconfig',
+                                    {
+                                        'meetingConfigTitle': getattr(item.portal_plonemeeting,
+                                                                      otherMeetingConfigClonableTo).Title()
+                                    }
+                                 )
+                                ))
         # In some cases, it does not matter if an item is inMeeting or not.
         if 'oralQuestion' in usedItemAttributes:
             if item.getOralQuestion():
