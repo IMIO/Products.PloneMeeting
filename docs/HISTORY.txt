@@ -125,6 +125,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added an icon displayed before item title in listings that shows that an item will
   be sent to another meeting configuration so we can see items that will be send and
   items that have already been sent to another meeting configuration
+- Locking is now working when using the inline edit functionnality (quick edit of a item or
+  meeting field thru the element view) and when quick editing an advice thru the popup
 
 3.2.0.1 (2014-03-06)
 --------------------
