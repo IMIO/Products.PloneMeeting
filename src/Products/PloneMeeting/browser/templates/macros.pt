@@ -6,7 +6,7 @@
                  tal:define="mode string:edit;
                              fieldName request/fieldName;
                              lang python: request.get('lang', '');
-                             fields python: [context.getField(fieldName)]">
+                             fields python: [context.getField(fieldName)];">
   <tal:showWarningWillInvalidateAdvices condition="python: context.meta_type == 'MeetingItem' and context.willInvalidateAdvices()">
   <dl class="portalMessage warning">
       <dt i18n:translate="" i18n:domain="plone">Warning</dt>
@@ -33,6 +33,7 @@
                    default_fieldset python:(not schematas or schematas.has_key('default')) and 'default' or fieldsets[0];
                    fieldset request/fieldset|options/fieldset|default_fieldset;
                    dummy python:here.at_isEditable(fields);
+                   dummyNotifyEditBegunEvent python: context.restrictedTraverse('@@pm-notify-event').notifyEditBegunEvent();
                    portal_type context/portal_type;
                    default_language python:request.get('HTTP_ACCEPT_LANGUAGE', 'en').split(',')[0].split('-')[0];
                    type_name portal_type;
@@ -108,6 +109,7 @@
  tal:define="fieldName request/fieldName;
              field python: context.getField(fieldName);
              lang python: request.get('lang', '');
+             dummyNotifyEditCancelledEvent python: context.restrictedTraverse('@@pm-notify-event').notifyEditCancelledEvent();
              mayEdit python: member.has_permission(field.write_permission, context)">
  <metal:view use-macro="context/@@pm-macros/viewField"/>
 </metal:field>
@@ -169,7 +171,7 @@ document.location.reload(true);
                  isOptional field/optional|python:False;
                  isUsed python: not isOptional or (isOptional and fieldName in usedAttrs);
                  ajaxEdit ajaxEdit|nothing;
-                 mayEdit python: ajaxEdit and member.has_permission(field.write_permission, context)"
+                 mayEdit python: ajaxEdit and member.has_permission(field.write_permission, context) and not context.restrictedTraverse('@@plone_lock_info').is_locked_for_current_user()"
      tal:condition="python: isUsed and field.widget.visible and member.has_permission(field.read_permission, context)">
   <tal:comment replace="nothing">Mono-language, rich</tal:comment>
   <tal:mono define="lang python:''" condition="python: not bilingual and isRich">

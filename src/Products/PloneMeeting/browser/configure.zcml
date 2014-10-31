@@ -377,6 +377,13 @@
         permission="zope.Public"
         allowed_attributes="addAnnex
                             isValidAnnexId"/>
+    <browser:view
+        name="pm-notify-event"
+        class=".notify.NotifyEvent"
+        for="*"
+        permission="cmf.ModifyPortalContent"
+        allowed_attributes="notify"/>
+
     <!-- Form that manage item assembly -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

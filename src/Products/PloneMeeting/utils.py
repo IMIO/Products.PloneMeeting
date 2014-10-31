@@ -36,9 +36,11 @@ from AccessControl import getSecurityManager
 from zope.i18n import translate
 from zope.component import getUtility
 from zope.component.interfaces import ObjectEvent
+from zope.event import notify
 from zope.interface import implements
 from plone.memoize.interfaces import ICacheChooser
 from imio.helpers.xhtml import removeBlanks, xhtmlContentIsEmpty
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.MailHost.MailHost import MailHostError
@@ -1067,6 +1069,9 @@ def setFieldFromAjax(obj, fieldName, newValue):
     # Apply XHTML transforms when relevant
     transformAllRichTextFields(obj, onlyField=fieldName)
     obj.reindexObject()
+    # notify that object was edited so relevant events are called
+    # unlocking, modification date, reindexation, ...
+    notify(ObjectEditedEvent(obj))
 
 
 # ------------------------------------------------------------------------------

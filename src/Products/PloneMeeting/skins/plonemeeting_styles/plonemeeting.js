@@ -577,22 +577,37 @@ function asyncToggleIcon(UID, baseUrl, viewName, baseSelector) {
 function initRichTextField(rq, hook) {
   /* Function that needs to be called when getting the edit view of a
      rich-text field through Ajax. */
-  // Javascripts inside this zone will not be executed. So find them
-  // and trigger their execution here.
-  var scripts = $('script', hook);
-  var fieldName = rq.hook.split('_')[1];
-  for (var i=0; i<scripts.length; i++) {
-    var scriptContent = scripts[i].innerHTML;
-    if (scriptContent.search('addEventHandler') != -1) {
-      // This is a kupu field that will register an event onLoad on
-      // window but this event will never be triggered. So do it by
-      // hand.
-      currentFieldName = hook.id.split('_')[1];
-    }
-    else { eval(scriptContent); }
+  /* Check that we can actually edit the field, indeed the object
+   * could have been locked in between (concurrent edit) */
+  is_locked = $.ajax({
+     async: false,
+     type: 'GET',
+     url: '@@plone_lock_info/is_locked_for_current_user',
+     success: function(data) {
+          //callback
+     }
+    });
+  if (is_locked.responseText === "True") {
+    window.location.href = window.location.href;
   }
-  // Initialize CKeditor if it is the used editor
-  if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
+  else {
+    // Javascripts inside this zone will not be executed. So find them
+    // and trigger their execution here.
+    var scripts = $('script', hook);
+    var fieldName = rq.hook.split('_')[1];
+    for (var i=0; i<scripts.length; i++) {
+      var scriptContent = scripts[i].innerHTML;
+      if (scriptContent.search('addEventHandler') != -1) {
+        // This is a kupu field that will register an event onLoad on
+        // window but this event will never be triggered. So do it by
+        // hand.
+        currentFieldName = hook.id.split('_')[1];
+      }
+      else { eval(scriptContent); }
+    }
+    // Initialize CKeditor if it is the used editor
+    if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
+  }
 }
 function getRichTextContent(rq, params) {
   /* Gets the content of a rich text field before sending it through an Ajax
