@@ -15,9 +15,11 @@ from zope.annotation import IAnnotations
 
 from plone.memoize import ram
 
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import checkPermission
 
+from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from collective.documentviewer.settings import GlobalSettings
 
 
@@ -239,32 +241,57 @@ class AnnexableAdapter(object):
         return res
 
 
-class ContentDeletableAdapter(object):
+class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
     """
-      Manage the mayDelete for content types of PloneMeeting (Meeting, MeetingItem and MeetingFile).
+      Manage the mayDelete for MeetingItem.
+      Must have 'Delete objects' on the item.
     """
     def __init__(self, context):
         self.context = context
 
     def mayDelete(self):
         '''See docstring in interfaces.py.'''
-        # Determine if the object can be deleted or not
-        if self.context.meta_type == 'MeetingFile':
-            parent = self.context.getParent()
-            mayDelete = True
-            if parent.meta_type == 'MeetingItem':
-                mayDelete = parent.wfConditions().mayDeleteAnnex(self.context)
-        elif self.context.meta_type == 'Meeting' and 'wholeMeeting' in self.context.REQUEST:
+        # check 'Delete objects' permission
+        return super(MeetingItemContentDeletableAdapter, self).mayDelete()
+
+
+class MeetingContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Manage the mayDelete for Meeting.
+      - must have 'Delete objects' on the meeting;
+      - must be 'Manager' to remove 'wholeMeeting';
+      - meeting must be empty to be removed.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self):
+        '''See docstring in interfaces.py.'''
+        if not super(MeetingContentDeletableAdapter, self).mayDelete():
+            return False
+
+        member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+        if 'wholeMeeting' in self.context.REQUEST:
             # if we try to remove a 'Meeting' using the 'wholeMeeting' option
             # we need to check that current user is a 'Manager'
-            member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
             if not member.has_role('Manager'):
                 return False
-            else:
-                return self.context.wfConditions().mayDelete()
         else:
-            try:
-                mayDelete = self.context.wfConditions().mayDelete()
-            except AttributeError:
-                mayDelete = True
-        return mayDelete
+            if not self.context.getRawItems():
+                return True
+
+
+class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Manage the mayDelete for MeetingFile.
+      A MeetingFile can be deleted by users able to edit parent (item or advice).
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self):
+        '''See docstring in interfaces.py.'''
+        parent = self.context.getParent()
+        if checkPermission(ModifyPortalContent, parent):
+            return True
+        return False

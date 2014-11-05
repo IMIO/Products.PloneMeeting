@@ -186,12 +186,6 @@ class MeetingWorkflowConditions:
             return
         return True
 
-    security.declarePublic('mayDelete')
-    def mayDelete(self):
-        user = self.context.portal_membership.getAuthenticatedMember()
-        if user.has_role('Manager') or not self.context.getRawItems():
-            return True
-
 InitializeClass(MeetingWorkflowConditions)
 
 

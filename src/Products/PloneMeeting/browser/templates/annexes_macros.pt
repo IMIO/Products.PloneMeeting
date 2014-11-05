@@ -212,7 +212,7 @@
            tal:condition="python: meetingConfig.getEnableAnnexConfidentiality() and isManager">Confidential?</th>
        <th class="nosort" i18n:translate="PloneMeeting_label_toPrint" tal:condition="meetingConfig/getEnableAnnexToPrint">To print?</th>
        <th class="nosort" i18n:translate="listingheader_size" i18n:domain="plone">Size</th>
-       <th class="nosort" i18n:translate="heading_actions" i18n:domain="plone" tal:condition="python:member.has_permission('Delete objects', here)">Actions</th>
+       <th class="nosort" i18n:translate="heading_actions" i18n:domain="plone">Actions</th>
      </tr>
      </thead>
      <tbody>
@@ -232,7 +232,7 @@
            <metal:annexToPrint use-macro="here/@@annexes-macros/annexToPrint" />
        </td>
        <td tal:content="annex/getObjSize"></td>
-       <td tal:condition="python:member.has_permission('Delete objects', annex)">
+       <td>
            <tal:actions replace="structure python: annex.restrictedTraverse('@@actions_panel')(showIcons=True)" />
        </td>
        </span>

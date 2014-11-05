@@ -366,16 +366,6 @@ class IMeetingItemWorkflowConditions(Interface):
         '''May the decision be definitely confirmed?'''
     def mayCorrect():
         '''May the user cancel the previous action performed on me?'''
-    def mayDelete():
-        '''May one delete me? By default, it is always True. This method is
-           used to allow more fine-grained security than the "Delete objects"
-           permission. Indeed, in some complex cases, even if the user has this
-           permission on an item, it is not desirable to delete it.'''
-    def mayDeleteAnnex(annex):
-        '''May I delete p_annex (p_annex is one of my annexes) ?. In the
-           PloneMeeting default implementation, it is always True. This method
-           is used to allow more fine-grained security than the "Delete objects"
-           permission on p_annex.'''
     def mayPublish():
         '''May one publish me?'''
     def meetingIsPublished():
@@ -513,9 +503,6 @@ class IMeetingWorkflowConditions(Interface):
            state, is my date still in the future, ...)'''
     def mayChangeItemsOrder():
         '''May one change order of my list of items ?'''
-    def mayDelete():
-        '''May one delete me? by default, a meeting may only be deleted if it
-           contains no item.'''
 
 
 class IMeetingWorkflowActions(Interface):

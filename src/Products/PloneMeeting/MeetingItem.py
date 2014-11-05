@@ -287,17 +287,6 @@ class MeetingItemWorkflowConditions:
                                     context=self.context.REQUEST))
         return False
 
-    security.declarePublic('mayDelete')
-    def mayDelete(self):
-        """
-          Hook for controlling delete action on a MeetingItem.
-        """
-        return True
-
-    security.declarePublic('mayDeleteAnnex')
-    def mayDeleteAnnex(self, annex):
-        return True
-
     security.declarePublic('meetingIsPublished')
     def meetingIsPublished(self):
         res = False
