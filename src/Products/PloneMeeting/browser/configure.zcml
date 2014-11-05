@@ -381,8 +381,7 @@
         name="pm-notify-event"
         class=".notify.NotifyEvent"
         for="*"
-        permission="cmf.ModifyPortalContent"
-        allowed_attributes="notify"/>
+        permission="cmf.ModifyPortalContent"/>
 
     <!-- Form that manage item assembly -->
     <browser:page

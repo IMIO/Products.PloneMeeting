@@ -12,4 +12,3 @@ class NotifyEvent(BrowserView):
 
     def notifyEditCancelledEvent(self):
         notify(EditCancelledEvent(self.context))
-
