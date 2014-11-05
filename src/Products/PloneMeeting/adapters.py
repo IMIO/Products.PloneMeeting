@@ -270,12 +270,12 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         if not super(MeetingContentDeletableAdapter, self).mayDelete():
             return False
 
-        member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
         if 'wholeMeeting' in self.context.REQUEST:
+            member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
             # if we try to remove a 'Meeting' using the 'wholeMeeting' option
             # we need to check that current user is a 'Manager'
-            if not member.has_role('Manager'):
-                return False
+            if member.has_role('Manager'):
+                return True
         else:
             if not self.context.getRawItems():
                 return True
