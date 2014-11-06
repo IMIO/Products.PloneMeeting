@@ -27,6 +27,8 @@ import logging
 from DateTime.DateTime import DateTime
 
 from Products.CMFCore.permissions import DeleteObjects
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -373,9 +375,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             except WorkflowException:
                 continue
             self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
             self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission('View', i1))
+            self.failIf(self.hasPermission(View, i1))
         # now here i1 is "presented"
         # once meeting/items are "published", it is visible by everybody
         isPublished = False
@@ -386,15 +388,15 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 continue
             self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
             if not isPublished and m1.queryState() == 'published':
                 isPublished = True
             if isPublished:
                 self.changeUser('pmCreator2')
-                self.failUnless(self.hasPermission('View', i1))
+                self.failUnless(self.hasPermission(View, i1))
             else:
                 self.changeUser('pmCreator2')
-                self.failIf(self.hasPermission('View', i1))
+                self.failIf(self.hasPermission(View, i1))
         # check that the meeting have been published
         self.failUnless(isPublished)
 
@@ -413,9 +415,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             except WorkflowException:
                 continue
             self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
             self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission('View', i1))
+            self.failIf(self.hasPermission(View, i1))
         # now here i1 is "presented"
         # once meeting/items are "published", it is NOT visible because of the wfAdaptation
         isPublished = False
@@ -426,12 +428,12 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 continue
             self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
             if not isPublished and m1.queryState() == 'published':
                 isPublished = True
             # no matter the element is published or not
             self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission('View', i1))
+            self.failIf(self.hasPermission(View, i1))
         #check that the meeting have been published
         self.failUnless(isPublished)
         # check every decided states of the item
@@ -448,7 +450,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         for availableDecisionTransition in availableDecisionTransitions:
             self.do(i1, availableDecisionTransition)
             self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission('View', i1))
+            self.failIf(self.hasPermission(View, i1))
             self.changeUser('pmManager')
             # compute backTransition
             backTransition = [tr for tr in self.transitions(i1) if tr.startswith('back')][0]
@@ -484,9 +486,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             except WorkflowException:
                 continue
             self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
             self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission('View', i1))
+            self.failIf(self.hasPermission(View, i1))
         # now here i1 is "presented"
         # once meeting/items are "published", it is visible by everybody
         isPublished = False
@@ -497,15 +499,15 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 continue
             self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
             if not isPublished and m1.queryState() == 'published':
                 isPublished = True
             if isPublished:
                 self.changeUser('pmCreator2')
-                self.failUnless(self.hasPermission('View', i1))
+                self.failUnless(self.hasPermission(View, i1))
             else:
                 self.changeUser('pmCreator2')
-                self.failIf(self.hasPermission('View', i1))
+                self.failIf(self.hasPermission(View, i1))
         #check that the meeting have been published
         self.failUnless(isPublished)
 
@@ -529,9 +531,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             except WorkflowException:
                 continue
             self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
             self.changeUser('pmCreator2')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
         # now here i1 is "presented"
         # once meeting/items are "published", it is visible by everybody
         isPublished = False
@@ -542,11 +544,11 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 continue
             self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
             if not isPublished and m1.queryState() == 'published':
                 isPublished = True
             self.changeUser('pmCreator2')
-            self.failUnless(self.hasPermission('View', i1))
+            self.failUnless(self.hasPermission(View, i1))
         #check that the meeting have been published
         self.failUnless(isPublished)
 
@@ -570,7 +572,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         i1 = self.create('MeetingItem')
         i1.setDecision('<p>My decision</p>')
-        self.failUnless(self.hasPermission('Modify portal content', i1))
+        self.failUnless(self.hasPermission(ModifyPortalContent, i1))
         self.changeUser('pmManager')
         m1 = self.create('Meeting', date=DateTime())
         for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
@@ -581,7 +583,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                 continue
             self.changeUser('pmCreator1')
             # the creator can no more modify the item
-            self.failIf(self.hasPermission('Modify portal content', i1))
+            self.failIf(self.hasPermission(ModifyPortalContent, i1))
         for tr in self._getTransitionsToCloseAMeeting():
             self.changeUser('pmManager')
             if tr in self.transitions(m1):
@@ -590,14 +592,14 @@ class testWFAdaptations(PloneMeetingTestCase):
                 continue
             self.changeUser('pmCreator1')
             # the creator can no more modify the item
-            self.failIf(self.hasPermission('Modify portal content', i1))
+            self.failIf(self.hasPermission(ModifyPortalContent, i1))
 
     def _creator_edits_unless_closed_active(self):
         '''Tests while 'creator_edits_unless_closed' wfAdaptation is active.'''
         self.changeUser('pmCreator1')
         i1 = self.create('MeetingItem')
         i1.setDecision("<p>My decision</p>")
-        self.failUnless(self.hasPermission('Modify portal content', i1))
+        self.failUnless(self.hasPermission(ModifyPortalContent, i1))
         self.changeUser('pmManager')
         m1 = self.create('Meeting', date=DateTime())
         for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
@@ -610,9 +612,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             # the creator can still modify the item if certain states
             # by default every state before "present"
             if not i1.queryState() in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
-                self.failUnless(self.hasPermission('Modify portal content', i1))
+                self.failUnless(self.hasPermission(ModifyPortalContent, i1))
             else:
-                self.failIf(self.hasPermission('Modify portal content', i1))
+                self.failIf(self.hasPermission(ModifyPortalContent, i1))
         for tr in self._getTransitionsToCloseAMeeting():
             self.changeUser('pmManager')
             if tr in self.transitions(m1):
@@ -622,9 +624,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.changeUser('pmCreator1')
             # the creator can still modify the item if certain states
             if not i1.queryState() in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
-                self.failUnless(self.hasPermission('Modify portal content', i1))
+                self.failUnless(self.hasPermission(ModifyPortalContent, i1))
             else:
-                self.failIf(self.hasPermission('Modify portal content', i1))
+                self.failIf(self.hasPermission(ModifyPortalContent, i1))
 
     def test_pm_WFA_local_meeting_managers(self):
         '''Test the workflowAdaptation 'local_meeting_managers'.'''
@@ -655,25 +657,25 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'local_meeting_managers' wfAdaptation is inactive.'''
         self.changeUser('pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        self.failUnless(self.hasPermission('View', m1))
-        self.failUnless(self.hasPermission('Modify portal content', m1))
+        self.failUnless(self.hasPermission(View, m1))
+        self.failUnless(self.hasPermission(ModifyPortalContent, m1))
         # every MeetingManagers can access created meetings
         self.changeUser('pmManager2')
-        self.failUnless(self.hasPermission('View', m1))
-        self.failUnless(self.hasPermission('Modify portal content', m1))
+        self.failUnless(self.hasPermission(View, m1))
+        self.failUnless(self.hasPermission(ModifyPortalContent, m1))
 
     def _local_meeting_managers_active(self):
         '''Tests while 'local_meeting_managers' wfAdaptation is active.'''
         # the meeting creator can manage the
         self.changeUser('pmManager')
         m1 = self.create('Meeting', date=DateTime())
-        self.failUnless(self.hasPermission('Modify portal content', m1))
+        self.failUnless(self.hasPermission(ModifyPortalContent, m1))
         # only MeetingManagers of the same groups can access created meetings
         self.changeUser('pmManager2')
-        self.failIf(self.hasPermission('Modify portal content', m1))
+        self.failIf(self.hasPermission(ModifyPortalContent, m1))
         # same group MeetingManagers can access the Meeting
         self.changeUser('pmManager3')
-        self.failUnless(self.hasPermission('Modify portal content', m1))
+        self.failUnless(self.hasPermission(ModifyPortalContent, m1))
 
     def test_pm_WFA_return_to_proposing_group(self):
         '''Test the workflowAdaptation 'return_to_proposing_group'.'''
@@ -737,6 +739,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         for permission in cloned_state_permissions:
             cloned_state_permission_with_meetingmanager = []
+            acquired = isinstance(cloned_state_permissions[permission], list) and True or False
             if not 'MeetingManager' in cloned_state_permissions[permission]:
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
                 cloned_state_permission_with_meetingmanager.append('MeetingManager')
@@ -745,8 +748,15 @@ class testWFAdaptations(PloneMeetingTestCase):
             # 'Delete objects' is only given to ['Manager', 'MeetingManager']
             if permission == DeleteObjects:
                 cloned_state_permission_with_meetingmanager = ['Manager', 'MeetingManager']
+
+            if not acquired:
+                cloned_state_permission_with_meetingmanager = tuple(cloned_state_permission_with_meetingmanager)
+
             self.assertEquals(cloned_state_permission_with_meetingmanager,
                               new_state_permissions[permission])
+            # Permission acquisition is also cloned
+            self.assertEquals(itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].getPermissionInfo(permission)['acquired'],
+                              itemWF.states['returned_to_proposing_group'].getPermissionInfo(permission)['acquired'])
 
     def _return_to_proposing_group_active_custom_permissions(self):
         '''Helper method to test 'return_to_proposing_group' wfAdaptation regarding the
@@ -761,17 +771,22 @@ class testWFAdaptations(PloneMeetingTestCase):
         # in the permissions cloned from the defined state to clone
         CUSTOM_PERMISSION = 'PloneMeeting: Write item observations'
         if not 'MeetingManager' in itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION]:
-            itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION].remove('MeetingManager')
+            if isinstance(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION], tuple):
+                tmp_list = list(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
+                tmp_list.remove('MeetingManager')
+                itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION] = tuple(tmp_list)
+            else:
+                itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION].remove('MeetingManager')
         self.assertEquals(
             itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION],
-            tuple(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION]))
+            itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
         # we will add the 'MeetingMember' role, make sure it is not already there...
         if 'MeetingMember' in itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION]:
             itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION].remove('MeetingMember')
         self.failIf('MeetingMember' in itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
         # we define the custom permissions and we run the wfAdaptation again...
         adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {'PloneMeeting: Write item observations':
-                                                                    ['Manager', 'MeetingManager', 'MeetingMember', ]}
+                                                                    ('Manager', 'MeetingManager', 'MeetingMember', )}
         self._reApplyWFAdaptationReturnToProposingGroup(itemWF)
         # now our custom permission must be taken into account but other permissions should be the same than
         # the ones defined in the state to clone permissions of
@@ -779,6 +794,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         for permission in cloned_state_permissions:
             cloned_state_permission_with_meetingmanager = []
+            acquired = isinstance(cloned_state_permissions[permission], list) and True or False
             if not 'MeetingManager' in cloned_state_permissions[permission]:
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
                 cloned_state_permission_with_meetingmanager.append('MeetingManager')
@@ -792,15 +808,17 @@ class testWFAdaptations(PloneMeetingTestCase):
             # if it was not defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
             if permission == DeleteObjects:
                 cloned_state_permission_with_meetingmanager = ['Manager', 'MeetingManager']
-            self.assertEquals(tuple(cloned_state_permission_with_meetingmanager),
-                              tuple(new_state_permissions[permission]))
+            if not acquired:
+                cloned_state_permission_with_meetingmanager = tuple(cloned_state_permission_with_meetingmanager)
+            self.assertEquals(cloned_state_permission_with_meetingmanager,
+                              new_state_permissions[permission])
         # if 'Delete objects' was defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
         # the defined permissions are kept.  For example, only give 'Delete objects' to 'Manager'
-        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[DeleteObjects] = ['Manager']
+        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[DeleteObjects] = ('Manager', )
         self._reApplyWFAdaptationReturnToProposingGroup(itemWF)
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         self.assertEquals(('Manager', ),
-                          tuple(new_state_permissions[DeleteObjects]))
+                          new_state_permissions[DeleteObjects])
 
     def _reApplyWFAdaptationReturnToProposingGroup(self, itemWF):
         '''Re-apply the 'return_to_proposing_group' WF adaptation,
@@ -826,7 +844,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # now that it is presented, the pmCreator1/pmReviewer1 can not edit it anymore
         for userId in ('pmCreator1', 'pmReviewer1'):
             self.changeUser(userId)
-            self.failIf(self.hasPermission('Modify portal content', item))
+            self.failIf(self.hasPermission(ModifyPortalContent, item))
         # the item can be send back to the proposing group by the MeetingManagers only
         for userId in ('pmCreator1', 'pmReviewer1'):
             self.changeUser(userId)
@@ -836,10 +854,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         # send the item back to the proposing group so the proposing group as an edit access to it
         self.do(item, 'return_to_proposing_group')
         self.changeUser('pmCreator1')
-        self.failUnless(self.hasPermission('Modify portal content', item))
+        self.failUnless(self.hasPermission(ModifyPortalContent, item))
+        # the item creator may not be able to delete the item
+        self.failIf(self.hasPermission(DeleteObjects, item))
         # MeetingManagers can still edit it also
         self.changeUser('pmManager')
-        self.failUnless(self.hasPermission('Modify portal content', item))
+        self.failUnless(self.hasPermission(ModifyPortalContent, item))
         # the creator can send the item back to the meeting managers, as the meeting managers
         for userId in ('pmCreator1', 'pmManager'):
             self.changeUser(userId)
