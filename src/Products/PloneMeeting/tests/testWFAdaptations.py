@@ -782,7 +782,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
         # we will add the 'MeetingMember' role, make sure it is not already there...
         if 'MeetingMember' in itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION]:
-            itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION].remove('MeetingMember')
+            tmp_list = list(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
+            tmp_list.remove('MeetingMember')
+            itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION] = tuple(tmp_list)
         self.failIf('MeetingMember' in itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
         # we define the custom permissions and we run the wfAdaptation again...
         adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {'PloneMeeting: Write item observations':
