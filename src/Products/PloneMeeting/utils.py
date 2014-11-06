@@ -440,14 +440,9 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
-    tool = obj.portal_plonemeeting
-    # If p_isRole is True and the current user has this role, I will not send
-    # mail: a MeetingManager is already notified!
-    currentUser = obj.portal_membership.getAuthenticatedMember()
-    if isRole and currentUser.has_role(permissionOrRole, obj):
-        # In this case we don't know if mail is enabled or disabled; we just
-        # decide to avoid sending the mail.
-        return
+    tool = getToolByName(obj, 'portal_plonemeeting')
+    membershipTool = getToolByName(obj, 'portal_membership')
+    currentUser = membershipTool.getAuthenticatedMember()
     cfg = tool.getMeetingConfig(obj)
     # Do not send the mail if mail mode is "deactivated".
     if cfg.getMailMode() == 'deactivated':
@@ -462,16 +457,15 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
     if isRole and (permissionOrRole == 'Owner'):
         userIds = [obj.Creator()]
     else:
-        userIds = obj.portal_membership.listMemberIds()
+        userIds = membershipTool.listMemberIds()
         # When using the LDAP plugin, this method does not return all
         # users, nor the cached users!
     for userId in userIds:
-        user = obj.acl_users.getUser(userId)
-        if not user:
+        user = membershipTool.getMemberById(userId)
+        # do not warn user doing the action
+        if not user or userId == currentUser.getId():
             continue
-        # May happen if someone deletes the user directly in the ZMI.
-        userInfo = obj.portal_membership.getMemberById(userId)
-        if not userInfo.getProperty('email'):
+        if not user.getProperty('email'):
             continue
         # Does the user have the corresponding permission on p_obj ?
         if isRole:
@@ -480,7 +474,7 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
             checkMethod = user.has_permission
         if not checkMethod(permissionOrRole, obj):
             continue
-        recipient = tool.getMailRecipient(userInfo)
+        recipient = tool.getMailRecipient(user)
         # Must we avoid sending mail to this recipient for some custom reason?
         if not adap.includeMailRecipient(event, userId):
             continue
@@ -491,7 +485,8 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
             continue
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
-    sendMail(recipients, obj, event, mapping=mapping)
+    if recipients:
+        sendMail(recipients, obj, event, mapping=mapping)
     return True
 
 
