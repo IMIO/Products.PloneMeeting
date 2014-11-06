@@ -4,6 +4,7 @@
    PloneMeeting data structures and workflows.'''
 
 from Products.Archetypes.atapi import *
+from Products.CMFCore.permissions import DeleteObjects
 from Products.PloneMeeting.config import ReadDecision, WriteDecision
 
 
@@ -25,12 +26,17 @@ RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
 # with a RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE, the permissions defined here under in
 # RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS will override and be applied after cloned permissions
 # a valid value is something like :
-# {'Modify portal content': ['Manager', 'MeetingManager', 'MeetingMember', 'MeetingReviewer', ],
-#  'Review portal content': ['Manager', 'MeetingManager', 'MeetingReviewer', ],}
+# {'Modify portal content': ('Manager', 'MeetingManager', 'MeetingMember', 'MeetingReviewer', ),
+#  'Review portal content': ('Manager', 'MeetingManager', 'MeetingReviewer', ),}
 # this way, MeetingMembers can edit the item but only MeetingReviewer can send it back to the
 # meeting managers and the other permissions are kept from the state to clone permissions defined
 # in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
-RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}  # {'PloneMeeting: Write item observations': ['Manager', 'MeetingManager', 'MeetingMember', ]}
+# XXX take care that info about the fact that a permission is acquired is a bit weird :
+# if roles for a permission is a tuple, it means that it is not acquired and if it is a list,
+# it means that is is acquired... so most of times, use tuples to define roles
+# For example :
+# {'PloneMeeting: Write item observations': ('Manager', 'MeetingManager', 'MeetingMember', )}
+RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}
 # states of the meeting from wich an item can be 'returned_to_proposing_group'
 RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
 
@@ -328,10 +334,10 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
     if 'only_creator_may_delete' in wfAdaptations:
         wf = itemWorkflow
         for state in wf.states.values():
-            if 'MeetingMember' in state.permission_roles['Delete objects']:
-                state.setPermission('Delete objects', 0, ['MeetingMember', 'Manager'])
+            if 'MeetingMember' in state.permission_roles[DeleteObjects]:
+                state.setPermission(DeleteObjects, 0, ['MeetingMember', 'Manager'])
             else:
-                state.setPermission('Delete objects', 0, ['Manager', ])
+                state.setPermission(DeleteObjects, 0, ['Manager', ])
         logger.info(WF_APPLIED % ("only_creator_may_delete", meetingConfig.getId()))
 
     # "no_global_observation" means that during the whole decision process,
@@ -435,20 +441,32 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             # clone the permissions of the given RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE if it exists
             cloned_permissions_with_meetingmanager = {}
             if hasattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE):
-                stateToClonePermissions = getattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE)
+                stateToClone = getattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE)
                 # we must make sure the MeetingManagers still may access this item
                 # so add MeetingManager role to every cloned permissions
-                cloned_permissions = dict(stateToClonePermissions.permission_roles)
+                cloned_permissions = dict(stateToClone.permission_roles)
                 # we need to use an intermediate dict because roles are stored as a tuple and we need a list...
                 for permission in cloned_permissions:
+                    # the acquisition is defined like this : if permissions is a tuple, it is not acquired
+                    # if it is a list, it is acquired...  WTF???  So make sure we store the correct type...
+                    acquired = isinstance(cloned_permissions[permission], list) and True or False
                     cloned_permissions_with_meetingmanager[permission] = list(cloned_permissions[permission])
                     if not 'MeetingManager' in cloned_permissions[permission]:
                         cloned_permissions_with_meetingmanager[permission].append('MeetingManager')
-            # no apply custom permissions defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+                    if not acquired:
+                        cloned_permissions_with_meetingmanager[permission] = tuple(cloned_permissions_with_meetingmanager[permission])
+            # now apply custom permissions defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
             cloned_permissions_with_meetingmanager.update(RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS)
 
-            # 'Delete objects' will only be availble to ['Manager', 'MeetingManager']
-            cloned_permissions_with_meetingmanager['Delete objects'] = ['Manager', 'MeetingManager']
+            # if we are cloning an existing state permissions, make sure DeleteObjects
+            # is only be availble to ['Manager', 'MeetingManager']
+            # if custom permissions are defined, keep what is defined in it
+            if not DeleteObjects in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS:
+                del_obj_perm = stateToClone.getPermissionInfo(DeleteObjects)
+                if del_obj_perm['acquired']:
+                    cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', 'MeetingManager']
+                else:
+                    cloned_permissions_with_meetingmanager[DeleteObjects] = ('Manager', 'MeetingManager')
 
             # finally, apply computed permissions, aka cloned + custom
             newState.permission_roles = cloned_permissions_with_meetingmanager
