@@ -263,6 +263,22 @@ class testMeeting(PloneMeetingTestCase):
                            ('public', 'development'),
                            ('public', 'events'),
                            ('public', 'research')])
+        # test insertion of an item with large difference between to levels
+        # of order, here 'privacy' can take 2 different values and category
+        # can take 6 values
+        newItem = self.create('MeetingItem')
+        # use first privacy
+        newItem.setPrivacy('secret')
+        # use last category
+        newItem.setCategory(item.listCategories().keys()[-1])
+        self.presentItem(newItem)
+        self.assertEquals([(item.getPrivacy(), item.getCategory()) for item in meeting.getItemsInOrder()],
+                          [('secret', 'development'),
+                           ('secret', 'events'),
+                           ('secret', 'projects'),
+                           ('public', 'development'),
+                           ('public', 'events'),
+                           ('public', 'research')])
 
     def test_pm_InsertItemPrivacyThenCategoriesWithDisabledCategory(self):
         '''Sort method tested here is "on_privacy_then_categories" but
