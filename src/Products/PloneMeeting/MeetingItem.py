@@ -2394,38 +2394,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            contains every sub insertMethod given in p_insertMethods.'''
         res = None
         item = self.getSelf()
-        oneLevelsTotals = []
+        # we need to compute len of relevant levels
+        # we take largest level +1 and we make a list with powes of this largest level
+        # so if we have 2 insertingMethods and largest level is 9, we will have
+        # [1000, 100, 10]
+        # first find largest level
+        largestLevelValue = 0
         oneLevels = []
-        if len(insertMethods) > 1:
-            # we need to compute len of relevant levels
-            # a oneLevel is a complete set of useable values for a given insertMethod
-            # for example "10" categories or "2" privacy values
-            # So if we have insertMethods ['on_privacy', 'on_proposing_groups', 'on_categories']
-            # if we have "2" privacies, "10 proposing groups" and "8 categories", the first
-            # step here under will create the list [2, 10, 8]
-            for insertMethod in insertMethods:
-                oneLevels.append(item._findOneLevelFor(insertMethod['insertingMethod'], item))
-            # now what we will do is build a list for wich last element is always "1"
-            # and first elements are factorial of elements of the list
-            # so [2, 10, 8] will be translated to [160, 80, 1] aka 2*10*8, 10*8 and last element always 1
-            for oneLevel in oneLevels:
-                oneLevelValue = 1
-                for elt in oneLevels[oneLevels.index(oneLevel):]:
-                    oneLevelValue = oneLevelValue * elt
-                oneLevelsTotals.append(oneLevelValue)
-        # last value of oneLevels is always "1"
-        oneLevelsTotals.append(1)
-        oneLevels.append(1)
+        for insertMethod in insertMethods:
+            levelValue = item._findOneLevelFor(insertMethod['insertingMethod'], item)
+            oneLevels.append(levelValue)
+            if levelValue > largestLevelValue:
+                largestLevelValue = levelValue + 1
+        # now build the list of levels values
+        levels = []
+        lastLevel = 1
+        for insertMethod in insertMethods:
+            levels.append((lastLevel * largestLevelValue))
+            lastLevel = lastLevel * largestLevelValue
+        levels.reverse()
+
         for insertMethod in insertMethods:
             if not res:
                 res = 0
             order = item._findOrderFor(insertMethod['insertingMethod'], item)
             # check if we need to reverse order
             if insertMethod['reverse'] == '1':
-                halfOneLevel = oneLevels[insertMethods.index(insertMethod)]/2
+                halfOneLevel = levels[insertMethods.index(insertMethod)]/2
                 halfOneLevelDiff = halfOneLevel - order
                 order = int(halfOneLevel + halfOneLevelDiff)
-            res = res + oneLevelsTotals[insertMethods.index(insertMethod)] * order
+            res = res + levels[insertMethods.index(insertMethod)] * order
 
         if res is None:
             raise PloneMeetingError(INSERT_ITEM_ERROR)
