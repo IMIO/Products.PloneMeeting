@@ -16,6 +16,7 @@ from plone.directives import form
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.utils import getHistory
+from Products.PloneMeeting.utils import getLastEvent
 
 
 class IMeetingAdvice(Interface):
@@ -155,6 +156,19 @@ class MeetingAdvice(Container):
         if self.REQUEST.get('mayGiveAdvice', False):
             return True
         return False
+
+    def get_advice_given_on(self):
+        '''Return the date the advice was given on.
+           Returns older date between modified() and last event 'giveAdvice'.'''
+        lastEvent = getLastEvent(self, 'giveAdvice')
+        if not lastEvent:
+            return self.modified()
+        else:
+            modified = self.modified()
+            if lastEvent['time'] < modified:
+                return lastEvent['time']
+            else:
+                return modified
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
