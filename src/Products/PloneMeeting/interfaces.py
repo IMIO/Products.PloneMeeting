@@ -338,7 +338,9 @@ class IMeetingItemDocumentation:
            to be copied to the new cloned items.  If we want to add some arbitrary
            fields like fields coming from a SchemaExtender, we can specify this
            with this method that will returns a list of extra field ids to copy to
-           the cloned item.'''
+           the cloned item.  The parameter p_cloned_to_same_mc is True if current item
+           will be cloned to the same meeting config, and is False if item is
+           actually sent to another meeting config.'''
     def itemPositiveDecidedStates():
         '''Return a tuple containing item states considered as 'positive'
            like 'accepted' for example.'''

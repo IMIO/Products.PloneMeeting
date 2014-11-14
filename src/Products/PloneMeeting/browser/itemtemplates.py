@@ -7,8 +7,6 @@ from plone.app.layout.navigation.navtree import NavtreeStrategyBase
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
-from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FOR_TEMPLATE
 
 
 class ItemTemplateView(BrowserView):
@@ -60,8 +58,7 @@ class ItemTemplateView(BrowserView):
         member = membershipTool.getAuthenticatedMember()
         newItem = templateItem.clone(newOwnerId=member.id,
                                      cloneEventAction='create_meeting_item_from_template',
-                                     destFolder=self.context,
-                                     copyFields=DEFAULT_COPIED_FIELDS + EXTRA_COPIED_FIELDS_FOR_TEMPLATE)
+                                     destFolder=self.context)
         return newItem
 
     @memoize

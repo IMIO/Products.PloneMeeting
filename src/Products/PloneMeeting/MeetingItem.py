@@ -1671,7 +1671,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
 
     security.declarePublic('getExtraFieldsToCopyWhenCloning')
-    def getExtraFieldsToCopyWhenCloning(self):
+    def getExtraFieldsToCopyWhenCloning(self, cloned_to_same_mc):
         '''Check doc in interfaces.py.'''
         return []
 
@@ -3914,8 +3914,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Copy/paste item into the folder
         sourceFolder = self.getParentNode()
         copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
+        # if we are cloning to the same mc, keep some more fields
+        cloned_to_same_mc = not newPortalType and True or False
+        if cloned_to_same_mc:
+            copyFields = copyFields + EXTRA_COPIED_FIELDS_SAME_MC
         # Check if an external plugin want to add some fieldsToCopy
-        copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning()
+        copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc)
         newItem = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
                                   newOwnerId=newOwnerId, copyFields=copyFields,
                                   newPortalType=newPortalType)[0]
