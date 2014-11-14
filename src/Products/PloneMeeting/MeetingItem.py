@@ -1595,7 +1595,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.insert(0, ('_none_', translate('make_a_choice',
                                                domain='PloneMeeting',
                                                context=self.REQUEST)))
-        return DisplayList(tuple(res))
+        res = DisplayList(tuple(res))
+        # make sure current category is listed here
+        if not self.getCategory() in res.keys():
+            current_cat = self.getCategory(theObject=True)
+            res.add(current_cat.getId(), current_cat.getName())
+        return res
 
     security.declarePublic('getCategory')
     def getCategory(self, theObject=False, **kwargs):
