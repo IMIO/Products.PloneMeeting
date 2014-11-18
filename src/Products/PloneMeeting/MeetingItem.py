@@ -1597,7 +1597,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                context=self.REQUEST)))
         res = DisplayList(tuple(res))
         # make sure current category is listed here
-        if not self.getCategory() in res.keys():
+        if self.getCategory() and not self.getCategory() in res.keys():
             current_cat = self.getCategory(theObject=True)
             res.add(current_cat.getId(), current_cat.getName())
         return res
