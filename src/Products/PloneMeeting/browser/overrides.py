@@ -1,6 +1,7 @@
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
+from plone.memoize import ram
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 
@@ -217,6 +218,65 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                                    'renderActions',
                                    'renderHistory', )
 
+    def __call___cachekey(method,
+                          self,
+                          useIcons=True,
+                          showTransitions=True,
+                          appendTypeNameToTransitionLabel=False,
+                          showEdit=True,
+                          showOwnDelete=True,
+                          showActions=True,
+                          showAddContent=False,
+                          showHistory=False,
+                          showHistoryLastEventHasComments=True,
+                          **kwargs):
+        '''cachekey method for self.__call__ method.
+           The cache is invalidated if :
+           - linked meeting is modified (modified is also triggered when review_state changed);
+           - item is modified (modified is also triggered when review_state changed);
+           - something changed around advices;
+           - different item or user;
+           - user groups changed.'''
+        meetingModified = ''
+        meeting = self.context.getMeeting()
+        if meeting:
+            meetingModified = self.context.getMeeting().modified()
+        user = self.request['AUTHENTICATED_USER']
+        userGroups = user.getGroups()
+        userRoles = user.getRoles(),
+        return (self.context, self.context.modified(), self.context.adviceIndex,
+                user.getId(), userGroups, userRoles,
+                meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
+                showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
+                kwargs)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self,
+                 useIcons=True,
+                 showTransitions=True,
+                 appendTypeNameToTransitionLabel=False,
+                 showEdit=True,
+                 showOwnDelete=True,
+                 showActions=True,
+                 showAddContent=False,
+                 showHistory=False,
+                 showHistoryLastEventHasComments=True,
+                 **kwargs):
+        """
+          Redefined to add ram.cache...
+        """
+        return super(MeetingItemActionsPanelView, self).\
+            __call__(useIcons=useIcons,
+                     showTransitions=showTransitions,
+                     appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
+                     showEdit=showEdit,
+                     showOwnDelete=showOwnDelete,
+                     showActions=showActions,
+                     showAddContent=showAddContent,
+                     showHistory=showHistory,
+                     showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+                     **kwargs)
+
     def renderArrows(self):
         """
         """
@@ -252,6 +312,60 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                                    'renderDeleteWholeMeeting',
                                    'renderEdit',
                                    'renderActions', ]
+
+    def __call___cachekey(method,
+                          self,
+                          useIcons=True,
+                          showTransitions=True,
+                          appendTypeNameToTransitionLabel=False,
+                          showEdit=True,
+                          showOwnDelete=True,
+                          showActions=True,
+                          showAddContent=False,
+                          showHistory=False,
+                          showHistoryLastEventHasComments=True,
+                          **kwargs):
+        '''cachekey method for self.__call__ method.
+           The cache is invalidated if :
+           - meeting is modified (modified is also triggered when review_state changed);
+           - getRawItems or getRawLateItems changed;
+           - different item or user;
+           - user groups changed.'''
+        user = self.request['AUTHENTICATED_USER']
+        userGroups = user.getGroups()
+        userRoles = user.getRoles(),
+        return (self.context, self.context.modified(), self.context.getRawItems(), self.context.getRawLateItems(),
+                user.getId(), userGroups, userRoles,
+                useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
+                showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
+                kwargs)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self,
+                 useIcons=True,
+                 showTransitions=True,
+                 appendTypeNameToTransitionLabel=False,
+                 showEdit=True,
+                 showOwnDelete=True,
+                 showActions=True,
+                 showAddContent=False,
+                 showHistory=False,
+                 showHistoryLastEventHasComments=True,
+                 **kwargs):
+        """
+          Redefined to add ram.cache...
+        """
+        return super(MeetingActionsPanelView, self).\
+            __call__(useIcons=useIcons,
+                     showTransitions=showTransitions,
+                     appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
+                     showEdit=showEdit,
+                     showOwnDelete=showOwnDelete,
+                     showActions=showActions,
+                     showAddContent=showAddContent,
+                     showHistory=showHistory,
+                     showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+                     **kwargs)
 
     def renderDeleteWholeMeeting(self):
         """
