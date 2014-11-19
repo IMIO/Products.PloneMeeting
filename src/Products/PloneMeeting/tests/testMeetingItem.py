@@ -22,6 +22,8 @@
 # 02110-1301, USA.
 #
 
+from copy import deepcopy
+
 from AccessControl import Unauthorized
 from DateTime import DateTime
 
@@ -2136,6 +2138,85 @@ class testMeetingItem(PloneMeetingTestCase):
         # toggling it again will release the taking over again
         view.toggle(takenOverByFrom=item.getTakenOverBy())
         self.assertTrue(not item.getTakenOverBy())
+
+    def test_pm_ItemActionsPanelCaching(self):
+        '''For performance, actions panel is cached,
+           check that cache is correctly invalidated.'''
+        # use categories
+        self.meetingConfig.setUseGroupsAsCategories(False)
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        rendered_actions_panel = actions_panel()
+
+        # invalidated when item edited
+        # an item can not be proposed if no selected category
+        # remove selected category and notify edited
+        originalCategory = item.getCategory()
+        item.setCategory('')
+        item.at_post_edit_script()
+        self.assertTrue(not self.transitions(item))
+        no_category_rendered_actions_panel = actions_panel()
+        self.assertTrue(not no_category_rendered_actions_panel ==
+                        rendered_actions_panel)
+        item.setCategory(originalCategory)
+        item.at_post_edit_script()
+        # changed again
+        rendered_actions_panel = actions_panel()
+        self.assertTrue(not no_category_rendered_actions_panel ==
+                        rendered_actions_panel)
+
+        # invalidated when item state changed
+        self.proposeItem(item)
+        proposedItemForCreator_rendered_actions_panel = actions_panel()
+        self.assertTrue(not rendered_actions_panel ==
+                        proposedItemForCreator_rendered_actions_panel)
+
+        # invalidated when user changed
+        # 'pmReviewer1' may validate the item, the rendered panel will not be the same
+        self.changeUser('pmReviewer1')
+        proposedItemForReviewer_rendered_actions_panel = actions_panel()
+        self.assertTrue(not proposedItemForCreator_rendered_actions_panel ==
+                        proposedItemForReviewer_rendered_actions_panel)
+        self.validateItem(item)
+        validatedItemForReviewer_rendered_actions_panel = actions_panel()
+        self.assertTrue(not proposedItemForReviewer_rendered_actions_panel ==
+                        validatedItemForReviewer_rendered_actions_panel)
+
+        # invalidated when linked meeting changed
+        self.changeUser('pmManager')
+        # MeetingManager is another user with other actions, double check...
+        validatedItemForManager_rendered_actions_panel = actions_panel()
+        self.assertTrue(not validatedItemForReviewer_rendered_actions_panel ==
+                        validatedItemForManager_rendered_actions_panel)
+        meeting = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
+        self.presentItem(item)
+        # create a dummy action that is displayed in the item actions panel
+        # when linked meeting date is '2010/10/10', then notify meeting is modified, actions panel
+        # on item will be invalidted
+        itemType = self.portal.portal_types[item.portal_type]
+        itemType.addAction(id='dummy',
+                           name='dummy',
+                           action='',
+                           icon_expr='',
+                           condition="python: context.getMeeting().getDate().strftime('%Y/%d/%m') == '2010/10/10'",
+                           permission=('View',),
+                           visible=True,
+                           category='object_buttons')
+        # action not available for now
+        pa = self.portal.portal_actions
+        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(item)['object_buttons']]
+        # for now action is not available on the item
+        self.assertTrue(not 'dummy' in object_buttons)
+        beforeMeetingEdit_rendered_actions_panel = actions_panel()
+        meeting.setDate(DateTime('2010/10/10'))
+        meeting.at_post_edit_script()
+        # now action is available
+        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(item)['object_buttons']]
+        self.assertTrue('dummy' in object_buttons)
+        # and actions panel has been invalidated
+        self.assertTrue(not beforeMeetingEdit_rendered_actions_panel == actions_panel())
 
 
 def test_suite():
