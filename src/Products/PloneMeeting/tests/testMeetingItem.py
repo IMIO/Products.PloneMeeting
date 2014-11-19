@@ -22,8 +22,6 @@
 # 02110-1301, USA.
 #
 
-from copy import deepcopy
-
 from AccessControl import Unauthorized
 from DateTime import DateTime
 
