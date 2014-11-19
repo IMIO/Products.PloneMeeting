@@ -30,7 +30,8 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
 from Products.PloneMeeting.utils import sendMailIfRelevant, addRecurringItemsIfRelevant, \
-    sendAdviceToGiveMailIfRelevant, applyOnTransitionFieldTransform, meetingTriggerTransitionOnLinkedItems
+    sendAdviceToGiveMailIfRelevant, applyOnTransitionFieldTransform, \
+    meetingTriggerTransitionOnLinkedItems
 
 podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 
@@ -159,6 +160,13 @@ def onItemAdded(item, event):
     item.emergency_changes_history = PersistentList()
     # Add a place to store completeness changes history
     item.completeness_changes_history = PersistentList()
+
+
+def onItemModified(item, event):
+    '''Called when an item is modified so we can invalidate caching on linked meeting.'''
+    meeting = item.getMeeting()
+    if meeting:
+        meeting.invalidate_meeting_actions_panel_cache = True
 
 
 def onMeetingAdded(meeting, event):

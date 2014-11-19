@@ -43,6 +43,7 @@ from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
 from plone.memoize import ram
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
@@ -3635,6 +3636,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         forceHTMLContentTypeForEmptyRichFields(self)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
+        # notify modified
+        notify(ObjectEditedEvent(self))
         self.reindexObject()
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Item at %s edited by "%s".' %

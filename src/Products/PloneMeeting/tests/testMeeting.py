@@ -22,6 +22,8 @@
 # 02110-1301, USA.
 #
 
+from copy import deepcopy
+
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
 
@@ -1030,6 +1032,102 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse(items)
         # the preferred meeting of the item is now 'whatever'
         self.assertTrue(item.getPreferredMeeting() == ITEM_NO_PREFERRED_MEETING_VALUE)
+
+    def test_pm_MeetingActionsPanelCaching(self):
+        '''For performance, actions panel is cached,
+           check that cache is correctly invalidated.
+           Actions panel is invalidated when :
+           - meeting is modified;
+           - meeting state changed;
+           - a linked item changed;
+           - user changed;
+           - user groups changed;
+           - user roles changed.'''
+        self.changeUser('pmManager')
+        self._removeConfigObjectsFor(self.meetingConfig)
+        # invalidated when meeting is modified
+        meeting = self.create('Meeting', date=DateTime('2011/11/11'))
+        actions_panel = meeting.restrictedTraverse('@@actions_panel')
+        # add an action that is only returned when meeting date is 2010/10/10
+        meetingType = self.portal.portal_types[meeting.portal_type]
+        meetingType.addAction(id='dummy',
+                              name='dummy',
+                              action='',
+                              icon_expr='',
+                              condition="python: context.getDate().strftime('%Y/%d/%m') == '2010/10/10'",
+                              permission=('View',),
+                              visible=True,
+                              category='object_buttons')
+        # not available for now
+        pa = self.portal.portal_actions
+        # not object_buttons actions at all
+        self.assertTrue(not 'object_buttons' in pa.listFilteredActionsFor(meeting))
+        beforeEdit_rendered_actions_panel = actions_panel()
+        # now edit the meeting
+        meeting.setDate(DateTime('2010/10/10'))
+        meeting.at_post_edit_script()
+        # action is available
+        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
+        self.assertTrue('dummy' in object_buttons)
+        # actions panel was invalidated
+        afterEdit_rendered_actions_panel = actions_panel()
+        self.assertTrue(not beforeEdit_rendered_actions_panel == afterEdit_rendered_actions_panel)
+
+        # invalidated when getRawItems/getRawLateItems changed
+        # for now no transitions on the meeting as it contains no item
+        # insert an item
+        self.assertTrue(not self.transitions(meeting))
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        presentedItem_rendered_actions_panel = actions_panel()
+        self.assertTrue(not afterEdit_rendered_actions_panel == presentedItem_rendered_actions_panel)
+
+        # invalidated when review state changed
+        # just make sure the contained item is not changed
+        self.meetingConfig.setOnMeetingTransitionItemTransitionToTrigger(())
+        itemModified = item.modified()
+        itemWFHistory = deepcopy(item.workflow_history)
+        self.freezeMeeting(meeting)
+        self.assertTrue(item.modified() == itemModified)
+        self.assertTrue(item.workflow_history == itemWFHistory)
+        frozenMeeting_rendered_actions_panel = actions_panel()
+        self.assertTrue(not presentedItem_rendered_actions_panel == frozenMeeting_rendered_actions_panel)
+
+        # invalidated when a linked item is modified
+        # add an action that is only returned for meetings
+        # this will show that when the item is modified, the meeting actions panel is invalidated
+        meetingType.addAction(id='dummyitemedited',
+                              name='dummyitemedited',
+                              action='',
+                              icon_expr='',
+                              condition="python: context.meta_type == 'Meeting'",
+                              permission=('View',),
+                              visible=True,
+                              category='object_buttons')
+        # it is returned for meeting
+        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
+        self.assertTrue('dummyitemedited' in object_buttons)
+        # for now, the actions panel is still the same
+        dummyItemAction_rendered_actions_panel = actions_panel()
+        self.assertTrue(frozenMeeting_rendered_actions_panel == dummyItemAction_rendered_actions_panel)
+        item.at_post_edit_script()
+        # the actions panel has been invalidated
+        dummyItemAction_rendered_actions_panel = actions_panel()
+        self.assertTrue(not frozenMeeting_rendered_actions_panel == dummyItemAction_rendered_actions_panel)
+
+        # invalidated when user changed
+        self.changeUser('pmReviewer1')
+        self.assertTrue(not dummyItemAction_rendered_actions_panel == actions_panel())
+
+        # invalidated when user roles changed
+        # remove MeetingManager role to 'pmManager'
+        self.changeUser('pmManager')
+        meetingManager_rendered_actions_panel = actions_panel()
+        self.portal.acl_users.portal_role_manager.removeRoleFromPrincipal('MeetingManager', 'pmManager')
+        # we need to reconnect for roles changes to take effect
+        self.changeUser('pmManager')
+        self.assertTrue(not self.member.has_role('MeetingManager'))
+        self.assertTrue(not meetingManager_rendered_actions_panel == actions_panel())
 
 
 def test_suite():

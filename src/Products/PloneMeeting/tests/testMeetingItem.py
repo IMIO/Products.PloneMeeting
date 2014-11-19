@@ -2139,7 +2139,14 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemActionsPanelCaching(self):
         '''For performance, actions panel is cached,
-           check that cache is correctly invalidated.'''
+           check that cache is correctly invalidated.
+           Actions panel is invalidated when :
+           - item is modified;
+           - item state changed;
+           - linked meeting changed;
+           - user changed;
+           - user groups changed;
+           - user roles changed.'''
         # use categories
         self.meetingConfig.setUseGroupsAsCategories(False)
         # create an item

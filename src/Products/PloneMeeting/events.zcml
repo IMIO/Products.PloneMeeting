@@ -9,6 +9,10 @@
               handler=".events.onItemAdded"/>
 
   <subscriber for=".interfaces.IMeetingItem
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onItemModified"/>
+
+  <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.ObjectMovedEvent"
               handler=".events.onItemMoved" />
 

@@ -243,7 +243,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             meetingModified = self.context.getMeeting().modified()
         user = self.request['AUTHENTICATED_USER']
         userGroups = user.getGroups()
-        userRoles = user.getRoles(),
+        userRoles = user.getRoles()
         return (self.context, self.context.modified(), self.context.adviceIndex,
                 user.getId(), userGroups, userRoles,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
@@ -333,9 +333,13 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            - user groups changed.'''
         user = self.request['AUTHENTICATED_USER']
         userGroups = user.getGroups()
-        userRoles = user.getRoles(),
+        userRoles = user.getRoles()
+        invalidate_meeting_actions_panel_cache = False
+        if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
+            invalidate_meeting_actions_panel_cache = True
+            delattr(self.context, 'invalidate_meeting_actions_panel_cache')
         return (self.context, self.context.modified(), self.context.getRawItems(), self.context.getRawLateItems(),
-                user.getId(), userGroups, userRoles,
+                user.getId(), userGroups, userRoles, invalidate_meeting_actions_panel_cache,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 kwargs)
