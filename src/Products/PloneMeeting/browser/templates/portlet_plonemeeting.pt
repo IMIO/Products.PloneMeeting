@@ -90,10 +90,13 @@
       <td class="portletSection" i18n:translate="portletmeetings_title"></td>
       <td style="text-align: right; padding-right: 1em;">
         <tal:comment replace="nothing">Create a new meeting</tal:comment>
-        <img style="cursor:pointer" tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', context)"
-             tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=Meeting%s\'' % (meetingFolder.absolute_url(), meetingConfig.getShortName());
-                             src string: $portal_url/new.png"
-             title="create_meeting" i18n:attributes="title"/>
+        <a id="newMeetingCreation" href="#"
+           style="display: inline;"
+           tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', context)"
+           tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=Meeting${meetingConfig/getShortName};">
+            <img tal:attributes="src string: $portal_url/new.png"
+              title="create_meeting" i18n:attributes="title" />
+        </a>
       </td>
      </tr>
     </table>
