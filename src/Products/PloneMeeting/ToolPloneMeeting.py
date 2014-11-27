@@ -1624,9 +1624,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     # in this case, the current wf state is wrong, we will correct it
                     newItem.workflow_history = {}
                     # this will initialize wf initial state if workflow_history is empty
-                    initial_state = newItem.portal_workflow.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem)
+                    initial_state = wftool.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem)
                     tmpDict[newWFName][0]['review_state'] = initial_state.id
                     newItem.workflow_history = tmpDict
+                # update security settings of new item has workflow permissions could have changed...
+                newItemWF.updateRoleMappingsFor(newItem)
 
             # remove contained meetingadvices
             newItem._removeEveryContainedAdvices()
