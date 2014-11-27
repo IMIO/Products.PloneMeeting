@@ -290,9 +290,9 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     enc = obj.portal_properties.site_properties.getProperty('default_charset')
     # Compute user name
     pms = obj.portal_membership
-    userName = pms.getAuthenticatedMember().id
+    userName = pms.getAuthenticatedMember().getId()
     userInfo = pms.getMemberById(userName)
-    if userInfo.getProperty('fullname'):
+    if userInfo and userInfo.getProperty('fullname'):
         userName = userInfo.getProperty('fullname').decode(enc)
     # Compute list of MeetingGroups for this user
     userGroups = ', '.join([g.Title() for g in tool.getGroupsForUser()])

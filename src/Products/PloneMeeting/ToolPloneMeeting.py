@@ -1552,7 +1552,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('pasteItems')
     def pasteItems(self, destFolder, copiedData, copyAnnexes=False,
-                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None):
+                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
+                   newPortalType=None, keepProposingGroup=False):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.'''
         # warn that we are pasting items
@@ -1700,11 +1701,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     del annotations[ann]
 
             # Change the proposing group if the item owner does not belong to
-            # the defined proposing group.
-            userGroups = self.getGroupsForUser(userId=newOwnerId, suffix="creators")
-            if newItem.getProposingGroup(True) not in userGroups:
-                if userGroups:
-                    newItem.setProposingGroup(userGroups[0].getId())
+            # the defined proposing group, except if p_keepProposingGroup is True
+            if not keepProposingGroup:
+                userGroups = self.getGroupsForUser(userId=newOwnerId, suffix="creators")
+                if newItem.getProposingGroup(True) not in userGroups:
+                    if userGroups:
+                        newItem.setProposingGroup(userGroups[0].getId())
 
             # call at_post_create_script again that updates the local roles (so removes role
             # 'Manager' that we've set above) by calling MeetingItem.updateLocalRoles,

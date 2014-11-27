@@ -427,7 +427,8 @@ class MeetingItemWorkflowActions:
         # We create a copy in the initial item state, in the folder of creator.
         clonedItem = self.context.clone(copyAnnexes=True,
                                         newOwnerId=creator,
-                                        cloneEventAction='create_from_predecessor')
+                                        cloneEventAction='create_from_predecessor',
+                                        keepProposingGroup=True)
         clonedItem.setPredecessor(self.context)
         # Send, if configured, a mail to the person who created the item
         clonedItem.sendMailIfRelevant('itemDelayed', 'Owner', isRole=True)
@@ -3890,7 +3891,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('clone')
     def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
-              destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None):
+              destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None,
+              keepProposingGroup=False):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -3898,7 +3900,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            another item (useful for delayed items, but not when simply
            duplicating an item).  p_copyFields will contains a list of fields
            we want to keep value of, if not in this list, the new field value
-           will be the default value for this field.'''
+           will be the default value for this field.
+           If p_keepProposingGroup, the proposingGroup in ToolPloneMeeting.pasteItems
+           no matter current user is not member of that group.'''
         # first check that we are not trying to clone an item
         # we can not access because of privacy status
         # do thsi check if we are not creating an item from an itemTemplate
@@ -3930,7 +3934,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc)
         newItem = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
                                   newOwnerId=newOwnerId, copyFields=copyFields,
-                                  newPortalType=newPortalType)[0]
+                                  newPortalType=newPortalType, keepProposingGroup=keepProposingGroup)[0]
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
             # because it was cleaned by ToolPloneMeeting.pasteItems.
@@ -4002,7 +4006,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         newItem = self.clone(copyAnnexes=True, newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
-                             newPortalType=destMeetingConfig.getItemTypeName())
+                             newPortalType=destMeetingConfig.getItemTypeName(),
+                             keepProposingGroup=True)
         # manage categories mapping, if original and new items use
         # categories, we check if a mapping is defined in the configuration of the original item
         if not cfg.getUseGroupsAsCategories() and \
