@@ -1795,11 +1795,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            excepted if we are on an archive site.'''
         res = []
         tool = getToolByName(self, 'portal_plonemeeting')
-        if tool.isArchiveSite():
-            allGroups = tool.objectValues('MeetingGroup')
-        else:
-            allGroups = tool.getMeetingGroups(notEmptySuffix="creators")
-        for group in allGroups:
+        for group in tool.getMeetingGroups(notEmptySuffix="creators"):
             res.append((group.id, group.getName()))
 
         # make sure associatedGroups actually stored have their corresponding

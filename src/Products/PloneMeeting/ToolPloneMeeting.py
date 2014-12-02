@@ -304,49 +304,13 @@ schema = Schema((
         ),
     ),
     IntegerField(
-        name='maxSearchResults',
-        default=defValues.maxSearchResults,
+        name='maxShownFound',
+        default=defValues.maxShownFound,
         widget=IntegerField._properties['widget'](
-            description="MaxSearchResults",
-            description_msgid="max_search_results_descr",
-            label='Maxsearchresults',
-            label_msgid='PloneMeeting_label_maxSearchResults',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="pm_search",
-    ),
-    IntegerField(
-        name='maxShownFoundItems',
-        default=defValues.maxShownFoundItems,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownFoundItems",
-            description_msgid="max_shown_found_items_descr",
-            label='Maxshownfounditems',
-            label_msgid='PloneMeeting_label_maxShownFoundItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="pm_search",
-    ),
-    IntegerField(
-        name='maxShownFoundMeetings',
-        default=defValues.maxShownFoundMeetings,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownFoundMeetings",
-            description_msgid="max_shown_found_meetings_descr",
-            label='Maxshownfoundmeetings',
-            label_msgid='PloneMeeting_label_maxShownFoundMeetings',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="pm_search",
-    ),
-    IntegerField(
-        name='maxShownFoundAnnexes',
-        default=defValues.maxShownFoundAnnexes,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownFoundAnnexes",
-            description_msgid="max_shown_found_annexes_descr",
-            label='Maxshownfoundannexes',
-            label_msgid='PloneMeeting_label_maxShownFoundAnnexes',
+            description="MaxShownFound",
+            description_msgid="max_shown_found_descr",
+            label='Maxshownfound',
+            label_msgid='PloneMeeting_label_maxShownFound',
             i18n_domain='PloneMeeting',
         ),
         schemata="pm_search",
@@ -362,21 +326,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="pm_search",
-    ),
-    LinesField(
-        name='searchItemStates',
-        widget=MultiSelectionWidget(
-            description="SearchItemStates",
-            description_msgid="search_item_states_descr",
-            label='Searchitemstates',
-            label_msgid='PloneMeeting_label_searchItemStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="pm_search",
-        multiValued=1,
-        vocabulary='listItemStates',
-        default=defValues.searchItemStates,
-        enforceVocabulary=False,
     ),
     LinesField(
         name='workingDays',
@@ -2091,19 +2040,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     res.append(tInfo)
         return res
 
-    security.declarePublic('getMaxShownFound')
-    def getMaxShownFound(self, objectType):
-        '''Gets the maximum nummber of shown items, annexes or meetings in
-           lists.'''
-        if objectType == 'MeetingItem':
-            return self.getMaxShownFoundItems()
-        elif objectType == 'Meeting':
-            return self.getMaxShownFoundMeetings()
-        elif objectType == 'MeetingFile':
-            return self.getMaxShownFoundAnnexes()
-        else:
-            return 20
-
     security.declarePublic('showToggleDescriptions')
     def showToggleDescriptions(self, context):
         '''Under what circumstances must action 'toggle descrs' be shown?'''
@@ -2176,13 +2112,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if '-' in res:
             res = res[:res.find('-')]
         return res
-
-    security.declarePublic('isArchiveSite')
-    def isArchiveSite(self):
-        '''Is this site an archive site?'''
-        cfgs = self.getActiveConfigs()
-        if cfgs:
-            return 'archiving' in cfgs[0].getWorkflowAdaptations()
 
     security.declarePublic('getPloneUsers')
     def getPloneUsers(self):

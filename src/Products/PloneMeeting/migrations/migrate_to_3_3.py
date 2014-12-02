@@ -416,6 +416,26 @@ class Migrate_To_3_3(Migrator):
                     break
         logger.info('Done.')
 
+    def _cleanToolSearchAttributes(self):
+        '''Search attributes on the tool were simplified, and mostly removed.
+           The attribute 'maxShownFound' will replace :
+           - maxShownFoundItems;
+           - maxShownFoundMeetings;
+           - maxShownFoundAnnexes.
+           Attributes 'maxSearchResults' and 'searchItemStates' were simply removed.
+           Set new 'maxShownFound' to old 'maxShownFoundItems' and delete useless attributes.'''
+        logger.info('Cleaning search attributes on portal_plonemeeting...')
+        if hasattr(self.tool, 'maxShownFoundItems'):
+            # set new value
+            self.tool.setMaxShownFound(self.tool.maxShownFoundItems)
+            # remove useless attributes
+            delattr(self.tool, 'maxShownFoundItems')
+            delattr(self.tool, 'maxShownFoundMeetings')
+            delattr(self.tool, 'maxShownFoundAnnexes')
+            delattr(self.tool, 'maxSearchResults')
+            delattr(self.tool, 'searchItemStates')
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         self._finishMeetingFolderViewRemoval()
@@ -437,6 +457,7 @@ class Migrate_To_3_3(Migrator):
         self._cleanCKeditorCustomToolbar()
         self._checkItemsPreferredMeeting()
         self._removeMeetingCategoryItemsCountAttribute()
+        self._cleanToolSearchAttributes()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -474,9 +495,10 @@ def migrate(context):
        17) Clean the CKeditor toolbar to remove 'Ajaxsave' and 'Templates' buttons;
        18) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
        19) Remove MeetingCategory.itemsCount attribute;
-       20) Clean registries as we removed some css;
-       21) Reinstall PloneMeeting;
-       22) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       20) Clean portal_plonemeeting search attributes as most were removed;
+       21) Clean registries as we removed some css;
+       22) Reinstall PloneMeeting;
+       23) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_3(context).run()
 # ------------------------------------------------------------------------------

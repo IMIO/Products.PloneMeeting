@@ -137,7 +137,6 @@
                      batchSize batch/length;
                      wholeSize batch/sequence_length;
                      jsParams python: '\'%s\', \'%s\', \'%s\', \'%%d\', \'%s\', \'%s\', \'%s\'' % (request['hookId'], meetingConfig.absolute_url(), topic.id, request.get('sortKey', ''), request.get('sortOrder', ''), request.get('filterKey', ''));
-                     maxReached python: wholeSize == tool.getMaxSearchResults();
                      _ python: context.translate">
     <tr>
       <tal:comment replace="nothing">Go to the first page</tal:comment>
@@ -157,10 +156,7 @@
         <span tal:replace="python: startNumber"/>
         <img tal:attributes="src string: $portal_url/to.png"/>
         <span tal:replace="python: min(wholeSize, startNumber+batchSize-1)"/>&nbsp;<b>//</b>
-        <acronym tal:condition="maxReached" tal:content="wholeSize"
-                 tal:attributes="title python: _('search_max_limit', {'number':wholeSize}, domain='PloneMeeting')">
-        </acronym>
-        <span tal:condition="not:maxReached" tal:replace="wholeSize"/>&nbsp;
+        <span tal:replace="wholeSize"/>&nbsp;
       </td>
       <tal:comment replace="nothing">Go to the next page</tal:comment>
       <td tal:define="nextNumber python: min(startNumber + batchSize, wholeSize + 1);

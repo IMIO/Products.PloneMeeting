@@ -127,6 +127,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   items that have already been sent to another meeting configuration
 - Locking is now working when using the inline edit functionnality (quick edit of a item or
   meeting field thru the element view) and when quick editing an advice thru the popup
+- Simplified tool defineable search parameters : no more max search limit, no more selectable
+  item states, one single value for every dashboards about the elements to show per page
+
 
 3.2.0.1 (2014-03-06)
 --------------------

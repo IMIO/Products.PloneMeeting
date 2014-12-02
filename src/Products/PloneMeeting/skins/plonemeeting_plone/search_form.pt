@@ -32,8 +32,7 @@
                  currentMeetingConfig python: tool.getMeetingConfig(context);
                  associatedGroupsUsed python: tool.attributeIsUsed('item', 'associatedGroups');
                  categoryUsed python: tool.attributeIsUsed('item', 'category');
-                 classifierUsed python: tool.attributeIsUsed('item', 'classifier');
-                 isArchiveSite tool/isArchiveSite">
+                 classifierUsed python: tool.attributeIsUsed('item', 'classifier');">
 
   <script language="javascript">
   <!--
@@ -257,13 +256,11 @@
                 </select>&nbsp;&nbsp;&nbsp;&nbsp;
               </td>
               <tal:comment replace="nothing">Item state</tal:comment>
-              <td tal:define="searchItemStates tool/getSearchItemStates"
-                  tal:condition="python: not isArchiveSite and searchItemStates">
+              <td>
                 <label i18n:translate="item_state"></label><br/>
                 <select name="itemState" multiple="multiple" size="7">
                   <tal:options repeat="stateInfo python: currentMeetingConfig.listItemStates().items()">
-                   <option tal:condition="python: stateInfo[0] in searchItemStates"
-                           tal:attributes="value python: stateInfo[0]; title python: stateInfo[1]"
+                   <option tal:attributes="value python: stateInfo[0]; title python: stateInfo[1]"
                            tal:content="python: tool.truncate(stateInfo[1])">
                    </option>
                   </tal:options>

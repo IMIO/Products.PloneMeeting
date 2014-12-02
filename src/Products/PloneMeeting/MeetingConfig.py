@@ -3407,9 +3407,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 else:
                     sortKey = 'created'
             methodId = topic.getProperty(TOPIC_SEARCH_SCRIPT, None)
-            objectType = topic.getProperty(TOPIC_TYPE, 'Unknown')
-            batchSize = self.REQUEST.get('MaxShownFound') or \
-                tool.getMaxShownFound(objectType)
+            # if search is made by portlet_todo, we have a 'MaxShownFound' in the REQUEST
+            batchSize = self.REQUEST.get('MaxShownFound') or tool.getMaxShownFound()
             if methodId:
                 # Topic params are not sufficient, use a specific method.
                 # keep topics defined paramaters

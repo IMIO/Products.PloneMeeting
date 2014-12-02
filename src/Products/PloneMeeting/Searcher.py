@@ -130,7 +130,7 @@ class Searcher:
 
     def queryCatalog(self, params):
         '''Performs a single query catalog.'''
-        return self.portalCatalog(**params)[:params['sort_limit']]
+        return self.portalCatalog(**params)
 
     def getValueFromIndex(self, brain, indexName):
         '''Gets the value of index named p_indexName on a b_brain.'''
@@ -208,7 +208,7 @@ class Searcher:
             return res[0]
         else:
             sortKey = params['sort_on']
-            return self.mergeResults(res, sortKey)[:params['sort_limit']]
+            return self.mergeResults(res, sortKey)
 
     def run(self):
         '''Creates and executes queries and returns the result.'''
@@ -229,15 +229,14 @@ class Searcher:
         if rq.get('keywords', None):
             self.keywords = prepareSearchValue(rq.get('keywords'))
         # Prepare main search parameters.
-        mainParams = {'sort_limit': self.tool.getMaxSearchResults(),
-                      'sort_order': self.sortOrder}
+        mainParams = {'sort_order': self.sortOrder}
         # If a filter has been defined on a field (ie the user typed some
         # keywords in a column header for further filtering the search), we take
         # it into account here.
         if self.filterKey:
             mainParams[self.filterKey] = prepareSearchValue(self.filterValue)
         # Perform the search.
-        batchSize = self.tool.getMaxShownFound(self.searchedType)
+        batchSize = self.tool.getMaxShownFound()
         if self.searchedType == 'MeetingItem':
             params = self.getItemSearchParams(mainParams, [fromDate, toDate])
             itemBrains = self.queryCatalog(params)

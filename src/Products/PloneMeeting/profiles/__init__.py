@@ -519,15 +519,12 @@ class PloneMeetingConfiguration(Descriptor):
         self.deferredNotificationsHandling = False
         self.enableUserPreferences = False
         self.enableAnnexPreview = False
-        self.maxSearchResults = 50
-        self.maxShownFoundItems = 20
-        self.maxShownFoundMeetings = 20
-        self.maxShownFoundAnnexes = 20
+        # number of elements displayed in dashboards
+        self.maxShownFound = 20
         # If True, the following param will, on the search screen, display
         # radio buttons allowing to choose if item keywords encompass index
         # Title, Description, getDeliberation or SearchableText.
         self.showItemKeywordsTargets = True
-        self.searchItemStates = []
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [{'date': '2014/01/01', },
                          {'date': '2014/04/21', },
