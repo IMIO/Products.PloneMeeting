@@ -113,10 +113,6 @@ class ToolInitializer:
             cfg._updateCloneToOtherMCActions()
         # finally, create the current user (admin) member area
         self.site.portal_membership.createMemberArea()
-        # update advanced search parameters on the tool
-        # now that MeetingConfigs have been created, we can define
-        # tool.searchItemStates, we select every item states by default
-        self.tool.setSearchItemStates(self.tool.listItemStates().keys())
         # at the end, add users outside PloneMeeting groups because
         # they could have to be added in groups created by the MeetingConfig
         self.tool.addUsersOutsideGroups(d.usersOutsideGroups)
