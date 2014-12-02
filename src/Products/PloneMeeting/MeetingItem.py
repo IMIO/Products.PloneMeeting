@@ -1599,16 +1599,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if lastEvent['action']:
                     if lastEvent['action'].startswith('back'):
                         res.append(('wf_down.png', 'icon_help_wf_down'))
-                    # up the workflow for at least second times and not linked to a meeting
-                    # check if last event was already made in item workflow_history
-                    history = item.workflow_history[cfg.getItemWorkflow()]
-                    i = 0
-                    for event in history:
-                        if event['action'] == lastEvent['action']:
-                            i = i + 1
-                            if i > 1:
-                                res.append(('wf_up.png', 'icon_help_wf_up'))
-                                break
+                    else:
+                        # up the workflow for at least second times and not linked to a meeting
+                        # check if last event was already made in item workflow_history
+                        history = item.workflow_history[cfg.getItemWorkflow()]
+                        i = 0
+                        for event in history:
+                            if event['action'] == lastEvent['action']:
+                                i = i + 1
+                                if i > 1:
+                                    res.append(('wf_up.png', 'icon_help_wf_up'))
+                                    break
         # In some cases, it does not matter if an item is inMeeting or not.
         if 'oralQuestion' in usedItemAttributes:
             if item.getOralQuestion():
