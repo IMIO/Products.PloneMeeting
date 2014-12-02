@@ -831,7 +831,7 @@ def getFieldVersion(obj, name, changes):
 
 
 # ------------------------------------------------------------------------------
-def getLastEvent(obj, transition, notBefore='transfer'):
+def getLastEvent(obj, transition=None, notBefore='transfer'):
     '''Returns, from the workflow history of p_obj, the event that corresponds
        to the most recent triggering of p_transition (=its name). p_transition
        can be a list of names: in this case, it returns the event about the most
@@ -841,9 +841,12 @@ def getLastEvent(obj, transition, notBefore='transfer'):
        triggering of this transition. This is useful when history of an item
        is the combined history of this item from several sites, and we want
        to search only within history of the "last" site, so we want to ignore
-       everything that occurrred before the last "transfer" transition.'''
+       everything that occurrred before the last "transfer" transition.
+       If p_transition is None, the very last event is returned'''
     wfTool = getToolByName(obj, 'portal_workflow')
     history = obj.workflow_history[wfTool.getWorkflowsFor(obj)[0].getId()]
+    if not transition:
+        return history[-1]
     i = len(history)-1
     while i >= 0:
         event = history[i]

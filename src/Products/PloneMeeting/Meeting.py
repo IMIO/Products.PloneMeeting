@@ -1517,9 +1517,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return cfg.getMeetingWorkflow()
 
     security.declarePublic('getLastEvent')
-    def getLastEvent(self, transition):
+    def getLastEvent(self, transition=None):
         '''Check doc in called function in utils.py.'''
-        return getLastEvent(self, transition)
+        return getLastEvent(self, transition=transition)
 
     security.declarePublic('getObject')
     def getObject(self):
