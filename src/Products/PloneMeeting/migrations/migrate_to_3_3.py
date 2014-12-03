@@ -467,7 +467,8 @@ class Migrate_To_3_3(Migrator):
                                  u'profile-imio.actionspanel:default'])
         # items in the configuration are now indexed, so clear and rebuild
         # by default, only portal_catalog is updated by refreshDatabase
-        self.refreshDatabase()
+        # update also role mappings (wf) as meeting_activity_workflow changed
+        self.refreshDatabase(workflows=True)
         self.finish()
 
 
