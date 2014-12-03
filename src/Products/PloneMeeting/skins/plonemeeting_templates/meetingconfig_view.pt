@@ -297,7 +297,7 @@
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
                 <span tal:condition="not: isActive" i18n:translate="">No</span>
               </td>
-              <td tal:condition="isManager" align="right">
+              <td tal:condition="isRealManager" align="right">
                 <!-- Edit the file type -->
                 <form name="deleteFTForm" action="delete_givenuid">
                   <a tal:attributes="href python: obj.absolute_url() + '/edit'">
@@ -311,7 +311,7 @@
                   <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
-              <td tal:condition="not: isManager" align="right">-</td>
+              <td tal:condition="not: isRealManager" align="right">-</td>
             </tr>
             </tal:loop>
             </tbody>
