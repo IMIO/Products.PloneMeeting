@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
-<dc-workflow xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-             i18n:domain="plone"
-             workflow_id="plonemeeting_activity_workflow"
-             title="PloneMeeting Activity Workflow"
-             description="This allows to active the tool PloneMeeting."
+<dc-workflow workflow_id="plonemeeting_activity_workflow"
+             title="plonemeeting_activity_workflow"
              state_variable="review_state"
-             initial_state="active">
+             initial_state="active"
+             xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+             i18n:domain="plone">
  <permission>View</permission>
  <permission>Access contents information</permission>
  <permission>Modify portal content</permission>
  <permission>Review portal content</permission>
  <permission>Delete objects</permission>
+ <permission>PloneMeeting: Write harmless config</permission>
+ <permission>PloneMeeting: Write risky config</permission>
  <state state_id="active"
         title="active"
         i18n:attributes="title">
-  <description i18n:translate="">Activate this element</description>
   <exit-transition transition_id="deactivate"/>
   <permission-map name="Access contents information"
                   acquired="False">
@@ -32,6 +32,16 @@
   <permission-map name="Modify portal content"
                   acquired="False">
    <permission-role>Owner</permission-role>
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write harmless config"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write risky config"
+                  acquired="False">
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="Review portal content"
@@ -51,7 +61,6 @@
  <state state_id="inactive"
         title="inactive"
         i18n:attributes="title">
-  <description i18n:translate="">Deactivate this element</description>
   <exit-transition transition_id="activate"/>
   <permission-map name="Access contents information"
                   acquired="False">
@@ -69,6 +78,14 @@
   <permission-map name="Modify portal content"
                   acquired="False">
    <permission-role>Owner</permission-role>
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write harmless config"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write risky config"
+                  acquired="False">
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="Review portal content"

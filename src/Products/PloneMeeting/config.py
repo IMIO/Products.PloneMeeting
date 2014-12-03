@@ -88,6 +88,8 @@ ReadDecisionAnnex = 'PloneMeeting: Read decision annex'
 WriteDecisionAnnex = 'PloneMeeting: Write decision annex'
 ReadBudgetInfos = 'PloneMeeting: Read budget infos'
 WriteBudgetInfos = 'PloneMeeting: Write budget infos'
+WriteHarmlessConfig = 'PloneMeeting: Write harmless config'
+WriteRiskyConfig = 'PloneMeeting: Write risky config'
 AddAdvice = 'PloneMeeting: Add advice'
 CopyOrMove = 'Copy or Move'
 setDefaultRoles(ReadDecision, ('Manager',))

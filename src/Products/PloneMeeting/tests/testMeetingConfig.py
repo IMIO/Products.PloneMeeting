@@ -30,13 +30,15 @@ from zope.i18n import translate
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from PloneMeetingTestCase import pm_logger
-from Products.PloneMeeting.config import TOPIC_SEARCH_FILTERS
+from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.config import TOPIC_SEARCH_FILTERS
+from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.utils import cleanRamCacheFor
 
@@ -1258,7 +1260,11 @@ class testMeetingConfig(PloneMeetingTestCase):
            on fields MeetingManagers may edit...'''
         self.changeUser('pmManager')
         cfg = self.meetingConfig
-        pass
+        # a MeetingManager is able to edit a MeetingConfig
+        self.assertTrue(self.hasPermission(ModifyPortalContent, cfg))
+        # every editable fields are protected by the 'PloneMeeting: Write harmless config' permission
+        for field in cfg.Schema().editableFields(cfg):
+            self.assertTrue(field.write_permission == WriteHarmlessConfig)
 
 
 def test_suite():
