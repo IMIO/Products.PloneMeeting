@@ -58,8 +58,8 @@ class ChangeItemCompletenessView(BrowserView):
             # while the Cancel button is hit
             return self.request.response.redirect(self.context.absolute_url())
         elif submitted:
-            # check that given 'new_completeness_value' is available in the field vocabulary
-            # if not available, just raise Unauthorized
+            # change completeness value, it will also check that given 'new_completeness_value'
+            # is available in the field vocabulary if not available, and selectable by current user
             self._changeCompleteness(self.request.get('new_completeness_value'),
                                      comment=self.request.get('comment', ''))
             # update item
@@ -77,7 +77,7 @@ class ChangeItemCompletenessView(BrowserView):
            self.context.restrictedTraverse('@@item-completeness').listSelectableCompleteness().keys():
             raise Unauthorized
         self.context.setCompleteness(new_completeness_value)
-        # add a line to the item's emergency_change_history
+        # add a line to the item's completeness_changes_history
         membershipTool = getToolByName(self.context, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
         history_data = {'action': new_completeness_value,
