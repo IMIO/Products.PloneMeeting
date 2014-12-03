@@ -132,6 +132,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   meeting field thru the element view) and when quick editing an advice thru the popup
 - Simplified tool defineable search parameters : no more max search limit, no more selectable
   item states, one single value for every dashboards about the elements to show per page
+- MeetingManagers have now access to the meeting configurations and are able to edit
+  "harmless" parameters like assembly and signatures
 
 
 3.2.0.1 (2014-03-06)
