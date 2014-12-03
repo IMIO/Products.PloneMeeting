@@ -384,9 +384,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(newItem.getCategory() == item.getCategory())
         # if we remove the newItem, the reference in the original item annotation is removed
         # and the original item is sendable again
-        self.changeUser('pmCreator1')
         self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
-        self.changeUser('pmManager')
         self.failIf(annotationKey in annotations)
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # An item is automatically sent to the other meetingConfigs when it is 'accepted'
@@ -415,9 +413,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # item.itemPositiveDecidedStates() state
         # by default, the only positive state is 'accepted'
         for state in item.adapted().itemPositiveDecidedStates():
-            self.changeUser('pmCreator1')
             self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
-            self.changeUser('pmManager')
             self.do(item, 'backToItemFrozen')
             self.failIf(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
             self.do(item, self._getTransitionToReachState(item, state))
