@@ -14,9 +14,10 @@
   </metal:title>
   <metal:fill fill-slot="content-core">
     <metal:body_macro define-macro="body"
-       tal:define="isManager python: context.isManager(True);
+       tal:define="isRealManager python: context.isManager(True);
                    mode string:view;">
 
+    <tal:hideToNonManagers condition="python: isRealManager or context.isManager()">
     <script language="javascript" tal:content="context/getJavascriptMessages"></script>
     <p i18n:translate="plonemeeting_descr"></p>
 
@@ -26,6 +27,7 @@
         <legend>
          <span i18n:translate="meeting_configurations"></span>
          <input type="image" style="cursor:pointer" class="imageInput"
+                tal:condition="isRealManager"
                 tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=MeetingConfig\'' % context.absolute_url();
                                 src string: $portal_url/plus.png"
                 title="add_object" i18n:attributes="title"/>
@@ -61,7 +63,7 @@
                                 objectIds python: context.objectIds('MeetingConfig');
                                 firstId python: objectIds and objectIds[0] or '';
                                 lastId python: objectIds and objectIds[-1] or '';"
-                    tal:condition="isManager" align="right">
+                    tal:condition="isRealManager" align="right">
                   <form name="deleteMGForm" action="delete_givenuid">
                   <!-- Edit meeting config -->
                   <a tal:attributes="href python: obj.absolute_url() + '/edit'">
@@ -78,6 +80,7 @@
                   <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                   </form>
                 </td>
+                <td tal:condition="not: isRealManager" align="right">-</td>
               </tr>
               </tal:loop>
               </tbody>
@@ -95,6 +98,7 @@
                                onClick python:'toggleDoc(\'groupDoc\')'"
                style="cursor:pointer"/>
           <input type="image" style="cursor:pointer" class="imageInput"
+                 tal:condition="isRealManager"
                  tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=MeetingGroup\'' % context.absolute_url();
                                  src string: $portal_url/plus.png"
                  title="add_object" i18n:attributes="title"/>
@@ -159,7 +163,7 @@
                   <span tal:condition="isActive" i18n:translate="">Yes</span>
                   <span tal:condition="not: isActive" i18n:translate="">No</span>
                 </td>
-                <td tal:condition="isManager" align="right">
+                <td tal:condition="isRealManager" align="right">
                   <!-- Edit the meeting group -->
                   <form name="deleteMGForm" action="delete_givenuid">
                   <a tal:attributes="href python: obj.absolute_url() + '/edit'">
@@ -182,6 +186,7 @@
                   </a>
                   </form>
                 </td>
+                <td tal:condition="not: isRealManager" align="right">-</td>
               </tr>
               </tal:loop>
               </tbody>
@@ -324,7 +329,7 @@
       </fieldset>
       </tal:customFields>
 
-    <fieldset tal:condition="isManager">
+    <fieldset tal:condition="isRealManager">
       <legend i18n:translate="heading_actions"></legend>
       <p class="discreet" style="color: red;" i18n:translate="pm_tool_updates_warning">
       Warning: take care that launching these updates may take time, depending on the number of existing elements!  Do not launch during period of hig use!
@@ -377,6 +382,7 @@
     </fieldset>
 
     <div metal:define-macro="folderlisting"></div>
+    </tal:hideToNonManagers>
 
     </metal:body_macro>
   </metal:fill>

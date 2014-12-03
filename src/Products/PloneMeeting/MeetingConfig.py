@@ -114,6 +114,8 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
+        schemata="assembly_and_signatures",
+        write_permission="PloneMeeting: Write harmless config",
     ),
     TextField(
         name='signatures',
@@ -127,6 +129,8 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
+        schemata="assembly_and_signatures",
+        write_permission="PloneMeeting: Write harmless config",
     ),
     TextField(
         name='certifiedSignatures',
@@ -140,6 +144,8 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
+        schemata="assembly_and_signatures",
+        write_permission="PloneMeeting: Write harmless config",
     ),
     TextField(
         name='places',
@@ -153,6 +159,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
+        write_permission="PloneMeeting: Write risky config",
     ),
     TextField(
         name='budgetDefault',
@@ -168,6 +175,7 @@ schema = Schema((
         default_content_type="text/html",
         default=defValues.budgetDefault,
         default_output_type="text/x-html-safe",
+        write_permission="PloneMeeting: Write risky config",
     ),
     TextField(
         name='defaultMeetingItemMotivation',
@@ -183,6 +191,7 @@ schema = Schema((
         default_content_type="text/html",
         default=defValues.defaultMeetingItemMotivation,
         default_output_type="text/x-html-safe",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='folderTitle',
@@ -195,6 +204,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         required=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='shortName',
@@ -207,6 +217,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         required=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='isDefault',
@@ -218,6 +229,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_isDefault',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     IntegerField(
         name='lastMeetingNumber',
@@ -229,6 +241,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_lastMeetingNumber',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='yearlyInitMeetingNumber',
@@ -240,6 +253,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_yearlyInitMeetingNumber',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='configVersion',
@@ -251,6 +265,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_configVersion',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='enableAnnexToPrint',
@@ -262,6 +277,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_enableAnnexToPrint',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='annexToPrintDefault',
@@ -273,6 +289,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_annexToPrintDefault',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='annexDecisionToPrintDefault',
@@ -284,6 +301,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_annexDecisionToPrintDefault',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='annexAdviceToPrintDefault',
@@ -295,6 +313,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_annexAdviceToPrintDefault',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='usedItemAttributes',
@@ -311,6 +330,7 @@ schema = Schema((
         vocabulary='listUsedItemAttributes',
         default=defValues.usedItemAttributes,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='historizedItemAttributes',
@@ -327,6 +347,7 @@ schema = Schema((
         vocabulary='listItemAttributes',
         default=defValues.historizedItemAttributes,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='recordItemHistoryStates',
@@ -342,6 +363,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.recordItemHistoryStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='usedMeetingAttributes',
@@ -358,6 +380,7 @@ schema = Schema((
         vocabulary='listUsedMeetingAttributes',
         default=defValues.usedMeetingAttributes,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='historizedMeetingAttributes',
@@ -374,6 +397,7 @@ schema = Schema((
         vocabulary='listMeetingAttributes',
         default=defValues.historizedMeetingAttributes,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='recordMeetingHistoryStates',
@@ -389,6 +413,7 @@ schema = Schema((
         vocabulary='listMeetingStates',
         default=defValues.recordMeetingHistoryStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='useGroupsAsCategories',
@@ -401,6 +426,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='toDiscussSetOnItemInsert',
@@ -413,6 +439,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='toDiscussDefault',
@@ -425,6 +452,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='toDiscussLateDefault',
@@ -437,6 +465,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='toDiscussShownForLateItems',
@@ -449,6 +478,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     TextField(
         name='itemReferenceFormat',
@@ -463,6 +493,7 @@ schema = Schema((
         ),
         schemata="data",
         default_content_type='text/plain',
+        write_permission="PloneMeeting: Write risky config",
     ),
     DataGridField(
         name='insertingMethodsOnAddItem',
@@ -480,6 +511,7 @@ schema = Schema((
         allow_oddeven=True,
         columns=('insertingMethod', 'reverse', ),
         allow_empty_rows=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     TextField(
         name='allItemTags',
@@ -494,6 +526,7 @@ schema = Schema((
         ),
         default_content_type='text/plain',
         allowable_content_types=('text/plain',),
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='sortAllItemTags',
@@ -506,6 +539,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='xhtmlTransformFields',
@@ -521,6 +555,7 @@ schema = Schema((
         vocabulary='listAllRichTextFields',
         default=defValues.xhtmlTransformFields,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='xhtmlTransformTypes',
@@ -536,6 +571,7 @@ schema = Schema((
         vocabulary='listTransformTypes',
         default=defValues.xhtmlTransformTypes,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='publishDeadlineDefault',
@@ -548,6 +584,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='freezeDeadlineDefault',
@@ -560,6 +597,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='preMeetingDateDefault',
@@ -572,6 +610,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='useUserReplacements',
@@ -584,6 +623,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='enableAnnexConfidentiality',
@@ -596,6 +636,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
+        write_permission="PloneMeeting: Write risky config",
     ),
     DataGridField(
         name='meetingConfigsToCloneTo',
@@ -612,6 +653,7 @@ schema = Schema((
         allow_oddeven=True,
         columns=('meeting_config', 'trigger_workflow_transitions_until', ),
         allow_empty_rows=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='itemWorkflow',
@@ -628,6 +670,7 @@ schema = Schema((
         vocabulary='listWorkflows',
         default=defValues.itemWorkflow,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='itemConditionsInterface',
@@ -641,6 +684,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="workflow",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='itemActionsInterface',
@@ -654,6 +698,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="workflow",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='meetingWorkflow',
@@ -670,6 +715,7 @@ schema = Schema((
         vocabulary='listWorkflows',
         default=defValues.meetingWorkflow,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='meetingConditionsInterface',
@@ -683,6 +729,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="workflow",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='meetingActionsInterface',
@@ -696,6 +743,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="workflow",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemDecidedStates',
@@ -711,6 +759,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemDecidedStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='workflowAdaptations',
@@ -726,6 +775,7 @@ schema = Schema((
         vocabulary='listWorkflowAdaptations',
         default=defValues.workflowAdaptations,
         enforceVocabulary= True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='transitionsToConfirm',
@@ -741,6 +791,7 @@ schema = Schema((
         vocabulary='listAllTransitions',
         default=defValues.transitionsToConfirm,
         enforceVocabulary= False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='transitionsForPresentingAnItem',
@@ -754,6 +805,7 @@ schema = Schema((
         ),
         schemata="workflow",
         vocabulary='listEveryItemTransitions',
+        write_permission="PloneMeeting: Write risky config",
     ),
     DataGridField(
         name='onTransitionFieldTransforms',
@@ -770,6 +822,7 @@ schema = Schema((
         allow_oddeven=True,
         columns=('transition', 'field_name', 'tal_expression', ),
         allow_empty_rows=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     DataGridField(
         name='onMeetingTransitionItemTransitionToTrigger',
@@ -786,6 +839,7 @@ schema = Schema((
         allow_oddeven=True,
         columns=('meeting_transition', 'item_transition', ),
         allow_empty_rows=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='meetingTopicStates',
@@ -801,6 +855,7 @@ schema = Schema((
         vocabulary='listMeetingStates',
         default=defValues.meetingTopicStates,
         enforceVocabulary= False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='decisionTopicStates',
@@ -816,6 +871,7 @@ schema = Schema((
         vocabulary='listMeetingStates',
         default=defValues.decisionTopicStates,
         enforceVocabulary= False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     IntegerField(
         name='maxShownMeetings',
@@ -829,6 +885,7 @@ schema = Schema((
         ),
         required=True,
         schemata="gui",
+        write_permission="PloneMeeting: Write risky config",
     ),
     IntegerField(
         name='maxDaysDecisions',
@@ -842,6 +899,7 @@ schema = Schema((
         ),
         required=True,
         schemata="gui",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='meetingAppDefaultView',
@@ -856,6 +914,7 @@ schema = Schema((
         enforceVocabulary=False,
         schemata="gui",
         vocabulary='listMeetingAppAvailableViews',
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemsListVisibleColumns',
@@ -871,6 +930,7 @@ schema = Schema((
         vocabulary='listItemsListVisibleColumns',
         default=defValues.itemsListVisibleColumns,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemColumns',
@@ -886,6 +946,7 @@ schema = Schema((
         vocabulary='listItemColumns',
         default=defValues.itemColumns,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='meetingColumns',
@@ -901,6 +962,7 @@ schema = Schema((
         vocabulary='listMeetingColumns',
         default=defValues.meetingColumns,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemsListVisibleFields',
@@ -916,6 +978,7 @@ schema = Schema((
         vocabulary='listItemsListVisibleFields',
         default=defValues.itemsListVisibleFields,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     IntegerField(
         name='maxShownAvailableItems',
@@ -928,6 +991,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
+        write_permission="PloneMeeting: Write risky config",
     ),
     IntegerField(
         name='maxShownMeetingItems',
@@ -940,6 +1004,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
+        write_permission="PloneMeeting: Write risky config",
     ),
     IntegerField(
         name='maxShownLateItems',
@@ -952,6 +1017,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='enableGotoPage',
@@ -964,6 +1030,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='enableGotoItem',
@@ -976,6 +1043,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='openAnnexesInSeparateWindows',
@@ -988,6 +1056,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
+        write_permission="PloneMeeting: Write risky config",
     ),
     ReferenceField(
         name='toDoListTopics',
@@ -1008,6 +1077,7 @@ schema = Schema((
         schemata="gui",
         multiValued=True,
         relationship="ToDoTopics",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='mailMode',
@@ -1022,6 +1092,7 @@ schema = Schema((
         enforceVocabulary=True,
         schemata="mail",
         vocabulary='listMailModes',
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='mailFormat',
@@ -1036,6 +1107,7 @@ schema = Schema((
         enforceVocabulary=True,
         schemata="mail",
         vocabulary='listMailFormats',
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='mailItemEvents',
@@ -1051,6 +1123,7 @@ schema = Schema((
         vocabulary='listItemEvents',
         default=defValues.mailItemEvents,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='mailMeetingEvents',
@@ -1066,6 +1139,7 @@ schema = Schema((
         vocabulary='listMeetingEvents',
         default=defValues.mailMeetingEvents,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='tasksMacro',
@@ -1079,6 +1153,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="tasks",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='taskCreatorRole',
@@ -1093,6 +1168,7 @@ schema = Schema((
         enforceVocabulary=False,
         schemata="tasks",
         vocabulary='listRoles',
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='useAdvices',
@@ -1105,6 +1181,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemAdviceStates',
@@ -1120,6 +1197,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemAdviceStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemAdviceEditStates',
@@ -1135,6 +1213,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemAdviceEditStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemAdviceViewStates',
@@ -1150,6 +1229,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemAdviceViewStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='usedAdviceTypes',
@@ -1166,6 +1246,7 @@ schema = Schema((
         vocabulary='listAdviceTypes',
         default=defValues.usedAdviceTypes,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='defaultAdviceType',
@@ -1181,6 +1262,7 @@ schema = Schema((
         enforceVocabulary=True,
         schemata="advices",
         vocabulary='listAdviceTypes',
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='enforceAdviceMandatoriness',
@@ -1193,6 +1275,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='enableAdviceInvalidation',
@@ -1205,6 +1288,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemAdviceInvalidateStates',
@@ -1220,6 +1304,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemAdviceInvalidateStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='adviceStyle',
@@ -1234,6 +1319,7 @@ schema = Schema((
         enforceVocabulary=True,
         schemata="advices",
         vocabulary='listAdviceStyles',
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='defaultAdviceHiddenDuringRedaction',
@@ -1246,6 +1332,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='transitionReinitializingDelays',
@@ -1260,6 +1347,7 @@ schema = Schema((
         enforceVocabulary=True,
         schemata="advices",
         vocabulary='listTransitionsReinitializingDelays',
+        write_permission="PloneMeeting: Write risky config",
     ),
     DataGridField(
         name='customAdvisers',
@@ -1276,6 +1364,7 @@ schema = Schema((
         allow_oddeven=True,
         columns=('row_id', 'group', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message', 'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert', 'delay_label', 'available_on', 'is_linked_to_previous_row'),
         allow_empty_rows=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemPowerObserversStates',
@@ -1291,6 +1380,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemPowerObserversStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='meetingPowerObserversStates',
@@ -1306,6 +1396,7 @@ schema = Schema((
         vocabulary='listMeetingStates',
         default=defValues.meetingPowerObserversStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemRestrictedPowerObserversStates',
@@ -1321,6 +1412,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemRestrictedPowerObserversStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='meetingRestrictedPowerObserversStates',
@@ -1336,6 +1428,7 @@ schema = Schema((
         vocabulary='listMeetingStates',
         default=defValues.meetingRestrictedPowerObserversStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemBudgetInfosStates',
@@ -1351,6 +1444,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemBudgetInfosStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='powerAdvisersGroups',
@@ -1366,6 +1460,7 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listActiveMeetingGroupsForPowerAdvisers',
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='useCopies',
@@ -1378,6 +1473,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='selectableCopyGroups',
@@ -1393,6 +1489,7 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listSelectableCopyGroups',
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemCopyGroupsStates',
@@ -1408,6 +1505,7 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemCopyGroupsStates,
         enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='hideItemHistoryCommentsToUsersOutsideProposingGroup',
@@ -1420,6 +1518,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='restrictAccessToSecretItems',
@@ -1432,6 +1531,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='useVotes',
@@ -1444,6 +1544,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="votes",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='votesEncoder',
@@ -1460,6 +1561,7 @@ schema = Schema((
         vocabulary='listVotesEncoders',
         default=defValues.votesEncoder,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='usedVoteValues',
@@ -1476,6 +1578,7 @@ schema = Schema((
         vocabulary='listAllVoteValues',
         default=defValues.usedVoteValues,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='defaultVoteValue',
@@ -1490,6 +1593,7 @@ schema = Schema((
         enforceVocabulary=True,
         schemata="votes",
         vocabulary='listAllVoteValues',
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='voteCondition',
@@ -1503,6 +1607,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="votes",
+        write_permission="PloneMeeting: Write risky config",
     ),
 
 ),
@@ -1515,6 +1620,12 @@ MeetingConfig_schema = OrderedBaseFolderSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+# set write_permission for 'id' and 'title'
+MeetingConfig_schema['id'].write_permission = "PloneMeeting: Write risky config"
+MeetingConfig_schema['title'].write_permission = "PloneMeeting: Write risky config"
+# hide metadata fields
+for field in MeetingConfig_schema.getSchemataFields('metadata'):
+    field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
 ##/code-section after-schema
 
 class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):

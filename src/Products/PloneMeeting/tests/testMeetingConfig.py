@@ -1252,6 +1252,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.cleanMemoize()
         self.assertTrue(len(cfg.getTopics('MeetingItem', fromPortletTodo=False)) == numberOfItemRelatedTopics - 3)
 
+    def test_pm_MeetingManagersMayEditHarmlessConfigFields(self):
+        '''A MeetingManager may edit some harmless fields on the MeetingConfig,
+           make sure we specify the write_permission 'PloneMeeting: Write harmless config'
+           on fields MeetingManagers may edit...'''
+        self.changeUser('pmManager')
+        cfg = self.meetingConfig
+        pass
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -19,12 +19,14 @@
 
   <metal:fill fill-slot="content-core">
     <metal:main_macro define-macro="body"
-                      tal:define="isManager context/portal_plonemeeting/isManager;
+                      tal:define="isRealManager python: context.portal_plonemeeting.isManager(True);
                                   mode python:'view';
                                   pageName request/pageName|string:default;
                                   member context/portal_plonemeeting/getUser;
                                   schematas here/Schemata;
-                                  fieldsets python:[key for key in schematas.keys() if (key != 'metadata') and (schematas[key].editableFields(here, visible_only=True))];">
+                                  fieldsets python:[key for key in schematas.keys() if (key != 'metadata')];">
+
+    <tal:hideToNonManagers condition="python: isRealManager or context.isManager()">
 
     <script language="javascript" tal:content="context/portal_plonemeeting/getJavascriptMessages"></script>
     <span tal:repeat="fieldset python: fieldsets + ['users', 'doc']">
@@ -36,7 +38,7 @@
       <tal:currentFieldset condition="python: pageName==fieldset"><b><span
         tal:content="fieldset" i18n:translate=""></span></b>
       </tal:currentFieldset>
-      <tal:edit condition="python: fieldset in fieldsets">
+      <tal:edit condition="python: fieldset in fieldsets and schematas[fieldset].editableFields(here, visible_only=True)">
       <input type="image" title="Edit" i18n:attributes="title"
              style="cursor:pointer" class="imageInput"
              tal:attributes="src string: $portal_url/edit.gif;
@@ -47,36 +49,15 @@
     <tal:mainConfig condition="python: pageName=='default'">
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td width="25%" tal:define="field python:here.getField('assembly')">
-            <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
-              The field here above is not used, check the 'users' tab.
-            </span>
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td width="25%" tal:define="field python:here.getField('signatures')">
-            <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
-              The field here above is not used, check the 'users' tab.
-            </span>
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td width="25%" tal:define="field python:here.getField('certifiedSignatures')">
-            <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
-              The field here above is not used, check the 'users' tab.
-            </span>
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td width="25%" tal:define="field python:here.getField('places')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('budgetDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('defaultMeetingItemMotivation')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td width="25%" tal:define="field python:here.getField('places')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td></td>
         </tr>
         <tr valign="top">
@@ -137,8 +118,33 @@
       </table>
     </fieldset>
     </tal:customFields>
-
     </tal:mainConfig>
+
+    <tal:assembly_and_signatures condition="python: pageName=='assembly_and_signatures'">
+      <p i18n:translate="meetingconfig_assembly_and_signatures_descr" class='pageNameDescr'></p><br />
+      <table width="100%" class="discreet">
+        <tr valign="top">
+          <td width="33%" tal:define="field python:here.getField('assembly')">
+            <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
+              The field here above is not used, check the 'users' tab.
+            </span>
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="34%" tal:define="field python:here.getField('signatures')">
+            <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
+              The field here above is not used, check the 'users' tab.
+            </span>
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="33%" tal:define="field python:here.getField('certifiedSignatures')">
+            <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
+              The field here above is not used, check the 'users' tab.
+            </span>
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+      </table>
+    </tal:assembly_and_signatures>
 
     <tal:data condition="python: pageName=='data'">
       <p i18n:translate="meetingconfig_data_descr" class='pageNameDescr'></p><br />
@@ -305,6 +311,7 @@
                   <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
+              <td tal:condition="not: isManager" align="right">-</td>
             </tr>
             </tal:loop>
             </tbody>
@@ -370,7 +377,7 @@
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
                 <span tal:condition="not: isActive" i18n:translate="">No</span>
               </td>
-              <td tal:condition="isManager" align="right">
+              <td tal:condition="isRealManager" align="right">
                 <!-- Edit the category -->
                 <form name="deleteCatForm" action="delete_givenuid">
                 <a tal:attributes="href python: obj.absolute_url() + '/edit'">
@@ -384,6 +391,7 @@
                   <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
+              <td tal:condition="not: isRealManager" align="right">-</td>
             </tr>
             </tal:loop>
             </tbody>
@@ -451,7 +459,7 @@
                 <span tal:condition="isActive" i18n:translate="">Yes</span>
                 <span tal:condition="not: isActive" i18n:translate="">No</span>
               </td>
-              <td tal:condition="isManager" align="right">
+              <td tal:condition="isRealManager" align="right">
                 <form name="deleteCatForm" action="delete_givenuid">
                 <!-- Edit the category -->
                 <a tal:attributes="href python: obj.absolute_url() + '/edit'">
@@ -465,6 +473,7 @@
                     <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
+              <td tal:condition="not: isRealManager" align="right">-</td>
             </tr>
             </tal:loop>
             </tbody>
@@ -513,7 +522,7 @@
               <td><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></td>
               <td><span tal:content="python: obj.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
               <td align="right"
-                  tal:condition="isManager">
+                  tal:condition="isRealManager">
                 <form name="deleteItemForm" action="delete_givenuid">
                 <!-- Edit the item -->
                 <a tal:attributes="href python: obj.absolute_url() + '/edit'">
@@ -527,6 +536,7 @@
                     <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
+              <td tal:condition="not: isRealManager" align="right">-</td>
             </tr>
             </tbody>
             </table>
@@ -740,7 +750,7 @@
               </td>
 
               <!-- Actions -->
-              <td tal:condition="isManager" align="right">
+              <td tal:condition="isRealManager" align="right">
                 <!-- Edit the topic-->
                 <form name="deleteTopicForm" action="delete_givenuid">
                   <a tal:attributes="href python: obj.absolute_url() + '/edit'">
@@ -754,6 +764,7 @@
                   <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
+              <td tal:condition="not: isRealManager" align="right">-</td>
             </tr>
             </tal:loop>
             </tbody>
@@ -995,7 +1006,7 @@
           <span tal:condition="not: isActive" i18n:translate="">No</span>
         </td>
         <td align="right"
-            tal:condition="isManager">
+            tal:condition="isRealManager">
           <form name="deleteItemForm" action="delete_givenuid">
           <!-- Edit the user -->
           <a tal:attributes="href python: obj.absolute_url() + '/edit'">
@@ -1009,12 +1020,14 @@
               <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
           </form>
         </td>
+        <td tal:condition="not: isRealManager" align="right">-</td>
       </tr>
       </tal:loop>
       </table>
 
       <form name="addUserForm"
             tal:attributes="action python: context.absolute_url() + '/addUser'"
+            tal:condition="isRealManager"
             style="text-align:right; padding-top: 0.5em;">
         <label for="userid" style="vertical-align: middle;" i18n:translate="plonemeeting_identifier"></label>
         <input type="text" name="userid"/>
@@ -1091,7 +1104,7 @@
                 <span tal:condition="not: isActive" i18n:translate="">No</span>
               </td>
               <tal:comment replace="nothing">Actions</tal:comment>
-              <td tal:condition="isManager" align="right">
+              <td tal:condition="isRealManager" align="right">
                 <tal:comment replace="nothing">Edit the pod template</tal:comment>
                 <form name="deletePodTemplateForm" action="delete_givenuid">
                   <a tal:attributes="href python: obj.absolute_url() + '/edit'">
@@ -1105,6 +1118,7 @@
                   <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
                 </form>
               </td>
+              <td tal:condition="not: isRealManager" align="right">-</td>
             </tr>
             </tal:loop>
             </table>
@@ -1120,6 +1134,9 @@
 
     <br/>
     <div metal:use-macro="here/@@pm-macros/showTransitions"></div>
+
+    </tal:hideToNonManagers>
+
        </metal:main_macro>
     </metal:fill>
   </body>
