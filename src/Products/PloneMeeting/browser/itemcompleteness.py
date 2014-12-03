@@ -60,22 +60,31 @@ class ChangeItemCompletenessView(BrowserView):
         elif submitted:
             # check that given 'new_completeness_value' is available in the field vocabulary
             # if not available, just raise Unauthorized
-            new_completeness_value = self.request.get('new_completeness_value')
-            if not new_completeness_value in self.context.restrictedTraverse('@@item-completeness').listSelectableCompleteness().keys():
-                raise Unauthorized
-            self.context.setCompleteness(new_completeness_value)
-            # add a line to the item's emergency_change_history
-            membershipTool = getToolByName(self.context, 'portal_membership')
-            member = membershipTool.getAuthenticatedMember()
-            history_data = {'action': new_completeness_value,
-                            'actor': member.getId(),
-                            'time': DateTime(),
-                            'comment': self.request.get('comment', '')}
-            self.context.completeness_changes_history.append(history_data)
+            self._changeCompleteness(self.request.get('new_completeness_value'),
+                                     comment=self.request.get('comment', ''))
             # update item
             self.context.at_post_edit_script()
             self.request.response.redirect(self.context.absolute_url())
         return self.index()
+
+    def _changeCompleteness(self, new_completeness_value, bypassSecurityCheck=False, comment=''):
+        '''Helper method that change completeness and manage completeness history.'''
+        # make sure new_completeness_value exists in MeetingItem.listCompleteness vocabulary
+        if not new_completeness_value in self.context.listCompleteness().keys():
+            raise KeyError("New value %s does not correspond to a value of MeetingItem.listCompleteness")
+
+        if not bypassSecurityCheck and not new_completeness_value in \
+           self.context.restrictedTraverse('@@item-completeness').listSelectableCompleteness().keys():
+            raise Unauthorized
+        self.context.setCompleteness(new_completeness_value)
+        # add a line to the item's emergency_change_history
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        history_data = {'action': new_completeness_value,
+                        'actor': member.getId(),
+                        'time': DateTime(),
+                        'comment': comment}
+        self.context.completeness_changes_history.append(history_data)
 
 
 class ItemCompletenessHistoryView(BrowserView):
