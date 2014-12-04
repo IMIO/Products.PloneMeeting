@@ -70,11 +70,11 @@ class ChangeItemCompletenessView(BrowserView):
     def _changeCompleteness(self, new_completeness_value, bypassSecurityCheck=False, comment=''):
         '''Helper method that change completeness and manage completeness history.'''
         # make sure new_completeness_value exists in MeetingItem.listCompleteness vocabulary
-        if not new_completeness_value in self.context.listCompleteness().keys():
+        if not new_completeness_value in self.context.listCompleteness():
             raise KeyError("New value %s does not correspond to a value of MeetingItem.listCompleteness")
 
         if not bypassSecurityCheck and not new_completeness_value in \
-           self.context.restrictedTraverse('@@item-completeness').listSelectableCompleteness().keys():
+           self.context.restrictedTraverse('@@item-completeness').listSelectableCompleteness():
             raise Unauthorized
         self.context.setCompleteness(new_completeness_value)
         # add a line to the item's completeness_changes_history
