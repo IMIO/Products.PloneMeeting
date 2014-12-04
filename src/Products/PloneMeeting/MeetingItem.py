@@ -1065,14 +1065,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return getFieldContent(self, 'title', force)
 
     security.declarePublic('getMotivation')
-    def getMotivation(self, keepWithNext=False, **kwargs):
+    def getMotivation(self, **kwargs):
         '''Overridden version of 'motivation' field accessor. It allows to manage
            the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the motivation/decision for non-managers if meeting state is 'decided.'''
         item = self.getSelf()
-        res = self.getField('motivation').get(self, **kwargs)
-        if keepWithNext:
-            res = signatureNotAlone(res)
         tool = getToolByName(item, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         adaptations = cfg.getWorkflowAdaptations()

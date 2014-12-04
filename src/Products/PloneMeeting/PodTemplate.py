@@ -280,7 +280,8 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
             tempfile.gettempdir(), obj.UID(), time.time(), self.getPodFormat())
         # Define parameters to pass to the appy.pod renderer
         currentUser = self.portal_membership.getAuthenticatedMember()
-        podContext = {'self': obj, 'adap': obj.adapted(),
+        podContext = {'self': obj,
+                      'adap': obj.adapted(),
                       'tool': self.portal_plonemeeting,
                       'meetingConfig': meetingConfig,
                       'meetingIsDecided': self.meetingIsDecided(obj),
@@ -289,6 +290,8 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
                       'podTemplate': self,
                       # give ability to access annexes related methods
                       'IAnnexable': IAnnexable,
+                      # make methods defined in utils available
+                      'utils': Products.PloneMeeting.utils,
                       }
         podContext.update(obj.adapted().getSpecificDocumentContext())
         rendererParams = {'template': StringIO(self.getPodTemplate()),
