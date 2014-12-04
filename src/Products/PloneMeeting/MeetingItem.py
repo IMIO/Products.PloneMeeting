@@ -1064,6 +1064,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
+    security.declarePublic('getMotivation')
+    def getMotivation(self, keepWithNext=False, **kwargs):
+        '''Overridden version of 'motivation' field accessor. It allows to manage
+           the 'hide_decisions_when_under_writing' workflowAdaptation that
+           hides the motivation/decision for non-managers if meeting state is 'decided.'''
+        item = self.getSelf()
+        res = self.getField('motivation').get(self, **kwargs)
+        if keepWithNext:
+            res = signatureNotAlone(res)
+        tool = getToolByName(item, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        adaptations = cfg.getWorkflowAdaptations()
+        if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
+           item.getMeeting().queryState() == 'decided' and not tool.isManager():
+            return translate('decision_under_edit',
+                             domain='PloneMeeting',
+                             context=item.REQUEST,
+                             default='<p>The decision is currently under edit by managers, you can not access it.</p>')
+        return self.getField('motivation').get(self, **kwargs)
+    getRawMotivation = getMotivation
+
     security.declarePublic('getDecision')
     def getDecision(self, keepWithNext=True, **kwargs):
         '''Overridden version of 'decision' field accessor. It allows to specify
@@ -1089,24 +1110,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              default='<p>The decision is currently under edit by managers, you can not access it.</p>')
         return res
     getRawDecision = getDecision
-
-    security.declarePublic('getMotivation')
-    def getMotivation(self, **kwargs):
-        '''Overridden version of 'motivation' field accessor. It allows to manage
-           the 'hide_decisions_when_under_writing' workflowAdaptation that
-           hides the motivation/decision for non-managers if meeting state is 'decided.'''
-        item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        adaptations = cfg.getWorkflowAdaptations()
-        if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
-           item.getMeeting().queryState() == 'decided' and not tool.isManager():
-            return translate('decision_under_edit',
-                             domain='PloneMeeting',
-                             context=item.REQUEST,
-                             default='<p>The decision is currently under edit by managers, you can not access it.</p>')
-        return self.getField('motivation').get(self, **kwargs)
-    getRawMotivation = getMotivation
 
     security.declarePublic('getDeliberation')
     def getDeliberation(self, keepWithNext=True, separate=False, **kwargs):
