@@ -249,11 +249,6 @@ class IMeetingItemDocumentation:
     def mayTakeOver():
         '''This manage the condition that check if MeetingItem.takenOverBy
            may be edited by the current user.'''
-    def mayBeLinkedToTasks():
-        '''This method returns True if this meeting item fulfills conditions
-           such that it can be associated to tasks. In the default
-           implementation, it is the case if the item is in state "confirmed"
-           or is in state "itemarchived" and previous state was "confirmed".'''
     def transformRichTextField(fieldName, richContent):
         '''This method is called every time an item is created or updated. It
            allows you to modify the content of any "richtext" attribute

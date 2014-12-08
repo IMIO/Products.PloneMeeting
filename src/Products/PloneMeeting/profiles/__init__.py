@@ -436,13 +436,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemTemplates = []  # ~[ItemTemplateDescriptor]~
         self.meetingFileTypes = []
 
-        # Tasks-related parameters ---------------------------------------------
-        # Macro that will be called within meetingitem_view.pt for displaying
-        # tasks linked to the shown item.
-        self.tasksMacro = ''
-        # What role is provided by the external task module for creating tasks?
-        self.taskCreatorRole = ''
-
         # Advices parameters ---------------------------------------------------
         # Enable / disable advices
         self.useAdvices = False

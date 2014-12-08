@@ -799,21 +799,6 @@
       </table>
     </tal:mail>
 
-    <tal:tasks condition="python: pageName=='tasks'">
-      <p i18n:translate="tasks_descr" class='pageNameDescr'></p><br />
-      <table width="100%" class="discreet">
-        <tr valign="top">
-          <td width="33%" tal:define="field python:here.getField('tasksMacro')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td width="34%" tal:define="field python:here.getField('taskCreatorRole')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td width="33%"></td>
-        </tr>
-      </table>
-    </tal:tasks>
-
     <tal:advices condition="python: pageName=='advices'">
       <p i18n:translate="meetingconfig_advice_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">

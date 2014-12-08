@@ -2353,23 +2353,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 unrestrictedRemoveGivenObject(item)
                 return True
 
-    security.declarePublic('mayBeLinkedToTasks')
-    def mayBeLinkedToTasks(self):
-        '''See doc in interfaces.py.'''
-        item = self.getSelf()
-        res = False
-        if (item.queryState() == 'confirmed'):
-            res = True
-        elif (item.queryState() == 'itemarchived'):
-            meetingConfig = item.portal_plonemeeting.getMeetingConfig(item)
-            itemWorkflow = meetingConfig.getItemWorkflow()
-            if itemWorkflow in item.workflow_history:
-                previousState = item.workflow_history[itemWorkflow][-2][
-                    'review_state']
-                if previousState == 'confirmed':
-                    res = True
-        return res
-
     security.declarePublic('mayQuickEdit')
     def mayQuickEdit(self, fieldName):
         '''Check if the current p_fieldName can be quick edited thru the meetingitem_view.

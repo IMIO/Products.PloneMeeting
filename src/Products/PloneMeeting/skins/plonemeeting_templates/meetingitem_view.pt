@@ -413,18 +413,8 @@
 
     </tal:itemInConfig>
 
-    <tal:comment replace="nothing">Tasks</tal:comment>
-    <tal:tasks condition="meetingConfig/getTasksMacro">
-    <span tal:define="tasksMacro python: path(meetingConfig.getTasksMacro() + '|nothing')"
-          tal:condition="python: tasksMacro and context.adapted().mayBeLinkedToTasks() and (member.has_role('TaskManager') or member.has_role('Owner', context))">
-      <br/>
-      <span metal:use-macro="tasksMacro"></span>
-    </span>
-    </tal:tasks>
-
     <tal:comment replace="nothing">Remember when this item was last accessed</tal:comment>
     <span tal:define="dummy python: tool.rememberAccess(context.UID())"></span>
-
 
        </metal:body_macro>
     </metal:fill>

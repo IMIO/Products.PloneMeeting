@@ -134,7 +134,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   item states, one single value for every dashboards about the elements to show per page
 - MeetingManagers have now access to the meeting configurations and are able to edit
   "harmless" parameters like assembly and signatures
-
+- Removed "PloneTask" related fields and functionnality
 
 3.2.0.1 (2014-03-06)
 --------------------

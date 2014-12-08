@@ -436,6 +436,18 @@ class Migrate_To_3_3(Migrator):
             delattr(self.tool, 'searchItemStates')
         logger.info('Done.')
 
+    def _cleanMeetingConfigsTaskAttributes(self):
+        '''Attributes regarding 'task' were removed :
+           - tasksMacro;
+           - taskCreatorRole.'''
+        logger.info('Cleaning search attributes on portal_plonemeeting...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            if hasattr(cfg, 'tasksMacro'):
+                # remove useless attributes
+                delattr(cfg, 'tasksMacro')
+                delattr(cfg, 'taskCreatorRole')
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         self._finishMeetingFolderViewRemoval()
@@ -458,6 +470,7 @@ class Migrate_To_3_3(Migrator):
         self._checkItemsPreferredMeeting()
         self._removeMeetingCategoryItemsCountAttribute()
         self._cleanToolSearchAttributes()
+        self._cleanMeetingConfigsTaskAttributes()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -497,9 +510,10 @@ def migrate(context):
        18) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
        19) Remove MeetingCategory.itemsCount attribute;
        20) Clean portal_plonemeeting search attributes as most were removed;
-       21) Clean registries as we removed some css;
-       22) Reinstall PloneMeeting;
-       23) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       21) Clean meeting configs task related attributes as it was removed;
+       22) Clean registries as we removed some css;
+       23) Reinstall PloneMeeting;
+       24) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_3(context).run()
 # ------------------------------------------------------------------------------

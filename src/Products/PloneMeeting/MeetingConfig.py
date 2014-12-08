@@ -1141,35 +1141,6 @@ schema = Schema((
         enforceVocabulary=False,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='tasksMacro',
-        default=defValues.tasksMacro,
-        widget=StringField._properties['widget'](
-            size=70,
-            description="TasksMacro",
-            description_msgid="tasks_macro_descr",
-            label='Tasksmacro',
-            label_msgid='PloneMeeting_label_tasksMacro',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="tasks",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='taskCreatorRole',
-        widget=SelectionWidget(
-            description="TaskCreatorRole",
-            description_msgid="task_creator_role_descr",
-            label='Taskcreatorrole',
-            label_msgid='PloneMeeting_label_taskCreatorRole',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="tasks",
-        vocabulary='listRoles',
-        default=defValues.taskCreatorRole,
-        enforceVocabulary=False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
     BooleanField(
         name='useAdvices',
         default=defValues.useAdvices,
@@ -4243,3 +4214,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+
