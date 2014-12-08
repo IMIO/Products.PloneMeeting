@@ -7,7 +7,7 @@ from plone.memoize.instance import memoize
 
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.config import ADVICE_STATES_STILL_EDITABLE
+from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 
 
 class PloneMeetingTopicView(BrowserView):
@@ -287,7 +287,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
             # advice giveable but not given
             indexAdvisers.append("delay__%s_advice_not_given" % groupId)
             # now advice given and still editable
-            for advice_state in ADVICE_STATES_STILL_EDITABLE:
+            for advice_state in ADVICE_STATES_ALIVE:
                 indexAdvisers.append("delay__%s_%s" % (groupId, advice_state))
         query = {}
         query['indexAdvisers'] = indexAdvisers

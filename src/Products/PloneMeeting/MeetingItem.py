@@ -3124,7 +3124,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # declare that we are currently updating advices
         # because some subprocess like events could call it again
         # leading to some inconsistency...
-        self.REQUEST.get('currentlyUpdatingAdvice', True)
+        self.REQUEST.set('currentlyUpdatingAdvice', True)
 
         old_adviceIndex = deepcopy(self.adviceIndex.data)
 
@@ -3431,7 +3431,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    triggered_by_transition=triggered_by_transition,
                                    old_adviceIndex=old_adviceIndex))
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
-        self.REQUEST.get('currentlyUpdatingAdvice', False)
+        self.REQUEST.set('currentlyUpdatingAdvice', False)
 
     security.declarePublic('getDelayInfosForAdvice')
     def getDelayInfosForAdvice(self, advice_id):

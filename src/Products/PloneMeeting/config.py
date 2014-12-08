@@ -222,10 +222,10 @@ NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
 NOT_GIVEN_ADVICE_VALUE = 'not_given'
 
 # the 2 lists here under are showing advice review_states
-# in which an advice is still editable or no more editable
+# in which an advice is still considered 'alive' or advice is considered 'ended'
 # this can change if the wf used for advice is different
-ADVICE_STATES_STILL_EDITABLE = ('advice_under_edit', )
-ADVICE_STATES_NO_MORE_EDITABLE = ('advice_given', )
+ADVICE_STATES_ALIVE = ('advice_under_edit', )
+ADVICE_STATES_ENDED = ('advice_given', )
 
 # In those states, the meeting is not closed.
 MEETING_NOT_CLOSED_STATES = ('published', 'frozen', 'decided', 'decisions_published')

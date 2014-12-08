@@ -40,8 +40,8 @@ from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAdvice
-from Products.PloneMeeting.config import ADVICE_STATES_STILL_EDITABLE
-from Products.PloneMeeting.config import ADVICE_STATES_NO_MORE_EDITABLE
+from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
+from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -1335,7 +1335,7 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_ConfigAdviceStates(self):
         '''
           This test that states defined in config.py in two constants
-          ADVICE_STATES_STILL_EDITABLE and ADVICE_STATES_NO_MORE_EDITABLE
+          ADVICE_STATES_ALIVE and ADVICE_STATES_ENDED
           consider every states of the workflow used for content_type 'meetingadvice'.
         '''
         adviceWF = self.wfTool.getWorkflowsFor('meetingadvice')
@@ -1343,7 +1343,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(len(adviceWF) == 1)
         adviceWF = adviceWF[0]
         everyStates = adviceWF.states.keys()
-        statesOfConfig = ADVICE_STATES_STILL_EDITABLE + ADVICE_STATES_NO_MORE_EDITABLE
+        statesOfConfig = ADVICE_STATES_ALIVE + ADVICE_STATES_ENDED
         self.assertTrue(set(everyStates) == set(statesOfConfig))
 
 
