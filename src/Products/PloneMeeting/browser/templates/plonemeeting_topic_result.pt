@@ -1,6 +1,6 @@
 <tal:comment replace="nothing">
   This macro displays a list of items, meetings or meeting files as a result
-  of a topic call or custom search. It requires REQUEST parameters "topicId".
+  of a topic call or custom search. It requires REQUEST parameters "topicId" and "isFake".
 </tal:comment>
 <metal:result define-macro="topicResult" i18n:domain="PloneMeeting"
      tal:define="tool           context/getParentNode;
