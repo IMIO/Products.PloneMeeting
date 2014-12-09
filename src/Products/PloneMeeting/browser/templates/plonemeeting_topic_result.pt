@@ -1,6 +1,6 @@
 <tal:comment replace="nothing">
   This macro displays a list of items, meetings or meeting files as a result
-  of a topic call or custom search. It requires REQUEST parameters "topicId" and "isFake".
+  of a topic call or custom search. It requires REQUEST parameters "topicId".
 </tal:comment>
 <metal:result define-macro="topicResult" i18n:domain="PloneMeeting"
      tal:define="tool           context/getParentNode;
@@ -18,7 +18,6 @@
     receives a "fakeTopic" (which is one of the predefined topics of the
     meeting configuration); query results in the portal_catalog are already
     given in searchResults.</tal:comment>
-
   <tal:comment replace="nothing">Show the result.</tal:comment>
   <div onmouseover="javascript:initializePMOverlays()" class="ajax-pm-frame" tal:condition="searchResults">
 
@@ -31,12 +30,11 @@
                   sortKey             request/sortKey | nothing;
                   sortOrder           request/sortOrder | python:'asc';
                   showAdvices         python: meetingConfig.getUseAdvices() and ('advices' in visibleColumns);
-                  showRelatedMeeting  python: (resultMetaType == 'MeetingItem') and (isFake or ('meeting' in visibleColumns));
-                  showToDiscuss       python: not isFake and ('toDiscuss' in visibleColumns);
-                  showItemIsSigned    python: not isFake and ('itemIsSigned' in visibleColumns);
-                  showPrefMeeting     python: not isFake and ('preferredMeeting' in visibleColumns);
-                  showBudgetInfos     python: not isFake and ('budgetInfos' in visibleColumns);
-                  showActions         python: not isFake and ('actions' in visibleColumns);">
+                  showRelatedMeeting  python: resultMetaType == 'MeetingItem' and 'meeting' in visibleColumns;
+                  showToDiscuss       python: 'toDiscuss' in visibleColumns;
+                  showItemIsSigned    python: 'itemIsSigned' in visibleColumns;
+                  showPrefMeeting     python: 'preferredMeeting' in visibleColumns;
+                  showActions         python: 'actions' in visibleColumns;">
     <tr>
       <tal:comment replace="nothing">Title</tal:comment>
       <th class="pm_listing_th_title" tal:define="fieldIndex string:sortable_title; filterIndex string:SearchableText">
@@ -154,7 +152,7 @@
             <tal:wakeUpItem define="meetingItem brain/getObject;
                                     isPrivacyViewable python: meetingItem.adapted().isPrivacyViewable()">
             <tal:comment replace="nothing">Icon to display</tal:comment>
-            <tal:showTitle replace="structure python: tool.getColoredLink(meetingItem, showColors, highlight=isFake, inMeeting=True)"/>
+            <tal:showTitle replace="structure python: tool.getColoredLink(meetingItem, showColors, highlight=True, inMeeting=True)"/>
             <metal:itemMoreInfos use-macro="here/@@pm-macros/itemMoreInfos" />
             <tal:comment replace="nothing">Annexes</tal:comment>
             <table class="no-style-table" cellpadding="0" cellspacing="0" align="right"
@@ -178,7 +176,7 @@
                 </td>
               </tr>
             </table>
-            <tal:budget condition="python: showBudgetInfos and isPrivacyViewable and meetingItem.getBudgetRelated() and not meetingItem.fieldIsEmpty('budgetInfos')">
+            <tal:budget condition="python: 'budgetInfos' in visibleColumns and isPrivacyViewable and meetingItem.getBudgetRelated() and not meetingItem.fieldIsEmpty('budgetInfos')">
                 <span tal:define="field python: meetingItem.getField('budgetInfos');
                                   mode string:view;
                                   context python: meetingItem;">

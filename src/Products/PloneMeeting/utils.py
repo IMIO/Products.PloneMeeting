@@ -183,9 +183,10 @@ def getCurrentMeetingObject(context):
             else:
                 # It can be a method with attribute im_class
                 obj = None
-    if obj and not obj.meta_type == 'Meeting':
-        obj = None
-    return obj
+    toReturn = None
+    if obj and hasattr(obj, 'meta_type') and obj.meta_type == 'Meeting':
+        toReturn = obj
+    return toReturn
 
 
 def cleanRamCacheFor(methodId):
