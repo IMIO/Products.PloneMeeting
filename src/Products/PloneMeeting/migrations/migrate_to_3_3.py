@@ -3,6 +3,8 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 
 from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
+
 from Acquisition import aq_base
 
 from zope.i18n import translate
@@ -171,18 +173,24 @@ class Migrate_To_3_3(Migrator):
                                                 acquire=False)
         logger.info('Done.')
 
-    def _addChangesHistoryToItems(self):
-        '''Add the attribute 'emergency_changes_history' and 'completeness_changes_history'
-           on every existing items, this will be used to store changes about the
-           MeetingItem.emergency and MeetingItem.completeness fields values and comments.'''
+    def _addPersistentAttributesToItems(self):
+        '''Add the attributes 'emergency_changes_history', 'completeness_changes_history' and 'takenOverByInfos'
+           on every existing items :
+           - 'emergency_changes_history' and 'completeness_changes_history' will be used to store changes about the
+           MeetingItem.emergency and MeetingItem.completeness fields values and comments;
+           - 'takenOverByInfos' will be used to store history of who already took an item over
+           for each review_state the item already get thru.'''
         brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
-        logger.info('Initializing attribute \'emergency_changes_history\' and \'completeness_changes_history\' for %d MeetingItem objects...' % len(brains))
+        logger.info("Initializing new attributes 'emergency_changes_history', 'completeness_changes_history' and "
+                    "'takenOverByInfos' for %d MeetingItem objects..." % len(brains))
         for brain in brains:
             item = brain.getObject()
             if not hasattr(item, 'emergency_changes_history'):
                 item.emergency_changes_history = PersistentList()
             if not hasattr(item, 'completeness_changes_history'):
                 item.completeness_changes_history = PersistentList()
+            if not hasattr(item, 'takenOverByInfos'):
+                item.takenOverByInfos = PersistentMapping()
         logger.info('Done.')
 
     def _translateFoldersOfMeetingConfigs(self):
@@ -459,7 +467,7 @@ class Migrate_To_3_3(Migrator):
         self._addAdvicesNewFieldHiddenDuringRedaction()
         self._updateAdvices()
         self._updateAddFilePermissionOnMeetingConfigFolders()
-        self._addChangesHistoryToItems()
+        self._addPersistentAttributesToItems()
         self._translateFoldersOfMeetingConfigs()
         self._addItemTypesToTypesUseViewActionInListings()
         self._adaptTopicsPortalTypeCriterion()

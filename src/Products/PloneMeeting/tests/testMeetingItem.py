@@ -1617,20 +1617,20 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('admin')
         # we have 8 items, if we remove item number 5, others are correct
         self.assertTrue(len(meeting.getItemsInOrder()) == 8)
-        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem in meeting.getItemsInOrder()] ==
-                        [1, 2, 3, 4, 5, 6, 7, 8])
+        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem
+                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7, 8])
         # 1 late item
         self.assertTrue(len(meeting.getItemsInOrder(late=True)) == 1)
-        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem in meeting.getItemsInOrder(late=True)] ==
-                        [9, ])
+        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem
+                         in meeting.getItemsInOrder(late=True)] == [9, ])
         # item is 5th of normal items
         self.assertTrue(item.UID() == meeting.getItemsInOrder()[4].UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
-        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem in meeting.getItemsInOrder()] ==
-                        [1, 2, 3, 4, 5, 6, 7])
+        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem
+                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7])
         # and late items are correct too
-        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem in meeting.getItemsInOrder(late=True)] ==
-                        [8, ])
+        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem
+                         in meeting.getItemsInOrder(late=True)] == [8, ])
 
     def test_pm_ListMeetingsAcceptingItems(self):
         '''
@@ -2083,7 +2083,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertTrue(item.adapted().mayTakeOver(self.member))
+        self.assertTrue(item.adapted().mayTakeOver())
         # for now, not taken over
         self.assertTrue(not item.getTakenOverBy())
         # take it over
@@ -2095,12 +2095,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(not item.getTakenOverBy())
         # moreover, as pmCreator1 does not have 'Review portal content'
         # it can not be taken over
-        self.assertTrue(not item.adapted().mayTakeOver(self.member))
+        self.assertTrue(not item.adapted().mayTakeOver())
         # if he tries so, he gets Unauthorized
         self.assertRaises(Unauthorized, view.toggle, takenOverByFrom=item.getTakenOverBy())
         # turn to a user than can take the item over
         self.changeUser('pmReviewer1')
-        self.assertTrue(item.adapted().mayTakeOver(self.member))
+        self.assertTrue(item.adapted().mayTakeOver())
         # test that the user is warned if item was taken over in between
         # we will do as if 'pmVirtualReviewer1' had taken the item over
         item.setTakenOverBy('pmVirtualReviewer1')
@@ -2132,6 +2132,49 @@ class testMeetingItem(PloneMeetingTestCase):
         # toggling it again will release the taking over again
         view.toggle(takenOverByFrom=item.getTakenOverBy())
         self.assertTrue(not item.getTakenOverBy())
+
+    def test_pm_HistorizedTakenOverBy(self):
+        '''Test the functionnality under takenOverBy that will automatically set back original
+           user that took over item first time.  So if a user take over an item in state1, it is saved.
+           If item goes to state2, taken over by is set to '', if item comes back to state1, original user
+           that took item over is automatically set again.'''
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(not item.takenOverByInfos)
+        # take item over
+        item.setTakenOverBy('pmCreator1')
+        item_created_key = "%s__wfstate__%s" % (self.meetingConfig.getItemWorkflow(), item.queryState())
+        self.assertTrue(item.takenOverByInfos[item_created_key] == 'pmCreator1')
+        # if takenOverBy is removed, takenOverByInfos is cleaned too
+        item.setTakenOverBy('')
+        self.assertTrue(not item.takenOverByInfos)
+        # take item over and propose item
+        item.setTakenOverBy('pmCreator1')
+        self.proposeItem(item)
+        # takenOverBy was set back to ''
+        self.assertTrue(not item.getTakenOverBy())
+        self.changeUser('pmReviewer1')
+        # take item over
+        item.setTakenOverBy('pmReviewer1')
+        # send item back to itemcreated, 'pmCreator1' will be automatically
+        # selected as user that took item over
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertTrue(item.getTakenOverBy() == 'pmCreator1')
+        # propose it again, it will be set to 'pmReviewer1'
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        self.assertTrue(item.getTakenOverBy() == 'pmReviewer1')
+
+        # while setting to a state where a user already took item
+        # over, if user we will set automatically does not have right anymore
+        # to take over item, it will not be set, '' will be set and takenOverByInfos is cleaned
+        item.takenOverByInfos[item_created_key] = 'pmCreator2'
+        # now set item back to itemcreated
+        self.changeUser('pmReviewer1')
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertTrue(not item.getTakenOverBy())
+        self.assertTrue(not item_created_key in item.takenOverByInfos)
 
     def test_pm_ItemActionsPanelCaching(self):
         '''For performance, actions panel is cached,

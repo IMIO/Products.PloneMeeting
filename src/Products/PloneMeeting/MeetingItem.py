@@ -34,6 +34,9 @@ from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
+from AccessControl.SecurityManagement import newSecurityManager
+from AccessControl.SecurityManagement import getSecurityManager
+from AccessControl.SecurityManagement import setSecurityManager
 from DateTime import DateTime
 from App.class_init import InitializeClass
 from OFS.ObjectManager import BeforeDeleteException
@@ -1297,12 +1300,65 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return True
 
     security.declarePublic('mayTakeOver')
-    def mayTakeOver(self, member):
+    def mayTakeOver(self):
         '''Condition for editing 'takenOverBy' field.
            A member may take an item over if he his able to change the review_state.'''
         item = self.getSelf()
         wfTool = getToolByName(item, 'portal_workflow')
         return bool(wfTool.getTransitionsFor(item))
+
+    security.declareProtected('Modify portal content', 'setItemIsSigned')
+    def setTakenOverBy(self, value, **kwargs):
+        '''Override MeetingItem.takenOverBy mutator so we can manage
+           history stored in 'takenOverByInfos'.
+           We can receive a 'wf_state' in the kwargs, than needs to have format like :
+           workflowname__wfname__wfstate.'''
+        # Add a place to store takenOverBy by review_state user id
+        # as we override mutator, this method is called before ObjectInitializedEvent
+        # do not manage history while creating a new item
+        if not self._at_creation_flag:
+            # save takenOverBy to takenOverByInfos for current review_state
+            # or check for a wf_state in kwargs
+            if 'wf_state' in kwargs:
+                wf_state = kwargs['wf_state']
+            else:
+                tool = getToolByName(self, 'portal_plonemeeting')
+                cfg = tool.getMeetingConfig(self)
+                wf_state = "%s__wfstate__%s" % (cfg.getItemWorkflow(), self.queryState())
+            if value:
+                self.takenOverByInfos[wf_state] = value
+            elif not value and wf_state in self.takenOverByInfos:
+                del self.takenOverByInfos[wf_state]
+        self.getField('takenOverBy').set(self, value, **kwargs)
+
+    security.declarePublic('setHistorizedTakenOverBy')
+    def setHistorizedTakenOverBy(self, wf_state):
+        '''Set 'takenOverBy' taking into account last user that was taking
+           the item over.  So if an item come back a second time (or more), to
+           the same p_wf_state, we automatically set the same user than before
+           if still available.  If not, we set that to ''.'''
+        if wf_state in self.takenOverByInfos:
+            previousUserId = self.takenOverByInfos[wf_state]
+            membershipTool = getToolByName(self, 'portal_membership')
+            previousUser = membershipTool.getMemberById(previousUserId)
+            mayTakeOver = False
+            if previousUser:
+                # save current SecurityManager to fall back to it after
+                oldsm = getSecurityManager()
+                # login as an omnipotent user
+                newSecurityManager(None, previousUser)
+                try:
+                    mayTakeOver = self.adapted().mayTakeOver()
+                except:
+                    logger.warning("An error occured in 'setHistorizedTakenOverBy' while evaluating 'mayTakeOver'")
+                finally:
+                    setSecurityManager(oldsm)
+            if not mayTakeOver:
+                self.setTakenOverBy('')
+            else:
+                self.setTakenOverBy(previousUserId)
+        else:
+            self.setTakenOverBy('')
 
     security.declarePublic('mayAskEmergency')
     def mayAskEmergency(self):

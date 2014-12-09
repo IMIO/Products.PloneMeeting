@@ -98,8 +98,10 @@ def onItemTransition(item, event):
     do(action, event)
     # update local roles regarding copyGroups when changing item's state
     item.updateCopyGroupsLocalRoles()
-    # if 'takenOverBy' is used, it is reinitialized after a transition
-    item.setTakenOverBy('')
+    # if 'takenOverBy' is used, it is automatically set after a transition
+    # to last user that was taking the item over or to nothing
+    wf_state = "%s__wfstate__%s" % (event.workflow.getId(), event.new_state.getId())
+    item.setHistorizedTakenOverBy(wf_state)
     # update relevant indexes
     item.reindexObject(idxs=['previous_review_state', 'reviewProcessInfo', 'getTakenOverBy', ])
 
@@ -160,6 +162,8 @@ def onItemAdded(item, event):
     item.emergency_changes_history = PersistentList()
     # Add a place to store completeness changes history
     item.completeness_changes_history = PersistentList()
+    # Add a place to store takenOverBy by review_state user id
+    item.takenOverByInfos = PersistentMapping()
 
 
 def onItemModified(item, event):

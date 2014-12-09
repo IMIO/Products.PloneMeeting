@@ -162,7 +162,7 @@ class TakenOverBy(BrowserView):
 
     def toggle(self, takenOverByFrom):
         member = self.portal_state.member()
-        if not self.context.adapted().mayTakeOver(member):
+        if not self.context.adapted().mayTakeOver():
             raise Unauthorized
 
         memberId = member.getId()

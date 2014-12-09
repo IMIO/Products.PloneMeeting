@@ -283,7 +283,7 @@ document.location.reload(true);
   meetingItem : the relevant MeetingItem
 </tal:comment>
 <metal:takenOverBy define-macro="takenOverBy" i18n:domain="PloneMeeting"
-                    tal:define="mayEdit python: ajaxEdit==False and False or meetingItem.adapted().mayTakeOver(member);
+                    tal:define="mayEdit python: ajaxEdit==False and False or meetingItem.adapted().mayTakeOver();
                                 memberId member/getId;
                                 isManager python: tool.isManager();
                                 takenOverBy meetingItem/getTakenOverBy;
