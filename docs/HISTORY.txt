@@ -9,7 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.3 (unreleased)
 ----------------
-- Moved to Products.CMFPlone 4.3.3
+- Moved to Products.CMFPlone 4.3.4
 - Moved to collective.ckeditor 4.2.0
 - Depends on plonetheme.imioapps to manage default skin (plonemeetingskin)
 - Moved from communesplone.iconified_document_actions to collective.iconifieddocumentactions
