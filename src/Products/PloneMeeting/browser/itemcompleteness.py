@@ -85,6 +85,7 @@ class ChangeItemCompletenessView(BrowserView):
                         'time': DateTime(),
                         'comment': comment}
         self.context.completeness_changes_history.append(history_data)
+        self.context.reindexObject(idxs=['getCompleteness', ])
 
 
 class ItemCompletenessHistoryView(BrowserView):
