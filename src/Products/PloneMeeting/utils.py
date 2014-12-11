@@ -1065,6 +1065,7 @@ def setFieldFromAjax(obj, fieldName, newValue):
         addDataChange(obj, previousData)
     # Update the last modification date
     obj.setModificationDate(DateTime())
+    obj.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
     # Apply XHTML transforms when relevant
     transformAllRichTextFields(obj, onlyField=fieldName)
     obj.reindexObject()

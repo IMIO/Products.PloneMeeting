@@ -74,6 +74,7 @@ def do(action, event):
 
     # update modification date upon state change
     event.object.setModificationDate(DateTime())
+    event.object.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
 
 
 def onItemTransition(item, event):
@@ -265,6 +266,7 @@ def onAnnexAdded(annex, event):
     '''When an annex is added, we need to update item modification date.'''
     item = annex.getParent()
     item.setModificationDate(DateTime())
+    event.object.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
 
 
 def onAnnexRemoved(annex, event):
@@ -283,6 +285,7 @@ def onAnnexRemoved(annex, event):
 
     # update item modification date
     item.setModificationDate(DateTime())
+    event.object.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
 
 
 def onItemDuplicated(item, event):
