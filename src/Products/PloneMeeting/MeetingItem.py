@@ -1509,7 +1509,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             associatedGroupsInVocab = [group[0] for group in res]
             for groupId in associatedGroups:
                 if not groupId in associatedGroupsInVocab:
-                    res.append((groupId, getattr(tool, groupId).getName()))
+                    mGroup = getattr(tool, groupId, None)
+                    if mGroup:
+                        res.append((groupId, getattr(tool, groupId).getName()))
+                    else:
+                        res.append((groupId, groupId))
 
         return DisplayList(tuple(res)).sortedByValue()
 
@@ -3329,7 +3333,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for groupId in copyGroups:
                 if not groupId in copyGroupsInVocab:
                     group = self.portal_groups.getGroupById(groupId)
-                    res.append((groupId, group.getProperty('title')))
+                    if group:
+                        res.append((groupId, group.getProperty('title')))
+                    else:
+                        res.append((groupId, groupId))
 
         return DisplayList(tuple(res)).sortedByValue()
 
