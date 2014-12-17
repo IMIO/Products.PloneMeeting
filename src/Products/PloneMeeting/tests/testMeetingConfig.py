@@ -40,7 +40,6 @@ from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import TOPIC_SEARCH_FILTERS
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
-from Products.PloneMeeting.utils import cleanRamCacheFor
 
 
 class testMeetingConfig(PloneMeetingTestCase):
@@ -65,19 +64,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         item.setOptionalAdvisers(('developers', 'vendors__rowid__unique_id_123'))
         # as the item is "itemcreated", advices are not givable
         self.changeUser('pmAdviser1')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
         # now propose the item
         self.changeUser('pmCreator1')
         self.proposeItem(item)
         # only advisers can give an advice, so a creator for example will not see it
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 0)
         # now test as advisers
         self.changeUser('pmAdviser1')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 1)
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.assertEquals(self.meetingConfig.searchItemsToAdvice('', '', '', '')[0].UID, item.UID())
         # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
         # so pmAdviser1 gives his advice
@@ -86,13 +81,10 @@ class testMeetingConfig(PloneMeetingTestCase):
                                  **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
         # pmReviewer2 is adviser for 'vendors', delay-aware advices are also returned
         self.changeUser('pmReviewer2')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 1)
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.assertEquals(self.meetingConfig.searchItemsToAdvice('', '', '', '')[0].UID, item.UID())
         # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
         # so pmReviewer2 gives his advice
@@ -101,7 +93,6 @@ class testMeetingConfig(PloneMeetingTestCase):
                                  **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
                                     'advice_type': u'negative',
                                     'advice_comment': RichTextValue(u'My comment')})
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
 
     def test_pm_SearchAdvisedItems(self):
@@ -128,11 +119,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failUnless(self.meetingConfig.searchAdvisedItems('', '', '', ''))
         # another user will not see given advices
         self.changeUser('pmCreator1')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failIf(self.meetingConfig.searchAdvisedItems('', '', '', ''))
         # other advisers of the same group will also see advised items
         self.changeUser('pmManager')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failUnless(self.meetingConfig.searchAdvisedItems('', '', '', ''))
         # now create a second item and ask advice to the vendors (pmManager)
         # it will be returned for pmManager but not for pmAdviser1
@@ -147,13 +136,10 @@ class testMeetingConfig(PloneMeetingTestCase):
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 2)
         self.changeUser('pmAdviser1')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 1)
         self.changeUser('pmCreator1')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 0)
 
     def test_pm_SearchAdvisedItemsWithDelay(self):
@@ -204,7 +190,6 @@ class testMeetingConfig(PloneMeetingTestCase):
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         self.failUnless(len(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', '')) == 1)
         self.changeUser('pmCreator1')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         self.failUnless(len(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', '')) == 0)
 
     def test_pm_SearchItemsInCopy(self):

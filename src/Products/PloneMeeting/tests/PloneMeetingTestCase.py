@@ -160,6 +160,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
         self.cleanMemoize()
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         login(self.portal, loginName)
         membershipTool = getToolByName(self.portal, 'portal_membership')
         self.member = membershipTool.getAuthenticatedMember()
@@ -335,9 +336,9 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             self.portal.portal_groups.addPrincipalToGroup(member.getId(), group)
 
     # Workflow-related methods -------------------------------------------------
-    def do(self, obj, transition):
+    def do(self, obj, transition, comment=''):
         '''Executes a workflow p_transition on a given p_obj.'''
-        self.wfTool.doActionFor(obj, transition)
+        self.wfTool.doActionFor(obj, transition, comment=comment)
 
     def transitions(self, obj):
         '''Returns the list of transitions that the current user may trigger

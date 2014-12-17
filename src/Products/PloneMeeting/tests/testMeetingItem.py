@@ -36,10 +36,11 @@ from Products.CMFCore.permissions import View
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.statusmessages.interfaces import IStatusMessage
 
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
-from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
+from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -2261,6 +2262,33 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue('dummy' in object_buttons)
         # and actions panel has been invalidated
         self.assertTrue(not beforeMeetingEdit_rendered_actions_panel == actions_panel())
+
+    def test_pm_HistoryCommentViewability(self):
+        '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter
+           that will make history comments no viewable to any other user than proposing group members.'''
+        # by default, comments are viewable by everyone
+        self.assertTrue(not self.meetingConfig.getHideItemHistoryCommentsToUsersOutsideProposingGroup())
+        # create an item and do some WF transitions so we have history events
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # set 'pmReviewer2' as copyGroups
+        item.setCopyGroups(('vendors_reviewers', ))
+        self.proposeItem(item)
+        self.validateItem(item)
+        # by default, comments are viewable
+        self.changeUser('pmReviewer2')
+        history = item.getHistory()
+        # we have history
+        self.assertTrue(len(history['events']) > 2)
+        for event in history['events']:
+            self.assertTrue(event['comments'] == '')
+        # make comments not viewable
+        self.meetingConfig.setHideItemHistoryCommentsToUsersOutsideProposingGroup(True)
+        history = item.getHistory()
+        # we have history
+        self.assertTrue(len(history['events']) > 2)
+        for event in history['events']:
+            self.assertTrue(event['comments'] == HISTORY_COMMENT_NOT_VIEWABLE)
 
 
 def test_suite():

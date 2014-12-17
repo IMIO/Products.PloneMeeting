@@ -505,7 +505,7 @@ legend .pmLanguage {top: -0.3em; right: 5px;}
     left: 70px;
 }
 div[id^="pm_menu_advice_change_delay"].pmDropdown {
-    left: 47px;
+    right: -190px;
     margin-top: -1px;
 }
 
@@ -1014,9 +1014,6 @@ div a.advice_delay_change_value {
 .advice_change_delay.Editable {
     font-style: italic;
 }
-.advice_change_delay.Editable img {
-    vertical-align: middle;
-}
 
 .item_attribute_label {
     font-style: italic;
@@ -1048,6 +1045,13 @@ span#content-history.highlight-history-link a {
     font-weight: bold;
 }
 
+#content-history p#historize_signed_advice_content-advice_comment,
+#content-history p#historize_signed_advice_content-advice_observations {
+    color: &dtml-discreetColor;;
+    font-style: italic;
+    text-decoration: underline;
+}
+
 #content ul.item-predecessors {
     list-style: none;
     margin-left: 0;
@@ -1059,7 +1063,7 @@ span#content-history.highlight-history-link a {
     font-size: 0.4em;
     padding-right: 0.5em;
     vertical-align: text-bottom;
-    color: &dtml-discreetColor;;;
+    color: &dtml-discreetColor;;
 }
 #content ul.item-predecessors li {
     line-height: 1em;

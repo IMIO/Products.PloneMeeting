@@ -1,40 +1,53 @@
 <tal:defines define="selectableDelays python: view.advice['delay'] and view.listSelectableDelays(view.advice['row_id']) or [];
-                     menuId string:advice_change_delay_row_id_${view/advice/row_id}_${view/context/UID};"
-             condition="selectableDelays"
+                     menuId string:advice_change_delay_row_id_${view/advice/row_id}_${view/context/UID};
+                     portal_url context/@@plone_portal_state/portal_url;
+                     mayAccessDelayChangesHistory view/_mayAccessDelayChangesHistory;"
+             condition="selectableDelays|mayAccessDelayChangesHistory|False"
              i18n:domain="PloneMeeting">
     <span onclick="javascript:toggleMenu('advice_change_delay_row_id_123')"
           class="advice_change_delay Editable"
           tal:attributes="onclick string:javascript:toggleMenu('${menuId}')">
-        <img src="advice_with_delay.png" />&nbsp;<span i18n:translate="">Change delay</span>
+        <img src="advice_with_delay.png" />
     </span>
     <div id="pm_menu_advice_change_delay"
          name="pm_menu_advice_change_delay"
          class="pmDropdown"
          tal:attributes="id string:pm_menu_${menuId};">
-        <div style="clear: left; display: table;" tal:repeat="delay selectableDelays">
-            <img style="float: left; padding-right: 0.3em;"
-                 src="blue_arrow.gif"
-                 tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
-            <a href="#"
-               tal:attributes="href python: '%s/@@change-advice-delay?new_advice_row_id=%s&current_advice_row_id=%s' % (view.context.absolute_url(),
-                                                                                                                       delay[0],
-                                                                                                                       view.advice['row_id']);
-                               class python: 'link-overlay-pm advice_delay_change_value'">
-                <img src="advice_with_delay_big.png"
-                     tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png">
-                <span class="advice_delay" tal:content="python: delay[1]">Delay</span>
-                <span tal:content="python: delay[2]">Delay label</span>
+        <tal:selectableDelays condition="selectableDelays">
+            <div style="clear: left; display: table;" tal:repeat="delay selectableDelays">
+                <img style="float: left; padding-right: 0.3em;"
+                     src="blue_arrow.gif"
+                     tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
+                <a href="#"
+                   tal:attributes="href python: '%s/@@change-advice-delay?new_advice_row_id=%s&current_advice_row_id=%s' % (view.context.absolute_url(),
+                                                                                                                           delay[0],
+                                                                                                                           view.advice['row_id']);
+                                   class python: 'link-overlay-pm advice_delay_change_value'">
+                    <img src="advice_with_delay_big.png"
+                         tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png">
+                    <span class="advice_delay" tal:content="python: delay[1]">Delay</span>
+                    <span tal:content="python: delay[2]">Delay label</span>
+                </a>
+            </div>
+            <div style="text-align: right;"
+                 onclick="javascript:toggleMenu('advice_change_delay_row_id_123')"
+                 tal:attributes="onclick string:javascript:toggleMenu('${menuId}')">
+                <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
+                     src="pb_close_small.png"
+                     tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
+            </div>
+        </tal:selectableDelays>
+        <div>
+            <a class="link-overlay-pm"
+               title="History of delay changes"
+               i18n:domain="PloneMeeting"
+               i18n:attributes="title"
+               style="display: inline-block;"
+               href="@@advice-delay-changes-history"
+               tal:attributes="href string:${view/context/absolute_url}/@@advice-delay-changes-history?advice=${view/advice/id}">
+                <img src="++resource++imio.actionspanel/history.gif"
+                     tal:attributes="src string:${portal_url}/++resource++imio.actionspanel/history.gif"/>&nbsp;<span i18n:translate="History of delay changes"></span>
             </a>
         </div>
-        <div style="text-align: right;"
-             onclick="javascript:toggleMenu('advice_change_delay_row_id_123')"
-             tal:attributes="onclick string:javascript:toggleMenu('${menuId}')">
-            <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
-                 src="pb_close_small.png"
-                 tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
-        </div>
     </div>
-    <tal:addBlankSpacesIfNeeded condition="not:view/mayEdit">
-        <br /><br />
-    </tal:addBlankSpacesIfNeeded>
 </tal:defines>

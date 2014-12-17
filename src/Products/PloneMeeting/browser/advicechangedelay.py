@@ -21,7 +21,6 @@ class AdviceDelaysView(BrowserView):
         self.portal_url = self.portal.absolute_url()
         self.advice = self.request.get('advice_change_delay_advice')
         self.cfg = self.request.get('advice_change_delay_cfg')
-        self.mayEdit = self.request.get('advice_change_delay_mayEdit')
 
     def listSelectableDelays(self, row_id):
         '''Returns a list of delays the current user can change the given p_row_id advice delay to.'''
@@ -92,6 +91,18 @@ class AdviceDelaysView(BrowserView):
                 continue
             res.append((linkedRow['row_id'], linkedRow['delay'], unicode(linkedRow['delay_label'], 'utf-8')))
         return res
+
+    def _mayAccessDelayChangesHistory(self, adviceId=None):
+        '''May current user access delay changes history?'''
+        if not adviceId:
+            adviceId = self.advice['id']
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        # MeetingManagers and advisers of the group
+        # can access the delay changes history
+        if tool.isManager() or adviceId in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')]:
+            return True
+        else:
+            return False
 
 
 class ChangeAdviceDelayView(BrowserView):
@@ -185,17 +196,8 @@ class ChangeAdviceDelayHistoryView(BrowserView):
         '''
           Return history of delay changes for an advice.
         '''
-        # get the advice in the REQUEST
-        advice = self.request.get('advice')
-        # and check if user can actually access it's history
-        # fist check that received advice exists, either something is going wrong
-        if not advice in self.context.adviceIndex:
+        delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
+        adviceId = self.request.get('advice')
+        if not delayChangesView._mayAccessDelayChangesHistory(adviceId):
             raise Unauthorized
-        # MeetingManagers and advisers of the group
-        # can access the delay changes history
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-        if tool.isManager() or advice in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')]:
-            return self.context.adviceIndex[advice]['delay_changes_history']
-        # if user arrives here, he is trying to access the delay history
-        # without permission, we raise Unauthorized
-        raise Unauthorized
+        return self.context.adviceIndex[adviceId]['delay_changes_history']

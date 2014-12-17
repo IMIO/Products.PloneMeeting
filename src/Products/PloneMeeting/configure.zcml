@@ -42,15 +42,9 @@
   <adapter for="OFS.interfaces.IItem"
            factory=".adapters.AnnexableAdapter"
            provides=".interfaces.IAnnexable" />
-
-  <!-- Indexes -->
-  <adapter name="Description" factory=".indexes.Description" />
-  <adapter name="getDeliberation" factory=".indexes.getDeliberation" />
-  <adapter name="isDefinedInTool" factory=".indexes.isDefinedInTool" />
-  <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
-  <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
-  <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
-  <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
+  <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.HistoryCommentViewableAdapter"
+           provides=".interfaces.IHistoryCommentViewable" />
 
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="Products.PloneMeeting.Meeting.Meeting"
@@ -62,6 +56,16 @@
   <adapter for="Products.PloneMeeting.MeetingFile.MeetingFile"
            factory=".adapters.MeetingFileContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
+
+  <!-- Indexes -->
+  <adapter name="Description" factory=".indexes.Description" />
+  <adapter name="getDeliberation" factory=".indexes.getDeliberation" />
+  <adapter name="isDefinedInTool" factory=".indexes.isDefinedInTool" />
+  <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
+  <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
+  <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
+  <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
+
 
   <!-- add the blob field to MeetingFile -->
   <adapter

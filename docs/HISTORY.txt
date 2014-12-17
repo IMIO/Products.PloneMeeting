@@ -69,7 +69,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Refactored index 'indexAdvisers' to avoid relying on suffixes like '0' or '1', but
   using readable suffixes like '_advice_not_given', '_advice_delay_exceeded' or by displaying
   current advice workflow state as suffix
-- Added parameter to hide history comments on an item to members outside the proposing group
+- Added parameter to hide history comments on an item to members outside the proposing group, access
+  to comment of each history event is done in an adapter so it can be eaily overriden if necessary
 - Do not use the 'Type' index in our searches, use the 'portal_type' index because 'Type' is indexing
   the 'Title' of the content type that may change, but 'portal_type' that index the 'id' will never changes
 - Removed 'signatureNotAlone' from fields transform types, this is now managed by the 'keepWithNext'

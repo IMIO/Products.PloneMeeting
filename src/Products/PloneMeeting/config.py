@@ -221,6 +221,9 @@ NOT_ENCODED_VOTE_VALUE = 'not_yet'
 NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
 NOT_GIVEN_ADVICE_VALUE = 'not_given'
 
+# value displayed in the object history table if a comment is not viewable
+HISTORY_COMMENT_NOT_VIEWABLE = "<span class='discreet'>Access to this comment is restricted.</span>"
+
 # the 2 lists here under are showing advice review_states
 # in which an advice is still considered 'alive' or advice is considered 'ended'
 # this can change if the wf used for advice is different

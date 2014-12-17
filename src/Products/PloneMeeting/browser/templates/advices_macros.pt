@@ -60,35 +60,36 @@
                                     tal:define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};"
                                     tal:attributes="class python: (advice['type'] == 'not_given' or advice['hidden_during_redaction']) and class_if_not_given or 'advice_delay'" />
                          </span>
-
-                         <span tal:condition="advice/optional">(</span>
-                              <b tal:content="structure advice/name"></b>
+                         <div style="display: inline-block; vertical-align: middle;">
+                         <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b>
                               <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
                                    - <b tal:content="advice/delay_label"></b>
-                              </tal:showDelayLabel>
-                         <span tal:condition="advice/optional">)</span>
+                              </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
+                         </div>
+                         <div style="max-width: 70px; float: right;" >
                          <acronym tal:attributes="title python: meetingItem.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
-                         <acronym tal:condition="advice/delay">
-                            <a class="link-overlay-pm"
+                         <acronym tal:condition="advice/delay" title="Change delay" i18n:attributes="title">
+                            <tal:advice-change-delay
+                              tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
+                                          dummy python: context.REQUEST.set('advice_change_delay_cfg', meetingConfig);"
+                              replace="structure meetingItem/@@advice-available-delays/index" />
+                         </acronym>
+                         <acronym tal:condition="advice/advice_id|nothing" style="margin-left: 0.2em; padding-right: 0.2em;">
+                            <a class="overlay-history"
                                title="History"
                                i18n:domain="plone"
                                i18n:attributes="title"
                                style="display: inline-block;"
-                               href="@@advice-delay-changes-history"
-                               tal:attributes="href string:${meetingItem/absolute_url}/@@advice-delay-changes-history?advice=${advice/id}">
+                               href="@@historyview"
+                               tal:attributes="href string:${obj/absolute_url}/@@historyview">
                                 <img src="++resource++imio.actionspanel/history.gif"
                                      tal:attributes="src string:${portal_url}/++resource++imio.actionspanel/history.gif"/>
                             </a>
                          </acronym>
+                         </div>
                     </legend>
 
                 <tal:notHiddenUnderRedactionOrManagable condition="python: memberIsAdviserForGroup or mayEdit or not adviceType in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')">
-
-                <tal:advice-change-delay
-                  tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
-                              dummy python: context.REQUEST.set('advice_change_delay_cfg', meetingConfig);
-                              dummy python: context.REQUEST.set('advice_change_delay_mayEdit', mayEdit);"
-                  replace="structure meetingItem/@@advice-available-delays/index" />
 
                 <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%">
                   <tr tal:condition="mayEdit">

@@ -295,3 +295,29 @@ class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
         if checkPermission(ModifyPortalContent, parent):
             return True
         return False
+
+
+class HistoryCommentViewableAdapter(object):
+    """
+      Manage the fact that current user may see or not a comment in an element's history.
+    """
+
+    def __init__(self, context):
+        self.context = context
+        self.request = self.context.REQUEST
+
+    def mayViewComment(self, event):
+        '''
+          By default, every p_event comment is viewable except for MeetingItem, if
+          'hideItemHistoryCommentsToUsersOutsideProposingGroup' is enabled in the MeetingConfig,
+          only members of the proposing group will be able to access history comment.
+        '''
+        userMayAccessComment = True
+        if self.context.meta_type == 'MeetingItem':
+            tool = getToolByName(self.context, 'portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            if cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and not tool.isManager():
+                userMeetingGroupIds = [mGroup.getId() for mGroup in tool.getGroupsForUser()]
+                if not self.context.getProposingGroup() in userMeetingGroupIds:
+                    userMayAccessComment = False
+        return userMayAccessComment

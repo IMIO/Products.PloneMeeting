@@ -351,7 +351,7 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
             if name != mailingList:
                 continue
             for userId in userIds.strip().split(','):
-                recipient = tool.getMailRecipient(userId)
+                recipient = tool.getMailRecipient(userId.strip())
                 if not recipient:
                     continue
                 recipients.append(recipient)
