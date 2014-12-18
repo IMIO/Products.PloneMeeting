@@ -280,6 +280,10 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
     def renderArrows(self):
         """
         """
+        if self.context.isDefinedInTool():
+            config_actions_panel = self.context.restrictedTraverse('@@config_actions_panel')
+            config_actions_panel()
+            return config_actions_panel.renderArrows()
         showArrows = self.kwargs.get('showArrows', False)
         if showArrows and self.mayChangeOrder():
             self.totalNbOfItems = self.kwargs['totalNbOfItems']
@@ -409,6 +413,8 @@ class ConfigActionsPanelView(ActionsPanelView):
         """
           Render arrows if user may change order of elements.
         """
+        if not self.useIcons:
+            return ''
         showArrows = self.kwargs.get('showArrows', False)
         if showArrows and self.member.has_permission(ModifyPortalContent, self.folder):
             return ViewPageTemplateFile("templates/actions_panel_config_arrows.pt")(self)

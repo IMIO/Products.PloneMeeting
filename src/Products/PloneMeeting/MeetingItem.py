@@ -3952,7 +3952,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # - the user must be able to see the item if it is private.
         # The user will duplicate the item in his own folder.
         tool = getToolByName(self, 'portal_plonemeeting')
-        if not tool.userIsAmong('creators') or not self.adapted().isPrivacyViewable():
+        if self.isDefinedInTool() or not tool.userIsAmong('creators') or not self.adapted().isPrivacyViewable():
             return False
         return True
 

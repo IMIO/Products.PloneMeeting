@@ -246,7 +246,8 @@
          <input type="image" style="cursor:pointer" class="imageInput"
                 tal:attributes="onClick python: 'href: window.location=\'%s/meetingfiletypes/createObject?type_name=MeetingFileType\'' % context.absolute_url();
                                 src string: $portal_url/plus.png"
-                title="add_object" i18n:attributes="title"/>
+                title="add_object" i18n:attributes="title"
+                tal:condition="isRealManager"/>
         </legend>
         <p class="discreet" i18n:translate="meeting_file_types_descr"></p><br />
           <table class="listing nosort" align="right" width="100%"
@@ -290,7 +291,7 @@
                 <span tal:condition="not: isActive" i18n:translate="">No</span>
               </td>
               <td align="center">
-                <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
               </td>
             </tr>
             </tal:loop>
@@ -306,7 +307,8 @@
          <input type="image" style="cursor:pointer" class="imageInput"
                 tal:attributes="onClick python: 'href: window.location=\'%s/categories/createObject?type_name=MeetingCategory\'' % context.absolute_url();
                                 src string: $portal_url/plus.png"
-                title="add_object" i18n:attributes="title"/>
+                title="add_object" i18n:attributes="title"
+                tal:condition="isRealManager"/>
         </legend>
         <p class="discreet" i18n:translate="categories_descr"></p><br />
         <table tal:define="cFolder python:context.categories;
@@ -347,7 +349,7 @@
               <span tal:condition="not: isActive" i18n:translate="">No</span>
             </td>
             <td align="right">
-              <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
             </td>
           </tr>
           </tal:loop>
@@ -363,11 +365,12 @@
          <input type="image" style="cursor:pointer" class="imageInput"
                 tal:attributes="onClick python: 'href: window.location=\'%s/classifiers/createObject?type_name=MeetingCategory\'' % context.absolute_url();
                                 src string: $portal_url/plus.png"
-                title="add_object" i18n:attributes="title"/>
+                title="add_object" i18n:attributes="title"
+                tal:condition="isRealManager"/>
         </legend>
         <table tal:define="cFolder python:context.classifiers;
                            cFolderUrl cFolder/absolute_url"
-               class="listing" align="right" width="100%">
+               class="listing nosort" align="right" width="100%">
           <tr>
             <th class="nosort" i18n:translate="listingheader_title">Title</th>
             <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId">Category id</th>
@@ -405,7 +408,7 @@
               <span tal:condition="not: isActive" i18n:translate="">No</span>
             </td>
             <td align="right">
-              <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
             </td>
           </tr>
           </tal:loop>
@@ -421,57 +424,35 @@
                 tal:define="itemType python: 'MeetingItem' + context.getShortName()"
                 tal:attributes="onClick python: 'href: window.location=\'%s/recurringitems/createObject?type_name=%s\'' % (context.absolute_url(), itemType);
                                 src string: $portal_url/plus.png"
-                title="add_object" i18n:attributes="title"/>
+                title="add_object" i18n:attributes="title"
+                tal:condition="isRealManager"/>
         </legend>
-      <table width="100%"
-             tal:define="rFolder python:context.recurringitems;
-                         rFolderUrl rFolder/absolute_url;
-                         moveUrl python: rFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=data#recItems';
-                         objectIds python: rFolder.objectIds('MeetingItem');
-                         firstId python: objectIds and objectIds[0] or '';
-                         lastId python: objectIds and objectIds[-1] or '';">
-        <tr valign="top">
-          <td><p class="discreet" i18n:translate="recurring_items_descr"></p><br /></td>
-        </tr>
-        <tr>
-          <td>
-          <table class="listing" align="right" width="100%">
-            <thead>
-            <tr>
-              <th class="nosort" width="50%" i18n:translate="listingheader_title">Title</th>
-              <th class="nosort" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe">Meeting transition inserting me</th>
-              <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr tal:condition="python: not rFolder.objectValues('MeetingItem')">
-              <td colspan="5" align="center" i18n:translate="">no_recurring_item</td>
-            </tr>
-            <tr tal:repeat="obj python:rFolder.objectValues('MeetingItem')">
-              <td><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></td>
-              <td><span tal:content="python: obj.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
-              <td align="right"
-                  tal:condition="isRealManager">
-                <form name="deleteItemForm" action="delete_givenuid">
-                <!-- Edit the item -->
-                <a tal:attributes="href python: obj.absolute_url() + '/edit'">
-                  <img src="edit.gif" title="label_edit" i18n:attributes="title" />
-                </a>
-                <!-- Delete the item -->
-                  <input type="hidden" name="object_uid" tal:attributes="value obj/UID"/>
-                    <img title="label_remove" i18n:attributes="title"
-                         tal:attributes="src string:$portal_url/delete_icon.png"
-                         onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                    <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
-                </form>
-              </td>
-              <td tal:condition="not: isRealManager" align="right">-</td>
-            </tr>
-            </tbody>
-            </table>
-          </td>
-        </tr>
-      </table>
+        <p class="discreet" i18n:translate="recurring_items_descr"></p><br />
+        <table class="listing nosort" align="right" width="100%"
+               tal:define="rFolder python:context.recurringitems;
+                           rFolderUrl rFolder/absolute_url;">
+          <tr>
+            <th class="nosort" width="50%" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe">Meeting transition inserting me</th>
+            <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+          </tr>
+          <tr tal:condition="python: not rFolder.objectValues('MeetingItem')">
+            <td colspan="5" align="center" i18n:translate="">no_recurring_item</td>
+          </tr>
+          <tal:loop repeat="obj python:rFolder.objectValues('MeetingItem')">
+          <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+                          oddrow repeat/obj/odd;
+                          classOddEven python: oddrow and 'even' or 'odd';" valign="top"
+                tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+                class="#">
+            <td><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></td>
+            <td><span tal:content="python: obj.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
+            <td align="right">
+              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+            </td>
+          </tr>
+          </tal:loop>
+        </table>
       </fieldset>
 
       <!-- Item templates -->
@@ -617,90 +598,47 @@
           <input type="image" style="cursor:pointer" class="imageInput"
                  tal:attributes="onClick python: 'href: window.location=\'%s/topics/createObject?type_name=Topic\'' % context.absolute_url();
                                  src string: $portal_url/plus.png"
-                 title="add_object" i18n:attributes="title"/>
+                 title="add_object" i18n:attributes="title"
+                 tal:condition="isRealManager"/>
         </legend>
-
-        <!-- Show the existing topics and a 'add new topic' button -->
-        <table tal:define="tFolder python:context.topics;
+        <p class="discreet" i18n:translate="topics_descr"></p><br />
+        <table class="listing nosort" align="right" width="100%"
+               tal:define="tFolder python:context.topics;
                            tFolderUrl tFolder/absolute_url" width="100%;">
-        <tr valign="top">
-         <td width="50%"><p class="discreet" i18n:translate="topics_descr"></p><br /></td>
-        </tr>
-        <tr valign="top">
-          <td>
-          <table class="listing" align="right" width="100%"
-                 tal:define="moveUrl python: tFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=gui#topics';
-                             objectIds python: tFolder.objectIds('ATTopic');
-                             firstId python: objectIds and objectIds[0] or '';
-                             lastId python: objectIds and objectIds[-1] or '';">
-            <thead>
-            <tr>
-              <th class="nosort" i18n:translate="listingheader_title">Title</th>
-              <th class="nosort" i18n:translate="topic_linked_to_type">Linked to Meeting or MeetingItem?</th>
-              <th class="nosort" i18n:translate="topic_search_script">Topic search script</th>
-              <th class="nosort" i18n:translate="topic_tal_expression">Topic tal expression</th>
-              <th class="nosort" width="50px" i18n:translate="pod_template_is_active">Active?</th>
-              <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
-            </tr>
-            </thead>
-
-            <tbody>
-            <!-- No topic is defined -->
-            <tr tal:condition="python: not tFolder.objectValues('ATTopic')">
-              <td colspan="5" align="center" i18n:translate="">no_topic_folder</td>
-            </tr>
-
-            <!-- List of defined topics -->
-            <tal:loop repeat="obj python:tFolder.objectValues('ATTopic')">
-            <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                            icon obj/getIcon"
-                tal:attributes="class python: not isActive and 'state-inactive' or ''"
-                valign="top">
-
-              <!-- Title -->
-              <td>
-                <a i18n:translate="" tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a>
-                <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
-              </td>
-
-              <!-- Linked to type -->
-              <td><p i18n:translate="" i18n:domain="plone" tal:content="python: obj.getProperty('meeting_topic_type')">Meeting or Item</p></td>
-
-              <!-- Linked search script -->
-              <td><p i18n:translate="" tal:content="python: obj.getProperty('topic_search_script')">Topic search script Id</p></td>
-
-              <!-- Display condition -->
-              <td><p i18n:translate="" tal:content="python: obj.getProperty('topic_tal_expression')">Meeting or Item</p></td>
-
-              <!-- Active ? -->
-              <td i18n:domain="plone">
-                <span tal:condition="isActive" i18n:translate="">Yes</span>
-                <span tal:condition="not: isActive" i18n:translate="">No</span>
-              </td>
-
-              <!-- Actions -->
-              <td tal:condition="isRealManager" align="right">
-                <!-- Edit the topic-->
-                <form name="deleteTopicForm" action="delete_givenuid">
-                  <a tal:attributes="href python: obj.absolute_url() + '/edit'">
-                    <img src="edit.gif" title="label_edit" i18n:attributes="title" />
-                  </a>
-                  <!-- Delete the topic -->
-                  <input type="hidden" name="object_uid" tal:attributes="value obj/UID" />
-                  <img title="label_remove" i18n:attributes="title"
-                       tal:attributes="src string:$portal_url/delete_icon.png"
-                       onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                  <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
-                </form>
-              </td>
-              <td tal:condition="not: isRealManager" align="right">-</td>
-            </tr>
-            </tal:loop>
-            </tbody>
-            </table>
-          </td>
-        </tr>
-      </table>
+          <tr>
+            <th class="nosort" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" i18n:translate="topic_linked_to_type">Linked to Meeting or MeetingItem?</th>
+            <th class="nosort" i18n:translate="topic_search_script">Topic search script</th>
+            <th class="nosort" i18n:translate="topic_tal_expression">Topic tal expression</th>
+            <th class="nosort" width="50px" i18n:translate="pod_template_is_active">Active?</th>
+            <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+          </tr>
+          <tr tal:condition="python: not tFolder.objectValues('ATTopic')">
+            <td colspan="5" align="center" i18n:translate="">no_topic_folder</td>
+          </tr>
+          <tal:loop repeat="obj python:tFolder.objectValues('ATTopic')">
+          <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+                          oddrow repeat/obj/odd;
+                          classOddEven python: oddrow and 'even' or 'odd';"
+              tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+              valign="top">
+            <td>
+              <a i18n:translate="" tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a>
+              <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
+            </td>
+            <td><p i18n:translate="" i18n:domain="plone" tal:content="python: obj.getProperty('meeting_topic_type')">Meeting or Item</p></td>
+            <td><p i18n:translate="" tal:content="python: obj.getProperty('topic_search_script')">Topic search script Id</p></td>
+            <td><p i18n:translate="" tal:content="python: obj.getProperty('topic_tal_expression')">Meeting or Item</p></td>
+            <td i18n:domain="plone">
+              <span tal:condition="isActive" i18n:translate="">Yes</span>
+              <span tal:condition="not: isActive" i18n:translate="">No</span>
+            </td>
+            <td align="right">
+              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+            </td>
+          </tr>
+          </tal:loop>
+        </table>
       </fieldset>
     </tal:gui>
 
