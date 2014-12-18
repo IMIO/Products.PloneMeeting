@@ -41,6 +41,7 @@ schema = Schema((
         ),
         default_content_type='text/plain',
         accessor="Description",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='categoryId',
@@ -52,6 +53,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         searchable=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='usingGroups',
@@ -65,6 +67,7 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listUsingGroups',
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='categoryMappingsWhenCloningToOtherMC',
@@ -78,6 +81,7 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=True,
         vocabulary='listCategoriesOfOtherMCs',
+        write_permission="PloneMeeting: Write risky config",
     ),
 
 ),
@@ -90,6 +94,13 @@ MeetingCategory_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+# set write_permission for 'id' and 'title'
+MeetingCategory_schema['id'].write_permission = "PloneMeeting: Write risky config"
+MeetingCategory_schema['title'].write_permission = "PloneMeeting: Write risky config"
+# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+for field in MeetingCategory_schema.getSchemataFields('metadata'):
+    field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
+    field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
 class MeetingCategory(BaseContent, BrowserDefaultMixin):

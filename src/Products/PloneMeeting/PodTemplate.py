@@ -63,6 +63,7 @@ schema = Schema((
         default_output_type='text/plain',
         default_content_type='text/plain',
         accessor="Description",
+        write_permission="PloneMeeting: Write risky config",
     ),
     FileField(
         name='podTemplate',
@@ -75,6 +76,7 @@ schema = Schema((
         ),
         required=True,
         storage=AttributeStorage(),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='podFormat',
@@ -89,6 +91,7 @@ schema = Schema((
         enforceVocabulary=True,
         vocabulary='listPodFormats',
         required=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='podCondition',
@@ -100,6 +103,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_podCondition',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='podPermission',
@@ -115,6 +119,7 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listPodPermissions',
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='freezeEvent',
@@ -127,6 +132,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         vocabulary='listFreezeEvents',
+        write_permission="PloneMeeting: Write risky config",
     ),
     TextField(
         name='mailingLists',
@@ -140,6 +146,7 @@ schema = Schema((
         ),
         default_output_type='text/plain',
         default_content_type='text/plain',
+        write_permission="PloneMeeting: Write risky config",
     ),
 
 ),
@@ -168,6 +175,12 @@ PodTemplate_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+PodTemplate_schema['id'].write_permission = "PloneMeeting: Write risky config"
+PodTemplate_schema['title'].write_permission = "PloneMeeting: Write risky config"
+# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+for field in PodTemplate_schema.getSchemataFields('metadata'):
+    field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
+    field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
 class PodTemplate(BaseContent, BrowserDefaultMixin):

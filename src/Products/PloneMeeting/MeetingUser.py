@@ -38,6 +38,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         accessor="Title",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='configId',
@@ -47,6 +48,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_configId',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='gender',
@@ -60,6 +62,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         vocabulary='listGenders',
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='duty',
@@ -71,6 +74,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_duty',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='replacementDuty',
@@ -82,6 +86,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_replacementDuty',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='usages',
@@ -97,6 +102,7 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listUsages',
+        write_permission="PloneMeeting: Write risky config",
     ),
     ImageField(
         name='signatureImage',
@@ -109,6 +115,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         storage=AttributeStorage(),
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='signatureIsDefault',
@@ -121,6 +128,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_signatureIsDefault',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='meetingAppDefaultView',
@@ -134,6 +142,7 @@ schema = Schema((
         enforceVocabulary=True,
         vocabulary='listMeetingAppAvailableViews',
         default_method='getMeetingAppDefaultValue',
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='mailFormat',
@@ -147,6 +156,7 @@ schema = Schema((
         enforceVocabulary=True,
         vocabulary='listMailFormats',
         default_method='getDefaultMailFormat',
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='adviceStyle',
@@ -160,6 +170,7 @@ schema = Schema((
         enforceVocabulary=True,
         vocabulary='listAdviceStyles',
         default_method="getDefaultAdviceStyle",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemsListVisibleColumns',
@@ -175,6 +186,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemsListVisibleColumns',
         default_method="getDefaultVisibleColumns",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemColumns',
@@ -190,6 +202,7 @@ schema = Schema((
         multiValued=1,
         vocabulary="listItemColumns",
         default_method="getDefaultItemColumns",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='meetingColumns',
@@ -205,6 +218,7 @@ schema = Schema((
         multiValued=1,
         vocabulary="listMeetingColumns",
         default_method="getDefaultMeetingColumns",
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='openAnnexesInSeparateWindows',
@@ -216,6 +230,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_method="getOpenAnnexesDefaultValue",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='mailItemEvents',
@@ -232,6 +247,7 @@ schema = Schema((
         multiValued=1,
         vocabulary="listItemEvents",
         default_method="getDefaultItemEvents",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='mailMeetingEvents',
@@ -248,6 +264,7 @@ schema = Schema((
         multiValued=1,
         vocabulary="listMeetingEvents",
         default_method="getDefaultMeetingEvents",
+        write_permission="PloneMeeting: Write risky config",
     ),
 
 ),
@@ -260,6 +277,12 @@ MeetingUser_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+MeetingUser_schema['id'].write_permission = "PloneMeeting: Write risky config"
+MeetingUser_schema['title'].write_permission = "PloneMeeting: Write risky config"
+# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+for field in MeetingUser_schema.getSchemataFields('metadata'):
+    field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
+    field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
 class MeetingUser(BaseContent, BrowserDefaultMixin):

@@ -1,0 +1,24 @@
+<td class="noPadding" tal:define="isLastId view/_isLastId;
+                                  isFirstId view/_isFirstId;
+                                  ">
+    <!-- Move the element to bottom -->
+    <a tal:condition="not:isLastId"
+       tal:attributes="href python: view.moveUrl % ('bottom', view.objId);">
+        <img src="arrowBottom.png" tal:attributes="src string:${view/portal_url}/arrowBottom.png;" title="title_move_item_bottom" i18n:attributes="title" />
+    </a>
+    <!-- Move the element down -->
+    <a tal:condition="not:isLastId"
+       tal:attributes="href python: view.moveUrl % ('down', view.objId);">
+      <img src="arrowDown.png" tal:attributes="src string:${view/portal_url}/arrowDown.png;" title="title_move_item_down" i18n:attributes="title" />
+    </a>
+    <!-- Move the element up -->
+    <a tal:condition="not:isFirstId"
+       tal:attributes="href python: view.moveUrl % ('up', view.objId);">
+      <img src="arrowUp.png" tal:attributes="src string:${view/portal_url}/arrowUp.png;" title="title_move_item_up" i18n:attributes="title" />
+    </a>
+    <!-- Move the element top-->
+    <a tal:condition="not:isFirstId"
+       tal:attributes="href python: view.moveUrl % ('top', view.objId);">
+        <img src="arrowTop.png" tal:attributes="src string:${view/portal_url}/arrowTop.png;" title="title_move_item_top" i18n:attributes="title" />
+    </a>
+</td>

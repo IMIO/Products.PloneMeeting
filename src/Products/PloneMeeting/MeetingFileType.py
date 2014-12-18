@@ -46,6 +46,7 @@ schema = Schema((
         ),
         required=True,
         storage=AttributeStorage(),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='predefinedTitle',
@@ -55,6 +56,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_predefinedTitle',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='relatedTo',
@@ -68,6 +70,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         vocabulary='listRelatedTo',
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='otherMCCorrespondences',
@@ -82,6 +85,7 @@ schema = Schema((
         enforceVocabulary=False,
         multiValued=1,
         vocabulary='listOtherMCCorrespondences',
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='isConfidentialDefault',
@@ -93,6 +97,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_isConfidentialDefault',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     DataGridField(
         name='subTypes',
@@ -108,6 +113,7 @@ schema = Schema((
         allow_oddeven=True,
         columns=('row_id', 'title', 'predefinedTitle', 'otherMCCorrespondences', 'isConfidentialDefault', 'isActive'),
         allow_empty_rows=False,
+        write_permission="PloneMeeting: Write harmless config",
     ),
 
 ),
@@ -120,6 +126,12 @@ MeetingFileType_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+MeetingFileType_schema['id'].write_permission = "PloneMeeting: Write risky config"
+MeetingFileType_schema['title'].write_permission = "PloneMeeting: Write risky config"
+# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+for field in MeetingFileType_schema.getSchemataFields('metadata'):
+    field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
+    field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
 class MeetingFileType(BaseContent, BrowserDefaultMixin):
