@@ -825,12 +825,7 @@
       </div>
       <table class="listing" width="100%"
             tal:define="mFolder python:context.meetingusers;
-                        mFolderUrl mFolder/absolute_url;
-                        moveUrl python: mFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=users';
-                        objectIds python: mFolder.objectIds('MeetingUser');
-                        firstId python: objectIds and objectIds[0] or '';
-                        lastId python: objectIds and objectIds[-1] or '';">
-      <thead>
+                        mFolderUrl mFolder/absolute_url;">
       <tr>
         <th class="nosort" width="20%" i18n:translate="listingheader_title">Title</th>
         <th class="nosort" width="20%" i18n:translate="plonemeeting_identifier">Identifier</th>
@@ -839,13 +834,15 @@
         <th class="nosort" width="50px" i18n:translate="pod_template_is_active">Active?</th>
         <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
       </tr>
-      </thead>
       <tr tal:condition="python: not mFolder.objectValues('MeetingUser')">
         <td colspan="6" align="center" i18n:translate="">no_meeting_user</td>
       </tr>
       <tal:loop repeat="obj python:mFolder.objectValues('MeetingUser')">
-      <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active'"
-          tal:attributes="class python: not isActive and 'state-inactive' or ''">
+        <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+                          oddrow repeat/obj/odd;
+                          classOddEven python: oddrow and 'even' or 'odd';"
+            tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+            valign="top">
         <td><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></td>
         <td tal:content="obj/getId"></td>
         <td tal:content="python: obj.getBilingual('duty')"></td>
@@ -857,22 +854,9 @@
           <span tal:condition="isActive" i18n:translate="">Yes</span>
           <span tal:condition="not: isActive" i18n:translate="">No</span>
         </td>
-        <td align="right"
-            tal:condition="isRealManager">
-          <form name="deleteItemForm" action="delete_givenuid">
-          <!-- Edit the user -->
-          <a tal:attributes="href python: obj.absolute_url() + '/edit'">
-            <img src="edit.gif" title="label_edit" i18n:attributes="title" />
-          </a>
-          <!-- Delete the user -->
-            <input type="hidden" name="object_uid" tal:attributes="value obj/UID"/>
-              <img title="label_remove" i18n:attributes="title"
-                   tal:attributes="src string:$portal_url/delete_icon.png"
-                   onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-              <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
-          </form>
+        <td align="right">
+          <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
         </td>
-        <td tal:condition="not: isRealManager" align="right">-</td>
       </tr>
       </tal:loop>
       </table>
@@ -898,85 +882,62 @@
          <input type="image" style="cursor:pointer" class="imageInput"
                 tal:attributes="onClick python: 'href: window.location=\'%s/podtemplates/createObject?type_name=PodTemplate\'' % context.absolute_url();
                                 src string: $portal_url/plus.png"
-                title="add_object" i18n:attributes="title"/>
+                title="add_object" i18n:attributes="title"
+                tal:condition="isRealManager"/>
         </legend>
-      <table width="100%">
-        <tr valign="top">
-          <td><p class="discreet" i18n:translate="pod_templates_descr"></p><br /></td>
-        </tr>
-        <tr>
-          <td>
-          <table class="listing" align="right" width="100%"
-                 tal:define="pFolder python:context.podtemplates;
-                             pFolderUrl pFolder/absolute_url" width="100%;">
-            <thead>
-            <tr>
-              <th class="nosort" width="20px"></th>
-              <th class="nosort" i18n:translate="listingheader_title">Title</th>
-              <th class="nosort" width="50px"  i18n:translate="pod_template_is_active">Active?</th>
-              <th class="nosort" width="130px"  i18n:translate="heading_actions">Actions</th>
-            </tr>
-            </thead>
-            <tal:comment replace="nothing">No template is defined.</tal:comment>
-            <tr tal:condition="python: not pFolder.objectValues('PodTemplate')">
-              <td colspan="4" align="center" i18n:translate="">no_pod_folder</td>
-            </tr>
-            <tal:loop repeat="obj python:pFolder.objectValues('PodTemplate')"
-                      define="moveUrl python: pFolderUrl + '/folder_position?position=%s&id=%s&template_id=../?pageName=doc#podTemplates';
-                              objectIds python: pFolder.objectIds('PodTemplate');
-                              firstId python: objectIds and objectIds[0] or '';
-                              lastId python: objectIds and objectIds[-1] or '';">
-            <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active'"
-                tal:attributes="class python: not isActive and 'state-inactive' or ''">
-              <td align="center"><img tal:define="fmt obj/getPodFormat"
-                                      tal:attributes="src string: $portal_url/$fmt.png"/></td>
-              <td>
-                <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
-                <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
-                <tal:additionalInformations define="context python: obj">
-                    <span class="discreet"
-                          tal:define="field python:obj.getField('podCondition');"
-                          tal:condition="obj/getPodCondition">
-                      <metal:field use-macro="context/widgets/field/macros/view" />
-                    </span>
-                    <span class="discreet"
-                          tal:define="field python:obj.getField('freezeEvent');"
-                          tal:condition="obj/getFreezeEvent">
-                      <metal:field use-macro="context/widgets/field/macros/view" />
-                    </span>
-                    <span class="discreet"
-                          tal:define="field python:obj.getField('mailingLists');"
-                          tal:condition="obj/getMailingLists">
-                      <metal:field use-macro="context/widgets/field/macros/view" />
-                    </span>
-                </tal:additionalInformations>
-              </td>
-              <td i18n:domain="plone">
-                <span tal:condition="isActive" i18n:translate="">Yes</span>
-                <span tal:condition="not: isActive" i18n:translate="">No</span>
-              </td>
-              <tal:comment replace="nothing">Actions</tal:comment>
-              <td tal:condition="isRealManager" align="right">
-                <tal:comment replace="nothing">Edit the pod template</tal:comment>
-                <form name="deletePodTemplateForm" action="delete_givenuid">
-                  <a tal:attributes="href python: obj.absolute_url() + '/edit'">
-                    <img src="edit.gif" title="label_edit" i18n:attributes="title" />
-                  </a>
-                  <tal:comment replace="nothing">Delete it</tal:comment>
-                  <input type="hidden" name="object_uid" tal:attributes="value obj/UID" />
-                  <img title="label_remove" i18n:attributes="title"
-                       tal:attributes="src string:$portal_url/delete_icon.png"
-                       onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                  <metal:moves use-macro="context/@@pm-macros/moveUpDown"/>
-                </form>
-              </td>
-              <td tal:condition="not: isRealManager" align="right">-</td>
-            </tr>
-            </tal:loop>
-            </table>
-          </td>
-        </tr>
-      </table>
+        <p class="discreet" i18n:translate="pod_templates_descr"></p><br />
+        <table class="listing nosort" align="right" width="100%"
+               tal:define="pFolder python:context.podtemplates;
+                           pFolderUrl pFolder/absolute_url" width="100%;">
+          <tr>
+            <th class="nosort" width="20px"></th>
+            <th class="nosort" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" width="50px"  i18n:translate="pod_template_is_active">Active?</th>
+            <th class="nosort" width="130px"  i18n:translate="heading_actions">Actions</th>
+          </tr>
+          <tal:comment replace="nothing">No template is defined.</tal:comment>
+          <tr tal:condition="python: not pFolder.objectValues('PodTemplate')">
+            <td colspan="4" align="center" i18n:translate="">no_pod_folder</td>
+          </tr>
+          <tal:loop repeat="obj python:pFolder.objectValues('PodTemplate')">
+          <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+                          oddrow repeat/obj/odd;
+                          classOddEven python: oddrow and 'even' or 'odd';"
+             tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+             valign="top">
+            <td align="center"><img tal:define="fmt obj/getPodFormat"
+                                    tal:attributes="src string: $portal_url/$fmt.png"/></td>
+            <td>
+              <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
+              <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
+              <tal:additionalInformations define="context python: obj">
+                  <span class="discreet"
+                        tal:define="field python:obj.getField('podCondition');"
+                        tal:condition="obj/getPodCondition">
+                    <metal:field use-macro="context/widgets/field/macros/view" />
+                  </span>
+                  <span class="discreet"
+                        tal:define="field python:obj.getField('freezeEvent');"
+                        tal:condition="obj/getFreezeEvent">
+                    <metal:field use-macro="context/widgets/field/macros/view" />
+                  </span>
+                  <span class="discreet"
+                        tal:define="field python:obj.getField('mailingLists');"
+                        tal:condition="obj/getMailingLists">
+                    <metal:field use-macro="context/widgets/field/macros/view" />
+                  </span>
+              </tal:additionalInformations>
+            </td>
+            <td i18n:domain="plone">
+              <span tal:condition="isActive" i18n:translate="">Yes</span>
+              <span tal:condition="not: isActive" i18n:translate="">No</span>
+            </td>
+            <td align="right">
+              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+            </td>
+          </tr>
+          </tal:loop>
+        </table>
       </fieldset>
     </tal:doc>
 

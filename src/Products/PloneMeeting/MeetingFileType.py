@@ -113,7 +113,7 @@ schema = Schema((
         allow_oddeven=True,
         columns=('row_id', 'title', 'predefinedTitle', 'otherMCCorrespondences', 'isConfidentialDefault', 'isActive'),
         allow_empty_rows=False,
-        write_permission="PloneMeeting: Write harmless config",
+        write_permission="PloneMeeting: Write risky config",
     ),
 
 ),
