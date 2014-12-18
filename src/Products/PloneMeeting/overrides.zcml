@@ -105,6 +105,13 @@
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
+        <browser:page
+            for="Products.PloneMeeting.interfaces.IMeetingCategory"
+            name="actions_panel"
+            class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
     </configure>
 
 </configure>
