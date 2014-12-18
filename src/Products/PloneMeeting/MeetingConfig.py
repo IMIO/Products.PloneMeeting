@@ -2705,7 +2705,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ppw = self.portal_placeful_workflow
                     toolPolicy = ppw.portal_plonemeeting_policy
                     toolPolicy.setChain(portalTypeName,
-                                        ('plonemeeting_onestate_workflow',))
+                                        ('plonemeeting_activity_managers_workflow',))
                     # Update the typesUseViewActionInListings property of site_properties
                     # so MeetingItem types are in it, this is usefull when managing item templates
                     # in the MeetingConfig because folders there have the 'folder_contents' layout
@@ -4214,4 +4214,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-

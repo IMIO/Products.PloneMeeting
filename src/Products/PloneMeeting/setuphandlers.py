@@ -186,7 +186,7 @@ def postInstall(context):
 
     pol = ppw.portal_plonemeeting_policy
     pol.setTitle(_(u'PloneMeeting tool policy'))
-    pol.setChain('Topic', ('plonemeeting_activity_workflow',))
+    pol.setChain('Topic', ('plonemeeting_activity_managers_workflow',))
     pol.setChainForPortalTypes(
         ('MeetingGroup', 'MeetingConfig', 'MeetingFileType',
          'MeetingCategory'), ('plonemeeting_activity_workflow',))
