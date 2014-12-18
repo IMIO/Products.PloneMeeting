@@ -10,6 +10,7 @@
  <permission>Review portal content</permission>
  <permission>Modify portal content</permission>
  <permission>Delete objects</permission>
+ <permission>List folder contents</permission>
  <state state_id="active"
         title="active"
         i18n:attributes="title">
@@ -24,6 +25,14 @@
   <permission-map name="Delete objects"
                   acquired="False">
    <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="List folder contents"
+                  acquired="False">
+   <permission-role>Owner</permission-role>
+   <permission-role>Anonymous</permission-role>
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
   </permission-map>
   <permission-map name="Modify portal content"
                   acquired="False">

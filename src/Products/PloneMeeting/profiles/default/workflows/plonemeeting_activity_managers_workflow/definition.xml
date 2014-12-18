@@ -82,18 +82,6 @@
    <permission-role>MeetingManager</permission-role>
   </permission-map>
  </state>
- <transition transition_id="deactivate"
-             title="deactivate"
-             new_state="inactive"
-             trigger="USER"
-             before_script=""
-             after_script=""
-             i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">deactivate</action>
-  <guard>
-    <guard-permission>Review portal content</guard-permission>
-  </guard>
- </transition>
  <transition transition_id="activate"
              title="activate"
              new_state="active"
@@ -102,6 +90,18 @@
              after_script=""
              i18n:attributes="title">
   <action url="" category="workflow" i18n:translate="">activate</action>
+  <guard>
+    <guard-permission>Review portal content</guard-permission>
+  </guard>
+ </transition>
+ <transition transition_id="deactivate"
+             title="deactivate"
+             new_state="inactive"
+             trigger="USER"
+             before_script=""
+             after_script=""
+             i18n:attributes="title">
+  <action url="" category="workflow" i18n:translate="">deactivate</action>
   <guard>
     <guard-permission>Review portal content</guard-permission>
   </guard>
