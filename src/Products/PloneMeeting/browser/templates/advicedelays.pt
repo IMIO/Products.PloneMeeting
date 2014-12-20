@@ -2,7 +2,7 @@
                      menuId string:advice_change_delay_row_id_${view/advice/row_id}_${view/context/UID};
                      portal_url context/@@plone_portal_state/portal_url;
                      mayAccessDelayChangesHistory view/_mayAccessDelayChangesHistory;"
-             condition="selectableDelays|mayAccessDelayChangesHistory|False"
+             condition="python: selectableDelays or mayAccessDelayChangesHistory"
              i18n:domain="PloneMeeting">
     <span onclick="javascript:toggleMenu('advice_change_delay_row_id_123')"
           class="advice_change_delay Editable"
