@@ -15,9 +15,6 @@
          tal:attributes="id string:pm_menu_${menuId};">
         <tal:selectableDelays condition="selectableDelays">
             <div style="clear: left; display: table;" tal:repeat="delay selectableDelays">
-                <img style="float: left; padding-right: 0.3em;"
-                     src="blue_arrow.gif"
-                     tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
                 <a href="#"
                    tal:attributes="href python: '%s/@@change-advice-delay?new_advice_row_id=%s&current_advice_row_id=%s' % (view.context.absolute_url(),
                                                                                                                            delay[0],

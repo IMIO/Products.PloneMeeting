@@ -483,6 +483,7 @@ legend .pmLanguage {top: -0.3em; right: 5px;}
     background-color: white;
     padding: 0.3em;
     z-index: 5;
+    cursor: auto;
 }
 .pmDropdown a {
     display: block;
@@ -505,7 +506,7 @@ legend .pmLanguage {top: -0.3em; right: 5px;}
     left: 70px;
 }
 div[id^="pm_menu_advice_change_delay"].pmDropdown {
-    right: -190px;
+    right: 25px;
     margin-top: -1px;
 }
 
