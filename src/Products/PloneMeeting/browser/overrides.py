@@ -280,6 +280,10 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
     def renderArrows(self):
         """
         """
+        if self.context.isDefinedInTool():
+            config_actions_panel = self.context.restrictedTraverse('@@config_actions_panel')
+            config_actions_panel()
+            return config_actions_panel.renderArrows()
         showArrows = self.kwargs.get('showArrows', False)
         if showArrows and self.mayChangeOrder():
             self.totalNbOfItems = self.kwargs['totalNbOfItems']
@@ -378,6 +382,57 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         """
         if self.member.has_role('Manager'):
             return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
+
+
+class ConfigActionsPanelView(ActionsPanelView):
+    """
+      Actions panel used for elements of the configuration.
+    """
+    def __init__(self, context, request):
+        super(ConfigActionsPanelView, self).__init__(context, request)
+        self.SECTIONS_TO_RENDER = ('renderEdit',
+                                   'renderOwnDelete',
+                                   'renderArrows',
+                                   'renderTransitions')
+        self.folder = self.context.getParentNode()
+        # objectIds is used for moving elements, we actually only want
+        # to move elements of same portal_type
+        self.objectIds = self.folder.objectIds(self.context.meta_type)
+        self.objId = self.context.getId()
+        self.moveUrl = "{0}/folder_position?position=%s&id=%s&template_id=../?pageName=data#{1}".format(
+            self.folder.absolute_url(), self.folder.getId())
+
+    def mayEdit(self):
+        """
+          We override mayEdit because for elements of the configuration,
+          some users have 'Modify portal content' but no field to edit...
+          In the case there is no field to edit, do not display the edit action.
+        """
+        return self.member.has_permission(ModifyPortalContent, self.context) and \
+            self.context.Schema().editableFields(self.context.Schema())
+
+    def renderArrows(self):
+        """
+          Render arrows if user may change order of elements.
+        """
+        if not self.useIcons:
+            return ''
+        showArrows = self.kwargs.get('showArrows', False)
+        if showArrows and self.member.has_permission(ModifyPortalContent, self.folder):
+            return ViewPageTemplateFile("templates/actions_panel_config_arrows.pt")(self)
+        return ''
+
+    def _isLastId(self):
+        """
+          Is current element last id of folder container?
+        """
+        return bool(self.context.getId() == self.objectIds[-1])
+
+    def _isFirstId(self):
+        """
+          Is current element first id of folder container?
+        """
+        return bool(self.context.getId() == self.objectIds[0])
 
 
 class PMDeleteGivenUidView(DeleteGivenUidView):

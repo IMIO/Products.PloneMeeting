@@ -33,14 +33,6 @@
          visible="True">
   <permission value="View"/>
  </action>
- <action title="Edit"
-         action_id="edit"
-         category="object"
-         condition_expr="not:object/@@plone_lock_info/is_locked_for_current_user"
-         url_expr="string:${object_url}/edit"
-         visible="True">
-  <permission value="Modify portal content"/>
- </action>
  <action title="Properties"
          i18n:attributes="title"
          action_id="metadata"
@@ -49,6 +41,14 @@
          url_expr="string:$object_url/base_metadata"
          visible="True">
   <permission value="Manage portal"/>
+ </action>
+ <action title="Edit"
+         action_id="edit"
+         category="object"
+         condition_expr="python:not object.restrictedTraverse('@@plone_lock_info').is_locked_for_current_user() and object.Schema().editableFields(object.Schema())"
+         url_expr="string:${object_url}/edit"
+         visible="True">
+  <permission value="Modify portal content"/>
  </action>
 <!-- ##code-section FOOT -->
 <!-- ##/code-section FOOT -->

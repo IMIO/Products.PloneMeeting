@@ -2290,6 +2290,27 @@ class testMeetingItem(PloneMeetingTestCase):
         for event in history['events']:
             self.assertTrue(event['comments'] == HISTORY_COMMENT_NOT_VIEWABLE)
 
+    def test_pm_GetCertifiedSignatures(self):
+        '''Test the MeetingItem.getCertifiedSignatures method that gets signatures from
+           the item proposing group or from the MeetingConfig.'''
+        # define signatures for the 'developers' group
+        self.tool.developers.setSignatures('Developers group signatures')
+        # define signatures for the MeetingConfig
+        self.meetingConfig.setCertifiedSignatures('Meeting config signatures')
+        # create an item and do some WF transitions so we have history events
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # item proposing group is "developers"
+        self.assertTrue(item.getProposingGroup() == 'developers')
+        # getting certified signatures for item will return signatures defined on proposing group
+        self.assertTrue(item.getCertifiedSignatures() == 'Developers group signatures')
+        # we can force to get signatures from the MeetingConfig
+        self.assertTrue(item.getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True)
+                        == 'Meeting config signatures')
+        # if no signatures on the MeetingGroup, signatures of the MeetingConfig are used
+        self.tool.developers.setSignatures('')
+        self.assertTrue(item.getCertifiedSignatures() == 'Meeting config signatures')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

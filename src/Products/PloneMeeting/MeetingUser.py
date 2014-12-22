@@ -38,6 +38,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         accessor="Title",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='configId',
@@ -47,6 +48,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_configId',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='gender',
@@ -59,6 +61,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
         vocabulary='listGenders',
     ),
     StringField(
@@ -71,6 +74,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_duty',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='replacementDuty',
@@ -82,6 +86,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_replacementDuty',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='usages',
@@ -97,6 +102,7 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listUsages',
+        write_permission="PloneMeeting: Write risky config",
     ),
     ImageField(
         name='signatureImage',
@@ -109,6 +115,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         storage=AttributeStorage(),
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='signatureIsDefault',
@@ -121,6 +128,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_signatureIsDefault',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='meetingAppDefaultView',
@@ -132,6 +140,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
         vocabulary='listMeetingAppAvailableViews',
         default_method='getMeetingAppDefaultValue',
     ),
@@ -145,6 +154,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
         vocabulary='listMailFormats',
         default_method='getDefaultMailFormat',
     ),
@@ -158,6 +168,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
         vocabulary='listAdviceStyles',
         default_method="getDefaultAdviceStyle",
     ),
@@ -171,10 +182,11 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemsListVisibleColumns',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=True,
         multiValued=1,
         vocabulary='listItemsListVisibleColumns',
         default_method="getDefaultVisibleColumns",
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemColumns',
@@ -186,10 +198,11 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemColumns',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=True,
         multiValued=1,
         vocabulary="listItemColumns",
         default_method="getDefaultItemColumns",
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='meetingColumns',
@@ -201,10 +214,11 @@ schema = Schema((
             label_msgid='PloneMeeting_label_meetingColumns',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=True,
         multiValued=1,
         vocabulary="listMeetingColumns",
         default_method="getDefaultMeetingColumns",
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='openAnnexesInSeparateWindows',
@@ -215,6 +229,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_openAnnexesInSeparateWindows',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
         default_method="getOpenAnnexesDefaultValue",
     ),
     LinesField(
@@ -228,10 +243,11 @@ schema = Schema((
             label_msgid='PloneMeeting_label_mailItemEvents',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=True,
         multiValued=1,
         vocabulary="listItemEvents",
         default_method="getDefaultItemEvents",
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='mailMeetingEvents',
@@ -244,10 +260,11 @@ schema = Schema((
             label_msgid='PloneMeeting_label_mailMeetingEvents',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=True,
         multiValued=1,
         vocabulary="listMeetingEvents",
         default_method="getDefaultMeetingEvents",
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
 
 ),
@@ -260,6 +277,12 @@ MeetingUser_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+MeetingUser_schema['id'].write_permission = "PloneMeeting: Write risky config"
+MeetingUser_schema['title'].write_permission = "PloneMeeting: Write risky config"
+# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+for field in MeetingUser_schema.getSchemataFields('metadata'):
+    field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
+    field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
 class MeetingUser(BaseContent, BrowserDefaultMixin):
@@ -536,3 +559,4 @@ registerType(MeetingUser, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+

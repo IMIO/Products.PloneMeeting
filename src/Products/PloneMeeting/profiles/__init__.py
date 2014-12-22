@@ -203,6 +203,7 @@ class GroupDescriptor(Descriptor):
         self.itemAdviceEditStates = []
         self.itemAdviceViewStates = []
         self.asCopyGroupOn = asCopyGroupOn
+        self.signatures = ''
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
         for role in MEETING_GROUP_SUFFIXES:
             setattr(self, role, [])

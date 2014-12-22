@@ -41,6 +41,7 @@ schema = Schema((
         ),
         default_content_type='text/plain',
         accessor="Description",
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='categoryId',
@@ -51,6 +52,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_categoryId',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
         searchable=True,
     ),
     LinesField(
@@ -65,6 +67,7 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listUsingGroups',
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='categoryMappingsWhenCloningToOtherMC',
@@ -75,9 +78,10 @@ schema = Schema((
             label_msgid='PloneMeeting_label_categoryMappingsWhenCloningToOtherMC',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=True,
         multiValued=True,
         vocabulary='listCategoriesOfOtherMCs',
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
 
 ),
@@ -90,6 +94,13 @@ MeetingCategory_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+# set write_permission for 'id' and 'title'
+MeetingCategory_schema['id'].write_permission = "PloneMeeting: Write risky config"
+MeetingCategory_schema['title'].write_permission = "PloneMeeting: Write risky config"
+# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+for field in MeetingCategory_schema.getSchemataFields('metadata'):
+    field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
+    field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
 class MeetingCategory(BaseContent, BrowserDefaultMixin):
@@ -258,8 +269,10 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
             previousMCValue = MCValue
 
 
+
 registerType(MeetingCategory, PROJECTNAME)
 # end of class MeetingCategory
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+

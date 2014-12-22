@@ -456,6 +456,17 @@ class Migrate_To_3_3(Migrator):
                 delattr(cfg, 'taskCreatorRole')
         logger.info('Done.')
 
+    def _updateToolPolicy(self):
+        '''Update the portal_plonemeeting WF policy.'''
+        logger.info('Updating the ToolPloneMeeting workflow policy...')
+        tool = getToolByName(self.portal, 'portal_plonemeeting')
+        ppw = getToolByName(self.portal, 'portal_placeful_workflow')
+        toolPolicy = ppw.portal_plonemeeting_policy
+        itemTypes = [cfg.getItemTypeName() for cfg in tool.objectValues('MeetingConfig')]
+        toolPolicy.setChainForPortalTypes(('Topic',) + tuple(itemTypes), ('plonemeeting_activity_managers_workflow',))
+        toolPolicy.setChain('Folder', ('plonemeeting_onestate_workflow',))
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         self._finishMeetingFolderViewRemoval()
@@ -486,6 +497,8 @@ class Migrate_To_3_3(Migrator):
         # reinstall imio.actionspanel so actionspanel.css is taken into account
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
                                  u'profile-imio.actionspanel:default'])
+        # update tool policy now that workflow 'plonemeeting_activity_managers_workflow' is available
+        self._updateToolPolicy()
         # items in the configuration are now indexed, so clear and rebuild
         # by default, only portal_catalog is updated by refreshDatabase
         # update also role mappings (wf) as meeting_activity_workflow changed

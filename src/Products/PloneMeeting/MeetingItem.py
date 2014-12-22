@@ -2169,6 +2169,38 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Does this item define specific item signatures ?.'''
         return bool(self.getField('itemSignatures').get(self))
 
+    security.declarePublic('getCertifiedSignatures')
+    def getCertifiedSignatures(self, forceUseCertifiedSignaturesOnMeetingConfig=False):
+        '''Gets the certified signatures for this item.
+           Either use signatures defined on the proposing MeetingGroup if exists,
+           or use the meetingConfig certified signatures.
+           If p_forceUseCertifiedSignaturesOnMeetingConfig, signatures defined on
+           the MeetingConfig will be used, no matter signatures are defined on the proposing group.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if forceUseCertifiedSignaturesOnMeetingConfig:
+            return cfg.getCertifiedSignatures()
+
+        groupSignatures = self.getProposingGroup(theObject=True).getSignatures()
+        if groupSignatures:
+            return groupSignatures
+
+        # no group signatures, use signatures from MeetingConfig
+        # if we use MeetingUsers, compute certified signatures, if not, use
+        # MeetingConfig certified signatures field
+        if not cfg.isUsingMeetingUsers():
+            return cfg.getCertifiedSignatures()
+        else:
+            # we use MeetingUsers
+            signatories = cfg.getMeetingUsers(usages=('signer',))
+            res = []
+            for signatory in signatories:
+                if signatory.getSignatureIsDefault():
+                    particule = signatory.getGender() == 'm' and 'Le' or 'La'
+                    res.append("%s %s" % (particule, signatory.getDuty()))
+                    res.append("%s" % signatory.Title())
+            return '\n'.join(res)
+
     security.declarePublic('getItemSignatories')
     def getItemSignatories(self, theObjects=False, includeDeleted=True,
                            includeReplacements=False):
@@ -3952,7 +3984,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # - the user must be able to see the item if it is private.
         # The user will duplicate the item in his own folder.
         tool = getToolByName(self, 'portal_plonemeeting')
-        if not tool.userIsAmong('creators') or not self.adapted().isPrivacyViewable():
+        if self.isDefinedInTool() or not tool.userIsAmong('creators') or not self.adapted().isPrivacyViewable():
             return False
         return True
 

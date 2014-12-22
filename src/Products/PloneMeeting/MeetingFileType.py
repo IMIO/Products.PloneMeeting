@@ -46,6 +46,7 @@ schema = Schema((
         ),
         required=True,
         storage=AttributeStorage(),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='predefinedTitle',
@@ -55,6 +56,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_predefinedTitle',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='relatedTo',
@@ -67,6 +69,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
         vocabulary='listRelatedTo',
     ),
     LinesField(
@@ -79,9 +82,10 @@ schema = Schema((
             label_msgid='PloneMeeting_label_otherMCCorrespondences',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=False,
         multiValued=1,
         vocabulary='listOtherMCCorrespondences',
+        enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
         name='isConfidentialDefault',
@@ -93,10 +97,10 @@ schema = Schema((
             label_msgid='PloneMeeting_label_isConfidentialDefault',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
     ),
     DataGridField(
         name='subTypes',
-        default=(),
         widget=DataGridWidget(
             columns={'row_id': Column("Sub type row id", visible=False), 'title': Column("Sub type title", required=True), 'predefinedTitle': Column("Sub type predefined title"), 'otherMCCorrespondences': MultiSelectColumn("Sub type correspondences while sent to other meeting configs", vocabulary='listOtherMCCorrespondences', col_description="Sub type correspondences while sent to other meeting configs description."), 'isConfidentialDefault': CheckboxColumn("Sub type confidentiality of created annexes", col_description="Sub type confidentiality of created annexes description.", default=''), 'isActive': CheckboxColumn("Sub type is active?", default='1'), },
             description="SubTypes",
@@ -105,7 +109,9 @@ schema = Schema((
             label_msgid='PloneMeeting_label_subTypes',
             i18n_domain='PloneMeeting',
         ),
+        default=(),
         allow_oddeven=True,
+        write_permission="PloneMeeting: Write risky config",
         columns=('row_id', 'title', 'predefinedTitle', 'otherMCCorrespondences', 'isConfidentialDefault', 'isActive'),
         allow_empty_rows=False,
     ),
@@ -120,6 +126,12 @@ MeetingFileType_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+MeetingFileType_schema['id'].write_permission = "PloneMeeting: Write risky config"
+MeetingFileType_schema['title'].write_permission = "PloneMeeting: Write risky config"
+# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+for field in MeetingFileType_schema.getSchemataFields('metadata'):
+    field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
+    field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
 class MeetingFileType(BaseContent, BrowserDefaultMixin):
@@ -159,7 +171,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         '''Calculates the icon for the AT default view'''
         self.getIcon()
 
-    security.declareProtected('Modify portal content', 'setSubTypes')
+    security.declareProtected(WriteRiskyConfig, 'setSubTypes')
     def setSubTypes(self, value, **kwargs):
         '''Overrides the field 'subTypes' mutator to manage
            the 'row_id' column manually.  If empty, we need to add a
@@ -360,6 +372,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
                 if annex.getMeetingFileType() in mftUIDs:
                     raise BeforeDeleteException("can_not_delete_meetingfiletype_meetingfile")
         BaseContent.manage_beforeDelete(self, item, container)
+
 
 
 registerType(MeetingFileType, PROJECTNAME)

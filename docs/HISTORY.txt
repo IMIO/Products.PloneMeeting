@@ -136,6 +136,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - MeetingManagers have now access to the meeting configurations and are able to edit
   "harmless" parameters like assembly and signatures
 - Removed "PloneTask" related fields and functionnality
+- Added field MeetingGroup.signatures useable to define current certified signatures to use in templates,
+  if not certified signatures defined on the group, MeetingConfig.certifiedSignatures is used
 
 3.2.0.1 (2014-03-06)
 --------------------

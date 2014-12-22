@@ -44,6 +44,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         required=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     TextField(
         name='description',
@@ -55,6 +56,7 @@ schema = Schema((
         ),
         default_content_type='text/plain',
         accessor="Description",
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemAdviceStates',
@@ -68,6 +70,7 @@ schema = Schema((
         ),
         multiValued=1,
         vocabulary='listItemStates',
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemAdviceEditStates',
@@ -81,6 +84,7 @@ schema = Schema((
         ),
         multiValued=1,
         vocabulary='listItemStates',
+        write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='itemAdviceViewStates',
@@ -94,6 +98,7 @@ schema = Schema((
         ),
         multiValued=1,
         vocabulary='listItemStates',
+        write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='asCopyGroupOn',
@@ -106,6 +111,20 @@ schema = Schema((
             label_msgid='PloneMeeting_label_asCopyGroupOn',
             i18n_domain='PloneMeeting',
         ),
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    TextField(
+        name='signatures',
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            label_msgid="PloneMeeting_label_group_signatures",
+            description="Leave empty to use the signatures defined on the meeting.",
+            description_msgid="group_signatures_descr",
+            label='Signatures',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type='text/plain',
+        write_permission="PloneMeeting: Write harmless config",
     ),
 
 ),
@@ -118,6 +137,12 @@ MeetingGroup_schema = BaseSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+MeetingGroup_schema['id'].write_permission = "PloneMeeting: Write risky config"
+MeetingGroup_schema['title'].write_permission = "PloneMeeting: Write risky config"
+# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+for field in MeetingGroup_schema.getSchemataFields('metadata'):
+    field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
+    field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
 class MeetingGroup(BaseContent, BrowserDefaultMixin):
@@ -399,6 +424,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                         tmpres.append(state)
                 res = tmpres
         return tuple(res)
+
 
 
 registerType(MeetingGroup, PROJECTNAME)

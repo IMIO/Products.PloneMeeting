@@ -1819,7 +1819,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             tags.sort()
         self.setAllItemTags('\n'.join(tags))
 
-    security.declareProtected('Modify portal content', 'setCustomAdvisers')
+    security.declareProtected(WriteRiskyConfig, 'setCustomAdvisers')
     def setCustomAdvisers(self, value, **kwargs):
         '''Overrides the field 'customAdvisers' mutator to manage
            the 'row_id' column manually.  If empty, we need to add a
@@ -2705,7 +2705,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ppw = self.portal_placeful_workflow
                     toolPolicy = ppw.portal_plonemeeting_policy
                     toolPolicy.setChain(portalTypeName,
-                                        ('plonemeeting_onestate_workflow',))
+                                        ('plonemeeting_activity_managers_workflow',))
                     # Update the typesUseViewActionInListings property of site_properties
                     # so MeetingItem types are in it, this is usefull when managing item templates
                     # in the MeetingConfig because folders there have the 'folder_contents' layout
@@ -4214,4 +4214,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-
