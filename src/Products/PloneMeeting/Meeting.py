@@ -1010,15 +1010,52 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 break
         return res
 
+    def getBeforeFrozenStates_cachekey(method, self):
+        '''cachekey method for self.getBeforeFrozenStates.'''
+        # do only recompute once by REQUEST
+        return (self, str(self.REQUEST.debug))
+
+    @ram.cache(getBeforeFrozenStates_cachekey)
+    def getBeforeFrozenStates(self):
+        """
+          Returns states before the meeting is frozen, so states where
+          an item is still not considered as a late item.
+        """
+        wfTool = getToolByName(self, 'portal_workflow')
+        meetingWF = wfTool.getWorkflowsFor(self)[0]
+        # get the 'frozen' state
+        if not 'frozen' in meetingWF.states:
+            return ''
+        frozenState = meetingWF.states['frozen']
+        # get back to the meeting WF initial state
+        res = []
+        initial_state = meetingWF.initial_state
+        new_state_id = ''
+        new_state = frozenState
+        while not new_state_id == initial_state:
+            for transition in new_state.transitions:
+                if transition.startswith('backTo'):
+                    new_state_id = meetingWF.transitions[transition].new_state_id
+                    res.append(new_state_id)
+                    new_state = meetingWF.states[new_state_id]
+        return res
+
     security.declarePublic('getBeforeFrozenState')
     def getBeforeFrozenState(self):
         '''Predecessor of state "frozen" in a meeting can be "published" or
-           "created", depending on workflow adaptations.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        if 'no_publication' in cfg.getWorkflowAdaptations():
-            return 'created'
-        return 'published'
+           "created", depending on workflow adaptations.
+           So get the workflow state and check where is leading
+           the 'backToXXX' leaving transition.'''
+        wfTool = getToolByName(self, 'portal_workflow')
+        meetingWF = wfTool.getWorkflowsFor(self)[0]
+        # get the 'frozen' state
+        if not 'frozen' in meetingWF.states:
+            return ''
+        frozenState = meetingWF.states['frozen']
+        for transition in frozenState.transitions:
+            if transition.startswith('backTo'):
+                return meetingWF.transitions[transition].new_state_id
+        return ''
 
     security.declareProtected("Modify portal content", 'insertItem')
     def insertItem(self, item, forceNormal=False):

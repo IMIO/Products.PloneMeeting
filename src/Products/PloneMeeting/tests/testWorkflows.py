@@ -381,20 +381,20 @@ class testWorkflows(PloneMeetingTestCase):
         self.backToState(meeting, 'created')
         self.failIf(len(meeting.getItems()) != 4)
         self.failIf(len(meeting.getLateItems()) != 0)
-        #a recurring item can be added several times...
+        # a recurring item can be added several times...
         self.freezeMeeting(meeting)
-        self.failIf(len(meeting.getItems()) != 4)
-        self.failIf(len(meeting.getLateItems()) != 2)
-        # put a past date for the meeting so we can decide it
-        meetingDate = DateTime('2008/06/12 08:00:00')
-        meeting.setDate(meetingDate)
+        # one normal recurring item is added when meeting is published, and so meeting still not frozen
+        self.failIf(len(meeting.getItems()) != 5)
+        # and one recurring item is added when meeting is frozen, so item considered as late
+        self.failIf(len(meeting.getLateItems()) != 1)
         # an item need a decisionText to be decided...
         for item in (meeting.getItems() + meeting.getLateItems()):
             item.setDecision(self.decisionText)
         self.decideMeeting(meeting)
         # a recurring item is added during the 'decide' transition
-        self.failIf(len(meeting.getItems()) != 4)
-        self.failIf(len(meeting.getLateItems()) != 3)
+        self.failIf(len(meeting.getItems()) != 5)
+        # one additional recurring item is added when meeting is decided
+        self.failIf(len(meeting.getLateItems()) != 2)
 
     def test_pm_NoDefinedRecurringItems(self):
         '''When no recurring items exist in the meetingConfig, we can add a meeting,

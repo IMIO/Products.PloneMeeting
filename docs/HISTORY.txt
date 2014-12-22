@@ -138,6 +138,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed "PloneTask" related fields and functionnality
 - Added field MeetingGroup.signatures useable to define current certified signatures to use in templates,
   if not certified signatures defined on the group, MeetingConfig.certifiedSignatures is used
+- Ease management of late items, an item is now by default considered late if the meeting is in a late
+  state and the available item is validated and the meeting is his preferred meeting
 
 3.2.0.1 (2014-03-06)
 --------------------

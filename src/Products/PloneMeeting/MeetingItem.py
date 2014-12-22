@@ -335,13 +335,13 @@ class MeetingItemWorkflowConditions:
 
     security.declarePublic('isLateFor')
     def isLateFor(self, meeting):
-        if meeting and (meeting.queryState() in MEETING_NOT_CLOSED_STATES) and \
+        '''
+          To be considered as late item for a meeting, the meeting must be in a frozen state,
+          and it must be selected as preferred meeting for the item.
+        '''
+        if meeting and (not meeting.queryState() in meeting.getBeforeFrozenStates()) and \
            (meeting.UID() == self.context.getPreferredMeeting()):
-            itemValidationDate = self._getDateOfAction(self.context, 'validate')
-            meetingFreezingDate = self._getDateOfAction(meeting, 'freeze')
-            if itemValidationDate and meetingFreezingDate:
-                if itemValidationDate > meetingFreezingDate:
-                    return True
+            return True
         return False
 
 InitializeClass(MeetingItemWorkflowConditions)

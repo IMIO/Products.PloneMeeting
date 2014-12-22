@@ -1326,7 +1326,7 @@ class testMeetingItem(PloneMeetingTestCase):
         for tr in self.TRANSITIONS_FOR_CLOSING_MEETING_2:
             if tr in self.transitions(meeting):
                 self.do(meeting, tr)
-            if meeting.queryState() in MEETING_NOT_CLOSED_STATES:
+            if meeting.queryState() not in meeting.getBeforeFrozenStates():
                 self.failUnless(lateItem.wfConditions().isLateFor(meeting))
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
