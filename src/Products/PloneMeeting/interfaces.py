@@ -349,6 +349,12 @@ class IMeetingItemDocumentation:
     def itemPositiveDecidedStates():
         '''Return a tuple containing item states considered as 'positive'
            like 'accepted' for example.'''
+    def getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=False):
+        '''Gets the certified signatures for this item.
+           Either use signatures defined on the proposing MeetingGroup if exists,
+           or use the meetingConfig certified signatures.
+           If p_forceUseCertifiedSignaturesOnMeetingConfig, signatures defined on
+           the MeetingConfig will be used, no matter signatures are defined on the proposing group.'''
 
 
 class IMeetingItemWorkflowConditions(Interface):

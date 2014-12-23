@@ -38,7 +38,6 @@ from Products.statusmessages.interfaces import IStatusMessage
 
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
-from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
@@ -2303,13 +2302,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # item proposing group is "developers"
         self.assertTrue(item.getProposingGroup() == 'developers')
         # getting certified signatures for item will return signatures defined on proposing group
-        self.assertTrue(item.getCertifiedSignatures() == 'Developers group signatures')
+        self.assertTrue(item.adapted().getCertifiedSignatures() == 'Developers group signatures')
         # we can force to get signatures from the MeetingConfig
-        self.assertTrue(item.getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True)
+        self.assertTrue(item.adapted().getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True)
                         == 'Meeting config signatures')
         # if no signatures on the MeetingGroup, signatures of the MeetingConfig are used
         self.tool.developers.setSignatures('')
-        self.assertTrue(item.getCertifiedSignatures() == 'Meeting config signatures')
+        self.assertTrue(item.adapted().getCertifiedSignatures() == 'Meeting config signatures')
 
 
 def test_suite():

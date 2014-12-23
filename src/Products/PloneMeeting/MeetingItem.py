@@ -2171,17 +2171,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCertifiedSignatures')
     def getCertifiedSignatures(self, forceUseCertifiedSignaturesOnMeetingConfig=False):
-        '''Gets the certified signatures for this item.
-           Either use signatures defined on the proposing MeetingGroup if exists,
-           or use the meetingConfig certified signatures.
-           If p_forceUseCertifiedSignaturesOnMeetingConfig, signatures defined on
-           the MeetingConfig will be used, no matter signatures are defined on the proposing group.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        '''See docstring in interfaces.py.'''
+        item = self.getSelf()
+        tool = getToolByName(item, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures()
 
-        groupSignatures = self.getProposingGroup(theObject=True).getSignatures()
+        groupSignatures = item.getProposingGroup(theObject=True).getSignatures()
         if groupSignatures:
             return groupSignatures
 
