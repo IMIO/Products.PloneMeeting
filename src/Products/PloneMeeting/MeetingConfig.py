@@ -3650,7 +3650,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         d = 'PloneMeeting'
         res = []
-        for field in MeetingItem.schema.fields():
+        for field in baseClass.schema.fields():
             fieldName = field.getName()
             if field.widget.getName() == 'RichWidget':
                 msg = '%s.%s -> %s' % (baseClass.__name__, fieldName,

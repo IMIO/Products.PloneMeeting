@@ -448,7 +448,7 @@ class Migrate_To_3_3(Migrator):
         '''Attributes regarding 'task' were removed :
            - tasksMacro;
            - taskCreatorRole.'''
-        logger.info('Cleaning search attributes on portal_plonemeeting...')
+        logger.info('Cleaning PloneTask related attributes for each MeetingConfig...')
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             if hasattr(cfg, 'tasksMacro'):
                 # remove useless attributes
@@ -467,8 +467,50 @@ class Migrate_To_3_3(Migrator):
         toolPolicy.setChain('Folder', ('plonemeeting_onestate_workflow',))
         logger.info('Done.')
 
+    def _computeTransitionsForPresentingAnItem(self):
+        '''Try to fill the MeetingConfig.transitionsForPresentingAnItem by
+           walking the item workflow until state 'presented' is reached.
+           The logic is that we will begin from initial_state and look for available transitions,
+           removing the transitions starting with 'backTo'.  If several are left, we will take one
+           that starts with 'propose'.  In case it fails, we just add a warning to the log.'''
+        logger.info('Computing \'transitionsForPresentingAnItem\' for each MeetingConfig...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            if not cfg.getTransitionsForPresentingAnItem():
+                wfTool = getToolByName(self.portal, 'portal_workflow')
+                wf = wfTool.getWorkflowById(cfg.getItemWorkflow())
+                state = wf.states[wf.initial_state]
+                couldStillWalk = True
+                res = []
+                while couldStillWalk and not state.id == 'presented':
+                    transitions = [tr for tr in state.transitions if not tr.startswith('backTo')]
+                    # if several transitions available, take one beginning with 'propose'
+                    if len(transitions) > 1:
+                        transitions = [tr for tr in transitions if tr.startswith('propose')]
+                    # still more that one transition?  We do not know where to go, we break and add a message...
+                    if len(transitions) > 1:
+                        couldStillWalk = False
+                    # only one transition?  OK, we take it, new state is where the transition ends
+                    transition = transitions[0]
+                    res.append(transition)
+                    new_state = wf.transitions[transition].new_state_id
+                    state = wf.states[new_state]
+                if not couldStillWalk:
+                    logger.warning('Unable to compute \'transitionsForPresentingAnItem\' for MeetingConfig % !!!'
+                                   % cfg.getId())
+                else:
+                    cfg.setTransitionsForPresentingAnItem(res)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
+        # run every available upgrade steps so different dependencies are correct
+        self.upgradeProfile(u'collective.ckeditor:default')
+        self.upgradeProfile(u'collective.iconifieddocumentactions:default')
+        self.upgradeProfile(u'plone.app.dexterity:default')
+        self.upgradeProfile(u'plone.app.discussion:default')
+        self.upgradeProfile(u'plone.app.iterate:default')
+        self.upgradeProfile(u'plone.app.theming:default')
+        # PM specific steps
         self._finishMeetingFolderViewRemoval()
         self._moveItemTemplatesToOwnFolder()
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
@@ -486,7 +528,6 @@ class Migrate_To_3_3(Migrator):
         self._cleanMeetingGroupsAsCopyGroupOn()
         self._updateTopics()
         self._cleanCKeditorCustomToolbar()
-        self._checkItemsPreferredMeeting()
         self._removeMeetingCategoryItemsCountAttribute()
         self._cleanToolSearchAttributes()
         self._cleanMeetingConfigsTaskAttributes()
@@ -497,8 +538,12 @@ class Migrate_To_3_3(Migrator):
         # reinstall imio.actionspanel so actionspanel.css is taken into account
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default',
                                  u'profile-imio.actionspanel:default'])
+        # check preferred meeting on items now that portal_catalog 'getPreferredMeeting' metadata is available
+        self._checkItemsPreferredMeeting()
         # update tool policy now that workflow 'plonemeeting_activity_managers_workflow' is available
         self._updateToolPolicy()
+        # update transitionsForPresentingAnItem now that workflows and wfAdaptations are installed
+        self._computeTransitionsForPresentingAnItem()
         # items in the configuration are now indexed, so clear and rebuild
         # by default, only portal_catalog is updated by refreshDatabase
         # update also role mappings (wf) as meeting_activity_workflow changed
@@ -510,31 +555,34 @@ class Migrate_To_3_3(Migrator):
 def migrate(context):
     '''This migration function:
 
-       1) Finalize removal of the 'meetingfolder_view' view;
-       2) Move item templates in the MeetingConfig to their own folder (itemtemplates);
-       3) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
-       4) Update every MeetingConfig.sortingMethodOnAddItem attribute
+       1) Execute upgrade steps available for dependencies;
+       2) Finalize removal of the 'meetingfolder_view' view;
+       3) Move item templates in the MeetingConfig to their own folder (itemtemplates);
+       4) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
+       5) Update every MeetingConfig.sortingMethodOnAddItem attribute
           (moved to MeetingConfig.insertingMethodOnAddItem DataGridField);
-       5) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
-       6) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
-       7) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
-       8) Update advices to store 'comment' as utf-8 and not as unicode;
-       9) Update 'Add File' permission on each meetingConfig folder;
-       10) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
-       11) Translate folders stored in each MeetingConfigs (recurringitems, itemtemplates, categories, ...);
-       12) Add item portal_types to site_properties.typesUseViewActionInListings;
-       13) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
-       14) Remove 'signatureNotAlone' from selectable MeetingConfig.xhtmlTransformTypes;
-       15) Clean every MeetingGroup.asCopyGroupOn values;
-       16) Update topics;
-       17) Clean the CKeditor toolbar to remove 'Ajaxsave' and 'Templates' buttons;
-       18) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
+       6) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
+       7) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
+       8) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
+       9) Update advices to store 'comment' as utf-8 and not as unicode;
+       10) Update 'Add File' permission on each meetingConfig folder;
+       11) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
+       12) Translate folders stored in each MeetingConfigs (recurringitems, itemtemplates, categories, ...);
+       13) Add item portal_types to site_properties.typesUseViewActionInListings;
+       14) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
+       15) Remove 'signatureNotAlone' from selectable MeetingConfig.xhtmlTransformTypes;
+       16) Clean every MeetingGroup.asCopyGroupOn values;
+       17) Update topics;
+       18) Clean the CKeditor toolbar to remove 'Ajaxsave' and 'Templates' buttons;
        19) Remove MeetingCategory.itemsCount attribute;
        20) Clean portal_plonemeeting search attributes as most were removed;
        21) Clean meeting configs task related attributes as it was removed;
        22) Clean registries as we removed some css;
        23) Reinstall PloneMeeting;
-       24) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       24) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
+       25) Update the portal_plonemeeting WF policy;
+       26) Compute MeetingConfig.transitionsForPresentingAnItem suite of transitions;
+       27) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_3(context).run()
 # ------------------------------------------------------------------------------
