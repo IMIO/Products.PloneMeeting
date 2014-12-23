@@ -4064,7 +4064,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         mimeType = mimetypes.guess_type(pt.podTemplate)[0]
         fileObject = File('dummyId', pt.podTemplate, f.read(),
                           content_type=mimeType)
-        fileObject.filename = pt.podTemplate
+        # pt.podTemplate can be a relative path like "../../profile_id/templates/mytemplate.odt"
+        # so split on "/" and take last part...
+        fileObject.filename = pt.podTemplate.split('/')[-1]
         fileObject.content_type = mimeType
         f.close()
         data = pt.getData(podTemplate=fileObject)
