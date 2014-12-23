@@ -1,12 +1,6 @@
-Migration from PloneMeeting 2.x (Plone3) versions :
-===================================================
+Migration to PloneMeeting 3.3 :
+===============================
 
-On the PM 2.x site (old site) :
--------------------------------
-- uninstall FCKeditor (we will use collective.ckeditor now)
-
-On the PM 3.x site (new site) :
--------------------------------
-- launch the Plone migration to Plone4
-- launch the PloneMeeting upgrade step to PloneMeeting 3
-- uninstall Kupu (was not uninstallable in Plone3, but well in Plone4) if not used
+1) Run Plone migration to Plone 4.3.4;
+2) Run upgrade step for collective.iconifieddocumentactions;
+3) Run upgrade step for Products.PloneMeeting.
