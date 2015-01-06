@@ -125,6 +125,13 @@
         for="Products.PloneMeeting.interfaces.IMeetingFile"
         permission="zope2.View" />
     <browser:page
+        name="toggle_advice_is_confidential"
+        attribute="toggle"
+        allowed_attributes="toggle"
+        class=".async.AdviceIsConfidential"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        permission="zope2.View" />
+    <browser:page
         name="toggle_budget_related"
         attribute="toggle"
         allowed_attributes="toggle"

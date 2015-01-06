@@ -239,7 +239,9 @@ class AnnexIsConfidential(BrowserView):
 
     def toggle(self):
         member = self.portal_state.member()
-        if not member.has_permission('Modify portal content', self.context):
+        tool = getToolByName(self, 'portal_plonemeeting')
+        if not member.has_permission('Modify portal content', self.context) or \
+           not tool.isManager():
             raise Unauthorized
 
         isConfidential = self.context.getIsConfidential()
@@ -257,6 +259,49 @@ class AnnexIsConfidential(BrowserView):
             filename = 'isConfidentialYes.png'
             name = 'isConfidentialNo'
             title_msgid = 'annex_is_confidential_yes_edit'
+
+        title = translate(title_msgid,
+                          domain="PloneMeeting",
+                          context=self.request)
+        portal_url = self.portal_state.portal_url()
+        src = "%s/%s" % (portal_url, filename)
+        html = self.IMG_TEMPLATE % (src, title, name)
+        self.context.at_post_edit_script()
+        return html
+
+
+class AdviceIsConfidential(BrowserView):
+    """
+      View that switch an advice 'isConfidential' attribute using an ajax call.
+    """
+    IMG_TEMPLATE = u'<img class="adviceIsConfidentialEditable" src="%s" title="%s" name="%s" />'
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
+        self.portal = self.portal_state.portal()
+
+    def toggle(self, UID):
+        # check if current user may edit advice confidentiality
+        if not self.context.adapted().mayEditAdviceConfidentiality():
+            raise Unauthorized
+
+        # get the adviceInfo
+        adviceId = UID.split('__')[1]
+
+        isConfidential = self.context.adviceIndex[adviceId]['isConfidential']
+        # toggle value
+        self.context.adviceIndex[adviceId]['isConfidential'] = not isConfidential
+
+        if isConfidential:
+            filename = 'isConfidentialNo.png'
+            name = 'isConfidentialYes'
+            title_msgid = 'advice_is_confidential_no_edit'
+        else:
+            filename = 'isConfidentialYes.png'
+            name = 'isConfidentialNo'
+            title_msgid = 'advice_is_confidential_yes_edit'
 
         title = translate(title_msgid,
                           domain="PloneMeeting",

@@ -879,7 +879,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                groupId.endswith(RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
                 return True
 
+    def isManager_cachekey(method, self, realManagers=False):
+        '''cachekey method for self.isManager.'''
+        # we only recompute if REQUEST changed
+        return (str(self.REQUEST.debug), realManagers)
+
     security.declarePublic('isManager')
+    @ram.cache(isManager_cachekey)
     def isManager(self, realManagers=False):
         '''Is the current user a 'Manager'?  If p_realManagers is True,
            only returns True if user has role Manager/Site Administrator, either
@@ -889,7 +895,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             user.has_role('Site Administrator') or \
             (not realManagers and user.has_role('MeetingManager'))
 
+    def isPowerObserverForCfg_cachekey(method, self, cfg, isRestricted=False):
+        '''cachekey method for self.isPowerObserverForCfg.'''
+        # we only recompute if REQUEST changed
+        return (str(self.REQUEST.debug), cfg, isRestricted)
+
     security.declarePublic('isPowerObserverForCfg')
+    @ram.cache(isPowerObserverForCfg_cachekey)
     def isPowerObserverForCfg(self, cfg, isRestricted=False):
         """
           Returns True if the current user is a power observer
@@ -899,8 +911,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
           If p_iRestricted is True, it will check if current user is a
           restricted power observer.
         """
-        if not isRestricted and self.isManager():
-            return True
         member = self.portal_membership.getAuthenticatedMember()
         if not isRestricted:
             groupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)

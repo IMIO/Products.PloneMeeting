@@ -9,7 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.3 (unreleased)
 ----------------
-- Moved to Products.CMFPlone 4.3.4
+- Moved to Plone 4.3.4
 - Moved to collective.ckeditor 4.2.0
 - Depends on plonetheme.imioapps to manage default skin (plonemeetingskin)
 - Moved from communesplone.iconified_document_actions to collective.iconifieddocumentactions
@@ -22,8 +22,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   refactored display of item assembly and signatures on item
 - Added restricted power observers, a second kind of power observers that may
   access elements in different states
-- Added 'confidentiality' for annexes, making them not visibile by restricted power observers,
-  annex confidentialy is ajax switchable in the UI
+- Added 'confidentiality' for annexes and advices, making them not visibile by power observers or
+  restricted power observers, confidentialy is ajax switchable in the UI
 - When sending an item to antoher meeting config, if both configurations use categories,
   added possibility to define for a category in original meeting configuration what will
   be the used category in the destination meeting configuration

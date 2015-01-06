@@ -27,9 +27,6 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
-import tempfile
-import time
-import unicodedata
 from Acquisition import aq_base
 from AccessControl import Unauthorized
 from zope.annotation import IAnnotations
@@ -221,10 +218,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     security.declareProtected(View, 'index_html')
     def index_html(self, REQUEST=None, RESPONSE=None):
         '''Download the file'''
-        # Prevent downloading the annex if the parent is an item
-        # and this item is not privacy-viewable.
-        parent = self.getParent()
-        if parent.meta_type == 'MeetingItem' and not parent.adapted().isPrivacyViewable():
+        if not self.isViewableForCurrentUser():
             raise Unauthorized
         self.portal_plonemeeting.rememberAccess(self.UID())
         return ATBlob.index_html(self, REQUEST, RESPONSE)
@@ -232,11 +226,35 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     security.declareProtected(View, 'download')
     def download(self, REQUEST=None, RESPONSE=None):
         """Download the file"""
-        parent = self.getParent()
-        if parent.meta_type == 'MeetingItem' and not parent.adapted().isPrivacyViewable():
+        if not self.isViewableForCurrentUser():
             raise Unauthorized
         self.portal_plonemeeting.rememberAccess(self.UID())
         return ATBlob.download(self, REQUEST, RESPONSE)
+
+    security.declarePublic('isViewableForCurrentUser')
+    def isViewableForCurrentUser(self):
+        '''
+          MeetingFile is viewable if :
+          - parent is an item and is privacyViewable;
+          - annex is not confidential;
+          - annex is confidential and current user may view it.
+          This is used to protect MeetingFile download in case current user knows the url
+          of an annex he may not access...
+        '''
+        parent = self.getParent()
+        # is parent an item and privacy viewable?
+        if parent.meta_type == 'MeetingItem' and not parent.adapted().isPrivacyViewable():
+            return False
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(parent)
+        if not cfg.getEnableAnnexConfidentiality():
+            return True
+        isPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=False)
+        isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
+        return IAnnexable(parent)._isViewableForCurrentUser(cfg,
+                                                            isPowerObserver,
+                                                            isRestrictedPowerObserver,
+                                                            self.getAnnexInfo())
 
     security.declarePublic('at_post_create_script')
     def at_post_create_script(self):

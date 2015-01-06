@@ -355,6 +355,9 @@ class IMeetingItemDocumentation:
            or use the meetingConfig certified signatures.
            If p_forceUseCertifiedSignaturesOnMeetingConfig, signatures defined on
            the MeetingConfig will be used, no matter signatures are defined on the proposing group.'''
+    def mayEditAdviceConfidentiality():
+        '''Condition for being able to edit the confidentiality of asked advices.
+           By default, only MeetingManagers able to edit the item may change advice confidentiality.'''
 
 
 class IMeetingItemWorkflowConditions(Interface):

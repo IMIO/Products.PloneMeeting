@@ -229,12 +229,10 @@
           <td tal:define="field python:here.getField('useUserReplacements')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('enableAnnexConfidentiality')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td tal:define="field python:here.getField('meetingConfigsToCloneTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
       </table>
 
@@ -776,8 +774,23 @@
           <td tal:define="field python:here.getField('hideItemHistoryCommentsToUsersOutsideProposingGroup')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
-          <td></td>
+          <td tal:define="field python:here.getField('enableAnnexConfidentiality')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('annexConfidentialFor')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr>
+          <td tal:define="field python:here.getField('enableAdviceConfidentiality')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('adviceConfidentialityDefault')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('adviceConfidentialFor')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
       </table>
     </tal:advices>

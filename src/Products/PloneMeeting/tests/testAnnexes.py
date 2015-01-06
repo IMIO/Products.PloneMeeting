@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from AccessControl import Unauthorized
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.interfaces import IAnnexable
 
@@ -78,7 +79,7 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_GetAnnexesByTypeAnnexConfidentiality(self):
         '''Test the getAnnexesByType method when annex confidentiality is enabled.
-           A confidential annex is not visible by restricted power observers.'''
+           A confidential annex is not visible by power observers or restricted power observers.'''
         item, mft1, mft2, mft3 = self._setupAnnexes()
         # a MeetingManager can access everything, as nothing is confidential for now...
         annexesByType = IAnnexable(item).getAnnexesByType('item')
@@ -97,9 +98,13 @@ class testAnnexes(PloneMeetingTestCase):
         # now enable annex confidentiality and test again
         self.changeUser('admin')
         self.meetingConfig.setEnableAnnexConfidentiality(True)
+        # hide confidential annexes to restricted power observers
+        self.meetingConfig.setAnnexConfidentialFor(('restricted_power_observers', ))
         # make first annex of group1 and second annex of group3 confidential
-        getattr(item, annexesByType[0][2]['id']).setIsConfidential(True)
-        getattr(item, annexesByType[2][1]['id']).setIsConfidential(True)
+        confidentialAnnex1 = getattr(item, annexesByType[0][2]['id'])
+        confidentialAnnex1.setIsConfidential(True)
+        confidentialAnnex2 = getattr(item, annexesByType[2][1]['id'])
+        confidentialAnnex2.setIsConfidential(True)
         # update annex index as isConfidential is in MeetingItem.annexIndex
         IAnnexable(item).updateAnnexIndex()
         # it does not change anything for other users than restricted power observers
@@ -109,6 +114,8 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(annexesByType[0]) == 3)
         self.assertTrue(len(annexesByType[1]) == 1)
         self.assertTrue(len(annexesByType[2]) == 2)
+        self.assertTrue(confidentialAnnex1.isViewableForCurrentUser())
+        self.assertTrue(confidentialAnnex2.isViewableForCurrentUser())
         # but restricted power observers will not see confidential annexes
         self.changeUser('restrictedpowerobserver1')
         annexesByType = IAnnexable(item).getAnnexesByType('item')
@@ -116,6 +123,13 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(annexesByType[0]) == 2)
         self.assertTrue(len(annexesByType[1]) == 1)
         self.assertTrue(len(annexesByType[2]) == 1)
+        self.assertFalse(confidentialAnnex1.isViewableForCurrentUser())
+        self.assertFalse(confidentialAnnex2.isViewableForCurrentUser())
+        # moreover, trying to download the annex will raise Unauthorized
+        self.assertRaises(Unauthorized, confidentialAnnex1.download)
+        self.assertRaises(Unauthorized, confidentialAnnex2.download)
+        self.assertRaises(Unauthorized, confidentialAnnex1.index_html)
+        self.assertRaises(Unauthorized, confidentialAnnex2.index_html)
         # if every annexes of a group are confidential, the group
         # is not returned anymore, hide the unique annex of second group
         self.changeUser('pmManager')
@@ -126,6 +140,26 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(annexesByType) == 2)
         self.assertTrue(len(annexesByType[0]) == 2)
         self.assertTrue(len(annexesByType[1]) == 1)
+
+        # if confidential annexes are hidden to power observers,
+        # it behaves like for restricted power observers
+        # for now, not confidential, every annexes are viewable
+        self.changeUser('powerobserver1')
+        annexesByType = IAnnexable(item).getAnnexesByType('item')
+        self.assertTrue(len(annexesByType) == 3)
+        self.assertTrue(len(annexesByType[0]) == 3)
+        self.assertTrue(len(annexesByType[1]) == 1)
+        self.assertTrue(len(annexesByType[2]) == 2)
+        self.assertTrue(confidentialAnnex1.isViewableForCurrentUser())
+        self.assertTrue(confidentialAnnex2.isViewableForCurrentUser())
+        # now hide confidential annexes to power observers
+        self.meetingConfig.setAnnexConfidentialFor(('restricted_power_observers', 'power_observers'))
+        annexesByType = IAnnexable(item).getAnnexesByType('item')
+        self.assertTrue(len(annexesByType) == 2)
+        self.assertTrue(len(annexesByType[0]) == 2)
+        self.assertTrue(len(annexesByType[1]) == 1)
+        self.assertFalse(confidentialAnnex1.isViewableForCurrentUser())
+        self.assertFalse(confidentialAnnex2.isViewableForCurrentUser())
 
 
 def test_suite():

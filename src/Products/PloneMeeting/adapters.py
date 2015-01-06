@@ -199,6 +199,18 @@ class AnnexableAdapter(object):
             res = self.context.uid_catalog(UID=annexUid)[0].getObject()
         return res
 
+    def _isViewableForCurrentUser(self, cfg, isPowerObserver, isRestrictedPowerObserver, annexInfo):
+        '''
+          Returns True if current user may view the annex
+        '''
+        # if confidentiality is used and annex is marked as confidential,
+        # annexes could be hidden to power observers and/or restricted power observers
+        if cfg.getEnableAnnexConfidentiality() and annexInfo['isConfidential'] and \
+           ((isPowerObserver and 'power_observers' in cfg.getAnnexConfidentialFor()) or
+           (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAnnexConfidentialFor())):
+            return False
+        return True
+
     def getAnnexesByType(self, relatedTo, makeSubLists=True,
                          typesIds=[], realAnnexes=False):
         '''See docstring in interfaces.py'''
@@ -216,6 +228,9 @@ class AnnexableAdapter(object):
                                             onlySelectable=False,
                                             includeSubTypes=False)
         useConfidentiality = cfg.getEnableAnnexConfidentiality()
+        isPowerObserver = False
+        if useConfidentiality:
+            isPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=False)
         isRestrictedPowerObserver = False
         if useConfidentiality:
             isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
@@ -225,7 +240,7 @@ class AnnexableAdapter(object):
                 if (annexInfo['relatedTo'] == relatedTo) and \
                    (annexInfo['meetingFileTypeObjectUID'] == fileType['meetingFileTypeObjectUID']):
                     # manage annex confidentiality, do not consider annex not to show
-                    if useConfidentiality and annexInfo['isConfidential'] and isRestrictedPowerObserver:
+                    if not self._isViewableForCurrentUser(cfg, isPowerObserver, isRestrictedPowerObserver, annexInfo):
                         continue
                     if not realAnnexes:
                         annexes.append(annexInfo)

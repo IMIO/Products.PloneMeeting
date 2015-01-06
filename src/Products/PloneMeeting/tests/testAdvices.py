@@ -42,6 +42,7 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
+from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -999,6 +1000,7 @@ class testAdvices(PloneMeetingTestCase):
         vocab = factory(item)
         self.assertTrue(len(vocab) == 1)
         self.assertTrue('vendors' in vocab)
+        self.assertTrue(not 'developers' in vocab)
 
     def test_pm_ComputeDelaysWorkingDaysAndHolidaysAndUnavailableEndDays(self):
         '''Test that computing of delays relying on workingDays, holidays
@@ -1343,6 +1345,71 @@ class testAdvices(PloneMeetingTestCase):
         everyStates = adviceWF.states.keys()
         statesOfConfig = ADVICE_STATES_ALIVE + ADVICE_STATES_ENDED
         self.assertTrue(set(everyStates) == set(statesOfConfig))
+
+    def test_pm_AdvicesConfidentiality(self):
+        '''Test the getAdvicesByType method when advice confidentiality is enabled.
+           A confidential advice is not visible by power observers or restricted power observers.'''
+        # hide confidential advices to power observers
+        self.meetingConfig.setEnableAdviceConfidentiality(True)
+        self.meetingConfig.setAdviceConfidentialityDefault(True)
+        self.meetingConfig.setAdviceConfidentialFor(('power_observers', ))
+        # make power observers able to see proposed items
+        self.meetingConfig.setItemPowerObserversStates(('proposed', ))
+        # first check default confidentiality value
+        # create an item and ask advice of 'developers'
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('developers', ))
+        item.at_post_edit_script()
+        # must be MeetingManager to be able to change advice confidentiality
+        self.assertFalse(item.adapted().mayEditAdviceConfidentiality())
+        # if creator tries to change advice confidentiality, he gets Unauthorized
+        toggleView = item.restrictedTraverse('@@toggle_advice_is_confidential')
+        self.assertRaises(Unauthorized, toggleView.toggle, UID='%s__%s' % (item.UID(), 'developers'))
+        self.assertTrue(item.adviceIndex['developers']['isConfidential'])
+        self.meetingConfig.setAdviceConfidentialityDefault(False)
+        # ask 'vendors' advice
+        item.setOptionalAdvisers(('developers', 'vendors', ))
+        item.at_post_edit_script()
+        # still confidential for 'developers'
+        self.assertTrue(item.adviceIndex['developers']['isConfidential'])
+        # but not by default for 'vendors'
+        self.assertFalse(item.adviceIndex['vendors']['isConfidential'])
+        # so we have one confidential advice and one that is not confidential
+        # but MeetingManagers may see both
+        self.assertTrue(len(item.getAdvicesByType()[NOT_GIVEN_ADVICE_VALUE]) == 2)
+        # propose the item so power observers can see it
+        self.proposeItem(item)
+
+        # log as power observer and check what he may access
+        self.changeUser('powerobserver1')
+        # only the not confidential advice is visible
+        advicesByType = item.getAdvicesByType()
+        self.assertTrue(len(advicesByType[NOT_GIVEN_ADVICE_VALUE]) == 1)
+        self.assertTrue(advicesByType[NOT_GIVEN_ADVICE_VALUE][0]['id'] == 'vendors')
+
+        # now give the advice so we check that trying to access a confidential
+        # advice will raise Unauthorized
+        self.changeUser('pmAdviser1')
+        developers_advice = createContentInContainer(item,
+                                                     'meetingadvice',
+                                                     **{'advice_group': 'developers',
+                                                     'advice_type': u'positive',
+                                                     'advice_comment': RichTextValue(u'My comment')})
+        # if powerobserver tries to access the Title of the confidential advice
+        # displayed in particular on the advice view, it raises Unauthorized
+        self.changeUser('powerobserver1')
+        self.assertRaises(Unauthorized, developers_advice.Title)
+        advice_view = developers_advice.restrictedTraverse('@@view')
+        self.assertRaises(Unauthorized, advice_view)
+
+        # a MeetingManager may toggle advice confidentiality
+        # a MeetingManager would be able to change advice confidentiality
+        self.changeUser('pmManager')
+        self.assertTrue(item.adapted().mayEditAdviceConfidentiality())
+        self.assertTrue(item.adviceIndex['developers']['isConfidential'])
+        toggleView.toggle(UID='%s__%s' % (item.UID(), 'developers'))
+        self.assertFalse(item.adviceIndex['developers']['isConfidential'])
 
 
 def test_suite():

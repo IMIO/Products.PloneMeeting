@@ -340,7 +340,13 @@ class MeetingConfigDescriptor(Descriptor):
         self.preMeetingDateDefault = '4.08:30'
         # Will we manage replacements of users ?
         self.useUserReplacements = False
+        # annex confidentiality
         self.enableAnnexConfidentiality = False
+        self.annexConfidentialFor = ()
+        # advice confidentiality
+        self.enableAdviceConfidentiality = False
+        self.adviceConfidentialityDefault = False
+        self.adviceConfidentialFor = ()
         # List of other meetingConfigs, item of this meetingConfig
         # will be clonable to
         self.meetingConfigsToCloneTo = []

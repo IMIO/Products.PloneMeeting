@@ -26,13 +26,6 @@
                     <span tal:content="python: delay[2]">Delay label</span>
                 </a>
             </div>
-            <div style="text-align: right;"
-                 onclick="javascript:toggleMenu('advice_change_delay_row_id_123')"
-                 tal:attributes="onclick string:javascript:toggleMenu('${menuId}')">
-                <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
-                     src="pb_close_small.png"
-                     tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
-            </div>
         </tal:selectableDelays>
         <div>
             <a class="link-overlay-pm"
@@ -45,6 +38,13 @@
                 <img src="++resource++imio.actionspanel/history.gif"
                      tal:attributes="src string:${portal_url}/++resource++imio.actionspanel/history.gif"/>&nbsp;<span i18n:translate="History of delay changes"></span>
             </a>
+        </div>
+        <div style="text-align: right;"
+             onclick="javascript:toggleMenu('advice_change_delay_row_id_123')"
+             tal:attributes="onclick string:javascript:toggleMenu('${menuId}')">
+            <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
+                 src="pb_close_small.png"
+                 tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
         </div>
     </div>
 </tal:defines>

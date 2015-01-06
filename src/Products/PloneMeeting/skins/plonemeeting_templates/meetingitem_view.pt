@@ -350,7 +350,7 @@
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
     <table width="100%" cellpadding="1" cellspacing="1"
-           tal:define="hasAnnexes context/hasAnnexesWhere;
+           tal:define="hasAnnexes python: context.hasAnnexesWhere(relatedTo='item');
                        hasAnnexesDecision python: context.hasAnnexesWhere(relatedTo='item_decision');
                        hasAdvices python: (meetingConfig.getUseAdvices() and context.displayAdvices())">
         <tr style="vertical-align: top;">

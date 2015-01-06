@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from AccessControl import Unauthorized
 from zope.interface import implements, Interface
 from zope import schema
 from zope.i18n import translate
@@ -96,6 +97,23 @@ class MeetingAdvice(Container):
     implements(IMeetingAdvice)
 
     def Title(self):
+        '''
+          This will construct the title of the advice, moreover, it checks for access
+          to a confidential advice.
+        '''
+        # check that current user is not accessing to an advice that is confidential
+        # to him but for which he knows the url to access to...
+        parent = self.getParentNode()
+        if self.advice_group in parent.adviceIndex and parent.adviceIndex[self.advice_group]['isConfidential']:
+            tool = getToolByName(self, 'portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            isPowerObserver = tool.isPowerObserverForCfg(cfg)
+            isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
+            if not parent._adviceIsViewableForCurrentUser(cfg,
+                                                          isPowerObserver,
+                                                          isRestrictedPowerObserver,
+                                                          parent.adviceIndex[self.advice_group]):
+                raise Unauthorized
         # we can not return a translated msg using _ so translate it
         return translate("Advice given on item ${item_title}",
                          mapping={'item_title': '"%s"' % unicode(self.getParentNode().Title(), 'utf-8')},

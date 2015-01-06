@@ -508,6 +508,7 @@ legend .pmLanguage {top: -0.3em; right: 5px;}
 div[id^="pm_menu_advice_change_delay"].pmDropdown {
     right: 25px;
     margin-top: -1px;
+    font-weight: normal;
 }
 
 /* CSS for data changes in object histories. */
@@ -615,12 +616,14 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
     cursor: not-allowed !important;
 }
 
+.adviceInfo,
 .budgetRelatedEditable,
 .toDiscussEditable,
 .takenOverByEditable,
 .itemIsSignedEditable,
 .annexToPrintEditable,
 .annexIsConfidentialEditable,
+.adviceIsConfidentialEditable,
 .itemAssemblyEditable i,
 .itemSignaturesEditable i {
     border-bottom: 1px dotted;

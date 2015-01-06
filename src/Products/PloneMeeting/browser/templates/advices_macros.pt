@@ -16,6 +16,7 @@
                                             tool python: portal.portal_plonemeeting;
                                             portal_url context/@@plone_portal_state/portal_url;
                                             plone_view context/@@plone;
+                                            displayAdviceConfidentiality python: meetingConfig.getEnableAdviceConfidentiality() and tool.isManager();
                                             isRealManager python: tool.isManager(realManagers=True);
                                             item_review_state meetingItem/queryState;
                                             adviceFileTypes python: meetingConfig.getFileTypes('advice');">
@@ -66,8 +67,11 @@
                                    - <b tal:content="advice/delay_label"></b>
                               </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
                          </div>
-                         <div style="max-width: 70px; float: right;" >
+                         <div style="max-width: 90px; float: right;" >
                          <acronym tal:attributes="title python: meetingItem.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
+                         <acronym tal:condition="displayAdviceConfidentiality" style="border-bottom: none;">
+                            <metal:isConfidential use-macro="here/@@advices-macros/isConfidential" />
+                         </acronym>
                          <acronym tal:condition="advice/delay" title="Change delay" i18n:attributes="title">
                             <tal:advice-change-delay
                               tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
@@ -292,5 +296,34 @@
       <td tal:condition="not: advicesByType">-</td>
     </tr>
   </table>
-
 </metal:icons>
+
+
+<tal:comment replace="nothing">
+  This macro manage the isConfidential attribute of advices.
+  advice : the relevant adviceInfo from the meetingItem.adviceIndex and meetingItem, the MeetingItem
+</tal:comment>
+<metal:isConfidential define-macro="isConfidential" i18n:domain="PloneMeeting"
+                      tal:define="mayEdit python: meetingItem.adapted().mayEditAdviceConfidentiality();
+                                  isConfidential advice/isConfidential;">
+  <span tal:condition="mayEdit"
+        id="marker_toggle_advice_isconfidential_UID__adviceId#"
+        tal:attributes="id string:marker_toggle_advice_isconfidential_${UID}__${advice/id};"
+        tal:define="UID meetingItem/UID;
+                    baseUrl meetingItem/absolute_url;">
+    <img class="adviceIsConfidentialEditable" tal:condition="isConfidential" name="isConfidentialNo" style="cursor:pointer"
+         title="advice_is_confidential_yes_edit" i18n:attributes="title"
+         tal:attributes="src string:$portal_url/isConfidentialYes.png;
+                         onClick python: 'asyncToggleIcon(\''+UID + '__' + advice['id'] +'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_advice_is_confidential\', baseSelector=\'#marker_toggle_advice_isconfidential_\')'"/>
+    <img class="adviceIsConfidentialEditable" tal:condition="not: isConfidential" name="isConfidentialYes" style="cursor:pointer"
+         title="advice_is_confidential_no_edit" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/isConfidentialNo.png;
+                         onClick python: 'asyncToggleIcon(\''+UID + '__' + advice['id'] +'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_advice_is_confidential\', baseSelector=\'#marker_toggle_advice_isconfidential_\')'"/>
+  </span>
+  <tal:notMayEdit condition="not: mayEdit">
+    <img tal:condition="isConfidential" title="advice_is_confidential_yes" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/isConfidentialYes.png"/>
+    <img tal:condition="not: isConfidential" title="advice_is_confidential_no" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/isConfidentialNo.png"/>
+  </tal:notMayEdit>
+</metal:isConfidential>

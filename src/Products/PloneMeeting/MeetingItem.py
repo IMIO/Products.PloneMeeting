@@ -56,7 +56,7 @@ from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions, \
-    IMeetingItemWorkflowActions
+    IMeetingItemWorkflowActions, IAnnexable
 from Products.PloneMeeting.utils import \
     getWorkflowAdapter, getCustomAdapter, fieldIsEmpty, \
     getCurrentMeetingObject, checkPermission, sendMail, sendMailIfRelevant, \
@@ -1420,6 +1420,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
         return True
 
+    security.declarePublic('mayEditAdviceConfidentiality')
+    def mayEditAdviceConfidentiality(self):
+        '''Check doc in interfaces.py.'''
+        item = self.getSelf()
+
+        tool = getToolByName(item, 'portal_plonemeeting')
+        membershipTool = getToolByName(item, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        # user must be able to edit the item and must be a Manager
+        if not member.has_permission(ModifyPortalContent, item) or \
+           not tool.isManager():
+            return False
+        return True
+
     security.declareProtected('Modify portal content', 'setItemIsSigned')
     def setItemIsSigned(self, value, **kwargs):
         '''Overrides the field 'itemIsSigned' mutator to check if the field is
@@ -1718,7 +1732,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getRestrictAccessToSecretItems():
             return True
         # Bypass privacy check for super users
-        if tool.isPowerObserverForCfg(cfg):
+        if tool.isPowerObserverForCfg(cfg) or tool.isManager():
             return True
         # Check that the user belongs to the proposing group.
         proposingGroup = item.getProposingGroup()
@@ -2087,13 +2101,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('hasAnnexesWhere')
-    def hasAnnexesWhere(self, relatedTo=ITEM_NO_PREFERRED_MEETING_VALUE):
+    def hasAnnexesWhere(self, relatedTo='item'):
         '''Have I some annexes?  If p_relatedTo is whatever, consider every annexes
            no matter their 'relatedTo', either, only consider relevant relatedTo annexes.'''
-        if relatedTo == ITEM_NO_PREFERRED_MEETING_VALUE:
-            return bool(self.annexIndex)
-        else:
-            return bool([annex for annex in self.annexIndex if annex['relatedTo'] == relatedTo])
+        return bool(IAnnexable(self).getAnnexesByType(relatedTo=relatedTo))
 
     def queryState_cachekey(method, self):
         '''cachekey method for self.queryState.'''
@@ -2941,12 +2952,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 toAdd.append((groupId, group.getName()))
         return (toAdd, toEdit)
 
+    def _adviceIsViewableForCurrentUser(self, cfg, isPowerObserver, isRestrictedPowerObserver, advice):
+        '''
+          Returns True if current user may view the advice.
+        '''
+        # if confidentiality is used and advice is marked as confidential,
+        # advices could be hidden to power observers and/or restricted power observers
+        if cfg.getEnableAdviceConfidentiality() and advice['isConfidential'] and \
+           ((isPowerObserver and 'power_observers' in cfg.getAdviceConfidentialFor()) or
+           (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAdviceConfidentialFor())):
+            return False
+        return True
+
     security.declarePublic('getAdvicesByType')
     def getAdvicesByType(self):
         '''Returns the list of advices, grouped by type.'''
         res = {}
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        isPowerObserver = tool.isPowerObserverForCfg(cfg)
+        isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
         for groupId, advice in self.adviceIndex.iteritems():
             # Create the entry for this type of advice if not yet created.
+            # first check if current user may access advice, aka advice is not confidential to him
+            if not self._adviceIsViewableForCurrentUser(cfg, isPowerObserver, isRestrictedPowerObserver, advice):
+                continue
+
             # if the advice is 'hidden_during_redaction', we create a specific advice type
             if not advice['hidden_during_redaction']:
                 adviceType = advice['type']
@@ -3291,6 +3322,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             saved_stored_data[groupId]['delay_changes_history'] = \
                 'delay_changes_history' in adviceInfo and \
                 adviceInfo['delay_changes_history'] or []
+            saved_stored_data[groupId]['isConfidential'] = \
+                'isConfidential' in adviceInfo and \
+                adviceInfo['isConfidential'] or cfg.getAdviceConfidentialityDefault()
 
         itemState = self.queryState()
         self.adviceIndex = PersistentMapping()
@@ -3338,17 +3372,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # 'is_linked_to_previous_row' on the MeetingConfig.customAdvisers
                 if groupId in saved_stored_data:
                     d['delay_for_automatic_adviser_changed_manually'] = saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually']
+                    d['delay_changes_history'] = saved_stored_data[groupId]['delay_changes_history']
+                    d['isConfidential'] = saved_stored_data[groupId]['isConfidential']
                 else:
                     d['delay_for_automatic_adviser_changed_manually'] = False
+                    d['delay_changes_history'] = []
+                    d['isConfidential'] = cfg.getAdviceConfidentialityDefault()
                 # index view/add/edit access
                 d['item_viewable_by_advisers'] = False
                 d['advice_addable'] = False
                 d['advice_editable'] = False
-                # a place for delay changes history
-                if groupId in saved_stored_data:
-                    d['delay_changes_history'] = saved_stored_data[groupId]['delay_changes_history']
-                else:
-                    d['delay_changes_history'] = []
 
         # now update self.adviceIndex with given advices
         for groupId, adviceInfo in self.getGivenAdvices().iteritems():
@@ -3368,11 +3401,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # advice should not be asked, but as already given, we keep it
                     adviceInfo['delay_started_on'] = saved_stored_data[groupId]['delay_started_on']
                     adviceInfo['delay_stopped_on'] = saved_stored_data[groupId]['delay_stopped_on']
+                if groupId in saved_stored_data:
+                    adviceInfo['delay_for_automatic_adviser_changed_manually'] = \
+                        saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually']
+                    adviceInfo['delay_changes_history'] = saved_stored_data[groupId]['delay_changes_history']
+                    adviceInfo['isConfidential'] = saved_stored_data[groupId]['isConfidential']
+                else:
+                    adviceInfo['delay_for_automatic_adviser_changed_manually'] = False
+                    adviceInfo['delay_changes_history'] = []
+                    adviceInfo['isConfidential'] = cfg.getAdviceConfidentialityDefault()
                 # index view/add/edit access
                 adviceInfo['item_viewable_by_advisers'] = False
                 adviceInfo['advice_addable'] = False
                 adviceInfo['advice_editable'] = False
-                adviceInfo['delay_changes_history'] = []
                 adviceInfo['annexIndex'] = []
             self.adviceIndex[groupId].update(adviceInfo)
 

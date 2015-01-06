@@ -625,19 +625,6 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='enableAnnexConfidentiality',
-        default=defValues.enableAnnexConfidentiality,
-        widget=BooleanField._properties['widget'](
-            description="EnableAnnexConfidentiality",
-            description_msgid="enable_annex_confidentiality_descr",
-            label='Enableannexconfidentiality',
-            label_msgid='PloneMeeting_label_enableAnnexConfidentiality',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     DataGridField(
         name='meetingConfigsToCloneTo',
         widget=DataGridField._properties['widget'](
@@ -1502,6 +1489,79 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='enableAnnexConfidentiality',
+        default=defValues.enableAnnexConfidentiality,
+        widget=BooleanField._properties['widget'](
+            description="EnableAnnexConfidentiality",
+            description_msgid="enable_annex_confidentiality_descr",
+            label='Enableannexconfidentiality',
+            label_msgid='PloneMeeting_label_enableAnnexConfidentiality',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='annexConfidentialFor',
+        widget=MultiSelectionWidget(
+            description="AnnexConfidentialFor",
+            description_msgid="annex_confidential_for_descr",
+            format="checkbox",
+            label='Annexconfidentialfor',
+            label_msgid='PloneMeeting_label_annexConfidentialFor',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listConfidentialFor',
+        default=defValues.annexConfidentialFor,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='enableAdviceConfidentiality',
+        default=defValues.enableAdviceConfidentiality,
+        widget=BooleanField._properties['widget'](
+            description="EnableAdviceConfidentiality",
+            description_msgid="enable_advice_confidentiality_descr",
+            label='Enableadviceconfidentiality',
+            label_msgid='PloneMeeting_label_enableAdviceConfidentiality',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='adviceConfidentialityDefault',
+        default=defValues.adviceConfidentialityDefault,
+        widget=BooleanField._properties['widget'](
+            description="AdviceConfidentialityDefault",
+            description_msgid="advice_confidentiality_default_descr",
+            label='Adviceconfidentialitydefault',
+            label_msgid='PloneMeeting_label_adviceConfidentialityDefault',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='adviceConfidentialFor',
+        widget=MultiSelectionWidget(
+            description="AdviceConfidentialFor",
+            description_msgid="advice_confidential_for_descr",
+            format="checkbox",
+            label='Adviceconfidentialfor',
+            label_msgid='PloneMeeting_label_adviceConfidentialFor',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listConfidentialFor',
+        default=defValues.annexConfidentialFor,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -2615,6 +2675,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   context=self.REQUEST)),
             # 'blank' represents a blank vote.
             ("blank", translate('vote_value_blank', domain=d, context=self.REQUEST)),
+        ))
+        return res
+
+    security.declarePrivate('listConfidentialFor')
+    def listConfidentialFor(self):
+        '''
+          Vocabulary for the 'annexConfidentialFor' and 'adviceConfidentialFor' fields.
+        '''
+        res = DisplayList((
+            ('power_observers', translate('confidential_for_power_observers',
+                                          domain="PloneMeeting",
+                                          context=self.REQUEST)),
+            ('restricted_power_observers', translate('confidential_for_restricted_power_observers',
+                                                     domain="PloneMeeting",
+                                                     context=self.REQUEST)),
         ))
         return res
 

@@ -161,6 +161,8 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         logout()
         self.cleanMemoize()
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isPowerObserverForCfg')
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isManager')
         login(self.portal, loginName)
         membershipTool = getToolByName(self.portal, 'portal_membership')
         self.member = membershipTool.getAuthenticatedMember()
