@@ -338,7 +338,7 @@ body.template-meetingitem_view td.itemAnnexesCell dd.actionMenuContentAX {
 .actionMenuContentAdvice { width: 600px; }
 
 /* annexes displayed in the annexes_form (table of annexes) */
-td.pmLinks div.annexTitle {
+td.pmLinks a {
     display: inline;
 }
 /* annexes displayed as dropdown list */
@@ -1071,6 +1071,12 @@ span#content-history.highlight-history-link a {
 }
 #content ul.item-predecessors li {
     line-height: 1em;
+}
+
+td.pmAnnexSizeWarning {
+    background-color: red !important;
+    color: white;
+    cursor: help;
 }
 /* </dtml-with> */
 

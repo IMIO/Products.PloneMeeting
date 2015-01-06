@@ -252,6 +252,9 @@ PY_DATETIME_WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 ITEMS_LIST_VISIBLE_FIELDS = ('description', 'detailedDescription',
                              'budgetInfos', 'motivation', 'decision', )
 
+# warn about MeetingFile size if file size bigger than
+MAX_FILE_SIZE_WARNING = 5000000
+
 # default user password used when sample users are added to a PloneMeeting during install
 DEFAULT_USER_PASSWORD = 'meeting'
 

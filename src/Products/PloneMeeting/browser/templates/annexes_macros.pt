@@ -198,11 +198,10 @@
                        annexes python: context.restrictedTraverse('@@annexes').getAnnexesByType(relatedTo, makeSubLists=False);
                        member member|context/@@plone_portal_state/member;">
    <div tal:condition="not: annexes" i18n:translate="no_annexes" class="discreet">No annexes</div>
-   <table class="vertical listing"
+   <table class="listing nosort"
           tal:condition="annexes"
-          width="100%" i18n:domain="plone">
-     <thead>
-     <tr i18n:domain="PloneMeeting">
+          width="100%" i18n:domain="PloneMeeting">
+     <tr>
        <th class="nosort" i18n:translate="listingheader_title">Title</th>
        <th class="nosort" i18n:translate="pm_annex_type">Annex type</th>
        <th class="nosort" i18n:translate="pm_creator">Creator</th>
@@ -214,9 +213,9 @@
        <th class="nosort" i18n:translate="listingheader_size" i18n:domain="plone">Size</th>
        <th class="nosort" i18n:translate="heading_actions" i18n:domain="plone">Actions</th>
      </tr>
-     </thead>
-     <tbody>
-     <tr tal:repeat="annexInfo annexes">
+     <tal:loop repeat="annexInfo annexes">
+     <tr tal:define="oddrow repeat/annexInfo/odd;"
+         tal:attributes="class python: oddrow and 'even' or 'odd';">
        <span tal:define="annex python: context.uid_catalog(UID=annexInfo['UID'])[0].getObject()">
        <td class="pmLinks">
          <img tal:attributes="src string:${portal_url}/${annex/getIcon};"/>&nbsp;
@@ -231,12 +230,17 @@
        <td tal:condition="meetingConfig/getEnableAnnexToPrint">
            <metal:annexToPrint use-macro="here/@@annexes-macros/annexToPrint" />
        </td>
-       <td tal:content="annex/getObjSize"></td>
+       <td tal:define="warnSize annex/warnSize"
+           tal:attributes="class python: warnSize and 'pmAnnexSizeWarning' or '';
+                           title python: warnSize and 'annex_size_warning' or '';"
+           tal:content="annex/getObjSize"
+           i18n:attributes="title"></td>
        <td>
            <tal:actions replace="structure python: annex.restrictedTraverse('@@actions_panel')(showIcons=True)" />
        </td>
        </span>
      </tr>
+     </tal:loop>
    </table>
   </tal:defines>
 </div>

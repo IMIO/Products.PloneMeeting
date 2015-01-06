@@ -17,6 +17,7 @@ from plone.memoize import ram
 
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.utils import checkPermission
 
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
@@ -93,6 +94,11 @@ class AnnexableAdapter(object):
         # current user may loose permission to edit
         # the object because we copy item permissions.
         newAnnex.processForm()
+        # display a warning portal message if annex size is large
+        if newAnnex.warnSize():
+            self.context.plone_utils.addPortalMessage(_("The annex that you just added has a large size and could be "
+                                                        "difficult to download by users wanting to view it!"),
+                                                      type='warning')
         userId = self.context.portal_membership.getAuthenticatedMember().getId()
         logger.info('Annex at %s uploaded by "%s".' % (newAnnex.absolute_url_path(), userId))
 

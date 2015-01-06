@@ -322,9 +322,15 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'modification_date': aq_base(self).pm_modification_date,
                'relatedTo': self.findRelatedTo(),
                'conversionStatus': self.conversionStatus(),
-               'isConfidential': self.getIsConfidential()
+               'isConfidential': self.getIsConfidential(),
+               'warnSize': self.warnSize(),
+               'friendlySize': self.getObjSize()
                }
         return res
+
+    def warnSize(self):
+        '''Need to warn user because of huge size of the annex?'''
+        return bool(self.get_size() > MAX_FILE_SIZE_WARNING)
 
     security.declarePublic('getSelf')
     def getSelf(self):
