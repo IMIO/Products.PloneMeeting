@@ -297,7 +297,7 @@
             <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                             oddrow repeat/obj/odd;
                             classOddEven python: oddrow and 'even' or 'odd';" valign="top"
-                tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+                tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                 class="#">
               <td><img tal:attributes="src python: obj.absolute_url() + '/at_download/theIcon'"/>&nbsp;
                   <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
@@ -357,7 +357,7 @@
           <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                             oddrow repeat/obj/odd;
                             classOddEven python: oddrow and 'even' or 'odd';" valign="top"
-                tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+                tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                 class="#">
             <td>
               <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
@@ -415,7 +415,7 @@
           <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                             oddrow repeat/obj/odd;
                             classOddEven python: oddrow and 'even' or 'odd';" valign="top"
-                tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+                tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                 class="#">
             <td tal:define="descr obj/Description">
               <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
@@ -474,7 +474,7 @@
           <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                           oddrow repeat/obj/odd;
                           classOddEven python: oddrow and 'even' or 'odd';" valign="top"
-                tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+                tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                 class="#">
             <td><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></td>
             <td><span tal:content="python: obj.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
@@ -651,7 +651,7 @@
           <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                           oddrow repeat/obj/odd;
                           classOddEven python: oddrow and 'even' or 'odd';"
-              tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+              tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
               valign="top">
             <td>
               <a i18n:translate="" tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a>
@@ -887,7 +887,7 @@
         <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                           oddrow repeat/obj/odd;
                           classOddEven python: oddrow and 'even' or 'odd';"
-            tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+            tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
             valign="top">
         <td><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></td>
         <td tal:content="obj/getId"></td>
@@ -949,7 +949,7 @@
           <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                           oddrow repeat/obj/odd;
                           classOddEven python: oddrow and 'even' or 'odd';"
-             tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+             tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
              valign="top">
             <td align="center"><img tal:define="fmt obj/getPodFormat"
                                     tal:attributes="src string: $portal_url/$fmt.png"/></td>

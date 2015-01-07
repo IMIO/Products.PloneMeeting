@@ -49,7 +49,7 @@
           <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                           oddrow repeat/obj/odd;
                           classOddEven python: oddrow and 'even' or 'odd';"
-             tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+             tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
              valign="top">
             <td><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
             </td>
@@ -96,7 +96,7 @@
           <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                           oddrow repeat/obj/odd;
                           classOddEven python: oddrow and 'even' or 'odd';"
-             tal:attributes="class python: not isActive and classOddEven+'state-inactive' or classOddEven"
+             tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
              valign="top">
             <td>
               <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
