@@ -2,7 +2,7 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2014 by Imio.be
+# Copyright (c) 2015 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -1507,9 +1507,9 @@ schema = Schema((
     LinesField(
         name='annexConfidentialFor',
         widget=MultiSelectionWidget(
+            format="select",
             description="AnnexConfidentialFor",
             description_msgid="annex_confidential_for_descr",
-            format="checkbox",
             label='Annexconfidentialfor',
             label_msgid='PloneMeeting_label_annexConfidentialFor',
             i18n_domain='PloneMeeting',
@@ -1552,7 +1552,7 @@ schema = Schema((
         widget=MultiSelectionWidget(
             description="AdviceConfidentialFor",
             description_msgid="advice_confidential_for_descr",
-            format="checkbox",
+            format="select",
             label='Adviceconfidentialfor',
             label_msgid='PloneMeeting_label_adviceConfidentialFor',
             i18n_domain='PloneMeeting',
@@ -4349,6 +4349,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 advice['isConfidential'] = adviceConfidentialityDefault
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
+
 
 
 registerType(MeetingConfig, PROJECTNAME)
