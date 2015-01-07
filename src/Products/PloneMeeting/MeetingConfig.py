@@ -4281,6 +4281,59 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 obj = getattr(self.meetingusers, user.id)
         return getattr(obj, methodName)()
 
+    security.declarePublic('updateAnnexConfidentiality')
+    def updateAnnexConfidentiality(self):
+        '''Update the confidentiality of existing annexes regarding default value
+           for confidentiality defined in the corresponding annex type.'''
+        if not self.isManager(realManagers=True):
+            raise Unauthorized
+        # update every annexes of items of this MeetingConfig
+        catalog = getToolByName(self, 'portal_catalog')
+        brains = catalog(portal_type=self.getItemTypeName())
+        numberOfBrains = len(brains)
+        i = 1
+        for brain in brains:
+            item = brain.getObject()
+            logger.info('%d/%d Initializing annexes confidentiality of item at %s' %
+                        (i,
+                         numberOfBrains,
+                         '/'.join(item.getPhysicalPath())))
+            i = i + 1
+            annexes = IAnnexable(item).getAnnexes()
+            if not annexes:
+                continue
+            for annex in annexes:
+                # get default confidential value from corresponding MeetingFileType
+                mft = annex.getMeetingFileType(theData=True)
+                annex.setIsConfidential(mft['isConfidentialDefault'])
+            # update annexIndex as isConfidential is into it
+            IAnnexable(item).updateAnnexIndex()
+        self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
+
+    security.declarePublic('updateAdviceConfidentiality')
+    def updateAdviceConfidentiality(self):
+        '''Update the confidentiality of existing advices regarding default value
+           in MeetingConfig.adviceConfidentialityDefault.'''
+        if not self.isManager(realManagers=True):
+            raise Unauthorized
+        # update every advices of items of this MeetingConfig
+        catalog = getToolByName(self, 'portal_catalog')
+        brains = catalog(portal_type=self.getItemTypeName())
+        numberOfBrains = len(brains)
+        i = 1
+        adviceConfidentialityDefault = self.getAdviceConfidentialityDefault()
+        for brain in brains:
+            item = brain.getObject()
+            logger.info('%d/%d Initializing advices confidentiality of item at %s' %
+                        (i,
+                         numberOfBrains,
+                         '/'.join(item.getPhysicalPath())))
+            i = i + 1
+            for advice in item.adviceIndex.itervalues():
+                advice['isConfidential'] = adviceConfidentialityDefault
+        self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
 
 
 registerType(MeetingConfig, PROJECTNAME)
