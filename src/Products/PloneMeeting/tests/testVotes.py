@@ -2,7 +2,7 @@
 #
 # File: testVotes.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #

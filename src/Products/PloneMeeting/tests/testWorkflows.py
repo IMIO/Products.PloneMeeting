@@ -2,7 +2,7 @@
 #
 # File: testWorkflows.py
 #
-# Copyright (c) 2007 by PloneGov
+# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #

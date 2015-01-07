@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2007 by PloneGov
+# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -20,6 +20,7 @@
 # 02110-1301, USA.
 #
 # ------------------------------------------------------------------------------
+
 import time
 import logging
 logger = logging.getLogger('PloneMeeting')

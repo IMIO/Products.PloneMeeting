@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+#
+# File: testing.py
+#
+# Copyright (c) 2015 by Imio.be
+#
+# GNU General Public License (GPL)
+#
+
 from plone.testing import z2, zca
 from plone.app.testing import PLONE_FIXTURE
 from plone.app.testing import PloneWithPackageLayer

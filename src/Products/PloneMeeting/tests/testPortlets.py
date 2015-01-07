@@ -2,7 +2,7 @@
 #
 # File: testPortlets.py
 #
-# Copyright (c) 2007-2012 by PloneGov
+# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #

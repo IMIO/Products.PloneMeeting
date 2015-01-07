@@ -2,7 +2,7 @@
 #
 # File: PodTemplate.py
 #
-# Copyright (c) 2014 by Imio.be
+# Copyright (c) 2015 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -496,4 +496,3 @@ def freezePodDocumentsIfRelevant(obj, transition):
                     logger.warn(CANT_WRITE_DOC % (
                         user.getId(), fileId, obj.absolute_url(), podTemplate.getId()))
 ##/code-section module-footer
-

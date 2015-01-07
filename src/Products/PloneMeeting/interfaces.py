@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+#
+# File: interfaces.py
+#
+# Copyright (c) 2015 by Imio.be
+#
+# GNU General Public License (GPL)
+#
 
 from zope.interface import Interface
 

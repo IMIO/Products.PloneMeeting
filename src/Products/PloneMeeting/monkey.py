@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# File: monkey.py
+#
+# Copyright (c) 2015 by Imio.be
+#
+# GNU General Public License (GPL)
+#
+
 import logging
 logger = logging.getLogger('Products.PloneMeeting')
 

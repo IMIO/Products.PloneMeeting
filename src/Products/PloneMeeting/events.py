@@ -2,7 +2,7 @@
 #
 # File: events.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2015 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #

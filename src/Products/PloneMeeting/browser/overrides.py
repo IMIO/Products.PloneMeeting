@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# File: overrides.py
+#
+# Copyright (c) 2015 by Imio.be
+#
+# GNU General Public License (GPL)
+#
+
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet

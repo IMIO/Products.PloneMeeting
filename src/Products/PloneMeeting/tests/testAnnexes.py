@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# File: testAdvices.py
+# File: testAnnexes.py
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #
