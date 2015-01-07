@@ -268,6 +268,18 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
+        name='itemCreatedOnlyUsingTemplate',
+        default=defValues.itemCreatedOnlyUsingTemplate,
+        widget=BooleanField._properties['widget'](
+            description="ItemCreatedOnlyUsingTemplate",
+            description_msgid="item_created_only_using_template_descr",
+            label='Itemcreatedonlyusingtemplate',
+            label_msgid='PloneMeeting_label_itemCreatedOnlyUsingTemplate',
+            i18n_domain='PloneMeeting',
+        ),
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
         name='enableAnnexToPrint',
         default=defValues.enableAnnexToPrint,
         widget=BooleanField._properties['widget'](

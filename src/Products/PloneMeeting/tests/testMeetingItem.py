@@ -2310,6 +2310,23 @@ class testMeetingItem(PloneMeetingTestCase):
         self.tool.developers.setSignatures('')
         self.assertTrue(item.adapted().getCertifiedSignatures() == 'Meeting config signatures')
 
+    def test_pm_ItemCreatedOnlyUsingTemplate(self):
+        '''If MeetingConfig.itemCreatedOnlyUsingTemplate is True, a user can only
+           create a new item using an item template, if he tries to create an item
+           using createObject?type_name=MeetingItemXXX, he gets Unauthorized.'''
+        # make sure user may add an item without a template for now
+        self.meetingConfig.setItemCreatedOnlyUsingTemplate(False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # in AT, the EditBegunEvent is triggered on the edit form by the @@at_lifecycle_view
+        # accessing it for now does work on a item in the creation process
+        item._at_creation_flag = True
+        self.assertTrue(item._at_creation_flag)
+        self.assertIsNone(item.restrictedTraverse('@@at_lifecycle_view').begin_edit())
+        # now make only item creation possible using a template
+        self.meetingConfig.setItemCreatedOnlyUsingTemplate(True)
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@at_lifecycle_view').begin_edit)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -17,6 +17,7 @@ __docformat__ = 'plaintext'
 import logging
 logger = logging.getLogger('PloneMeeting')
 
+from AccessControl import Unauthorized
 from Acquisition import aq_base
 from DateTime import DateTime
 from persistent.list import PersistentList
@@ -320,6 +321,16 @@ def onItemDuplicated(item, event):
     newEvent['action'] = action
     newEvent['actor'] = memberId
     item.workflow_history[wfName] = item.workflow_history[wfName] + (newEvent, )
+
+
+def onItemEditBegun(item, event):
+    '''When an item edit begun, if it is an item in creation, we check that
+       user is not trying to create an item not using an item template if he can not...'''
+    if item._at_creation_flag:
+        tool = getToolByName(item, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        if cfg.getItemCreatedOnlyUsingTemplate():
+            raise Unauthorized
 
 
 def onMeetingRemoved(meeting, event):

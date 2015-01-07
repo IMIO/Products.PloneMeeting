@@ -24,6 +24,11 @@
                    Products.PloneMeeting.interfaces.IItemDuplicatedEvent"
               handler=".events.onItemDuplicated"/>
 
+  <subscriber for=".interfaces.IMeetingItem
+                   Products.Archetypes.interfaces.IEditBegunEvent"
+              handler=".events.onItemEditBegun"/>
+
+
   <subscriber for=".interfaces.IMeeting
                    zope.container.interfaces.IObjectAddedEvent"
               handler=".events.onMeetingAdded"/>
