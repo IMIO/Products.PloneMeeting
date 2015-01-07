@@ -34,6 +34,7 @@ from zope.i18n import translate
 from plone.memoize.instance import memoize
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.CatalogTool import getObjSize
 from Products.MimetypesRegistry.common import MimeTypeException
 from collective.documentviewer.async import asyncInstalled
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -324,7 +325,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'conversionStatus': self.conversionStatus(),
                'isConfidential': self.getIsConfidential(),
                'warnSize': self.warnSize(),
-               'friendlySize': self.getObjSize()
+               'friendlySize': getObjSize(self)()
                }
         return res
 
