@@ -3322,9 +3322,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             saved_stored_data[groupId]['delay_changes_history'] = \
                 'delay_changes_history' in adviceInfo and \
                 adviceInfo['delay_changes_history'] or []
-            saved_stored_data[groupId]['isConfidential'] = \
-                'isConfidential' in adviceInfo and \
-                adviceInfo['isConfidential'] or cfg.getAdviceConfidentialityDefault()
+            if 'isConfidential' in adviceInfo:
+                saved_stored_data[groupId]['isConfidential'] = adviceInfo['isConfidential']
+            else:
+                saved_stored_data[groupId]['isConfidential'] = cfg.getAdviceConfidentialityDefault()
 
         itemState = self.queryState()
         self.adviceIndex = PersistentMapping()
