@@ -1354,7 +1354,7 @@ class testAdvices(PloneMeetingTestCase):
         self.meetingConfig.setAdviceConfidentialityDefault(True)
         self.meetingConfig.setAdviceConfidentialFor(('power_observers', ))
         # make power observers able to see proposed items
-        self.meetingConfig.setItemPowerObserversStates(('proposed', ))
+        self.meetingConfig.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # first check default confidentiality value
         # create an item and ask advice of 'developers'
         self.changeUser('pmCreator1')
