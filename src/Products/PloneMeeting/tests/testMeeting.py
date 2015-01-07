@@ -773,27 +773,37 @@ class testMeeting(PloneMeetingTestCase):
         """
           Test the functionnality to decide several items at once
         """
-        #create a meeting
+        # create a meeting
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         self.freezeMeeting(meeting)
         itemUids = []
         allItems = meeting.getItems()
-        #set decision and place all items, except the last in uids
+        # set decision and place all items, except the last in uids
         for item in allItems:
             item.setDecision(self.decisionText)
             if item != allItems[-1]:
                 itemUids.append(item.UID())
         self.decideMeeting(meeting)
-        #back item to itemFrozen state
+        # back item to itemFrozen state
         for item in allItems:
             if item.queryState() == 'accepted':
                 self.do(item, 'backToItemFrozen')
-        #initialize request variables used in decideSeveralItems method
-        meeting.decideSeveralItems(",".join(itemUids), 'accept')
-        #after execute method, all items, except the last, are accepted
+        # get available decision transitions
+        # this will return every transitions that lead to a decided item
+        decidingTransitions = self.meetingConfig.listTransitionsDecidingItem()
+        itemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
+        for tr in decidingTransitions:
+            # make sure the transition lead to an item decided state
+            self.assertTrue(itemWF.transitions[tr].new_state_id in self.meetingConfig.getItemDecidedStates())
+
+        # use the first decidingTransition and check that elements are decided
+        decidingTransition = itemWF.transitions[decidingTransitions[0]]
+        # initialize request variables used in decideSeveralItems method
+        meeting.decideSeveralItems(",".join(itemUids), decidingTransition.id)
+        # after execute method, all items, except the last, are decided
         for item in allItems[:-1]:
-            self.assertEquals(item.queryState(), 'accepted')
+            self.assertEquals(item.queryState(), decidingTransition.new_state_id)
         self.assertEquals(allItems[-1].queryState(), 'itemfrozen')
 
     def test_pm_PresentItemToMeeting(self):

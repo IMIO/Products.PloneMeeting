@@ -2329,20 +2329,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     toRemove.append(principalId)
         obj.manage_delLocalRoles(toRemove)
 
-    security.declarePublic('getDecidedTransitions')
-    def getDecidedTransitions(self, context):
-        '''Get decided transitions based on itemDecidedStates field
-           in the corresponding MeetingConfig.'''
-        cfg = self.getMeetingConfig(context)
-        itemWorkflow = getattr(self.portal_workflow, cfg.getItemWorkflow(), None)
-        res = []
-        for transition in itemWorkflow.transitions.values():
-            if transition.id.startswith('backTo'):
-                continue
-            if transition.new_state_id in cfg.getItemDecidedStates():
-                res.append(transition.id)
-        return res
-
     security.declarePublic('toHTMLStrikedContent')
     def toHTMLStrikedContent(self, content):
         """

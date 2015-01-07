@@ -818,14 +818,13 @@ Needs moveUrl, firstId, lastId, obj</tal:comment>
       <input type="hidden" name="iStartNumber"/>
       <input type="hidden" name="lStartNumber"/>
       <input type="hidden" name="transition" value=""/>
-      <span tal:repeat="transition python: context.portal_plonemeeting.getDecidedTransitions(context)"
+      <span tal:repeat="transition python: meetingConfig.listTransitionsDecidingItem().items()"
           class="noPadding">
         <input type="submit"
-               tal:attributes="name python:transition;
-                               value python:context.utranslate(msgid=transition, domain='plone');
+               tal:attributes="name python:transition[0];
+                               value python:transition[1];
                                class string:apButton apButtonWF apButtonWF_$transition;
-                               size python: int(len(transition));
-                               onClick string:decideSelectedItems('$transition')"/>
+                               onClick python: 'decideSelectedItems(\'%s\')' % transition[0]"/>
       </span>
     </form>
 </metal:decideSeveralItems>
