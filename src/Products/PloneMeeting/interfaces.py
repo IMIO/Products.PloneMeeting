@@ -29,6 +29,11 @@ class IItemDuplicatedFromConfigEvent(IObjectEvent):
     """
 
 
+class IItemAfterTransitionEvent(IObjectEvent):
+    """
+    """
+
+
 class IRedirect(Interface):
     """
     """

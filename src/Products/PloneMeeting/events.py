@@ -22,6 +22,7 @@ from Acquisition import aq_base
 from DateTime import DateTime
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
+from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
@@ -32,7 +33,7 @@ from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
 from Products.PloneMeeting.utils import sendMailIfRelevant, addRecurringItemsIfRelevant, \
     sendAdviceToGiveMailIfRelevant, applyOnTransitionFieldTransform, \
-    meetingTriggerTransitionOnLinkedItems
+    meetingTriggerTransitionOnLinkedItems, ItemAfterTransitionEvent
 
 podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 
@@ -104,6 +105,9 @@ def onItemTransition(item, event):
     # to last user that was taking the item over or to nothing
     wf_state = "%s__wfstate__%s" % (event.workflow.getId(), event.new_state.getId())
     item.setHistorizedTakenOverBy(wf_state)
+    # notify our own PM event so we are sure that this event is called
+    # after the onItemTransition event
+    notify(ItemAfterTransitionEvent(item))
     # update relevant indexes
     item.reindexObject(idxs=['previous_review_state', 'reviewProcessInfo', 'getTakenOverBy', ])
 
