@@ -208,7 +208,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         wfTool = getToolByName(cat, 'portal_workflow')
         state = wfTool.getInfoFor(cat, 'review_state')
         isUsing = True
-        usingGroups = self.getUsingGroups()
+        usingGroups = cat.getUsingGroups()
         # If we have an item, do one additional check
         if usingGroups and not tool.isManager(realManagers=True):
             # listProposingGroups takes isDefinedInTool into account
