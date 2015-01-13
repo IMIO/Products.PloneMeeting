@@ -384,7 +384,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(newItem.getCategory() == item.getCategory())
         # if we remove the newItem, the reference in the original item annotation is removed
         # and the original item is sendable again
+        # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
+        self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
+        self.changeUser('pmManager')
         self.failIf(annotationKey in annotations)
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # An item is automatically sent to the other meetingConfigs when it is 'accepted'
@@ -413,7 +416,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # item.itemPositiveDecidedStates() state
         # by default, the only positive state is 'accepted'
         for state in item.adapted().itemPositiveDecidedStates():
+            # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
+            self.changeUser('admin')
             self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
+            self.changeUser('pmManager')
             self.do(item, 'backToItemFrozen')
             self.failIf(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
             self.do(item, self._getTransitionToReachState(item, state))
@@ -814,7 +820,10 @@ class testMeetingItem(PloneMeetingTestCase):
                                                                  (self.meetingConfig2.getId(),
                                                                   catIdOfMC2Mapped), ))
         # delete newItem and send originalItem again
+        # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
+        self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        self.changeUser('pmManager')
         originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
         newItem = originalItem.getBRefs('ItemPredecessor')[0].getObject()
         self.assertTrue(newItem.getCategory() == catIdOfMC2Mapped)

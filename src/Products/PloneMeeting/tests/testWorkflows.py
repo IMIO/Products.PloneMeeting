@@ -130,7 +130,10 @@ class testWorkflows(PloneMeetingTestCase):
         self.failUnless(hasattr(pmManagerFolder, meeting.getId()))
         self.assertEquals(len(pmManagerFolder.objectValues()), 2)
         # Now, remove things in the good order. Remove the item and check
+        # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
+        self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
+        self.changeUser('pmManager')
         self.assertEquals(len(pmManagerFolder.objectValues()), 1)
         # Try to remove the folder again but with a contained meeting only
         self.assertRaises(BeforeDeleteException,

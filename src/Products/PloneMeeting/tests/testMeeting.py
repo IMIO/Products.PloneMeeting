@@ -563,13 +563,15 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.getId() for item in meeting.getItemsInOrder()],
                           ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
-        #remove an item
+        # remove an item
         item5 = getattr(meeting, 'o5')
         meeting.removeItem(item5)
         self.assertEquals([item.getId() for item in meeting.getItemsInOrder()],
                           ['recItem1', 'recItem2', 'o3', 'o2', 'o4', 'o6'])
-        #delete a linked item
+        # delete a linked item
         item4 = getattr(meeting, 'o4')
+        # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
+        self.changeUser('admin')
         meeting.restrictedTraverse('@@delete_givenuid')(item4.UID())
         self.assertEquals([item.getId() for item in meeting.getItemsInOrder()],
                           ['recItem1', 'recItem2', 'o3', 'o2', 'o6'])
