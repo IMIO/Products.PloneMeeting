@@ -496,9 +496,9 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             if not DeleteObjects in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS:
                 del_obj_perm = stateToClone.getPermissionInfo(DeleteObjects)
                 if del_obj_perm['acquired']:
-                    cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', 'MeetingManager']
+                    cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', ]
                 else:
-                    cloned_permissions_with_meetingmanager[DeleteObjects] = ('Manager', 'MeetingManager')
+                    cloned_permissions_with_meetingmanager[DeleteObjects] = ('Manager', )
 
             # finally, apply computed permissions, aka cloned + custom
             newState.permission_roles = cloned_permissions_with_meetingmanager

@@ -745,9 +745,9 @@ class testWFAdaptations(PloneMeetingTestCase):
                 cloned_state_permission_with_meetingmanager.append('MeetingManager')
             else:
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
-            # 'Delete objects' is only given to ['Manager', 'MeetingManager']
+            # 'Delete objects' is only given to ['Manager', ]
             if permission == DeleteObjects:
-                cloned_state_permission_with_meetingmanager = ['Manager', 'MeetingManager']
+                cloned_state_permission_with_meetingmanager = ['Manager', ]
 
             if not acquired:
                 cloned_state_permission_with_meetingmanager = tuple(cloned_state_permission_with_meetingmanager)
@@ -809,17 +809,17 @@ class testWFAdaptations(PloneMeetingTestCase):
             # 'Delete objects' is only given to ['Manager', 'MeetingManager']
             # if it was not defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
             if permission == DeleteObjects:
-                cloned_state_permission_with_meetingmanager = ['Manager', 'MeetingManager']
+                cloned_state_permission_with_meetingmanager = ['Manager', ]
             if not acquired:
                 cloned_state_permission_with_meetingmanager = tuple(cloned_state_permission_with_meetingmanager)
             self.assertEquals(cloned_state_permission_with_meetingmanager,
                               new_state_permissions[permission])
         # if 'Delete objects' was defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
-        # the defined permissions are kept.  For example, only give 'Delete objects' to 'Manager'
-        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[DeleteObjects] = ('Manager', )
+        # the defined permissions are kept.  For example, give 'Delete objects' to 'Manager' and 'MeetingManager'
+        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[DeleteObjects] = ('Manager', 'MeetingManager')
         self._reApplyWFAdaptationReturnToProposingGroup(itemWF)
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
-        self.assertEquals(('Manager', ),
+        self.assertEquals(('Manager', 'MeetingManager', ),
                           new_state_permissions[DeleteObjects])
 
     def _reApplyWFAdaptationReturnToProposingGroup(self, itemWF):
