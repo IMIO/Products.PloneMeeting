@@ -1120,12 +1120,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     content = self.highlight(content)
                 # add a warning regarding file size if necessary
                 if obj['warnSize']:
-                    content = content + "&nbsp;<span title='%s' style='color: red; cursor: help;'>(%s)</span>" % \
-                        (translate("annex_size_warning",
-                                   domain="PloneMeeting",
-                                   context=self.REQUEST,
-                                   default="Annex size is huge, it could be difficult to be downloaded!"),
-                         obj['friendlySize'])
+                    content = content + "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
+                        translate("annex_size_warning",
+                                  domain="PloneMeeting",
+                                  context=self.REQUEST,
+                                  default="Annex size is huge, it could be difficult to be downloaded!").encode('utf-8'),
+                        obj['friendlySize'])
         tg = target
         if target:
             tg = ' target="%s"' % target
