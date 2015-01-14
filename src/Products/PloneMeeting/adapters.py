@@ -220,8 +220,12 @@ class AnnexableAdapter(object):
     def getAnnexesByType_cachekey(method, self, relatedTo, makeSubLists=True,
                                   typesIds=[], realAnnexes=False):
         '''cachekey method for self.getAnnexesByType.'''
+        # if MeetingConfig changed (MeetingConfig.annexConfidentialFor for example)
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
         return (self.context, relatedTo, makeSubLists, typesIds,
-                realAnnexes, self.context.annexIndex, self.request['AUTHENTICATED_USER'])
+                realAnnexes, self.context.annexIndex, self.request['AUTHENTICATED_USER'],
+                cfg.modified())
 
     @ram.cache(getAnnexesByType_cachekey)
     def getAnnexesByType(self, relatedTo, makeSubLists=True,

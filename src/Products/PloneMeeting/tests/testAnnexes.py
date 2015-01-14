@@ -154,6 +154,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(confidentialAnnex2.isViewableForCurrentUser())
         # now hide confidential annexes to power observers
         self.meetingConfig.setAnnexConfidentialFor(('restricted_power_observers', 'power_observers'))
+        self.meetingConfig.notifyModified()
         annexesByType = IAnnexable(item).getAnnexesByType('item')
         self.assertTrue(len(annexesByType) == 2)
         self.assertTrue(len(annexesByType[0]) == 2)
