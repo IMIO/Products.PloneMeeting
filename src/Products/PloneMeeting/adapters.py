@@ -217,6 +217,13 @@ class AnnexableAdapter(object):
             return False
         return True
 
+    def getAnnexesByType_cachekey(method, self, relatedTo, makeSubLists=True,
+                                  typesIds=[], realAnnexes=False):
+        '''cachekey method for self.getAnnexesByType.'''
+        return (self.context, relatedTo, makeSubLists, typesIds,
+                realAnnexes, self.context.annexIndex, self.request['AUTHENTICATED_USER'])
+
+    @ram.cache(getAnnexesByType_cachekey)
     def getAnnexesByType(self, relatedTo, makeSubLists=True,
                          typesIds=[], realAnnexes=False):
         '''See docstring in interfaces.py'''
