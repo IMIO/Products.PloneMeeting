@@ -11,7 +11,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 ----------------
 - Moved to Plone 4.3.4
 - Moved to collective.ckeditor 4.2.0
-- Depends on plonetheme.imioapps to manage default skin (plonemeetingskin)
+- Depends on plonetheme.imioapps to manage default skin (plonemeetingskin) and communesplone.layout
 - Moved from communesplone.iconified_document_actions to collective.iconifieddocumentactions
 - Moved management of indexes and metadatas (utils.updateIndexes) to imio.helpers and depends on that package now
 - Removed field Meeting.allItemsAtOnce and relative code

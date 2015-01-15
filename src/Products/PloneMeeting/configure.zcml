@@ -17,6 +17,7 @@
   <include package="collective.datagridcolumns"/>
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
+  <include package="communesplone.layout"/>
   <include package="plone.app.dexterity" />
   <include package="plone.directives.form" file="meta.zcml" />
   <include package="plone.directives.form" />
