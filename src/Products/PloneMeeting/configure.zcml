@@ -5,6 +5,7 @@
            i18n_domain="PloneMeeting">
 
   <!-- ##code-section configure.zcml.header -->
+  <include package="Products.PasswordStrength" />
   <include file="events.zcml" />
   <include file="profiling.zcml" />
   <include package=".browser" />

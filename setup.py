@@ -65,6 +65,7 @@ setup(name='Products.PloneMeeting',
           'plone.directives.form',
           'plonetheme.imioapps',
           'Products.DataGridField',
+          'Products.PasswordStrength',
           'Products.cron4plone', ],
       entry_points={},
       )

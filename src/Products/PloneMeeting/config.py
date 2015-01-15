@@ -256,7 +256,7 @@ ITEMS_LIST_VISIBLE_FIELDS = ('description', 'detailedDescription',
 MAX_FILE_SIZE_WARNING = 5000000
 
 # default user password used when sample users are added to a PloneMeeting during install
-DEFAULT_USER_PASSWORD = 'meeting'
+DEFAULT_USER_PASSWORD = 'Meeting_12'
 
 
 def registerClasses():
