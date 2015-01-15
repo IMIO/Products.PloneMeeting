@@ -508,7 +508,6 @@ class Migrate_To_3_3(Migrator):
         self.upgradeProfile(u'collective.iconifieddocumentactions:default')
         self.upgradeProfile(u'plone.app.dexterity:default')
         self.upgradeProfile(u'plone.app.discussion:default')
-        self.upgradeProfile(u'plone.app.iterate:default')
         self.upgradeProfile(u'plone.app.theming:default')
         # PM specific steps
         self._finishMeetingFolderViewRemoval()
