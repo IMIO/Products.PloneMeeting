@@ -512,10 +512,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         '''getGroupsForUser check in with Plone subgroups a user is and
            returns corresponding MeetingGroups.'''
         self.changeUser('pmManager')
-        # pmManager is in group every 'developers' Plone groups
+        # pmManager is in every 'developers' Plone groups except 'prereviewers'
         # and in the 'vendors_advisers' Plone group
         dev = self.meetingConfig.developers
         pmManagerGroups = ['AuthenticatedUsers', 'vendors_advisers', ] + dev.getPloneGroups(idsOnly=True)
+        pmManagerGroups.remove('developers_prereviewers')
         self.assertTrue(set(self.member.getGroups()) == set(pmManagerGroups))
         self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser()] ==
                         ['developers', 'vendors'])
