@@ -1735,7 +1735,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          'created',
          'searchMyItemsTakenOver',
          "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
-         "and here.portal_plonemeeting.getGroupsForUser()",
+         "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or here.portal_plonemeeting.isReviewer())",
          ),
         # All (visible) items
         ('searchallitems',
