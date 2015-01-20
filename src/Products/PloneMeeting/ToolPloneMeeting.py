@@ -587,19 +587,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(meetingConfig)
         return res
 
-    def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffix=None, zope=False):
+    def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffix=None, zope=False, omittedSuffixes=[]):
         '''cachekey method for self.getGroupsForUser.'''
         # we only recompute if param or REQUEST changed
-        return (str(self.REQUEST.debug), userId, active, suffix, zope)
+        return (str(self.REQUEST.debug), userId, active, suffix, zope, omittedSuffixes)
 
     security.declarePublic('getGroupsForUser')
     @ram.cache(getGroupsForUser_cachekey)
-    def getGroupsForUser(self, userId=None, active=True, suffix=None, zope=False):
+    def getGroupsForUser(self, userId=None, active=True, suffix=None, zope=False, omittedSuffixes=[]):
         '''Gets the groups p_userId belongs to. If p_userId is None, we use the
            authenticated user. If active is True, we select only active
            MeetingGroups. If p_suffix is not None, we select only groups having
            a particular p_suffix. If p_zope is False, we return MeetingGroups;
-           else, we return Zope/Plone groups.'''
+           else, we return Zope/Plone groups. If p_omittedSuffixes, we do not consider
+           groups the user is in using those suffixes.'''
         res = []
         user = self.getUser(userId)
         groupIds = user.getGroups()
@@ -610,6 +611,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for mGroup in mGroups:
             for gSuffix in MEETING_GROUP_SUFFIXES:
                 if suffix and (suffix != gSuffix):
+                    continue
+                if gSuffix in omittedSuffixes:
                     continue
                 groupId = mGroup.getPloneGroupId(gSuffix)
                 if groupId not in groupIds:
