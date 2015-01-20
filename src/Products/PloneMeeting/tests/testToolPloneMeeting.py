@@ -512,10 +512,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         '''getGroupsForUser check in with Plone subgroups a user is and
            returns corresponding MeetingGroups.'''
         self.changeUser('pmManager')
-        # pmManager is in group 'developers' and 'vendors'
-        self.assertTrue(self.member.getGroups() ==
-                        ['AuthenticatedUsers', 'vendors_advisers', 'developers_creators',
-                         'developers_advisers', 'developers_reviewers', 'developers_observers'])
+        # pmManager is in group every 'developers' Plone groups
+        # and in the 'vendors_advisers' Plone group
+        dev = self.meetingConfig.developers
+        pmManagerGroups = ['AuthenticatedUsers', 'vendors_advisers', ] + dev.getPloneGroups(idsOnly=True)
+        self.assertTrue(set(self.member.getGroups()) == set(pmManagerGroups))
         self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser()] ==
                         ['developers', 'vendors'])
         # check the 'suffix' parameter, it will check that user is in a Plone group of that suffix
@@ -547,8 +548,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # if we pass a 'zope=True' parameter, it will actually return
         # Plone groups the user is in, no more MeetingGroups
         self.assertTrue(set([group.getId() for group in self.tool.getGroupsForUser(zope=True)]) ==
-                        set(['developers_observers', 'developers_creators', 'developers_advisers',
-                             'developers_reviewers', 'vendors_advisers']))
+                        set([group for group in pmManagerGroups if not group == 'AuthenticatedUsers']))
 
 
 def test_suite():
