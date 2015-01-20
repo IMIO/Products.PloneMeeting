@@ -56,9 +56,6 @@ from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom,
 import logging
 logger = logging.getLogger('PloneMeeting')
 
-KEEP_WITH_NEXT_STYLES = {'para': 'pmParaKeepWithNext',
-                         'item': 'podItemKeepWithNext'}
-
 # PloneMeetingError-related constants ------------------------------------------
 WRONG_INTERFACE_NAME = 'Wrong interface name "%s". You must specify the full ' \
                        'interface package name.'
@@ -1105,27 +1102,10 @@ def signatureNotAlone(xhtmlContent):
        specific CSS class that will prevent, in ODT documents, signatures
        to stand alone on their last page.'''
     # A paragraph may be a "p" or "li". If it is a "p", I will add style
-    # (if not already done) "pmItemKeepWithNext"; if it is a "li" I will
+    # (if not already done) "podItemKeepWithNext"; if it is a "li" I will
     # add style "pmParaKeepWithNext" (if not already done).
-    res = xhtmlContent
-    lastParaIndex = res.rfind('<p')
-    lastItemIndex = res.rfind('<li')
-    if (lastParaIndex != -1) or (lastItemIndex != -1):
-        # Is the last one an item or a para?
-        styleKey = 'item'
-        elemLenght = 3
-        if lastParaIndex > lastItemIndex:
-            styleKey = 'para'
-            elemLenght = 2
-        maxIndex = max(lastParaIndex, lastItemIndex)
-        kwnStyle = KEEP_WITH_NEXT_STYLES[styleKey]
-        # Does this element already have a "class" attribute?
-        if res.find('class="%s"' % kwnStyle, maxIndex) == -1:
-            # No: I add the style
-            res = (res[:maxIndex+elemLenght] +
-                   ' class="%s" ' % kwnStyle +
-                   res[maxIndex+elemLenght:])
-    return res
+    from imio.helpers.xhtml import addClassToLastChildren
+    return addClassToLastChildren(xhtmlContent, className='pmParaKeepWithNext')
 
 
 # ------------------------------------------------------------------------------

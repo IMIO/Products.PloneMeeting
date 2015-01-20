@@ -1086,8 +1086,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     getRawMotivation = getMotivation
 
     security.declarePublic('getDecision')
-    def getDecision(self, keepWithNext=True, **kwargs):
-        '''Overridden version of 'decision' field accessor. It allows to specify
+    def getDecision(self, keepWithNext=False, **kwargs):
+        '''Overridde 'decision' field accessor. It allows to specify
            p_keepWithNext=True. In that case, the last paragraph of bullet in
            field "decision" will get a specific CSS class that will keep it with
            next paragraph. Useful when including the decision in a document
@@ -1112,10 +1112,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     getRawDecision = getDecision
 
     security.declarePublic('getDeliberation')
-    def getDeliberation(self, keepWithNext=True, separate=False, **kwargs):
+    def getDeliberation(self, keepWithNext=False, separate=False, **kwargs):
         '''Returns the entire deliberation depending on fields used.'''
         motivation = self.getMotivation(**kwargs).strip()
-        decision = self.getDecision(keepWithNext=keepWithNext, **kwargs).strip()
+        decision = self.getDecision(**kwargs).strip()
         # do add a separation blank line between motivation and decision
         # if p_separate is True and if motivation is used...
         if separate and motivation:
@@ -1132,7 +1132,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             if not hasSeparation:
                 motivation = motivation + '<p>&nbsp;</p>'
-        return motivation + decision
+        deliberation = motivation + decision
+        if keepWithNext:
+            deliberation = signatureNotAlone(deliberation)
+        return deliberation
 
     security.declarePrivate('validate_category')
     def validate_category(self, value):

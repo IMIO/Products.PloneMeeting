@@ -1991,8 +1991,14 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setMotivation('<p>My motivation</p>')
         item.setDecision('<p>My decision</p>')
         self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
+        # if passed arg separate=True, it adds a seperation blank line between motivation and decision
         self.assertTrue(item.getDeliberation(separate=True) == item.getMotivation() +
                         '<p>&nbsp;</p>' + item.getDecision())
+        # if passed keepWithNext is passed, a specific class 'pmParaKeepWithNext' is set
+        # on last tags of the text, until number of chars is 60
+        self.assertTrue(item.getDeliberation(keepWithNext=True) ==
+                        '<p class="pmParaKeepWithNext">My motivation</p>\n'
+                        '<p class="pmParaKeepWithNext">My decision</p>\n')
         # if there is no motivation, we do not insert a blank line even if separate is True
         item.setMotivation('')
         self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
