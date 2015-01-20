@@ -262,42 +262,6 @@ class Migrate_To_3_3(Migrator):
     def _updateTopics(self):
         '''Add the new topics, remove useless ones and adapt some too...'''
         logger.info('Updating topics of every MeetingConfigs...')
-        newTopicsInfo = (
-            # Items to advice with delay : need a script to do this search
-            ('searchitemsofmygroups',
-            (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-             ),
-             'created',
-             'searchItemsOfMyGroups',
-             "python: here.portal_plonemeeting.getGroupsForUser()",
-             ),
-            # Items I take over
-            ('searchmyitemstakenover',
-            (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-             ),
-             'created',
-             'searchMyItemsTakenOver',
-             "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
-             "and here.portal_plonemeeting.getGroupsForUser()",
-             ),
-            # Items to advice without delay : need a script to do this search
-            ('searchitemstoadvicewithoutdelay',
-            (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-             ),
-             'created',
-             'searchItemsToAdviceWithoutDelay',
-             "python: here.portal_plonemeeting.getMeetingConfig(here)."
-             "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-             ),
-            # Validable items : need a script to do this search
-            ('searchvalidableitems',
-            (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-             ),
-             'created',
-             'searchValidableItems',
-             "python: here.userIsAReviewer()",
-             ),
-        )
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
             hasSearchItemsOfMyGroups = False
             hasSearchMyItemsTakenOver = False
@@ -312,7 +276,7 @@ class Migrate_To_3_3(Migrator):
             if hasattr(cfg.topics, 'searchvalidableitems'):
                 hasSearchValidableItems = True
             # createTopics manage the fact that the topic already exists
-            cfg.createTopics(newTopicsInfo)
+            cfg.createTopics(cfg.topicsInfo)
             if not hasSearchItemsOfMyGroups:
                 # now reorder so 'searchitemsofmygroups' is under 'searchmyitems'
                 # find delta, we need to insert it after the 'searchmyitems' topic
