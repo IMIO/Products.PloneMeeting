@@ -355,7 +355,20 @@
       </tr>
      </tal:mayViewItem>
     </tal:showItem>
-    <tr tal:condition="not: shownItems"><td colspan="30" class="discreet" i18n:translate="no_shown_items">No shown items</td></tr>
+    <tr tal:condition="not: shownItems">
+        <td colspan="30"
+            class="discreet"
+            tal:condition="python: totalNbOfItems <= batchSize"
+            i18n:translate="no_shown_items">
+            No shown items
+        </td>
+        <td colspan="30"
+            class="discreet"
+            tal:condition="python: totalNbOfItems > batchSize"
+            i18n:translate="no_shown_items_check_other_meeting_pages">
+            No shown items on this page, please check other pages of this meeting.
+        </td>
+    </tr>
    </table>
    </div>
 
