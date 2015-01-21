@@ -787,6 +787,15 @@
           <td tal:define="field python:here.getField('hideItemHistoryCommentsToUsersOutsideProposingGroup')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('restrictAccessToSecretItems')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
+          </td>
+        </tr>
+        <tr valign="top">
+          <td>
+          </td>
           <td tal:define="field python:here.getField('enableAnnexConfidentiality')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
