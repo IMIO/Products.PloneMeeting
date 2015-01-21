@@ -918,7 +918,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_manuallyLinkedItems',
             i18n_domain='PloneMeeting',
         ),
-        optional=True,
+        visible=False,
         multiValued=True,
         relationship="ManuallyLinkedItem",
     ),
