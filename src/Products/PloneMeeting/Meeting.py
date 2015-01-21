@@ -34,7 +34,7 @@ from zope.event import notify
 from zope.i18n import translate
 from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
-from Products.CMFCore.permissions import ReviewPortalContent, ModifyPortalContent
+from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
@@ -953,7 +953,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     # Keep only items whose uid is in p_uids, and ensure the
                     # current user has the right to view them (uids filtering
                     # is used within POD templates).
-                    condition = condition and (item.UID() in uids) and user.has_permission('View', item)
+                    condition = condition and (item.UID() in uids) and user.has_permission(View, item)
                 if deadline:
                     # Determine the deadline to use
                     if late:
@@ -1831,7 +1831,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def showRemoveSelectedItemsAction(self):
         '''See doc in interfaces.py.'''
         meeting = self.getSelf()
-        return not meeting.queryState() in meeting.meetingClosedStates
+        member = getToolByName(meeting, 'portal_membership').getAuthenticatedMember()
+        return bool(member.has_permission(ModifyPortalContent, meeting) and
+                    not meeting.queryState() in meeting.meetingClosedStates)
 
     security.declarePublic('removeSeveralItems')
     def removeSeveralItems(self, uids=None):
