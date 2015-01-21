@@ -245,7 +245,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
            - item is modified (modified is also triggered when review_state changed);
            - something changed around advices;
            - different item or user;
-           - user groups changed.'''
+           - user groups changed;
+           - if item query_state is 'validated', check also if getMeetingToInsertIntoWhenNoCurrentMeetingObject changed'''
         meetingModified = ''
         meeting = self.context.getMeeting()
         if meeting:
@@ -253,11 +254,16 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         user = self.request['AUTHENTICATED_USER']
         userGroups = user.getGroups()
         userRoles = user.getRoles()
+        # if item is validated, the 'present' action could appear if a meeting
+        # is now available for the item to be inserted into
+        meetingToInsertInto = None
+        if self.context.queryState() == 'validated':
+            meetingToInsertInto = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
         return (self.context, self.context.modified(), self.context.adviceIndex,
                 user.getId(), userGroups, userRoles,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                kwargs)
+                meetingToInsertInto, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,
