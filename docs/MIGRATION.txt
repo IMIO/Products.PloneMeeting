@@ -3,4 +3,5 @@ Migration to PloneMeeting 3.3 :
 
 1) Run Plone migration to Plone 4.3.4;
 2) Run upgrade step for collective.iconifieddocumentactions;
-3) Run upgrade step for Products.PloneMeeting.
+3) Run upgrade step for Products.PloneMeeting;
+4) Run upgrade step for the PM subplugin.
