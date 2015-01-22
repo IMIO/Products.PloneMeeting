@@ -17,6 +17,23 @@ from Products.PloneMeeting.migrations import Migrator
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_3(Migrator):
 
+    def _updateHolidays(self):
+        '''Update holidays to holidays of 2015.'''
+        from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+        defaultPMConfig = PloneMeetingConfiguration('', '', '')
+        defaultHolidays = [holiday['date'] for holiday in defaultPMConfig.holidays]
+        currentHolidays = [holiday['date'] for holiday in self.tool.getHolidays()]
+        storedHolidays = list(self.tool.getHolidays())
+        for defaultHoliday in defaultHolidays:
+            if not defaultHoliday in currentHolidays:
+                storedHolidays.append({'date': defaultHoliday})
+            else:
+                # if we found an holiday for 2015 that is already defined
+                # it is that we already updated this or that the siteadmin
+                # already updated it manually, we break...
+                break
+        self.tool.setHolidays(storedHolidays)
+
     def _finishMeetingFolderViewRemoval(self):
         '''Now that we removed the 'meetingfolder_view', we need to :
         - remove it from available view_methods for portal_type 'Folder';
@@ -474,6 +491,7 @@ class Migrate_To_3_3(Migrator):
         self.upgradeProfile(u'plone.app.discussion:default')
         self.upgradeProfile(u'plone.app.theming:default')
         # PM specific steps
+        self._updateHolidays()
         self._finishMeetingFolderViewRemoval()
         self._moveItemTemplatesToOwnFolder()
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
@@ -519,33 +537,34 @@ def migrate(context):
     '''This migration function:
 
        1) Execute upgrade steps available for dependencies;
-       2) Finalize removal of the 'meetingfolder_view' view;
-       3) Move item templates in the MeetingConfig to their own folder (itemtemplates);
-       4) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
-       5) Update every MeetingConfig.sortingMethodOnAddItem attribute
+       2) Update holidays to take into account default holidays for 2015;
+       3) Finalize removal of the 'meetingfolder_view' view;
+       4) Move item templates in the MeetingConfig to their own folder (itemtemplates);
+       5) Update every MeetingConfig.meetingConfigsToCloneTo attribute (moved to DataGridField);
+       6) Update every MeetingConfig.sortingMethodOnAddItem attribute
           (moved to MeetingConfig.insertingMethodOnAddItem DataGridField);
-       6) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
-       7) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
-       8) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
-       9) Update advices to store 'comment' as utf-8 and not as unicode;
-       10) Update 'Add File' permission on each meetingConfig folder;
-       11) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
-       12) Translate folders stored in each MeetingConfigs (recurringitems, itemtemplates, categories, ...);
-       13) Add item portal_types to site_properties.typesUseViewActionInListings;
-       14) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
-       15) Remove 'signatureNotAlone' from selectable MeetingConfig.xhtmlTransformTypes;
-       16) Clean every MeetingGroup.asCopyGroupOn values;
-       17) Update topics;
-       18) Clean the CKeditor toolbar to remove 'Ajaxsave' and 'Templates' buttons;
-       19) Remove MeetingCategory.itemsCount attribute;
-       20) Clean portal_plonemeeting search attributes as most were removed;
-       21) Clean meeting configs task related attributes as it was removed;
-       22) Clean registries as we removed some css;
-       23) Reinstall PloneMeeting;
-       24) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
-       25) Update the portal_plonemeeting WF policy;
-       26) Compute MeetingConfig.transitionsForPresentingAnItem suite of transitions;
-       27) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       7) Update every MeetingFile.meetingFileType attribute (not a ReferenceField anymore);
+       8) Create a Plone group that will contain 'restricted power observers' for every MeetingConfig;
+       9) Update every meetingadvice objects to add a new attribute 'advice_hide_during_redaction';
+       10) Update advices to store 'comment' as utf-8 and not as unicode;
+       11) Update 'Add File' permission on each meetingConfig folder;
+       12) Add attributes 'emergency_changes_history' and 'completeness_changes_history' for every existing items;
+       13) Translate folders stored in each MeetingConfigs (recurringitems, itemtemplates, categories, ...);
+       14) Add item portal_types to site_properties.typesUseViewActionInListings;
+       15) Adapt topics of MeetingConfigs to be sure that they query using index 'portal_type', no more 'Type';
+       16) Remove 'signatureNotAlone' from selectable MeetingConfig.xhtmlTransformTypes;
+       17) Clean every MeetingGroup.asCopyGroupOn values;
+       18) Update topics;
+       19) Clean the CKeditor toolbar to remove 'Ajaxsave' and 'Templates' buttons;
+       20) Remove MeetingCategory.itemsCount attribute;
+       21) Clean portal_plonemeeting search attributes as most were removed;
+       22) Clean meeting configs task related attributes as it was removed;
+       23) Clean registries as we removed some css;
+       24) Reinstall PloneMeeting;
+       25) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
+       26) Update the portal_plonemeeting WF policy;
+       27) Compute MeetingConfig.transitionsForPresentingAnItem suite of transitions;
+       28) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_3(context).run()
 # ------------------------------------------------------------------------------
