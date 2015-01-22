@@ -19,6 +19,7 @@ class Migrate_To_3_3(Migrator):
 
     def _updateHolidays(self):
         '''Update holidays to holidays of 2015.'''
+        logger.info('Updating default holidays for 2015...')
         from Products.PloneMeeting.profiles import PloneMeetingConfiguration
         defaultPMConfig = PloneMeetingConfiguration('', '', '')
         defaultHolidays = [holiday['date'] for holiday in defaultPMConfig.holidays]
@@ -33,6 +34,7 @@ class Migrate_To_3_3(Migrator):
                 # already updated it manually, we break...
                 break
         self.tool.setHolidays(storedHolidays)
+        logger.info('Done.')
 
     def _finishMeetingFolderViewRemoval(self):
         '''Now that we removed the 'meetingfolder_view', we need to :
