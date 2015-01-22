@@ -144,6 +144,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Display warnings if annex file size is too large
 - Added parameter MeetingConfig.itemCreatedOnlyUsingTemplate that will do user only able
   to create new items using an item template, no more item from scratch
+- Added parameter MeetingConfig.onTransitionFieldTransforms that will make it possible to apply
+  a transform to a given field of an item of a meeting when a transition is triggered on it.  It will
+  in particular be used when the decision is changed when an item is delayed
+- Added parameter MeetingConfig.onMeetingTransitionItemTransitionToTrigger that will make it possible
+  to trigger arbitrary transitions on items of a meeting when a transition is triggered on that meeting
 
 3.2.0.1 (2014-03-06)
 --------------------
