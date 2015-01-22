@@ -36,6 +36,26 @@ class Migrate_To_3_3(Migrator):
         self.tool.setHolidays(storedHolidays)
         logger.info('Done.')
 
+    def _updateCustomAdvisers(self):
+        '''There are 2 new columns for MeetingConfig.customAdvisers :
+           - available_on;
+           - is_linked_to_previous_row.'''
+        logger.info('Updating customAdvisers for each MeetingConfig...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            customAdvisers = cfg.getCustomAdvisers()
+            # no custom advisers or already migrated?  Continue to next MeetingConfig...
+            if not customAdvisers or 'available_on' in customAdvisers[0]:
+                continue
+            # initialize custom advisers by using setCustomAdvisers
+            # it will add relevant keys in the customAdvisers
+            # but it does not set the default value for 'is_linked_to_previous_row' that is '0'
+            cfg.setCustomAdvisers(customAdvisers)
+            customAdvisers = cfg.getCustomAdvisers()
+            for customAdviser in customAdvisers:
+                customAdviser['is_linked_to_previous_row'] = '0'
+            cfg.setCustomAdvisers(customAdvisers)
+        logger.info('Done.')
+
     def _finishMeetingFolderViewRemoval(self):
         '''Now that we removed the 'meetingfolder_view', we need to :
         - remove it from available view_methods for portal_type 'Folder';
@@ -494,6 +514,7 @@ class Migrate_To_3_3(Migrator):
         self.upgradeProfile(u'plone.app.theming:default')
         # PM specific steps
         self._updateHolidays()
+        self._updateCustomAdvisers()
         self._finishMeetingFolderViewRemoval()
         self._moveItemTemplatesToOwnFolder()
         self._updateMeetingConfigsToCloneToAttributeOnMeetingConfigs()
