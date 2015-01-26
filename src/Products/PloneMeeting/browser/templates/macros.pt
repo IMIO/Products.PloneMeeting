@@ -57,7 +57,7 @@
                isRich python: field.widget.getName() == 'RichWidget';
                isOptional field/optional|python:False;
                isUsed python: isOptional and fieldName in usedAttrs or True;"
-   tal:condition="python: isUsed and field.widget.visible and member.has_permission(field.read_permission, context)">
+   tal:condition="python: isUsed and member.has_permission(field.read_permission, context)">
   <tal:monolanguage condition="not: bilingual">
     <metal:field use-macro="python:context.widget(fieldName, mode='edit')"/>
   </tal:monolanguage>
@@ -172,7 +172,7 @@ document.location.reload(true);
                  isUsed python: not isOptional or (isOptional and fieldName in usedAttrs);
                  ajaxEdit ajaxEdit|nothing;
                  mayEdit python: ajaxEdit and member.has_permission(field.write_permission, context) and not context.restrictedTraverse('@@plone_lock_info').is_locked_for_current_user()"
-     tal:condition="python: isUsed and field.widget.visible and member.has_permission(field.read_permission, context)">
+     tal:condition="python: isUsed and field.widget.visible and field.widget.visible and field.widget.testCondition(context.getParentNode(), context.getParentNode(), context) and member.has_permission(field.read_permission, context)">
   <tal:comment replace="nothing">Mono-language, rich</tal:comment>
   <tal:mono define="lang python:''" condition="python: not bilingual and isRich">
     <metal:view use-macro="context/@@pm-macros/viewField"/>
