@@ -192,9 +192,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
            meeting item (if p_objectType is 'MeetingItem') and
            returns the created object. p_attrs is a dict of attributes
            that will be given to invokeFactory.'''
-        cfg = meetingConfig
-        if not cfg:
-            cfg = self.meetingConfig
+        cfg = meetingConfig or self.meetingConfig
         shortName = cfg.getShortName()
         # Some special behaviour occurs if the thing to create is a recurring
         # item

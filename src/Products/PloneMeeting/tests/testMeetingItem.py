@@ -422,8 +422,10 @@ class testMeetingItem(PloneMeetingTestCase):
             self.changeUser('pmManager')
             self.do(item, 'backToItemFrozen')
             self.failIf(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
+            self.assertFalse(item.getItemClonedToOtherMC(otherMeetingConfigId))
             self.do(item, self._getTransitionToReachState(item, state))
             self.failUnless(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
+            self.assertTrue(item.getItemClonedToOtherMC(otherMeetingConfigId))
             self.failUnless(otherMeetingConfigId in item._getOtherMeetingConfigsImAmClonedIn())
             newUID = annotations[annotationKey]
 

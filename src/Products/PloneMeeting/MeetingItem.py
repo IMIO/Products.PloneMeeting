@@ -4277,6 +4277,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
+    def getItemClonedToOtherMC(self, destMeetingConfigId):
+        '''Returns the item cloned to the destMeetingConfigId if any.'''
+        annotation_key = self._getSentToOtherMCAnnotationKey(destMeetingConfigId)
+        ann = IAnnotations(self)
+        itemUID = ann.get(annotation_key, None)
+        if itemUID:
+            catalog = getToolByName(self, 'portal_catalog')
+            brains = catalog(UID=itemUID)
+            if brains:
+                return brains[0].getObject()
+        return None
+
     security.declarePublic('onDuplicate')
     def onDuplicate(self):
         '''This method is triggered when the users clicks on
