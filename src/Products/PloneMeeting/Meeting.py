@@ -1117,6 +1117,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         itemsSetter(items)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
+        # meeting is considered modified
+        self.notifyModified()
 
     security.declareProtected("Modify portal content", 'removeItem')
     def removeItem(self, item):
@@ -1145,6 +1147,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 anItem.setItemNumber(anItem.getItemNumber()-1)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
+        # meeting is considered modified
+        self.notifyModified()
 
     security.declarePublic('getAvailableItems')
     def getAvailableItems(self):

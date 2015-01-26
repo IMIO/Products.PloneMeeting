@@ -254,6 +254,9 @@ class ChangeItemOrderView(BrowserView):
                         elif (itemNumber > oldIndex) and (itemNumber < move):
                             item.setItemNumber(itemNumber-1)
 
+        # when items order on meeting changed, it is considered modified
+        meeting.notifyModified()
+
         return tool.gotoReferer()
 
 

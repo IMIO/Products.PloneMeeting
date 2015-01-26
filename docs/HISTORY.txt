@@ -149,6 +149,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   in particular be used when the decision is changed when an item is delayed
 - Added parameter MeetingConfig.onMeetingTransitionItemTransitionToTrigger that will make it possible
   to trigger arbitrary transitions on items of a meeting when a transition is triggered on that meeting
+- A meeting is now considered modified (modification_date is changed) when an item is added, removed
+  or it's position changed
 
 3.2.0.1 (2014-03-06)
 --------------------
