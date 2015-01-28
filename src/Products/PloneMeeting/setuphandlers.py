@@ -393,6 +393,7 @@ def _adaptFrontPage(site):
     if not frontPage:
         return
 
+    logger.info('Adapting front-page...')
     # make sure we only adapt it at install time, so when creation and modification date are almost equal
     if frontPage.modified() - frontPage.created() < 0.000005:
         # disable presentation mode
