@@ -222,7 +222,7 @@ class GroupDescriptor(Descriptor):
 
 
 class MeetingConfigDescriptor(Descriptor):
-    multiSelectFields = ('usedItemAttributes', 'historizedItemAttributes',
+    multiSelectFields = ('certifiedSignatures', 'usedItemAttributes', 'historizedItemAttributes',
                          'recordItemHistoryStates', 'usedMeetingAttributes',
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'itemsListVisibleColumns', 'itemsListVisibleFields', 'itemColumns', 'meetingColumns',
