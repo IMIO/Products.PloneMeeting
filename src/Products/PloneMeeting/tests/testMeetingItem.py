@@ -2308,11 +2308,25 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_GetCertifiedSignatures(self):
         '''Test the MeetingItem.getCertifiedSignatures method that gets signatures from
-           the item proposing group or from the MeetingConfig.'''
+           the item proposing group or from the MeetingConfig periodic signatures.'''
         # define signatures for the 'developers' group
         self.tool.developers.setSignatures('Developers group signatures')
         # define signatures for the MeetingConfig
-        self.meetingConfig.setCertifiedSignatures('Meeting config signatures')
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1',
+             'function': 'Function1',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': 'Function2',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        self.meetingConfig.setCertifiedSignatures(certified)
         # create an item and do some WF transitions so we have history events
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -2321,11 +2335,177 @@ class testMeetingItem(PloneMeetingTestCase):
         # getting certified signatures for item will return signatures defined on proposing group
         self.assertTrue(item.adapted().getCertifiedSignatures() == 'Developers group signatures')
         # we can force to get signatures from the MeetingConfig
-        self.assertTrue(item.adapted().getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True)
-                        == 'Meeting config signatures')
+        self.assertTrue(item.adapted().getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True) ==
+                        [u'Function1', u'Name1', u'Function2', u'Name2'])
         # if no signatures on the MeetingGroup, signatures of the MeetingConfig are used
         self.tool.developers.setSignatures('')
-        self.assertTrue(item.adapted().getCertifiedSignatures() == 'Meeting config signatures')
+        self.assertTrue(item.adapted().getCertifiedSignatures() ==
+                        [u'Function1', u'Name1', u'Function2', u'Name2'])
+
+        # now test behaviour of periodic signatures
+        # when periodic signatures are defined, it will compute each signature number
+        # and take first available
+        # test here above shows when no date_from/date_to are defined
+        # we can define several signatures, up to 10... try with 4...
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1',
+             'function': 'Function1',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': 'Function2',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '3',
+             'name': 'Name3',
+             'function': 'Function3',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '4',
+             'name': 'Name4',
+             'function': 'Function4',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        self.meetingConfig.setCertifiedSignatures(certified)
+        self.assertTrue(item.adapted().getCertifiedSignatures() ==
+                        [u'Function1', u'Name1', u'Function2', u'Name2',
+                         u'Function3', u'Name3', u'Function4', u'Name4'])
+
+        # when periods are define, returned signature is first available
+        # define a passed period signature then a signature always valid (no date_from/date_to)
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1passed',
+             'function': 'Function1passed',
+             'date_from': '2014/01/01',
+             'date_to': '2014/12/31',
+             },
+            {'signatureNumber': '1',
+             'name': 'Name1',
+             'function': 'Function1',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': 'Function2',
+             'date_from': '',
+             'date_to': '',
+             }
+        ]
+        self.meetingConfig.setCertifiedSignatures(certified)
+        self.assertTrue(item.adapted().getCertifiedSignatures() ==
+                        [u'Function1', u'Name1', u'Function2', u'Name2'])
+
+        # no valid signature number 1 at all, every timed out
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1passed',
+             'function': 'Function1passed',
+             'date_from': '2014/01/01',
+             'date_to': '2014/12/31',
+             },
+            {'signatureNumber': '1',
+             'name': 'Name1passed',
+             'function': 'Function1passed',
+             'date_from': '2015/01/01',
+             'date_to': '2015/01/15',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': 'Function2',
+             'date_from': '',
+             'date_to': '',
+             }
+        ]
+        self.meetingConfig.setCertifiedSignatures(certified)
+        self.assertTrue(item.adapted().getCertifiedSignatures() ==
+                        [u'Function2', u'Name2'])
+
+        # first discovered valid is used
+        # defined for signature number 1, one passed, one valid, one always valid
+        # for signature number 2, 2 passed and one always valid
+        # compute valid date_from and date_to depending on now
+        now = DateTime()
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1passed',
+             'function': 'Function1passed',
+             'date_from': '2014/01/01',
+             'date_to': '2014/12/31',
+             },
+            {'signatureNumber': '1',
+             'name': 'Name1valid',
+             'function': 'Function1valid',
+             'date_from': (now - 10).strftime('%Y/%m/%d'),
+             'date_to': (now + 10).strftime('%Y/%m/%d'),
+             },
+            {'signatureNumber': '1',
+             'name': 'Name1AlwaysValid',
+             'function': 'Function1AlwaysValid',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2past',
+             'function': 'Function2past',
+             'date_from': '2013/01/05',
+             'date_to': '2013/01/09',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2past',
+             'function': 'Function2past',
+             'date_from': '2014/01/01',
+             'date_to': '2015/01/15',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': 'Function2',
+             'date_from': '',
+             'date_to': '',
+             }
+        ]
+        self.meetingConfig.setCertifiedSignatures(certified)
+        self.assertTrue(item.adapted().getCertifiedSignatures() ==
+                        [u'Function1valid', u'Name1valid', u'Function2', u'Name2'])
+
+        # validity dates can be same day (same date_from and date_to)
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1past',
+             'function': 'Function1past',
+             'date_from': '2014/01/01',
+             'date_to': '2014/12/31',
+             },
+            {'signatureNumber': '1',
+             'name': 'Name1past',
+             'function': 'Function1past',
+             'date_from': (now - 5).strftime('%Y/%m/%d'),
+             'date_to': (now - 5).strftime('%Y/%m/%d'),
+             },
+            {'signatureNumber': '1',
+             'name': 'Name1valid',
+             'function': 'Function1valid',
+             'date_from': now.strftime('%Y/%m/%d'),
+             'date_to': now.strftime('%Y/%m/%d'),
+             },
+            {'signatureNumber': '1',
+             'name': 'Name1AlwaysValid',
+             'function': 'Function1AlwaysValid',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        self.meetingConfig.setCertifiedSignatures(certified)
+        self.assertTrue(item.adapted().getCertifiedSignatures() ==
+                        [u'Function1valid', u'Name1valid'])
 
     def test_pm_ItemCreatedOnlyUsingTemplate(self):
         '''If MeetingConfig.itemCreatedOnlyUsingTemplate is True, a user can only

@@ -49,7 +49,8 @@ from Products.CMFPlone import PloneMessageFactory
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
-    getCustomSchemaFields, getFieldContent, prepareSearchValue, forceHTMLContentTypeForEmptyRichFields
+    getCustomSchemaFields, getFieldContent, prepareSearchValue, \
+    forceHTMLContentTypeForEmptyRichFields, _in_between
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -132,20 +133,28 @@ schema = Schema((
         schemata="assembly_and_signatures",
         write_permission="PloneMeeting: Write harmless config",
     ),
-    TextField(
+    DataGridField(
         name='certifiedSignatures',
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
+        widget=DataGridField._properties['widget'](
             description="CertifiedSignatures",
             description_msgid="certified_signatures_descr",
+            columns={'signatureNumber': SelectColumn("Signature number", vocabulary="listSignatureNumbers", col_description="Select the signature number."),
+                     'name': Column("Name", col_description="Name of the signatory (for example 'Mister John Doe')."),
+                     'function': Column("Function", col_description="Function (for example 'Mayor')."),
+                     'date_from': Column("Valid from (included)", col_description="Enter valid from date, use following format : YYYY/MM/DD, leave empty so it is always valid."),
+                     'date_to': Column("Valid to (included)", col_description="Enter valid to date, use following format : YYYY/MM/DD, leave empty so it is always valid."),
+                     },
             label='Certifiedsignatures',
             label_msgid='PloneMeeting_label_certifiedSignatures',
             i18n_domain='PloneMeeting',
         ),
-        default_content_type='text/plain',
         default=defValues.certifiedSignatures,
+        required=False,
+        allow_oddeven=True,
+        allow_empty_rows=False,
         schemata="assembly_and_signatures",
         write_permission="PloneMeeting: Write harmless config",
+        columns=('signatureNumber', 'name', 'function', 'date_from', 'date_to'),
     ),
     TextField(
         name='places',
@@ -1951,6 +1960,47 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if (cfg != self) and (cfg.getShortName() == value):
                 return DUPLICATE_SHORT_NAME % value
 
+    security.declarePrivate('validate_certifiedSignatures')
+    def validate_certifiedSignatures(self, value):
+        '''Validate the 'certifiedSignatures' field, check that provided dates
+           (date_from and date_to) respect correct format and that signatures are
+           sorted by signature number.'''
+        lastSignatureNumber = 0
+        row_number = 0
+        for signature in value:
+            # bypass 'template_row_marker'
+            if 'orderindex_' in signature and signature['orderindex_'] == 'template_row_marker':
+                continue
+            row_number += 1
+            # check that signatures are correctly ordered by signature number
+            signatureNumber = int(signature['signatureNumber'])
+            if signatureNumber < lastSignatureNumber:
+                return _('error_certified_signatures_order')
+            lastSignatureNumber = signatureNumber
+            # if a date_from is defined, a date_to is required and vice versa
+            date_from = signature['date_from']
+            date_to = signature['date_to']
+            # stop checks if no date provided
+            if not date_from and not date_to:
+                continue
+            # if a date is provided, both are required
+            if (date_from and not date_to) or \
+               (date_to and not date_from):
+                return _('error_certified_signatures_both_dates_required',
+                         mapping={'row_number': row_number})
+            try:
+                datetime_from = DateTime(date_from)
+                datetime_to = DateTime(date_to)
+                # respect right string format?
+                # datefrom <= dateto?
+                if not datetime_from.strftime('%Y/%m/%d') == date_from or \
+                   not datetime_to.strftime('%Y/%m/%d') == date_to or \
+                   not datetime_from <= datetime_to:
+                    raise SyntaxError
+            except:
+                return _('error_certified_signatures_invalid_dates',
+                         mapping={'row_number': row_number})
+
     security.declarePrivate('validate_transitionsForPresentingAnItem')
     def validate_transitionsForPresentingAnItem(self, values):
         '''Validate the transitionsForPresentingAnItem field.
@@ -2468,6 +2518,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for adaptation in self.wfAdaptations:
             title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
             res.append((adaptation, title))
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listSignatureNumbers')
+    def listSignatureNumbers(self):
+        '''Vocabulary for column 'signatureNumber' of MeetingConfig.certifiedSignatures.'''
+        res = []
+        for number in range(1,10):
+            res.append((str(number), str(number)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemRelatedColumns')
@@ -3846,6 +3904,37 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for meeting_transition_id, meeting_transition_name in meeting_transitions:
             res.append(("meeting_state_changed_%s" % meeting_transition_id, meeting_transition_name))
         return DisplayList(res).sortedByValue()
+
+    security.declarePublic('getCertifiedSignatures')
+    def getCertifiedSignatures(self, computed=False, **kwargs):
+        '''Overrides field 'certifiedSignatures' accessor to be able to pass
+           the p_computed parameter that will return computed certified signatures,
+           so signatures really available right now.'''
+        res = self.getField('certifiedSignatures').get(self, **kwargs)
+        if computed:
+            # compute available signatures and return it as a list of pair
+            # of function/name, like ['function1', 'name1', 'function2', 'name2']
+            tmp_res = []
+            now = DateTime()
+            validSignatureNumber = 0
+            for signature in res:
+                # first check if we still did not found a valid signature for this signatureNumber
+                if signature['signatureNumber'] == validSignatureNumber:
+                    continue
+                # walk thru every signatures and select available one
+                # the first found active signature is kept
+                # if we have a date_from, we append hours 0h01 to take entire day into account
+                date_from = signature['date_from'] and DateTime('{} 0:01'.format(signature['date_from'])) or None
+                # if we have a date_to, we append hours 23h59 to take entire day into account
+                date_to = signature['date_to'] and DateTime('{} 23:59'.format(signature['date_to'])) or None
+                # if dates are defined and not current, continue
+                if (date_from and date_to) and not _in_between(date_from, date_to, now):
+                    continue
+                tmp_res.append(signature['function'])
+                tmp_res.append(signature['name'])
+                validSignatureNumber = signature['signatureNumber']
+            res = tmp_res
+        return res
 
     def getFileTypes_cachekey(method, self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
         '''cachekey method for self.getFileTypes.'''

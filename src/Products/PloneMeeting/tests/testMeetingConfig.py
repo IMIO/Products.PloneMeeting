@@ -1005,6 +1005,158 @@ class testMeetingConfig(PloneMeetingTestCase):
         customAdvisers.pop(3)
         self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
 
+    def test_pm_Validate_certifiedSignatures(self):
+        '''Test the MeetingConfig.certifiedSignatures validation.
+           It fails if :
+           - signatures are not ordered by signature number;
+           - both date_from/date_to are not provided together (if provided);
+           - date format is wrong (respect YYYY/DD/MM, valid DateTime, date_from <= date_to).'''
+        cfg = self.meetingConfig
+        # if nothing is defined, validation is successful
+        self.failIf(cfg.validate_certifiedSignatures([]))
+        # nothing is required, except signatureNumber
+        # here is a working sample
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1a',
+             'function': 'Function1a',
+             'date_from': '2015/01/01',
+             'date_to': '2015/02/02',
+             },
+            {'signatureNumber': '1',
+             'name': 'Name1b',
+             'function': 'Function1b',
+             'date_from': '2015/02/15',
+             'date_to': '2015/02/15',
+             },
+            {'signatureNumber': '1',
+             'name': 'Name1',
+             'function': 'Function1',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2a',
+             'function': 'Function2a',
+             'date_from': '2015/01/01',
+             'date_to': '2015/01/15',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': 'Function2',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        self.failIf(cfg.validate_certifiedSignatures(certified))
+
+        # fails if signatureNumber are not ordered
+        certified = [
+            {'signatureNumber': '2',
+             'name': '',
+             'function': '',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        order_error_msg = _('error_certified_signatures_order')
+        self.assertEquals(cfg.validate_certifiedSignatures(certified),
+                          order_error_msg)
+
+        # if we want to use date, we have to provide both from and to
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '2015/01/01',
+             'date_to': '',
+             },
+        ]
+        both_error_msg = _('error_certified_signatures_both_dates_required',
+                           mapping={'row_number': 1})
+        self.assertEquals(cfg.validate_certifiedSignatures(certified),
+                          both_error_msg)
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '',
+             'date_to': '2015/01/01',
+             },
+        ]
+        self.assertEquals(cfg.validate_certifiedSignatures(certified),
+                          both_error_msg)
+
+        # check date format
+        # wrong date
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '2015/02/00',
+             'date_to': '2015/02/15',
+             },
+        ]
+        invalid_error_msg = _('error_certified_signatures_invalid_dates',
+                              mapping={'row_number': 1})
+        self.assertEquals(cfg.validate_certifiedSignatures(certified),
+                          invalid_error_msg)
+        # wrong date format, not respecting YYYY/MM/DD
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '2015/15/01',
+             'date_to': '2015/20/01',
+             },
+        ]
+        self.assertEquals(cfg.validate_certifiedSignatures(certified),
+                          invalid_error_msg)
+        # date_from must be <= date_to
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '2015/01/15',
+             'date_to': '2015/01/10',
+             },
+        ]
+        self.assertEquals(cfg.validate_certifiedSignatures(certified),
+                          invalid_error_msg)
+
+        # row number is displayed in the error message, check that it works
+        # here, row 2 is wrong
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': 'wrong_date',
+             'date_to': '2015/01/01',
+             },
+            {'signatureNumber': '2',
+             'name': '',
+             'function': '',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        invalid_line2_error_msg = _('error_certified_signatures_invalid_dates',
+                                    mapping={'row_number': 2})
+        self.assertEquals(cfg.validate_certifiedSignatures(certified),
+                          invalid_line2_error_msg)
+
     def test_pm_Validate_transitionsForPresentingAnItem(self):
         '''Test the MeetingConfig.transitionsForPresentingAnItem validation.
            It fails if :

@@ -2190,7 +2190,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(item, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         if forceUseCertifiedSignaturesOnMeetingConfig:
-            return cfg.getCertifiedSignatures()
+            return cfg.getCertifiedSignatures(computed=True)
 
         groupSignatures = item.getProposingGroup(theObject=True).getSignatures()
         if groupSignatures:
@@ -2200,7 +2200,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # if we use MeetingUsers, compute certified signatures, if not, use
         # MeetingConfig certified signatures field
         if not cfg.isUsingMeetingUsers():
-            return cfg.getCertifiedSignatures()
+            # get certified signatures computed, this will return a list with pair
+            # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
+            # this list is ordered by signature number defined in the MeetingConfig
+            return cfg.getCertifiedSignatures(computed=True)
         else:
             # we use MeetingUsers
             signatories = cfg.getMeetingUsers(usages=('signer',))

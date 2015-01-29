@@ -137,6 +137,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - MeetingManagers have now access to the meeting configurations and are able to edit
   "harmless" parameters like assembly and signatures
 - Removed "PloneTask" related fields and functionnality
+- Adapted functionnality around certified signatures defined on the MeetingConfig to make it
+  "period-aware".  It is now possible to define a signature that will be useable for a period of time
+  (from date, to date) so certified signatures can be managed in advance when knowing
+  signatories absences/presences
 - Added field MeetingGroup.signatures useable to define current certified signatures to use in templates,
   if not certified signatures defined on the group, MeetingConfig.certifiedSignatures is used
 - Ease management of late items, an item is now by default considered late if the meeting is in a late

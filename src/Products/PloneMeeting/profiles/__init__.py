@@ -255,7 +255,7 @@ class MeetingConfigDescriptor(Descriptor):
         # General parameters ---------------------------------------------------
         self.assembly = 'Person 1, Person 2'
         self.signatures = 'Person 1, Person 2, Person 3'
-        self.certifiedSignatures = 'Role 1,\nPerson 1\nRole 2,\nPerson 2'
+        self.certifiedSignatures = []
         # "Places" describe some predefined places where meetings occur. It is a
         # text widget that should contain one place per line.
         self.places = ''
