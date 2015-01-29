@@ -2001,6 +2001,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.getDeliberation(keepWithNext=True) ==
                         '<p class="pmParaKeepWithNext">My motivation</p>\n'
                         '<p class="pmParaKeepWithNext">My decision</p>\n')
+        # keepWithNext applies a different class for lists
+        item.setMotivation('<p>My motivation</p><ul><li>Art 1</li><li>Art 2</li></ul>')
+        self.assertTrue(item.getDeliberation(keepWithNext=True) ==
+                        '<p class="pmParaKeepWithNext">My motivation</p>\n'
+                        '<ul>\n  <li class="podItemKeepWithNext">Art 1</li>\n  '
+                        '<li class="podItemKeepWithNext">Art 2</li>\n</ul>\n'
+                        '<p class="pmParaKeepWithNext">My decision</p>\n')
         # if there is no motivation, we do not insert a blank line even if separate is True
         item.setMotivation('')
         self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())

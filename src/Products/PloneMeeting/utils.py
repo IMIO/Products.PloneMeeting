@@ -1103,9 +1103,9 @@ def signatureNotAlone(xhtmlContent):
        to stand alone on their last page.'''
     # A paragraph may be a "p" or "li". If it is a "p", I will add style
     # (if not already done) "podItemKeepWithNext"; if it is a "li" I will
-    # add style "pmParaKeepWithNext" (if not already done).
+    # add style "podParaKeepWithNext" (if not already done).
     from imio.helpers.xhtml import addClassToLastChildren
-    return addClassToLastChildren(xhtmlContent, className='pmParaKeepWithNext')
+    return addClassToLastChildren(xhtmlContent)
 
 
 # ------------------------------------------------------------------------------
