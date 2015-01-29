@@ -904,24 +904,6 @@ schema = Schema((
         multiValued=False,
         relationship="ItemPredecessor",
     ),
-    ReferenceField(
-        name='manuallyLinkedItems',
-        widget=ReferenceBrowserWidget(
-            description="ManuallyLinkedItems",
-            description_msgid="manually_linked_items_descr",
-            condition="python: here.attributeIsUsed('manuallyLinkedItems')",
-            allow_search=True,
-            allow_browse=False,
-            base_query="manuallyLinkedItemsBaseQuery",
-            show_results_without_query=True,
-            label='Manuallylinkeditems',
-            label_msgid='PloneMeeting_label_manuallyLinkedItems',
-            i18n_domain='PloneMeeting',
-        ),
-        visible=False,
-        multiValued=True,
-        relationship="ManuallyLinkedItem",
-    ),
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
