@@ -1029,7 +1029,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         searchParams = self.REQUEST.SESSION.get('searchParams', None)
         if not searchParams:
             return text
-        import ipdb; ipdb.set_trace()
         keywords = searchParams.get('keywords', None)
         if not keywords:
             return text
