@@ -25,6 +25,7 @@
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -232,6 +233,27 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers_reviewers' not in item.listCopyGroups())
         self.assertTrue('developers' not in item.listOptionalAdvisers())
         self.assertTrue(not self.tool.userIsAmong('creators'))
+
+    def test_pm_UpdatePloneGroupTitle(self):
+        '''When the title of a MeetingGroup changed, the title of linked
+           Plone groups is changed accordingly.'''
+        developers = self.tool.developers
+        devId = developers.getId()
+        devTitle = developers.Title()
+        # for now created Plone groups are correct
+        for suffix in MEETING_GROUP_SUFFIXES:
+            ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(devId, suffix))
+            translatedSuffix = translate(suffix, domain='PloneMeeting', context=self.request)
+            self.assertTrue(ploneGroup.getProperty('title') == ('{0} ({1})'.format(devTitle, translatedSuffix)))
+        # update MeetingGroup title and check again
+        devTitle = 'New developers meeting group title'
+        developers.setTitle(devTitle)
+        developers.at_post_edit_script()
+        # Plone groups title have been updated
+        for suffix in MEETING_GROUP_SUFFIXES:
+            ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(devId, suffix))
+            translatedSuffix = translate(suffix, domain='PloneMeeting', context=self.request)
+            self.assertTrue(ploneGroup.getProperty('title') == ('{0} ({1})'.format(devTitle, translatedSuffix)))
 
 
 def test_suite():

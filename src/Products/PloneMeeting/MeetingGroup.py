@@ -210,8 +210,9 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 res.append(group)
         return res
 
-    def _createPloneGroup(self, groupSuffix):
-        '''Creates the PloneGroup that corresponds to me and p_groupSuffix.'''
+    def _createOrUpdatePloneGroup(self, groupSuffix, update=False):
+        '''If p_update is False, this will create the PloneGroup that corresponds to me
+           and p_groupSuffix, if p_update is True, it will just update it's title.'''
         groupId = self.getPloneGroupId(groupSuffix)
         enc = self.portal_properties.site_properties.getProperty(
             'default_charset')
@@ -222,11 +223,18 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         # edited TTW, his title is no more unicode if it was previously...
         # make sure we behave like Plone...
         groupTitle = groupTitle.encode(enc)
-        self.portal_groups.addGroup(groupId, title=groupTitle)
-        self.portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
-        group = self.portal_groups.getGroupById(groupId)
-        group.setProperties(meetingRole=MEETINGROLES.get(groupSuffix, ''),
-                            meetingGroupId=self.id)
+        if update:
+            # just update the title so Plone groups title are coherent
+            # with MeetingGroup title in case it is updated thereafter
+            group = self.portal_groups.getGroupById(groupId)
+            group.setProperties(title=groupTitle)
+        else:
+            # create the Plone group
+            self.portal_groups.addGroup(groupId, title=groupTitle)
+            self.portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
+            group = self.portal_groups.getGroupById(groupId)
+            group.setProperties(meetingRole=MEETINGROLES.get(groupSuffix, ''),
+                                meetingGroupId=self.id)
 
     def getOrder(self, associatedGroupIds=None, onlyActive=True):
         '''At what position am I among all the active groups ? If
@@ -272,11 +280,13 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                                         "because a Plone groupe having id "
                                         "'%s' already exists." % groupId)
         for groupSuffix in MEETING_GROUP_SUFFIXES:
-            self._createPloneGroup(groupSuffix)
+            self._createOrUpdatePloneGroup(groupSuffix)
         self.adapted().onEdit(isCreated=True)  # Call product-specific code
 
     security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
+        for groupSuffix in MEETING_GROUP_SUFFIXES:
+            self._createOrUpdatePloneGroup(groupSuffix, update=True)
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('manage_beforeDelete')
