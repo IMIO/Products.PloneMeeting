@@ -1029,15 +1029,25 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         searchParams = self.REQUEST.SESSION.get('searchParams', None)
         if not searchParams:
             return text
+        import ipdb; ipdb.set_trace()
         keywords = searchParams.get('keywords', None)
         if not keywords:
             return text
+        # build variants
+        variants = []
         for word in keywords.strip().split():
             sWord = word.strip(' *').lower()
             for variant in (sWord, sWord.capitalize(), sWord.upper()):
-                text = text.replace(variant,
-                                    '<span class="highlight">%s</span>' % variant)
-        return text
+                variants.append(variant)
+        # now that we have every variants, we will walk the text and replace necessary words
+        res = []
+        for word in text.strip().split():
+            sWord = word.strip(' ' + string.punctuation).lower()
+            if sWord in variants:
+                res.append('<span class="highlight">{0}</span>'.format(word))
+            else:
+                res.append(word)
+        return ' '.join(res)
 
     security.declarePublic('getColoredLink')
     def getColoredLink(self, obj, showColors, showIcon=False, contentValue=None,
