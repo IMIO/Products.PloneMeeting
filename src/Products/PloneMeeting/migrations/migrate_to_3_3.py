@@ -10,7 +10,9 @@ from Acquisition import aq_base
 from zope.i18n import translate
 
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.config import PLONEMEETING_UPDATERS, ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
 from Products.PloneMeeting.migrations import Migrator
 
 
@@ -533,6 +535,16 @@ class Migrate_To_3_3(Migrator):
             cfg.setCertifiedSignatures(res)
         logger.info('Done.')
 
+    def _updatePloneGroupsTitleAccordingToMeetingGroupTitle(self):
+        '''Before, when a MeetingGroup title changed, the Plone groups title were not
+           changed accordingly, now that it is the case, make sure every Plone groups title
+           correspond to the linked MeetingGroup title.'''
+        logger.info('Updating every Plone groups title according to the linked MeetingGroup title...')
+        for mGroup in self.portal.portal_plonemeeting.objectValues('MeetingGroup'):
+            for suffix in MEETING_GROUP_SUFFIXES:
+                mGroup._createOrUpdatePloneGroup(suffix, update=True)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         # run every available upgrade steps so different dependencies are correct
@@ -565,6 +577,7 @@ class Migrate_To_3_3(Migrator):
         self._cleanToolSearchAttributes()
         self._cleanMeetingConfigsTaskAttributes()
         self._updateCertifiedSignatures()
+        self._updatePloneGroupsTitleAccordingToMeetingGroupTitle()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
