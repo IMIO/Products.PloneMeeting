@@ -1757,6 +1757,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          "python: here.portal_plonemeeting.getMeetingConfig(here)."
          "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
          ),
+        # Items to prevalidate : search items in state 'proposed' if wfAdaptation 'pre_validation' is active
+        ('searchitemstoprevalidate',
+        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+         ('review_state', 'ATListCriterion', ('prevalidated',)),
+         ),
+         'created',
+         '',
+         "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
+         "'pre_validation' in here.getWorkflowAdaptations()",
+         ),
         # Items to validate : need a script to do this search
         ('searchitemstovalidate',
         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),

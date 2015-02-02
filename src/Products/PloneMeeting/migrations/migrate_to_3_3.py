@@ -307,6 +307,7 @@ class Migrate_To_3_3(Migrator):
             hasSearchItemsOfMyGroups = False
             hasSearchMyItemsTakenOver = False
             hasSearchItemsToAdvifceWithoutDelay = False
+            hasSearchItemsToPrevalidate = False
             hasSearchValidableItems = False
             if hasattr(cfg.topics, 'searchitemsofmygroups'):
                 hasSearchItemsOfMyGroups = True
@@ -314,6 +315,8 @@ class Migrate_To_3_3(Migrator):
                 hasSearchMyItemsTakenOver = True
             if hasattr(cfg.topics, 'searchitemstoadvicewithoutdelay'):
                 hasSearchItemsToAdvifceWithoutDelay = True
+            if hasattr(cfg.topics, 'searchitemstoprevalidate'):
+                hasSearchItemsToPrevalidate = True
             if hasattr(cfg.topics, 'searchvalidableitems'):
                 hasSearchValidableItems = True
             # createTopics manage the fact that the topic already exists
@@ -324,55 +327,65 @@ class Migrate_To_3_3(Migrator):
                 if not hasattr(cfg.topics, 'searchmyitems'):
                     logger.error('Unable to find topic \'searchmyitems\' !!!  '
                                  'New \'searchitemsofmygroups\' topic will be left at the bottom of available topics!')
-                    continue
-                myItemsTopic = cfg.topics.searchmyitems
-                everyTopicIds = cfg.topics.objectIds()
-                myItemsTopicPosition = everyTopicIds.index(myItemsTopic.getId())
-                itemsOfMyGroupsTopicPosition = everyTopicIds.index('searchitemsofmygroups')
-                delta = itemsOfMyGroupsTopicPosition - myItemsTopicPosition - 1
-                cfg.topics.moveObjectsUp('searchitemsofmygroups', delta=delta)
+                else:
+                    myItemsTopic = cfg.topics.searchmyitems
+                    everyTopicIds = cfg.topics.objectIds()
+                    myItemsTopicPosition = everyTopicIds.index(myItemsTopic.getId())
+                    itemsOfMyGroupsTopicPosition = everyTopicIds.index('searchitemsofmygroups')
+                    delta = itemsOfMyGroupsTopicPosition - myItemsTopicPosition - 1
+                    cfg.topics.moveObjectsUp('searchitemsofmygroups', delta=delta)
             if not hasSearchMyItemsTakenOver:
                 # now reorder so 'searchmyitemstakenover' is under 'searchitemsofmygroups'
                 # find delta, we need to insert it after the 'searchitemsofmygroups' topic
                 if not hasattr(cfg.topics, 'searchitemsofmygroups'):
                     logger.error('Unable to find topic \'searchitemsofmygroups\' !!!  '
                                  'New \'searchmyitemstakenover\' topic will be left at the bottom of available topics!')
-                    continue
-                itemsOfMyGroupsTopic = cfg.topics.searchitemsofmygroups
-                everyTopicIds = cfg.topics.objectIds()
-                itemsOfMyGroupsTopicPosition = everyTopicIds.index(itemsOfMyGroupsTopic.getId())
-                myItemsTakenOverTopicPosition = everyTopicIds.index('searchmyitemstakenover')
-                delta = myItemsTakenOverTopicPosition - itemsOfMyGroupsTopicPosition - 1
-                cfg.topics.moveObjectsUp('searchmyitemstakenover', delta=delta)
+                else:
+                    itemsOfMyGroupsTopic = cfg.topics.searchitemsofmygroups
+                    everyTopicIds = cfg.topics.objectIds()
+                    itemsOfMyGroupsTopicPosition = everyTopicIds.index(itemsOfMyGroupsTopic.getId())
+                    myItemsTakenOverTopicPosition = everyTopicIds.index('searchmyitemstakenover')
+                    delta = myItemsTakenOverTopicPosition - itemsOfMyGroupsTopicPosition - 1
+                    cfg.topics.moveObjectsUp('searchmyitemstakenover', delta=delta)
             if not hasSearchItemsToAdvifceWithoutDelay:
                 # now reorder so 'searchitemstoadvicewithoutdelay' is under 'searchallitemstoadvice'
                 # find delta, we need to insert it after the 'searchallitemstoadvice' topic
                 if not hasattr(cfg.topics, 'searchallitemstoadvice'):
                     logger.error('Unable to find topic \'searchallitemstoadvice\' !!!  '
                                  'New \'searchitemstoadvicewithoutdelay\' topic will be left at the bottom of available topics!')
-                    continue
-                allAdvicesTopic = cfg.topics.searchallitemstoadvice
-                everyTopicIds = cfg.topics.objectIds()
-                allAdvicesTopicPosition = everyTopicIds.index(allAdvicesTopic.getId())
-                advicesWithoutDelayTopicPosition = everyTopicIds.index('searchitemstoadvicewithoutdelay')
-                delta = advicesWithoutDelayTopicPosition - allAdvicesTopicPosition - 1
-                cfg.topics.moveObjectsUp('searchitemstoadvicewithoutdelay', delta=delta)
+                else:
+                    allAdvicesTopic = cfg.topics.searchallitemstoadvice
+                    everyTopicIds = cfg.topics.objectIds()
+                    allAdvicesTopicPosition = everyTopicIds.index(allAdvicesTopic.getId())
+                    advicesWithoutDelayTopicPosition = everyTopicIds.index('searchitemstoadvicewithoutdelay')
+                    delta = advicesWithoutDelayTopicPosition - allAdvicesTopicPosition - 1
+                    cfg.topics.moveObjectsUp('searchitemstoadvicewithoutdelay', delta=delta)
+            if not hasSearchItemsToPrevalidate:
+                # now reorder so 'searchitemstoprevalidate' is just above 'searchitemstovalidate'
+                # find delta, we need to insert it before the 'searchitemstovalidate' topic
+                if not hasattr(cfg.topics, 'searchitemstovalidate'):
+                    logger.error('Unable to find topic \'searchitemstovalidate\' !!!  '
+                                 'New \'searchitemstoprevalidate\' topic will be left at the bottom of available topics!')
+                else:
+                    itemsToValidateTopic = cfg.topics.searchitemstovalidate
+                    everyTopicIds = cfg.topics.objectIds()
+                    itemsToValidateTopicPosition = everyTopicIds.index(itemsToValidateTopic.getId())
+                    itemsToPrevalidateTopicPosition = everyTopicIds.index('searchitemstoprevalidate')
+                    delta = itemsToPrevalidateTopicPosition - itemsToValidateTopicPosition
+                    cfg.topics.moveObjectsUp('searchitemstoprevalidate', delta=delta)
             if not hasSearchValidableItems:
                 # now reorder so 'searchvalidableitems' is under 'searchitemstovalidate'
                 # find delta, we need to insert it after the 'searchitemstovalidate' topic
                 if not hasattr(cfg.topics, 'searchitemstovalidate'):
                     logger.error('Unable to find topic \'searchitemstovalidate\' !!!  '
                                  'New \'searchvalidableitems\' topic will be left at the bottom of available topics!')
-                    continue
-                itemsToValidateTopic = cfg.topics.searchitemstovalidate
-                everyTopicIds = cfg.topics.objectIds()
-                itemsToValidateTopicPosition = everyTopicIds.index(itemsToValidateTopic.getId())
-                validableItemsTopicPosition = everyTopicIds.index('searchvalidableitems')
-                delta = validableItemsTopicPosition - itemsToValidateTopicPosition - 1
-                cfg.topics.moveObjectsUp('searchvalidableitems', delta=delta)
-            # remove topic 'searchitemstoprevalidate'
-            if hasattr(cfg.topics, 'searchitemstoprevalidate'):
-                cfg.topics.manage_delObjects(['searchitemstoprevalidate', ])
+                else:
+                    itemsToValidateTopic = cfg.topics.searchitemstovalidate
+                    everyTopicIds = cfg.topics.objectIds()
+                    itemsToValidateTopicPosition = everyTopicIds.index(itemsToValidateTopic.getId())
+                    validableItemsTopicPosition = everyTopicIds.index('searchvalidableitems')
+                    delta = validableItemsTopicPosition - itemsToValidateTopicPosition - 1
+                    cfg.topics.moveObjectsUp('searchvalidableitems', delta=delta)
             # update condition of the 'searchitemstovalidate' topic
             if hasattr(cfg.topics, 'searchitemstovalidate') and \
                (cfg.topics.searchitemstovalidate.getProperty('topic_tal_expression') ==
