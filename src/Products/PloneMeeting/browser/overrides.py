@@ -409,6 +409,8 @@ class ConfigActionsPanelView(ActionsPanelView):
                                    'renderOwnDelete',
                                    'renderArrows',
                                    'renderTransitions')
+        if self.context.meta_type == 'MeetingGroup':
+            self.SECTIONS_TO_RENDER = self.SECTIONS_TO_RENDER + ('renderLinkedPloneGroups', )
         self.folder = self.context.getParentNode()
         # objectIds is used for moving elements, we actually only want
         # to move elements of same portal_type
@@ -425,6 +427,15 @@ class ConfigActionsPanelView(ActionsPanelView):
         """
         return self.member.has_permission(ModifyPortalContent, self.context) and \
             self.context.Schema().editableFields(self.context.Schema())
+
+    def renderLinkedPloneGroups(self):
+        """
+          Add a link to linked Plone groups for a MeetingGroup.
+        """
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        if tool.isManager(True):
+            return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
+        return ''
 
     def renderArrows(self):
         """
