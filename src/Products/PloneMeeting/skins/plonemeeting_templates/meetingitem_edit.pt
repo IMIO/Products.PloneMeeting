@@ -73,9 +73,6 @@
                    i18n:translate="item_is_signed_yes"></label>
           </div>
         </td>
-        <td>
-          <metal:field use-macro="python:here.widget('manuallyLinkedItems', mode='edit')"/>
-        </td>
       </tr>
     </table>
     <tal:comment replace="nothing">Associated groups, optional advisers and copyGroups</tal:comment>

@@ -1212,18 +1212,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         query['path'] = {'query': '/'.join(cfg.getPhysicalPath() + ('classifiers',))}
         return query
 
-    security.declarePublic('manuallyLinkedItemsBaseQuery')
-    def manuallyLinkedItemsBaseQuery(self):
-        '''base_query for the 'manuallyLinkedItems' field.
-           Here, we restrict the widget to search only MeetingItems.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        allowed_types = []
-        for cfg in tool.getActiveConfigs():
-            allowed_types.append(cfg.getItemTypeName())
-        query = {}
-        query['portal_type'] = allowed_types
-        return query
-
     security.declarePublic('getDefaultBudgetInfo')
     def getDefaultBudgetInfo(self):
         '''The default budget info is to be found in the config.'''

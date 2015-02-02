@@ -909,13 +909,6 @@ select#optionalAdvisers option[disabled] {
     font-weight: bold;
 }
 
-/* skin edit of referenceBrowserWidet to reduce space between selected items check boxes */
-#ref_browser_items_manuallyLinkedItems > li {
-    line-height: 1em;
-    margin-bottom: 0;
-}
-
-
 .item_completeness_incomplete,
 #content a.item_completeness_incomplete:link,
 #content a.item_completeness_incomplete:visited {
