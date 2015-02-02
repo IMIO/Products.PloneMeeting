@@ -1,6 +1,6 @@
 <td class="noPadding" i18n:domain="plone">
   <a tal:define="dummy view/saveHasActions;"
-     tal:attributes="href string:${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/context/Title}">
+     tal:attributes="href string:${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/context/Title} (">
     <img src="group.png" tal:attributes="src string:${view/portal_url}/group.png" title="Edit" i18n:attributes="title" />
   </a>
 </td>
