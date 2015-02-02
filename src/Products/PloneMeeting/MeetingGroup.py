@@ -223,11 +223,12 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         # edited TTW, his title is no more unicode if it was previously...
         # make sure we behave like Plone...
         groupTitle = groupTitle.encode(enc)
+        groupsTool = getToolByName(self, 'portal_groups')
         if update:
             # just update the title so Plone groups title are coherent
             # with MeetingGroup title in case it is updated thereafter
             group = self.portal_groups.getGroupById(groupId)
-            group.setProperties(title=groupTitle)
+            groupsTool.editGroup(groupId, title=groupTitle)
         else:
             # create the Plone group
             self.portal_groups.addGroup(groupId, title=groupTitle)
