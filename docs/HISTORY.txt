@@ -156,6 +156,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - A meeting is now considered modified (modification_date is changed) when an item is added, removed
   or it's position changed
 - When the title of a MeetingGroup changed, the title of linked Plone groups is also changed accordingly
+- Removed workflow adaptation 'local_meeting_managers'
 
 3.2.0.1 (2014-03-06)
 --------------------

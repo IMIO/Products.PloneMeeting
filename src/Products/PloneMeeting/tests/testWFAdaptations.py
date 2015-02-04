@@ -30,7 +30,6 @@ from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.config import WriteDecision
@@ -54,7 +53,6 @@ class testWFAdaptations(PloneMeetingTestCase):
                                'everyone_reads_all',
                                'hide_decisions_when_under_writing',
                                'items_come_validated',
-                               'local_meeting_managers',
                                'no_global_observation',
                                'no_proposal',
                                'no_publication',
@@ -627,55 +625,6 @@ class testWFAdaptations(PloneMeetingTestCase):
                 self.failUnless(self.hasPermission(ModifyPortalContent, i1))
             else:
                 self.failIf(self.hasPermission(ModifyPortalContent, i1))
-
-    def test_pm_WFA_local_meeting_managers(self):
-        '''Test the workflowAdaptation 'local_meeting_managers'.'''
-        # ease override by subproducts
-        if not 'local_meeting_managers' in self.meetingConfig.listWorkflowAdaptations():
-            return
-        # create a MeetingManager and put it in another _creators group than
-        # the default MeetingManager
-        self.createUser('pmManager2', ['Member', 'MeetingManager', ])
-        membershipTool = getToolByName(self.portal, 'portal_membership')
-        membershipTool.getMemberById('pmManager2')
-        self.portal.portal_groups.addPrincipalToGroup('pmManager2', 'vendors_creators')
-        self.changeUser('pmManager2')
-        # create a MeetingManager in the same group than default MeetingManager
-        self.createUser('pmManager3', ['Member', 'MeetingManager', ])
-        membershipTool.getMemberById('pmManager3')
-        self.portal.portal_groups.addPrincipalToGroup('pmManager3', 'developers_creators')
-        self.changeUser('pmManager3')
-        # check while the wfAdaptation is not activated
-        self._local_meeting_managers_inactive()
-        # activate the wfAdaptation and check
-        self.meetingConfig.setWorkflowAdaptations('local_meeting_managers')
-        logger = logging.getLogger('PloneMeeting: testing')
-        performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
-        self._local_meeting_managers_active()
-
-    def _local_meeting_managers_inactive(self):
-        '''Tests while 'local_meeting_managers' wfAdaptation is inactive.'''
-        self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime())
-        self.failUnless(self.hasPermission(View, m1))
-        self.failUnless(self.hasPermission(ModifyPortalContent, m1))
-        # every MeetingManagers can access created meetings
-        self.changeUser('pmManager2')
-        self.failUnless(self.hasPermission(View, m1))
-        self.failUnless(self.hasPermission(ModifyPortalContent, m1))
-
-    def _local_meeting_managers_active(self):
-        '''Tests while 'local_meeting_managers' wfAdaptation is active.'''
-        # the meeting creator can manage the
-        self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime())
-        self.failUnless(self.hasPermission(ModifyPortalContent, m1))
-        # only MeetingManagers of the same groups can access created meetings
-        self.changeUser('pmManager2')
-        self.failIf(self.hasPermission(ModifyPortalContent, m1))
-        # same group MeetingManagers can access the Meeting
-        self.changeUser('pmManager3')
-        self.failUnless(self.hasPermission(ModifyPortalContent, m1))
 
     def test_pm_WFA_return_to_proposing_group(self):
         '''Test the workflowAdaptation 'return_to_proposing_group'.'''

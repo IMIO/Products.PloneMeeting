@@ -1402,25 +1402,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             # replaced; values are ids of replacement users.
             self.userReplacements = replacements
 
-    security.declarePrivate('setLocalMeetingManagers')
-    def setLocalMeetingManagers(self):
-        '''When workflow adaptation "local_meeting_managers" is enabled, this
-           method grants local role "MeetingManagerLocal" to every
-           MeetingManager belonging to the same MeetingGroup as the meeting
-           creator (including the meeting creator itself).'''
-        # Identify all local managers
-        localManagers = []
-        for zopeGroup in self.portal_plonemeeting.getGroupsForUser(zope=True):
-            zGroup = zopeGroup._getGroup()
-            for userId in zGroup.getMemberIds():
-                user = self.acl_users.getUserById(userId)
-                if user.has_role('MeetingManager') and \
-                   (userId not in localManagers):
-                    localManagers.append(userId)
-        # Grant them the corresponding local role
-        for userId in localManagers:
-            self.manage_addLocalRoles(userId, ('MeetingManagerLocal',))
-
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
         '''Initializes the meeting title and inserts recurring items if
@@ -1433,10 +1414,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         self.setMeetingConfigVersion(meetingConfig.getConfigVersion())
         addRecurringItemsIfRelevant(self, '_init_')
-        # If workflow adaptation 'local_meeting_managers' is enabled, set local
-        # roles accordingly.
-        if 'local_meeting_managers' in meetingConfig.getWorkflowAdaptations():
-            self.setLocalMeetingManagers()
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields

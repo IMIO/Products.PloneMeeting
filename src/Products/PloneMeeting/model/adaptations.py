@@ -422,44 +422,6 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             grantPermission(state, WriteDecision, 'MeetingMember')
         logger.info(WF_APPLIED % ("creator_edits_unless_closed", meetingConfig.getId()))
 
-    # "local_meeting_managers" lets people manage meetings of their group only.
-    # When this adaptation is enabled, as usual, global role MeetingManager is
-    # granted to people that may create meetings. But, once a meeting has been
-    # created, global role MeetingManager has no more permission on the created
-    # meeting; new role MeetingManagerLocal is, on this meeting, granted locally
-    # to all the MeetingManagers belonging to the same MeetingGroup as the
-    # meeting creator. This notion of "local meeting manager" allows different
-    # groups to create and manage meetings, instead of a single global meeting
-    # manager.
-    if 'local_meeting_managers' in wfAdaptations:
-        # Create role 'MeetingManagerLocal' if it does not exist.
-        site = meetingConfig.getParentNode().getParentNode()
-        roleManager = site.acl_users.portal_role_manager
-        if 'MeetingManagerLocal' not in roleManager.listRoleIds():
-            allRoles = list(site.__ac_roles__)
-            roleManager.addRole('MeetingManagerLocal', 'MeetingManagerLocal', '')
-            allRoles.append('MeetingManagerLocal')
-            site.__ac_roles__ = tuple(allRoles)
-        # Patch the meeting workflow: everything that is granted to
-        # MeetingManager, grant it to MeetingManagerLocal instead.
-        wf = meetingWorkflow
-        for stateName in wf.states:
-            state = wf.states[stateName]
-            for permission, roles in state.permission_roles.iteritems():
-                if 'MeetingManager' in roles:
-                    # Remove MeetingManager from people having this permission
-                    newRoles = list(roles)
-                    newRoles.remove('MeetingManager')
-                    state.setPermission(permission, 0, newRoles)
-                    # Grant this permission to MeetingManagerLocal
-                    grantPermission(state, permission, 'MeetingManagerLocal')
-                # Grant all rights to Owner. Indeed, when displaying the form
-                # for creating a meeting, the user still does not have the
-                # MeetingManagerLocal role yet (will be set in at_post_create).
-                if stateName == 'created':
-                    grantPermission(state, permission, 'Owner')
-        logger.info(WF_APPLIED % ("local_meeting_managers", meetingConfig.getId()))
-
     # when an item is linked to a meeting, most of times, creators lose modify rights on it
     # with this, the item can be 'returned_to_proposing_group' when in a meeting then the creators
     # can modify it if necessary and send it back to the MeetingManagers when done
