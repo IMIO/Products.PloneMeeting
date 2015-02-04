@@ -558,6 +558,19 @@ class Migrate_To_3_3(Migrator):
                 mGroup._createOrUpdatePloneGroup(suffix, update=True)
         logger.info('Done.')
 
+    def _cleanUpMCSelectedWFAdaptations(self):
+        '''Make sure wfAdaptations selected in MeetingConfig.workflowAdaptations still exist.
+           This generic method will especially remove the 'local_meeting_managers' wfAdaptation that
+           was removed.'''
+        logger.info('Cleaning field \'workflowAdaptations\' for each MeetingConfig...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            wfas = list(cfg.getWorkflowAdaptations())
+            for wfa in wfas:
+                if not wfa in cfg.wfAdaptations:
+                    wfas.remove(wfa)
+            cfg.setWorkflowAdaptations(wfas)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         # run every available upgrade steps so different dependencies are correct
@@ -591,6 +604,7 @@ class Migrate_To_3_3(Migrator):
         self._cleanMeetingConfigsTaskAttributes()
         self._updateCertifiedSignatures()
         self._updatePloneGroupsTitleAccordingToMeetingGroupTitle()
+        self._cleanUpMCSelectedWFAdaptations()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
