@@ -9,5 +9,6 @@ Migration to PloneMeeting 3.3 :
    - certified signatures on each MeetingConfig;
    - adapt certified signatures call on relevant templates;
    - generate every templates to check for consistency;
-   - MeetingItem.listProposingGroup is not MeetingItem.listProposingGroups;
+   - MeetingItem.listProposingGroup is now MeetingItem.listProposingGroups;
+   - MeetingGroup._createPloneGroup is now MeetingGroup._createOrUpdatePloneGroup;
    - MeetingItem.getAdviceDataFor now needs a mandatory first paramter, the item itself (avoid calls TTW).
