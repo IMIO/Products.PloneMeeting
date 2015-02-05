@@ -753,16 +753,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         portal = getToolByName(self, 'portal_url').getPortalObject()
         root_folder = getattr(portal.portal_membership.getHomeFolder(userId),
                               ROOT_FOLDER)
-        meetingConfig = getattr(self, meetingConfigId)
+        cfg = getattr(self, meetingConfigId)
         root_folder.invokeFactory('Folder', meetingConfigId,
-                                  title=meetingConfig.getFolderTitle())
+                                  title=cfg.getFolderTitle())
         mc_folder = getattr(root_folder, meetingConfigId)
         # We add the MEETING_CONFIG property to the folder
         mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
         mc_folder.setLayout('meetingfolder_redirect_view')
         mc_folder.setConstrainTypesMode(1)
-        allowedTypes = [meetingConfig.getItemTypeName(),
-                        meetingConfig.getMeetingTypeName()] + ['File', 'Folder', 'MeetingFile']
+        allowedTypes = [cfg.getItemTypeName(),
+                        cfg.getMeetingTypeName()] + ['File', 'Folder', 'MeetingFile']
         mc_folder.setLocallyAllowedTypes(allowedTypes)
         mc_folder.setImmediatelyAddableTypes([])
         # Define permissions on this folder. Some remarks:
@@ -785,6 +785,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_permission('ATContentTypes: Add File', PLONEMEETING_UPDATERS, acquire=0)
         # Only Manager may change the set of allowable types in folders.
         mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
+        # Give MeetingManager localrole to relevant _meetingmanagers group
+        mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
 
     security.declarePublic('getMeetingConfig')
     def getMeetingConfig(self, context, caching=True):
@@ -876,27 +878,30 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for role in user.getRoles():
             if role in ploneMeetingRoles:
                 return True
+        # or maybe it is a user that is only a MeetingManager
+        if self.isManager(self):
+            return True
         # or maybe this is a user in a _powerobservers group
         for groupId in user.getGroups():
             if groupId.endswith(POWEROBSERVERS_GROUP_SUFFIX) or \
                groupId.endswith(RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
                 return True
 
-    def isManager_cachekey(method, self, realManagers=False):
+    def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
         # we only recompute if REQUEST changed
-        return (str(self.REQUEST.debug), realManagers)
+        return (str(self.REQUEST.debug), context, realManagers)
 
     security.declarePublic('isManager')
     @ram.cache(isManager_cachekey)
-    def isManager(self, realManagers=False):
-        '''Is the current user a 'Manager'?  If p_realManagers is True,
+    def isManager(self, context, realManagers=False):
+        '''Is the current user a 'MeetingManager' on context?  If p_realManagers is True,
            only returns True if user has role Manager/Site Administrator, either
            (by default) MeetingManager is also considered as a 'Manager'?'''
         user = self.portal_membership.getAuthenticatedMember()
-        return user.has_role('Manager') or \
-            user.has_role('Site Administrator') or \
-            (not realManagers and user.has_role('MeetingManager'))
+        return user.has_role('Manager', context) or \
+            user.has_role('Site Administrator', context) or \
+            (not realManagers and user.has_role('MeetingManager', context))
 
     def isPowerObserverForCfg_cachekey(method, self, cfg, isRestricted=False):
         '''cachekey method for self.isPowerObserverForCfg.'''
@@ -1414,7 +1419,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         restrictMode = self.getRestrictUsers()
         res = True
         if restrictMode:
-            if not self.isManager():
+            if not self.isManager(self):
                 user = self.portal_membership.getAuthenticatedMember()
                 # Check if the user is in specific list
                 if user.id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
@@ -2210,7 +2215,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('updateAllAdvicesAction')
     def updateAllAdvicesAction(self):
         '''UI action that calls _updateAllAdvices.'''
-        if not self.isManager(realManagers=True):
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
         self._updateAllAdvices()
         self.plone_utils.addPortalMessage('Done.')
@@ -2240,7 +2245,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def updatePowerObservers(self):
         '''Update local_roles regarging the RestrictedPowerObservers
            and PowerObservers for every meetings and items.'''
-        if not self.isManager(realManagers=True):
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
         catalog = getToolByName(self, 'portal_catalog')
         brains = catalog(meta_type=('Meeting', 'MeetingItem'))
@@ -2263,7 +2268,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('updateBudgetImpactEditors')
     def updateBudgetImpactEditors(self):
         '''Update local_roles regarging the BudgetImpactEditors for every items.'''
-        if not self.isManager(realManagers=True):
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
         for b in self.portal_catalog(meta_type=('MeetingItem')):
             obj = b.getObject()
@@ -2274,7 +2279,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('updateCopyGroups')
     def updateCopyGroups(self):
         '''Update local_roles regarging the copyGroups for every items.'''
-        if not self.isManager(realManagers=True):
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
         for b in self.portal_catalog(meta_type=('MeetingItem', )):
             obj = b.getObject()

@@ -40,6 +40,7 @@ import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
 #from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -89,7 +90,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         self.wfTool = self.portal.portal_workflow
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Create admin user
-        self.createUser('admin', ('Member', 'Manager', 'MeetingManager', ))
+        self.createUser('admin', ('Member', 'Manager', ))
         # Import the test profile
         login(self.portal, 'admin')
         # Create some member areas
@@ -97,9 +98,12 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             _createHomeFolder(self.portal, userId)
         # Disable notifications mechanism. This way, the test suite may be
         # executed even on production sites that contain many real users.
-        for meetingConfig in self.tool.objectValues('MeetingConfig'):
-            meetingConfig.setMailItemEvents([])
-            meetingConfig.setMailMeetingEvents([])
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg.setMailItemEvents([])
+            cfg.setMailMeetingEvents([])
+            # add 'pmManager' in relevant _meetingmanagers groups
+            self.portal.portal_groups.addPrincipalToGroup('pmManager', '{0}_{1}'.format(cfg.getId(),
+                                                                                        MEETINGMANAGERS_GROUP_SUFFIX))
         logout()
         # Set the default meeting config
         self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly', None)

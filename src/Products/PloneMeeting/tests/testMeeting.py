@@ -30,7 +30,9 @@ from DateTime.DateTime import _findLocalTimeZoneName
 from AccessControl import Unauthorized
 from zope.i18n import translate
 
-from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS, ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import cleanRamCacheFor
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -1056,7 +1058,8 @@ class testMeeting(PloneMeetingTestCase):
            - user groups changed;
            - user roles changed.'''
         self.changeUser('pmManager')
-        self._removeConfigObjectsFor(self.meetingConfig)
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         # invalidated when meeting is modified
         meeting = self.create('Meeting', date=DateTime('2011/11/11'))
         actions_panel = meeting.restrictedTraverse('@@actions_panel')
@@ -1096,7 +1099,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # invalidated when review state changed
         # just make sure the contained item is not changed
-        self.meetingConfig.setOnMeetingTransitionItemTransitionToTrigger(())
+        cfg.setOnMeetingTransitionItemTransitionToTrigger(())
         itemModified = item.modified()
         itemWFHistory = deepcopy(item.workflow_history)
         self.freezeMeeting(meeting)
@@ -1135,10 +1138,12 @@ class testMeeting(PloneMeetingTestCase):
         # remove MeetingManager role to 'pmManager'
         self.changeUser('pmManager')
         meetingManager_rendered_actions_panel = actions_panel()
-        self.portal.acl_users.portal_role_manager.removeRoleFromPrincipal('MeetingManager', 'pmManager')
-        # we need to reconnect for roles changes to take effect
+        # we will remove 'pmManager' from the cfg _meetingmanagers group
+        self.portal.portal_groups.removePrincipalFromGroup('pmManager', '{0}_{1}'.format(cfg.getId(),
+                                                                                         MEETINGMANAGERS_GROUP_SUFFIX))
+        # we need to reconnect for groups changes to take effect
         self.changeUser('pmManager')
-        self.assertTrue(not self.member.has_role('MeetingManager'))
+        self.assertTrue(not self.member.has_role('MeetingManager', meeting))
         self.assertTrue(not meetingManager_rendered_actions_panel == actions_panel())
 
 

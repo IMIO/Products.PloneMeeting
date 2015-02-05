@@ -7,6 +7,7 @@
 # GNU General Public License (GPL)
 #
 
+from zope.annotation import IAnnotations
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
@@ -246,11 +247,14 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
            - something changed around advices;
            - different item or user;
            - user groups changed;
-           - if item query_state is 'validated', check also if getMeetingToInsertIntoWhenNoCurrentMeetingObject changed'''
+           - if item query_state is 'validated', check also if
+             getMeetingToInsertIntoWhenNoCurrentMeetingObject changed;
+           - finally, invalidate if annotations changed.'''
         meetingModified = ''
         meeting = self.context.getMeeting()
         if meeting:
             meetingModified = self.context.getMeeting().modified()
+        annotations = IAnnotations(self.context)
         user = self.request['AUTHENTICATED_USER']
         userGroups = user.getGroups()
         userRoles = user.getRoles()
@@ -260,7 +264,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if self.context.queryState() == 'validated':
             meetingToInsertInto = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
         return (self.context, self.context.modified(), self.context.adviceIndex,
-                user.getId(), userGroups, userRoles,
+                user.getId(), userGroups, userRoles, annotations,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 meetingToInsertInto, kwargs)
@@ -433,7 +437,7 @@ class ConfigActionsPanelView(ActionsPanelView):
           Add a link to linked Plone groups for a MeetingGroup.
         """
         tool = getToolByName(self.context, 'portal_plonemeeting')
-        if tool.isManager(True):
+        if tool.isManager(self.context, True):
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 

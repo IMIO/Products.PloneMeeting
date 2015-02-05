@@ -622,7 +622,7 @@ def checkAfterConversion(obj, event):
         # make sure the annex is not printed in documents
         obj.setToPrint(False)
         # special behavior for real Managers
-        isRealManager = obj.portal_plonemeeting.isManager(realManagers=True)
+        isRealManager = obj.portal_plonemeeting.isManager(obj, realManagers=True)
         # send an email to relevant users to warn them if relevant
         # plone.app.async does not have a REQUEST... so make one...
         if asyncInstalled():

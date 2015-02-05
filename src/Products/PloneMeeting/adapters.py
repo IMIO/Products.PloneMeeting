@@ -348,7 +348,7 @@ class HistoryCommentViewableAdapter(object):
         if self.context.meta_type == 'MeetingItem':
             tool = getToolByName(self.context, 'portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
-            if cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and not tool.isManager():
+            if cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and not tool.isManager(self.context):
                 userMeetingGroupIds = [mGroup.getId() for mGroup in tool.getGroupsForUser()]
                 if not self.context.getProposingGroup() in userMeetingGroupIds:
                     userMayAccessComment = False

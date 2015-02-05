@@ -12,6 +12,7 @@ from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
 from Products.PloneMeeting.migrations import Migrator
 
@@ -571,6 +572,59 @@ class Migrate_To_3_3(Migrator):
             cfg.setWorkflowAdaptations(wfas)
         logger.info('Done.')
 
+    def _moveToLocalMeetingManagers(self):
+        '''Now that we use local meeting managers, we will have to adapt some elements :
+           - create relevant _meetingmanagers groups by MeetingConfig;
+           - move users having global role 'MeetingManagers' to every created _meetingmanagers groups;
+           - adapt every user meetingConfig folder to add relevant local roles;
+           - adapt POD templates condition now that ToolPloneMeeting.isManager
+             needs a mandatory first argument 'context'.
+        '''
+        logger.info('Moving to local MeetingManagers...')
+        globalMeetingManagers = [member for member in self.portal.portal_membership.listMembers() if member.has_role('MeetingManager')]
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # create _meetingmanagers groups
+            cfg.createMeetingManagersGroup()
+            cfgId = cfg.getId()
+            groupId = "%s_%s" % (cfgId, MEETINGMANAGERS_GROUP_SUFFIX)
+
+            # move relevant MeetingManagers to this created group
+            if globalMeetingManagers:
+                for member in globalMeetingManagers:
+                    self.portal.portal_groups.addPrincipalToGroup(member.getId(), groupId)
+
+            # update every users meeting folders
+            for userFolder in self.portal.Members.objectValues():
+                # if something else than a userFolder, pass
+                if not hasattr(aq_base(userFolder), 'mymeetings'):
+                    continue
+                mc_folder = getattr(userFolder.mymeetings, cfgId, None)
+                if mc_folder:
+                    mc_folder.manage_addLocalRoles(groupId, ('MeetingManager',))
+
+            # migrate POD templates condition regarding the 'isManager' methode
+            for template in cfg.podtemplates.objectValues('PodTemplate'):
+                condition = template.getPodCondition()
+                if 'isManager' in condition:
+                    if 'isManager(here' in condition or 'isManager(context' in condition:
+                        # already migrated, continue
+                        continue
+                    elif condition == 'here/portal_plonemeeting/isManager' or \
+                            condition == 'context/portal_plonemeeting/isManager':
+                        # treat TAL style expressions
+                        condition = u'python: here.portal_plonemeeting.isManager(here)'
+                    elif 'python' in condition:
+                        # treat python style expressions
+                        if 'isManager(True)' in condition or 'isManager(realManagers=)' in condition:
+                            condition = condition.replace('isManager(', 'isManager(here, ')
+                        elif 'isManager()' in condition:
+                            condition = condition.replace('isManager()', 'isManager(here)')
+                template.setPodCondition(condition)
+        # now remove gobal role 'MeetingManager' given to globalMeetingManagers
+        for member in globalMeetingManagers:
+            self.portal.acl_users.portal_role_manager.removeRoleFromPrincipal('MeetingManager', member.getId())
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         # run every available upgrade steps so different dependencies are correct
@@ -605,6 +659,7 @@ class Migrate_To_3_3(Migrator):
         self._updateCertifiedSignatures()
         self._updatePloneGroupsTitleAccordingToMeetingGroupTitle()
         self._cleanUpMCSelectedWFAdaptations()
+        self._moveToLocalMeetingManagers()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller

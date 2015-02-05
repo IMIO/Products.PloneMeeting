@@ -15,6 +15,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Depends on Products.PasswordStrength and use defaut policy (10 characters, 1 uppercase, 1 special char, 1 number)
 - Moved from communesplone.iconified_document_actions to collective.iconifieddocumentactions
 - Moved management of indexes and metadatas (utils.updateIndexes) to imio.helpers and depends on that package now
+- MeetingManagers are now managed locally, MeetingConfig by MeetingConfig,
+  the global role 'MeetingManager' should not be given anymore to MeetingManagers
 - Removed field Meeting.allItemsAtOnce and relative code
 - Removed field MeetingCategory.itemsCount and relative code
 - Refactored mechanism when inserting an item in a meeting : it is now possible

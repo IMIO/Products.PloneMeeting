@@ -25,7 +25,7 @@
                               title meetingConfig/getName"/>
          </a>
          <a style="display: inline;"
-            tal:condition="tool/isManager"
+            tal:condition="python: tool.isManager(view.context)"
             href="#"
             tal:attributes="href meetingConfig/absolute_url">
          <img style="cursor:pointer" title="pm_configuration" i18n:attributes="title"

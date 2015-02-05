@@ -239,9 +239,9 @@ class AnnexIsConfidential(BrowserView):
 
     def toggle(self):
         member = self.portal_state.member()
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = getToolByName(self.context, 'portal_plonemeeting')
         if not member.has_permission('Modify portal content', self.context) or \
-           not tool.isManager():
+           not tool.isManager(self.context):
             raise Unauthorized
 
         isConfidential = self.context.getIsConfidential()

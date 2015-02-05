@@ -321,9 +321,12 @@
       </tal:results>
     </table>
   </div>
-  <span class="discreet" tal:condition="python: not searchResults"
-     tal:content="python: tool.translate('search_%s_empty' % resultMetaType, domain='PloneMeeting')">
-  </span>
-        <metal:sortAndFilter use-macro="context/@@navigate-macros/search"/>
+  <div class="discreet pm_search_no_result_info"
+        tal:condition="python: not searchResults"
+        tal:content="python: tool.translate('search_%s_empty' % resultMetaType, domain='PloneMeeting')">
+    No elements found.
+  </div>
+
+  <metal:sortAndFilter use-macro="context/@@navigate-macros/search"/>
 
 </metal:result>

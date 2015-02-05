@@ -19,14 +19,14 @@
 
   <metal:fill fill-slot="content-core">
     <metal:main_macro define-macro="body"
-                      tal:define="isRealManager python: context.portal_plonemeeting.isManager(True);
+                      tal:define="isRealManager python: context.portal_plonemeeting.isManager(context, True);
                                   mode python:'view';
                                   pageName request/pageName|string:default;
                                   member context/portal_plonemeeting/getUser;
                                   schematas here/Schemata;
                                   fieldsets python:[key for key in schematas.keys() if (key != 'metadata')];">
 
-    <tal:hideToNonManagers condition="python: isRealManager or context.isManager()">
+    <tal:hideToNonManagers condition="python: isRealManager or context.portal_plonemeeting.isManager(context)">
 
     <script language="javascript" tal:content="context/portal_plonemeeting/getJavascriptMessages"></script>
     <span tal:repeat="fieldset python: fieldsets + ['users', 'doc']">

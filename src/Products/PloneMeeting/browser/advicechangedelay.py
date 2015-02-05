@@ -48,7 +48,7 @@ class AdviceDelaysView(BrowserView):
             # advice is automatic, only Managers and MeetingManagers can change an automatic advice delay
             # and only if the advice still could not be given or if it is currently editable
             tool = getToolByName(self.context, 'portal_plonemeeting')
-            if not tool.isManager() or not checkPermission('Modify portal content', self.context):
+            if not tool.isManager(self.context) or not checkPermission('Modify portal content', self.context):
                 return False
         # we can not change delay for an advice that is no more giveable,
         # aka for wich a delay_stopped_on date is defined
@@ -99,7 +99,7 @@ class AdviceDelaysView(BrowserView):
         tool = getToolByName(self.context, 'portal_plonemeeting')
         # MeetingManagers and advisers of the group
         # can access the delay changes history
-        if tool.isManager() or adviceId in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')]:
+        if tool.isManager(self.context) or adviceId in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')]:
             return True
         else:
             return False

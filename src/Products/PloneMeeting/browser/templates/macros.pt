@@ -250,7 +250,7 @@ document.location.reload(true);
 <metal:itemIsSigned define-macro="itemIsSigned" i18n:domain="PloneMeeting"
                     tal:define="showItemIsSigned meetingItem/showItemIsSigned;
                                 mayEdit python: ajaxEdit==False and False or meetingItem.adapted().maySignItem(member);
-                                isManager python: tool.isManager();
+                                isManager python: tool.isManager(meetingItem);
                                 itemIsSigned meetingItem/getItemIsSigned;">
   <span id="marker_toggle_itemissigned_UID#"
         tal:attributes="id string:marker_toggle_itemissigned_$UID;"
@@ -285,7 +285,7 @@ document.location.reload(true);
 <metal:takenOverBy define-macro="takenOverBy" i18n:domain="PloneMeeting"
                     tal:define="mayEdit python: ajaxEdit==False and False or meetingItem.adapted().mayTakeOver();
                                 memberId member/getId;
-                                isManager python: tool.isManager();
+                                isManager python: tool.isManager(meetingItem);
                                 takenOverBy meetingItem/getTakenOverBy;
                                 takenOverByCurrentUser python: takenOverBy == memberId;">
   <span id="marker_toggle_takenoverby_UID#"
@@ -490,7 +490,7 @@ document.location.reload(true);
                    global showRefresh python: False;
                    error request/error | python:'';
                    secret context/getVotesAreSecret;
-                   isManager tool/isManager;
+                   isManager python: tool.isManager(context);
                    mayEditItem python: member.has_permission('Modify portal content', context);"
        id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0">
   <tal:comment replace="nothing">Column headers</tal:comment>

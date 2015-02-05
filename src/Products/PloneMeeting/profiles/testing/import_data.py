@@ -87,7 +87,7 @@ itemTemplate.podTemplate = 'Item.odt'
 itemTemplate.podCondition = 'python:here.meta_type=="MeetingItem"'
 
 # Test users and groups
-pmManager = UserDescriptor('pmManager', ['MeetingManager'], email="pmmanager@plonemeeting.org", fullname='M. PMManager')
+pmManager = UserDescriptor('pmManager', [], email="pmmanager@plonemeeting.org", fullname='M. PMManager')
 pmCreator1 = UserDescriptor('pmCreator1', [], email="pmcreator1@plonemeeting.org", fullname='M. PMCreator One')
 pmCreator1b = UserDescriptor('pmCreator1b', [], email="pmcreator1b@plonemeeting.org", fullname='M. PMCreator One bee')
 pmReviewer1 = UserDescriptor('pmReviewer1', [], email="pmreviewer1@plonemeeting.org", fullname='M. PMReviewer One')

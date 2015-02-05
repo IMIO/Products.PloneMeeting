@@ -1738,7 +1738,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          'created',
          'searchMyItemsTakenOver',
          "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
-         "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or here.portal_plonemeeting.isManager())",
+         "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or here.portal_plonemeeting.isManager(here))",
          ),
         # All (visible) items
         ('searchallitems',
@@ -1854,7 +1854,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          ),
          'created',
          '',
-         "python: here.portal_plonemeeting.isManager() and "
+         "python: here.portal_plonemeeting.isManager(here) and "
          "'return_to_proposing_group' in here.getWorkflowAdaptations()",
          ),
         # All not-yet-decided meetings
@@ -3053,24 +3053,34 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                            visible=True)
         self.portal_actions.portal_tabs._setObject(tabId, configTab)
 
+    def _createSuffixedGroup(self, suffix):
+        '''Create a group for this MeetingConfig using given p_suffix
+           to manage group id and group title.
+           This will return groupId and True if group was added, False otherwise.'''
+        groupId = "%s_%s" % (self.getId(), suffix)
+        wasCreated = False
+        if not groupId in self.portal_groups.listGroupIds():
+            wasCreated = True
+            enc = self.portal_properties.site_properties.getProperty(
+                'default_charset')
+            groupTitle = '%s (%s)' % (
+                self.Title().decode(enc),
+                translate(suffix, domain='PloneMeeting', context=self.REQUEST))
+            # a default Plone group title is NOT unicode.  If a Plone group title is
+            # edited TTW, his title is no more unicode if it was previously...
+            # make sure we behave like Plone...
+            groupTitle = groupTitle.encode(enc)
+            self.portal_groups.addGroup(groupId, title=groupTitle)
+        return groupId, wasCreated
+
     security.declarePrivate('createPowerObserversGroup')
     def createPowerObserversGroup(self):
         '''Creates Plone groups to manage (restricted) power observers.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         for grpSuffix in (RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
                           POWEROBSERVERS_GROUP_SUFFIX, ):
-            groupId = "%s_%s" % (self.getId(), grpSuffix)
-            if not groupId in self.portal_groups.listGroupIds():
-                enc = self.portal_properties.site_properties.getProperty(
-                    'default_charset')
-                groupTitle = '%s (%s)' % (
-                    self.Title().decode(enc),
-                    translate(grpSuffix, domain='PloneMeeting', context=self.REQUEST))
-                # a default Plone group title is NOT unicode.  If a Plone group title is
-                # edited TTW, his title is no more unicode if it was previously...
-                # make sure we behave like Plone...
-                groupTitle = groupTitle.encode(enc)
-                self.portal_groups.addGroup(groupId, title=groupTitle)
+            groupId, wasCreated = self._createSuffixedGroup(grpSuffix)
+            if wasCreated:
                 # now define local_roles on the tool so it is accessible by this group
                 tool.manage_addLocalRoles(groupId, (READER_USECASES[grpSuffix],))
                 # but we do not want this group to access every MeetingConfigs so
@@ -3082,18 +3092,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def createBudgetImpactEditorsGroup(self):
         '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
            local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
-        groupId = "%s_%s" % (self.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
-        if not groupId in self.portal_groups.listGroupIds():
-            enc = self.portal_properties.site_properties.getProperty(
-                'default_charset')
-            groupTitle = '%s (%s)' % (
-                self.Title().decode(enc),
-                translate(BUDGETIMPACTEDITORS_GROUP_SUFFIX, domain='PloneMeeting', context=self.REQUEST))
-            # a default Plone group title is NOT unicode.  If a Plone group title is
-            # edited TTW, his title is no more unicode if it was previously...
-            # make sure we behave like Plone...
-            groupTitle = groupTitle.encode(enc)
-            self.portal_groups.addGroup(groupId, title=groupTitle)
+        self._createSuffixedGroup(suffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX)
+
+    security.declarePrivate('createMeetingManagersGroup')
+    def createMeetingManagersGroup(self):
+        '''Creates a Plone group that will be used to apply the 'MeetingManager'
+           local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
+        groupId, wasCreated = self._createSuffixedGroup(suffix=MEETINGMANAGERS_GROUP_SUFFIX)
+        if wasCreated:
+            # now define local_roles on the tool so it is accessible by this group
+            tool = getToolByName(self, 'portal_plonemeeting')
+            tool.manage_addLocalRoles(groupId, ('MeetingManager',))
+            # but we do not want this group to get MeetingManager role on every MeetingConfigs so
+            # remove inheritance on self and define these local_roles for self too
+            self.__ac_local_roles_block__ = True
+            self.manage_addLocalRoles(groupId, ('MeetingManager',))
+        self.manage_addLocalRoles(groupId, ('MeetingManager',))
 
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
@@ -3122,6 +3136,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.createPowerObserversGroup()
         # Create the corresponding group that will contain MeetingBudgetImpactEditors
         self.createBudgetImpactEditorsGroup()
+        # Create the corresponding group that will contain MeetingManagers
+        self.createMeetingManagersGroup()
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
 
     def at_post_edit_script(self):
@@ -4404,7 +4420,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def updateAnnexConfidentiality(self):
         '''Update the confidentiality of existing annexes regarding default value
            for confidentiality defined in the corresponding annex type.'''
-        if not self.isManager(realManagers=True):
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
         # update every annexes of items of this MeetingConfig
         catalog = getToolByName(self, 'portal_catalog')
@@ -4434,7 +4450,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def updateAdviceConfidentiality(self):
         '''Update the confidentiality of existing advices regarding default value
            in MeetingConfig.adviceConfidentialityDefault.'''
-        if not self.isManager(realManagers=True):
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
         # update every advices of items of this MeetingConfig
         catalog = getToolByName(self, 'portal_catalog')

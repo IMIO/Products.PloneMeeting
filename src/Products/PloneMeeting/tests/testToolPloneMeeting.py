@@ -513,9 +513,12 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            returns corresponding MeetingGroups.'''
         self.changeUser('pmManager')
         # pmManager is in every 'developers' Plone groups except 'prereviewers'
-        # and in the 'vendors_advisers' Plone group
+        # and in the 'vendors_advisers' Plone group and in the _meetingmanagers groups
         dev = self.meetingConfig.developers
-        pmManagerGroups = ['AuthenticatedUsers', 'vendors_advisers', ] + dev.getPloneGroups(idsOnly=True)
+        globalGroups = ['AuthenticatedUsers',
+                        '%s_meetingmanagers' % self.meetingConfig.getId(),
+                        '%s_meetingmanagers' % self.meetingConfig2.getId()]
+        pmManagerGroups = dev.getPloneGroups(idsOnly=True) + ['vendors_advisers', ] + globalGroups
         pmManagerGroups.remove('developers_prereviewers')
         self.assertTrue(set(self.member.getGroups()) == set(pmManagerGroups))
         self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser()] ==
@@ -549,7 +552,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # if we pass a 'zope=True' parameter, it will actually return
         # Plone groups the user is in, no more MeetingGroups
         self.assertTrue(set([group.getId() for group in self.tool.getGroupsForUser(zope=True)]) ==
-                        set([group for group in pmManagerGroups if not group == 'AuthenticatedUsers']))
+                        set([group for group in pmManagerGroups if group not in globalGroups]))
 
 
 def test_suite():

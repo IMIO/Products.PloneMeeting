@@ -209,10 +209,9 @@ class MeetingItemWorkflowConditions:
         # workflow transition, we also check if the current user is
         # MeetingManager, to allow transitions for recurring items added in a
         # meeting.
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        user = membershipTool.getAuthenticatedMember()
+        tool = getToolByName(self.context, 'portal_plonemeeting')
         if not checkPermission(ReviewPortalContent, self.context) and not \
-           user.has_role('MeetingManager'):
+           tool.isManager(self.context):
             return
         currentState = self.context.queryState()
         # In early item states, there is no additional condition for going back
@@ -260,10 +259,9 @@ class MeetingItemWorkflowConditions:
         """Specific guard for the 'return_to_proposing_group' wfAdaptation.
            As we have only one guard_expr for potentially several transitions departing
            from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        user = membershipTool.getAuthenticatedMember()
+        tool = getToolByName(self.context, 'portal_plonemeeting')
         if not checkPermission(ReviewPortalContent, self.context) and not \
-           user.has_role('MeetingManager'):
+           tool.isManager(self.context):
             return
         # get the linked meeting
         meeting = self.context.getMeeting()
@@ -368,8 +366,7 @@ class MeetingItemWorkflowActions:
 
     security.declarePrivate('doValidate')
     def doValidate(self, stateChange):
-        # If it is a "late" item, we must potentially send a mail to warn
-        # MeetingManagers.
+        # If it is a "late" item, we must potentially send a mail to warn MeetingManagers.
         preferredMeeting = self.context.getPreferredMeeting()
         if preferredMeeting != ITEM_NO_PREFERRED_MEETING_VALUE:
             # Get the meeting from its UID
@@ -706,7 +703,7 @@ schema = Schema((
         name='oralQuestion',
         default=False,
         widget=BooleanField._properties['widget'](
-            condition="python: here.attributeIsUsed('oralQuestion') and here.portal_plonemeeting.isManager()",
+            condition="python: here.attributeIsUsed('oralQuestion') and here.portal_plonemeeting.isManager(here)",
             description="OralQuestion",
             description_msgid="oral_question_item_descr",
             label='Oralquestion',
@@ -718,7 +715,7 @@ schema = Schema((
     LinesField(
         name='itemInitiator',
         widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('itemInitiator') and here.portal_plonemeeting.isManager()",
+            condition="python: here.attributeIsUsed('itemInitiator') and here.portal_plonemeeting.isManager(here)",
             description="ItemInitiator",
             description_msgid="item_initiator_descr",
             label='Iteminitiator',
@@ -789,7 +786,7 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
+            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager(here) and here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
             label_method="getLabelItemAssembly",
@@ -804,7 +801,7 @@ schema = Schema((
         name='itemAssemblyExcused',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused')",
+            condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused')",
             description="ItemAssemblyExcusedDescrMethod",
             description_msgid="item_assembly_excused_descr",
             label='Itemassemblyexcused',
@@ -818,7 +815,7 @@ schema = Schema((
         name='itemAssemblyAbsents',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents')",
+            condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents')",
             description="ItemAssemblyAbsentsDescrMethod",
             description_msgid="item_assembly_absents_descr",
             label='Itemassemblyabsents',
@@ -832,7 +829,7 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures')",
+            condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures')",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
             label='Itemsignatures',
@@ -845,7 +842,7 @@ schema = Schema((
     LinesField(
         name='itemSignatories',
         widget=MultiSelectionWidget(
-            condition="python: here.portal_plonemeeting.isManager() and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatories')",
+            condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and here.getMeeting().attributeIsUsed('signatories')",
             description="ItemSignatories",
             description_msgid="item_signatories_descr",
             size=10,
@@ -1059,7 +1056,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(item)
         adaptations = cfg.getWorkflowAdaptations()
         if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
-           item.getMeeting().queryState() == 'decided' and not tool.isManager():
+           item.getMeeting().queryState() == 'decided' and not tool.isManager(item):
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=item.REQUEST,
@@ -1085,7 +1082,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(item)
         adaptations = cfg.getWorkflowAdaptations()
         if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
-           item.getMeeting().queryState() == 'decided' and not tool.isManager():
+           item.getMeeting().queryState() == 'decided' and not tool.isManager(item):
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=item.REQUEST,
@@ -1258,7 +1255,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(item, 'portal_plonemeeting')
         # Only MeetingManagers can sign an item if it is decided
         if not item.showItemIsSigned() or \
-           not tool.isManager():
+           not tool.isManager(item):
             return False
 
         # bypass for the Manager role
@@ -1354,7 +1351,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(item, 'portal_plonemeeting')
         membershipTool = getToolByName(item, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
-        if tool.isManager() and member.has_permission(ModifyPortalContent, item):
+        if tool.isManager(item) and member.has_permission(ModifyPortalContent, item):
             return True
         return False
 
@@ -1397,13 +1394,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayEditAdviceConfidentiality(self):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
-
         tool = getToolByName(item, 'portal_plonemeeting')
         membershipTool = getToolByName(item, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
         # user must be able to edit the item and must be a Manager
         if not member.has_permission(ModifyPortalContent, item) or \
-           not tool.isManager():
+           not tool.isManager(item):
             return False
         return True
 
@@ -1538,7 +1534,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # If the current user is a meetingManager (or a Manager),
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
-        if review_states == ('created', 'frozen') and tool.isManager():
+        if review_states == ('created', 'frozen') and tool.isManager(item):
             review_states += ('decided', 'published', )
 
         query = {'portal_type': meetingPortalType,
@@ -1705,7 +1701,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getRestrictAccessToSecretItems():
             return True
         # Bypass privacy check for super users
-        if tool.isPowerObserverForCfg(cfg) or tool.isManager():
+        if tool.isPowerObserverForCfg(cfg) or tool.isManager(item):
             return True
         # Check that the user belongs to the proposing group.
         proposingGroup = item.getProposingGroup()
@@ -1821,7 +1817,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isDefinedInTool = self.isDefinedInTool()
         # bypass for Managers, pass idDefinedInTool to True so Managers
         # can select any available MeetingGroup
-        isManager = tool.isManager(realManagers=True)
+        isManager = tool.isManager(self, realManagers=True)
         res = tool.getSelectableGroups(isDefinedInTool=(isDefinedInTool or isManager),
                                        existingGroupId=groupId)
         # add a 'make_a_choice' value when the item is in the tool
@@ -2443,7 +2439,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if member.has_permission(field.write_permission, self) and \
            self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
            (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
-           tool.isManager(realManagers=True):
+           tool.isManager(self, realManagers=True):
             return True
         return False
 
@@ -4237,7 +4233,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not destMeetingConfigId in [mctct['meeting_config'] for mctct in cfg.getMeetingConfigsToCloneTo()]:
             return False
         # The member must have necessary roles
-        if not item.portal_plonemeeting.isManager():
+        if not item.portal_plonemeeting.isManager(item):
             return False
         return True
 
@@ -4581,7 +4577,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         member = self.restrictedTraverse('@@plone_portal_state').member()
         if not self.hasVotes() and \
            member.has_permission(ModifyPortalContent, self) and \
-           self.portal_plonemeeting.isManager():
+           self.portal_plonemeeting.isManager(self):
             return True
         return False
 
@@ -4620,7 +4616,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayEditQAs')
     def mayEditQAs(self):
         '''May the logged user edit questioners and answerers for this item?'''
-        res = self.portal_plonemeeting.isManager() and self.hasMeeting() and \
+        res = self.portal_plonemeeting.isManager(self) and self.hasMeeting() and \
             self.getMeeting().getDate().isPast()
         return res
 
@@ -4655,7 +4651,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            discussing this item: we will record this info, excepted if
            request["action"] tells us to remove the info instead.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        if not tool.isManager() or not checkPermission(ModifyPortalContent, self):
+        if not tool.isManager(self) or not checkPermission(ModifyPortalContent, self):
             raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']
@@ -4677,7 +4673,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            We will record this info, excepted if request["action"] tells us to
            remove it instead.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        if not tool.isManager() or not checkPermission(ModifyPortalContent, self):
+        if not tool.isManager(self) or not checkPermission(ModifyPortalContent, self):
             raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']

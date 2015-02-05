@@ -888,7 +888,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def showObs(self, name):
         '''When must field named p_name be shown? p_name can be "observations"
            or "preObservations".'''
-        isMgr = self.portal_plonemeeting.isManager()
+        isMgr = self.portal_plonemeeting.isManager(self)
         res = not self.isTemporary() and isMgr and self.attributeIsUsed(name)
         return res
 

@@ -121,6 +121,11 @@ RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX = 'restrictedpowerobservers'
 # users that will be able to edit the budgetInfos field for items in state
 # corresponding to MeetingConfig.itemBudgetInfosStates
 BUDGETIMPACTEDITORS_GROUP_SUFFIX = 'budgetimpacteditors'
+# This is the group created for each MeetingConfig where we store
+# users that will receive the 'MeetingManager' role.  This group will be defined
+# in localroles of every meetingConfig user folders (mymeetings/meetingconfigfolder)
+# and on the corresponding MeetingConfig so these users are MeetingManager on the MeetingConfig too
+MEETINGMANAGERS_GROUP_SUFFIX = 'meetingmanagers'
 
 # This is a mapping between usecases around the role Reader, so users that can see
 # By default, the same role is used for different usecases, so it will give the same view permission by the wf

@@ -24,6 +24,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 from zope.i18n import translate
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import getCustomAdapter, FakeMeetingUser, getFieldContent
 ##/code-section module-header
 
@@ -377,9 +378,9 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def mayConsultVote(self, loggedUser, item):
         '''See doc in interfaces.py.'''
         mUser = self.getSelf()
+        tool = getToolByName(mUser, 'portal_plonemeeting')
         if (loggedUser.id == mUser.getId()) or \
-           loggedUser.has_role('MeetingManager') or \
-           loggedUser.has_role('Manager') or \
+           tool.isManager(item) or \
            item.getMeeting().adapted().isDecided():
             return True
         return False
@@ -388,18 +389,19 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def mayEditVote(self, loggedUser, item):
         '''See doc in interfaces.py.'''
         mUser = self.getSelf()
+        tool = getToolByName(item, 'portal_plonemeeting')
         if loggedUser.has_role('Manager'):
             return True
         meeting = item.getMeeting()
         if item.getMeeting().queryState() in meeting.meetingClosedStates:
             return False
         else:
-            meetingConfig = item.portal_plonemeeting.getMeetingConfig(item)
-            votesEncoder = meetingConfig.getVotesEncoder()
+            cfg = tool.getMeetingConfig(item)
+            votesEncoder = cfg.getVotesEncoder()
             if (loggedUser.id == mUser.getId()) and \
                ('theVoterHimself' in votesEncoder):
                 return True
-            if loggedUser.has_role('MeetingManager') and \
+            if tool.isManager(item) and \
                ('aMeetingManager' in votesEncoder):
                 return True
         return False
@@ -463,8 +465,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         # We must know if the user is a MeetingManager, an item creator or
         # adviser
         tool = config.getParentNode()
-        user = tool.portal_membership.getAuthenticatedMember()
-        isMeetingManager = user.has_role('MeetingManager')
+        isMeetingManager = tool.isManager(config)
         isCreator = tool.userIsAmong('creators')
         isAdviser = tool.userIsAmong('advisers')
         for event in selectedEvents:

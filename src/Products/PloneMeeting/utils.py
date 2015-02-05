@@ -187,8 +187,8 @@ def getCurrentMeetingObject(context):
     return toReturn
 
 
-def cleanRamCacheFor(methodId):
-    '''Clean ram.cache for given methodId.'''
+def cleanRamCacheFor(methodId, obj=None):
+    '''Clean ram.cache for given p_methodId.'''
     cache_chooser = getUtility(ICacheChooser)
     thecache = cache_chooser(methodId)
     thecache.ramcache.invalidate(methodId)

@@ -16,8 +16,8 @@
                                             tool python: portal.portal_plonemeeting;
                                             portal_url context/@@plone_portal_state/portal_url;
                                             plone_view context/@@plone;
-                                            displayAdviceConfidentiality python: meetingConfig.getEnableAdviceConfidentiality() and tool.isManager();
-                                            isRealManager python: tool.isManager(realManagers=True);
+                                            displayAdviceConfidentiality python: meetingConfig.getEnableAdviceConfidentiality() and tool.isManager(meetingItem);
+                                            isRealManager python: tool.isManager(meetingItem, realManagers=True);
                                             item_review_state meetingItem/queryState;
                                             adviceFileTypes python: meetingConfig.getFileTypes('advice');">
       <tal:comment replace="nothing">Icon for adding an advice</tal:comment>

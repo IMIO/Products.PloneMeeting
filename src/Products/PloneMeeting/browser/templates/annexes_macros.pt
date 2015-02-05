@@ -194,7 +194,7 @@
   </tal:comment>
   <tal:defines define="tool python: context.portal_plonemeeting;
                        meetingConfig python: context.portal_plonemeeting.getMeetingConfig(context);
-                       isManager meetingConfig/isManager;
+                       isManager python: meetingConfig.isManager(context);
                        annexes python: context.restrictedTraverse('@@annexes').getAnnexesByType(relatedTo, makeSubLists=False);
                        member member|context/@@plone_portal_state/member;">
    <div tal:condition="not: annexes" i18n:translate="no_annexes" class="discreet">No annexes</div>
@@ -252,7 +252,7 @@
                             tal:define="conversionStatus annex/conversionStatus;
                                         previewEnabled tool/getEnableAnnexPreview;
                                         target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows', context.REQUEST) and '_blank' or '';">
-    <tal:withPreview define="isRealManager python: tool.isManager(realManagers=True);"
+    <tal:withPreview define="isRealManager python: tool.isManager(context, realManagers=True);"
                      condition="previewEnabled">
        <a href="#"
           tal:attributes="href string:${portal_url}/${annex/absolute_url}/download"

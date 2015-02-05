@@ -36,7 +36,12 @@ from Products.CMFPlone import PloneMessageFactory
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import TOPIC_SEARCH_FILTERS
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -1402,6 +1407,42 @@ class testMeetingConfig(PloneMeetingTestCase):
         # every editable fields are protected by the 'PloneMeeting: Write harmless config' permission
         for field in cfg.Schema().editableFields(cfg):
             self.assertTrue(field.write_permission == WriteHarmlessConfig)
+
+    def test_pm_MeetingConfigGroupsCreatedCorrectly(self):
+        '''When a meetingConfig is created, some groups are created and configured,
+           make sure it is done correctly...'''
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
+        existingGroupIds = self.portal.portal_groups.getGroupIds()
+        # create mymeetings/cfgId folder for 'pmManager'
+        self.changeUser('pmManager')
+        self.tool.getPloneMeetingFolder(cfgId)
+        pmManagerConfigFolder = getattr(self.portal.Members.pmManager.mymeetings, cfgId)
+        # different groups are created for each MeetingConfig :
+        # powerobservers
+        # restrictedpowerobservers
+        # budgetimpacteditors
+        # meetingmanagers
+        for suffix in (BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+                       POWEROBSERVERS_GROUP_SUFFIX,
+                       RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+                       MEETINGMANAGERS_GROUP_SUFFIX):
+            groupId = '{0}_{1}'.format(cfgId, suffix)
+            self.assertTrue(groupId in existingGroupIds)
+            # for (restricted)powerobservers, it gets a Reader localrole on tool and MeetingConfig
+            if suffix in (POWEROBSERVERS_GROUP_SUFFIX,
+                          RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
+                self.assertTrue(self.tool.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])
+                self.assertTrue(cfg.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])
+            # for meetingmanagers, it gets MeetingManager localrole on MeetingConfig
+            # and every users meetingConfig folder
+            if suffix == MEETINGMANAGERS_GROUP_SUFFIX:
+                self.assertTrue(self.tool.__ac_local_roles__[groupId] == ['MeetingManager', ])
+                self.assertTrue(cfg.__ac_local_roles__[groupId] == ['MeetingManager', ])
+                # the _meetingmanagers group gets also MeetingManager localrole on every user meetingConfig folder
+                self.assertTrue(pmManagerConfigFolder.__ac_local_roles__[groupId] == ['MeetingManager', ])
+                # 'pmManager' is in each _meetingmanagers group
+                self.assertTrue(groupId in self.member.getGroups())
 
 
 def test_suite():

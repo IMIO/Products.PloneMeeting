@@ -414,6 +414,7 @@ def _adaptFrontPage(site):
         frontPage.setText(frontPageBody)
         frontPage.setModificationDate(frontPage.created() + 0.000002)
         frontPage.reindexObject()
+    logger.info('Done.')
 
 
 def reInstall(context):
