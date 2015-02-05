@@ -3080,10 +3080,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     return False
         return True
 
-    security.declarePrivate('getAdviceDataFor')
-    def getAdviceDataFor(self, adviserId=None):
+    security.declarePublic('getAdviceDataFor')
+    def getAdviceDataFor(self, item, adviserId=None):
         '''Returns data info for given p_adviserId adviser id.
-           If not p_adviserId is given, every advice infos are returned.'''
+           If not p_adviserId is given, every advice infos are returned.
+           We receive p_item as the current item to be sure that this public
+           method can not be called thru the web (impossible to pass an object as parameter),
+           but it is still callable using a Script (Python) or useable in a TAL expression...'''
+        if not isinstance(item, MeetingItem) or not item.UID() == self.UID():
+            raise Unauthorized
         data = {}
         if not adviserId:
             for adviceInfo in self.adviceIndex.values():

@@ -2531,6 +2531,19 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.setItemCreatedOnlyUsingTemplate(True)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@at_lifecycle_view').begin_edit)
 
+    def test_pm_GetAdviceDataFor(self):
+        '''Test the getAdviceDataFor method, essentially the fact that it needs the item
+           we are calling the method on as first parameter, this will avoid this method
+           being callable TTW.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        # raises Unauthorized if item is not passed as first parameter
+        self.assertRaises(Unauthorized, item.getAdviceDataFor, '')
+        self.assertRaises(Unauthorized, item.getAdviceDataFor, item2)
+        # but works if right parameters are passed
+        self.assertTrue(item.getAdviceDataFor(item) == {})
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
