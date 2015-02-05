@@ -8,4 +8,6 @@ Migration to PloneMeeting 3.3 :
 5) Check some elements :
    - certified signatures on each MeetingConfig;
    - adapt certified signatures call on relevant templates;
-   - generate every templates to check for consistency.
+   - generate every templates to check for consistency;
+   - MeetingItem.listProposingGroup is not MeetingItem.listProposingGroups;
+   - MeetingItem.getAdviceDataFor now needs a mandatory first paramter, the item itself (avoid calls TTW).
