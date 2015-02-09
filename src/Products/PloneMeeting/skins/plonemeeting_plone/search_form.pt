@@ -29,7 +29,7 @@
 
   <metal:main fill-slot="main"
      tal:define="tool python: context.portal_plonemeeting;
-                 currentMeetingConfig python: tool.getMeetingConfig(context);
+                 cfg python: tool.getMeetingConfig(context);
                  associatedGroupsUsed python: tool.attributeIsUsed('item', 'associatedGroups');
                  categoryUsed python: tool.attributeIsUsed('item', 'category');
                  classifierUsed python: tool.attributeIsUsed('item', 'classifier');">
@@ -196,7 +196,7 @@
         <tal:comment replace="nothing">What meeting configs and site to include in the search?</tal:comment>
         <td width="25%">
               <input type="hidden" class="noborder" name="search_config"
-                     tal:attributes="value currentMeetingConfig/id;"/>
+                     tal:attributes="value cfg/id;"/>
         </td>
       </tr>
       <tr name="item_criteria">
@@ -259,7 +259,7 @@
               <td>
                 <label i18n:translate="item_state"></label><br/>
                 <select name="itemState" multiple="multiple" size="7">
-                  <tal:options repeat="stateInfo python: currentMeetingConfig.listItemStates().items()">
+                  <tal:options repeat="stateInfo python: cfg.listItemStates().items()">
                    <option tal:attributes="value python: stateInfo[0]; title python: stateInfo[1]"
                            tal:content="python: tool.truncate(stateInfo[1])">
                    </option>
@@ -274,7 +274,7 @@
                <tal:comment replace="nothing">Categories</tal:comment>
                <br/><label for="categories" i18n:translate="PloneMeeting_label_category"></label><br/>
                 <select name="categories" multiple="multiple" size="7">
-                  <tal:options repeat="category currentMeetingConfig/getCategories">
+                  <tal:options repeat="category python: cfg.getCategories(onlySelectable=False)">
                     <option tal:define="name category/getName"
                             tal:attributes="value category/id; title name"
                             tal:content="python: tool.truncate(name, 45)">
@@ -287,7 +287,7 @@
                 <br/><label for="classifiers" i18n:translate="PloneMeeting_label_classifier"></label><br/>
                 <select name="classifiers" multiple="multiple" size="7"
                         tal:condition="classifierUsed">
-                  <tal:options repeat="classifier python: currentMeetingConfig.getCategories(classifiers=True)">
+                  <tal:options repeat="classifier python: cfg.getCategories(onlySelectable=False, classifiers=True)">
                   <option tal:define="name classifier/getName"
                           tal:attributes="value classifier/UID; title name"
                           tal:content="python: tool.truncate(name, 45)">
