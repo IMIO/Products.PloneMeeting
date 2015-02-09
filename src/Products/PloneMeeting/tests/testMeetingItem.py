@@ -37,6 +37,8 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.statusmessages.interfaces import IStatusMessage
 
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
+from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
@@ -2543,6 +2545,26 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, item.getAdviceDataFor, item2)
         # but works if right parameters are passed
         self.assertTrue(item.getAdviceDataFor(item) == {})
+
+    def test_pm_CopiedFieldsWhenDuplicated(self):
+        '''This test will test constants DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC
+           regarding current item schema.  This will ensure that when a new field is added, it
+           is correctly considered by these 2 constants or purposely not taken into account.'''
+        # every item fields except ones considered as metadata
+        itemFields = [field.getName() for field in MeetingItem.schema.filterFields(isMetadata=False)]
+        # fields not taken into account are following
+        # XXX toDiscuss is a neutral field because it will be initialized following
+        # parameter MeetingConfig.toDiscussDefault when the item will be cloned
+        neutralFields = ['answerers', 'completeness', 'emergency', 'id',
+                         'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
+                         'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
+                         'itemKeywords', 'itemNumber', 'itemSignatories',
+                         'itemSignatures', 'itemTags', 'meetingTransitionInsertingMe',
+                         'predecessor', 'preferredMeeting', 'proposingGroup', 'questioners',
+                         'takenOverBy', 'templateUsingGroups',
+                         'toDiscuss', 'votesAreSecret']
+        # neutral + default + extra should equals itemFields
+        self.assertTrue(set(neutralFields + DEFAULT_COPIED_FIELDS + EXTRA_COPIED_FIELDS_SAME_MC) == set(itemFields))
 
 
 def test_suite():

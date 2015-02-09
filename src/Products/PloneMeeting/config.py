@@ -194,12 +194,13 @@ ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 
 # default fields kept when an item is cloned
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
-                         'decision', 'classifier', 'category', 'budgetInfos',
-                         'budgetRelated', 'privacy']
+                         'decision', 'budgetInfos', 'budgetRelated', 'privacy',
+                         'sendToAuthority']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not send to another meeting config
-EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'optionalAdvisers',
-                               'otherMeetingConfigsClonableTo', 'oralQuestion', 'observations']
+EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', 'category',
+                               'optionalAdvisers', 'otherMeetingConfigsClonableTo',
+                               'oralQuestion', 'observations']
 
 # There are various ways to insert items into meetings
 itemInsertMethods = (  # Items are inserted:
