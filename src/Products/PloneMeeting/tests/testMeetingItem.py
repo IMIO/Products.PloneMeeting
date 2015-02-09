@@ -2550,8 +2550,10 @@ class testMeetingItem(PloneMeetingTestCase):
         '''This test will test constants DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC
            regarding current item schema.  This will ensure that when a new field is added, it
            is correctly considered by these 2 constants or purposely not taken into account.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
         # every item fields except ones considered as metadata
-        itemFields = [field.getName() for field in MeetingItem.schema.filterFields(isMetadata=False)]
+        itemFields = [field.getName() for field in item.Schema().filterFields(isMetadata=False)]
         # fields not taken into account are following
         # XXX toDiscuss is a neutral field because it will be initialized following
         # parameter MeetingConfig.toDiscussDefault when the item will be cloned
@@ -2561,10 +2563,15 @@ class testMeetingItem(PloneMeetingTestCase):
                          'itemKeywords', 'itemNumber', 'itemSignatories',
                          'itemSignatures', 'itemTags', 'meetingTransitionInsertingMe',
                          'predecessor', 'preferredMeeting', 'proposingGroup', 'questioners',
-                         'takenOverBy', 'templateUsingGroups',
-                         'toDiscuss', 'votesAreSecret']
-        # neutral + default + extra should equals itemFields
-        self.assertTrue(set(neutralFields + DEFAULT_COPIED_FIELDS + EXTRA_COPIED_FIELDS_SAME_MC) == set(itemFields))
+                         'takenOverBy', 'templateUsingGroups', 'toDiscuss', 'votesAreSecret']
+        # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
+        # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
+        self.assertTrue(set(neutralFields +
+                            DEFAULT_COPIED_FIELDS +
+                            EXTRA_COPIED_FIELDS_SAME_MC +
+                            item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=True) +
+                            item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=False))
+                        == set(itemFields))
 
 
 def test_suite():
