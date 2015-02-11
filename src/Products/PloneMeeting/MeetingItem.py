@@ -4383,16 +4383,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the list of dict that contains infos about a predecessor.
            This method can be adapted.'''
         item = self.getSelf()
-        tool = getToolByName(item, "portal_plonemeeting")
+        tool = getToolByName(item, 'portal_plonemeeting')
         predecessor = item.getPredecessor()
         predecessors = []
-        #retrieve every predecessors
+        # retrieve every predecessors
         while predecessor:
             predecessors.append(predecessor)
             predecessor = predecessor.getPredecessor()
-        #keep order
+        # keep order
         predecessors.reverse()
-        #retrieve backrefs too
+        # retrieve backrefs too
         brefs = item.getBRefs('ItemPredecessor')
         while brefs:
             predecessors = predecessors + brefs
@@ -4401,21 +4401,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for predecessor in predecessors:
             showColors = tool.showColorsForUser()
             coloredLink = tool.getColoredLink(predecessor, showColors=showColors)
-            #extract title from coloredLink that is HTML and complete it
+            # extract title from coloredLink that is HTML and complete it
             originalTitle = re.sub('<[^>]*>', '', coloredLink).strip()
-            #remove '&nbsp;' left at the beginning of the string
+            # remove '&nbsp;' left at the beginning of the string
             originalTitle = originalTitle.lstrip('&nbsp;')
             title = originalTitle
             meeting = predecessor.getMeeting()
-            #display the meeting date if the item is linked to a meeting
+            # display the meeting date if the item is linked to a meeting
             if meeting:
                 title = "%s (%s)" % (title, tool.formatMeetingDate(meeting).encode('utf-8'))
-            #show that the linked item is not of the same portal_type
-            if not predecessor.portal_type == item.portal_type:
-                predecessorCfg = tool.getMeetingConfig(predecessor)
-                title = "<b><i>%s</i></b> - " % predecessorCfg.Title() + title
-            #only replace last occurence because title appear in the "title" tag,
-            #could be the same as the last part of url (id), ...
+            # show the meetingConfig type of the linked item, no matter
+            # it is from same portal_type of current item or not
+            predecessorCfg = tool.getMeetingConfig(predecessor)
+            title = "<b><i>%s</i></b> - " % predecessorCfg.Title() + title
+            # only replace last occurence because title appear in the "title" tag,
+            # could be the same as the last part of url (id), ...
             splittedColoredLink = coloredLink.split(originalTitle)
             splittedColoredLink[-2] = splittedColoredLink[-2] + title + splittedColoredLink[-1]
             splittedColoredLink.pop(-1)
