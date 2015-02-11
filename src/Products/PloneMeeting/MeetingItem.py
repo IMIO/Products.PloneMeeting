@@ -4121,21 +4121,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         newOwnerId = self.Creator()
         cloneEventAction = 'create_to_%s_from_%s' % (destMeetingConfigId,
                                                      cfg.getId())
-        fieldsToCopy = DEFAULT_COPIED_FIELDS
-        originUsedItemAttributes = cfg.getUsedItemAttributes()
+        fieldsToCopy = list(DEFAULT_COPIED_FIELDS)
         destUsedItemAttributes = destMeetingConfig.getUsedItemAttributes()
-        # Copy also budgetRelated fields if used in the destMeetingConfig
-        if not 'budgetInfos' in originUsedItemAttributes or \
-           not 'budgetInfos' in destUsedItemAttributes:
-            if 'budgetRelated' in fieldsToCopy:
-                fieldsToCopy.remove('budgetRelated')
-            if 'budgetInfos' in fieldsToCopy:
-                fieldsToCopy.remove('budgetInfos')
-        # Copy also motivation if used in the destMeetingConfig
-        if not 'motivation' in originUsedItemAttributes or \
-           not 'motivation' in destUsedItemAttributes:
-            if 'motivation' in fieldsToCopy:
-                fieldsToCopy.remove('motivation')
+        # do not keep optional fields that are not used in the destMeetingConfig
+        optionalFields = cfg.listUsedItemAttributes().keys()
+        for field in fieldsToCopy:
+            if field in optionalFields and not field in destUsedItemAttributes:
+                fieldsToCopy.remove(field)
+                # special case for 'budgetRelated' that works together with 'budgetInfos'
+                if field == 'budgetInfos':
+                    fieldsToCopy.remove('budgetRelated')
         newItem = self.clone(copyAnnexes=True, newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
