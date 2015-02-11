@@ -8,8 +8,9 @@ Migration to PloneMeeting 3.3 :
 5) Check some elements :
    - certified signatures on each MeetingConfig;
    - adapt certified signatures call on relevant templates;
+   - make sure signatures are not alone;
    - generate every templates to check for consistency;
    - MeetingItem.listProposingGroup is now MeetingItem.listProposingGroups;
    - MeetingGroup._createPloneGroup is now MeetingGroup._createOrUpdatePloneGroup;
    - ToolPloneMeeting.isManager now need a context as first mandatory argument now that MeetingManagers are local;
-   - MeetingItem.getAdviceDataFor now needs a mandatory first paramter, the item itself (avoid calls TTW).
+   - MeetingItem.getAdviceDataFor now needs a mandatory first parameter, the item itself (avoid calls TTW).
