@@ -379,7 +379,7 @@ class MeetingItemWorkflowActions:
                                        'MeetingManager', isRole=True)
 
     security.declarePrivate('doPresent')
-    def doPresent(self, stateChange, forceNormal=False):
+    def doPresent(self, stateChange):
         '''Presents an item into a meeting. If p_forceNormal is True, and the
            item should be inserted as a late item, it is nevertheless inserted
            as a normal item.'''
@@ -389,6 +389,7 @@ class MeetingItemWorkflowActions:
         if not meeting:
             # find meetings accepting items in the future
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
+        forceNormal = bool(self.context.REQUEST.form.get('itemInsertForceNormal') is True)
         meeting.insertItem(self.context, forceNormal=forceNormal)
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
@@ -2460,7 +2461,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 'customAdviceMessage': None}
 
     security.declarePublic('getInsertOrder')
-    def getInsertOrder(self, insertMethods, meeting, late):
+    def getInsertOrder(self, insertMethods):
         '''When inserting an item into a meeting, depending on the sort method
            chosen in the meeting config we must insert the item at a given
            position that depends on the "insert order", ie the order of the
@@ -2479,7 +2480,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         largestLevelValue = 0
         oneLevels = []
         for insertMethod in insertMethods:
-            levelValue = item._findOneLevelFor(insertMethod['insertingMethod'], item)
+            levelValue = item._findOneLevelFor(insertMethod['insertingMethod'])
             oneLevels.append(levelValue)
             if levelValue > largestLevelValue:
                 largestLevelValue = levelValue + 1
@@ -2494,7 +2495,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for insertMethod in insertMethods:
             if not res:
                 res = 0
-            order = item._findOrderFor(insertMethod['insertingMethod'], item)
+            order = item._findOrderFor(insertMethod['insertingMethod'])
             # check if we need to reverse order
             if insertMethod['reverse'] == '1':
                 halfOneLevel = levels[insertMethods.index(insertMethod)]/2
@@ -2506,25 +2507,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise PloneMeetingError(INSERT_ITEM_ERROR)
         return res
 
-    def _findOneLevelFor_cachekey(method, self, insertMethod, item):
+    def _findOneLevelFor_cachekey(method, self, insertMethod):
         '''cachekey method for self._findOneLevelFor.'''
-        return (insertMethod, str(item.REQUEST.debug))
+        return (insertMethod, str(self.REQUEST.debug))
 
     @ram.cache(_findOneLevelFor_cachekey)
-    def _findOneLevelFor(self, insertMethod, item):
+    def _findOneLevelFor(self, insertMethod):
         '''
           Find the size of a complete set of given p_insertMethod.
           We use it in the algorythm that calculate item order
           when inserting it in a meeting.
         '''
-        tool = getToolByName(item, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         if insertMethod == 'on_categories':
             return len(cfg.getCategories(onlySelectable=False))
         elif insertMethod in ('on_proposing_groups', 'on_all_groups'):
             return len(tool.getMeetingGroups(onlyActive=False))
         elif insertMethod == 'on_privacy':
-            return len(item.listPrivacyValues())
+            return len(self.listPrivacyValues())
         elif insertMethod == 'on_to_discuss':
             # either 'toDiscuss' is True or False
             return 2
@@ -2533,8 +2534,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # can be sent to + the fact that an item is not
             # to send to another MC
             return len(self.listOtherMeetingConfigsClonableTo()) + 1
+        else:
+            return self.adapted()._findCustomOneLevelFor(insertMethod)
 
-    def _findOrderFor(self, insertMethod, item):
+    def _findCustomOneLevelFor(self, insertMethod):
+        '''
+          Adaptable method when defining our own insertMethod.
+          This is made to be overrided.
+        '''
+        raise NotImplementedError
+
+    def _findOrderFor(self, insertMethod):
         '''
           Find the order of given p_insertMethod.
         '''
@@ -2543,18 +2553,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # get the category order, pass onlySelectable to False so disabled categories
             # are taken into account also, so we avoid problems with freshly disabled categories
             # or when a category is restricted to a group a MeetingManager is not member of
-            res = item.getCategory(True).getOrder(onlySelectable=False)
+            res = self.getCategory(True).getOrder(onlySelectable=False)
         elif insertMethod == 'on_proposing_groups':
-            res = item.getProposingGroup(True).getOrder(onlyActive=False)
+            res = self.getProposingGroup(True).getOrder(onlyActive=False)
         elif insertMethod == 'on_all_groups':
-            res = item.getProposingGroup(True).getOrder(item.getAssociatedGroups(), onlyActive=False)
+            res = self.getProposingGroup(True).getOrder(self.getAssociatedGroups(), onlyActive=False)
         elif insertMethod == 'on_privacy':
-            privacy = item.getPrivacy()
-            privacies = item.listPrivacyValues().keys()
+            privacy = self.getPrivacy()
+            privacies = self.listPrivacyValues().keys()
             # Get the order of the privacy
             res = privacies.index(privacy)
         elif insertMethod == 'on_to_discuss':
-            if item.getToDiscuss():
+            if self.getToDiscuss():
                 res = 0
             else:
                 res = 1
@@ -2565,7 +2575,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return len(values) + 1
             else:
                 return values.index(toCloneTo[0])
+        else:
+            res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
+
+    def _findCustomOrderFor(self, insertMethod):
+        '''
+          Adaptable method when defining our own insertMethod.
+          This is made to be overrided.
+        '''
+        raise NotImplementedError
 
     security.declarePublic('sendMailIfRelevant')
     def sendMailIfRelevant(self, event, permissionOrRole, isRole=False, customEvent=False, mapping={}):

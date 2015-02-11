@@ -2573,6 +2573,15 @@ class testMeetingItem(PloneMeetingTestCase):
                             item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=False))
                         == set(itemFields))
 
+    def test_pm_CustomInsertingMethodRaisesNotImplementedErrorIfNotImplemented(self):
+        '''Test that we can use a custom inserting method, relevant code is called.
+           For now, it will raise NotImplementedError.
+        '''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertRaises(NotImplementedError, item._findOneLevelFor, 'my_custom_inserting_method')
+        self.assertRaises(NotImplementedError, item._findOrderFor, 'my_custom_inserting_method')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

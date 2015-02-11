@@ -42,7 +42,7 @@ class testMeeting(PloneMeetingTestCase):
     '''Tests various aspects of Meetings management.'''
 
     def test_pm_InsertItem(self):
-        '''Tests that items are inserted at the right place into the meeting.
+        '''Test that items are inserted at the right place into the meeting.
            In the test profile, groups order is like this:
            1) developers
            2) vendors
@@ -56,12 +56,18 @@ class testMeeting(PloneMeetingTestCase):
             if meetingConfig == self.meetingConfig.getId():
                 # There are 2 recurring items in self.meetingConfig
                 expected = ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6']
+                expectedInsertOrderIndexes = [0, 0, 0, 0, 4, 4, 4]
             else:
                 expected = ['o3', 'o4', 'o5', 'o6', 'o2']
+                expectedInsertOrderIndexes = [18, 18, 27, 27, 36]
             self.setMeetingConfig(meetingConfig)
             meeting = self._createMeetingWithItems()
             self.assertEquals([item.getId() for item in meeting.getItemsInOrder()],
                               expected)
+            # insert order is determined by computing an index value
+            self.assertEquals([item.getInsertOrder(self.meetingConfig.getInsertingMethodsOnAddItem())
+                               for item in meeting.getItemsInOrder()],
+                              expectedInsertOrderIndexes)
 
     def test_pm_InsertItemOnProposingGroupsWithDisabledGroup(self):
         '''Test that inserting an item using the "on_proposing_groups" sorting method

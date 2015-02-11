@@ -1092,7 +1092,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             # item whose category/group immediately follows p_item's category/
             # group (or at the end if inexistent). Note that the MeetingManager,
             # in subsequent manipulations, may completely change items order.
-            itemOrder = item.adapted().getInsertOrder(insertMethods, self, isLate)
+            itemOrder = item.adapted().getInsertOrder(insertMethods)
             higherItemFound = False
             insertIndex = 0  # That's where I will insert the item
             for anItem in items:
@@ -1101,7 +1101,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     # continue to visit the items in order to increment their
                     # number.
                     anItem.setItemNumber(anItem.getItemNumber()+1)
-                elif anItem.adapted().getInsertOrder(insertMethods, self, isLate) > itemOrder:
+                elif anItem.adapted().getInsertOrder(insertMethods) > itemOrder:
                     higherItemFound = True
                     insertIndex = anItem.getItemNumber()-1
                     anItem.setItemNumber(anItem.getItemNumber()+1)
