@@ -159,7 +159,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   or it's position changed
 - When the title of a MeetingGroup changed, the title of linked Plone groups is also changed accordingly
 - Removed workflow adaptation 'local_meeting_managers'
-- Added easy way to define a custom inserting method
+- Added easy way to define a custom inserting method (order when an item is inserted in a meeting)
 
 3.2.0.1 (2014-03-06)
 --------------------
