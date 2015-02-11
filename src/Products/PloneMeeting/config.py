@@ -203,7 +203,7 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', '
                                'oralQuestion', 'observations']
 
 # There are various ways to insert items into meetings
-itemInsertMethods = (  # Items are inserted:
+ITEM_INSERT_METHODS = (  # Items are inserted:
     'at_the_end',  # at the end of meetings;
     'on_categories',  # according to category order;
     'on_proposing_groups',  # according to proposing group order;

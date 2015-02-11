@@ -4085,7 +4085,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Return a list of available inserting methods when
            adding a item to a meeting'''
         res = []
-        for itemInsertMethod in itemInsertMethods:
+        for itemInsertMethod in ITEM_INSERT_METHODS:
             res.append((itemInsertMethod,
                         translate(itemInsertMethod,
                                   domain='PloneMeeting',
