@@ -182,7 +182,7 @@ class MeetingUserDescriptor(Descriptor):
 
 
 class GroupDescriptor(Descriptor):
-    multiSelectFields = ('itemAdviceStates', 'itemAdviceEditStates', 'itemAdviceViewStates')
+    multiSelectFields = ('certifiedSignatures', 'itemAdviceStates', 'itemAdviceEditStates', 'itemAdviceViewStates')
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
     instance = None
@@ -203,7 +203,7 @@ class GroupDescriptor(Descriptor):
         self.itemAdviceEditStates = []
         self.itemAdviceViewStates = []
         self.asCopyGroupOn = asCopyGroupOn
-        self.signatures = ''
+        self.certifiedSignatures = []
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
         for role in MEETING_GROUP_SUFFIXES:
             setattr(self, role, [])

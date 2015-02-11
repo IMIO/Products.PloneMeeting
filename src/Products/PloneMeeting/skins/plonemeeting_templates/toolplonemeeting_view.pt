@@ -104,28 +104,11 @@
                    tal:define="descr obj/Description"
                    tal:condition="descr"
                    tal:content="descr">MeetingGroup description</div>
-              <tal:additionalInformations define="context python: obj">
-                <span class="discreet"
-                      tal:define="field python:obj.getField('itemAdviceStates');"
-                      tal:condition="obj/getItemAdviceStates">
-                  <metal:field use-macro="context/widgets/field/macros/view" />
-                </span>
-                <span class="discreet"
-                      tal:define="field python:obj.getField('itemAdviceEditStates');"
-                      tal:condition="obj/getItemAdviceEditStates">
-                  <metal:field use-macro="context/widgets/field/macros/view" />
-                </span>
-                <span class="discreet"
-                      tal:define="field python:obj.getField('itemAdviceViewStates');"
-                      tal:condition="obj/getItemAdviceViewStates">
-                  <metal:field use-macro="context/widgets/field/macros/view" />
-                </span>
-                <span class="discreet"
-                      tal:define="field python:obj.getField('asCopyGroupOn');"
-                      tal:condition="obj/getAsCopyGroupOn">
-                  <metal:field use-macro="context/widgets/field/macros/view" />
-                </span>
-              </tal:additionalInformations>
+                  <tal:additionalInformations
+                        define="context python: obj;
+                                excludedFields python: ('id', 'description', 'title')">
+                        <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
+                  </tal:additionalInformations>
             </td>
             <td tal:content="obj/getAcronym"></td>
             <td i18n:domain="plone">

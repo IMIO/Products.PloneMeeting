@@ -50,7 +50,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
     getCustomSchemaFields, getFieldContent, prepareSearchValue, \
-    forceHTMLContentTypeForEmptyRichFields, _in_between
+    forceHTMLContentTypeForEmptyRichFields, computeCertifiedSignatures
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -2526,7 +2526,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listSignatureNumbers(self):
         '''Vocabulary for column 'signatureNumber' of MeetingConfig.certifiedSignatures.'''
         res = []
-        for number in range(1,10):
+        for number in range(1, 11):
             res.append((str(number), str(number)))
         return DisplayList(tuple(res))
 
@@ -3928,31 +3928,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides field 'certifiedSignatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
            so signatures really available right now.'''
-        res = self.getField('certifiedSignatures').get(self, **kwargs)
+        signatures = self.getField('certifiedSignatures').get(self, **kwargs)
         if computed:
-            # compute available signatures and return it as a list of pair
-            # of function/name, like ['function1', 'name1', 'function2', 'name2']
-            tmp_res = []
-            now = DateTime()
-            validSignatureNumber = 0
-            for signature in res:
-                # first check if we still did not found a valid signature for this signatureNumber
-                if signature['signatureNumber'] == validSignatureNumber:
-                    continue
-                # walk thru every signatures and select available one
-                # the first found active signature is kept
-                # if we have a date_from, we append hours 0h01 to take entire day into account
-                date_from = signature['date_from'] and DateTime('{} 0:01'.format(signature['date_from'])) or None
-                # if we have a date_to, we append hours 23h59 to take entire day into account
-                date_to = signature['date_to'] and DateTime('{} 23:59'.format(signature['date_to'])) or None
-                # if dates are defined and not current, continue
-                if (date_from and date_to) and not _in_between(date_from, date_to, now):
-                    continue
-                tmp_res.append(signature['function'])
-                tmp_res.append(signature['name'])
-                validSignatureNumber = signature['signatureNumber']
-            res = tmp_res
-        return res
+            computedSignatures = computeCertifiedSignatures(signatures)
+            signatures = computedSignatures
+        return signatures
 
     def getFileTypes_cachekey(method, self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
         '''cachekey method for self.getFileTypes.'''

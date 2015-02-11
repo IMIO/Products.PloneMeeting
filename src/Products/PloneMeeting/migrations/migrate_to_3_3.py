@@ -521,20 +521,19 @@ class Migrate_To_3_3(Migrator):
         logger.info('Done.')
 
     def _updateCertifiedSignatures(self):
-        '''MeetingConfig.certifiedSignatures is now a DataGridField, move to it.'''
-        logger.info('Updating certified signatures...')
-        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
-            if hasattr(cfg.certifiedSignatures, 'raw'):
-                certifiedSignatures = cfg.certifiedSignatures.raw
-            else:
-                # already migrated
-                continue
+        '''MeetingConfig.certifiedSignatures and MeetingGroup.signatures
+           are now DataGridFields, move to it.'''
+        def _dictifySignatures(signatures):
+            '''Adapt given signatures to build a dict compliant with DataGridField.'''
             # migrate couple of defined values, considered like 'function', 'name'
-            splittedCertifiedSignatures = certifiedSignatures.split('\n')
+            splittedCertifiedSignatures = signatures.split('\n')
             i = 1
             res = []
             signature = {}
             for splittedCertifiedSignature in splittedCertifiedSignatures:
+                # we manage maximum 10 signatures
+                if i > 10:
+                    continue
                 # encoding function, signature is still empty
                 if not signature:
                     signature['signatureNumber'] = '%d' % i
@@ -546,7 +545,24 @@ class Migrate_To_3_3(Migrator):
                     res.append(signature)
                     signature = {}
                     i = i + 1
-            cfg.setCertifiedSignatures(res)
+            return res
+
+        logger.info('Updating certified signatures on MeetingConfigs and MeetingGroups...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            if hasattr(cfg.certifiedSignatures, 'raw'):
+                certifiedSignatures = cfg.certifiedSignatures.raw
+            else:
+                # already migrated
+                continue
+            correctSignatures = _dictifySignatures(certifiedSignatures)
+            cfg.setCertifiedSignatures(correctSignatures)
+        for mGroup in self.portal.portal_plonemeeting.objectValues('MeetingGroup'):
+            if not hasattr(mGroup, 'signatures'):
+                # already migrated
+                continue
+            correctSignatures = _dictifySignatures(mGroup.signatures.raw)
+            mGroup.setCertifiedSignatures(correctSignatures)
+
         logger.info('Done.')
 
     def _updatePloneGroupsTitleAccordingToMeetingGroupTitle(self):

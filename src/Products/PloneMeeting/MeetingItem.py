@@ -2159,18 +2159,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures(computed=True)
 
-        groupSignatures = item.getProposingGroup(theObject=True).getSignatures()
-        if groupSignatures:
-            return groupSignatures
-
-        # no group signatures, use signatures from MeetingConfig
-        # if we use MeetingUsers, compute certified signatures, if not, use
-        # MeetingConfig certified signatures field
+        # if we do not use MeetingUsers, compute certified signatures calling
+        # it on the MeetingGroup (that will call the MeetingConfig if nothing defined on it)
         if not cfg.isUsingMeetingUsers():
             # get certified signatures computed, this will return a list with pair
             # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
-            # this list is ordered by signature number defined in the MeetingConfig
-            return cfg.getCertifiedSignatures(computed=True)
+            # this list is ordered by signature number defined on the MeetingGroup/MeetingConfig
+            return item.getProposingGroup(theObject=True).getCertifiedSignatures(computed=True, context=item)
         else:
             # we use MeetingUsers
             signatories = cfg.getMeetingUsers(usages=('signer',))

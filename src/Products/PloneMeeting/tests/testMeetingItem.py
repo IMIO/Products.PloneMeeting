@@ -2319,7 +2319,21 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test the MeetingItem.getCertifiedSignatures method that gets signatures from
            the item proposing group or from the MeetingConfig periodic signatures.'''
         # define signatures for the 'developers' group
-        self.tool.developers.setSignatures('Developers group signatures')
+        groupCertifiedSignatures = [
+            {'signatureNumber': '1',
+             'name': 'Group Name1',
+             'function': 'Group Function1',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Group Name2',
+             'function': 'Group Function2',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        self.tool.developers.setCertifiedSignatures(groupCertifiedSignatures)
         # define signatures for the MeetingConfig
         certified = [
             {'signatureNumber': '1',
@@ -2342,12 +2356,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # item proposing group is "developers"
         self.assertTrue(item.getProposingGroup() == 'developers')
         # getting certified signatures for item will return signatures defined on proposing group
-        self.assertTrue(item.adapted().getCertifiedSignatures() == 'Developers group signatures')
+        self.assertTrue(item.adapted().getCertifiedSignatures() ==
+                        ['Group Function1', 'Group Name1', 'Group Function2', 'Group Name2'])
         # we can force to get signatures from the MeetingConfig
         self.assertTrue(item.adapted().getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True) ==
                         [u'Function1', u'Name1', u'Function2', u'Name2'])
         # if no signatures on the MeetingGroup, signatures of the MeetingConfig are used
-        self.tool.developers.setSignatures('')
+        self.tool.developers.setCertifiedSignatures([])
         self.assertTrue(item.adapted().getCertifiedSignatures() ==
                         [u'Function1', u'Name1', u'Function2', u'Name2'])
 

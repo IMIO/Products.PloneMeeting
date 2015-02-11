@@ -1185,7 +1185,31 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
                     pass
 
 
-# ------------------------------------------------------------------------------
+def computeCertifiedSignatures(signatures):
+    # compute available signatures and return it as a list of pair
+    # of function/name, like ['function1', 'name1', 'function2', 'name2']
+    computedSignatures = []
+    now = DateTime()
+    validSignatureNumber = 0
+    for signature in signatures:
+        # first check if we still did not found a valid signature for this signatureNumber
+        if signature['signatureNumber'] == validSignatureNumber:
+            continue
+        # walk thru every signatures and select available one
+        # the first found active signature is kept
+        # if we have a date_from, we append hours 0h01 to take entire day into account
+        date_from = signature['date_from'] and DateTime('{} 0:01'.format(signature['date_from'])) or None
+        # if we have a date_to, we append hours 23h59 to take entire day into account
+        date_to = signature['date_to'] and DateTime('{} 23:59'.format(signature['date_to'])) or None
+        # if dates are defined and not current, continue
+        if (date_from and date_to) and not _in_between(date_from, date_to, now):
+            continue
+        computedSignatures.append(signature['function'])
+        computedSignatures.append(signature['name'])
+        validSignatureNumber = signature['signatureNumber']
+    return computedSignatures
+
+
 def prepareSearchValue(value):
     '''Prepare given p_value to execute a query in the portal_catalog
        with a ZCTextIndex by adding a '*' at the end of each word.'''

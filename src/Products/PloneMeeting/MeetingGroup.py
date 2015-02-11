@@ -20,6 +20,10 @@ import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
+from Products.DataGridField import DataGridField, DataGridWidget
+from Products.DataGridField.Column import Column
+from Products.DataGridField.SelectColumn import SelectColumn
+
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
@@ -28,7 +32,9 @@ logger = logging.getLogger('PloneMeeting')
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
+from Products.PloneMeeting.utils import computeCertifiedSignatures
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.profiles import GroupDescriptor
 defValues = GroupDescriptor.get()
@@ -113,6 +119,22 @@ schema = Schema((
         ),
         write_permission="PloneMeeting: Write risky config",
     ),
+    DataGridField(
+        name='certifiedSignatures',
+        widget=DataGridWidget(
+            description="GroupCertifiedSignatures",
+            description_msgid="group_certified_signatures_descr",
+            columns={'signatureNumber': SelectColumn("Certified signatures signature number", vocabulary="listSignatureNumbers", col_description="Select the signature number, keep signatures ordered by number."), 'name': Column("Certified signatures signatory name", col_description="Name of the signatory (for example 'Mister John Doe')."), 'function': Column("Certified signatures signatory function", col_description="Function of the signatory (for example 'Mayor')."), 'date_from': Column("Certified signatures valid from (included)", col_description="Enter valid from date, use following format : YYYY/MM/DD, leave empty so it is always valid."), 'date_to': Column("Certified signatures valid to (included)", col_description="Enter valid to date, use following format : YYYY/MM/DD, leave empty so it is always valid."), },
+            label='Groupcertifiedsignatures',
+            label_msgid='PloneMeeting_label_group_certified_signatures',
+            i18n_domain='PloneMeeting',
+        ),
+        default=defValues.certifiedSignatures,
+        allow_oddeven=True,
+        write_permission="PloneMeeting: Write harmless config",
+        columns=('signatureNumber', 'name', 'function', 'date_from', 'date_to'),
+        allow_empty_rows=False,
+    ),
     TextField(
         name='signatures',
         allowable_content_types=('text/plain',),
@@ -172,6 +194,14 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     def queryState(self):
         '''In what state am I ?'''
         return self.portal_workflow.getInfoFor(self, 'review_state')
+
+    security.declarePrivate('listSignatureNumbers')
+    def listSignatureNumbers(self):
+        '''Vocabulary for column 'signatureNumber' of MeetingGroup.certifiedSignatures.'''
+        res = []
+        for number in range(1, 11):
+            res.append((str(number), str(number)))
+        return DisplayList(tuple(res))
 
     security.declarePublic('listItemStates')
     def listItemStates(self):
@@ -436,6 +466,23 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 res = tmpres
         return tuple(res)
 
+    security.declarePublic('getCertifiedSignatures')
+    def getCertifiedSignatures(self, computed=False, context=None, **kwargs):
+        '''Overrides field 'certifiedSignatures' accessor to be able to pass
+           the p_computed parameter that will return computed certified signatures,
+           so signatures really available right now.  If nothing is defined on the MeetingGroup,
+           use certified signatures defined on the corresponding MeetingConfig found using p_context.'''
+        signatures = self.getField('certifiedSignatures').get(self, **kwargs)
+        if computed:
+            # if we have certified signatures defined on this MeetingGroup use it
+            if signatures:
+                computedSignatures = computeCertifiedSignatures(signatures)
+            else:
+                tool = getToolByName(self, 'portal_plonemeeting')
+                cfg = tool.getMeetingConfig(context)
+                computedSignatures = cfg.getCertifiedSignatures(computed=True)
+            signatures = computedSignatures
+        return signatures
 
 
 registerType(MeetingGroup, PROJECTNAME)
