@@ -251,6 +251,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.id = id  # Identifier of the meeting config.
         self.setBilingual('title', title)
         self.active = active
+        # ids of users that will be MeetingManagers for this MeetingConfig
+        self.meetingManagers = []
 
         # General parameters ---------------------------------------------------
         self.assembly = 'Person 1, Person 2'

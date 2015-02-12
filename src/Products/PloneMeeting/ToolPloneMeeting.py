@@ -743,6 +743,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             mu.reindexObject()
             mu.setUsages(oldUsages)
             mu.reindexObject()
+        # manage MeetingManagers
+        groupsTool = getToolByName(self, 'portal_groups')
+        for userId in configData.meetingManagers:
+            groupsTool.addPrincipalToGroup(userId, '{0}_{1}'.format(cfg.getId(),
+                                                                    MEETINGMANAGERS_GROUP_SUFFIX))
         # Perform workflow adaptations on this meetingConfig
         performWorkflowAdaptations(self.getParentNode(), cfg, logger)
         return cfg

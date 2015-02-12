@@ -101,9 +101,6 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         for cfg in self.tool.objectValues('MeetingConfig'):
             cfg.setMailItemEvents([])
             cfg.setMailMeetingEvents([])
-            # add 'pmManager' in relevant _meetingmanagers groups
-            self.portal.portal_groups.addPrincipalToGroup('pmManager', '{0}_{1}'.format(cfg.getId(),
-                                                                                        MEETINGMANAGERS_GROUP_SUFFIX))
         logout()
         # Set the default meeting config
         self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly', None)
