@@ -3807,18 +3807,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         meetingGroup = self.getProposingGroup(True)
         if meetingGroup:
             for groupSuffix in MEETING_GROUP_SUFFIXES:
+                # adviser-related local roles are managed in method
+                # MeetingItem.updateAdvices.
                 if groupSuffix == 'advisers':
                     continue
-                # Indeed, adviser-related local roles are managed in method
-                # MeetingItem.updateAdvices.
+                # if we have a Plone group related to this suffix, apply a local role for it
                 groupId = meetingGroup.getPloneGroupId(groupSuffix)
                 ploneGroup = self.portal_groups.getGroupById(groupId)
                 if not ploneGroup:
                     # in some case, MEETING_GROUP_SUFFIXES are used to manage
                     # only some groups so some other may not have a linked Plone group
                     continue
-                meetingRole = ploneGroup.getProperties()['meetingRole']
-                self.manage_addLocalRoles(groupId, (meetingRole,))
+                self.manage_addLocalRoles(groupId, (MEETINGROLES[groupSuffix],))
         # update local roles regarding copyGroups
         self.updateCopyGroupsLocalRoles()
         # Update advices after updateLocalRoles because updateLocalRoles

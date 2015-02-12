@@ -257,15 +257,11 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         if update:
             # just update the title so Plone groups title are coherent
             # with MeetingGroup title in case it is updated thereafter
-            group = self.portal_groups.getGroupById(groupId)
             groupsTool.editGroup(groupId, title=groupTitle)
         else:
             # create the Plone group
             self.portal_groups.addGroup(groupId, title=groupTitle)
             self.portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
-            group = self.portal_groups.getGroupById(groupId)
-            group.setProperties(meetingRole=MEETINGROLES.get(groupSuffix, ''),
-                                meetingGroupId=self.id)
 
     def getOrder(self, associatedGroupIds=None, onlyActive=True):
         '''At what position am I among all the active groups ? If

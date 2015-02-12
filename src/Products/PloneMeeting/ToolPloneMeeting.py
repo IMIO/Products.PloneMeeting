@@ -538,10 +538,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getMeetingGroup(self, ploneGroupId):
         '''Returns the MeetingGroup linked to the Plone group with id
             p_ploneGroupId.'''
-        ploneGroup = self.portal_groups.getGroupById(ploneGroupId)
-        props = ploneGroup.getProperties()
-        if 'meetingGroupId' in props and props['meetingGroupId']:
-            return getattr(self.aq_base, props['meetingGroupId'], None)
+        for suffix in MEETING_GROUP_SUFFIXES:
+            if ploneGroupId.endswith('_%s' % suffix):
+                mGroupId = ploneGroupId.replace('_%s' % suffix, '')
+                return getattr(self.aq_base, mGroupId, None)
 
     security.declarePublic('getMeetingGroups')
     def getMeetingGroups(self, notEmptySuffix=None, onlyActive=True, caching=True):

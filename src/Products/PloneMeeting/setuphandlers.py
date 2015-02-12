@@ -35,7 +35,6 @@ from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
 
 folderViews = ('meetingfolder_redirect_view', 'folder_contents', )
-pmGroupProperties = ('meetingRole', 'meetingGroupId')
 noSearchTypes = ('Folder',)
 # Indexes used by PloneMeeting
 # XXX warning, do ONLY use ZCTextIndex for real text values,
@@ -201,11 +200,6 @@ def postInstall(context):
 
     # Do not allow an anonymous user to register himself as new user
     site.manage_permission('Add portal member', ('Manager',), acquire=0)
-
-    # Register PloneMeeting-specific properties on groups
-    for groupProp in pmGroupProperties:
-        if not site.portal_groupdata.hasProperty(groupProp):
-            site.portal_groupdata.manage_addProperty(groupProp, '', 'string')
 
     site.portal_plonemeeting.at_post_create_script()
 

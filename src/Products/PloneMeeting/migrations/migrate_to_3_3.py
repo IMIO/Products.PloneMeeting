@@ -647,6 +647,16 @@ class Migrate_To_3_3(Migrator):
             self.portal.acl_users.portal_role_manager.removeRoleFromPrincipal('MeetingManager', member.getId())
         logger.info('Done.')
 
+    def _removePloneGroupsUselessProperties(self):
+        '''Properties 'meetingRole' and 'meetingGroupId' have been removed
+           from Plone groups created when adding a MeetingGroup.'''
+        logger.info('Removing useless properties \'meetingRole\' and \'meetingGroupId\' from portal_groupdata...')
+        propsToRemove = ('meetingRole', 'meetingGroupId', )
+        for propToRemove in propsToRemove:
+            if self.portal.portal_groupdata.hasProperty(propToRemove):
+                self.portal.portal_groupdata.manage_delProperties((propToRemove, ))
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         # run every available upgrade steps so different dependencies are correct
@@ -682,6 +692,7 @@ class Migrate_To_3_3(Migrator):
         self._updatePloneGroupsTitleAccordingToMeetingGroupTitle()
         self._cleanUpMCSelectedWFAdaptations()
         self._moveToLocalMeetingManagers()
+        self._removePloneGroupsUselessProperties()
         # clean registries (js, css, portal_setup)
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -730,12 +741,16 @@ def migrate(context):
        21) Clean portal_plonemeeting search attributes as most were removed;
        22) Clean meeting configs task related attributes as it was removed;
        23) Update certified signatures now that it is period aware;
-       24) Clean registries as we removed some css;
-       25) Reinstall PloneMeeting;
-       26) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
-       27) Update the portal_plonemeeting WF policy;
-       28) Compute MeetingConfig.transitionsForPresentingAnItem suite of transitions;
-       29) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
+       24) Make sure Plone groups linked to a MeetingGroup have a consistent title (same as MeetingGroup);
+       25) Clean wfAdaptations selected on each MeetingConfig;
+       26) Move to local MeetingManagers;
+       27) Remove properties that were added on Plone groups linked to a MeetingGroup;
+       28) Clean registries as we removed some css;
+       29) Reinstall PloneMeeting;
+       30) Make sure MeetingItem.getPreferredMeeting is referencing an existing meeting UID;
+       31) Update the portal_plonemeeting WF policy;
+       32) Compute MeetingConfig.transitionsForPresentingAnItem suite of transitions;
+       33) Clear and rebuild portal_catalog so items in the MeetingConfigs are indexed.
     '''
     Migrate_To_3_3(context).run()
 # ------------------------------------------------------------------------------
