@@ -1857,6 +1857,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          "python: here.portal_plonemeeting.isManager(here) and "
          "'return_to_proposing_group' in here.getWorkflowAdaptations()",
          ),
+        # All 'decided' items
+        ('searchdecideditems',
+         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
+          ),
+         'created',
+         'searchDecidedItems',
+         '',
+         ),
         # All not-yet-decided meetings
         ('searchallmeetings',
         (('portal_type', 'ATPortalTypeCriterion', ('Meeting',)),
@@ -3568,6 +3576,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         member = membershipTool.getAuthenticatedMember()
         params = {'portal_type': self.getItemTypeName(),
                   'getTakenOverBy': member.getId(),
+                  'sort_on': sortKey,
+                  'sort_order': sortOrder, }
+        # Manage filter
+        if filterKey:
+            params[filterKey] = prepareSearchValue(filterValue)
+        # update params with kwargs
+        params.update(kwargs)
+        # Perform the query in portal_catalog
+        return self.portal_catalog(**params)
+
+    security.declarePublic('searchDecidedItems')
+    def searchDecidedItems(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
+        '''Queries all items that are decided, depending on MeetingConfig.itemDecidedStates.'''
+        params = {'portal_type': self.getItemTypeName(),
+                  'review_state': self.getItemDecidedStates(),
                   'sort_on': sortKey,
                   'sort_order': sortOrder, }
         # Manage filter

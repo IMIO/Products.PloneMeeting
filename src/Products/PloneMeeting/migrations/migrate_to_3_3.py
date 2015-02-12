@@ -305,6 +305,12 @@ class Migrate_To_3_3(Migrator):
         '''Add the new topics, remove useless ones and adapt some too...'''
         logger.info('Updating topics of every MeetingConfigs...')
         for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            # make sure 'searchdecideditems' use a search script
+            # removes it if not so it is added again correctly
+            if hasattr(cfg.topics, 'searchdecideditems'):
+                decidedItemsTopic = cfg.topics.searchdecideditems
+                if not decidedItemsTopic.getProperty('TOPIC_SEARCH_SCRIPT', None):
+                    cfg.topics.manage_delObjects([decidedItemsTopic.getId(), ])
             hasSearchItemsOfMyGroups = False
             hasSearchMyItemsTakenOver = False
             hasSearchItemsToAdvifceWithoutDelay = False
