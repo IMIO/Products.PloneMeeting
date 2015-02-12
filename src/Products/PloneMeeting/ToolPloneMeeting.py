@@ -40,7 +40,6 @@ import transaction
 import OFS.Moniker
 from appy.gen import No
 from datetime import datetime
-from openid.cryptutil import randomString
 from AccessControl import Unauthorized
 from AccessControl import getSecurityManager
 from Acquisition import aq_base
@@ -70,6 +69,8 @@ from Products.PloneMeeting.model.adaptations import performModelAdaptations, per
 import logging
 logger = logging.getLogger('PloneMeeting')
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.security import is_develop_environment
+from imio.helpers.security import generate_password
 
 # Some constants ---------------------------------------------------------------
 MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
@@ -1849,13 +1850,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            tool based on p_groups which is a list of GroupDescriptor instances.
            if p_usersOutsideGroups is not empty, it is a list of UserDescriptor
            instances that will serve to create the corresponding Plone users.'''
-        groupsTool = self.portal_groups
-        # use a generated password if we are adding an instance
-        # in a mount point, aka an instance that will be in production one day...
-        portal = getToolByName(self, 'portal_url').getPortalObject()
-        is_mountpoint = len(portal.absolute_url_path().split('/')) > 2
-        password = is_mountpoint and randomString(8, (string.ascii_letters + string.digits)) or None
-        logger.info("The password used for added users is '%s'" % (password or DEFAULT_USER_PASSWORD))
+        plone_utils = getToolByName(self, 'plone_utils')
+        groupsTool = getToolByName(self, 'portal_groups')
+        # if we are in dev, we use DEFAULT_USER_PASSWORD, else we will generate a
+        # password that is compliant with the current password policy...
+        if is_develop_environment():
+            password = DEFAULT_USER_PASSWORD
+        else:
+            password = generate_password()
+        msg = "The password used for added users is %s" % (password or DEFAULT_USER_PASSWORD)
+        logger.info(msg)
+        # add a portal_message so admin adding the Plone site knows password
+        plone_utils.addPortalMessage(msg, 'warning')
         for groupDescr in groups:
             # Maybe the MeetingGroup already exists?
             # It could be the case if we are reapplying a configuration
