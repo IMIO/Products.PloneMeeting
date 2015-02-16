@@ -1700,17 +1700,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     if userGroups:
                         newItem.setProposingGroup(userGroups[0].getId())
 
+            res.append(newItem)
+
+        # now trigger post creation methods on result
+        self.REQUEST.set('currentlyPastingItems', False)
+        for item in res:
             # call at_post_create_script again that updates the local roles (so removes role
             # 'Manager' that we've set above) by calling MeetingItem.updateLocalRoles,
             # and also gives role "Owner" to the logged user.
-            newItem.at_post_create_script()
-            IAnnexable(newItem).updateAnnexIndex()
+            item.at_post_create_script()
+            IAnnexable(item).updateAnnexIndex()
             if newOwnerId != loggedUserId:
-                self.plone_utils.changeOwnershipOf(newItem, newOwnerId)
+                self.plone_utils.changeOwnershipOf(item, newOwnerId)
             # Append the new item to the result.
-            newItem.reindexObject()
-            res.append(newItem)
-        self.REQUEST.set('currentlyPastingItems', False)
+            item.reindexObject()
         return res
 
     def _updateMeetingFileTypesAfterSentToOtherMeetingConfig(self, annex):
