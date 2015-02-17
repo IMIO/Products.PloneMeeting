@@ -4416,7 +4416,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             coloredLink = originalTitle.join(splittedColoredLink)
             if not checkPermission(View, predecessor):
                 coloredLink = spanifyLink(coloredLink)
-                coloredLink += "&nbsp;<span class='discreet'>({0})</span>".format(translate('can_not_access_this_item', domain="PloneMeeting", context=item.REQUEST, default="You can not access this item").encode('utf-8'))
+                coloredLink += "&nbsp;<span class='discreet'>({0})</span>".format(
+                    translate('can_not_access_this_item',
+                              domain="PloneMeeting",
+                              context=item.REQUEST,
+                              default="You can not access this item").encode('utf-8'))
             res.append(coloredLink)
         return res
 
