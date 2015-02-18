@@ -2363,9 +2363,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('toHTMLStrikedContent')
     def toHTMLStrikedContent(self, content):
         """
-          Transform given p_content that is plain text having elements to strike between [[]]
-          to a HTML string using <strike> and surroung all this with a <p> for wich
-          we give a class='mltAssembly' attribute.
+          p_content is HTML having elements to strike between [[]].
+          We will replace these [[]] by <strike> tags.  Moreover, we will append the 'mltAssembly'
+          class to the <p> that surrounds the given p_content HTML.
         """
         return content.replace('[[', '<strike>').replace(']]', '</strike>'). \
             replace('<p>', '<p class="mltAssembly">')
