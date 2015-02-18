@@ -157,17 +157,21 @@
       <p i18n:translate="meetingconfig_assembly_and_signatures_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td width="33%" tal:define="field python:here.getField('assembly')">
+          <td width="33%">
             <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
               The field here above is not used, check the 'users' tab.
             </span>
-            <span metal:use-macro="here/widgets/field/macros/view" />
+            <tal:comment replace="nothing">We do not use the widget macro to be able to render 'assembly' using mimetype='text/x-html-safe'</tal:comment>
+            <label class="formQuestion"><span i18n:translate="PloneMeeting_label_assembly"></span>:</label>
+            <span tal:replace="structure python: context.getAssembly(mimetype='text/x-html-safe') or '-'"/>
           </td>
-          <td width="34%" tal:define="field python:here.getField('signatures')">
+          <td width="34%">
             <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
               The field here above is not used, check the 'users' tab.
             </span>
-            <span metal:use-macro="here/widgets/field/macros/view" />
+            <tal:comment replace="nothing">We do not use the widget macro to be able to render 'signatures' using mimetype='text/x-html-safe'</tal:comment>
+            <label class="formQuestion"><span i18n:translate="PloneMeeting_label_signatures"></span>:</label>
+            <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '-'"/>
           </td>
           <td width="33%" tal:define="field python:here.getField('certifiedSignatures')">
             <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
