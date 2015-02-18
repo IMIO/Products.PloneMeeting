@@ -212,11 +212,15 @@ div.pm_search_no_result_info {
 .selectRow { }
 .itemTitle { font-size: 100%; font-weight: bold; margin: 0.2em 0.1em 0 0.1em; }
 .itemDescription { margin: 0 0.1em; }
-.portlet tr { height: 1.4em !important; }
 .portlet a:hover {text-decoration: underline; }
 .portletHeader { padding: 1px 0.5em; text-transform: none; font-weight: bold; }
-.portletSection {padding: 1px 0.5em 0 0.5em; font-weight: bold; height: 1.4em; }
-.portletCell { padding: 0 0.5em 0 1em; font-weight: normal; font-style: italic; }
+.portletSection {
+    padding-top: 0.5em;
+    padding-bottom: 0.2em;
+    font-weight: bold;
+    height: 1.4em;
+}
+.portletCell { padding: 0.1em 0.5em 0.2em 1em; font-weight: normal; font-style: italic; }
 .portletSelected { font-weight: bold; }
 .field {margin: 0 1em 0.5em 0; }
 #portal-column-one .visualPadding { padding: 2em 0 1em 1em; }
