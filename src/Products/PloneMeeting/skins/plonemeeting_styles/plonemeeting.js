@@ -340,7 +340,6 @@ function deleteEvent(objectUid, eventTime) {
   openDialog('deleteDialog');
 }
 
-var isIe = (navigator.appName == "Microsoft Internet Explorer");
 // AJAX machinery
 var xhrObjects = new Array(); // An array of XMLHttpRequest objects
 function XhrObject() { // Wraps a XmlHttpRequest object
