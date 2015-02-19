@@ -663,7 +663,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if groupId.endswith('_%s' % suffix):
                 if onlyActive:
                     # check that the linked MeetingGroup is active
-                    if self.getMeetingGroup(groupId).getId() in activeMeetingGroupIds:
+                    group = self.getMeetingGroup(groupId)
+                    # we could not find the group, for example if suffix is 'powerobservers'
+                    if not group or group.getId() in activeMeetingGroupIds:
                         return True
                 else:
                     return True
