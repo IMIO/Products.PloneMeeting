@@ -225,14 +225,14 @@
           <div i18n:translate="search_select_many"></div><br/>
           <tal:comment replace="nothing">Item-specific search criteria</tal:comment>
           <table style="no-style-table" cellspacing="0" cellpadding="0" align="center"
-                 tal:define="groupInfos tool/getMeetingGroupsForSearch">
+                 tal:define="groupsVocab tool/listMeetingGroupsForSearch">
             <tr valign="top">
               <td> <tal:comment replace="nothing">Proposing groups</tal:comment>
                 <label for="proposingGroups" i18n:translate="PloneMeeting_label_proposingGroup"></label><br/>
                 <select name="proposingGroups" multiple="multiple" size="7">
-                  <option tal:repeat="groupInfo python:groupInfos[0]"
-                          tal:attributes="value python: groupInfo[0]; title python: groupInfo[1]"
-                          tal:content="python: tool.truncate(groupInfo[1])">
+                  <option tal:repeat="group groupsVocab"
+                          tal:attributes="value group; title python: groupsVocab.getValue(group)"
+                          tal:content="python: groupsVocab.getValue(group)">
                   </option>
                 </select>&nbsp;&nbsp;&nbsp;&nbsp;
               </td>
@@ -240,18 +240,15 @@
                 <tal:comment replace="nothing">Associated groups</tal:comment>
                 <label for="associatedGroups" i18n:translate="PloneMeeting_label_associatedGroups"></label><br/>
                 <tal:comment replace="nothing">And/or selector (only if no duplicate group).</tal:comment>
-                <tal:endOr condition="python: not groupInfos[1]">
-                  <input type="radio" class="noborder" name="ag_operator" id="ag_operator_or"
-                         value="or" checked="checked"/>
-                  <label for="ag_operator_or" i18n:translate="search_or" class="searchItem"></label>
-                  <input type="radio" class="noborder" name="ag_operator" id="ag_operator_and" value="and"/>
-                  <label for="ag_operator_and" i18n:translate="search_and" class="searchItem"></label><br/>
-                </tal:endOr>
-                <br tal:condition="python: groupInfos[1]"/>
+                <input type="radio" class="noborder" name="ag_operator" id="ag_operator_or"
+                       value="or" checked="checked"/>
+                <label for="ag_operator_or" i18n:translate="search_or" class="searchItem"></label>
+                <input type="radio" class="noborder" name="ag_operator" id="ag_operator_and" value="and"/>
+                <label for="ag_operator_and" i18n:translate="search_and" class="searchItem"></label><br/>
                 <select name="associatedGroups" multiple="multiple" size="7">
-                  <option tal:repeat="groupInfo python:groupInfos[0]"
-                          tal:attributes="value python: groupInfo[0]; title python: groupInfo[1]"
-                          tal:content="python: tool.truncate(groupInfo[1])">
+                  <option tal:repeat="group groupsVocab"
+                          tal:attributes="value group; title python: groupsVocab.getValue(group)"
+                          tal:content="python: groupsVocab.getValue(group)">
                   </option>
                 </select>&nbsp;&nbsp;&nbsp;&nbsp;
               </td>

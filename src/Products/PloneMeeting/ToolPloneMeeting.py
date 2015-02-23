@@ -1434,28 +1434,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     res = False
         return res
 
-    security.declarePublic('getMeetingGroupsForSearch')
-    def getMeetingGroupsForSearch(self):
-        '''This method returns ids and titles of meeting groups for a specific
-           use: selecting them for search purposes. If several meeting groups
-           have the same title, they are considered as a single group, and their
-           id is merged. When triggering the search, the merged ids will be
-           separated again and the search will occur (with an 'OR') on all
-           those groups.'''
+    security.declarePublic('listMeetingGroupsForSearch')
+    def listMeetingGroupsForSearch(self):
+        '''This method is used as vocabulary for fields 'proposingGroup'7
+           and 'associatedGroups' in the search_form.'''
         res = []
-        duplicatesExist = False
-        for meetingGroup in self.objectValues('MeetingGroup'):
-            alreadyThere = False
-            groupName = meetingGroup.getName()
-            for resItem in res:
-                if groupName == resItem[1]:
-                    # This group has the same name as a previous one
-                    alreadyThere = True
-                    duplicatesExist = True
-                    resItem[0] += '*' + meetingGroup.id
-            if not alreadyThere:
-                res.append([meetingGroup.id, groupName])
-        return res, duplicatesExist
+        for meetingGroup in self.getMeetingGroups(onlyActive=False):
+            res.append([meetingGroup.getId(), meetingGroup.Title()])
+        return DisplayList(res).sortedByValue()
 
     security.declarePublic('getItemsList')
     def getItemsList(self, meeting, whichItems, startNumber=1):
