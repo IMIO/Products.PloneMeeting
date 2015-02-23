@@ -1436,7 +1436,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('listMeetingGroupsForSearch')
     def listMeetingGroupsForSearch(self):
-        '''This method is used as vocabulary for fields 'proposingGroup'7
+        '''This method is used as vocabulary for fields 'proposingGroup'
            and 'associatedGroups' in the search_form.'''
         res = []
         for meetingGroup in self.getMeetingGroups(onlyActive=False):
