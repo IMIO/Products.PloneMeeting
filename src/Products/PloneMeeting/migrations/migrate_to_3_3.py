@@ -568,6 +568,7 @@ class Migrate_To_3_3(Migrator):
                 continue
             correctSignatures = _dictifySignatures(mGroup.signatures.raw)
             mGroup.setCertifiedSignatures(correctSignatures)
+            delattr(mGroup, 'signatures')
 
         logger.info('Done.')
 

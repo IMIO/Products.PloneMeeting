@@ -121,12 +121,12 @@ schema = Schema((
     ),
     DataGridField(
         name='certifiedSignatures',
-        widget=DataGridWidget(
+        widget=DataGridField._properties['widget'](
+            columns={'signatureNumber': SelectColumn("Certified signatures signature number", vocabulary="listSignatureNumbers", col_description="Select the signature number, keep signatures ordered by number."), 'name': Column("Certified signatures signatory name", col_description="Name of the signatory (for example 'Mister John Doe')."), 'function': Column("Certified signatures signatory function", col_description="Function of the signatory (for example 'Mayor')."), 'date_from': Column("Certified signatures valid from (included)", col_description="Enter valid from date, use following format : YYYY/MM/DD, leave empty so it is always valid."), 'date_to': Column("Certified signatures valid to (included)", col_description="Enter valid to date, use following format : YYYY/MM/DD, leave empty so it is always valid."), },
+            label_msgid="PloneMeeting_label_group_certifiedSignatures",
             description="GroupCertifiedSignatures",
             description_msgid="group_certified_signatures_descr",
-            columns={'signatureNumber': SelectColumn("Certified signatures signature number", vocabulary="listSignatureNumbers", col_description="Select the signature number, keep signatures ordered by number."), 'name': Column("Certified signatures signatory name", col_description="Name of the signatory (for example 'Mister John Doe')."), 'function': Column("Certified signatures signatory function", col_description="Function of the signatory (for example 'Mayor')."), 'date_from': Column("Certified signatures valid from (included)", col_description="Enter valid from date, use following format : YYYY/MM/DD, leave empty so it is always valid."), 'date_to': Column("Certified signatures valid to (included)", col_description="Enter valid to date, use following format : YYYY/MM/DD, leave empty so it is always valid."), },
-            label='Groupcertifiedsignatures',
-            label_msgid='PloneMeeting_label_group_certified_signatures',
+            label='Certifiedsignatures',
             i18n_domain='PloneMeeting',
         ),
         default=defValues.certifiedSignatures,
@@ -134,19 +134,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write harmless config",
         columns=('signatureNumber', 'name', 'function', 'date_from', 'date_to'),
         allow_empty_rows=False,
-    ),
-    TextField(
-        name='signatures',
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
-            label_msgid="PloneMeeting_label_group_signatures",
-            description="Leave empty to use the signatures defined on the meeting.",
-            description_msgid="group_signatures_descr",
-            label='Signatures',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type='text/plain',
-        write_permission="PloneMeeting: Write harmless config",
     ),
 
 ),
@@ -481,8 +468,10 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         return signatures
 
 
+
 registerType(MeetingGroup, PROJECTNAME)
 # end of class MeetingGroup
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+
