@@ -50,21 +50,6 @@ UNABLE_TO_DETECT_MIMETYPE_ERROR = 'There was an error while trying to detect ' \
 
 schema = Schema((
 
-    TextField(
-        name='description',
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
-            description="PodTemplateDescription",
-            description_msgid="pod_template_description",
-            label='Description',
-            label_msgid='PloneMeeting_label_description',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type='text/plain',
-        default_output_type='text/plain',
-        accessor="Description",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     FileField(
         name='podTemplate',
         widget=FileField._properties['widget'](
@@ -177,7 +162,11 @@ PodTemplate_schema = BaseSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 PodTemplate_schema['id'].write_permission = "PloneMeeting: Write risky config"
 PodTemplate_schema['title'].write_permission = "PloneMeeting: Write risky config"
-# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+PodTemplate_schema['description'].schemata = "default"
+PodTemplate_schema['description'].write_permission = "PloneMeeting: Write risky config"
+PodTemplate_schema['description'].widget.description = " "
+PodTemplate_schema['description'].widget.description_msgid = "empty_description"
+# hide metadata fields and even protect it with the WriteRiskyConfig permission
 for field in PodTemplate_schema.getSchemataFields('metadata'):
     field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
     field.write_permission = WriteRiskyConfig

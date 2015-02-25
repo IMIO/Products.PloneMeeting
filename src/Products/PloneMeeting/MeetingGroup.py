@@ -52,18 +52,6 @@ schema = Schema((
         required=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    TextField(
-        name='description',
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
-            label='Description',
-            label_msgid='PloneMeeting_label_description',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type='text/plain',
-        accessor="Description",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='itemAdviceStates',
         default=defValues.itemAdviceStates,
@@ -148,6 +136,10 @@ MeetingGroup_schema = BaseSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 MeetingGroup_schema['id'].write_permission = "PloneMeeting: Write risky config"
 MeetingGroup_schema['title'].write_permission = "PloneMeeting: Write risky config"
+MeetingGroup_schema['description'].schemata = "default"
+MeetingGroup_schema['description'].write_permission = "PloneMeeting: Write risky config"
+MeetingGroup_schema['description'].widget.description = " "
+MeetingGroup_schema['description'].widget.description_msgid = "empty_description"
 # hide metadata fields and even protect it vy the WriteRiskyConfig permission
 for field in MeetingGroup_schema.getSchemataFields('metadata'):
     field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
@@ -474,4 +466,3 @@ registerType(MeetingGroup, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

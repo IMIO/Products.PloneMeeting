@@ -31,18 +31,6 @@ from Products.PloneMeeting import PMMessageFactory
 
 schema = Schema((
 
-    TextField(
-        name='description',
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
-            label='Description',
-            label_msgid='PloneMeeting_label_description',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type='text/plain',
-        accessor="Description",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     StringField(
         name='categoryId',
         widget=StringField._properties['widget'](
@@ -97,6 +85,10 @@ MeetingCategory_schema = BaseSchema.copy() + \
 # set write_permission for 'id' and 'title'
 MeetingCategory_schema['id'].write_permission = "PloneMeeting: Write risky config"
 MeetingCategory_schema['title'].write_permission = "PloneMeeting: Write risky config"
+MeetingCategory_schema['description'].schemata = "default"
+MeetingCategory_schema['description'].write_permission = "PloneMeeting: Write risky config"
+MeetingCategory_schema['description'].widget.description = " "
+MeetingCategory_schema['description'].widget.description_msgid = "empty_description"
 # hide metadata fields and even protect it vy the WriteRiskyConfig permission
 for field in MeetingCategory_schema.getSchemataFields('metadata'):
     field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
