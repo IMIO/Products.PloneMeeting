@@ -2554,6 +2554,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                          domain=d,
                                          context=self.REQUEST)),
             ("proposingGroupAcronym", translate("proposing_group_acronym", domain=d, context=self.REQUEST)),
+            ("toDiscuss", translate('PloneMeeting_label_toDiscuss', domain=d, context=self.REQUEST)),
             ("associatedGroups",
                 translate("PloneMeeting_label_associatedGroups", domain=d, context=self.REQUEST)),
             ("associatedGroupsAcronyms",
@@ -2563,22 +2564,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("advices", translate("PloneMeeting_label_advices", domain=d, context=self.REQUEST)),
             ("privacy", translate("PloneMeeting_label_privacy", domain=d, context=self.REQUEST)),
             ("budgetInfos", translate("PloneMeeting_label_budgetInfos", domain=d, context=self.REQUEST)),
+            ("itemIsSigned", translate('PloneMeeting_label_itemIsSigned', domain=d, context=self.REQUEST)),
             ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
         ]
-        if 'toDiscuss' in self.getUsedItemAttributes():
-            res.insert(0, ("toDiscuss", translate('PloneMeeting_label_toDiscuss',
-                                                  domain=d,
-                                                  context=self.REQUEST)))
-        if 'itemIsSigned' in self.getUsedItemAttributes():
-            res.insert(0, ("itemIsSigned", translate('PloneMeeting_label_itemIsSigned',
-                                                     domain=d,
-                                                     context=self.REQUEST)))
         return res
 
     security.declarePrivate('listItemsListVisibleColumns')
     def listItemsListVisibleColumns(self):
         res = self.listItemRelatedColumns()
-        return DisplayList(tuple(res))
+        return DisplayList(tuple(res)).sortedByValue()
 
     def listItemsListVisibleFields(self):
         '''
@@ -2604,7 +2598,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res.append(('preferredMeeting', translate('PloneMeeting_label_preferredMeeting',
                                                   domain='PloneMeeting',
                                                   context=self.REQUEST)))
-        return DisplayList(tuple(res))
+        return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listMeetingColumns')
     def listMeetingColumns(self):
