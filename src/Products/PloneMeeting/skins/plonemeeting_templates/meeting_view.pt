@@ -371,7 +371,7 @@
             tal:condition="python: 'signatures' in usedAttrs or context.getSignatures()"
             tal:attributes="width string:${colWidthPercentage}%">
             <fieldset>
-                <legend i18n:translate="PloneMeeting_label_signatures">Signatures</legend>
+                <legend i18n:translate="meeting_signatures">Signatures</legend>
                 <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '-'"/>
             </fieldset>
         </td>
