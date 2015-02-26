@@ -1086,6 +1086,18 @@ td.pmAnnexSizeWarning {
     color: white;
     cursor: help;
 }
+
+/* highlight empty lines in an XHTML content */
+.highlightBlankRow {
+    border: 1px dotted red;
+    color: red;
+}
+p.highlightBlankRow:before,
+div.highlightBlankRow:before {
+    content: attr(title);
+    padding-left: 0.5em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

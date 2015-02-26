@@ -39,7 +39,7 @@ from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.interface import implements
 from plone.memoize.interfaces import ICacheChooser
-from imio.helpers.xhtml import removeBlanks, xhtmlContentIsEmpty
+from imio.helpers.xhtml import markEmptyTags, removeBlanks, xhtmlContentIsEmpty
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -806,6 +806,13 @@ def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''
     lastVersion = obj.getField(name).getAccessor(obj)()
+    # highlight blank lines at the end of the text
+    lastVersion = markEmptyTags(lastVersion,
+                                tagTitle=translate('blank_line',
+                                                   domain='PloneMeeting',
+                                                   context=obj.REQUEST),
+                                onlyAtTheEnd=True)
+
     if not changes:
         return lastVersion
     # Return cumulative diff between successive versions of field

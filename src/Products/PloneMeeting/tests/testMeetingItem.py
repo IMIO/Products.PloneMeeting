@@ -46,7 +46,9 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.utils import cleanRamCacheFor, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
+from Products.PloneMeeting.utils import cleanRamCacheFor
+from Products.PloneMeeting.utils import getFieldVersion
+from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 
 
 class testMeetingItem(PloneMeetingTestCase):
@@ -2596,6 +2598,16 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertRaises(NotImplementedError, item._findOneLevelFor, 'my_custom_inserting_method')
         self.assertRaises(NotImplementedError, item._findOrderFor, 'my_custom_inserting_method')
+
+    def test_pm_EmptyLinesAreHighlighted(self):
+        '''Test that on the meetingitem_view, using utils.getFieldVersion, trailing
+           empty lines of a rich text field are highlighted.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Text before space</p><p>&nbsp;</p><p>Text after space</p><p>&nbsp;</p>')
+        self.assertTrue(getFieldVersion(item, 'decision', None) ==
+                        '<p>Text before space</p>\n<p>\xc2\xa0</p>\n<p>Text after space</p>\n'
+                        '<p class="highlightBlankRow" title="Blank line">\xc2\xa0</p>\n')
 
 
 def test_suite():

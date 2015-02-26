@@ -162,6 +162,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added easy way to define a custom inserting method (order when an item is inserted in a meeting)
 - Removed properties 'meetingRole' and 'meetingGroupId' from Plone groups created when adding
   a MeetingGroup, we use MEETINGROLES and MEETING_GROUP_SUFFIXES now
+- Highlight lines that are empty at the end of a rich text field on the meeting and item view
 
 3.2.0.1 (2014-03-06)
 --------------------
