@@ -1,0 +1,38 @@
+include *.conf
+include *.ignore
+include *.py
+include Makefile
+include base.cfg
+include buildout.cfg
+include dev.cfg
+include prod.cfg
+include versions-base.cfg
+include versions-dev.cfg
+recursive-include bin *.sh
+recursive-include docs *.txt
+recursive-include src *.GPL
+recursive-include src *.TXT
+recursive-include src *.ZPL
+recursive-include src *.conf
+recursive-include src *.cpt
+recursive-include src *.cpy
+recursive-include src *.dtml
+recursive-include src *.eml
+recursive-include src *.gif
+recursive-include src *.jpg
+recursive-include src *.js
+recursive-include src *.metadata
+recursive-include src *.odt
+recursive-include src *.pdf
+recursive-include src *.png
+recursive-include src *.pt
+recursive-include src *.py
+recursive-include src *.robot
+recursive-include src *.sh
+recursive-include src *.txt
+recursive-include src *.vpy
+recursive-include src *.xml
+recursive-include src *.zargo
+recursive-include src *.zcml
+recursive-include src *.zip
+recursive-include templates *.conf
