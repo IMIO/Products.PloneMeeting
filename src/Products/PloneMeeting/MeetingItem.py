@@ -389,13 +389,14 @@ class MeetingItemWorkflowActions:
         if not meeting:
             # find meetings accepting items in the future
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
-        forceNormal = bool(self.context.REQUEST.form.get('itemInsertForceNormal') is True)
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        forceNormal = bool(tool.readCookie('forceInsertNormal') == 'true')
         meeting.insertItem(self.context, forceNormal=forceNormal)
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
         meetingState = meeting.queryState()
         if meetingState in self.meetingAlreadyFrozenStates:
-            wTool = self.context.portal_workflow
+            wTool = getToolByName(self.context, 'portal_workflow')
             try:
                 wTool.doActionFor(self.context, 'itempublish')
             except:
@@ -1751,7 +1752,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listMeetingsAcceptingItems(self):
         '''Returns the (Display)list of meetings returned by
            m_getMeetingsAcceptingItems.'''
-        res = [(ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting')]
+        res = []
         tool = self.portal_plonemeeting
         # save meetingUIDs, it will be necessary here under
         for meetingBrain in self.adapted().getMeetingsAcceptingItems():
@@ -1771,6 +1772,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 preferredMeetingBrain = brains[0]
                 res.append((preferredMeetingBrain.UID,
                             tool.formatMeetingDate(preferredMeetingBrain, withHour=True)))
+        res.reverse()
+        res.insert(0, (ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting'))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingTransitions')
