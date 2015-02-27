@@ -1775,14 +1775,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          'searchItemsToValidateOfHighestHierarchicLevel',
          "python: here.userIsAReviewer()",
          ),
-        # Validable items : need a script to do this search
-        ('searchvalidableitems',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchValidableItems',
-         "python: here.userIsAReviewer()",
-         ),
         # Items to advice : need a script to do this search
         ('searchallitemstoadvice',
         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),

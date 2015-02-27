@@ -324,8 +324,6 @@ class Migrate_To_3_3(Migrator):
                 hasSearchItemsToAdvifceWithoutDelay = True
             if hasattr(cfg.topics, 'searchitemstoprevalidate'):
                 hasSearchItemsToPrevalidate = True
-            if hasattr(cfg.topics, 'searchvalidableitems'):
-                hasSearchValidableItems = True
             # createTopics manage the fact that the topic already exists
             cfg.createTopics(cfg.topicsInfo)
             if not hasSearchItemsOfMyGroups:
@@ -380,19 +378,6 @@ class Migrate_To_3_3(Migrator):
                     itemsToPrevalidateTopicPosition = everyTopicIds.index('searchitemstoprevalidate')
                     delta = itemsToPrevalidateTopicPosition - itemsToValidateTopicPosition
                     cfg.topics.moveObjectsUp('searchitemstoprevalidate', delta=delta)
-            if not hasSearchValidableItems:
-                # now reorder so 'searchvalidableitems' is under 'searchitemstovalidate'
-                # find delta, we need to insert it after the 'searchitemstovalidate' topic
-                if not hasattr(cfg.topics, 'searchitemstovalidate'):
-                    logger.error('Unable to find topic \'searchitemstovalidate\' !!!  '
-                                 'New \'searchvalidableitems\' topic will be left at the bottom of available topics!')
-                else:
-                    itemsToValidateTopic = cfg.topics.searchitemstovalidate
-                    everyTopicIds = cfg.topics.objectIds()
-                    itemsToValidateTopicPosition = everyTopicIds.index(itemsToValidateTopic.getId())
-                    validableItemsTopicPosition = everyTopicIds.index('searchvalidableitems')
-                    delta = validableItemsTopicPosition - itemsToValidateTopicPosition - 1
-                    cfg.topics.moveObjectsUp('searchvalidableitems', delta=delta)
             # update condition of the 'searchitemstovalidate' topic
             if hasattr(cfg.topics, 'searchitemstovalidate') and \
                (cfg.topics.searchitemstovalidate.getProperty('topic_tal_expression') ==
