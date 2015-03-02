@@ -4165,7 +4165,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # find next meeting accepting items, only query meetings that
                         # are in the initial workflow state
                         initial_state = wfTool[destMeetingConfig.getMeetingWorkflow()].initial_state
-                        meetingsAcceptingItems = cfg.adapted().getMeetingsAcceptingItems(
+                        meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
                             review_states=(initial_state, ),
                             inTheFuture=True)
                         # we only keep meetings that are in the
