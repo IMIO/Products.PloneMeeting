@@ -197,8 +197,6 @@ class IMeetingItemDocumentation:
     '''Normally, the methods described here should be part of IMeetingItem.
        Because it is impossible to do so with an overengineered yet overrigid
        ArchGenXML 2, we document the provided methods in this absurd class.'''
-    def getMeetingsAcceptingItems():
-        '''Gets the meetings that can accept items.'''
     def getItemReference():
         '''Returns the reference associated to this item. If the format of your
            item references is simple, you should define it by a TAL expression,
@@ -606,6 +604,8 @@ class IMeetingCategoryCustom(IMeetingCategory):
 class IMeetingConfigDocumentation:
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
+    def getMeetingsAcceptingItems():
+        '''Gets the meetings that can accept items.'''
 
 
 class IMeetingConfigCustom(IMeetingConfig):

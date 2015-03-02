@@ -1527,27 +1527,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res = None
         return res
 
-    def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
-        '''This returns meetings that are still accepting items.'''
-        item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
-        catalog = getToolByName(item, 'portal_catalog')
-        meetingPortalType = tool.getMeetingConfig(item).getMeetingTypeName()
-        # If the current user is a meetingManager (or a Manager),
-        # he is able to add a meetingitem to a 'decided' meeting.
-        # except if we specifically restricted given p_review_states.
-        if review_states == ('created', 'frozen') and tool.isManager(item):
-            review_states += ('decided', 'published', )
-
-        query = {'portal_type': meetingPortalType,
-                 'review_state': review_states,
-                 'sort_on': 'getDate'}
-
-        if inTheFuture:
-            query['getDate'] = {'query': DateTime(), 'range': 'min'}
-
-        return catalog.unrestrictedSearchResults(**query)
-
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
         # do only recompute once by REQUEST
@@ -1559,7 +1538,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            transition from another view than the meeting view.'''
         # first, find meetings in the future still accepting items
         # but that are not in MEETING_NOT_CLOSED_STATES
-        brains = self.adapted().getMeetingsAcceptingItems(inTheFuture=True)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        brains = cfg.adapted().getMeetingsAcceptingItems(inTheFuture=True)
         for brain in brains:
             # presenting an item from another place than the relevant meeting view
             # will insert it as a normal item to the very next available meeting
@@ -1751,11 +1732,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listMeetingsAcceptingItems')
     def listMeetingsAcceptingItems(self):
         '''Returns the (Display)list of meetings returned by
-           m_getMeetingsAcceptingItems.'''
+           MeetingConfig.getMeetingsAcceptingItems.'''
         res = []
-        tool = self.portal_plonemeeting
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         # save meetingUIDs, it will be necessary here under
-        for meetingBrain in self.adapted().getMeetingsAcceptingItems():
+        for meetingBrain in cfg.adapted().getMeetingsAcceptingItems():
             res.append((meetingBrain.UID,
                         tool.formatMeetingDate(meetingBrain, withHour=True)))
         # if one preferred meeting was already defined on self, add it
@@ -4183,8 +4165,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # find next meeting accepting items, only query meetings that
                         # are in the initial workflow state
                         initial_state = wfTool[destMeetingConfig.getMeetingWorkflow()].initial_state
-                        meetingsAcceptingItems = newItem.adapted().getMeetingsAcceptingItems(review_states=(initial_state, ),
-                                                                                             inTheFuture=True)
+                        meetingsAcceptingItems = cfg.adapted().getMeetingsAcceptingItems(
+                            review_states=(initial_state, ),
+                            inTheFuture=True)
                         # we only keep meetings that are in the
                         if not meetingsAcceptingItems:
                             plone_utils.addPortalMessage(_('could_not_present_item_no_meeting_accepting_items',

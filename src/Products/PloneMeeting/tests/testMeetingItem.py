@@ -765,7 +765,8 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = data['newItem']
         # could not be added because no meeting in initial_state is available
         meeting_initial_state = self.wfTool[self.meetingConfig2.getMeetingWorkflow()].initial_state
-        self.assertTrue(len(newItem.getMeetingsAcceptingItems(review_states=(meeting_initial_state, ))) == 0)
+        self.assertTrue(len(self.meetingConfig2.adapted().getMeetingsAcceptingItems(
+            review_states=(meeting_initial_state, ))) == 0)
         self.assertTrue(newItem.queryState() == 'validated')
         # a status message was added
         fail_to_present_msg = translate('could_not_present_item_no_meeting_accepting_items',
@@ -2019,28 +2020,29 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_GetMeetingsAcceptingItems(self):
         """Test the MeetingItem.getMeetingsAcceptingItems method."""
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
-        #create 4 meetings with items so we can play the workflow
-        #will stay 'created'
+        # create 4 meetings with items so we can play the workflow
+        # will stay 'created'
         m1 = self.create('Meeting', date=DateTime('2013/02/01 08:00:00'))
-        #go to state 'frozen'
+        # go to state 'frozen'
         m2 = self.create('Meeting', date=DateTime('2013/02/08 08:00:00'))
         self.freezeMeeting(m2)
-        #go to state 'decided'
+        # go to state 'decided'
         m3 = self.create('Meeting', date=DateTime('2013/02/15 08:00:00'))
         self.decideMeeting(m3)
-        #go to state 'closed'
+        # go to state 'closed'
         m4 = self.create('Meeting', date=DateTime('2013/02/22 08:00:00'))
         self.closeMeeting(m4)
-        item = self.create('MeetingItem')
-        #getMeetingsAcceptingItems should only return meetings
-        #that are 'created', 'frozen' or 'decided' for the meetingManager
-        self.assertEquals([m.id for m in item.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
-        #getMeetingsAcceptingItems should only return meetings
-        #that are 'created' or 'frozen' for the meetingMember
+        self.create('MeetingItem')
+        # getMeetingsAcceptingItems should only return meetings
+        # that are 'created', 'frozen' or 'decided' for the meetingManager
+        self.assertEquals([m.id for m in cfg.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
+        # getMeetingsAcceptingItems should only return meetings
+        # that are 'created' or 'frozen' for the meetingMember
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        self.assertEquals([m.id for m in item.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id])
+        self.create('MeetingItem')
+        self.assertEquals([m.id for m in cfg.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id])
 
     def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting

@@ -4459,7 +4459,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
+    def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
+        '''This returns meetings that are still accepting items.'''
+        cfg = self.getSelf()
+        tool = getToolByName(cfg, 'portal_plonemeeting')
+        catalog = getToolByName(cfg, 'portal_catalog')
+        # If the current user is a meetingManager (or a Manager),
+        # he is able to add a meetingitem to a 'decided' meeting.
+        # except if we specifically restricted given p_review_states.
+        if review_states == ('created', 'frozen') and tool.isManager(cfg):
+            review_states += ('decided', 'published', )
 
+        query = {'portal_type': cfg.getMeetingTypeName(),
+                 'review_state': review_states,
+                 'sort_on': 'getDate'}
+
+        if inTheFuture:
+            query['getDate'] = {'query': DateTime(), 'range': 'min'}
+
+        return catalog.unrestrictedSearchResults(**query)
 
 registerType(MeetingConfig, PROJECTNAME)
 # end of class MeetingConfig
