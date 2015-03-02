@@ -315,7 +315,6 @@ class Migrate_To_3_3(Migrator):
             hasSearchMyItemsTakenOver = False
             hasSearchItemsToAdvifceWithoutDelay = False
             hasSearchItemsToPrevalidate = False
-            hasSearchValidableItems = False
             if hasattr(cfg.topics, 'searchitemsofmygroups'):
                 hasSearchItemsOfMyGroups = True
             if hasattr(cfg.topics, 'searchmyitemstakenover'):
