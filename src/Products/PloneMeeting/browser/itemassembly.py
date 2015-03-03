@@ -180,7 +180,7 @@ class ManageItemAssemblyForm(form.Form):
     def update(self):
         """ """
         # raise Unauthorized if current user can not manage itemAssembly
-        if not self.context.mayQuickEdit('itemAssembly'):
+        if not self.context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True):
             raise Unauthorized
 
         super(ManageItemAssemblyForm, self).update()
@@ -220,7 +220,7 @@ class ManageItemAssemblyForm(form.Form):
           The method actually do the job, set the itemAssembly on self.context
           and following items if defined
         """
-        if not self.context.mayQuickEdit('itemAssembly'):
+        if not self.context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True):
             raise Unauthorized
 
         def _itemsToUpdate():

@@ -107,7 +107,7 @@
             <tal:comment replace="nothing">Item assembly</tal:comment>
             <tal:itemAssembly condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
                 <tal:defines define="redefinedItemAssemblies python: context.redefinedItemAssemblies(usedMeetingAttributes);
-                                     mayQuickEdit python: context.mayQuickEdit('itemAssembly');
+                                     mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
                                      class_if_highlighted python: redefinedItemAssemblies and 'highlightRedefinedValue' or '';
                                      class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' itemAssemblyEditable collapsibleHeader' or 'itemAssemblyEditable collapsibleHeader') or class_if_highlighted + ' collapsibleHeader'">
                     <dl id="itemAssembly"
@@ -296,7 +296,7 @@
             <tal:comment replace="nothing">Item signatures</tal:comment>
             <tal:itemSignatures condition="python: meeting and ('signatures' in usedMeetingAttributes)">
                 <tal:defines define="redefinedItemSignatures python: context.getItemSignatures(real=True);
-                                     mayQuickEdit python: context.mayQuickEdit('itemSignatures');
+                                     mayQuickEdit python: context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);
                                      class_if_highlighted python: redefinedItemSignatures and 'highlightRedefinedValue' or '';
                                      class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' itemSignaturesEditable collapsibleHeader' or 'itemSignaturesEditable collapsibleHeader') or class_if_highlighted + ' collapsibleHeader'">
                     <dl id="itemSignatures"

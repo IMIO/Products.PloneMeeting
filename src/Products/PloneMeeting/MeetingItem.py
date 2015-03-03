@@ -1274,7 +1274,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayTakeOver')
     def mayTakeOver(self):
         '''Condition for editing 'takenOverBy' field.
-           A member may take an item over if he his able to change the review_state.'''
+           A member may take an item over if he is able to change the review_state.'''
         item = self.getSelf()
         wfTool = getToolByName(item, 'portal_workflow')
         return bool(wfTool.getTransitionsFor(item))
@@ -2410,17 +2410,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return True
 
     security.declarePublic('mayQuickEdit')
-    def mayQuickEdit(self, fieldName):
+    def mayQuickEdit(self, fieldName, bypassWritePermissionCheck=False):
         '''Check if the current p_fieldName can be quick edited thru the meetingitem_view.
            By default, an item can be quickedited if the field condition is True (field is used,
            current user is Manager, current item is linekd to a meeting) and if the meeting
            the item is presented in is not considered as 'closed'.  Bypass if current user is
-           a real Manager (Site Administrator/Manager).'''
+           a real Manager (Site Administrator/Manager).
+           If p_bypassWritePermissionCheck is True, we will not check for write_permission.'''
         portal = getToolByName(self, 'portal_url').getPortalObject()
         tool = getToolByName(self, 'portal_plonemeeting')
         member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
         field = self.Schema()[fieldName]
-        if member.has_permission(field.write_permission, self) and \
+        if (not bypassWritePermissionCheck and member.has_permission(field.write_permission, self) or True) and \
            self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
            (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
            tool.isManager(self, realManagers=True):

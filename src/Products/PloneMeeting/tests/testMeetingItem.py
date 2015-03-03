@@ -1482,11 +1482,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item5.getItemSignatures(), 'Item signatures 3')
         self.assertEquals(item6.getItemSignatures(), 'Item signatures 3')
         # the form is callable on an item even when decided (not editable anymore)
+        # the form is callable until the linked meeting is considered 'closed'
         item2.manage_permission(ModifyPortalContent, ['Manager', ])
         self.failIf(self.hasPermission(ModifyPortalContent, item2))
         self.failUnless(self.hasPermission('View', item2))
-        item2.restrictedTraverse('@@manage_item_assembly_form')
-        item2.restrictedTraverse('@@manage_item_signatures_form')
+        item2.restrictedTraverse('@@manage_item_assembly_form').update()
+        item2.restrictedTraverse('@@manage_item_signatures_form').update()
         # it works also with lateItems
         self.freezeMeeting(meeting)
         lateItem1 = self.create('MeetingItem')
