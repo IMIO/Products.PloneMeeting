@@ -1593,14 +1593,13 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Inserts into this meeting some p_recurringItems. The newly created
            items are copied from recurring items (contained in the meeting
            config) to the folder containing this meeting.'''
-        sourceFolder = recurringItems[0].getParentNode()
-        copiedData = sourceFolder.manage_copyObjects(
-            ids=[ri.id for ri in recurringItems])
         destFolder = self.getParentNode()
-        # Paste the items in the Meeting folder
-        pastedItems = self.portal_plonemeeting.pasteItems(
-            destFolder, copiedData, copyAnnexes=True)
-        for newItem in pastedItems:
+        newItems = []
+        for recurringItem in recurringItems:
+            newItems.append(recurringItem.clone(cloneEventAction='Add recurring item',
+                                                destFolder=destFolder,
+                                                keepProposingGroup=True))
+        for newItem in newItems:
             # Put the new item in the correct state
             adap = newItem.adapted()
             error = adap.addRecurringItemToMeeting(self)

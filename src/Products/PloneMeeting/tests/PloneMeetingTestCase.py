@@ -28,7 +28,6 @@ from ZPublisher.HTTPRequest import FileUpload
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
 
-from zope.annotation.interfaces import IAnnotations
 
 from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
@@ -40,13 +39,13 @@ import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
 #from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.config import MEETINGREVIEWERS
-from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanRamCacheFor
+from Products.PloneMeeting.utils import cleanMemoize
 
 # Force application logging level to DEBUG so we can use logger in tests
 import sys
@@ -287,29 +286,18 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         self.assertNotEquals(theAnnex.size(), 0)
         return theAnnex
 
-    def cleanMemoize(self, obj=None):
+    def cleanMemoize(self):
         """
-          Remove every memoized informations : memoize on the REQUEST and on the object
+          Remove every memoized informations
         """
         # borg localroles are memoized...
         # so while checking local roles twice, there could be problems...
         # remove memoized localroles
-        annotations = IAnnotations(self.portal.REQUEST)
-        annotations_to_delete = []
-        for annotation in annotations.keys():
-            if annotation.startswith('borg.localrole.workspace.checkLocalRolesAllowed'):
-                annotations_to_delete.append(annotation)
-            if annotation.startswith('tool-getmeetinggroups-'):
-                annotations_to_delete.append(annotation)
-            if annotation.startswith('meeting-config-getcategories-'):
-                annotations_to_delete.append(annotation)
-            if annotation.startswith('meeting-config-gettopics-'):
-                annotations_to_delete.append(annotation)
-        for annotation_to_delete in annotations_to_delete:
-            del annotations[annotation_to_delete]
-
-        if 'plone.memoize' in annotations:
-            annotations['plone.memoize'].clear()
+        cleanMemoize(self.portal, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed',
+                                            'tool-getmeetinggroups-',
+                                            'meeting-config-getcategories-',
+                                            'meeting-config-gettopics-',
+                                            ])
 
     def _removeConfigObjectsFor(self, meetingConfig, folders=['recurringitems', 'itemtemplates']):
         """

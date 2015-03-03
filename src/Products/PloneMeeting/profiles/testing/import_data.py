@@ -183,12 +183,16 @@ muser_voter2 = MeetingUserDescriptor('voter2', duty='Voter2',
 
 # Recurring items
 recItem1 = RecurringItemDescriptor(
-    'recItem1', 'Recurring item #1',
-    '', category='developers', description='<p>This is the first recurring item.</p>',
+    'recItem1',
+    'Recurring item #1',
+    proposingGroup='developers',
+    description='<p>This is the first recurring item.</p>',
     decision='First recurring item approved')
 recItem2 = RecurringItemDescriptor(
-    'recItem2', 'Recurring item #2',
-    '', category='developers', description='<p>This is the second recurring item.</p>',
+    'recItem2',
+    'Recurring item #2',
+    proposingGroup='developers',
+    description='<p>This is the second recurring item.</p>',
     decision='Second recurring item approved')
 # item templates
 template1 = ItemTemplateDescriptor(

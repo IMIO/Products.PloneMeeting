@@ -35,6 +35,8 @@ class testMeetingGroup(PloneMeetingTestCase):
     def test_pm_CanNotRemoveUsedMeetingGroup(self):
         '''While removing a MeetingGroup, it should raise if it is used somewhere...'''
         self.changeUser('pmManager')
+        # delete recurring items, just keep item templates
+        self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', ])
         # make sure self.meetingConfig2 does not interact...
         self._removeConfigObjectsFor(self.meetingConfig2)
         # create an item

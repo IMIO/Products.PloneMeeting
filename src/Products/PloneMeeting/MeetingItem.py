@@ -63,7 +63,7 @@ from Products.PloneMeeting.utils import \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
-    forceHTMLContentTypeForEmptyRichFields, workday, networkdays
+    forceHTMLContentTypeForEmptyRichFields, workday, networkdays, cleanMemoize
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -2388,6 +2388,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not member.has_role('Manager', item):
                     gaveManagerRole = True
                     item.manage_addLocalRoles(member.getId(), ('Manager', ))
+                    # clean borg local_roles cache
+                    portal = getToolByName(item, 'portal_url').getPortalObject()
+                    cleanMemoize(portal, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed', ])
                 for tr in cfg.getTransitionsForPresentingAnItem():
                     wfTool.doActionFor(item, tr)
                 if gaveManagerRole:
@@ -4041,7 +4044,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         sourceFolder = self.getParentNode()
         copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
         # if we are cloning to the same mc, keep some more fields
-        cloned_to_same_mc = not newPortalType and True or False
+        cloned_to_same_mc = bool(not newPortalType)
         if cloned_to_same_mc:
             copyFields = copyFields + EXTRA_COPIED_FIELDS_SAME_MC
         # Check if an external plugin want to add some fieldsToCopy
