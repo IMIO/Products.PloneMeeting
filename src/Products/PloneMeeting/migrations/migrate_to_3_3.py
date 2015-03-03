@@ -642,6 +642,25 @@ class Migrate_To_3_3(Migrator):
                 self.portal.portal_groupdata.manage_delProperties((propToRemove, ))
         logger.info('Done.')
 
+    def _updateConfigObjectsWFHistory(self):
+        '''Elements contained in MeetingConfigs have a new workflow now, 'plonemeeting_activity_managers_workflow'
+           instead of 'plonemeeting_activity_workflow'.  Update workflow_history attribute.'''
+        logger.info('Updating workflow history of objects stored in each MeetingConfig...')
+        for cfg in self.portal.portal_plonemeeting.objectValues('MeetingConfig'):
+            brains = self.portal.portal_catalog(meta_type=('MeetingItem', 'ATTopic'), isDefinedInTool=True)
+            for brain in brains:
+                obj = brain.getObject()
+                if 'plonemeeting_activity_managers_workflow' in obj.workflow_history:
+                    # already migrated
+                    continue
+                if (obj.meta_type == 'MeetingItem' and 'plonemeeting_onestate_workflow' in obj.workflow_history):
+                    obj.workflow_history['plonemeeting_activity_managers_workflow'] = \
+                        obj.workflow_history['plonemeeting_onestate_workflow']
+                elif (obj.meta_type == 'ATTopic' and 'plonemeeting_activity_workflow' in obj.workflow_history):
+                    obj.workflow_history['plonemeeting_activity_managers_workflow'] = \
+                        obj.workflow_history['plonemeeting_activity_workflow']
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.3...')
         # run every available upgrade steps so different dependencies are correct
@@ -695,6 +714,7 @@ class Migrate_To_3_3(Migrator):
         # by default, only portal_catalog is updated by refreshDatabase
         # update also role mappings (wf) as meeting_activity_workflow changed
         self.refreshDatabase(workflows=True)
+        self._updateConfigObjectsWFHistory()
         self.finish()
 
 
