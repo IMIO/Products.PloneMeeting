@@ -13,6 +13,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   when no item exist.  This is used in imio.pm.ws 'meetingsAcceptingItems' SOAP call
 - Use MeetingItem.clone method to add recurring items to a meeting so it use same functionnality
   and extension mechanism regarding copyFields (fields to keep when cloning)
+- Make sure it is still possible for MeetingManagers to edit itemAssembly and itemSignatures
+  of items, even if it is decided, until the linked meeting is not considered closed
 
 3.3 (2015-02-27)
 ----------------
