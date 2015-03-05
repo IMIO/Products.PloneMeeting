@@ -63,7 +63,7 @@ from Products.PloneMeeting.utils import \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
-    forceHTMLContentTypeForEmptyRichFields, workday, networkdays
+    forceHTMLContentTypeForEmptyRichFields, workday, networkdays, cleanMemoize
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -389,13 +389,14 @@ class MeetingItemWorkflowActions:
         if not meeting:
             # find meetings accepting items in the future
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
-        forceNormal = bool(self.context.REQUEST.form.get('itemInsertForceNormal') is True)
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        forceNormal = bool(tool.readCookie('forceInsertNormal') == 'true')
         meeting.insertItem(self.context, forceNormal=forceNormal)
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
         meetingState = meeting.queryState()
         if meetingState in self.meetingAlreadyFrozenStates:
-            wTool = self.context.portal_workflow
+            wTool = getToolByName(self.context, 'portal_workflow')
             try:
                 wTool.doActionFor(self.context, 'itempublish')
             except:
@@ -1273,7 +1274,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayTakeOver')
     def mayTakeOver(self):
         '''Condition for editing 'takenOverBy' field.
-           A member may take an item over if he his able to change the review_state.'''
+           A member may take an item over if he is able to change the review_state.'''
         item = self.getSelf()
         wfTool = getToolByName(item, 'portal_workflow')
         return bool(wfTool.getTransitionsFor(item))
@@ -1526,27 +1527,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res = None
         return res
 
-    def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
-        '''This returns meetings that are still accepting items.'''
-        item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
-        catalog = getToolByName(item, 'portal_catalog')
-        meetingPortalType = tool.getMeetingConfig(item).getMeetingTypeName()
-        # If the current user is a meetingManager (or a Manager),
-        # he is able to add a meetingitem to a 'decided' meeting.
-        # except if we specifically restricted given p_review_states.
-        if review_states == ('created', 'frozen') and tool.isManager(item):
-            review_states += ('decided', 'published', )
-
-        query = {'portal_type': meetingPortalType,
-                 'review_state': review_states,
-                 'sort_on': 'getDate'}
-
-        if inTheFuture:
-            query['getDate'] = {'query': DateTime(), 'range': 'min'}
-
-        return catalog.unrestrictedSearchResults(**query)
-
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
         # do only recompute once by REQUEST
@@ -1558,7 +1538,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            transition from another view than the meeting view.'''
         # first, find meetings in the future still accepting items
         # but that are not in MEETING_NOT_CLOSED_STATES
-        brains = self.adapted().getMeetingsAcceptingItems(inTheFuture=True)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        brains = cfg.adapted().getMeetingsAcceptingItems(inTheFuture=True)
         for brain in brains:
             # presenting an item from another place than the relevant meeting view
             # will insert it as a normal item to the very next available meeting
@@ -1750,11 +1732,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listMeetingsAcceptingItems')
     def listMeetingsAcceptingItems(self):
         '''Returns the (Display)list of meetings returned by
-           m_getMeetingsAcceptingItems.'''
-        res = [(ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting')]
-        tool = self.portal_plonemeeting
+           MeetingConfig.getMeetingsAcceptingItems.'''
+        res = []
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         # save meetingUIDs, it will be necessary here under
-        for meetingBrain in self.adapted().getMeetingsAcceptingItems():
+        for meetingBrain in cfg.adapted().getMeetingsAcceptingItems():
             res.append((meetingBrain.UID,
                         tool.formatMeetingDate(meetingBrain, withHour=True)))
         # if one preferred meeting was already defined on self, add it
@@ -1771,6 +1754,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 preferredMeetingBrain = brains[0]
                 res.append((preferredMeetingBrain.UID,
                             tool.formatMeetingDate(preferredMeetingBrain, withHour=True)))
+        res.reverse()
+        res.insert(0, (ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting'))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingTransitions')
@@ -2403,6 +2388,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not member.has_role('Manager', item):
                     gaveManagerRole = True
                     item.manage_addLocalRoles(member.getId(), ('Manager', ))
+                    # clean borg local_roles cache
+                    portal = getToolByName(item, 'portal_url').getPortalObject()
+                    cleanMemoize(portal, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed', ])
                 for tr in cfg.getTransitionsForPresentingAnItem():
                     wfTool.doActionFor(item, tr)
                 if gaveManagerRole:
@@ -2422,17 +2410,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return True
 
     security.declarePublic('mayQuickEdit')
-    def mayQuickEdit(self, fieldName):
+    def mayQuickEdit(self, fieldName, bypassWritePermissionCheck=False):
         '''Check if the current p_fieldName can be quick edited thru the meetingitem_view.
            By default, an item can be quickedited if the field condition is True (field is used,
            current user is Manager, current item is linekd to a meeting) and if the meeting
            the item is presented in is not considered as 'closed'.  Bypass if current user is
-           a real Manager (Site Administrator/Manager).'''
+           a real Manager (Site Administrator/Manager).
+           If p_bypassWritePermissionCheck is True, we will not check for write_permission.'''
         portal = getToolByName(self, 'portal_url').getPortalObject()
         tool = getToolByName(self, 'portal_plonemeeting')
         member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
         field = self.Schema()[fieldName]
-        if member.has_permission(field.write_permission, self) and \
+        if (not bypassWritePermissionCheck and member.has_permission(field.write_permission, self) or True) and \
            self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
            (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
            tool.isManager(self, realManagers=True):
@@ -4056,7 +4045,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         sourceFolder = self.getParentNode()
         copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
         # if we are cloning to the same mc, keep some more fields
-        cloned_to_same_mc = not newPortalType and True or False
+        cloned_to_same_mc = bool(not newPortalType)
         if cloned_to_same_mc:
             copyFields = copyFields + EXTRA_COPIED_FIELDS_SAME_MC
         # Check if an external plugin want to add some fieldsToCopy
@@ -4180,8 +4169,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # find next meeting accepting items, only query meetings that
                         # are in the initial workflow state
                         initial_state = wfTool[destMeetingConfig.getMeetingWorkflow()].initial_state
-                        meetingsAcceptingItems = newItem.adapted().getMeetingsAcceptingItems(review_states=(initial_state, ),
-                                                                                             inTheFuture=True)
+                        meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+                            review_states=(initial_state, ),
+                            inTheFuture=True)
                         # we only keep meetings that are in the
                         if not meetingsAcceptingItems:
                             plone_utils.addPortalMessage(_('could_not_present_item_no_meeting_accepting_items',

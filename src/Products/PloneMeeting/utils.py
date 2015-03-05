@@ -33,6 +33,7 @@ from email.MIMEText import MIMEText
 from email import Encoders
 from DateTime import DateTime
 from AccessControl import getSecurityManager
+from zope.annotation import IAnnotations
 from zope.i18n import translate
 from zope.component import getUtility
 from zope.component.interfaces import ObjectEvent
@@ -192,6 +193,24 @@ def cleanRamCacheFor(methodId, obj=None):
     cache_chooser = getUtility(ICacheChooser)
     thecache = cache_chooser(methodId)
     thecache.ramcache.invalidate(methodId)
+
+
+def cleanMemoize(portal, prefixes):
+    ''' '''
+    # borg localroles are memoized...
+    # so while checking local roles twice, there could be problems...
+    # remove memoized localroles
+    annotations = IAnnotations(portal.REQUEST)
+    annotations_to_delete = []
+    for annotation in annotations.keys():
+        for prefix in prefixes:
+            if annotation.startswith(prefix):
+                annotations_to_delete.append(annotation)
+    for annotation_to_delete in annotations_to_delete:
+        del annotations[annotation_to_delete]
+
+    if 'plone.memoize' in annotations:
+        annotations['plone.memoize'].clear()
 
 
 def fieldIsEmpty(name, obj, useParamValue=False, value=None):

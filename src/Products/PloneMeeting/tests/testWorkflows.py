@@ -339,8 +339,16 @@ class testWorkflows(PloneMeetingTestCase):
         '''Setup some recurring items.'''
         # First, define recurring items in the meeting config
         self.changeUser('admin')
-        # 2 recurring items already exist in the configuration
+        # clean existing so we are sure of what we have got
+        self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', ])
+        # add 3 recurring items added on '_init_'
         self.create('RecurringMeetingItem', title='Rec item 1a',
+                    proposingGroup='vendors',
+                    meetingTransitionInsertingMe='_init_')
+        self.create('RecurringMeetingItem', title='Rec item 1b',
+                    proposingGroup='vendors',
+                    meetingTransitionInsertingMe='_init_')
+        self.create('RecurringMeetingItem', title='Rec item 1c',
                     proposingGroup='vendors',
                     meetingTransitionInsertingMe='_init_')
         # this one produce an error as backTo* transitions can not
@@ -366,7 +374,7 @@ class testWorkflows(PloneMeetingTestCase):
         # The recurring items must have as owner the meeting creator
         for item in meeting.getItems():
             self.assertEquals(item.getOwner().getId(), 'pmManager')
-        # The 2 recurring items inserted at meeting creation must be in it
+        # 1 recurring item is inserted at meeting creation
         self.failIf(len(meeting.getItems()) != 3)
         self.failIf(len(meeting.getLateItems()) != 0)
         # meeting has not already been frozen, so when publishing, the added recurring
