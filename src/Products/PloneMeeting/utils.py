@@ -1133,7 +1133,13 @@ def signatureNotAlone(xhtmlContent):
     # (if not already done) "podItemKeepWithNext"; if it is a "li" I will
     # add style "podParaKeepWithNext" (if not already done).
     from imio.helpers.xhtml import addClassToLastChildren
-    return addClassToLastChildren(xhtmlContent)
+    return addClassToLastChildren(xhtmlContent,
+                                  classNames={'p': 'pmParaKeepWithNext',
+                                              'span': 'pmParaKeepWithNext',
+                                              'strike': 'pmParaKeepWithNext',
+                                              'strong': '',
+                                              'li': 'podItemKeepWithNext'},
+                                  tags=('p', 'ul', 'li', 'span', 'strike', 'strong', ), numberOfChars=50)
 
 
 # ------------------------------------------------------------------------------
