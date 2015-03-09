@@ -32,8 +32,8 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneTestCase.setup import _createHomeFolder
-from Products.CMFCore.permissions import View
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.statusmessages.interfaces import IStatusMessage
 
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -1139,6 +1139,70 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf('MeetingObserverGlobal' in self.member.getRoles())
         self.changeUser(userThatCanNotSee)
         self.failIf('MeetingObserverGlobal' in self.member.getRoles())
+
+    def test_pm_PowerObserversLocalRoles(self):
+        '''Check that powerobservers local roles are set correctly...
+           Test alternatively item or meeting that is accessible to and not...'''
+        # we will check that (restricted) power observers local roles are set correctly.
+        # - powerobservers may access itemcreated, validated and presented items (and created meetings),
+        #   not restricted power observers;
+        # - frozen items/meetings are accessible by both;
+        # - only restricted power observers may access 'refused' items.
+        self.meetingConfig.setItemPowerObserversStates(('itemcreated', 'validated', 'presented',
+                                                       'itemfrozen', 'accepted', 'delayed'))
+        self.meetingConfig.setMeetingPowerObserversStates(('created', 'frozen', 'decided', 'closed'))
+        self.meetingConfig.setItemRestrictedPowerObserversStates(('itemfrozen', 'accepted', 'refused'))
+        self.meetingConfig.setMeetingRestrictedPowerObserversStates(('frozen', 'decided', 'closed'))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setDecision("<p>Decision</p>")
+        # itemcreated item is accessible by powerob, not restrictedpowerob
+        self.changeUser('restrictedpowerobserver1')
+        self.assertFalse(self.hasPermission(View, item))
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        # propose the item, it is no more visible to any powerob
+        self.proposeItem(item)
+        self.changeUser('restrictedpowerobserver1')
+        self.assertFalse(self.hasPermission(View, item))
+        self.changeUser('powerobserver1')
+        self.assertFalse(self.hasPermission(View, item))
+        # validate the item, only accessible to powerob
+        self.validateItem(item)
+        self.changeUser('restrictedpowerobserver1')
+        self.assertFalse(self.hasPermission(View, item))
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        # present the item, only viewable to powerob, including created meeting
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date='2015/01/01')
+        self.presentItem(item)
+        self.changeUser('restrictedpowerobserver1')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(View, meeting))
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(View, meeting))
+        # frozen items/meetings are accessible by both powerobs
+        self.freezeMeeting(meeting)
+        self.assertTrue(item.queryState() == 'itemfrozen')
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(View, meeting))
+        # decide the meeting and refuse the item, meeting accessible to both
+        # but refused item only accessible to restricted powerob
+        self.decideMeeting(meeting)
+        self.changeUser('pmManager')
+        self.do(item, 'refuse')
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.changeUser('powerobserver1')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(View, meeting))
 
     def test_pm_BudgetImpactEditorsGroups(self):
         '''Test the management of MeetingConfig linked 'budgetimpacteditors' Plone group.'''
