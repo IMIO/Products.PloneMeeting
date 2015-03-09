@@ -3860,7 +3860,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if itemState in cfg.getItemPowerObserversStates():
             powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
             self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
-        elif itemState in cfg.getItemRestrictedPowerObserversStates():
+        if itemState in cfg.getItemRestrictedPowerObserversStates():
             restrictedPowerObserversGroupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
             self.manage_addLocalRoles(restrictedPowerObserversGroupId, (READER_USECASES['restrictedpowerobservers'],))
 

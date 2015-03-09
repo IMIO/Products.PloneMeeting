@@ -1466,7 +1466,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if meetingState in cfg.getMeetingPowerObserversStates():
             powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
             self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
-        elif meetingState in cfg.getMeetingRestrictedPowerObserversStates():
+        if meetingState in cfg.getMeetingRestrictedPowerObserversStates():
             restrictedPowerObserversGroupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
             self.manage_addLocalRoles(restrictedPowerObserversGroupId, (READER_USECASES['restrictedpowerobservers'],))
 
