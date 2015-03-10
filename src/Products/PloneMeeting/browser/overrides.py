@@ -7,7 +7,9 @@
 # GNU General Public License (GPL)
 #
 
+from Acquisition import aq_base
 from zope.annotation import IAnnotations
+from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
@@ -23,6 +25,7 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.utils import prepareSearchValue
 
 
 class PloneMeetingContentHistoryView(ContentHistoryView):
@@ -151,6 +154,19 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         pm_version = self.context.portal_setup.getProfileInfo('profile-Products.PloneMeeting:default')['version']
         versions.insert(0, 'PloneMeeting %s' % pm_version)
         return versions
+
+
+class PMReferenceBrowserPopup(ReferenceBrowserPopup):
+    '''Overrides so searches using SearchableText are done wildcard.
+       Moreover, we display the item type in the shown title.'''
+
+    def getResult(self):
+        assert self._updated
+        search_value = self.request.get('SearchableText', '')
+        if search_value:
+            self.request.set('SearchableText',
+                             prepareSearchValue(search_value))
+        return super(PMReferenceBrowserPopup, self).getResult()
 
 
 class BaseActionsPanelView(ActionsPanelView):

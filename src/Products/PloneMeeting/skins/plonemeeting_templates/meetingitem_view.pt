@@ -105,15 +105,16 @@
             </div>
 
             <tal:comment replace="nothing">Item assembly</tal:comment>
-            <tal:itemAssembly condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
+            <div class="discreet"
+                 condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
                 <tal:defines define="redefinedItemAssemblies python: context.redefinedItemAssemblies(usedMeetingAttributes);
                                      mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
-                                     class_if_highlighted python: redefinedItemAssemblies and 'highlightRedefinedValue' or '';
-                                     class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' itemAssemblyEditable collapsibleHeader' or 'itemAssemblyEditable collapsibleHeader') or class_if_highlighted + ' collapsibleHeader'">
+                                     class_if_highlighted python: redefinedItemAssemblies and 'highlightValue' or '';
+                                     class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' collapsibleHeader' or ' collapsibleHeader') or class_if_highlighted + ' collapsibleHeader'">
                     <dl id="itemAssembly"
-                        class="collapsible inline collapsedOnLoad discreet">
+                        class="collapsible inline collapsedOnLoad">
                         <dt tal:attributes="class class_to_use" style="font-size: 100%;">
-                            <span i18n:translate="item_assembly">
+                            <span i18n:translate="item_assembly" class="item_attribute_label">
                                 Item assembly
                             </span>
                             <a tal:condition="mayQuickEdit" href="manage_item_assembly_form" class="link-overlay-pm">
@@ -128,27 +129,27 @@
                                                                where absents are striked.</tal:comment>
                                 <tal:displayAssemblyLabel condition="python: 'assemblyExcused' in usedMeetingAttributes or 'assemblyAbsents' in usedMeetingAttributes">
                                     <span class="item_attribute_label"
-                                          tal:attributes="class python: 'assembly' in redefinedItemAssemblies and 'item_attribute_label highlightRedefinedValue' or 'item_attribute_label'"
+                                          tal:attributes="class python: 'assembly' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
                                           i18n:translate="attendees_for_item"></span>:&nbsp;&nbsp;
                                 </tal:displayAssemblyLabel>
                                 <span tal:replace="structure python: context.getStrikedItemAssembly() or '-'">Assembly excused</span>
                             </div>
                             <div tal:condition="python: 'assemblyExcused' in usedMeetingAttributes">
                                 <span class="item_attribute_label"
-                                      tal:attributes="class python: 'assemblyExcused' in redefinedItemAssemblies and 'item_attribute_label highlightRedefinedValue' or 'item_attribute_label'"
+                                      tal:attributes="class python: 'assemblyExcused' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
                                       i18n:translate="PloneMeeting_label_itemAssemblyExcused"></span>:&nbsp;&nbsp;
                                 <span tal:replace="structure python: context.getItemAssemblyExcused() or '-'">Assembly excused</span>
                             </div>
                             <div tal:condition="python: 'assemblyAbsents' in usedMeetingAttributes">
                                 <span class="item_attribute_label"
-                                      tal:attributes="class python: 'assemblyAbsents' in redefinedItemAssemblies and 'item_attribute_label highlightRedefinedValue' or 'item_attribute_label'"
+                                      tal:attributes="class python: 'assemblyAbsents' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
                                       i18n:translate="PloneMeeting_label_itemAssemblyAbsents"></span>:&nbsp;&nbsp;
                                 <span tal:replace="structure python: context.getItemAssemblyAbsents() or '-'">Assembly absents</span>
                             </div>
                         </dd>
                     </dl>
                 </tal:defines>
-            </tal:itemAssembly>
+            </div>
 
             <tal:comment replace="nothing">Item keywords</tal:comment>
             <div class="discreet" tal:condition="python: 'itemKeywords' in usedAttrs">
@@ -163,26 +164,55 @@
                       i18n:translate="PloneMeeting_label_itemTags"></span>:&nbsp;&nbsp;
                 <span tal:content="python: ', '.join(context.getItemTags())"></span>
             </div>
-            <tal:comment replace="nothing">Predecessor</tal:comment>
-            <table class="no-style-table"
-                   tal:define="predecessors python: context.adapted().getPredecessors()">
-              <tr>
-                <td style="vertical-align: top;">
-                  <div class="discreet">
-                  <span class="item_attribute_label"
-                        i18n:translate="PloneMeeting_label_predecessor"></span>:&nbsp;&nbsp;
-                  </div>
-                </td>
-                <td tal:condition="predecessors">
-                    <ul class="item-predecessors">
-                        <li tal:repeat="predecessor predecessors">
-                            <tal:predecessor replace="structure predecessor" />
-                        </li>
-                    </ul>
-                </td>
-                <td class="discreet" tal:condition="not: predecessors">-</td>
-              </tr>
-            </table>
+
+            <tal:comment replace="nothing">Linked items</tal:comment>
+            <div class="discreet">
+                <tal:defines define="predecessors python: context.adapted().getPredecessors();
+                                     linkedItems context/getManuallyLinkedItems;
+                                     showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
+                                     class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
+                    <dl id="linkedItems"
+                        class="collapsible inline collapsedOnLoad">
+                        <dt class="collapsibleHeader"
+                            style="font-size: 100%;">
+                            <span tal:condition="showManuallyLinkedItems"
+                                  class="item_attribute_label"
+                                  tal:attributes="class class_to_use"
+                                  i18n:translate="linked_items_with_manually_linked_items">
+                                Linked items, <span i18n:name="auto_linked_items" tal:content="python: len(predecessors)">4</span> automatically and <span i18n:name="manually_linked_items" tal:content="python: len(linkedItems)">0</span> manually
+                            </span>
+                            <span tal:condition="not:showManuallyLinkedItems"
+                                  class="item_attribute_label"
+                                  tal:attributes="class class_to_use"
+                                  i18n:translate="linked_items">
+                                Linked items (<span i18n:name="auto_linked_items" tal:content="python: len(predecessors)">4</span>)
+                            </span>
+                        </dt>
+                        <dd class="collapsibleContent">
+                              <span class="item_attribute_label" i18n:translate="auto_linked_items">Automatically linked items</span>:&nbsp;&nbsp;
+                              <ul class="item-predecessors"
+                                  tal:condition="predecessors">
+                                  <li tal:repeat="predecessor predecessors">
+                                      <tal:predecessor replace="structure python: context.displayLinkedItem(predecessor)" />
+                                  </li>
+                              </ul>
+                              <span tal:condition="not: predecessors">-</span>
+                              <tal:manuallyLinkedItems condition="showManuallyLinkedItems">
+                                    <p></p>
+                                    <span class="item_attribute_label" i18n:translate="PloneMeeting_label_manuallyLinkedItems">Manually linked items</span>:&nbsp;&nbsp;
+                                    <ul class="item-linkeditems"
+                                        tal:condition="linkedItems">
+                                        <li tal:repeat="item linkedItems">
+                                            <tal:linkedItem replace="structure python: context.displayLinkedItem(item)" />
+                                        </li>
+                                    </ul>
+                                    <span tal:condition="not: linkedItems">-</span>
+                              </tal:manuallyLinkedItems>
+                        </dd>
+                    </dl>
+                </tal:defines>
+            </div>
+
             <div class="discreet"
                  tal:condition="python: 'itemIsSigned' in usedAttrs">
               <span class="item_attribute_label"
@@ -294,15 +324,16 @@
                 </tal:defines>
             </div>
             <tal:comment replace="nothing">Item signatures</tal:comment>
-            <tal:itemSignatures condition="python: meeting and ('signatures' in usedMeetingAttributes)">
+            <div class="discreet"
+                 tal:condition="python: meeting and ('signatures' in usedMeetingAttributes)">
                 <tal:defines define="redefinedItemSignatures python: context.getItemSignatures(real=True);
                                      mayQuickEdit python: context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);
-                                     class_if_highlighted python: redefinedItemSignatures and 'highlightRedefinedValue' or '';
-                                     class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' itemSignaturesEditable collapsibleHeader' or 'itemSignaturesEditable collapsibleHeader') or class_if_highlighted + ' collapsibleHeader'">
+                                     class_if_highlighted python: redefinedItemSignatures and 'highlightValue' or '';
+                                     class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' collapsibleHeader' or ' collapsibleHeader') or class_if_highlighted + ' collapsibleHeader'">
                     <dl id="itemSignatures"
-                        class="collapsible inline collapsedOnLoad discreet">
+                        class="collapsible inline collapsedOnLoad">
                         <dt tal:attributes="class class_to_use" style="font-size: 100%;">
-                            <span i18n:translate="meeting_signatures">
+                            <span i18n:translate="meeting_signatures" class="item_attribute_label">
                                 Item signatures
                             </span>
                             <a tal:condition="mayQuickEdit" href="manage_item_signatures_form" class="link-overlay-pm">
@@ -315,7 +346,7 @@
                         </dd>
                     </dl>
                 </tal:defines>
-            </tal:itemSignatures>
+            </div>
         </td>
       </tr>
     </table>

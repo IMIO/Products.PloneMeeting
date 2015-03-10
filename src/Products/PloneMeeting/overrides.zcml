@@ -38,6 +38,14 @@
         permission="zope2.View"
         />
 
+    <!-- override the referencebrowserwidget view to do searches wildcard -->
+    <browser:page
+        name="refbrowser_popup"
+        permission="zope2.Public"
+        for="*"
+        class=".browser.overrides.PMReferenceBrowserPopup"
+        />
+
     <!-- Override the contenthistory template displayed in the history popup
          to display things as a table -->
     <browser:view

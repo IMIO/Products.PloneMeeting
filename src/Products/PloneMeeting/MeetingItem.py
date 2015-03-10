@@ -4398,7 +4398,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the list of dict that contains infos about a predecessor.
            This method can be adapted.'''
         item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
         predecessor = item.getPredecessor()
         predecessors = []
         # retrieve every predecessors
@@ -4412,38 +4411,41 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         while brefs:
             predecessors = predecessors + brefs
             brefs = brefs[0].getBRefs('ItemPredecessor')
-        res = []
-        for predecessor in predecessors:
-            showColors = tool.showColorsForUser()
-            coloredLink = tool.getColoredLink(predecessor, showColors=showColors)
-            # extract title from coloredLink that is HTML and complete it
-            originalTitle = re.sub('<[^>]*>', '', coloredLink).strip()
-            # remove '&nbsp;' left at the beginning of the string
-            originalTitle = originalTitle.lstrip('&nbsp;')
-            title = originalTitle
-            meeting = predecessor.getMeeting()
-            # display the meeting date if the item is linked to a meeting
-            if meeting:
-                title = "%s (%s)" % (title, tool.formatMeetingDate(meeting).encode('utf-8'))
-            # show the meetingConfig type of the linked item, no matter
-            # it is from same portal_type of current item or not
-            predecessorCfg = tool.getMeetingConfig(predecessor)
-            title = "<b><i>%s</i></b> - " % predecessorCfg.Title() + title
-            # only replace last occurence because title appear in the "title" tag,
-            # could be the same as the last part of url (id), ...
-            splittedColoredLink = coloredLink.split(originalTitle)
-            splittedColoredLink[-2] = splittedColoredLink[-2] + title + splittedColoredLink[-1]
-            splittedColoredLink.pop(-1)
-            coloredLink = originalTitle.join(splittedColoredLink)
-            if not checkPermission(View, predecessor):
-                coloredLink = spanifyLink(coloredLink)
-                coloredLink += "&nbsp;<span class='discreet'>({0})</span>".format(
-                    translate('can_not_access_this_item',
-                              domain="PloneMeeting",
-                              context=item.REQUEST,
-                              default="You can not access this item").encode('utf-8'))
-            res.append(coloredLink)
-        return res
+        return predecessors
+
+    security.declarePublic('displayLinkedItem')
+    def displayLinkedItem(self, item):
+        '''Return a HTML structure to display a linked item.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        showColors = tool.showColorsForUser()
+        coloredLink = tool.getColoredLink(item, showColors=showColors)
+        # extract title from coloredLink that is HTML and complete it
+        originalTitle = re.sub('<[^>]*>', '', coloredLink).strip()
+        # remove '&nbsp;' left at the beginning of the string
+        originalTitle = originalTitle.lstrip('&nbsp;')
+        title = originalTitle
+        meeting = item.getMeeting()
+        # display the meeting date if the item is linked to a meeting
+        if meeting:
+            title = "%s (%s)" % (title, tool.formatMeetingDate(meeting).encode('utf-8'))
+        # show the meetingConfig type of the linked item, no matter
+        # it is from same portal_type of current item or not
+        itemCfg = tool.getMeetingConfig(item)
+        title = "<b><i>%s</i></b> - " % itemCfg.Title() + title
+        # only replace last occurence because title appear in the "title" tag,
+        # could be the same as the last part of url (id), ...
+        splittedColoredLink = coloredLink.split(originalTitle)
+        splittedColoredLink[-2] = splittedColoredLink[-2] + title + splittedColoredLink[-1]
+        splittedColoredLink.pop(-1)
+        coloredLink = originalTitle.join(splittedColoredLink)
+        if not checkPermission(View, item):
+            coloredLink = spanifyLink(coloredLink)
+            coloredLink += "&nbsp;<span class='discreet'>({0})</span>".format(
+                translate('can_not_access_this_item',
+                          domain="PloneMeeting",
+                          context=self.REQUEST,
+                          default="You can not access this item").encode('utf-8'))
+        return coloredLink
 
     security.declarePublic('showVotes')
     def showVotes(self):
