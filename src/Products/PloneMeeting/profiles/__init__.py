@@ -267,6 +267,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.shortName = ''  # Will be used for deducing content types specific
         # to this MeetingConfig (item, meeting)
         self.isDefault = isDefault
+        self.itemIconColor = "default"
         # What is the number of the last meeting for this meeting config ?
         self.lastMeetingNumber = 0
         # Reinitialise the meeting number every year ?

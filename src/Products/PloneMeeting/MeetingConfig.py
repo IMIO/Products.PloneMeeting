@@ -234,6 +234,20 @@ schema = Schema((
         ),
         write_permission="PloneMeeting: Write risky config",
     ),
+    StringField(
+        name='itemIconColor',
+        default=defValues.itemIconColor,
+        widget=SelectionWidget(
+            description="ItemIconColor",
+            description_msgid="item_icon_color_descr",
+            label='Itemiconcolor',
+            label_msgid='PloneMeeting_label_itemIconColor',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
+        vocabulary='listItemIconColors',
+    ),
     IntegerField(
         name='lastMeetingNumber',
         default=defValues.lastMeetingNumber,
@@ -2530,6 +2544,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((str(number), str(number)))
         return DisplayList(tuple(res))
 
+    security.declarePrivate('listItemIconColors')
+    def listItemIconColors(self):
+        '''Vocabulary for field 'itemIconColor'.'''
+        res = [("default", translate('icon_color_default',
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST))]
+        for color in ITEM_ICON_COLORS:
+            res.append((color, translate('icon_color_{0}'.format(color),
+                                         domain='PloneMeeting',
+                                         context=self.REQUEST)))
+        return DisplayList(tuple(res)).sortedByValue()
+
     security.declarePrivate('listItemRelatedColumns')
     def listItemRelatedColumns(self):
         '''Lists all the attributes that can be used as columns for displaying
@@ -2790,7 +2816,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType = getattr(pt, portalTypeName)
             basePortalType = getattr(pt, metaTypeName)
             portalType.i18n_domain = basePortalType.i18n_domain
-            portalType.icon_expr = basePortalType.icon_expr
+            if metaTypeName == "MeetingItem":
+                iconName = "MeetingItem.png"
+                if not self.getItemIconColor() == "default":
+                    iconName = "MeetingItem{0}.png".format(self.getItemIconColor().capitalize())
+                portalType.icon_expr = "string:${{portal_url}}/{0}".format(iconName)
+            else:
+                portalType.icon_expr = basePortalType.icon_expr
+            portalType.icon_expr_object = Expression(portalType.icon_expr)
             portalType.content_meta_type = basePortalType.content_meta_type
             portalType.factory = basePortalType.factory
             portalType.immediate_view = basePortalType.immediate_view
@@ -4478,6 +4511,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             query['getDate'] = {'query': DateTime(), 'range': 'min'}
 
         return catalog.unrestrictedSearchResults(**query)
+
+
 
 registerType(MeetingConfig, PROJECTNAME)
 # end of class MeetingConfig

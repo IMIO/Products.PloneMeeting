@@ -202,6 +202,9 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', '
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'oralQuestion', 'observations']
 
+# to differenciate items, we can use a different icon color
+ITEM_ICON_COLORS = ("azur", "green", "grey", "pink", "purple", "red", "yellow")
+
 # There are various ways to insert items into meetings
 ITEM_INSERT_METHODS = (  # Items are inserted:
     'at_the_end',  # at the end of meetings;
