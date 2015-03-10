@@ -917,7 +917,6 @@ schema = Schema((
             label_msgid='PloneMeeting_label_manuallyLinkedItems',
             i18n_domain='PloneMeeting',
         ),
-        visible=True,
         optional=True,
         multiValued=True,
         relationship="ManuallyLinkedItem",
@@ -1310,7 +1309,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = getToolByName(item, 'portal_workflow')
         return bool(wfTool.getTransitionsFor(item))
 
-    security.declareProtected('Modify portal content', 'setItemIsSigned')
+    security.declareProtected('Modify portal content', 'setTakenOverBy')
     def setTakenOverBy(self, value, **kwargs):
         '''Override MeetingItem.takenOverBy mutator so we can manage
            history stored in 'takenOverByInfos'.

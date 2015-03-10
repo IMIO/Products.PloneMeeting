@@ -543,10 +543,8 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 .highlight {background-color: yellow}
 
 /* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
-.highlightRedefinedValue,
-.highlightRedefinedValue.itemAssemblyEditable span,
-.highlightRedefinedValue.itemSignaturesEditable span {
-    color: red;
+.highlightValue {
+    color: red !important;
 }
 
 /* Add a highlight-red style useable in CKeditor to highlight modified elements */
@@ -666,11 +664,6 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 .itemAssemblyEditable i,
 .itemSignaturesEditable i {
     padding-bottom: 0px;
-}
-/* add some space before displayed itemAssembly (itemSignatures) if itemAssembly (itemSignatures) is editable */
-div.itemAssemblyEditable,
-div.itemSignaturesEditable {
-    margin-bottom: 5px;
 }
 
 /* make the textarea displayed in the manage itemAssembly/itemSignatures having a higher height */
@@ -1062,23 +1055,6 @@ span#content-history.highlight-history-link a {
     color: &dtml-discreetColor;;
     font-style: italic;
     text-decoration: underline;
-}
-
-#content ul.item-predecessors {
-    list-style: none;
-    margin-left: 0;
-    padding-left: 0;
-}
-#content ul.item-predecessors li:before {
-    content: "n";
-    font-family: "Webdings";
-    font-size: 0.4em;
-    padding-right: 0.5em;
-    vertical-align: text-bottom;
-    color: &dtml-discreetColor;;
-}
-#content ul.item-predecessors li {
-    line-height: 1em;
 }
 
 td.pmAnnexSizeWarning {

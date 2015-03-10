@@ -168,7 +168,7 @@ else:
 
         # need to quote it, to avoid injection of html containing javascript
         # and other evil stuff
-        display_description = html_quote(display_description)
+        display_description = html_quote(display_description) or '&nbsp;'
         write('''<div class="LSDescr">%s</div>''' % (display_description))
         write('''</li>''')
         full_title, display_title, display_description = None, None, None
