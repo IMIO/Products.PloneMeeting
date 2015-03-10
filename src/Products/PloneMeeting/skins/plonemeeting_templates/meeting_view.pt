@@ -40,7 +40,7 @@
                   useUserReplacements meetingConfig/getUseUserReplacements;
                   showAvailableItems python:member.has_permission('Modify portal content', context) and context.wfConditions().mayAcceptItems();
                   toLocalizedTime nocall: context/@@plone/toLocalizedTime;"
-      tal:attributes="onLoad python: 'javascript: askInitialItemsLists(\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\')' % (showColors, showLateItems, showAvailableItems, iStartNumber, lStartNumber, context.numberOfItems(), context.numberOfItems(True), meetingConfig.getMaxShownMeetingItems())">
+      tal:attributes="onLoad python: 'javascript: askInitialItemsLists(\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\');;createCookie(\'forceInsertNormal\', \'false\')' % (showColors, showLateItems, showAvailableItems, iStartNumber, lStartNumber, context.numberOfItems(), context.numberOfItems(True), meetingConfig.getMaxShownMeetingItems())">
 
   <script language="javascript"
     tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">

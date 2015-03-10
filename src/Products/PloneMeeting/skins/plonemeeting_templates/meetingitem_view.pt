@@ -165,8 +165,7 @@
             </div>
             <tal:comment replace="nothing">Predecessor</tal:comment>
             <table class="no-style-table"
-                   tal:define="predecessors python: context.adapted().getPredecessors()"
-                   tal:condition="predecessors">
+                   tal:define="predecessors python: context.adapted().getPredecessors()">
               <tr>
                 <td style="vertical-align: top;">
                   <div class="discreet">
@@ -174,13 +173,14 @@
                         i18n:translate="PloneMeeting_label_predecessor"></span>:&nbsp;&nbsp;
                   </div>
                 </td>
-                <td>
+                <td tal:condition="predecessors">
                     <ul class="item-predecessors">
                         <li tal:repeat="predecessor predecessors">
                             <tal:predecessor replace="structure predecessor" />
                         </li>
                     </ul>
                 </td>
+                <td class="discreet" tal:condition="not: predecessors">-</td>
               </tr>
             </table>
             <div class="discreet"

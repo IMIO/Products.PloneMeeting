@@ -903,6 +903,25 @@ schema = Schema((
         multiValued=False,
         relationship="ItemPredecessor",
     ),
+    ReferenceField(
+        name='manuallyLinkedItems',
+        widget=ReferenceBrowserWidget(
+            description="ManuallyLinkedItems",
+            description_msgid="manually_linked_items_descr",
+            condition="python: here.attributeIsUsed('manuallyLinkedItems')",
+            allow_search=True,
+            allow_browse=False,
+            base_query="manuallyLinkedItemsBaseQuery",
+            show_results_without_query=True,
+            label='Manuallylinkeditems',
+            label_msgid='PloneMeeting_label_manuallyLinkedItems',
+            i18n_domain='PloneMeeting',
+        ),
+        visible=True,
+        optional=True,
+        multiValued=True,
+        relationship="ManuallyLinkedItem",
+    ),
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
@@ -1209,6 +1228,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         query = {}
         query['path'] = {'query': '/'.join(cfg.getPhysicalPath() + ('classifiers',))}
+        return query
+
+    security.declarePublic('manuallyLinkedItemsBaseQuery')
+    def manuallyLinkedItemsBaseQuery(self):
+        '''base_query for the 'manuallyLinkedItems' field.
+           Here, we restrict the widget to search only MeetingItems.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        allowed_types = []
+        for cfg in tool.getActiveConfigs():
+            allowed_types.append(cfg.getItemTypeName())
+            query = {}
+            query['portal_type'] = allowed_types
         return query
 
     security.declarePublic('getDefaultBudgetInfo')
