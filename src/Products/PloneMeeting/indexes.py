@@ -16,6 +16,14 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 
 
 @indexer(IMeetingItem)
+def title_or_id(obj):
+    """
+      Indexes the title_or_id, used in the referencebrowser popup
+    """
+    return obj.title_or_id(withTypeName=False)
+
+
+@indexer(IMeetingItem)
 def previous_review_state(obj):
     """
       Indexes the previous review_state, aka the review_state before current review_state

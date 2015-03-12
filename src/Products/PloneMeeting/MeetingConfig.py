@@ -38,6 +38,8 @@ from zope.component import getMultiAdapter
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+from imio.helpers.catalog import addOrUpdateColumns
+from imio.helpers.catalog import removeColumns
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
 from plone.portlets.interfaces import IPortletManager
@@ -2551,7 +2553,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      domain='PloneMeeting',
                                      context=self.REQUEST))]
         for color in ITEM_ICON_COLORS:
-            res.append((color, translate('icon_color_{0}'.format(color),
+            res.append((color, translate(color,
                                          domain='PloneMeeting',
                                          context=self.REQUEST)))
         return DisplayList(tuple(res)).sortedByValue()
@@ -2810,20 +2812,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('updatePortalTypes')
     def updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
-        pt = self.portal_types
+        typesTool = getToolByName(self, 'portal_types')
         for metaTypeName in self.metaTypes:
             portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
-            portalType = getattr(pt, portalTypeName)
-            basePortalType = getattr(pt, metaTypeName)
+            portalType = getattr(typesTool, portalTypeName)
+            basePortalType = getattr(typesTool, metaTypeName)
             portalType.i18n_domain = basePortalType.i18n_domain
             if metaTypeName == "MeetingItem":
+                # change MeetingItem icon_expr only if necessary as we need to update
+                # the 'getIcon' metadata in this case...
                 iconName = "MeetingItem.png"
                 if not self.getItemIconColor() == "default":
                     iconName = "MeetingItem{0}.png".format(self.getItemIconColor().capitalize())
-                portalType.icon_expr = "string:${{portal_url}}/{0}".format(iconName)
+                # if icon_expr changed, we need to update the 'getIcon' metadata
+                # of items of this MeetingConfig
+                icon_expr = 'string:${{portal_url}}/{0}'.format(iconName)
+                if portalType.icon_expr != icon_expr:
+                    portalType.icon_expr = icon_expr
+                    portalType.icon_expr_object = Expression(portalType.icon_expr)
+                    catalog = getToolByName(self, 'portal_catalog')
+                    brains = catalog(portal_type=self.getItemTypeName(), isDefinedInTool=True) + \
+                        catalog(portal_type=self.getItemTypeName(), isDefinedInTool=False)
+                    for brain in brains:
+                        item = brain.getObject()
+                        item.reindexObject(idxs=['getIcon', ])
             else:
                 portalType.icon_expr = basePortalType.icon_expr
-            portalType.icon_expr_object = Expression(portalType.icon_expr)
+                portalType.icon_expr_object = Expression(portalType.icon_expr)
             portalType.content_meta_type = basePortalType.content_meta_type
             portalType.factory = basePortalType.factory
             portalType.immediate_view = basePortalType.immediate_view

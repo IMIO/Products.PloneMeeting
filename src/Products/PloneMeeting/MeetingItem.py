@@ -909,6 +909,7 @@ schema = Schema((
             description="ManuallyLinkedItems",
             description_msgid="manually_linked_items_descr",
             condition="python: here.attributeIsUsed('manuallyLinkedItems')",
+            allow_sorting=1,
             allow_search=True,
             allow_browse=False,
             base_query="manuallyLinkedItemsBaseQuery",
@@ -917,6 +918,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_manuallyLinkedItems',
             i18n_domain='PloneMeeting',
         ),
+        referencesSortable=1,
         optional=True,
         multiValued=True,
         relationship="ManuallyLinkedItem",
@@ -1060,6 +1062,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     # Methods
 
     # Manually created methods
+
+    security.declarePublic('title_or_id')
+    def title_or_id(self, withTypeName=True):
+        '''Implemented the deprecated method 'title_or_id' because it is used by
+           archetypes.referencebrowserwidget in the popup.  We also override the
+           view to use it in the widget in edit mode.  This way, we can display
+           more informations than just the title.'''
+        if withTypeName:
+            return "{0} - {1}".format(translate(self.portal_type,
+                                                domain="plone",
+                                                context=self.REQUEST).encode('utf-8'),
+                                      self.Title(withMeetingDate=True))
+        return self.Title(withMeetingDate=True)
+
+    def Title(self, withMeetingDate=False, **kwargs):
+        title = self.getField('title').get(self, **kwargs)
+        if withMeetingDate:
+            meeting = self.getMeeting()
+            if meeting:
+                tool = getToolByName(self, 'portal_plonemeeting')
+                return "{0} ({1})".format(title, tool.formatMeetingDate(meeting))
+        return title
 
     security.declarePublic('getName')
     def getName(self, force=None):
@@ -4426,11 +4450,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = item.getMeeting()
         # display the meeting date if the item is linked to a meeting
         if meeting:
-            title = "%s (%s)" % (title, tool.formatMeetingDate(meeting).encode('utf-8'))
+            title = item.Title(withMeetingDate=True)
         # show the meetingConfig type of the linked item, no matter
         # it is from same portal_type of current item or not
-        itemCfg = tool.getMeetingConfig(item)
-        title = "<b><i>%s</i></b> - " % itemCfg.Title() + title
+        title = "<img src='{0}' title='{1}' />&nbsp;{2}".format(item.getIcon(),
+                                                                translate(item.portal_type,
+                                                                          domain='plone',
+                                                                          context=self.REQUEST).encode('utf-8'),
+                                                                title)
         # only replace last occurence because title appear in the "title" tag,
         # could be the same as the last part of url (id), ...
         splittedColoredLink = coloredLink.split(originalTitle)

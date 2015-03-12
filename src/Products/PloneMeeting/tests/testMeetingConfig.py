@@ -32,11 +32,13 @@ from plone.dexterity.utils import createContentInContainer
 
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
+from Products.CMFPlone.CatalogTool import getIcon
 
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
@@ -1443,6 +1445,37 @@ class testMeetingConfig(PloneMeetingTestCase):
                 self.assertTrue(pmManagerConfigFolder.__ac_local_roles__[groupId] == ['MeetingManager', ])
                 # 'pmManager' is in each _meetingmanagers group
                 self.assertTrue(groupId in self.member.getGroups())
+
+    def test_pm_ItemIconColor(self):
+        '''When changing itemIconColor on the MeetingConfig, make sure the linked
+           portal_type is also updated and the 'getIcon' metadata is updated as well.'''
+        # create an item, it is using default itemIconColor, then change and check
+        self.changeUser('pmCreator1')
+        cfg = self.meetingConfig
+        self.assertTrue(cfg.getItemIconColor() == "default")
+        itemType = self.portal.portal_types[cfg.getItemTypeName()]
+        self.assertTrue(itemType.icon_expr.endswith('MeetingItem.png'))
+        # get one item of the config to check that these items are updated too
+        itemInConfig = cfg.getItems()[0]
+        item = self.create('MeetingItem')
+        # the item's getIcon metadata is correct
+        itemBrain = self.portal.portal_catalog(UID=item.UID())[0]
+        itemInConfigBrain = self.portal.portal_catalog(UID=itemInConfig.UID())[0]
+        self.assertTrue(itemBrain.getIcon == getIcon(item)())
+        self.assertTrue(itemInConfigBrain.getIcon == getIcon(itemInConfig)())
+        otherColor = ITEM_ICON_COLORS[0]
+        otherColorIconName = "MeetingItem{0}.png".format(ITEM_ICON_COLORS[0].capitalize())
+        cfg.setItemIconColor(otherColor)
+        cfg.at_post_edit_script()
+        # portal_type was updated
+        self.assertTrue(itemType.icon_expr.endswith(otherColorIconName))
+        self.assertTrue(itemType.icon_expr_object)
+        self.assertTrue(itemType.icon_expr.endswith(otherColorIconName))
+        # 'getIcon' metadata was updated
+        itemBrain = self.portal.portal_catalog(UID=item.UID())[0]
+        itemInConfigBrain = self.portal.portal_catalog(UID=itemInConfig.UID())[0]
+        self.assertTrue(itemBrain.getIcon == getIcon(item)())
+        self.assertTrue(itemInConfigBrain.getIcon == getIcon(itemInConfig)())
 
 
 def test_suite():

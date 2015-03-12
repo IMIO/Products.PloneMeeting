@@ -168,6 +168,11 @@ class PMReferenceBrowserPopup(ReferenceBrowserPopup):
                              prepareSearchValue(search_value))
         return super(PMReferenceBrowserPopup, self).getResult()
 
+    def title_or_id(self, item):
+        assert self._updated
+        item = aq_base(item)
+        return getattr(item, 'title_or_id')
+
 
 class BaseActionsPanelView(ActionsPanelView):
     """
