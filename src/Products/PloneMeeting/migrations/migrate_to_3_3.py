@@ -103,13 +103,23 @@ class Migrate_To_3_3(Migrator):
             # create the 'itemtemplates' folder for the MeetingConfig
             cfg._createSubFolders()
             item_ids_to_move = []
+            # move (cut/paste) items 10 by 10 because there is a clipboard limitation
+            # when moving elements, and 10 by 10 is ok...
+            i = 0
             for item in cfg.recurringitems.objectValues('MeetingItem'):
                 if 'as_template_item' in item.usages:
                     item_ids_to_move.append(item.getId())
                 # remove the 'usages' attribute that is no more used
                 delattr(item, 'usages')
-            cuttedData = cfg.recurringitems.manage_cutObjects(item_ids_to_move)
-            cfg.itemtemplates.manage_pasteObjects(cuttedData)
+                i = i + 1
+                if i == 10:
+                    cuttedData = cfg.recurringitems.manage_cutObjects(item_ids_to_move)
+                    cfg.itemtemplates.manage_pasteObjects(cuttedData)
+                    item_ids_to_move = []
+                    i = 0
+            if item_ids_to_move:
+                cuttedData = cfg.recurringitems.manage_cutObjects(item_ids_to_move)
+                cfg.itemtemplates.manage_pasteObjects(cuttedData)
         logger.info('Done.')
 
     def _updateMeetingConfigsToCloneToAttributeOnMeetingConfigs(self):
