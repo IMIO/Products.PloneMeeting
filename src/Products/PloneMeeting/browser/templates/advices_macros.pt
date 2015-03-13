@@ -14,7 +14,8 @@
                                             item_url meetingItem/absolute_url;
                                             portal context/@@plone_portal_state/portal;
                                             tool python: portal.portal_plonemeeting;
-                                            portal_url context/@@plone_portal_state/portal_url;
+                                            portal_url portal/absolute_url;
+                                            pm_utils context/@@pm_utils;
                                             displayAdviceConfidentiality python: meetingConfig.getEnableAdviceConfidentiality() and tool.isManager(meetingItem);
                                             isRealManager python: tool.isManager(meetingItem, realManagers=True);
                                             item_review_state meetingItem/queryState;
@@ -145,7 +146,7 @@
                   <tr tal:condition="python: (adviceType != 'not_given')">
                     <td colspan="4"
                         tal:define="needToCrop python: advice['comment'] and len(advice['comment']) > 400;
-                                    comment python: needToCrop and portal.restrictedTraverse('@@pm_utils').cropHTML(advice['comment'], 400) or advice['comment']">
+                                    comment python: needToCrop and pm_utils.cropHTML(advice['comment'], 400) or advice['comment']">
                         <img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${advice/type}.png;
                                              title string:${advice/type};"
                              i18n:attributes="title" title=""/>
