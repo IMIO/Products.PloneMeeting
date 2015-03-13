@@ -68,6 +68,13 @@
         permission="zope2.View"/>
     </configure>
 
+    <!-- a view that will make some utils available -->
+    <browser:page
+        for="*"
+        name="pm_utils"
+        class=".utils.Utils"
+        permission="zope2.View"
+        />
 
     <!-- Custom view for meetingadvice -->
     <browser:page

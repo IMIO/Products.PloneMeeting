@@ -15,7 +15,6 @@
                                             portal context/@@plone_portal_state/portal;
                                             tool python: portal.portal_plonemeeting;
                                             portal_url context/@@plone_portal_state/portal_url;
-                                            plone_view context/@@plone;
                                             displayAdviceConfidentiality python: meetingConfig.getEnableAdviceConfidentiality() and tool.isManager(meetingItem);
                                             isRealManager python: tool.isManager(meetingItem, realManagers=True);
                                             item_review_state meetingItem/queryState;
@@ -145,16 +144,20 @@
                   </tr>
                   <tr tal:condition="python: (adviceType != 'not_given')">
                     <td colspan="4"
-                        tal:define="croppedComment python: plone_view.cropText(advice['comment'] or '', 400, '...')">
+                        tal:define="needToCrop python: advice['comment'] and len(advice['comment']) > 400;
+                                    comment python: needToCrop and portal.restrictedTraverse('@@pm_utils').cropHTML(advice['comment'], 400) or advice['comment']">
                         <img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${advice/type}.png;
                                              title string:${advice/type};"
                              i18n:attributes="title" title=""/>
                         <span tal:content="string:${advice/type}" i18n:translate="">Advice type</span>
-                        <i tal:condition="croppedComment"
-                           tal:content="structure python: croppedComment"></i>
+                        <i tal:condition="comment"
+                           tal:content="structure comment"></i>
                         <p class="discreet"
-                              tal:condition="not: croppedComment"
-                              i18n:translate="">No complementary comment has been given on this advice.</p>
+                           tal:condition="not: comment"
+                           i18n:translate="">No complementary comment has been given on this advice.</p>
+                        <p class="discreet"
+                           tal:condition="needToCrop"
+                           i18n:translate="">This is an extract of the comment, access full comment if necessary...</p>
                     </td>
                   </tr>
                   <tr tal:condition="python: 'advice_id' in advice">
