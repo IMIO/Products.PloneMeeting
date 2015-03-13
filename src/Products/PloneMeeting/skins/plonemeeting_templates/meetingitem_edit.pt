@@ -75,7 +75,7 @@
         </td>
       </tr>
       <tr>
-        <td>
+        <td colspan="5">
           <metal:field use-macro="python:here.widget('manuallyLinkedItems', mode='edit')"/>
         </td>
       </tr>
