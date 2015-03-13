@@ -9,6 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.4 (unreleased)
 ----------------
+- Rely on beautifulsoup4
 - Moved the 'getMeetingsAcceptingItems' from MeetingItem to MeetingConfig so it can be called
   when no item exist.  This is used in imio.pm.ws 'meetingsAcceptingItems' SOAP call
 - Use MeetingItem.clone method to add recurring items to a meeting so it use same functionnality
