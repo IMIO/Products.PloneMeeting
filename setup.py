@@ -48,6 +48,7 @@ setup(name='Products.PloneMeeting',
       install_requires=[
           'setuptools',
           'appy',
+          'beautifulsoup4',
           'Plone',
           'Pillow',
           'collective.ckeditor',

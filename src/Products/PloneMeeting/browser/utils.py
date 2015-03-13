@@ -1,4 +1,4 @@
-from BeautifulSoup import BeautifulSoup
+from beautifulsoup4 import BeautifulSoup
 from zope.component import getMultiAdapter
 
 from Products.Five import BrowserView
@@ -16,4 +16,4 @@ class Utils(BrowserView):
 
     def cropHTML(self, html, length):
         '''Crop given HTML and return valid HTML.'''
-        return BeautifulSoup(html[:length]).renderContents()
+        return BeautifulSoup(html[:length], 'html.parser').renderContents()
