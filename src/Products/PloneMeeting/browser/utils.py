@@ -1,4 +1,4 @@
-from beautifulsoup4 import BeautifulSoup
+from bs4 import BeautifulSoup
 from zope.component import getMultiAdapter
 
 from Products.Five import BrowserView
