@@ -19,6 +19,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   item of the application.  Added possibility to define an icon to use to represent items of a
   MeetingConfig, this way, it is possible to differenciate items of different MeetingConfigs when
   these items are shown together in various places
+- Added view '@@pm_utils' that make some utils available in various places and added
+  method cropHTML that make sure a cropped HTML content is still valid
 
 3.3 (2015-02-27)
 ----------------
