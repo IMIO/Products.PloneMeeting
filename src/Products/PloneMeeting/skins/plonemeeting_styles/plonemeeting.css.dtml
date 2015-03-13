@@ -1073,6 +1073,10 @@ div.highlightBlankRow:before {
     content: attr(title);
     padding-left: 0.5em;
 }
+/* on the meetingconfig view, move itemIconColor value to let place for the icon */
+span[id^="parent-fieldname-itemIconColor"] {
+    padding-left: 20px;
+}
 
 /* </dtml-with> */
 

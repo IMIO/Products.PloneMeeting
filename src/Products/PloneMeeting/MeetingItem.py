@@ -1082,7 +1082,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting = self.getMeeting()
             if meeting:
                 tool = getToolByName(self, 'portal_plonemeeting')
-                return "{0} ({1})".format(title, tool.formatMeetingDate(meeting))
+                return "{0} ({1})".format(title, tool.formatMeetingDate(meeting).encode('utf-8'))
         return title
 
     security.declarePublic('getName')

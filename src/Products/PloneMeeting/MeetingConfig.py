@@ -38,8 +38,6 @@ from zope.component import getMultiAdapter
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
-from imio.helpers.catalog import addOrUpdateColumns
-from imio.helpers.catalog import removeColumns
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
 from plone.portlets.interfaces import IPortletManager
@@ -2553,7 +2551,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      domain='PloneMeeting',
                                      context=self.REQUEST))]
         for color in ITEM_ICON_COLORS:
-            res.append((color, translate(color,
+            res.append((color, translate('icon_color_{0}'.format(color),
                                          domain='PloneMeeting',
                                          context=self.REQUEST)))
         return DisplayList(tuple(res)).sortedByValue()
@@ -2809,6 +2807,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return True
         return False
 
+    def getItemIconColorName(self):
+        '''This will return the name of the icon used for MeetingItem portal_type.'''
+        iconName = "MeetingItem.png"
+        if not self.getItemIconColor() == "default":
+            iconName = "MeetingItem{0}.png".format(self.getItemIconColor().capitalize())
+        return iconName
+
     security.declarePrivate('updatePortalTypes')
     def updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
@@ -2821,9 +2826,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if metaTypeName == "MeetingItem":
                 # change MeetingItem icon_expr only if necessary as we need to update
                 # the 'getIcon' metadata in this case...
-                iconName = "MeetingItem.png"
-                if not self.getItemIconColor() == "default":
-                    iconName = "MeetingItem{0}.png".format(self.getItemIconColor().capitalize())
+                iconName = self.getItemIconColorName()
                 # if icon_expr changed, we need to update the 'getIcon' metadata
                 # of items of this MeetingConfig
                 icon_expr = 'string:${{portal_url}}/{0}'.format(iconName)
