@@ -357,14 +357,14 @@
      </tal:mayViewItem>
     </tal:showItem>
 
-    <tr tal:condition="python: whichItems=='availableItems' and context.queryState() not in context.getBeforeFrozenState()">
+    <!-- tr tal:condition="python: whichItems=='availableItems' and context.queryState() not in context.getBeforeFrozenState()">
         <td align="right" colspan="30">
           <input type="checkbox"
                  name="forceInsertNormal"
                  onclick="javascript:createCookie('forceInsertNormal', this.checked)">
           <label class="formQuestion" for="forceInsertNormal">Insert items as normal items.</label>
         </td>
-    </tr>
+    </tr-->
 
     <tr tal:condition="not: shownItems">
         <td colspan="30"
