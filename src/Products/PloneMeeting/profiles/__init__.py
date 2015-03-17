@@ -412,7 +412,7 @@ class MeetingConfigDescriptor(Descriptor):
                                         'annexes', 'annexesDecision', 'actions']
         # what fields of the item will be displayed in the items listings
         # while clicking on the show more infos action (glasses icon)
-        self.itemsListVisibleFields = ['description', 'decision']
+        self.itemsListVisibleFields = ['MeetingItem.description', 'MeetingItem.decision']
         # In item-related topic results, what columns are shown?
         self.itemColumns = ['creationDate', 'creator', 'state', 'annexes',
                             'annexesDecision', 'advices', 'actions', 'meeting']

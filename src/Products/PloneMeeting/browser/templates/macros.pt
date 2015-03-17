@@ -868,9 +868,10 @@ Fields are only displayed if :
           tal:define="mode string:view;
                       context python: meetingItem;">
         <tal:loop repeat="visibleField meetingConfig/getItemsListVisibleFields">
-            <span tal:define="field python: meetingItem.getField(visibleField);"
-                  tal:condition="python: not meetingItem.fieldIsEmpty(visibleField) and ((visibleField == 'budgetInfos' and
-                                 meetingItem.getBudgetRelated() or not visibleField == 'budgetInfos') and True or False) and not visibleField in visibleColumns">
+            <span tal:define="visibleFieldName python: visibleField.split('.')[1];
+                              field python: meetingItem.getField(visibleFieldName);"
+                  tal:condition="python: not meetingItem.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
+                                 meetingItem.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False) and not visibleFieldName in visibleColumns">
                 <span metal:use-macro="context/widgets/field/macros/view" />
             </span>
         </tal:loop>

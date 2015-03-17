@@ -2593,19 +2593,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res)).sortedByValue()
 
     def listItemsListVisibleFields(self):
-        '''
-        '''
-        res = []
-        for field in MeetingItem.schema.fields():
-            fieldName = field.getName()
-            if fieldName in ITEMS_LIST_VISIBLE_FIELDS:
-                res.append((fieldName,
-                            '%s (%s)' % (translate(field.widget.label_msgid,
-                                                   domain=field.widget.i18n_domain,
-                                                   context=self.REQUEST),
-                                         fieldName)
-                            ))
-        return res
+        '''Vocabulary for the 'itemsListVisibleFields' field.
+           Every RichText field available on the MeetingItem can be selectable.'''
+        res = self._listRichTextFieldFor(MeetingItem)
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listItemColumns')
     def listItemColumns(self):

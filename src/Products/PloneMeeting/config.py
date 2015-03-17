@@ -257,10 +257,6 @@ DELAY_UNAVAILABLE_WEEKDAY_NUMBER = 5
 # Define the weekday mnemonics to match the date.weekday function
 PY_DATETIME_WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
-# fields available in the MeetingConfig.itemsListVisibleFields vocabulary
-ITEMS_LIST_VISIBLE_FIELDS = ('description', 'detailedDescription',
-                             'budgetInfos', 'motivation', 'decision', )
-
 # warn about MeetingFile size if file size bigger than
 MAX_FILE_SIZE_WARNING = 5000000
 
