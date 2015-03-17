@@ -1332,6 +1332,13 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay'] == '20')
         self.assertTrue(item.adviceIndex['vendors']['delay_for_automatic_adviser_changed_manually'] is True)
 
+    def test_pm_MayGiveAdviceWhenItemIsBackToANotViewableState(self, ):
+        '''Test that if an item is set back to a state the user that set it back can
+           not view anymore, and that the advice turn from giveable to not giveable anymore,
+           transitions triggered on advice that will 'giveAdvice'.'''
+        pass
+
+
     def test_pm_ConfigAdviceStates(self):
         '''
           This test that states defined in config.py in two constants
