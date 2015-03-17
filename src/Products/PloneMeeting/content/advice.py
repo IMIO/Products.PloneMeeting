@@ -155,26 +155,6 @@ class MeetingAdvice(Container):
         '''See doc in utils.py.'''
         return getHistory(self, *args, **kwargs)
 
-    def mayBackToAdviceUnderEdit(self):
-        '''This is the guard_expr for transition backToAdviceUnderEdit.
-           By default, nobody can trigger this transition, it is automatically triggered,
-           during MeetingItem.updateAdvices.  Make sure MeetingItem.updateAdvices can trigger
-           it but nobody else.'''
-        # the transition is protected by the presence of a key 'mayBackToAdviceUnderEdit' in the REQUEST
-        if not self.REQUEST.get('mayBackToAdviceUnderEdit', False):
-            return False
-        return True
-
-    def mayGiveAdvice(self):
-        '''This is the guard_expr for transition giveAdvice.
-           By default, nobody can trigger this transition, it is automatically triggered,
-           during MeetingItem.updateAdvices.  Make sure MeetingItem.updateAdvices can trigger
-           it but nobody else.'''
-        # the transition is protected by the presence of a key 'mayGiveAdvice' in the REQUEST
-        if self.REQUEST.get('mayGiveAdvice', False):
-            return True
-        return False
-
     def get_advice_given_on(self):
         '''Return the date the advice was given on.
            Returns older date between modified() and last event 'giveAdvice'.'''

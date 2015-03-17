@@ -22,6 +22,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   these items are shown together in various places
 - Added view '@@pm_utils' that make some utils available in various places and added
   method cropHTML that make sure a cropped HTML content is still valid
+- Do not call the advice in the meetingadvice_workflow guard_expr because the advice could not be
+  accessible and it can raises Unauthorized.  Instead, put the guard_expr logic in the guard expression itself
 
 3.3 (2015-02-27)
 ----------------
