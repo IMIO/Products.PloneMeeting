@@ -1478,74 +1478,53 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # value sometimes contains an empty string ''...
         if '' in value:
             value.remove('')
+
+        # save value that will be actually stored on self as it will not be value
+        # if some extra uids are appended to it because linking to an item
+        # that is already linked to other items
         valueToStore = list(value)
+        # only compute if something changed
         if not set(stored) == set(value):
             catalog = getToolByName(self, 'portal_catalog')
-
-            # first make sure every uids of values + self UID are stored in every items of value...
+            # update every items linked together that are still kept (in value)
             newUids = list(set(value).difference(set(stored)))
-            if '' in newUids:
-                newUids.remove('')
-            if newUids:
-                # full list of uids is every linkedUids of every newUids and these newUids + value
-                # first build list of new uids that will be appended to every linked items
-                newLinkedUids = []
-                for newUid in newUids:
-                    # add every manually linked items of this newUid...
-                    newItem = catalog(UID=newUid)[0].getObject()
-                    for mLinkedItemUid in newItem.getRawManuallyLinkedItems():
-                        if not mLinkedItemUid in newLinkedUids and not mLinkedItemUid in '':
-                            newLinkedUids.append(mLinkedItemUid)
-                # do not forget newUids
-                newLinkedUids = newLinkedUids + newUids
-                # we will also store this for self
-                valueToStore = tuple(set(valueToStore).union(newLinkedUids))
-                # for every linked items, also keep back link to self
-                newLinkedUids.append(self.UID())
-                # now update every item (newLinkedUids + value)
-                # make sure we have not same UID several times
-                newLinkedUids = set(newLinkedUids).union(value)
-                for linkedItemUid in newLinkedUids:
-                    # self UID is in newLinkedUids but is managed here above, so pass
-                    if linkedItemUid == self.UID():
-                        continue
-                    linkedItem = catalog(UID=linkedItemUid)[0].getObject()
-                    # do not self reference
-                    newLinkedUidsToStore = list(newLinkedUids)
-                    if linkedItem.UID() in newLinkedUids:
-                        newLinkedUidsToStore.remove(linkedItem.UID())
-                    linkedItem.getField('manuallyLinkedItems').set(linkedItem, newLinkedUidsToStore, **kwargs)
+            # first build list of new uids that will be appended to every linked items
+            newLinkedUids = []
+            for newUid in newUids:
+                # add every manually linked items of this newUid...
+                newItem = catalog(UID=newUid)[0].getObject()
+                for mLinkedItemUid in newItem.getRawManuallyLinkedItems():
+                    if not mLinkedItemUid in newLinkedUids and not mLinkedItemUid in '':
+                        newLinkedUids.append(mLinkedItemUid)
+            # do not forget newUids
+            newLinkedUids = newLinkedUids + newUids
+            # we will also store this for self
+            valueToStore = tuple(set(valueToStore).union(newLinkedUids))
+            # for every linked items, also keep back link to self
+            newLinkedUids.append(self.UID())
+            # now update every item (newLinkedUids + value)
+            # make sure we have not same UID several times
+            newLinkedUids = set(newLinkedUids).union(value)
+            for linkedItemUid in newLinkedUids:
+                # self UID is in newLinkedUids but is managed here above, so pass
+                if linkedItemUid == self.UID():
+                    continue
+                linkedItem = catalog(UID=linkedItemUid)[0].getObject()
+                # do not self reference
+                newLinkedUidsToStore = list(newLinkedUids)
+                if linkedItem.UID() in newLinkedUids:
+                    newLinkedUidsToStore.remove(linkedItem.UID())
+                linkedItem.getField('manuallyLinkedItems').set(linkedItem, newLinkedUidsToStore, **kwargs)
 
-            # notify every stored uids that some reference where removed
-            # so remove this relation including self from every stored uids
+            # now if links were removed, remove linked items on every removed items...
             removedUids = set(stored).difference(set(value))
             if removedUids:
-                # remove the uid from every linked items
-                for linkedItemUid in stored:
-                    linkedItemBrains = catalog(UID=linkedItemUid)
-                    if not linkedItemBrains:
-                        continue
-                    linkedItem = linkedItemBrains[0].getObject()
-                    linkedItemUids = list(linkedItem.getRawManuallyLinkedItems())
-                    # if stored linkedItemUid is one to remove, remove also back link to self
-                    uidsToRemove = list(removedUids)
-                    if linkedItem.UID() in removedUids:
-                        uidsToRemove.append(self.UID())
-                    for uid in uidsToRemove:
-                        if uid in linkedItemUids:
-                            linkedItemUids.remove(uid)
-                    linkedItem.getField('manuallyLinkedItems').set(linkedItem, linkedItemUids, **kwargs)
-                # finally, remove every linked items from removedUids...
                 for removedUid in removedUids:
                     removedItemBrains = catalog(UID=removedUid)
                     if not removedItemBrains:
                         continue
                     removedItem = removedItemBrains[0].getObject()
-                    removedItemUids = list(removedItem.getRawManuallyLinkedItems())
-                    for linkedItemUid in stored:
-                        if linkedItemUid in removedItemUids:
-                            removedItemUids.remove(linkedItemUid)
-                    removedItem.getField('manuallyLinkedItems').set(removedItem, removedItemUids, **kwargs)
+                    removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
 
         self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
 

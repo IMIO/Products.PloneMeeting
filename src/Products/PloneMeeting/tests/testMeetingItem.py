@@ -2677,6 +2677,74 @@ class testMeetingItem(PloneMeetingTestCase):
                         '<p>Text before space</p>\n<p>\xc2\xa0</p>\n<p>Text after space</p>\n'
                         '<p class="highlightBlankRow" title="Blank line">\xc2\xa0</p>\n')
 
+    def test_pm_ManuallyLinkedItems(self):
+        '''Test the MeetingItem.manuallyLinkedItems field : as mutator is overrided,
+           we implent behaviour so every items are linked together.
+           Test when adding or removing items from linked items.'''
+        # create 4 items and play with it
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item1UID = item1.UID()
+        item2 = self.create('MeetingItem')
+        item2UID = item2.UID()
+        item3 = self.create('MeetingItem')
+        item3UID = item3.UID()
+        item4 = self.create('MeetingItem')
+        item4UID = item4.UID()
+
+        # first test while adding new linked items
+        # link item1 to item2, item2 will also be linked to item1
+        item1.setManuallyLinkedItems([item2UID, ])
+        self.assertTrue(item1.getRawManuallyLinkedItems() == [item2UID, ])
+        self.assertTrue(item2.getRawManuallyLinkedItems() == [item1UID, ])
+        # now link item3 to item2, it will also be automagically linked to item1
+        item2.setManuallyLinkedItems([item1UID, item3UID])
+        self.assertTrue(set(item1.getRawManuallyLinkedItems()) == set([item2UID, item3UID]))
+        self.assertTrue(set(item2.getRawManuallyLinkedItems()) == set([item1UID, item3UID]))
+        self.assertTrue(set(item3.getRawManuallyLinkedItems()) == set([item1UID, item2UID]))
+        # link item4 to item3, same bahaviour
+        item3.setManuallyLinkedItems([item1UID, item2UID, item4UID])
+        self.assertTrue(set(item1.getRawManuallyLinkedItems()) == set([item2UID, item3UID, item4UID]))
+        self.assertTrue(set(item2.getRawManuallyLinkedItems()) == set([item1UID, item3UID, item4UID]))
+        self.assertTrue(set(item3.getRawManuallyLinkedItems()) == set([item1UID, item2UID, item4UID]))
+        self.assertTrue(set(item4.getRawManuallyLinkedItems()) == set([item1UID, item2UID, item3UID]))
+
+        # now test when removing items
+        # remove linked item4 from item1, it will be removed from every items
+        item1.setManuallyLinkedItems([item2UID, item3UID])
+        self.assertTrue(set(item1.getRawManuallyLinkedItems()) == set([item2UID, item3UID]))
+        self.assertTrue(set(item2.getRawManuallyLinkedItems()) == set([item1UID, item3UID]))
+        self.assertTrue(set(item3.getRawManuallyLinkedItems()) == set([item1UID, item2UID]))
+        self.assertTrue(set(item4.getRawManuallyLinkedItems()) == set([]))
+
+        # ok, now test when adding an item that is already linked to another item
+        # link1 to item3 that is already linked to item4
+        item1.setManuallyLinkedItems([])
+        item3.setManuallyLinkedItems([item4UID])
+        self.assertTrue(item1.getRawManuallyLinkedItems() == [])
+        self.assertTrue(item2.getRawManuallyLinkedItems() == [])
+        self.assertTrue(item3.getRawManuallyLinkedItems() == [item4UID, ])
+        self.assertTrue(item4.getRawManuallyLinkedItems() == [item3UID, ])
+        # when linking item1 to item3, finally every items are linked together
+        item1.setManuallyLinkedItems([item3UID])
+        self.assertTrue(set(item1.getRawManuallyLinkedItems()) == set([item3UID, item4UID]))
+        self.assertTrue(set(item2.getRawManuallyLinkedItems()) == set([]))
+        self.assertTrue(set(item3.getRawManuallyLinkedItems()) == set([item1UID, item4UID]))
+        self.assertTrue(set(item4.getRawManuallyLinkedItems()) == set([item1UID, item3UID]))
+
+        # ok now add a linked item and remove one, so link item1 to item2 and remove item4
+        item1.setManuallyLinkedItems([item2UID, item3UID])
+        self.assertTrue(set(item1.getRawManuallyLinkedItems()) == set([item2UID, item3UID]))
+        self.assertTrue(set(item2.getRawManuallyLinkedItems()) == set([item1UID, item3UID]))
+        self.assertTrue(set(item3.getRawManuallyLinkedItems()) == set([item1UID, item2UID]))
+        self.assertTrue(set(item4.getRawManuallyLinkedItems()) == set([]))
+
+        # we sometimes receive a '' in the value passed to setManuallyLinkedItems, check that it does not fail
+        item1.setManuallyLinkedItems(['', item2UID, item3UID])
+        item2.setManuallyLinkedItems([''])
+        item3.setManuallyLinkedItems(['', item2UID, item4UID])
+        item4.setManuallyLinkedItems(['', item1UID])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
