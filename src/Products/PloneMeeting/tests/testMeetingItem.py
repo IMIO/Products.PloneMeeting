@@ -2745,6 +2745,23 @@ class testMeetingItem(PloneMeetingTestCase):
         item3.setManuallyLinkedItems(['', item2UID, item4UID])
         item4.setManuallyLinkedItems(['', item1UID])
 
+    def test_pm_ManuallyLinkedItemsCanUpdateEvenWithNotViewableItems(self):
+        '''In case a user edit MeetingItem.manuallyLinkedItems field and does not have access
+           to some of the listed items, it will work nevertheless...'''
+        # create an item for 'developers' and one for 'vendors'
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        self.changeUser('pmCreator2')
+        item2 = self.create('MeetingItem')
+        # pmCreator2 should be able to set pmCreator1's item
+        item2.setManuallyLinkedItems([item1.UID()])
+        self.assertTrue(item1.getRawManuallyLinkedItems() == [item2.UID()])
+        self.assertTrue(item2.getRawManuallyLinkedItems() == [item1.UID()])
+        # and also to remove it
+        item2.setManuallyLinkedItems([])
+        self.assertTrue(item1.getRawManuallyLinkedItems() == [])
+        self.assertTrue(item2.getRawManuallyLinkedItems() == [])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

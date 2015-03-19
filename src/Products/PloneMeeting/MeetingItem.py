@@ -1473,7 +1473,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'setManuallyLinkedItems')
     def setManuallyLinkedItems(self, value, **kwargs):
         '''Overrides the field 'manuallyLinkedItems' mutator so we synchronize
-           field manuallyLinkedItems of every linked items...'''
+           field manuallyLinkedItems of every linked items...
+           We are using ZCatalog.unrestrictedSearchResults and ZCatalog.unrestrictedSearchResults
+           because current member could update manually linked items in which some are not viewable.'''
         stored = self.getField('manuallyLinkedItems').getRaw(self, **kwargs)
         # value sometimes contains an empty string ''...
         if '' in value:
@@ -1485,14 +1487,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         valueToStore = list(value)
         # only compute if something changed
         if not set(stored) == set(value):
-            catalog = getToolByName(self, 'portal_catalog')
+            # we will use unrestrictedSearchResults because in the case a user update manually linked items
+            # and in already selected items, there is an item he can not view, it will be found in the catalog
+            unrestrictedSearch = getToolByName(self, 'portal_catalog').unrestrictedSearchResults
             # update every items linked together that are still kept (in value)
             newUids = list(set(value).difference(set(stored)))
             # first build list of new uids that will be appended to every linked items
             newLinkedUids = []
             for newUid in newUids:
                 # add every manually linked items of this newUid...
-                newItem = catalog(UID=newUid)[0].getObject()
+                newItem = unrestrictedSearch(UID=newUid)[0]._unrestrictedGetObject()
                 for mLinkedItemUid in newItem.getRawManuallyLinkedItems():
                     if not mLinkedItemUid in newLinkedUids and not mLinkedItemUid in '':
                         newLinkedUids.append(mLinkedItemUid)
@@ -1509,7 +1513,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # self UID is in newLinkedUids but is managed here above, so pass
                 if linkedItemUid == self.UID():
                     continue
-                linkedItem = catalog(UID=linkedItemUid)[0].getObject()
+                linkedItem = unrestrictedSearch(UID=linkedItemUid)[0]._unrestrictedGetObject()
                 # do not self reference
                 newLinkedUidsToStore = list(newLinkedUids)
                 if linkedItem.UID() in newLinkedUids:
@@ -1520,10 +1524,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             removedUids = set(stored).difference(set(value))
             if removedUids:
                 for removedUid in removedUids:
-                    removedItemBrains = catalog(UID=removedUid)
+                    removedItemBrains = unrestrictedSearch(UID=removedUid)
                     if not removedItemBrains:
                         continue
-                    removedItem = removedItemBrains[0].getObject()
+                    removedItem = removedItemBrains[0]._unrestrictedGetObject()
                     removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
 
         self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
