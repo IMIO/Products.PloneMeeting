@@ -395,18 +395,14 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         res = self.getField('itemAdviceStates').get(self, **kwargs)
 
         if cfg:
+            tmpres = []
             givenCfgId = cfg.getId()
-            # nothing redefined or nothing redefined for the given p_cfg, use p_cfg values
-            if not res or not [v for v in res if v.startswith('{0}__state__'.format(givenCfgId))]:
-                res = cfg.getItemAdviceStates()
-            else:
-                tmpres = []
-                givenCfgId = cfg.getId()
-                for elt in res:
-                    cfgId, state = elt.split('__state__')
-                    if cfgId == givenCfgId:
-                        tmpres.append(state)
-                res = tmpres
+            for elt in res:
+                cfgId, state = elt.split('__state__')
+                if cfgId == givenCfgId:
+                    tmpres.append(state)
+            # if nothing redefined for given p_cfg in this MeetingGroup, use value defined on the cfg
+            res = tmpres or cfg.getItemAdviceStates()
         return tuple(res)
 
     security.declarePublic('getItemAdviceEditStates')
@@ -414,17 +410,14 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         '''See docstring of method MeetingGroup.getItemAdviceStates.'''
         res = self.getField('itemAdviceEditStates').get(self, **kwargs)
         if cfg:
+            tmpres = []
             givenCfgId = cfg.getId()
-            if not res or not [v for v in res if v.startswith('{0}__state__'.format(givenCfgId))]:
-                res = cfg.getItemAdviceEditStates()
-            else:
-                tmpres = []
-                givenCfgId = cfg.getId()
-                for elt in res:
-                    cfgId, state = elt.split('__state__')
-                    if cfgId == givenCfgId:
-                        tmpres.append(state)
-                res = tmpres
+            for elt in res:
+                cfgId, state = elt.split('__state__')
+                if cfgId == givenCfgId:
+                    tmpres.append(state)
+            # if nothing redefined for given p_cfg in this MeetingGroup, use value defined on the cfg
+            res = tmpres or cfg.getItemAdviceEditStates()
         return tuple(res)
 
     security.declarePublic('getItemAdviceViewStates')
@@ -432,16 +425,14 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         '''See docstring of method MeetingGroup.getItemAdviceStates.'''
         res = self.getField('itemAdviceViewStates').get(self, **kwargs)
         if cfg:
+            tmpres = []
             givenCfgId = cfg.getId()
-            if not res or not [v for v in res if v.startswith('{0}__state__'.format(givenCfgId))]:
-                res = cfg.getItemAdviceViewStates()
-            else:
-                tmpres = []
-                for elt in res:
-                    cfgId, state = elt.split('__state__')
-                    if cfgId == givenCfgId:
-                        tmpres.append(state)
-                res = tmpres
+            for elt in res:
+                cfgId, state = elt.split('__state__')
+                if cfgId == givenCfgId:
+                    tmpres.append(state)
+            # if nothing redefined for given p_cfg in this MeetingGroup, use value defined on the cfg
+            res = tmpres or cfg.getItemAdviceViewStates()
         return tuple(res)
 
     security.declarePublic('getCertifiedSignatures')
