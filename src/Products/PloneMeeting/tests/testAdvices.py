@@ -954,6 +954,29 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(not vendors.getItemAdviceViewStates(cfg) == cfg.getItemAdviceViewStates())
         self.assertTrue(vendors.getItemAdviceViewStates(cfg) == (self.WF_STATE_NAME_MAPPINGS['validated'], ))
 
+    def test_pm_MeetingGroupDefinedItemAdviceStatesWorksTogetherWithMeetingConfigValues(self):
+        '''Advices giveable/editable/viewable states defined for a MeetingConfig on a MeetingGroup will
+           not interact other MeetingConfig for which nothing is defined on this MeetingGroup...'''
+        # make advices giveable for vendors for cfg1 in state 'proposed' and define nothing regarding
+        # cfg2, values defined on the cfg2 will be used
+        cfg = self.meetingConfig
+        vendors = self.tool.vendors
+        vendors.setItemAdviceStates(("%s__state__%s" % (cfg.getId(),
+                                                        self.WF_STATE_NAME_MAPPINGS['proposed'])))
+        vendors.setItemAdviceEditStates(("%s__state__%s" % (cfg.getId(),
+                                                            self.WF_STATE_NAME_MAPPINGS['proposed'])))
+        vendors.setItemAdviceViewStates(("%s__state__%s" % (cfg.getId(),
+                                                            self.WF_STATE_NAME_MAPPINGS['proposed'])))
+        cfg2 = self.meetingConfig2
+        cfg2.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'], ))
+        cfg2.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'], ))
+        cfg2.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'], ))
+
+        # getting states for cfg2 will get states on the cfg2
+        self.assertTrue(vendors.getItemAdviceStates(cfg2) == cfg2.getItemAdviceStates())
+        self.assertTrue(vendors.getItemAdviceEditStates(cfg2) == cfg2.getItemAdviceEditStates())
+        self.assertTrue(vendors.getItemAdviceViewStates(cfg2) == cfg2.getItemAdviceViewStates())
+
     def test_pm_PowerAdvisers(self):
         '''Power advisers are users that can give an advice even when not asked...'''
         # set developers as power advisers

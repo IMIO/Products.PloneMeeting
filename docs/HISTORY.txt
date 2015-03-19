@@ -25,6 +25,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   method cropHTML that make sure a cropped HTML content is still valid
 - Do not call the advice in the meetingadvice_workflow guard_expr because the advice could not be
   accessible and it can raises Unauthorized.  Instead, put the guard_expr logic in the guard expression itself
+- If advices states are redefined for a given MeetingConfig on a MeetingGroup, make sure other MeetingConfig
+  are not impacted, if nothing is defined on the MeetingGroup for another MeetingConfig, values defined on that
+  other MeetingConfig are used
 
 3.3 (2015-02-27)
 ----------------
