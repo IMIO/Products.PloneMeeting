@@ -211,7 +211,7 @@
                         </dd>
                     </dl>
                 </tal:defines>
-            </div>
+            </div><br />
 
             <div class="discreet"
                  tal:condition="python: 'itemIsSigned' in usedAttrs">
