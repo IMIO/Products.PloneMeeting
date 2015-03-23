@@ -2762,6 +2762,63 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item1.getRawManuallyLinkedItems() == [])
         self.assertTrue(item2.getRawManuallyLinkedItems() == [])
 
+    def test_pm_ManuallyLinkedItemsSortedByMeetingDate(self):
+        '''Linked items will be sorted automatically by linked meeting date.
+           If an item is not linked to a meeting, it will be sorted and the end
+           together with other items not linked to a meeting, by item creation date.'''
+        self.changeUser('pmManager')
+        # create 3 meetings containing an item in each
+        self.create('Meeting', date='2015/03/15')
+        i1 = self.create('MeetingItem')
+        i1UID = i1.UID()
+        i1.setDecision('<p>My decision</p>', mimetype='text/html')
+        self.presentItem(i1)
+        self.create('Meeting', date='2015/02/15')
+        i2 = self.create('MeetingItem')
+        i2UID = i2.UID()
+        i2.setDecision('<p>My decision</p>', mimetype='text/html')
+        self.presentItem(i2)
+        self.create('Meeting', date='2015/01/15')
+        i3 = self.create('MeetingItem')
+        i3UID = i3.UID()
+        i3.setDecision('<p>My decision</p>', mimetype='text/html')
+        self.presentItem(i3)
+        # now create 2 additional items
+        i4 = self.create('MeetingItem')
+        i4UID = i4.UID()
+        i5 = self.create('MeetingItem')
+        i5UID = i5.UID()
+
+        # now link i3 to i2 and i4
+        i3.setManuallyLinkedItems((i4UID, i2UID))
+        # items will be sorted correctly on every items
+        self.assertTrue(i3.getRawManuallyLinkedItems() == [i2UID, i4UID])
+        self.assertTrue(i2.getRawManuallyLinkedItems() == [i3UID, i4UID])
+        self.assertTrue(i4.getRawManuallyLinkedItems() == [i2UID, i3UID])
+
+        # add link to i1 and i5 and remove link to i2, do this on i4
+        i4.setManuallyLinkedItems((i5UID, i1UID, i3UID))
+        self.assertTrue(i1.getRawManuallyLinkedItems() == [i3UID, i4UID, i5UID])
+        self.assertTrue(i3.getRawManuallyLinkedItems() == [i1UID, i4UID, i5UID])
+        self.assertTrue(i4.getRawManuallyLinkedItems() == [i1UID, i3UID, i5UID])
+        self.assertTrue(i5.getRawManuallyLinkedItems() == [i1UID, i3UID, i4UID])
+
+        # link all items together
+        i1.setManuallyLinkedItems((i4UID, i2UID, i3UID, i5UID))
+        self.assertTrue(i1.getRawManuallyLinkedItems() == [i2UID, i3UID, i4UID, i5UID])
+        self.assertTrue(i2.getRawManuallyLinkedItems() == [i1UID, i3UID, i4UID, i5UID])
+        self.assertTrue(i3.getRawManuallyLinkedItems() == [i1UID, i2UID, i4UID, i5UID])
+        self.assertTrue(i4.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i5UID])
+        self.assertTrue(i5.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i4UID])
+
+        # call this again with same parameters, mutator is supposed to not change anything
+        i1.setManuallyLinkedItems(i1.getRawManuallyLinkedItems())
+        self.assertTrue(i1.getRawManuallyLinkedItems() == [i2UID, i3UID, i4UID, i5UID])
+        self.assertTrue(i2.getRawManuallyLinkedItems() == [i1UID, i3UID, i4UID, i5UID])
+        self.assertTrue(i3.getRawManuallyLinkedItems() == [i1UID, i2UID, i4UID, i5UID])
+        self.assertTrue(i4.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i5UID])
+        self.assertTrue(i5.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i4UID])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -918,7 +918,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_manuallyLinkedItems',
             i18n_domain='PloneMeeting',
         ),
-        referencesSortable=False,
+        referencesSortable=True,
         optional=True,
         multiValued=True,
         relationship="ManuallyLinkedItem",
@@ -1490,6 +1490,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # we will use unrestrictedSearchResults because in the case a user update manually linked items
             # and in already selected items, there is an item he can not view, it will be found in the catalog
             unrestrictedSearch = getToolByName(self, 'portal_catalog').unrestrictedSearchResults
+
+            # sorting method, items will be sorted by meeting date descending
+            # then, for items that are not in a meeting date, by creation date
+            def _sortByMeetingDate(xUid, yUid):
+                '''Sort method that will sort items by meetingDate.
+                   x and y are uids of items to sort.'''
+                item1 = unrestrictedSearch(UID=xUid)[0].getObject()
+                item2 = unrestrictedSearch(UID=yUid)[0].getObject()
+                item1Meeting = item1.getMeeting()
+                item2Meeting = item2.getMeeting()
+                if item1Meeting and item2Meeting:
+                    # both items have a meeting, compare meeting dates
+                    return cmp(item2Meeting.getDate(), item1Meeting.getDate())
+                elif item1Meeting and not item2Meeting:
+                    # only item1 has a Meeting, it will be displayed before
+                    return -1
+                elif not item1Meeting and item2Meeting:
+                    # only item2 has a Meeting, it will be displayed before
+                    return 1
+                else:
+                    # no meeting at all, sort by item creation date
+                    return cmp(item1.created(), item2.created())
+
             # update every items linked together that are still kept (in value)
             newUids = list(set(value).difference(set(stored)))
             # first build list of new uids that will be appended to every linked items
@@ -1503,7 +1526,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # do not forget newUids
             newLinkedUids = newLinkedUids + newUids
             # we will also store this for self
-            valueToStore = tuple(set(valueToStore).union(newLinkedUids))
+            valueToStore = list(set(valueToStore).union(newLinkedUids))
+            valueToStore.sort(_sortByMeetingDate)
             # for every linked items, also keep back link to self
             newLinkedUids.append(self.UID())
             # now update every item (newLinkedUids + value)
@@ -1518,6 +1542,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 newLinkedUidsToStore = list(newLinkedUids)
                 if linkedItem.UID() in newLinkedUids:
                     newLinkedUidsToStore.remove(linkedItem.UID())
+                newLinkedUidsToStore.sort(_sortByMeetingDate)
                 linkedItem.getField('manuallyLinkedItems').set(linkedItem, newLinkedUidsToStore, **kwargs)
 
             # now if links were removed, remove linked items on every removed items...
