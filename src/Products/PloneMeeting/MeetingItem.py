@@ -4528,16 +4528,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Return a HTML structure to display a linked item.'''
         tool = getToolByName(self, 'portal_plonemeeting')
         showColors = tool.showColorsForUser()
-        coloredLink = tool.getColoredLink(item, showColors=showColors)
-        # extract title from coloredLink that is HTML and complete it
-        originalTitle = re.sub('<[^>]*>', '', coloredLink).strip()
-        # remove '&nbsp;' left at the beginning of the string
-        originalTitle = originalTitle.lstrip('&nbsp;')
-        title = originalTitle
         meeting = item.getMeeting()
         # display the meeting date if the item is linked to a meeting
         if meeting:
             title = item.Title(withMeetingDate=True)
+        else:
+            title = item.Title()
         # show the meetingConfig type of the linked item, no matter
         # it is from same portal_type of current item or not
         title = "<img src='{0}' title='{1}' />&nbsp;{2}".format(item.getIcon(),
@@ -4545,12 +4541,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                           domain='plone',
                                                                           context=self.REQUEST).encode('utf-8'),
                                                                 title)
-        # only replace last occurence because title appear in the "title" tag,
-        # could be the same as the last part of url (id), ...
-        splittedColoredLink = coloredLink.split(originalTitle)
-        splittedColoredLink[-2] = splittedColoredLink[-2] + title + splittedColoredLink[-1]
-        splittedColoredLink.pop(-1)
-        coloredLink = originalTitle.join(splittedColoredLink)
+        coloredLink = tool.getColoredLink(item, showColors=showColors, contentValue=title)
         if not checkPermission(View, item):
             coloredLink = spanifyLink(coloredLink)
             coloredLink += "&nbsp;<span class='discreet'>({0})</span>".format(
