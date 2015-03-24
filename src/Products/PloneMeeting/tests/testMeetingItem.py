@@ -2603,7 +2603,8 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemCreatedOnlyUsingTemplate(self):
         '''If MeetingConfig.itemCreatedOnlyUsingTemplate is True, a user can only
            create a new item using an item template, if he tries to create an item
-           using createObject?type_name=MeetingItemXXX, he gets Unauthorized.'''
+           using createObject?type_name=MeetingItemXXX, he gets Unauthorized, except
+           if the item is added in the configuration, for managing item templates for example.'''
         # make sure user may add an item without a template for now
         self.meetingConfig.setItemCreatedOnlyUsingTemplate(False)
         self.changeUser('pmCreator1')
@@ -2616,6 +2617,21 @@ class testMeetingItem(PloneMeetingTestCase):
         # now make only item creation possible using a template
         self.meetingConfig.setItemCreatedOnlyUsingTemplate(True)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@at_lifecycle_view').begin_edit)
+
+        # but it is still possible to add items in the configuration
+        self.changeUser('admin')
+        # an item template
+        itemTemplate = self.create('TemplateMeetingItem')
+        itemTemplate._at_creation_flag = True
+        self.assertTrue(itemTemplate._at_creation_flag)
+        # using the edit form will not raise Unauthorized
+        self.assertIsNone(itemTemplate.restrictedTraverse('@@at_lifecycle_view').begin_edit())
+        # an recurring item
+        itemTemplate = self.create('RecurringMeetingItem')
+        itemTemplate._at_creation_flag = True
+        self.assertTrue(itemTemplate._at_creation_flag)
+        # using the edit form will not raise Unauthorized
+        self.assertIsNone(itemTemplate.restrictedTraverse('@@at_lifecycle_view').begin_edit())
 
     def test_pm_GetAdviceDataFor(self):
         '''Test the getAdviceDataFor method, essentially the fact that it needs the item

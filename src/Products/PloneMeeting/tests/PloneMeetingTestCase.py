@@ -194,12 +194,14 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
            that will be given to invokeFactory.'''
         cfg = meetingConfig or self.meetingConfig
         shortName = cfg.getShortName()
-        # Some special behaviour occurs if the thing to create is a recurring
-        # item
-        isRecurringItem = objectType.startswith('Recurring')
-        if isRecurringItem:
-            contentType = '%s%s' % (objectType[9:], shortName)
+        # Some special behaviour occurs if the item to create is
+        # a recurring item or an item template
+        if objectType == 'RecurringMeetingItem':
+            contentType = 'MeetingItem%s' % shortName
             folder = cfg.recurringitems
+        elif objectType == 'TemplateMeetingItem':
+            contentType = 'MeetingItem%s' % shortName
+            folder = cfg.itemtemplates
         elif objectType in ('MeetingGroup', 'MeetingConfig'):
             contentType = objectType
             folder = self.tool
