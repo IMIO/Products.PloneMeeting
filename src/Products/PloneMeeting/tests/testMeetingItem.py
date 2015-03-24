@@ -2767,16 +2767,19 @@ class testMeetingItem(PloneMeetingTestCase):
         # create an item for 'developers' and one for 'vendors'
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        self.changeUser('pmCreator2')
         item2 = self.create('MeetingItem')
-        # pmCreator2 should be able to set pmCreator1's item
-        item2.setManuallyLinkedItems([item1.UID()])
-        self.assertTrue(item1.getRawManuallyLinkedItems() == [item2.UID()])
-        self.assertTrue(item2.getRawManuallyLinkedItems() == [item1.UID()])
+        self.changeUser('pmCreator2')
+        item3 = self.create('MeetingItem')
+        # pmCreator2 should be able to set pmCreator1's items
+        item3.setManuallyLinkedItems([item1.UID(), item2.UID()])
+        self.assertTrue(item1.getRawManuallyLinkedItems() == [item2.UID(), item3.UID()])
+        self.assertTrue(item2.getRawManuallyLinkedItems() == [item1.UID(), item3.UID()])
+        self.assertTrue(item3.getRawManuallyLinkedItems() == [item1.UID(), item2.UID()])
         # and also to remove it
         item2.setManuallyLinkedItems([])
         self.assertTrue(item1.getRawManuallyLinkedItems() == [])
         self.assertTrue(item2.getRawManuallyLinkedItems() == [])
+        self.assertTrue(item3.getRawManuallyLinkedItems() == [])
 
     def test_pm_ManuallyLinkedItemsSortedByMeetingDate(self):
         '''Linked items will be sorted automatically by linked meeting date.

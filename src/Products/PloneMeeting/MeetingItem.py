@@ -1496,8 +1496,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             def _sortByMeetingDate(xUid, yUid):
                 '''Sort method that will sort items by meetingDate.
                    x and y are uids of items to sort.'''
-                item1 = unrestrictedSearch(UID=xUid)[0].getObject()
-                item2 = unrestrictedSearch(UID=yUid)[0].getObject()
+                item1 = unrestrictedSearch(UID=xUid)[0]._unrestrictedGetObject()
+                item2 = unrestrictedSearch(UID=yUid)[0]._unrestrictedGetObject()
                 item1Meeting = item1.getMeeting()
                 item2Meeting = item2.getMeeting()
                 if item1Meeting and item2Meeting:
