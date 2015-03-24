@@ -18,9 +18,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   of items, even if it is decided, until the linked meeting is not considered closed
 - Added field MeetingItem.manuallyLinkedItems that makes it possible to link an item to any other
   item of the application.  Back link is managed automatically so every linked items are all linked
-  together.  Added possibility to define an icon to use to represent items of a
-  MeetingConfig, this way, it is possible to differenciate items of different MeetingConfigs when
-  these items are shown together in various places
+  together and will build some kind of 'virtual folder'.  Items are sorted automatically chronologically
+  descending.  Added possibility to define an icon to use to represent items of a MeetingConfig, this way,
+  it is possible to differenciate items of different MeetingConfigs when these items are shown together
+  in various places
 - Added view '@@pm_utils' that make some utils available in various places and added
   method cropHTML that make sure a cropped HTML content is still valid
 - Do not call the advice in the meetingadvice_workflow guard_expr because the advice could not be
