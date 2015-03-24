@@ -329,8 +329,10 @@ def onItemDuplicated(item, event):
 
 def onItemEditBegun(item, event):
     '''When an item edit begun, if it is an item in creation, we check that
-       user is not trying to create an item not using an item template if he can not...'''
-    if item._at_creation_flag:
+       if MeetingConfig.itemCreatedOnlyUsingTemplate is True, the user is not trying to create
+       an fresh item not from an item template.  Do not check this for items added to the
+       configuration (recurring items and item templates).'''
+    if item._at_creation_flag and not item.isDefinedInTool():
         tool = getToolByName(item, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         if cfg.getItemCreatedOnlyUsingTemplate():
