@@ -162,7 +162,9 @@ PodTemplate_schema = BaseSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 PodTemplate_schema['id'].write_permission = "PloneMeeting: Write risky config"
 PodTemplate_schema['title'].write_permission = "PloneMeeting: Write risky config"
-PodTemplate_schema['description'].schemata = "default"
+PodTemplate_schema.changeSchemataForField('description', 'default')
+PodTemplate_schema.moveField('description', after='title')
+PodTemplate_schema['description'].storage = AttributeStorage()
 PodTemplate_schema['description'].write_permission = "PloneMeeting: Write risky config"
 PodTemplate_schema['description'].widget.description = " "
 PodTemplate_schema['description'].widget.description_msgid = "empty_description"
