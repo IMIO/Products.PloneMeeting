@@ -21,6 +21,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.utils import checkPermission
 
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
+from imio.history.adapters import ImioHistoryAdapter
 from collective.documentviewer.settings import GlobalSettings
 
 
@@ -329,21 +330,25 @@ class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
         return False
 
 
-class HistoryCommentViewableAdapter(object):
+class PMHistoryAdapter(ImioHistoryAdapter):
     """
-      Manage the fact that current user may see or not a comment in an element's history.
+      Override the imio.history ImioHistoryAdapter to define some more ignorable history comments.
     """
-
-    def __init__(self, context):
-        self.context = context
-        self.request = self.context.REQUEST
+    def ignorableHistoryComments(self):
+        """ """
+        ignorable_history_comment = super(PMHistoryAdapter, self).ignorableHistoryComments()
+        ignorable_history_comment += ('create_meeting_item_from_template_comments',
+                                      'create_from_predecessor_comments',
+                                      'Duplicate and keep link_comments',
+                                      'Duplicate_comments')
+        return ignorable_history_comment
 
     def mayViewComment(self, event):
-        '''
+        """
           By default, every p_event comment is viewable except for MeetingItem, if
           'hideItemHistoryCommentsToUsersOutsideProposingGroup' is enabled in the MeetingConfig,
           only members of the proposing group will be able to access history comment.
-        '''
+        """
         userMayAccessComment = True
         if self.context.meta_type == 'MeetingItem':
             tool = getToolByName(self.context, 'portal_plonemeeting')
@@ -353,3 +358,7 @@ class HistoryCommentViewableAdapter(object):
                 if not self.context.getProposingGroup() in userMeetingGroupIds:
                     userMayAccessComment = False
         return userMayAccessComment
+
+    def getHistory(self):
+        """ """
+        return self.context.getHistory()

@@ -11,14 +11,13 @@ from Acquisition import aq_base
 from zope.annotation import IAnnotations
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from plone.app.controlpanel.overview import OverviewControlPanel
-from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
-from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.actionspanel.browser.views import DeleteGivenUidView
+from imio.history.browser.views import IHDocumentBylineViewlet
 
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
@@ -26,33 +25,6 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import prepareSearchValue
-
-
-class PloneMeetingContentHistoryView(ContentHistoryView):
-    '''
-      Overrides the ContentHistoryView template to use our own.
-      We want to display the content_history as a table.
-    '''
-    index = ViewPageTemplateFile("templates/content_history.pt")
-
-    def getTransitionTitle(self, transitionName):
-        """
-          Given a p_transitionName, return the defined title in portal_workflow
-          as it is what is really displayed in the template.
-        """
-        currentWF = self._getCurrentContextWorkflow()
-        if hasattr(currentWF.transitions, transitionName):
-            return currentWF.transitions[transitionName].title
-        else:
-            return transitionName
-
-    @memoize
-    def _getCurrentContextWorkflow(self):
-        """
-          Return currently used workflow.
-        """
-        wfTool = getToolByName(self.context, 'portal_workflow')
-        return wfTool.getWorkflowsFor(self.context)[0]
 
 
 class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
@@ -104,9 +76,9 @@ class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
         return {'portal': default_tab}
 
 
-class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
+class PloneMeetingDocumentBylineViewlet(IHDocumentBylineViewlet):
     '''
-      Overrides the DocumentBylineViewlet to hide it for some layouts.
+      Overrides the IHDocumentBylineViewlet to hide it for some layouts.
     '''
 
     index = ViewPageTemplateFile("templates/document_byline.pt")
@@ -122,26 +94,6 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
             if currentLayout in ['meetingfolder_redirect_view', ]:
                 return False
         return True
-
-    def show_history(self):
-        """
-          Originally, the history is shown to people having the
-          'CMFEditions: Access previous versions' permission, here
-          we want everybody than can acces the item to see the history...
-        """
-        # show the history on the meetingadvice only on the advanced management view
-        if self.context.portal_type == 'meetingadvice' and 'ajax_load' in self.request:
-            return False
-        return True
-
-    def highlight_history_link(self):
-        """
-          If a comment was added to last event of the object history,
-          we highlight the link (set a css class on it) so user eye is drawn to it.
-        """
-        # use method historyLastEventHasComments from imio.actionspanel that does the job
-        actions_panel = self.context.restrictedTraverse('@@actions_panel')
-        return actions_panel.historyLastEventHasComments()
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):
@@ -184,11 +136,6 @@ class BaseActionsPanelView(ActionsPanelView):
     def __init__(self, context, request):
         super(BaseActionsPanelView, self).__init__(context, request)
         self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste')
-        self.IGNORABLE_HISTORY_COMMENTS = self.IGNORABLE_HISTORY_COMMENTS + \
-            ('create_meeting_item_from_template_comments',
-             'create_from_predecessor_comments',
-             'Duplicate and keep link_comments',
-             'Duplicate_comments')
 
     def mayEdit(self):
         """

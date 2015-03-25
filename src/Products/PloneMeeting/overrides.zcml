@@ -29,16 +29,18 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
-    <!-- Render the document byline -->
+
+    <!-- Override imio.history document byline -->
     <browser:viewlet
-        name="plone.belowcontenttitle.documentbyline"
+        name="imio.history.documentbyline"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class=".browser.overrides.PloneMeetingDocumentBylineViewlet"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
 
-    <!-- override the referencebrowserwidget view to do searches wildcard -->
+    <!-- override the referencebrowserwidget view to do searches wildcard
+         XXX to be removed in rbw > 2.5.2 -->
     <browser:page
         name="refbrowser_popup"
         permission="zope2.Public"
@@ -46,29 +48,6 @@
         class=".browser.overrides.PMReferenceBrowserPopup"
         />
 
-    <!-- Override the contenthistory template displayed in the history popup
-         to display things as a table -->
-    <browser:view
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        name="contenthistory"
-        class=".browser.overrides.PloneMeetingContentHistoryView"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View"
-        />
-    <browser:view
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        name="contenthistory"
-        class=".browser.overrides.PloneMeetingContentHistoryView"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View"
-        />
-    <browser:view
-        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
-        name="contenthistory"
-        class=".browser.overrides.PloneMeetingContentHistoryView"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View"
-        />
     <browser:page
         name="overview-controlpanel"
         for="Products.CMFPlone.interfaces.IPloneSiteRoot"

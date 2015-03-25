@@ -4201,7 +4201,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             wfName = wfTool.getWorkflowsFor(newItem)[0].id
             firstEvent = newItem.workflow_history[wfName][0]
             cloneEvent = firstEvent.copy()
-            # to be translated, cloneEventAction_comments must be in the 'PloneMeeting' domain
+            # to be translated, cloneEventAction_comments must be in the 'imio.history' domain
             # so it is displayed in content_history together with wf transitions
             cLabel = cloneEventAction + '_comments'
             cloneEvent['comments'] = cLabel

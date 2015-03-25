@@ -50,16 +50,6 @@ class IPloneMeetingLayer(IBrowserRequest):
     pass
 
 
-class IHistoryCommentViewable(Interface):
-    """
-    """
-
-    def mayViewComment(context, event):
-        """
-           May the current user access comment of given p_event?
-        """
-
-
 class IAnnexable(Interface):
     """
       Adapter interface that manage elements than contains annexes.

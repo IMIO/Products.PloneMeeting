@@ -41,6 +41,7 @@ from zope.event import notify
 from zope.interface import implements
 from plone.memoize.interfaces import ICacheChooser
 from imio.helpers.xhtml import markEmptyTags, removeBlanks, xhtmlContentIsEmpty
+from imio.history.interfaces import IImioHistory
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -52,8 +53,8 @@ from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
     IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, IPodTemplateCustom, \
-    IToolPloneMeetingCustom, IMeetingUserCustom, IAnnexable, IHistoryCommentViewable, \
-    IAdvicesUpdatedEvent, IItemDuplicatedEvent, IItemDuplicatedFromConfigEvent, IItemAfterTransitionEvent
+    IToolPloneMeetingCustom, IMeetingUserCustom, IAnnexable, IAdvicesUpdatedEvent, IItemDuplicatedEvent, \
+    IItemDuplicatedFromConfigEvent, IItemAfterTransitionEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -1059,12 +1060,12 @@ def getHistory(obj, startNumber=0, batchSize=5):
         else:
             # workflow history event
             # hide comment if user may not access it
-            if not IHistoryCommentViewable(obj).mayViewComment(event):
+            if not IImioHistory(obj).mayViewComment(event):
                 # We take a copy, because we will modify it.
                 event = history[i].copy()
                 event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
         res.append(event)
-    return {'events': res, 'totalNumber': len(history)}
+    return res
 
 
 # ------------------------------------------------------------------------------

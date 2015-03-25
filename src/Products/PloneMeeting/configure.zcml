@@ -44,9 +44,15 @@
   <adapter for="OFS.interfaces.IItem"
            factory=".adapters.AnnexableAdapter"
            provides=".interfaces.IAnnexable" />
-  <adapter for="OFS.interfaces.IItem"
-           factory=".adapters.HistoryCommentViewableAdapter"
-           provides=".interfaces.IHistoryCommentViewable" />
+  <adapter for="Products.PloneMeeting.interfaces.IMeeting"
+           factory=".adapters.PMHistoryAdapter"
+           provides="imio.history.interfaces.IImioHistory" />
+  <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
+           factory=".adapters.PMHistoryAdapter"
+           provides="imio.history.interfaces.IImioHistory" />
+  <adapter for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+           factory=".adapters.PMHistoryAdapter"
+           provides="imio.history.interfaces.IImioHistory" />
 
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="Products.PloneMeeting.Meeting.Meeting"
