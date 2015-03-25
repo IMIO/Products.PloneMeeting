@@ -1003,7 +1003,7 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def getHistory(obj, startNumber=0, batchSize=5):
+def getHistory(obj, startNumber=0, batchSize=500):
     '''Returns the history for this object, sorted in reverse order
        (most recent change first)'''
     res = []
