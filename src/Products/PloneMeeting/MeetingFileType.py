@@ -128,7 +128,9 @@ MeetingFileType_schema = BaseSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 MeetingFileType_schema['id'].write_permission = "PloneMeeting: Write risky config"
 MeetingFileType_schema['title'].write_permission = "PloneMeeting: Write risky config"
-MeetingFileType_schema['description'].schemata = "default"
+MeetingFileType_schema.changeSchemataForField('description', 'default')
+MeetingFileType_schema.moveField('description', after='title')
+MeetingFileType_schema['description'].storage = AttributeStorage()
 MeetingFileType_schema['description'].write_permission = "PloneMeeting: Write risky config"
 MeetingFileType_schema['description'].widget.description = " "
 MeetingFileType_schema['description'].widget.description_msgid = "empty_description"

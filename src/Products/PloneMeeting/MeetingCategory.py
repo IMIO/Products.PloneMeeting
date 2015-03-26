@@ -85,11 +85,13 @@ MeetingCategory_schema = BaseSchema.copy() + \
 # set write_permission for 'id' and 'title'
 MeetingCategory_schema['id'].write_permission = "PloneMeeting: Write risky config"
 MeetingCategory_schema['title'].write_permission = "PloneMeeting: Write risky config"
-MeetingCategory_schema['description'].schemata = "default"
+MeetingCategory_schema.changeSchemataForField('description', 'default')
+MeetingCategory_schema.moveField('description', after='title')
+MeetingCategory_schema['description'].storage = AttributeStorage()
 MeetingCategory_schema['description'].write_permission = "PloneMeeting: Write risky config"
 MeetingCategory_schema['description'].widget.description = " "
 MeetingCategory_schema['description'].widget.description_msgid = "empty_description"
-# hide metadata fields and even protect it vy the WriteRiskyConfig permission
+# hide metadata fields and even protect it by the WriteRiskyConfig permission
 for field in MeetingCategory_schema.getSchemataFields('metadata'):
     field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
     field.write_permission = WriteRiskyConfig
