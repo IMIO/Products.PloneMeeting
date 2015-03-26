@@ -1044,12 +1044,6 @@ div a.advice_delay_change_value {
     display: flex;
 }
 
-/* class applied to the link to 'history' on a element view when last event of history has comments */
-span#content-history.highlight-history-link a {
-    color: red;
-    font-weight: bold;
-}
-
 #content-history p#historize_signed_advice_content-advice_comment,
 #content-history p#historize_signed_advice_content-advice_observations {
     color: &dtml-discreetColor;;
