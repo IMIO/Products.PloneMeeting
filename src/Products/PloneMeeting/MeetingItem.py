@@ -430,8 +430,8 @@ class MeetingItemWorkflowActions:
         clonedItem = self.context.clone(copyAnnexes=True,
                                         newOwnerId=creator,
                                         cloneEventAction='create_from_predecessor',
-                                        keepProposingGroup=True)
-        clonedItem.setPredecessor(self.context)
+                                        keepProposingGroup=True,
+                                        setCurrentAsPredecessor=True)
         # Send, if configured, a mail to the person who created the item
         clonedItem.sendMailIfRelevant('itemDelayed', 'Owner', isRole=True)
 
@@ -4151,7 +4151,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('clone')
     def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
               destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None,
-              keepProposingGroup=False):
+              keepProposingGroup=False, setCurrentAsPredecessor=False):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -4161,7 +4161,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            we want to keep value of, if not in this list, the new field value
            will be the default value for this field.
            If p_keepProposingGroup, the proposingGroup in ToolPloneMeeting.pasteItems
-           no matter current user is not member of that group.'''
+           no matter current user is not member of that group.
+           If p_setCurrentAsPredecessor, current item will be set as predecessor
+           for the new item.'''
         # first check that we are not trying to clone an item
         # we can not access because of privacy status
         # do thsi check if we are not creating an item from an itemTemplate
@@ -4208,6 +4210,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cloneEvent['action'] = cloneEventAction
             cloneEvent['actor'] = userId
             newItem.workflow_history[wfName] = (firstEvent, cloneEvent)
+        # automatically set current item as predecessor for newItem?
+        if setCurrentAsPredecessor:
+            newItem.setPredecessor(self)
         # notify that item has been duplicated so subproducts
         # may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
@@ -4265,7 +4270,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
                              newPortalType=destMeetingConfig.getItemTypeName(),
-                             keepProposingGroup=True)
+                             keepProposingGroup=True, setCurrentAsPredecessor=True)
         # manage categories mapping, if original and new items use
         # categories, we check if a mapping is defined in the configuration of the original item
         if not cfg.getUseGroupsAsCategories() and \
@@ -4280,8 +4285,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     newItem.setCategory(newCat.getId())
                     break
 
-        # now that new item has been created, we can set self as the predecessor
-        newItem.setPredecessor(self)
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
         triggerUntil = '__nothing__'
@@ -4422,8 +4425,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''This method is triggered when the users clicks on
            "duplicate item and keep link".'''
         user = self.portal_membership.getAuthenticatedMember()
-        newItem = self.clone(newOwnerId=user.id, cloneEventAction='Duplicate and keep link')
-        newItem.setPredecessor(self)
+        newItem = self.clone(newOwnerId=user.id,
+                             cloneEventAction='Duplicate and keep link',
+                             setCurrentAsPredecessor=True)
         self.plone_utils.addPortalMessage(
             translate('item_duplicated_and_link_kept', domain='PloneMeeting', context=self.REQUEST))
         return self.REQUEST.RESPONSE.redirect(newItem.absolute_url())

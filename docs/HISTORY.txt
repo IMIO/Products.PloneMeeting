@@ -30,6 +30,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - If advices states are redefined for a given MeetingConfig on a MeetingGroup, make sure other MeetingConfig
   are not impacted, if nothing is defined on the MeetingGroup for another MeetingConfig, values defined on that
   other MeetingConfig are used
+- Added parameter 'setCurrentAsPredecessor' to MeetingItem.clone method, making it possible to specify if we
+  want the current item to be the predecessor of the newly created item.  This formalize something that is often
+  done, and when 'ItemDuplicatedEvent' is called at the end of the 'clone', we have the set predecessor if necessary
 
 3.3 (2015-02-27)
 ----------------
