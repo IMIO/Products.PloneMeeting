@@ -26,7 +26,7 @@ class Migrate_To_3_4(Migrator):
         self.cleanRegistries()
         self._updateItemsListVisibleFields()
         # reinstall so versions are correctly shown in portal_quickinstaller
-        # and new stuffs are added (portal_catalog metadata especially)
+        # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.finish()
 
