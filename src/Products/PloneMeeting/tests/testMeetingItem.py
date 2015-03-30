@@ -2373,14 +2373,16 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         history = item.getHistory()
         # we have history
-        self.assertTrue(len(history) == 3)
+        # we just check > 2 because the proposeItem method could add several events to the history
+        # depending on the validation flow (propose to chief, reviewer, director, ...)
+        self.assertTrue(len(history) > 3)
         for event in history:
             self.assertTrue(event['comments'] == '')
         # make comments not viewable
         self.meetingConfig.setHideItemHistoryCommentsToUsersOutsideProposingGroup(True)
         history = item.getHistory()
         # we have history
-        self.assertTrue(len(history) == 3)
+        self.assertTrue(len(history) > 3)
         for event in history:
             self.assertTrue(event['comments'] == HISTORY_COMMENT_NOT_VIEWABLE)
 
