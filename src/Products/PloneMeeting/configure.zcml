@@ -14,6 +14,7 @@
   <include package="collective.iconifieddocumentactions"/>
   <include package="imio.pm.locales"/>
   <include package="imio.actionspanel"/>
+  <include package="imio.history"/>
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
   <include package="collective.js.fancytree"/>
