@@ -7,7 +7,7 @@
         for="*"
         view="plone.app.layout.globals.interfaces.IViewView"
         manager="plone.app.layout.viewlets.interfaces.IContentViews"
-        class="plone.app.layout.viewlets.common.ContentActionsViewlet"
+        class="Products.PloneMeeting.browser.overrides.PloneMeetingContentActionsViewlet"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal"
         />
@@ -17,7 +17,7 @@
         for="*"
         view="plone.app.content.browser.interfaces.IFolderContentsView"
         manager="plone.app.layout.viewlets.interfaces.IContentViews"
-        class="plone.app.layout.viewlets.common.ContentActionsViewlet"
+        class="Products.PloneMeeting.browser.overrides.PloneMeetingContentActionsViewlet"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal"
         />

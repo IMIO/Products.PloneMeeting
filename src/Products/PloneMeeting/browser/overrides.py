@@ -10,6 +10,7 @@
 from zope.annotation import IAnnotations
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.content import ContentHistoryView, DocumentBylineViewlet
+from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize
@@ -139,6 +140,20 @@ class PloneMeetingDocumentBylineViewlet(DocumentBylineViewlet):
         # use method historyLastEventHasComments from imio.actionspanel that does the job
         actions_panel = self.context.restrictedTraverse('@@actions_panel')
         return actions_panel.historyLastEventHasComments()
+
+
+class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
+    '''
+      Overrides the ContentActionsViewlet to hide it for some types.
+    '''
+
+    def render(self):
+        if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
+                                      'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
+                                      'PodTemplate', 'ToolPloneMeeting',) or \
+           self.context.portal_type in ('meetingadvice', ):
+            return ''
+        return self.index()
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):

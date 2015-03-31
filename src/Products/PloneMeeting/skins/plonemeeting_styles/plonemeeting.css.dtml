@@ -804,13 +804,6 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     display: inline !important;
 }
 
-/* hide every dropdown menus on items and portal_plonemeeting and MeetingConfigs */
-body.template-meetingitem_view ul#contentActionMenus,
-body.template-toolplonemeeting_view ul#contentActionMenus,
-body.template-base_view.portaltype-meetingconfig ul#contentActionMenus {
-    display: none;
-}
-
 .overlay-history .pb-ajax > div {
     width: 97%;
 }
