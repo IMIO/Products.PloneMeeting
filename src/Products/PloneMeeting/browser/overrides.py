@@ -11,6 +11,7 @@ from Acquisition import aq_base
 from zope.annotation import IAnnotations
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from plone.app.controlpanel.overview import OverviewControlPanel
+from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
@@ -94,6 +95,20 @@ class PloneMeetingDocumentBylineViewlet(IHDocumentBylineViewlet):
             if currentLayout in ['meetingfolder_redirect_view', ]:
                 return False
         return True
+
+
+class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
+    '''
+      Overrides the ContentActionsViewlet to hide it for some types.
+    '''
+
+    def render(self):
+        if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
+                                      'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
+                                      'PodTemplate', 'ToolPloneMeeting',) or \
+           self.context.portal_type in ('meetingadvice', ):
+            return ''
+        return self.index()
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):
