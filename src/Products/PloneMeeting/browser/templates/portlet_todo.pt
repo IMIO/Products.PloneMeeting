@@ -22,7 +22,7 @@
                                             class python: lastRow and dummy + ' lastRow' or dummy;"
                                 tal:attributes="class class">
            <acronym tal:attributes="title brain/Title">
-            <tal:showTitle replace="structure python: tool.getColoredLink(brain.getObject(), showColors, maxLength=view.getTitleLength())"/>
+            <tal:showTitle replace="structure python: view.getColoredLink(brain)"/>
            </acronym>
         </dd>
         </tal:loop>

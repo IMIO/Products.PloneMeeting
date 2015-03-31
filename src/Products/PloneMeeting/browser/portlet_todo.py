@@ -133,6 +133,17 @@ class Renderer(base.Renderer):
         """
         return self.data.title_length
 
+    def getColoredLink(self, brain):
+        """
+          Get the colored link for current item.
+          In some case, due to current roles changes, the brain.getObject
+          will not work, that is why we use unrestricted getObject.
+        """
+        item = brain._unrestrictedGetObject()
+        tool = self.getPloneMeetingTool()
+        showColors = self.showColors()
+        return tool.getColoredLink(item, showColors=showColors, maxLength=self.getTitleLength())
+
 
 class AddForm(base.AddForm):
     form_fields = form.Fields(ITodoPortlet)
