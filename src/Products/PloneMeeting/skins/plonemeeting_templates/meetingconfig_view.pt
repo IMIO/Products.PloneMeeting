@@ -438,7 +438,7 @@
       </fieldset>
 
       <!-- Recurring items -->
-      <a name="recItems"></a>
+      <a name="recurringitems"></a>
       <fieldset>
         <legend>
          <span i18n:translate="RecurringItems"></span>

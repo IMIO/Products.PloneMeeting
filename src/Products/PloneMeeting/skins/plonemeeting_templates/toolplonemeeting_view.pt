@@ -22,7 +22,7 @@
     <p i18n:translate="plonemeeting_descr"></p>
 
       <tal:comment replace="nothing">Meeting configurations</tal:comment>
-      <a name="MeetingConfig"></a>
+      <a name="meetingconfigs"></a>
       <fieldset>
         <legend>
          <span i18n:translate="meeting_configurations"></span>
@@ -67,7 +67,7 @@
       </fieldset>
 
     <tal:comment replace="nothing">MeetingGroups</tal:comment>
-    <a name="MeetingGroup"></a>
+    <a name="meetinggroups"></a>
      <fieldset>
         <legend><span i18n:translate="meeting_groups"></span>
           <img tal:attributes="src string: $portal_url/questionMark.png;

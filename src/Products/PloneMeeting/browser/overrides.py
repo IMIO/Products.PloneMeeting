@@ -435,8 +435,25 @@ class ConfigActionsPanelView(ActionsPanelView):
         # to move elements of same portal_type
         self.objectIds = self.folder.objectIds(self.context.meta_type)
         self.objId = self.context.getId()
-        self.moveUrl = "{0}/folder_position?position=%s&id=%s&template_id=../?pageName=data#{1}".format(
-            self.folder.absolute_url(), self.folder.getId())
+        self.moveUrl = "{0}/folder_position?position=%s&id=%s&template_id={1}".format(
+            self.folder.absolute_url(), self.returnTo())
+
+    def returnTo(self, ):
+        """What URL should I return to after moving the element and page is refreshed."""
+        # return to the right fieldset the element we are moving is used on
+        folderId = self.folder.getId()
+        if folderId == 'topics':
+            return "../?pageName=gui#topics"
+        if folderId == 'podtemplates':
+            return "../?pageName=doc#podtemplates"
+        if folderId == 'meetingusers':
+            return "../?pageName=users#meetingusers"
+        if self.context.meta_type == "MeetingConfig":
+            return "#meetingconfigs"
+        if self.context.meta_type == "MeetingGroup":
+            return "#meetinggroups"
+        # most are used on the 'data' fieldset, use this as default
+        return "../?pageName=data#{0}".format(folderId)
 
     def mayEdit(self):
         """
