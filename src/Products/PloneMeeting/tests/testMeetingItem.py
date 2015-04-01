@@ -2664,9 +2664,10 @@ class testMeetingItem(PloneMeetingTestCase):
                          'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
                          'itemKeywords', 'itemNumber', 'itemSignatories',
                          'itemSignatures', 'itemTags', 'manuallyLinkedItems',
-                         'meetingTransitionInsertingMe', 'predecessor', 'preferredMeeting',
-                         'proposingGroup', 'questioners', 'takenOverBy',
-                         'templateUsingGroups', 'toDiscuss', 'votesAreSecret']
+                         'meetingTransitionInsertingMe', 'observations',
+                         'predecessor', 'preferredMeeting', 'proposingGroup',
+                         'questioners', 'takenOverBy', 'templateUsingGroups',
+                         'toDiscuss', 'votesAreSecret']
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
         self.assertTrue(set(neutralFields +
