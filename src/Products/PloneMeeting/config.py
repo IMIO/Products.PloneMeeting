@@ -199,8 +199,7 @@ DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivat
 # extra fields kept when an item is cloned in the same meeting config,
 # so not send to another meeting config
 EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', 'category',
-                               'optionalAdvisers', 'otherMeetingConfigsClonableTo',
-                               'oralQuestion', 'observations']
+                               'optionalAdvisers', 'otherMeetingConfigsClonableTo', 'oralQuestion']
 
 # There are various ways to insert items into meetings
 ITEM_INSERT_METHODS = (  # Items are inserted:
