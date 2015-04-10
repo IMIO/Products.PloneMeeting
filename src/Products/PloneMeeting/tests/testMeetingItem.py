@@ -2661,7 +2661,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
                          'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
                          'itemKeywords', 'itemNumber', 'itemSignatories',
-                         'itemSignatures', 'itemTags', 'manuallyLinkedItems',
+                         'itemSignatures', 'itemTags',
                          'meetingTransitionInsertingMe', 'observations',
                          'predecessor', 'preferredMeeting', 'proposingGroup',
                          'questioners', 'takenOverBy', 'templateUsingGroups',
