@@ -3012,7 +3012,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
           and/or in portel_todo.
           This is called to much times on the same page, we add some caching here...
         '''
-        key = "meeting-config-gettopics-%s" % topicType.lower() + self.UID() + str(fromPortletTodo)
+        key = "meeting-config-gettopics-%s-%s-%s" % (self.getId(),
+                                                     topicType.lower(),
+                                                     str(fromPortletTodo))
         cache = IAnnotations(self.REQUEST)
         data = cache.get(key, None)
         if data is None:
@@ -4035,7 +4037,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            If a p_userId is given, it will be used to be passed to isSelectable'''
         data = None
         if caching:
-            key = "meeting-config-getcategories-%s-%s-%s" % (str(classifiers), str(onlySelectable), str(userId))
+            key = "meeting-config-getcategories-%s-%s-%s-%s" % (self.getId(),
+                                                                str(classifiers),
+                                                                str(onlySelectable),
+                                                                str(userId))
             cache = IAnnotations(self.REQUEST)
             data = cache.get(key, None)
         if data is None:
