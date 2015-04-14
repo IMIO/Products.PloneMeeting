@@ -199,7 +199,8 @@ DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivat
 # extra fields kept when an item is cloned in the same meeting config,
 # so not send to another meeting config
 EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', 'category',
-                               'optionalAdvisers', 'otherMeetingConfigsClonableTo', 'oralQuestion']
+                               'optionalAdvisers', 'otherMeetingConfigsClonableTo',
+                               'oralQuestion', 'toDiscuss']
 
 # to differenciate items, we can use a different icon color
 ITEM_ICON_COLORS = ("azur", "black", "green", "grey", "orange", "pink", "purple", "red", "yellow")

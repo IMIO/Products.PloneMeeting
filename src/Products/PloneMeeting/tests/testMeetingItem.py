@@ -2657,8 +2657,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # every item fields except ones considered as metadata
         itemFields = [field.getName() for field in item.Schema().filterFields(isMetadata=False)]
         # fields not taken into account are following
-        # XXX toDiscuss is a neutral field because it will be initialized following
-        # parameter MeetingConfig.toDiscussDefault when the item will be cloned
+        # XXX toDiscuss is a neutral field because it is managed manually depending
+        # on the parameter MeetingConfig.toDiscussSetOnItemInsert
+        # check test test_pm_ToDiscussFieldBehaviourWhenCloned
         neutralFields = ['answerers', 'completeness', 'emergency', 'id',
                          'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
                          'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
@@ -2676,6 +2677,62 @@ class testMeetingItem(PloneMeetingTestCase):
                             item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=True) +
                             item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=False))
                         == set(itemFields))
+
+    def test_pm_ToDiscussFieldBehaviourWhenCloned(self):
+        '''When cloning an item to the same MeetingConfig, the field 'toDiscuss' is managed manually :
+           - if MeetingConfig.toDiscussSetOnItemInsert is True, value is not kept
+             and default value defined on the MeetingConfig is used;
+           - if MeetingConfig.toDiscussSetOnItemInsert is False, value on the
+             original item is kept no matter default defined in the MeetingConfig.
+           When cloning to another MeetingConfig, the default value defined in the MeetingConfig will be used.'''
+        # test when 'toDiscuss' is initialized by item creator
+        # value defined on the cloned item will be kept
+        self.meetingConfig.setToDiscussSetOnItemInsert(False)
+        self.meetingConfig.setToDiscussDefault(False)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setToDiscuss(True)
+        clonedItem = item.clone()
+        self.assertTrue(clonedItem.getToDiscuss())
+        item.setToDiscuss(False)
+        clonedItem = item.clone()
+        self.assertTrue(not clonedItem.getToDiscuss())
+
+        # now when toDiscuss is set when item is inserted in the meeting
+        self.meetingConfig.setToDiscussSetOnItemInsert(True)
+        item.setToDiscuss(True)
+        # as toDiscussSetOnItemInsert is True, the default value
+        # defined in the MeetingConfig will be used, here toDiscussDefault is False
+        self.assertFalse(self.meetingConfig.getToDiscussDefault())
+        clonedItem = item.clone()
+        self.assertFalse(clonedItem.getToDiscuss())
+        # now with default to 'True'
+        self.meetingConfig.setToDiscussDefault(True)
+        item.setToDiscuss(False)
+        clonedItem = item.clone()
+        self.assertTrue(clonedItem.getToDiscuss())
+
+        # now clone to another MeetingConfig
+        # no matter original item toDiscuss value, it will use the default
+        # defined on the destination MeetingConfig
+        self.meetingConfig.setToDiscussSetOnItemInsert(False)
+        self.meetingConfig2.setToDiscussDefault(True)
+        meeting = self.create('Meeting', date='2015/01/01')
+        item.setDecision('<p>My decision</p>', mimetype='text/html')
+        cfg2Id = self.meetingConfig2.getId()
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'accept')
+        clonedItem = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertTrue(clonedItem.getToDiscuss())
+        # now when default is 'False'
+        self.meetingConfig2.setToDiscussDefault(False)
+        self.portal.restrictedTraverse('@@delete_givenuid')(clonedItem.UID())
+        item.setToDiscuss(True)
+        item.cloneToOtherMeetingConfig(cfg2Id)
+        clonedItem = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertFalse(clonedItem.getToDiscuss())
 
     def test_pm_CustomInsertingMethodRaisesNotImplementedErrorIfNotImplemented(self):
         '''Test that we can use a custom inserting method, relevant code is called.

@@ -1620,12 +1620,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     field.set(newItem, field.getDefault(newItem))
 
             # Set some default values that could not be initialized properly
-            toDiscussDefault = destMeetingConfig.getToDiscussDefault()
-            newItem.setToDiscuss(toDiscussDefault)
+            if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
+                toDiscussDefault = destMeetingConfig.getToDiscussDefault()
+                newItem.setToDiscuss(toDiscussDefault)
             if 'classifier' in copyFields:
                 newItem.getField('classifier').set(
                     newItem, copiedItem.getClassifier())
-                    # No counter increment on related category.
+
             # Manage annexes.
             # we will remove annexes if copyAnnexes is False or if we could not find
             # defined meetingFileTypes in the destMeetingConfig

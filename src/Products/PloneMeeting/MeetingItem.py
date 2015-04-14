@@ -25,7 +25,6 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 import cgi
 import lxml.html
-import re
 from datetime import datetime
 from collections import OrderedDict
 from copy import deepcopy
@@ -4181,9 +4180,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             newOwnerId = userId
         # Do not use "not destFolder" because destFolder is an ATBTreeFolder
         # and an empty ATBTreeFolder will return False while testing destFolder.
+        cfg = tool.getMeetingConfig(self)
         if destFolder is None:
-            meetingConfigId = tool.getMeetingConfig(self).getId()
-            destFolder = tool.getPloneMeetingFolder(meetingConfigId, newOwnerId)
+            destFolder = tool.getPloneMeetingFolder(cfg.getId(), newOwnerId)
         # Copy/paste item into the folder
         sourceFolder = self.getParentNode()
         copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
@@ -4191,7 +4190,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cloned_to_same_mc = bool(not newPortalType)
         if cloned_to_same_mc:
             copyFields = copyFields + EXTRA_COPIED_FIELDS_SAME_MC
-        # Check if an external plugin want to add some fieldsToCopy
+
+        # Check if an external plugin want to add some copyFields
         copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc)
         newItem = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
                                   newOwnerId=newOwnerId, copyFields=copyFields,
