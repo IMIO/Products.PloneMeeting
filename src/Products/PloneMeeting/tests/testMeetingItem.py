@@ -2728,7 +2728,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(clonedItem.getToDiscuss())
         # now when default is 'False'
         self.meetingConfig2.setToDiscussDefault(False)
+        # remove the item sent to cfg2 so we can send item again
+        # use 'admin' to be sure that item will be removed
+        self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(clonedItem.UID())
+        self.changeUser('pmManager')
         item.setToDiscuss(True)
         item.cloneToOtherMeetingConfig(cfg2Id)
         clonedItem = item.getItemClonedToOtherMC(cfg2Id)
