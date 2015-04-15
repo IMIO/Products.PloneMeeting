@@ -332,10 +332,10 @@ class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
 
 class PMHistoryAdapter(ImioHistoryAdapter):
     """
-      Override the imio.history ImioHistoryAdapter to define some more ignorable history comments.
+      Override the imio.history ImioHistoryAdapter.
     """
     def ignorableHistoryComments(self):
-        """ """
+        """Add some more ignorable history comments."""
         ignorable_history_comment = super(PMHistoryAdapter, self).ignorableHistoryComments()
         ignorable_history_comment += ('create_meeting_item_from_template_comments',
                                       'create_from_predecessor_comments',
@@ -359,6 +359,6 @@ class PMHistoryAdapter(ImioHistoryAdapter):
                     userMayAccessComment = False
         return userMayAccessComment
 
-    def getHistory(self):
-        """ """
-        return self.context.getHistory()
+    def getHistory(self, checkMayView=True):
+        """Override getHistory because it manages data changes."""
+        return self.context.getHistory(checkMayView=checkMayView)

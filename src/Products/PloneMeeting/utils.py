@@ -1003,14 +1003,13 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def getHistory(obj, startNumber=0, batchSize=500):
+def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
     '''Returns the history for this object, sorted in reverse order
        (most recent change first)'''
     res = []
     wfTool = getToolByName(obj, 'portal_workflow')
     wfName = wfTool.getWorkflowsFor(obj)[0].getId()
     history = list(obj.workflow_history[wfName])
-    history.reverse()
     stopIndex = startNumber + batchSize - 1
     i = -1
     while (i+1) < len(history):
@@ -1057,7 +1056,7 @@ def getHistory(obj, startNumber=0, batchSize=500):
                     event['changes'][name] = val
                 else:
                     event['changes'][name] = oldValue
-        else:
+        elif checkMayView:
             # workflow history event
             # hide comment if user may not access it
             if not IImioHistory(obj).mayViewComment(event):
