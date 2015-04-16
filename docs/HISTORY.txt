@@ -37,6 +37,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Field MeetingItem.observations is no more kept when an item is cloned
 - Added icon to select/unselect every checkboxes of available items to present in a meeting like it is already
   the case for items presented in a meeting
+- Added MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates attribute to define meeting states to take into
+  account while getting the MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject, this way, it is possible
+  to only take into account future meetings accepting items that are in these defined states
 
 3.3 (2015-02-27)
 ----------------

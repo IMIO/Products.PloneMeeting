@@ -858,6 +858,22 @@ schema = Schema((
         allow_empty_rows=False,
     ),
     LinesField(
+        name='meetingPresentItemWhenNoCurrentMeetingStates',
+        widget=MultiSelectionWidget(
+            description="meetingPresentItemWhenNoCurrentMeetingStates",
+            description_msgid="meeting_present_item_when_no_current_meeting_states_descr",
+            label='Meetingpresentitemwhennocurrentmeetingstates',
+            label_msgid='PloneMeeting_label_meetingPresentItemWhenNoCurrentMeetingStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        multiValued=1,
+        vocabulary='listMeetingStates',
+        default=defValues.meetingPresentItemWhenNoCurrentMeetingStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='meetingTopicStates',
         widget=MultiSelectionWidget(
             description="MeetingTopicStates",
@@ -4536,3 +4552,4 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
+

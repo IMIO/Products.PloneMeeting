@@ -230,8 +230,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
            - something changed around advices;
            - different item or user;
            - user groups changed;
-           - if item query_state is 'validated', check also if
-             getMeetingToInsertIntoWhenNoCurrentMeetingObject changed;
+           - if item query_state is 'validated', check also if it is presentable;
            - finally, invalidate if annotations changed.'''
         meetingModified = ''
         meeting = self.context.getMeeting()
@@ -243,14 +242,15 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         userRoles = user.getRoles()
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
-        meetingToInsertInto = None
+        isPresentable = False
         if self.context.queryState() == 'validated':
-            meetingToInsertInto = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
+            isPresentable = self.context.wfConditions().mayPresent()
+
         return (self.context, self.context.modified(), self.context.adviceIndex,
                 user.getId(), userGroups, userRoles, annotations,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                meetingToInsertInto, kwargs)
+                isPresentable, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,
