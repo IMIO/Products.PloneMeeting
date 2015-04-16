@@ -161,16 +161,26 @@ class MeetingItemWorkflowConditions:
     def mayPresent(self):
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
-        res = False
-        if checkPermission(ReviewPortalContent, self.context) and \
-           (self._publishedObjectIsMeeting() or self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()):
-            res = True  # Until now
-            # Verify if all automatic advices have been given on this item.
-            if self.context.enforceAdviceMandatoriness() and \
-               not self.context.mandatoryAdvicesAreOk():
-                res = No(translate('mandatory_advice_ko',
-                                   domain="PloneMeeting",
-                                   context=self.context.REQUEST))
+        if not checkPermission(ReviewPortalContent, self.context):
+            return False
+        # if we are not on a meeting, try to get the next meeting accepting items
+        if not self._publishedObjectIsMeeting():
+            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
+            # if we found a meeting, check that, if it is a meeting accepting late items
+            # the current item is a late item...
+            if not meeting or \
+               (not meeting.queryState() in meeting.getBeforeFrozenStates() and
+                    not self.context.wfConditions().isLateFor(meeting)):
+                return False
+
+        # here we are sure that we have a meeting that will accept the item
+        # Verify if all automatic advices have been given on this item.
+        res = True  # for now...
+        if self.context.enforceAdviceMandatoriness() and \
+           not self.context.mandatoryAdvicesAreOk():
+            res = No(translate('mandatory_advice_ko',
+                               domain="PloneMeeting",
+                               context=self.context.REQUEST))
         return res
 
     security.declarePublic('mayDecide')
@@ -205,54 +215,17 @@ class MeetingItemWorkflowConditions:
 
     security.declarePublic('mayCorrect')
     def mayCorrect(self):
-        # Beyond checking if the current user has the right to trigger the
-        # workflow transition, we also check if the current user is
-        # MeetingManager, to allow transitions for recurring items added in a
-        # meeting.
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-        if not checkPermission(ReviewPortalContent, self.context) and not \
-           tool.isManager(self.context):
-            return
-        currentState = self.context.queryState()
-        # In early item states, there is no additional condition for going back
-        if currentState in ('proposed', 'prevalidated', 'validated'):
-            return True
-        if not self.context.hasMeeting():
-            return
-        # Get more information for evaluating the condition.
-        pubObjIsMeeting = self._publishedObjectIsMeeting()
+        '''If the item is not linked to a meeting, the user just need the
+           'Review portal content' permission, if it is linked to a meeting, an item
+           may still be corrected until the meeting is 'closed'.'''
+        res = False
         meeting = self.context.getMeeting()
-        meetingState = meeting.queryState()
-        isLateItem = self.context.isLate()
-        if (currentState == 'presented') and pubObjIsMeeting:
-            if (meetingState == 'created') or \
-               (isLateItem and (meetingState in MEETING_NOT_CLOSED_STATES)):
-                return True
-        elif (currentState == 'itempublished') and pubObjIsMeeting:
-            if isLateItem:
-                return True
-            elif meetingState == 'created':
-                return True
-            # (*) The user will never be able to correct the item in this state.
-            # The meeting workflow will do it automatically as soon as the
-            # meeting goes from 'published' to 'created'.
-        elif (currentState == 'itemfrozen') and pubObjIsMeeting:
-            if isLateItem:
-                return True
-            elif meetingState == meeting.getBeforeFrozenState():
-                return True
-            # See (*) above: done when meeting goes from 'frozen' to
-            # 'published' or 'created'.
-        elif currentState in ('accepted', 'refused', 'delayed'):
-            if meetingState in MEETING_NOT_CLOSED_STATES:
-                return True
-        elif currentState == 'confirmed':
-            if meetingState != 'closed':
-                return True
-        elif currentState == 'itemarchived':
-            if meetingState == 'closed':
-                return True
-            # See (*) above: done when meeting goes from 'archived' to 'closed'.
+        if not meeting or (meeting and meeting.queryState() != 'closed'):
+            # item is not linked to a meeting, or in a meeting that is not 'closed',
+            # just check for 'Review portal content' permission
+            if checkPermission(ReviewPortalContent, self.context):
+                res = True
+        return res
 
     security.declarePublic('mayBackToMeeting')
     def mayBackToMeeting(self, transitionName):
@@ -1535,16 +1508,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey)
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self):
         '''Return the meeting the item will be inserted into in case the 'present'
-           transition from another view than the meeting view.'''
+           transition from another view than the meeting view.  This will take into
+           acount meeting states defined in MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates.'''
         # first, find meetings in the future still accepting items
-        # but that are not in MEETING_NOT_CLOSED_STATES
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         brains = cfg.adapted().getMeetingsAcceptingItems(inTheFuture=True)
         for brain in brains:
-            # presenting an item from another place than the relevant meeting view
-            # will insert it as a normal item to the very next available meeting
-            if not brain.review_state in MEETING_NOT_CLOSED_STATES:
+            # now filter found brains regarding MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates
+            meetingStates = cfg.getMeetingPresentItemWhenNoCurrentMeetingStates()
+            if not meetingStates or brain.review_state in meetingStates:
                 return brain.getObject()
         return None
 

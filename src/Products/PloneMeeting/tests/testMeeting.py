@@ -844,17 +844,45 @@ class testMeeting(PloneMeetingTestCase):
         # as no meeting in the future
         self.assertTrue(not item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
         # clean RAM cache for MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
-        # and set meeting date in the future
+        # and set meeting date in the future, it will be found because no meetingPresentItemWhenNoCurrentMeetingStates
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         meeting.setDate(DateTime() + 2)
         meeting.reindexObject(idxs=['getDate', ])
-        # now item may be presented in the meeting
+        self.assertTrue(not self.meetingConfig.getMeetingPresentItemWhenNoCurrentMeetingStates())
+        # item may be presented in the meeting
         self.assertTrue(item.wfConditions().mayPresent())
         # there is a meeting to insert into
         self.assertTrue(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
-        # present it
+
+        # define meetingPresentItemWhenNoCurrentMeetingStates to ('created', )
+        self.meetingConfig.setMeetingPresentItemWhenNoCurrentMeetingStates(('created', ))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
+        # meeting is found because it is 'created'
+        self.assertTrue(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
+        # present the item as normal item
         self.presentItem(item)
         self.assertTrue(item.queryState() == 'presented')
+        self.assertFalse(item.isLate())
+        self.assertTrue(item.getMeeting().UID() == meeting.UID())
+        # remove the item, we will now insert it as late
+        self.do(item, 'backToValidated')
+
+        # freeze the meeting, there will be no more meeting to present the item to
+        self.freezeMeeting(meeting)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
+        self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
+
+        # make frozen meetings accept items
+        self.meetingConfig.setMeetingPresentItemWhenNoCurrentMeetingStates(('created', 'frozen', ))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
+        self.assertTrue(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
+
+        # present the item as late item
+        item.setPreferredMeeting(meeting.UID())
+        item.reindexObject(idxs=['getPreferredMeeting', ])
+        self.presentItem(item)
+        self.assertTrue(item.queryState() == 'itemfrozen')
+        self.assertTrue(item.isLate())
         self.assertTrue(item.getMeeting().UID() == meeting.UID())
 
     def test_pm_Validate_date(self):

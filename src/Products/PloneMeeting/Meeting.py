@@ -143,11 +143,7 @@ class MeetingWorkflowConditions:
     def mayCorrect(self):
         if not checkPermission(ReviewPortalContent, self.context):
             return
-        currentState = self.context.queryState()
-        if currentState in ('published', 'frozen', 'decisions_published', ):
-            if checkPermission(ReviewPortalContent, self.context):
-                return True
-        elif currentState == 'decided':
+        if self.context.queryState() == 'decided':
             # Going back from "decided" to previous state is not a true "undo".
             # Indeed, when a meeting is "decided", all items for which no
             # decision was taken are set in "accepted". Going back to

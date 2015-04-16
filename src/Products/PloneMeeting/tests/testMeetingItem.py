@@ -2278,6 +2278,7 @@ class testMeetingItem(PloneMeetingTestCase):
            - item is modified;
            - item state changed;
            - linked meeting changed;
+           - item is validated and isPresentable/no more presentable;
            - user changed;
            - user groups changed;
            - user roles changed.'''
@@ -2323,14 +2324,37 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(not proposedItemForReviewer_rendered_actions_panel ==
                         validatedItemForReviewer_rendered_actions_panel)
 
-        # invalidated when linked meeting changed
+        # invalidated when item turns to 'presentable'
+        # so create a meeting, item will be presentable and panel is invalidated
         self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems(meetingDate=DateTime() + 2)
+        # unset current meeting so we check with the getMeetingToInsertIntoWhenNoCurrentMeetingObject
+        item.REQUEST['PUBLISHED'] = item
+        # here item is presentable
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
+        self.assertTrue(item.wfConditions().mayPresent())
+        validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
+        self.assertTrue(not validatedItemForReviewer_rendered_actions_panel ==
+                        validatedItemCreatedMeeting_rendered_actions_panel)
+
+        # invalidated when item is not more presentable
+        # here for example, if we freeze the meeting, the item is no more presentable
+        self.freezeMeeting(meeting)
+        # here item is no more presentable
+        self.assertFalse(item.wfConditions().mayPresent())
+        validatedItemFrozenMeeting_rendered_actions_panel = actions_panel()
+        self.assertTrue(not validatedItemCreatedMeeting_rendered_actions_panel ==
+                        validatedItemFrozenMeeting_rendered_actions_panel)
+
+        # invalidated when linked meeting changed
         # MeetingManager is another user with other actions, double check...
         validatedItemForManager_rendered_actions_panel = actions_panel()
         self.assertTrue(not validatedItemForReviewer_rendered_actions_panel ==
                         validatedItemForManager_rendered_actions_panel)
-        meeting = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
+        # present the item as normal item
+        self.backToState(meeting, 'created')
         self.presentItem(item)
+
         # create a dummy action that is displayed in the item actions panel
         # when linked meeting date is '2010/10/10', then notify meeting is modified, actions panel
         # on item will be invalidted
