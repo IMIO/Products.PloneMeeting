@@ -110,20 +110,30 @@
 
       <th class="pm_meeting_listing_th_itemIsSigned" tal:condition="showItemIsSigned"
           i18n:translate="nothing" i18n:domain="PloneMeeting">
-          <img src="itemIsSignedYes.png" title="Item is signed?" tal:attributes="src string:$portal_url/itemIsSignedYes.png" i18n:attributes="title PloneMeeting_label_itemIsSigned" />
+          <img src="itemIsSignedYes.png" title="Item is signed?"
+               tal:attributes="src string:$portal_url/itemIsSignedYes.png"
+               i18n:attributes="title PloneMeeting_label_itemIsSigned" />
       </th>
 
       <tal:comment replace="nothing">Actions</tal:comment>
       <th class="pm_meeting_listing_th_actions" i18n:translate="heading_actions" tal:condition="showActions"></th>
 
       <tal:comment replace="nothing">Checkbox column for selecting items.</tal:comment>
-      <th class="pm_meeting_listing_th_checkBoxes" tal:condition="showCheckboxes" tal:attributes="style python: itemsNumbering and 'width: 50px' or 'width: 1%'">
-        <img tal:condition="itemsNumbering" tal:attributes="src string: $portal_url/select_items.png"
+      <th class="pm_meeting_listing_th_checkBoxes"
+          tal:condition="showCheckboxes"
+          tal:attributes="style python: showActions and 'width: 48px' or 'width: 1%';">
+        <img tal:condition="itemsNumbering"
+             tal:attributes="src string: $portal_url/select_items.png"
              i18n:attributes="title" title="helpSelectItemsIcon"
-             onClick="javascript:toggleCheckboxes()" style="cursor:pointer; display: inline"/>
+             onClick="javascript:toggleCheckboxes('itemCbToDump')" style="cursor:pointer; display: inline"/>
+        <img tal:condition="not:itemsNumbering"
+             tal:attributes="src string: $portal_url/select_items.png"
+             i18n:attributes="title" title="helpSelectItemsIcon"
+             onClick="javascript:toggleCheckboxes('itemCbToPresent')" style="cursor:pointer; display: inline"/>
         <tal:comment replace="nothing">We show inside the column header the button
              for presenting several items at once</tal:comment>
         <form name="selectItemsForm" tal:condition="not: itemsNumbering"
+              style="display: inline;"
               tal:attributes="action python: meeting.absolute_url_path() + '/presentSeveralItems'">
           <input type="hidden" name="uids" value=""/>
           <input type="hidden" name="iStartNumber"/>

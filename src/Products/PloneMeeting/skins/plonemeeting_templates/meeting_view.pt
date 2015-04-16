@@ -128,8 +128,8 @@
         }
     }
   }
-  function toggleCheckboxes() {
-    var checkBoxes = document.getElementsByName('itemCbToDump');
+  function toggleCheckboxes(checkBoxId) {
+    var checkBoxes = document.getElementsByName(checkBoxId);
     if (checkBoxesChecked) newCheckValue = false;
     else newCheckValue = true;
     for (var i=0; i<checkBoxes.length; i++) {
