@@ -39,15 +39,6 @@
         permission="zope2.View"
         />
 
-    <!-- override the referencebrowserwidget view to do searches wildcard
-         XXX to be removed in rbw > 2.5.2 -->
-    <browser:page
-        name="refbrowser_popup"
-        permission="zope2.Public"
-        for="*"
-        class=".browser.overrides.PMReferenceBrowserPopup"
-        />
-
     <browser:page
         name="overview-controlpanel"
         for="Products.CMFPlone.interfaces.IPloneSiteRoot"
