@@ -40,7 +40,10 @@ from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.interface import implements
 from plone.memoize.interfaces import ICacheChooser
-from imio.helpers.xhtml import markEmptyTags, removeBlanks, xhtmlContentIsEmpty
+from imio.helpers.xhtml import addClassToLastChildren
+from imio.helpers.xhtml import markEmptyTags
+from imio.helpers.xhtml import removeBlanks
+from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.interfaces import IImioHistory
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import getToolByName
@@ -1132,7 +1135,6 @@ def signatureNotAlone(xhtmlContent):
     # A paragraph may be a "p" or "li". If it is a "p", I will add style
     # (if not already done) "podItemKeepWithNext"; if it is a "li" I will
     # add style "podParaKeepWithNext" (if not already done).
-    from imio.helpers.xhtml import addClassToLastChildren
     return addClassToLastChildren(xhtmlContent)
 
 
