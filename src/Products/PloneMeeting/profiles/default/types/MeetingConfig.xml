@@ -34,6 +34,7 @@
          action_id="view"
          category="object"
          condition_expr=""
+         icon_expr=""
          url_expr="string:${object_url}/view"
          visible="True">
   <permission value="View"/>
@@ -42,6 +43,7 @@
          action_id="edit"
          category="object"
          condition_expr="python:not object.restrictedTraverse('@@plone_lock_info').is_locked_for_current_user() and object.Schema().editableFields(object.Schema())"
+         icon_expr=""
          url_expr="string:${object_url}/edit"
          visible="True">
   <permission value="Modify portal content"/>
