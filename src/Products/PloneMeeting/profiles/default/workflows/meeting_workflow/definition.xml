@@ -1,11 +1,10 @@
 <?xml version="1.0"?>
-<dc-workflow xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-             i18n:domain="plone"
-             workflow_id="meeting_workflow"
-             title="Meeting Workflow"
-             description="Workflow for Meeting."
+<dc-workflow workflow_id="meeting_workflow"
+             title="meeting_workflow"
              state_variable="review_state"
-             initial_state="created">
+             initial_state="created"
+             xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+             i18n:domain="plone">
  <permission>View</permission>
  <permission>Access contents information</permission>
  <permission>Modify portal content</permission>
@@ -221,7 +220,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">archive</action>
+  <action url="" icon="" category="workflow" i18n:translate="">archive</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayArchive()</guard-expression>
   </guard>
@@ -233,7 +232,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">backToClosed</action>
+  <action url="" icon="" category="workflow" i18n:translate="">backToClosed</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
   </guard>
@@ -245,7 +244,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">backToCreated</action>
+  <action url="" icon="" category="workflow" i18n:translate="">backToCreated</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
   </guard>
@@ -257,7 +256,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">backToDecided</action>
+  <action url="" icon="" category="workflow" i18n:translate="">backToDecided</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
   </guard>
@@ -269,7 +268,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">backToFrozen</action>
+  <action url="" icon="" category="workflow" i18n:translate="">backToFrozen</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
   </guard>
@@ -281,7 +280,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">backToPublished</action>
+  <action url="" icon="" category="workflow" i18n:translate="">backToPublished</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
   </guard>
@@ -293,7 +292,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">close</action>
+  <action url="" icon="" category="workflow" i18n:translate="">close</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayClose()</guard-expression>
   </guard>
@@ -305,7 +304,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">decide</action>
+  <action url="" icon="" category="workflow" i18n:translate="">decide</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayDecide()</guard-expression>
   </guard>
@@ -317,7 +316,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">freeze</action>
+  <action url="" icon="" category="workflow" i18n:translate="">freeze</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayFreeze()</guard-expression>
   </guard>
@@ -329,7 +328,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">publish</action>
+  <action url="" icon="" category="workflow" i18n:translate="">publish</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayPublish()</guard-expression>
   </guard>
@@ -341,7 +340,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">republish</action>
+  <action url="" icon="" category="workflow" i18n:translate="">republish</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayRepublish()</guard-expression>
   </guard>

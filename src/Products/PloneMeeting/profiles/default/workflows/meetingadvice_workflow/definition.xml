@@ -1,11 +1,10 @@
 <?xml version="1.0"?>
-<dc-workflow xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-             i18n:domain="plone"
-             workflow_id="meetingadvice_workflow"
-             title="Meeting Advice Workflow"
-             description="Workflow for advices into a meeting."
+<dc-workflow workflow_id="meetingadvice_workflow"
+             title="meetingadvice_workflow"
              state_variable="review_state"
-             initial_state="advice_under_edit">
+             initial_state="advice_under_edit"
+             xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+             i18n:domain="plone">
  <permission>View</permission>
  <permission>Access contents information</permission>
  <permission>Modify portal content</permission>
@@ -87,7 +86,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">backToAdviceUnderEdit</action>
+  <action url="" icon="" category="workflow" i18n:translate="">backToAdviceUnderEdit</action>
   <guard>
     <guard-expression>python: here.REQUEST.get('mayBackToAdviceUnderEdit', False)</guard-expression>
   </guard>
@@ -99,7 +98,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" category="workflow" i18n:translate="">giveAdvice</action>
+  <action url="" icon="" category="workflow" i18n:translate="">giveAdvice</action>
   <guard>
     <guard-expression>python: here.REQUEST.get('mayGiveAdvice', False)</guard-expression>
   </guard>
