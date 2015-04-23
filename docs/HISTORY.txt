@@ -9,7 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.4 (unreleased)
 ----------------
-- Rely on beautifulsoup4
+- Rely on beautifulsoup4, Products.CPUtils
 - Moved 'history' functionnalities (highlight, displayed as table, ...) to imio.history and rely on it
 - Moved the 'getMeetingsAcceptingItems' from MeetingItem to MeetingConfig so it can be called
   when no item exist.  This is used in imio.pm.ws 'meetingsAcceptingItems' SOAP call
@@ -40,6 +40,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates attribute to define meeting states to take into
   account while getting the MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject, this way, it is possible
   to only take into account future meetings accepting items that are in these defined states
+- Adapted workflows to define an icon on transitions now that it is possible and that imio.actionspanel use this
+  to get the icon to use for a transition
 
 3.3 (2015-02-27)
 ----------------
