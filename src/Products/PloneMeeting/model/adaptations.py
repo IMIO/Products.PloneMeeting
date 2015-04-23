@@ -103,14 +103,15 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
         transition.setProperties(
             title='prevalidate',
             new_state_id='prevalidated', trigger_type=1, script_name='',
-            actbox_name='prevalidate', actbox_url='', actbox_category='workflow',
+            actbox_name='prevalidate', actbox_url='',
+            actbox_icon='%(portal_url)s/prevalidate.png', actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().mayPrevalidate()'})
         transition = wf.transitions['backToPrevalidated']
         transition.setProperties(
             title='backToPrevalidated',
             new_state_id='prevalidated', trigger_type=1, script_name='',
             actbox_name='backToPrevalidated', actbox_url='',
-            actbox_category='workflow',
+            actbox_icon='%(portal_url)s/backToPrevalidated.png', actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
         # Update connections between states and transitions
         wf.states['proposed'].setProperties(
@@ -473,7 +474,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             transition.setProperties(
                 title='return_to_proposing_group',
                 new_state_id='returned_to_proposing_group', trigger_type=1, script_name='',
-                actbox_name='return_to_proposing_group', actbox_url='', actbox_category='workflow',
+                actbox_name='return_to_proposing_group', actbox_url='',
+                actbox_icon='%(portal_url)s/return_to_proposing_group.png', actbox_category='workflow',
                 props={'guard_expr': 'python:here.wfConditions().mayReturnToProposingGroup()'})
             # Update connections between states and transitions and create new transitions
             newTransitionNames = []
@@ -493,7 +495,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 transition.setProperties(
                     title='return_to_meeting',
                     new_state_id=stateName, trigger_type=1, script_name='',
-                    actbox_name=transitionName, actbox_url='', actbox_category='workflow',
+                    actbox_name=transitionName, actbox_url='',
+                    actbox_icon='%(portal_url)s/{0}.png'.format(transitionName), actbox_category='workflow',
                     props={'guard_expr': 'python:here.wfConditions().mayBackToMeeting("%s")' % transitionName})
             # now that we created back transitions, we can assign them to newState 'returned_to_proposing_group'
                         # set properties for new 'returned_to_proposing_group' state
@@ -521,13 +524,14 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             transition = wf.transitions['publish_decisions']
             transition.setProperties(title='publish_decisions',
                                      new_state_id='decisions_published', trigger_type=1, script_name='',
-                                     actbox_name='publish_decisions', actbox_url='', actbox_category='workflow',
+                                     actbox_name='publish_decisions', actbox_url='',
+                                     actbox_icon='', actbox_category='workflow',
                                      props={'guard_expr': 'python:here.wfConditions().mayPublishDecisions()'})
             transition = wf.transitions['backToDecisionsPublished']
             transition.setProperties(title='backToDecisionsPublished',
                                      new_state_id='decisions_published', trigger_type=1, script_name='',
                                      actbox_name='backToDecisionsPublished', actbox_url='',
-                                     actbox_category='workflow',
+                                     actbox_icon='', actbox_category='workflow',
                                      props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
             # Update connections between states and transitions
             wf.states['decided'].setProperties(
