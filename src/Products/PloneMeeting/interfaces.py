@@ -358,6 +358,12 @@ class IMeetingItemDocumentation:
     def mayEditAdviceConfidentiality():
         '''Condition for being able to edit the confidentiality of asked advices.
            By default, only MeetingManagers able to edit the item may change advice confidentiality.'''
+    def _itemToAdviceIsViewable(groupId):
+        '''Is the item viewable by given p_groupId for which advice has been asked?'''
+    def _adviceIsAddable(groupId):
+        """Is advice asked to p_groupId addable on item?"""
+    def _adviceIsEditable(groupId):
+        """Is advice asked to p_groupId editable on item?"""
 
 
 class IMeetingItemWorkflowConditions(Interface):

@@ -42,6 +42,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   to only take into account future meetings accepting items that are in these defined states
 - Adapted workflows to define an icon on transitions now that it is possible and that imio.actionspanel use this
   to get the icon to use for a transition
+- In MeetingItem.updateAdvices, added hooks _itemToAdviceIsViewable, _adviceIsAddable and _adviceIsEditable to be
+  able to make some advice behave a different way than the one defined in the application
 
 3.3 (2015-02-27)
 ----------------

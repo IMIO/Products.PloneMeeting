@@ -3144,9 +3144,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_toGive is True, it contrary returns if there
            is still an advice to be given.
            If some p_adviceIdsToBypass are given, these will not be taken
-           into account as giveable.'''
+           into account as giveable.
+           p_adviceIdsToBypass is a dict containing the advice to give as
+           key and the fact that advice is optional as value, so :
+           {'adviser_group_id': True}.'''
         for advice in self.adviceIndex.itervalues():
-            if advice['id'] in adviceIdsToBypass:
+            if advice['id'] in adviceIdsToBypass and \
+               adviceIdsToBypass[advice['id']] == advice['optional']:
                 continue
             if (toGive and advice['type'] == NOT_GIVEN_ADVICE_VALUE) or \
                (not toGive and not advice['type'] == NOT_GIVEN_ADVICE_VALUE):
@@ -3576,9 +3580,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.adviceIndex[groupId]['delay_started_on'] = None
                 continue
 
-            # give access to the item in any case
-            self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
-            self.adviceIndex[groupId]['item_viewable_by_advisers'] = True
+            # give access to the item if adviser can see it
+            if self.adapted()._itemToAdviceIsViewable(groupId):
+                self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
+                self.adviceIndex[groupId]['item_viewable_by_advisers'] = True
 
             # manage delay-aware advice, we start the delay if not already started
             if itemState in itemAdviceStates and \
@@ -3590,7 +3595,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # check also if the delay is not exceeded, in this case the advice can not be given anymore
             delayIsNotExceeded = not self.adviceIndex[groupId]['delay'] or \
                 self.getDelayInfosForAdvice(groupId)['delay_status'] != 'timed_out'
-            if itemState in itemAdviceStates and not adviceObj and delayIsNotExceeded:
+            if itemState in itemAdviceStates and \
+               not adviceObj and \
+               delayIsNotExceeded and \
+               self.adapted()._adviceIsAddable(groupId):
                 # advisers must be able to add a 'meetingadvice', give
                 # relevant permissions to 'Contributor' role
                 # the 'Add portal content' permission is given by default to 'Contributor', so
@@ -3602,7 +3610,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.adviceIndex[groupId]['advice_addable'] = True
 
             # is advice still editable?
-            if itemState in itemAdviceEditStates and delayIsNotExceeded and adviceObj:
+            if itemState in itemAdviceEditStates and \
+               delayIsNotExceeded and \
+               adviceObj and \
+               self.adapted()._adviceIsEditable(groupId):
                 # make sure the advice given by groupId is in state 'advice_under_edit'
                 if not adviceObj.queryState() == 'advice_under_edit':
                     try:
@@ -3656,6 +3667,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    old_adviceIndex=old_adviceIndex))
         self.reindexObject(idxs=['indexAdvisers', 'allowedRolesAndUsers', ])
         self.REQUEST.set('currentlyUpdatingAdvice', False)
+
+    def _itemToAdviceIsViewable(self, groupId):
+        '''See doc in interfaces.py.'''
+        return True
+
+    def _adviceIsAddable(self, groupId):
+        '''See doc in interfaces.py.'''
+        return True
+
+    def _adviceIsEditable(self, groupId):
+        '''See doc in interfaces.py.'''
+        return True
 
     security.declarePublic('getDelayInfosForAdvice')
     def getDelayInfosForAdvice(self, advice_id):
