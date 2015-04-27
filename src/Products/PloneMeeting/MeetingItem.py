@@ -3139,7 +3139,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return bool(userAdviserGroupIds.intersection(powerAdviserGroupIds))
 
     security.declarePublic('hasAdvices')
-    def hasAdvices(self, toGive=False, adviceIdsToBypass=()):
+    def hasAdvices(self, toGive=False, adviceIdsToBypass={}):
         '''Is there at least one given advice on this item?
            If p_toGive is True, it contrary returns if there
            is still an advice to be given.
