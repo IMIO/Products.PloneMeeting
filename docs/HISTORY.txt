@@ -44,6 +44,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   to get the icon to use for a transition
 - In MeetingItem.updateAdvices, added hooks _itemToAdviceIsViewable, _adviceIsAddable and _adviceIsEditable to be
   able to make some advice behave a different way than the one defined in the application
+- In MeetingItem.sendAdviceToGiveMailIfRelevant, added an adaptable call to a method _sendAdviceToGiveToGroup
+  that make it possible to check if the mail must be sent to a given groupId or not.  This makes it possible
+  to bypass some groups when sending the 'advice to give' notification
 
 3.3 (2015-02-27)
 ----------------

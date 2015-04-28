@@ -2688,6 +2688,51 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return sendMailIfRelevant(self, event, permissionOrRole, isRole,
                                   customEvent, mapping)
 
+    security.declarePublic('sendAdviceToGiveMailIfRelevant')
+    def sendAdviceToGiveMailIfRelevant(self, old_review_state, new_review_state):
+        '''A transition was fired on self, check if, in the new item state,
+           advices need to be given, that had not to be given in the previous item state.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if 'adviceToGive' not in cfg.getMailItemEvents():
+            return
+        for groupId, adviceInfo in self.adviceIndex.iteritems():
+            # call hook 'sendAdviceToGiveToGroup' to be able to bypass
+            # send of this notification to some defined groups
+            if not self.adapted()._sendAdviceToGiveToGroup(groupId):
+                continue
+            adviceStates = getattr(tool, groupId).getItemAdviceStates(cfg)
+            # Ignore advices that must not be given in the current item state
+            if new_review_state not in adviceStates:
+                continue
+            # Ignore advices that already needed to be given in the previous item state
+            if old_review_state in adviceStates:
+                continue
+            # do not consider groups that already gave their advice
+            if not adviceInfo['type'] == 'not_given':
+                continue
+            # Send a mail to every person from group _advisers.
+            ploneGroup = self.acl_users.getGroup('%s_advisers' % groupId)
+            for memberId in ploneGroup.getMemberIds():
+                if 'adviceToGive' not in cfg.getUserParam('mailItemEvents',
+                                                          request=self.REQUEST,
+                                                          userId=memberId):
+                    continue
+                # Send a mail to this guy
+                recipient = tool.getMailRecipient(memberId)
+                if recipient:
+                    labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
+                    translated_type = translate(labelType, domain='PloneMeeting', context=self.REQUEST).lower()
+                    sendMail([recipient],
+                             self,
+                             'adviceToGive',
+                             mapping={'type': translated_type})
+
+    security.declarePublic('sendAdviceToGiveToGroup')
+    def _sendAdviceToGiveToGroup(self, groupId):
+        """See docstring in interfaces.py"""
+        return True
+
     security.declarePublic('getOptionalAdvisersData')
     def getOptionalAdvisersData(self):
         '''Get optional advisers but with same format as getAutomaticAdvisers

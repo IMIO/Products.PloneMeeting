@@ -512,43 +512,6 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
     return True
 
 
-def sendAdviceToGiveMailIfRelevant(event):
-    '''A transition was fired on an item (in p_event.object). Check here if,
-       in the new item state, advices need to be given, that had not to be given
-       in the previous item state.'''
-    tool = event.object.portal_plonemeeting
-    cfg = tool.getMeetingConfig(event.object)
-    if 'adviceToGive' not in cfg.getMailItemEvents():
-        return
-    for groupId, adviceInfo in event.object.adviceIndex.iteritems():
-        adviceStates = getattr(tool, groupId).getItemAdviceStates(cfg)
-        # Ignore advices that must not be given in the current item state
-        if event.new_state.id not in adviceStates:
-            continue
-        # Ignore advices that already needed to be given in the previous item state
-        if event.old_state.id in adviceStates:
-            continue
-        # do not consider groups that already gave their advice
-        if not adviceInfo['type'] == 'not_given':
-            continue
-        # Send a mail to every person from group _advisers.
-        ploneGroup = event.object.acl_users.getGroup('%s_advisers' % groupId)
-        for memberId in ploneGroup.getMemberIds():
-            if 'adviceToGive' not in cfg.getUserParam('mailItemEvents',
-                                                      request=event.object.REQUEST,
-                                                      userId=memberId):
-                continue
-            # Send a mail to this guy
-            recipient = tool.getMailRecipient(memberId)
-            if recipient:
-                labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
-                translated_type = translate(labelType, domain='PloneMeeting', context=event.object.REQUEST).lower()
-                sendMail([recipient],
-                         event.object,
-                         'adviceToGive',
-                         mapping={'type': translated_type})
-
-
 def addRecurringItemsIfRelevant(meeting, transition):
     '''Sees in the meeting config linked to p_meeting if the triggering of
        p_transition must lead to the insertion of some recurring items in

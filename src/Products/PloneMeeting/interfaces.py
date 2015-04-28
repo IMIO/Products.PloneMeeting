@@ -364,6 +364,8 @@ class IMeetingItemDocumentation:
         """Is advice asked to p_groupId addable on item?"""
     def _adviceIsEditable(groupId):
         """Is advice asked to p_groupId editable on item?"""
+    def _sendAdviceToGiveToGroup(groupId):
+        """Send the 'your advice is asked on this item' mail notification to given p_groupId?"""
 
 
 class IMeetingItemWorkflowConditions(Interface):

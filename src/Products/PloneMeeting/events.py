@@ -31,9 +31,11 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
-from Products.PloneMeeting.utils import sendMailIfRelevant, addRecurringItemsIfRelevant, \
-    sendAdviceToGiveMailIfRelevant, applyOnTransitionFieldTransform, \
-    meetingTriggerTransitionOnLinkedItems, ItemAfterTransitionEvent
+from Products.PloneMeeting.utils import ItemAfterTransitionEvent
+from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
+from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
+from Products.PloneMeeting.utils import meetingTriggerTransitionOnLinkedItems
+from Products.PloneMeeting.utils import sendMailIfRelevant
 
 podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 
@@ -56,7 +58,7 @@ def do(action, event):
         # Update local roles given to budget impact editors
         event.object.updateBudgetImpactEditorsLocalRoles()
         # Send mail regarding advices to give if relevant
-        sendAdviceToGiveMailIfRelevant(event)
+        event.object.sendAdviceToGiveMailIfRelevant(event.old_state.id, event.new_state.id)
         # Send mail if relevant
         sendMailIfRelevant(event.object, "item_state_changed_%s" % event.transition.id, 'View')
         # apply on transition field transform if any
