@@ -333,6 +333,8 @@ class Migrate_To_3_3(Migrator):
                 hasSearchItemsToAdvifceWithoutDelay = True
             if hasattr(cfg.topics, 'searchitemstoprevalidate'):
                 hasSearchItemsToPrevalidate = True
+            if hasattr(cfg.topics, 'searchcorrecteditems'):
+                cfg.topics.searchcorrecteditems.manage_changeProperties(topic_tal_expression="python: here.portal_plonemeeting.isManager(here) and 'return_to_proposing_group' in here.getWorkflowAdaptations()")
             # createTopics manage the fact that the topic already exists
             cfg.createTopics(cfg.topicsInfo)
             if not hasSearchItemsOfMyGroups:
