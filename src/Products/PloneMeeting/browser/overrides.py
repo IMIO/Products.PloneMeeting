@@ -8,6 +8,7 @@
 #
 
 from zope.annotation import IAnnotations
+from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
@@ -23,6 +24,20 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+
+
+class PMFolderContentsView(FolderContentsView):
+    """
+      Overrides the FolderContentsView __init__ to not mark
+      the request with the IContentsPage interface supposed to hide
+      the actions menu on the folder_contents view because as we have folder_contents
+      in the available view methods on Folder, __init__ is called in getAvailableLayouts
+      and the 'action' menu is always hidden...
+    """
+
+    def __init__(self, context, request):
+        super(FolderContentsView, self).__init__(context, request)
+        #alsoProvides(request, IContentsPage)
 
 
 class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):

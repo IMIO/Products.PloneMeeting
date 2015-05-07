@@ -54,6 +54,16 @@
         layer="imio.actionspanel.interfaces.IActionsPanelLayer"
         permission="zope2.View" />
 
+    <!-- Folder contents -->
+    <configure package="plone.app.content">
+        <browser:page
+            for="*"
+            class="Products.PloneMeeting.browser.overrides.PMFolderContentsView"
+            name="folder_contents"
+            template="browser/folder_contents.pt"
+            permission="cmf.ListFolderContents" />
+    </configure>
+
     <configure package="imio.actionspanel">
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingItem"
