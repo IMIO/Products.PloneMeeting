@@ -55,6 +55,28 @@
            factory=".adapters.PMHistoryAdapter"
            provides="imio.history.interfaces.IImioHistory" />
 
+  <!-- searches useable as compoundcriterion -->
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsOfMyGroupsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-of-my-groups" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.MyItemsTakenOverAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="my-items-taken-over" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsInCopyAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-in-copy" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToValidateOfHighestHierarchicLevelAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-validate-of-highest-hierarchic-level" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToAdviceAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-advice" />
+
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="Products.PloneMeeting.Meeting.Meeting"
            factory=".adapters.MeetingContentDeletableAdapter"

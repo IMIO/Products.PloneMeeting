@@ -1720,19 +1720,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Information about each sub-folder that will be created within a meeting
     # config.
     subFoldersInfo = {
-        TOOL_FOLDER_CATEGORIES: ('Categories', ('MeetingCategory', ), 'categories',
-                                 'CategoryDescriptor'),
-        TOOL_FOLDER_CLASSIFIERS: ('Classifiers', ('MeetingCategory', ),
-                                  'classifiers', 'CategoryDescriptor'),
-        TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems', ('itemType', ), None, ''),
-        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', ('Folder', 'itemType'), None, ''),
-        'topics': ('Topics', ('Topic', ), None, ''),
-        TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes', ('MeetingFileType', ),
-                                 'meetingFileTypes', 'MeetingFileTypeDescriptor'),
-        TOOL_FOLDER_POD_TEMPLATES: ('Document templates', ('PodTemplate', ),
-                                    'podTemplates', 'PodTemplateDescriptor'),
-        TOOL_FOLDER_MEETING_USERS: ('Meeting users', ('MeetingUser', ),
-                                    'meetingUsers', 'MeetingUserDescriptor')
+        TOOL_FOLDER_CATEGORIES: ('Categories', ('MeetingCategory', )),
+        TOOL_FOLDER_CLASSIFIERS: ('Classifiers', ('MeetingCategory', )),
+        TOOL_FOLDER_SEARCHES: ('Searches', ('DashboardCollection', )),
+        TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems', ('itemType', )),
+        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', ('Folder', 'itemType')),
+        TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes', ('MeetingFileType', )),
+        TOOL_FOLDER_POD_TEMPLATES: ('Document templates', ('PodTemplate', )),
+        TOOL_FOLDER_MEETING_USERS: ('Meeting users', ('MeetingUser', ))
     }
 
     metaTypes = ('MeetingItem', 'Meeting')
@@ -1740,80 +1735,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
     # Format is :
-    # - topicId
-    # - a list of topic criteria
+    # - collectionId
+    # - a list of collection criteria
     # - a sort_on attribute
-    # - a topicScriptId used to manage complex searches
+    # - a tal_cond used to manage complex searches
     topicsInfo = (
-        # My items
-        ('searchmyitems',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ('Creator', 'ATCurrentAuthorCriterion', None),),
-         'created',
-         '',
-         "python: here.portal_plonemeeting.userIsAmong('creators')",
-         ),
-        # Items of my groups, items of the groups I am in
-        ('searchitemsofmygroups',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsOfMyGroups',
-         "python: here.portal_plonemeeting.getGroupsForUser()",
-         ),
-        # Items I take over
-        ('searchmyitemstakenover',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchMyItemsTakenOver',
-         "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
-         "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or here.portal_plonemeeting.isManager(here))",
-         ),
-        # All (visible) items
-        ('searchallitems',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         '',
-         '',
-         ),
-        # Items in copy : need a script to do this search
-        ('searchallitemsincopy',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsInCopy',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
-         ),
-        # Items to prevalidate : search items in state 'proposed' if wfAdaptation 'pre_validation' is active
-        ('searchitemstoprevalidate',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ('review_state', 'ATListCriterion', ('prevalidated',)),
-         ),
-         'created',
-         '',
-         "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
-         "'pre_validation' in here.getWorkflowAdaptations()",
-         ),
-        # Items to validate : need a script to do this search
-        ('searchitemstovalidate',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToValidateOfHighestHierarchicLevel',
-         "python: here.userIsAReviewer()",
-         ),
-        # Items to advice : need a script to do this search
-        ('searchallitemstoadvice',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToAdvice',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
+
+
+
+
         # Items to advice without delay : need a script to do this search
         ('searchitemstoadvicewithoutdelay',
         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
@@ -1918,6 +1848,109 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Methods
 
     # Manually created methods
+
+    def _searchesInfo(self):
+        """Informations used to create DashboardCollections in the searches."""
+        itemType = self.getItemTypeName()
+        return OrderedDict(
+            {
+                # My items
+                'searchmyitems':
+                {
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                        {'i': 'Creator', 'o': 'plone.app.querystring.operation.string.currentUser'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators')"
+                },
+                # Items of my groups
+                'searchitemsofmygroups':
+                {
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-of-my-groups'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getGroupsForUser()"
+                },
+                # Items I take over
+                'searchmyitemstakenover':
+                {
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'my-items-taken-over'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
+                                     "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or "
+                                     "here.portal_plonemeeting.isManager(here))"
+                },
+                # All (visible) items
+                'searchallitems':
+                {
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': ""
+                },
+                # Items in copy
+                'searchallitemsincopy':
+                {
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-in-copy'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')"
+                },
+                # Items to prevalidate
+                'searchitemstoprevalidate':
+                {
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['prevalidated']}
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
+                                     "'pre_validation' in here.getWorkflowAdaptations()"
+                },
+                # Items to validate
+                'searchitemstoprevalidate':
+                {
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-validate-of-highest-hierarchic-level'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.userIsAReviewer()"
+                },
+                # Items to advice
+                'searchallitemstoadvice':
+                {
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                },
+            }
+        )
 
     security.declarePublic('getName')
     def getName(self, force=None):
@@ -2917,6 +2950,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.portal_factory.manage_setPortalFactoryTypes(
             listOfTypeIds=factoryTypesToRegister+registeredFactoryTypes)
 
+    security.declarePrivate('createSearches')
+    def createSearches(self, searchesInfo):
+        '''Adds a bunch of collections in the 'searches' sub-folder.'''
+        searches = getattr(self, TOOL_FOLDER_SEARCHES)
+        for collectionId, collectionData in searchesInfo.items():
+            if collectionId in searches.objectIds():
+                logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
+                continue
+            searches.invokeFactory('DashboardCollection', collectionId, **collectionData)
+            collection = getattr(searches, collectionId)
+            collection.setTitle(collectionId)
+            collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
+
     security.declarePrivate('createTopics')
     def createTopics(self, topicsInfo):
         '''Adds a bunch of topics within the 'topics' sub-folder.'''
@@ -3176,6 +3222,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
         # Create the topics related to this meeting config
         self.createTopics(self.topicsInfo)
+        # Create the collections related to this meeting config
+        self.createSearches(self._searchesInfo())
         # Create the action (tab) that corresponds to this meeting config
         self.createTab()
         # Sort the item tags if needed
@@ -3297,42 +3345,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if "_%s'" % reviewSuffix in strGroupIds:
                 return reviewSuffix
 
-    security.declarePublic('searchItemsToValidateOfHighestHierarchicLevel')
-    def searchItemsToValidateOfHighestHierarchicLevel(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Return a list of items that the user can validate regarding his highest hierarchic level.
-           So if a user is 'prereviewer' and 'reviewier', the search will only return items
-           in state corresponding to his 'reviewer' role.'''
-        member = self.portal_membership.getAuthenticatedMember()
-        groupIds = self.portal_groups.getGroupsForPrincipal(member)
-        res = []
-        highestReviewerLevel = self._highestReviewerLevel(groupIds)
-        if not highestReviewerLevel:
-            return res
-        for groupId in groupIds:
-            if groupId.endswith('_%s' % highestReviewerLevel):
-                # append group name without suffix
-                res.append(groupId[:-len('_%s' % highestReviewerLevel)])
-        review_state = MEETINGREVIEWERS[highestReviewerLevel]
-        # specific management for workflows using the 'pre_validation' wfAdaptation
-        if highestReviewerLevel == 'reviewers' and \
-           ('pre_validation' in self.getWorkflowAdaptations() or
-           'pre_validation_keep_reviewer_permissions' in self.getWorkflowAdaptations()):
-            review_state = 'prevalidated'
-
-        params = {'portal_type': self.getItemTypeName(),
-                  'getProposingGroup': res,
-                  'review_state': review_state,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
     security.declarePublic('searchItemsToValidateOfMyReviewerGroups')
     def searchItemsToValidateOfMyReviewerGroups(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''Return a list of items that the user could validate.  So it returns every items the current
@@ -3417,30 +3429,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                   'reviewProcessInfo': reviewProcessInfos,
                   'sort_on': sortKey,
                   'sort_order': sortOrder
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToAdvice')
-    def searchItemsToAdvice(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items for which the current user must give an advice.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
-        # this search will return 'not delay-aware' and 'delay-aware' advices
-        groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
-                   ['delay__' + g.getId() + '_advice_not_given' for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder,
                   }
         # Manage filter
         if filterKey:
@@ -3567,61 +3555,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         params = {'portal_type': self.getItemTypeName(),
                   # KeywordIndex 'indexAdvisers' use 'OR' by default
                   'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsInCopy')
-    def searchItemsInCopy(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items for which the current user is in copyGroups.'''
-        membershipTool = getToolByName(self, 'portal_membership')
-        groupsTool = getToolByName(self, 'portal_groups')
-        member = membershipTool.getAuthenticatedMember()
-        userGroups = groupsTool.getGroupsForPrincipal(member)
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'getCopyGroups' use 'OR' by default
-                  'getCopyGroups': userGroups,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsOfMyGroups')
-    def searchItemsOfMyGroups(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items of groups of the current user, no matter wich suffix
-           of the group the user is in.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        userGroupIds = [mGroup.getId() for mGroup in tool.getGroupsForUser()]
-        params = {'portal_type': self.getItemTypeName(),
-                  'getProposingGroup': userGroupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchMyItemsTakenOver')
-    def searchMyItemsTakenOver(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items that current user take over.'''
-        membershipTool = getToolByName(self, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
-        params = {'portal_type': self.getItemTypeName(),
-                  'getTakenOverBy': member.getId(),
                   'sort_on': sortKey,
                   'sort_order': sortOrder, }
         # Manage filter
@@ -4552,4 +4485,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-

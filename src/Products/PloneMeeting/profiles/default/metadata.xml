@@ -5,6 +5,7 @@
   <dependencies>
     <dependency>profile-Products.CMFPlacefulWorkflow:CMFPlacefulWorkflow</dependency>
     <dependency>profile-imio.actionspanel:default</dependency>
+    <dependency>profile-imio.dashboard:default</dependency>
     <dependency>profile-imio.history:default</dependency>
     <dependency>profile-collective.documentviewer:default</dependency>
     <dependency>profile-collective.datagridcolumns:default</dependency>

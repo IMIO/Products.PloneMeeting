@@ -18,6 +18,7 @@ from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.utils import checkPermission
 
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
@@ -362,3 +363,101 @@ class PMHistoryAdapter(ImioHistoryAdapter):
     def getHistory(self, checkMayView=True):
         """Override getHistory because it manages data changes."""
         return self.context.getHistory(checkMayView=checkMayView)
+
+
+class CompoundCriterionBaseAdapter(object):
+
+    def __init__(self, context):
+        self.context = context
+        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+    @property
+    def query(self):
+        ''' '''
+        return {}
+
+
+class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items of groups of the current user, no matter wich suffix
+           of the group the user is in.'''
+        userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser()]
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'getProposingGroup': userGroupIds}
+
+
+class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items that current user take over.'''
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'getTakenOverBy': member.getId()}
+
+
+class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user is in copyGroups.'''
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        groupsTool = getToolByName(self.context, 'portal_groups')
+        member = membershipTool.getAuthenticatedMember()
+        userGroups = groupsTool.getGroupsForPrincipal(member)
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'getCopyGroups' use 'OR' by default
+                'getCopyGroups': userGroups}
+
+
+class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Return a list of items that the user can validate regarding his highest hierarchic level.
+           So if a user is 'prereviewer' and 'reviewier', the search will only return items
+           in state corresponding to his 'reviewer' role.'''
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        groupsTool = getToolByName(self.context, 'portal_groups')
+        groupIds = groupsTool.getGroupsForPrincipal(member)
+        res = []
+        highestReviewerLevel = self.cfg._highestReviewerLevel(groupIds)
+        if not highestReviewerLevel:
+            # in this case, we do not want to display a result
+            # we return an unknown review_state
+            return {'review_state': ['unknown_review_state', ]}
+        for groupId in groupIds:
+            if groupId.endswith('_%s' % highestReviewerLevel):
+                # append group name without suffix
+                res.append(groupId[:-len('_%s' % highestReviewerLevel)])
+        review_state = MEETINGREVIEWERS[highestReviewerLevel]
+        # specific management for workflows using the 'pre_validation' wfAdaptation
+        if highestReviewerLevel == 'reviewers' and \
+           ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+           'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+            review_state = 'prevalidated'
+
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'getProposingGroup': res,
+                'review_state': review_state}
+
+
+class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user must give an advice.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
+        # this search will return 'not delay-aware' and 'delay-aware' advices
+        groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
+                   ['delay__' + g.getId() + '_advice_not_given' for g in groups]
+        # Create query parameters
+        return {'portal_type': self.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}

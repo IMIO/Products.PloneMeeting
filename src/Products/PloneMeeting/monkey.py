@@ -10,6 +10,8 @@
 import logging
 logger = logging.getLogger('Products.PloneMeeting')
 
+from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
+
 
 def DefinedInToolAwareCatalog():
     """
@@ -42,10 +44,12 @@ def DefinedInToolAwareCatalog():
                 # only query elements of the config if we are in the config...
                 kw['isDefinedInTool'] = False
                 if hasattr(self.REQUEST, 'PUBLISHED'):
-                    context = hasattr(self.REQUEST['PUBLISHED'], 'context') and self.REQUEST['PUBLISHED'].context or self.REQUEST['PUBLISHED']
+                    context = hasattr(self.REQUEST['PUBLISHED'], 'context') and \
+                        self.REQUEST['PUBLISHED'].context or \
+                        self.REQUEST['PUBLISHED']
                     if 'portal_plonemeeting' in context.absolute_url() or 'portal_plonemeeting' in repr(context):
                         kw['isDefinedInTool'] = True
-            elif 'portal_plonemeeting' in repr(self) and 'topics' in repr(self):
+            elif 'portal_plonemeeting' in repr(self) and TOOL_FOLDER_SEARCHES in repr(self):
                 # if we are executing a topic of a MeetingConfig, we do not want items of the tool
                 kw['isDefinedInTool'] = False
 
