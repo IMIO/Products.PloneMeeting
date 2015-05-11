@@ -1065,6 +1065,14 @@ span[id^="parent-fieldname-itemIconColor"] {
     padding-left: 20px;
 }
 
+div.faceted-tagscloud-collection-widget div.portlet_add_icons {
+    float: right;
+    margin-right: 0.5em;
+}
+div.faceted-tagscloud-collection-widget div.portlet_add_icons a {
+    margin-left: 0em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

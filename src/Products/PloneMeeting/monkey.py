@@ -10,8 +10,6 @@
 import logging
 logger = logging.getLogger('Products.PloneMeeting')
 
-from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
-
 
 def DefinedInToolAwareCatalog():
     """
@@ -48,7 +46,9 @@ def DefinedInToolAwareCatalog():
                     context = hasattr(self.REQUEST['PUBLISHED'], 'context') and \
                         self.REQUEST['PUBLISHED'].context or \
                         self.REQUEST['PUBLISHED']
-                    if 'portal_plonemeeting' in context.absolute_url() or 'portal_plonemeeting' in repr(context):
+                    context_url = context.absolute_url()
+                    if ('portal_plonemeeting' in context_url or 'portal_plonemeeting' in repr(context)) and \
+                       ('itemtemplates' in context_url or 'recurringitems' in context_url):
                         kw['isDefinedInTool'] = True
 
         # for other cases, the 'isDefinedInTool' index is not in the

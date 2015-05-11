@@ -1,0 +1,19 @@
+<tal:defines define="term view/term;
+                     category view/category;
+                     widget python: view.widget;
+                     wid python:widget.data.getId();">
+          <li tal:define="
+            term_id python:term[0];
+            term_label python:term[1];
+            term_label python:widget.translate(term_label);
+            wbr_term_label python:widget.word_break(term_label);
+            default_class python:term_id == widget.default and 'faceted-tag-selected' or '';"
+            tal:attributes="
+            class python: not category[0] and default_class + ' no-category-tag' or default_class;
+            value python:term_id;
+            title term_label;
+            id string:${wid}${term_id};
+            data-kept-criteria python:widget.kept_criteria_as_json(term_id);">
+               <a href="javascript:;" tal:content="wbr_term_label" />
+          </li>
+</tal:defines>

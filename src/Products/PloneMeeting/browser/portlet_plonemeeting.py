@@ -4,6 +4,8 @@ from zope.formlib import form
 
 from DateTime import DateTime
 
+from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
+
 from plone.memoize.instance import memoize
 from plone.app.portlets.portlets import base
 from plone.portlets.interfaces import IPortletDataProvider
@@ -32,7 +34,7 @@ class Assignment(base.Assignment):
         return _(u"PloneMeeting")
 
 
-class Renderer(base.Renderer):
+class Renderer(base.Renderer, FacetedRenderer):
 
     _template = ViewPageTemplateFile('templates/portlet_plonemeeting.pt')
 

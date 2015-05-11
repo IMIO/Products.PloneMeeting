@@ -150,4 +150,21 @@
       provides="eea.facetednavigation.interfaces.ICriteria"
       factory=".adapters.Criteria" />
 
+    <configure package="collective.eeafaceted.collectionwidget">
+        <browser:page
+            for="*"
+            name="render_collection_widget_category"
+            class="Products.PloneMeeting.browser.overrides.PMRenderCategoryView"
+            template="browser/templates/category.pt"
+            permission="zope2.View"
+            />
+        <browser:page
+            for="*"
+            name="render_collection_widget_term"
+            class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
+            template="browser/templates/term.pt"
+            permission="zope2.View"
+            />
+    </configure>
+
 </configure>

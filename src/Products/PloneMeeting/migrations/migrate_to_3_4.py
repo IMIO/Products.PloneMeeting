@@ -2,7 +2,8 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 
-from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
+from Acquisition import aq_base
+
 from Products.PloneMeeting.migrations import Migrator
 
 
@@ -22,7 +23,7 @@ class Migrate_To_3_4(Migrator):
                 cfg.setItemsListVisibleFields(res)
         logger.info('Done.')
 
-    def _addDashboardCollections(self, ):
+    def _addDashboardCollections(self):
         '''Now that we use imio.dashboard, we need DashboardCollections, no more Topics...
            We will create a "searches" folder in every MeetingConfigs then create DashboardCollections.
            We will keep topics and migrate it manually if necessary...'''
@@ -34,15 +35,31 @@ class Migrate_To_3_4(Migrator):
             # create the "searches" folder in the MeetingConfig
             cfg._createSubFolders()
             cfg.createSearches(cfg._searchesInfo())
+        logger.info('Done.')
+
+    def _adaptMeetingConfigFolderLayout(self):
+        '''Adapt every meetingConfig folder for every users (folders that are
+           located in the "mymeetings" folder) to use the faceted view.'''
+        logger.info('Updating the layout for every meetingConfig folders...')
+        for userFolder in self.portal.Members.objectValues():
+            # if something else than a userFolder, pass
+            if not hasattr(aq_base(userFolder), 'mymeetings'):
+                continue
+            for mc_folder in userFolder.mymeetings.objectValues():
+                self.tool._enableFacetedFor(mc_folder)
+        logger.info('Done.')
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         self.cleanRegistries()
         self._updateItemsListVisibleFields()
         self._addDashboardCollections()
+        self._adaptMeetingConfigFolderLayout()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
+        # update catalog as index "isDefinedInTool" changed
+        #self.refreshDatabase(workflows=False)
         self.finish()
 
 
@@ -52,7 +69,8 @@ def migrate(context):
 
        1) Update MeetingConfig.itemsListVisibleFields stored values;
        2) Add DashboardCollections;
-       3) Reinstall PloneMeeting.
+       3) Refresh catalogs;
+       4) Reinstall PloneMeeting.
     '''
     Migrate_To_3_4(context).run()
 # ------------------------------------------------------------------------------

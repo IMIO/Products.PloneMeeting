@@ -49,7 +49,11 @@ from OFS import CopySupport
 from zExceptions import NotFound
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getMultiAdapter
+from zope.interface import noLongerProvides
 from zope.i18n import translate
+from eea.facetednavigation.interfaces import IFacetedLayout
+from eea.facetednavigation.interfaces import IHidePloneLeftColumn
 from plone.memoize import ram
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import View
@@ -767,7 +771,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder = getattr(root_folder, meetingConfigId)
         # We add the MEETING_CONFIG property to the folder
         mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
-        mc_folder.setLayout('meetingfolder_redirect_view')
+
+        # enable the faceted view
+        self._enableFacetedFor(mc_folder)
+
+        # constrain types
         mc_folder.setConstrainTypesMode(1)
         allowedTypes = [cfg.getItemTypeName(),
                         cfg.getMeetingTypeName()] + ['File', 'Folder', 'MeetingFile']
@@ -795,6 +803,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
         # Give MeetingManager localrole to relevant _meetingmanagers group
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
+
+    def _enableFacetedFor(self, mc_folder):
+        '''Configure the faceted view for given p_folder.'''
+        subtyper = getMultiAdapter((mc_folder, self.REQUEST), name=u'faceted_subtyper')
+        subtyper.enable()
+        # use correct layout in the faceted
+        IFacetedLayout(mc_folder).update_layout('faceted-table-items')
+        # show the left portlets
+        if IHidePloneLeftColumn.providedBy(mc_folder):
+            noLongerProvides(mc_folder, IHidePloneLeftColumn)
 
     security.declarePublic('getMeetingConfig')
     def getMeetingConfig(self, context, caching=True):
@@ -1927,7 +1945,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            - If p_prefix is True, the translated prefix "Meeting of" is
              prepended to the result.'''
         # Received meeting could be a brain or an object
-        if meeting.__class__.__name__ == 'mybrains':
+        if meeting.__class__.__name__ in ['mybrains', 'CatalogContentListingObject']:
             # It is a meeting brain, take the 'getDate' metadata
             date = meeting.getDate
         else:

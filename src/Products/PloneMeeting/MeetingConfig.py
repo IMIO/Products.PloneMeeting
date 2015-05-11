@@ -1731,7 +1731,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   ),
         TOOL_FOLDER_SEARCHES: ('Searches',
                                ('Folder', 'DashboardCollection', ),
-                               (('meetings', 'Meetings'), ('decisions', 'Decisions'))
+                               # 'items' is a reserved word
+                               (('meetingitems', 'Meeting items'),
+                                ('meetings', 'Meetings'),
+                                ('decisions', 'Decisions'))
                                ),
         TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems',
                                       ('itemType', ),
@@ -1842,14 +1845,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          'searchDecidedItems',
          '',
          ),
-        # All not-yet-decided meetings
-        ('searchallmeetings',
-        (('portal_type', 'ATPortalTypeCriterion', ('Meeting',)),
-         ),
-         'getDate',
-         '',
-         '',
-         ),
+
 
     )
 
@@ -1876,7 +1872,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # My items
                 ('searchmyitems',
                 {
-                    'subFolderId': None,
+                    'subFolderId': 'meetingitems',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1889,7 +1885,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items of my groups
                 ('searchitemsofmygroups',
                 {
-                    'subFolderId': None,
+                    'subFolderId': 'meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-of-my-groups'},
@@ -1901,7 +1897,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items I take over
                 ('searchmyitemstakenover',
                 {
-                    'subFolderId': None,
+                    'subFolderId': 'meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'my-items-taken-over'},
@@ -1915,7 +1911,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # All (visible) items
                 ('searchallitems',
                 {
-                    'subFolderId': None,
+                    'subFolderId': 'meetingitems',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1927,7 +1923,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items in copy
                 ('searchallitemsincopy',
                 {
-                    'subFolderId': None,
+                    'subFolderId': 'meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-in-copy'},
@@ -1940,7 +1936,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to prevalidate
                 ('searchitemstoprevalidate',
                 {
-                    'subFolderId': None,
+                    'subFolderId': 'meetingitems',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1954,7 +1950,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to validate
                 ('searchitemstoprevalidate',
                 {
-                    'subFolderId': None,
+                    'subFolderId': 'meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-validate-of-highest-hierarchic-level'},
@@ -1966,7 +1962,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to advice
                 ('searchallitemstoadvice',
                 {
-                    'subFolderId': None,
+                    'subFolderId': 'meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice'},
@@ -1977,8 +1973,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
                 }),
 
-
-
+                # All not-yet-decided meetings
+                ('searchallmeetings',
+                {
+                    'subFolderId': 'meetings',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
+                    ],
+                    'sort_on': u'getDate',
+                    'sort_reversed': True,
+                    'tal_condition': ''
+                }),
 
 
                 # All decided meetings
@@ -1992,7 +1998,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'getDate',
                     'sort_reversed': True,
                     'tal_condition': ''
-                })
+                }),
             ]
         )
 

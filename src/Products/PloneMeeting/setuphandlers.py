@@ -185,7 +185,7 @@ def postInstall(context):
 
     pol = ppw.portal_plonemeeting_policy
     pol.setTitle(_(u'PloneMeeting tool policy'))
-    pol.setChain('Topic', ('plonemeeting_activity_managers_workflow',))
+    pol.setChain('DashboardCollection', ('plonemeeting_activity_managers_workflow',))
     pol.setChainForPortalTypes(
         ('MeetingGroup', 'MeetingConfig', 'MeetingFileType',
          'MeetingCategory'), ('plonemeeting_activity_workflow',))
@@ -324,6 +324,9 @@ def postInstall(context):
     if not cron_configlet.cronjobs:
         # add a cron job that will be launched at 00:00
         cron_configlet.cronjobs = [u'0 0 * * portal/@@update-delay-aware-advices']
+
+    # make sure the permission to Configure faceted is only given to Manager
+    site.manage_permission('eea.facetednavigation: Configure faceted', ('Manager', ))
 
 
 ##code-section FOOT

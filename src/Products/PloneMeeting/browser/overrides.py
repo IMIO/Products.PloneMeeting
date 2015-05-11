@@ -15,6 +15,8 @@ from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
+from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
+from collective.eeafaceted.collectionwidget.browser.views import RenderTermView
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.actionspanel.browser.views import DeleteGivenUidView
 from imio.history.browser.views import IHDocumentBylineViewlet
@@ -133,6 +135,49 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         pm_version = self.context.portal_setup.getProfileInfo('profile-Products.PloneMeeting:default')['version']
         versions.insert(0, 'PloneMeeting %s' % pm_version)
         return versions
+
+
+class PMRenderTermView(RenderTermView):
+
+    def __call__(self, term, category, widget):
+        self.term = term
+        self.category = category
+        self.widget = widget
+        catalog = getToolByName(self.context, 'portal_catalog')
+        collection = catalog(UID=term[0])[0].getObject()
+        # display the searchallmeetings as a selection list
+        if collection.getId() == 'searchallmeetings':
+            self.tool = getToolByName(self, 'portal_plonemeeting')
+            self.cfg = self.tool.getMeetingConfig(self.context)
+            self.brains = collection.getQuery()
+            return ViewPageTemplateFile("templates/term_searchallmeetings.pt")(self)
+        return self.index()
+
+
+class PMRenderCategoryView(RenderCategoryView):
+    '''
+      Override the way a category is rendered in the portlet based on the
+      faceted collection widget so we can manage some usecases where icons
+      are displayed to add items or meetings.
+    '''
+
+    def __call__(self, category, widget):
+        self.category = category
+        self.widget = widget
+        self.tool = getToolByName(self, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+        if category[0] == 'meetingitems':
+            return ViewPageTemplateFile("templates/category_meetingitems.pt")(self)
+        if category[0] == 'meetings':
+            self.member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+            return ViewPageTemplateFile("templates/category_meetings.pt")(self)
+        else:
+            return self.index()
+
+    def templateItems(self):
+        '''Check if there are item templates defined or not.'''
+        return self.tool.getPloneMeetingFolder(self.cfg.getId()).restrictedTraverse('createitemfromtemplate').getItemTemplates()
 
 
 class BaseActionsPanelView(ActionsPanelView):
