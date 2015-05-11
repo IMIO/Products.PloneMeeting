@@ -37,6 +37,7 @@ from zope.component import getUtility
 from zope.component import getMultiAdapter
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
+from zope.interface import alsoProvides
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
@@ -1720,14 +1721,38 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Information about each sub-folder that will be created within a meeting
     # config.
     subFoldersInfo = {
-        TOOL_FOLDER_CATEGORIES: ('Categories', ('MeetingCategory', )),
-        TOOL_FOLDER_CLASSIFIERS: ('Classifiers', ('MeetingCategory', )),
-        TOOL_FOLDER_SEARCHES: ('Searches', ('DashboardCollection', )),
-        TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems', ('itemType', )),
-        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', ('Folder', 'itemType')),
-        TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes', ('MeetingFileType', )),
-        TOOL_FOLDER_POD_TEMPLATES: ('Document templates', ('PodTemplate', )),
-        TOOL_FOLDER_MEETING_USERS: ('Meeting users', ('MeetingUser', ))
+        TOOL_FOLDER_CATEGORIES: ('Categories',
+                                 ('MeetingCategory', ),
+                                 ()
+                                 ),
+        TOOL_FOLDER_CLASSIFIERS: ('Classifiers',
+                                  ('MeetingCategory', ),
+                                  ()
+                                  ),
+        TOOL_FOLDER_SEARCHES: ('Searches',
+                               ('Folder', 'DashboardCollection', ),
+                               (('meetings', 'Meetings'), ('decisions', 'Decisions'))
+                               ),
+        TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems',
+                                      ('itemType', ),
+                                      ()
+                                      ),
+        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates',
+                                     ('Folder', 'itemType'),
+                                     ()
+                                     ),
+        TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes',
+                                 ('MeetingFileType', ),
+                                 ()
+                                 ),
+        TOOL_FOLDER_POD_TEMPLATES: ('Document templates',
+                                    ('PodTemplate', ),
+                                    ()
+                                    ),
+        TOOL_FOLDER_MEETING_USERS: ('Meeting users',
+                                    ('MeetingUser', ),
+                                    ()
+                                    )
     }
 
     metaTypes = ('MeetingItem', 'Meeting')
@@ -1825,14 +1850,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
          '',
          '',
          ),
-        # All decided meetings
-        ('searchalldecisions',
-        (('portal_type', 'ATPortalTypeCriterion', ('Meeting',)),
-         ),
-         'getDate',
-         '',
-         '',
-         ),
+
     )
 
     # List of topics related to Meetings that take care
@@ -1852,11 +1870,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
         itemType = self.getItemTypeName()
+        meetingType = self.getMeetingTypeName()
         return OrderedDict(
-            {
+            [
                 # My items
-                'searchmyitems':
+                ('searchmyitems',
                 {
+                    'subFolderId': None,
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1865,10 +1885,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators')"
-                },
+                }),
                 # Items of my groups
-                'searchitemsofmygroups':
+                ('searchitemsofmygroups',
                 {
+                    'subFolderId': None,
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-of-my-groups'},
@@ -1876,10 +1897,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getGroupsForUser()"
-                },
+                }),
                 # Items I take over
-                'searchmyitemstakenover':
+                ('searchmyitemstakenover',
                 {
+                    'subFolderId': None,
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'my-items-taken-over'},
@@ -1889,10 +1911,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'tal_condition': "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
                                      "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or "
                                      "here.portal_plonemeeting.isManager(here))"
-                },
+                }),
                 # All (visible) items
-                'searchallitems':
+                ('searchallitems',
                 {
+                    'subFolderId': None,
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1900,10 +1923,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': ""
-                },
+                }),
                 # Items in copy
-                'searchallitemsincopy':
+                ('searchallitemsincopy',
                 {
+                    'subFolderId': None,
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-in-copy'},
@@ -1912,10 +1936,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')"
-                },
+                }),
                 # Items to prevalidate
-                'searchitemstoprevalidate':
+                ('searchitemstoprevalidate',
                 {
+                    'subFolderId': None,
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1925,10 +1950,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
                                      "'pre_validation' in here.getWorkflowAdaptations()"
-                },
+                }),
                 # Items to validate
-                'searchitemstoprevalidate':
+                ('searchitemstoprevalidate',
                 {
+                    'subFolderId': None,
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-validate-of-highest-hierarchic-level'},
@@ -1936,10 +1962,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.userIsAReviewer()"
-                },
+                }),
                 # Items to advice
-                'searchallitemstoadvice':
+                ('searchallitemstoadvice',
                 {
+                    'subFolderId': None,
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice'},
@@ -1948,8 +1975,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
-                },
-            }
+                }),
+
+
+
+
+
+                # All decided meetings
+                ('searchalldecisions',
+                {
+                    'subFolderId': 'decisions',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
+                    ],
+                    'sort_on': u'getDate',
+                    'sort_reversed': True,
+                    'tal_condition': ''
+                })
+            ]
         )
 
     security.declarePublic('getName')
@@ -2953,15 +2997,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('createSearches')
     def createSearches(self, searchesInfo):
         '''Adds a bunch of collections in the 'searches' sub-folder.'''
-        searches = getattr(self, TOOL_FOLDER_SEARCHES)
         for collectionId, collectionData in searchesInfo.items():
-            if collectionId in searches.objectIds():
+            container = getattr(self, TOOL_FOLDER_SEARCHES)
+            subFolderId = collectionData['subFolderId']
+            if subFolderId:
+                container = getattr(container, subFolderId)
+            if collectionId in container.objectIds():
                 logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
                 continue
-            searches.invokeFactory('DashboardCollection', collectionId, **collectionData)
-            collection = getattr(searches, collectionId)
-            collection.setTitle(collectionId)
+            container.invokeFactory('DashboardCollection', collectionId, **collectionData)
+            collection = getattr(container, collectionId)
+            collection.setTitle(translate(collectionId,
+                                          domain="PloneMeeting",
+                                          context=self.REQUEST,
+                                          default=collectionId))
             collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
+            collection.reindexObject()
 
     security.declarePrivate('createTopics')
     def createTopics(self, topicsInfo):
@@ -3276,9 +3327,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             self.invokeFactory('Folder', folderId)
             folder = getattr(self, folderId)
-            # special case for folder 'itemtemplates' for wich we want
+
+            # special case for folder 'searches' that we mark with the IFacetedSearchesMarker
+            # and for wich we enable the faceted navigation
+            if folderId == TOOL_FOLDER_SEARCHES:
+                alsoProvides(folder, IFacetedSearchesMarker)
+                subtyper = getMultiAdapter((folder, self.REQUEST), name=u'faceted_subtyper')
+                subtyper.enable()
+
+            # special case for folder 'itemtemplates' for which we want
             # to display the 'navigation' portlet and use the 'folder_contents' layout
-            if folderId == 'itemtemplates':
+            if folderId == TOOL_FOLDER_ITEM_TEMPLATES:
                 # add navigation portlet
                 manager = getUtility(IPortletManager, name=u"plone.leftcolumn")
                 portletAssignmentMapping = getMultiAdapter((folder, manager), IPortletAssignmentMapping, context=folder)
@@ -3291,6 +3350,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portletAssignmentMapping[name] = navPortlet
                 # use folder_contents layout
                 folder.setLayout('folder_contents')
+
             folder.setTitle(translate(folderInfo[0],
                                       domain="PloneMeeting",
                                       context=self.REQUEST,
@@ -3304,6 +3364,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             folder.setImmediatelyAddableTypes(allowedTypes)
             # call processForm passing dummy values so existing values are not touched
             folder.processForm(values={'dummy': None})
+            for subFolderId, subFolderTitle in folderInfo[2]:
+                folder.invokeFactory('Folder', subFolderId)
+                subFolder = getattr(folder, subFolderId)
+                subFolder.setTitle(translate(subFolderTitle,
+                                             domain="PloneMeeting",
+                                             context=self.REQUEST,
+                                             default=subFolderTitle))
+                subFolder.processForm(values={'dummy': None})
 
     def _manageEnableAnnexToPrint(self):
         '''

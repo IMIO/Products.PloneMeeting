@@ -144,4 +144,10 @@
             permission="zope2.View" />
     </configure>
 
+    <!-- Make criteria defined in the MeetingConfig used by faceted in the application -->
+    <adapter
+      for="eea.facetednavigation.interfaces.IFacetedNavigable"
+      provides="eea.facetednavigation.interfaces.ICriteria"
+      factory=".adapters.Criteria" />
+
 </configure>

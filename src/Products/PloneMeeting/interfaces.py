@@ -14,6 +14,13 @@ from zope.component.interfaces import IObjectEvent
 from zope.publisher.interfaces.browser import IBrowserRequest
 
 
+class IFacetedSearchesMarker(Interface):
+    """
+      Marker interface applied to the 'searches' folder added
+      to each MeetingConfig.
+    """
+
+
 class IAdvicesUpdatedEvent(IObjectEvent):
     """
     """

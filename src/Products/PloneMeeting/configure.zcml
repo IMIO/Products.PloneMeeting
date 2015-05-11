@@ -5,6 +5,7 @@
            i18n_domain="PloneMeeting">
 
   <!-- ##code-section configure.zcml.header -->
+  <include package="eea.facetednavigation" />
   <include package="Products.PasswordStrength" />
   <include file="events.zcml" />
   <include file="profiling.zcml" />

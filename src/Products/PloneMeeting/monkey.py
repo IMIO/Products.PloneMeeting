@@ -36,7 +36,8 @@ def DefinedInToolAwareCatalog():
                '@@search' in path_translated or \
                'updated_search' in path_translated or \
                'plonemeeting_topic_view' in path_translated or \
-               'search_form' in path_translated:
+               'search_form' in path_translated or \
+               '@@faceted_query' in path_translated:
                 kw['isDefinedInTool'] = False
             # if show_inactive is True, it means that we are using a layout
             # like folder_listing or folder_contents, check if we are in the configuration
@@ -49,9 +50,6 @@ def DefinedInToolAwareCatalog():
                         self.REQUEST['PUBLISHED']
                     if 'portal_plonemeeting' in context.absolute_url() or 'portal_plonemeeting' in repr(context):
                         kw['isDefinedInTool'] = True
-            elif 'portal_plonemeeting' in repr(self) and TOOL_FOLDER_SEARCHES in repr(self):
-                # if we are executing a topic of a MeetingConfig, we do not want items of the tool
-                kw['isDefinedInTool'] = False
 
         # for other cases, the 'isDefinedInTool' index is not in the
         # query so elements defined in the tool and not defined in the tool are taken into account

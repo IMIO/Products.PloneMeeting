@@ -21,6 +21,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.utils import checkPermission
 
+from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.history.adapters import ImioHistoryAdapter
 from collective.documentviewer.settings import GlobalSettings
@@ -365,6 +366,21 @@ class PMHistoryAdapter(ImioHistoryAdapter):
         return self.context.getHistory(checkMayView=checkMayView)
 
 
+class Criteria(eeaCriteria):
+    """ Handle criteria
+    """
+
+    def __init__(self, context):
+        """ Handle criteria
+        """
+        super(Criteria, self).__init__(context)
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if cfg:
+            self.context = cfg.searches
+            self.criteria = self._criteria()
+
+
 class CompoundCriterionBaseAdapter(object):
 
     def __init__(self, context):
@@ -458,6 +474,6 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
                    ['delay__' + g.getId() + '_advice_not_given' for g in groups]
         # Create query parameters
-        return {'portal_type': self.getItemTypeName(),
+        return {'portal_type': self.cfg.getItemTypeName(),
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
                 'indexAdvisers': groupIds}

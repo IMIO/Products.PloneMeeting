@@ -10,7 +10,7 @@
 from OFS.interfaces import IItem
 
 from plone.indexer import indexer
-
+from plone.app.collection.interfaces import ICollection
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 
@@ -73,8 +73,11 @@ def isDefinedInTool(obj):
     """
       Do elements defined in the tool visible by catalog searches only
       when an admin is in the tool...
+      Except elements of the "searches" folder that need to be searchable from the user
+      interface as it builds the dashboard collection portlet...
     """
-    return ('portal_plonemeeting' in obj.absolute_url())
+    obj_url = obj.absolute_url()
+    return ('portal_plonemeeting' in obj_url and not 'searches' in obj_url)
 
 
 @indexer(IItem)
