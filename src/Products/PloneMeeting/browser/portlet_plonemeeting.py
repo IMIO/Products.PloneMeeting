@@ -46,8 +46,8 @@ class Renderer(base.Renderer, FacetedRenderer):
     @property
     def available(self):
         '''Defines if the portlet is available in the context.'''
-        tool = self.getPloneMeetingTool()
-        return tool.isInPloneMeeting(self.context, inTool=False) and tool.isPloneMeetingUser()
+        available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
+        return available and self.getPloneMeetingTool().isPloneMeetingUser()
 
     def render(self):
         return self._template()

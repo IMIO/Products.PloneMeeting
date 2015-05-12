@@ -874,38 +874,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    LinesField(
-        name='meetingTopicStates',
-        widget=MultiSelectionWidget(
-            description="MeetingTopicStates",
-            description_msgid="meeting_topic_states_descr",
-            label='Meetingtopicstates',
-            label_msgid='PloneMeeting_label_meetingTopicStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listMeetingStates',
-        default=defValues.meetingTopicStates,
-        enforceVocabulary= False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='decisionTopicStates',
-        widget=MultiSelectionWidget(
-            description="DecisionTopicStates",
-            description_msgid="decision_topic_states_descr",
-            label='Decisiontopicstates',
-            label_msgid='PloneMeeting_label_decisionTopicStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listMeetingStates',
-        default=defValues.decisionTopicStates,
-        enforceVocabulary= False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
     IntegerField(
         name='maxShownMeetings',
         default=defValues.maxShownMeetings,
@@ -914,20 +882,6 @@ schema = Schema((
             description_msgid="max_shown_meetings_descr",
             label='Maxshownmeetings',
             label_msgid='PloneMeeting_label_maxShownMeetings',
-            i18n_domain='PloneMeeting',
-        ),
-        required=True,
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    IntegerField(
-        name='maxDaysDecisions',
-        default=defValues.maxDaysDecisions,
-        widget=IntegerField._properties['widget'](
-            description="MaxDaysDecision",
-            description_msgid="max_days_decisions_descr",
-            label='Maxdaysdecisions',
-            label_msgid='PloneMeeting_label_maxDaysDecisions',
             i18n_domain='PloneMeeting',
         ),
         required=True,
@@ -1972,7 +1926,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
                 }),
-
                 # All not-yet-decided meetings
                 ('searchallmeetings',
                 {
@@ -1980,13 +1933,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['created', 'frozen', 'published']},
                     ],
                     'sort_on': u'getDate',
                     'sort_reversed': True,
                     'tal_condition': ''
                 }),
-
-
+                # Last decided meetings
+                ('searchlastdecisions',
+                {
+                    'subFolderId': 'decisions',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['decided', 'closed']},
+                        {'i': 'getDate', 'o': 'plone.app.querystring.operation.date.largerThanRelativeDate', 'v': '60'},
+                    ],
+                    'sort_on': u'getDate',
+                    'sort_reversed': True,
+                    'tal_condition': ''
+                }),
                 # All decided meetings
                 ('searchalldecisions',
                 {
@@ -1994,6 +1960,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['decided', 'closed']},
                     ],
                     'sort_on': u'getDate',
                     'sort_reversed': True,
@@ -3013,6 +2980,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             container.invokeFactory('DashboardCollection', collectionId, **collectionData)
             collection = getattr(container, collectionId)
+            # update query so it is stored correctly because we pass a dict
+            # but it is actually stored as instances of ZPublisher.HTTPRequest.record
+            collection.setQuery(collection.query)
             collection.setTitle(translate(collectionId,
                                           domain="PloneMeeting",
                                           context=self.REQUEST,
@@ -3094,31 +3064,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        condition=availExpr,
                                        permission=('View',),
                                        visible=True)
-
-    security.declarePrivate('updateTopics')
-    def updateTopics(self):
-        '''Topic definitions may need to be updated if the some config-related
-           params have changed (like lists if states used in Meetings related topics).'''
-        # Update each Meeting related topic using the states defined in MeetingConfig.meetingTopicStates
-        for topicId in self.meetingTopicsUsingMeetingConfigStates:
-            # Delete the state-related criterion (normally it exists)
-            try:
-                topic = getattr(self.topics, topicId)
-            except AttributeError:
-                continue
-            try:
-                topic.deleteCriterion('crit__review_state_ATListCriterion')
-            except AttributeError:
-                pass
-            # Recreate it with the possibly updated list of states
-            stateCriterion = topic.addCriterion(
-                field='review_state', criterion_type='ATListCriterion')
-            # Which method must I use for getting states ?
-            if topicId == 'searchalldecisions':
-                getStatesMethod = self.getDecisionTopicStates
-            else:
-                getStatesMethod = self.getMeetingTopicStates
-            stateCriterion.setValue(getStatesMethod())
 
     security.declarePublic('getTopics')
     def getTopics(self, topicType, fromPortletTodo=False):
@@ -3325,6 +3270,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
           Create necessary subfolders for the MeetingConfig.
         '''
+        tool = getToolByName(self, 'portal_plonemeeting')
         for folderId, folderInfo in self.subFoldersInfo.iteritems():
             # if a folder already exists, we continue
             # this is done because this method is used as helper
@@ -3338,8 +3284,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # and for wich we enable the faceted navigation
             if folderId == TOOL_FOLDER_SEARCHES:
                 alsoProvides(folder, IFacetedSearchesMarker)
-                subtyper = getMultiAdapter((folder, self.REQUEST), name=u'faceted_subtyper')
-                subtyper.enable()
+                tool._enableFacetedFor(folder)
 
             # special case for folder 'itemtemplates' for which we want
             # to display the 'navigation' portlet and use the 'folder_contents' layout

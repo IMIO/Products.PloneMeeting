@@ -17,6 +17,7 @@ from plone.memoize.view import memoize_contextless
 
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.eeafaceted.collectionwidget.browser.views import RenderTermView
+from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.actionspanel.browser.views import DeleteGivenUidView
 from imio.history.browser.views import IHDocumentBylineViewlet
@@ -106,7 +107,7 @@ class PloneMeetingDocumentBylineViewlet(IHDocumentBylineViewlet):
             # add our own conditions
             # the documentByLine should be hidden on some layouts
             currentLayout = self.context.getLayout()
-            if currentLayout in ['meetingfolder_redirect_view', ]:
+            if currentLayout in ['facetednavigation_view', ]:
                 return False
         return True
 
@@ -137,6 +138,16 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         return versions
 
 
+class PMFacetedContainerView(FacetedContainerView):
+    '''
+      Override to disable border on the meetingFolder view.
+    '''
+
+    def __init__(self, context, request):
+        super(PMFacetedContainerView, self).__init__(context, request)
+        self.request.set('disable_border', 1)
+
+
 class PMRenderTermView(RenderTermView):
 
     def __call__(self, term, category, widget):
@@ -144,13 +155,14 @@ class PMRenderTermView(RenderTermView):
         self.category = category
         self.widget = widget
         catalog = getToolByName(self.context, 'portal_catalog')
-        collection = catalog(UID=term[0])[0].getObject()
+        self.collection = catalog(UID=term[0])[0].getObject()
         # display the searchallmeetings as a selection list
-        if collection.getId() == 'searchallmeetings':
+        collectionId = self.collection.getId()
+        if collectionId in ['searchallmeetings', 'searchlastdecisions']:
             self.tool = getToolByName(self, 'portal_plonemeeting')
             self.cfg = self.tool.getMeetingConfig(self.context)
-            self.brains = collection.getQuery()
-            return ViewPageTemplateFile("templates/term_searchallmeetings.pt")(self)
+            self.brains = self.collection.getQuery()
+            return ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return self.index()
 
 
@@ -451,6 +463,9 @@ class ConfigActionsPanelView(ActionsPanelView):
         folderId = self.folder.getId()
         if folderId == 'topics':
             return "../?pageName=gui#topics"
+        # searches
+        if folderId in ['meetingitems', 'meetings', 'decisions']:
+            return "../../?pageName=gui#searches"
         if folderId == 'podtemplates':
             return "../?pageName=doc#podtemplates"
         if folderId == 'meetingusers':

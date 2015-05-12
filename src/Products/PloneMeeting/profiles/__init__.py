@@ -237,6 +237,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates', 'decisionTopicStates',
                          'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues', 'insertingMethodsOnAddItem'
                          )
+    excludedFields = ['maxDaysDecisions', ]
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
@@ -395,9 +396,11 @@ class MeetingConfigDescriptor(Descriptor):
         # When the system displays the list of all meetings (the "all meetings"
         # topic), only meetings having one of the stated listed in
         # meetingTopicStates will be shown.
+        # this will be applied on the 'searchallmeetings' Collection
         self.meetingTopicStates = ('created', 'published', 'frozen')
         # In the "decisions" portlet, the "all decisions" portlet will only show
         # meetings having one of the states listed in decisionTopicStates.
+        # this will be applied on the 'searchalldecisions' Collection
         self.decisionTopicStates = ('decided', 'closed', 'archived')
         # Maximum number of meetings or decisions shown in the meeting and
         # decision portlets. If overflow, a combo box is shown instead of a
@@ -406,6 +409,7 @@ class MeetingConfigDescriptor(Descriptor):
         # If a decision if maxDaysDecisions old (or older), it is not shown
         # anymore in the "decisions" portlet. This decision may still be
         # consulted by clicking on "all decisions" in the same portlet.
+        # this will be applied on the 'searchalldecisions' Collection
         self.maxDaysDecisions = 60
         # Which view do you want to select when entering a PloneMeeting folder ?
         self.meetingAppDefaultView = 'topic_searchallmeetings'

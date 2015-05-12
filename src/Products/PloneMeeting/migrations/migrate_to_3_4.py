@@ -5,6 +5,7 @@ logger = logging.getLogger('PloneMeeting')
 from Acquisition import aq_base
 
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.utils import updateCollectionCriterion
 
 
 # The migration class ----------------------------------------------------------
@@ -23,18 +24,37 @@ class Migrate_To_3_4(Migrator):
                 cfg.setItemsListVisibleFields(res)
         logger.info('Done.')
 
-    def _addDashboardCollections(self):
-        '''Now that we use imio.dashboard, we need DashboardCollections, no more Topics...
-           We will create a "searches" folder in every MeetingConfigs then create DashboardCollections.
-           We will keep topics and migrate it manually if necessary...'''
-        logger.info('Adding DashboardCollections...')
+    def _adaptConfigForImioDashboard(self):
+        '''Now that we use imio.dashboard, we will adapt various things :
+           - DashboardCollections, no more Topics, we will create a "searches" folder
+             and keep existing Topics for now as we will not migrate topics to collections;
+           - move some parameters from the MeetingConfig to the relevant DashboardCollection.'''
+        logger.info('Moving to imio.dashboard...')
         for cfg in self.tool.objectValues('MeetingConfig'):
-            #if TOOL_FOLDER_SEARCHES in cfg.objectIds():
-                # already migrated
-                #continue
-            # create the "searches" folder in the MeetingConfig
+            logger.info('Moving to imio.dashboard : adding DashboardCollections...')
             cfg._createSubFolders()
             cfg.createSearches(cfg._searchesInfo())
+
+            logger.info('Moving to imio.dashboard : updating MeetingConfig parameters...')
+            if hasattr(cfg, 'maxDaysDecisions'):
+                updateCollectionCriterion(cfg.searches.decisions.searchlastdecisions,
+                                          'getDate',
+                                          str(cfg.maxDaysDecisions))
+                delattr(cfg, 'maxDaysDecisions')
+            if hasattr(cfg, 'meetingTopicStates'):
+                updateCollectionCriterion(cfg.searches.meetings.searchallmeetings,
+                                          'review_state',
+                                          cfg.meetingTopicStates)
+                delattr(cfg, 'meetingTopicStates')
+            if hasattr(cfg, 'decisionTopicStates'):
+                updateCollectionCriterion(cfg.searches.decisions.searchlastdecisions,
+                                          'review_state',
+                                          cfg.decisionTopicStates)
+                updateCollectionCriterion(cfg.searches.decisions.searchalldecisions,
+                                          'review_state',
+                                          cfg.decisionTopicStates)
+                delattr(cfg, 'decisionTopicStates')
+
         logger.info('Done.')
 
     def _adaptMeetingConfigFolderLayout(self):
@@ -49,11 +69,15 @@ class Migrate_To_3_4(Migrator):
                 self.tool._enableFacetedFor(mc_folder)
         logger.info('Done.')
 
+    def _cleanMeetingConfigAttributes(self):
+        '''Some parameters are now directly managed by the Collections
+           of the dashboard, move these paramaters and clean the configs.'''
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         self.cleanRegistries()
         self._updateItemsListVisibleFields()
-        self._addDashboardCollections()
+        self._adaptConfigForImioDashboard()
         self._adaptMeetingConfigFolderLayout()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)

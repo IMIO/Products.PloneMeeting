@@ -1,0 +1,48 @@
+<tal:defines define="brains python: view.brains;
+                     tool python: view.tool;
+                     cfg python: view.cfg;
+                     term python: view.term;
+                     collection python: view.collection;
+                     category python: view.category;
+                     widget python: view.widget;
+                     meetingFolder python: cfg.getPloneMeetingFolder(cfg.getId());
+                     nbOfMeetings python:len(brains);
+                     maxShownMeetings cfg/maxShownMeetings;"
+             i18n:domain="PloneMeeting">
+
+    <tal:comment replace="nothing">A few number of meetings, show a link by meeting</tal:comment>
+    <ul class="fewMeetings">
+        <li tal:condition="python: nbOfMeetings <= maxShownMeetings"
+                  tal:repeat="brain brains">
+            <a tal:attributes="href brain/getURL;
+                               class python: context.absolute_url().startswith(brain.getURL()) and 'portletSelected' or ''"
+               tal:content="python:tool.formatMeetingDate(brain, short=True, withHour=True)">
+                Meeting date
+            </a>
+        </li>
+    </ul>
+
+    <tal:comment replace="nothing">Many meetings, show a combo box</tal:comment>
+    <div class="manyMeetings" tal:condition="python: nbOfMeetings > maxShownMeetings">
+      <form name="gotoMeetingForm">
+        <select style="width: 90%"
+                name="selectMeeting"
+                onChange="location.href=this.options[selectedIndex].value">
+          <option i18n:translate="make_a_choice"
+                  tal:attributes="value meetingFolder/absolute_url">
+            Make a choice
+          </option>
+          <option tal:repeat="brain brains"
+                  tal:content="python:tool.formatMeetingDate(brain, short=True, withHour=True)"
+                  tal:attributes="value brain/getURL;
+                                  selected python:context.absolute_url().startswith(brain.getURL())"></option>
+        </select>
+      </form>
+    </div>
+
+    <tal:comment replace="nothing">No available meeting visible, show a help message</tal:comment>
+    <div class="noMeetings" tal:condition="python: collection.getId() == 'searchallmeetings' and nbOfMeetings==0">
+      <p class="discreet" i18n:translate="no_meeting"></p>
+    </div>
+
+</tal:defines>

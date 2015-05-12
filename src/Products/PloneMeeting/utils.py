@@ -1229,6 +1229,19 @@ def prepareSearchValue(value):
     return ' '.join(res)
 
 
+def updateCollectionCriterion(collection, i, v):
+    """Update a collection criterion."""
+    for criterion in collection.query:
+        if criterion['i'] == i:
+            if isinstance(criterion, dict):
+                criterion['v'] = v
+            else:
+                criterion.v = v
+            # make saved value persistent
+            collection.query = collection.query
+            break
+
+
 # ------------------------------------------------------------------------------
 tokens = (('<li', -1), ('</li>', 5))
 crlf = ('\r', '\n')

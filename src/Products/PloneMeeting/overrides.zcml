@@ -142,6 +142,13 @@
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
+        <browser:page
+            for="plone.app.collection.interfaces.ICollection"
+            name="config_actions_panel"
+            class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
     </configure>
 
     <!-- Make criteria defined in the MeetingConfig used by faceted in the application -->
@@ -165,6 +172,26 @@
             template="browser/templates/term.pt"
             permission="zope2.View"
             />
+    </configure>
+
+    <configure package="imio.dashboard">
+        <browser:page
+            for="*"
+            name="render_collection_widget_term_portlet"
+            class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
+            template="browser/templates/term.pt"
+            permission="zope2.View"
+            />
+    </configure>
+
+    <configure package="eea.facetednavigation">
+        <browser:page
+            for=".interfaces.IFacetedNavigable"
+            name="facetednavigation_view"
+            template="browser/template/view.pt"
+            class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+            permission="zope2.View"
+    />
     </configure>
 
 </configure>

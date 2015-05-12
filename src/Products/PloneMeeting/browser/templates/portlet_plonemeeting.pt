@@ -14,36 +14,37 @@
                 portal_url tool/getSiteUrl;
                 member tool/getUser">
 
-    <dt class="portletHeader"><tal:portlet_pm_header i18n:translate="portlet_pm_header_label">Manage</tal:portlet_pm_header>
-     <div class="portletPloneMeetingHeaderIcons">
-         <a style="display: inline;"
-            tal:condition="python: meetingConfig"
-            href="#"
-            tal:attributes="href meetingFolder/absolute_url">
-         <img style="cursor:pointer"
-              tal:attributes="src string:$portal_url/pm_home.png;
-                              title meetingConfig/getName"/>
-         </a>
-         <a style="display: inline;"
-            tal:condition="python: tool.isManager(view.context)"
-            href="#"
-            tal:attributes="href meetingConfig/absolute_url">
-         <img style="cursor:pointer" title="pm_configuration" i18n:attributes="title"
-              tal:attributes="src string:$portal_url/pm_config.png"/>
-         </a>
-         <a style="display: inline;"
-            tal:condition="tool/getEnableUserPreferences"
-            href="#"
-            tal:attributes="href string:${meetingConfig/absolute_url}/gotoPreferences;">
-         <img style="cursor:pointer" title="user_preferences" i18n:attributes="title"
-              tal:attributes="src string:$portal_url/pm_preferences.png"/>
-         </a>
-         <a style="display: inline;" href="#" tal:attributes="href string:${meetingFolder/absolute_url}/search_form;">
-         <img style="cursor:pointer" title="search_advanced"
-              i18n:attributes="title"
-              tal:attributes="src string:$portal_url/pm_search.png"/>
-         </a>
-     </div>
+    <dt class="portletHeader">
+        <span i18n:translate="portlet_pm_header_label">Manage</span>
+        <div class="portletPloneMeetingHeaderIcons">
+            <a style="display: inline;"
+               tal:condition="python: meetingConfig"
+               href="#"
+               tal:attributes="href meetingFolder/absolute_url">
+            <img style="cursor:pointer"
+                 tal:attributes="src string:$portal_url/pm_home.png;
+                                 title meetingConfig/getName"/>
+            </a>
+            <a style="display: inline;"
+               tal:condition="python: tool.isManager(view.context)"
+               href="#"
+               tal:attributes="href meetingConfig/absolute_url">
+            <img style="cursor:pointer" title="pm_configuration" i18n:attributes="title"
+                 tal:attributes="src string:$portal_url/pm_config.png"/>
+            </a>
+            <a style="display: inline;"
+               tal:condition="tool/getEnableUserPreferences"
+               href="#"
+               tal:attributes="href string:${meetingConfig/absolute_url}/gotoPreferences;">
+            <img style="cursor:pointer" title="user_preferences" i18n:attributes="title"
+                 tal:attributes="src string:$portal_url/pm_preferences.png"/>
+            </a>
+            <a style="display: inline;" href="#" tal:attributes="href string:${meetingFolder/absolute_url}/search_form;">
+            <img style="cursor:pointer" title="search_advanced"
+                 i18n:attributes="title"
+                 tal:attributes="src string:$portal_url/pm_search.png"/>
+            </a>
+        </div>
     </dt>
 
     <dd class="portletItem odd">
@@ -52,98 +53,7 @@
       </div>
     </dd>
 
-<!-- <tal:meetings>
-
- <tal:links define="pc python:context.portal_catalog;
-                    portalTypeName meetingConfig/getMeetingTypeName;
-                    meetingStates meetingConfig/getMeetingTopicStates;
-                    meetingBrains python:pc(portal_type=portalTypeName, review_state=meetingStates, sort_on='getDate', sort_order='reverse');
-                    nbOfMeetings python:len(meetingBrains);
-                    maxShownMeetings meetingConfig/maxShownMeetings">
-
-    <tal:comment replace="nothing">A few number of meetings: show a link by meeting</tal:comment>
-    <tr tal:condition="python: nbOfMeetings <= maxShownMeetings"
-        tal:repeat="meetingBrain meetingBrains">
-      <td class="portletCell">
-        <a tal:attributes="href meetingBrain/getURL;
-                           class python: context.absolute_url().startswith(meetingBrain.getURL()) and 'portletSelected' or ''"
-           tal:content="python:tool.formatMeetingDate(meetingBrain, short=True, withHour=True)"></a>
-      </td>
-    </tr>
-
-    <tal:comment replace="nothing">Many meetings. Show a combo box</tal:comment>
-    <tr tal:condition="python: nbOfMeetings > maxShownMeetings">
-     <td class="portletCell">
-      <form name="gotoMeetingForm">
-        <select style="width: 90%" name="selectMeeting" onChange="location.href=gotoMeetingForm.selectMeeting.options[selectedIndex].value">
-          <option i18n:translate="make_a_choice"
-                  tal:attributes="value python:meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=searchallmeetings'"></option>
-          <option tal:repeat="meetingBrain meetingBrains"
-                  tal:content="python:tool.formatMeetingDate(meetingBrain, short=True, withHour=True)"
-                  tal:attributes="value meetingBrain/getURL;
-                                  selected python:context.absolute_url().startswith(meetingBrain.getURL())"></option>
-        </select>
-      </form>
-     </td>
-    </tr>
-
-    <tr tal:condition="python: nbOfMeetings==0">
-      <td class="portletCell"><i class="discreet" i18n:translate="no_meeting"></i></td>
-    </tr>
-  </tal:links>
-  </tal:meetings>
-
-  <tal:decisions>
-  <tal:comment replace="nothing">Section: decisions</tal:comment>
-  <tr><td class="portletSection" i18n:translate="portletdecisions_title">Decisions</td></tr>
-
-  <tal:comment replace="nothing">List of available decisions</tal:comment>
-  <tal:links define="pc python:context.portal_catalog;
-                     portalTypeName meetingConfig/getMeetingTypeName;
-                     meetingStates meetingConfig/getDecisionTopicStates;
-                     meetingBrains python:pc(portal_type=portalTypeName, review_state=meetingStates, sort_on='getDate', sort_order='reverse', getDate={'query': currentDateTime-meetingConfig.getMaxDaysDecisions(), 'range': 'min'},);
-                     nbOfMeetings python:len(meetingBrains);
-                     maxShownMeetings meetingConfig/maxShownMeetings">
-
-    <tal:comment replace="nothing">A few number of meetings: show a link by meeting</tal:comment>
-    <tr tal:condition="python: nbOfMeetings <= maxShownMeetings"
-        tal:repeat="meetingBrain meetingBrains">
-     <td class="portletCell">
-      <a tal:attributes="href meetingBrain/getURL;
-                         class python: context.absolute_url().startswith(meetingBrain.getURL()) and 'portletSelected' or ''"
-         tal:content="python:tool.formatMeetingDate(meetingBrain, short=True, withHour=True)"></a>
-     </td>
-    </tr>
-
-    <tal:comment replace="nothing">Many meetings! Show a combo box</tal:comment>
-    <tr tal:condition="python: nbOfMeetings > maxShownMeetings">
-     <td class="portletCell">
-      <form name="gotoDecision">
-        <select name="selectDecision" onChange="location.href=gotoDecision.selectDecision.options[selectedIndex].value">
-          <option i18n:translate="make_a_choice"
-                  tal:attributes="value python:meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=searchalldecisions'"></option>
-          <option tal:repeat="meetingBrain meetingBrains"
-                  tal:content="python:tool.formatMeetingDate(meetingBrain, short=True, withHour=True)"
-                  tal:attributes="value meetingBrain/getURL;
-                                  selected python:context.absolute_url().startswith(meetingBrain.getURL())"></option>
-        </select>
-      </form>
-     </td>
-    </tr>
-  </tal:links>
-
-  <tal:comment replace="nothing">All decisions</tal:comment>
-  <tr>
-   <td class="portletCell">
-    <a tal:attributes="href python: meetingFolder.absolute_url() + '/plonemeeting_topic_view?search=searchalldecisions';
-                       class python: 'searchalldecisions' == context.REQUEST.form.get('search', '') and 'portletSelected' or ''"
-       i18n:translate="searchalldecisions"></a>
-   </td>
-  </tr>
-  </tal:decisions>
-</table>
--->
-<script language="javascript" tal:content="tool/getJavascriptMessages"></script>
+    <script language="javascript" tal:content="tool/getJavascriptMessages"></script>
 </dl>
 </body>
 </html>

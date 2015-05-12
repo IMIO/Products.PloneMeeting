@@ -1065,12 +1065,20 @@ span[id^="parent-fieldname-itemIconColor"] {
     padding-left: 20px;
 }
 
-div.faceted-tagscloud-collection-widget div.portlet_add_icons {
+dl.portletWidgetCollection div.portlet_add_icons {
     float: right;
     margin-right: 0.5em;
 }
-div.faceted-tagscloud-collection-widget div.portlet_add_icons a {
+dl.portletWidgetCollection div.portlet_add_icons a {
     margin-left: 0em;
+}
+dl.portletWidgetCollection div.manyMeetings {
+    margin-bottom: 0.5em;
+}
+dl.portletWidgetCollection div.noMeetings,
+dl.portletWidgetCollection div.fewMeetings,
+dl.portletWidgetCollection div.manyMeetings {
+    margin-left: 0.5em;
 }
 
 /* </dtml-with> */
