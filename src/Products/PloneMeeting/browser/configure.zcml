@@ -194,20 +194,6 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
-    <!-- the meetingfolder_redirect_view.pt that manage the home page of the user while entering a meetingConfig -->
-    <browser:view
-        for="Products.ATContentTypes.interfaces.folder.IATFolder"
-        name="meetingfolder_redirect_view"
-        class=".views.PloneMeetingFolderView"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-    <browser:view
-        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
-        name="meetingfolder_redirect_view"
-        class=".views.PloneMeetingFolderView"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-
     <!-- the maintenance task view that update delay-aware advisers -->
     <browser:view
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
