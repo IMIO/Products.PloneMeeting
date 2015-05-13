@@ -23,7 +23,7 @@ from Products.PloneMeeting.utils import checkPermission
 
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
-from imio.history.adapters import ImioHistoryAdapter
+from imio.history.adapters import ImioWfHistoryAdapter
 from collective.documentviewer.settings import GlobalSettings
 
 
@@ -332,7 +332,7 @@ class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
         return False
 
 
-class PMHistoryAdapter(ImioHistoryAdapter):
+class PMHistoryAdapter(ImioWfHistoryAdapter):
     """
       Override the imio.history ImioHistoryAdapter.
     """
