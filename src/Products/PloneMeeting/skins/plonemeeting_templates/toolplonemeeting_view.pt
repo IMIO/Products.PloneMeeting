@@ -37,7 +37,7 @@
           <thead>
           <tr>
             <th class="nosort" i18n:translate="listingheader_title"></th>
-            <th class="nosort" width="50px" i18n:translate="config_is_active"></th>
+            <th class="nosort" width="50px" i18n:translate="heading_is_active"></th>
             <th class="nosort" width="140px" i18n:translate="heading_actions"></th>
           </tr>
           </thead>
@@ -86,7 +86,7 @@
           <tr>
             <th class="nosort" i18n:translate="listingheader_title"></th>
             <th class="nosort" width="10%" i18n:translate="PloneMeeting_label_acronym"></th>
-            <th class="nosort" width="50px" i18n:translate="group_is_active"></th>
+            <th class="nosort" width="50px" i18n:translate="heading_is_active"></th>
             <th class="nosort" width="140px" i18n:translate="heading_actions"></th>
           </tr>
           <tr tal:condition="python: not context.objectValues('MeetingGroup')">

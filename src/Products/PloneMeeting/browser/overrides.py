@@ -19,7 +19,6 @@ from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryV
 from collective.eeafaceted.collectionwidget.browser.views import RenderTermView
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.actionspanel.browser.views import ActionsPanelView
-from imio.actionspanel.browser.views import DeleteGivenUidView
 from imio.history.browser.views import IHDocumentBylineViewlet
 
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
@@ -145,7 +144,9 @@ class PMFacetedContainerView(FacetedContainerView):
 
     def __init__(self, context, request):
         super(PMFacetedContainerView, self).__init__(context, request)
-        self.request.set('disable_border', 1)
+        # hide the green bar on the faceted if not in the configuration
+        if not 'portal_plonemeeting' in self.context.absolute_url():
+            self.request.set('disable_border', 1)
 
 
 class PMRenderTermView(RenderTermView):
@@ -224,29 +225,6 @@ class BaseActionsPanelView(ActionsPanelView):
         if cfg:
             toConfirm = cfg.getTransitionsToConfirm()
         return toConfirm
-
-    def _redirectToViewableUrl(self):
-        """
-          Return the url the user must be redirected to.
-          This is relevant for Meeting and MeetingItem.
-        """
-        http_referer = self.request['HTTP_REFERER']
-        if http_referer.startswith(self.context.absolute_url()):
-            # we were on the item, redirect to user home page
-            mc = self.context.portal_plonemeeting.getMeetingConfig(self.context)
-            app = self.context.portal_plonemeeting.getPloneMeetingFolder(mc.id)
-            redirectToUrl = app.restrictedTraverse('@@meetingfolder_redirect_view').getFolderRedirectUrl()
-        else:
-            redirectToUrl = http_referer
-        return redirectToUrl
-
-    @memoize_contextless
-    def _goToReferer(self):
-        """
-          Override _goToReferer to take some specific PloneMeeting case into account.
-        """
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-        return tool.goToReferer()
 
 
 class MeetingItemActionsPanelView(BaseActionsPanelView):
@@ -517,21 +495,3 @@ class ConfigActionsPanelView(ActionsPanelView):
           Is current element first id of folder container?
         """
         return bool(self.context.getId() == self.objectIds[0])
-
-
-class PMDeleteGivenUidView(DeleteGivenUidView):
-    '''Redefine the _findViewablePlace.'''
-
-    def _findViewablePlace(self, obj):
-        '''When removing an item/meeting from his view (not from a listing),
-           we need to compute exact back url because as the parent has a view that does
-           a redirection also, we loose portal_messages...  So here, we compute the
-           url the view of the parent would redirect to...
-        '''
-        tool = getToolByName(obj, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(obj)
-        # if we are outside PloneMeeting, then use default DeleteGivenUidView behaviour
-        if not cfg:
-            return super(PMDeleteGivenUidView, self)._findViewablePlace(obj)
-        app = tool.getPloneMeetingFolder(cfg.getId())
-        return app.restrictedTraverse('@@meetingfolder_redirect_view').getFolderRedirectUrl()

@@ -1080,7 +1080,9 @@ dl.portletWidgetCollection div.fewMeetings,
 dl.portletWidgetCollection div.manyMeetings {
     margin-left: 0.5em;
 }
-
+dl.portlet.portletWidgetCollection div.widget-portlet li a {
+    text-transform: lowercase;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

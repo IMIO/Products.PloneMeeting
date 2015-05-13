@@ -302,7 +302,7 @@
             <tr>
               <th class="plain" i18n:translate="listingheader_title">Title</th>
               <th width="200px" i18n:translate="PloneMeeting_label_relatedTo">Related to</th>
-              <th width="50px" i18n:translate="group_is_active">Active?</th>
+              <th width="50px" i18n:translate="heading_is_active">Active?</th>
               <th width="130px" i18n:translate="heading_actions">Actions</th>
             </tr>
             <tr tal:condition="python: not fFolder.objectValues('MeetingFileType')">
@@ -356,7 +356,7 @@
                class="listing nosort" align="right" width="100%">
           <tr>
             <th i18n:translate="listingheader_title">Title</th>
-            <th width="50px" i18n:translate="config_is_active">Active?</th>
+            <th width="50px" i18n:translate="heading_is_active">Active?</th>
             <th width="130px" i18n:translate="heading_actions">Actions</th>
           </tr>
           <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
@@ -407,7 +407,7 @@
           <tr>
             <th class="nosort" i18n:translate="listingheader_title">Title</th>
             <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId">Category id</th>
-            <th class="nosort" width="50px" i18n:translate="group_is_active">Active?</th>
+            <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
             <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
           </tr>
           <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
@@ -599,25 +599,84 @@
           <td tal:define="field python:here.getField('itemsListVisibleFields')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('toDoListTopics')">
+          <td tal:define="field python:here.getField('toDoListSearches')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td></td>
         </tr>
       </table>
 
+      <!-- Searches -->
+      <a name="searches"></a>
+      <fieldset>
+        <legend>
+          <span i18n:translate="Searches">Searches</span>
+        </legend>
+        <p class="discreet" i18n:translate="searches_descr"></p>
+        <p><img src="manage.png"
+                tal:attributes="src string:${portal_url}/manage.png;"/>&nbsp;
+            <a href="searches/configure_faceted.html" i18n:translate="">
+                Manage dashboard
+            </a>
+        </p>
+        <tal:searchesCategories repeat="cFolder python: context.searches.objectValues()">
+            <table class="listing nosort" style="text-align: right;" width="100%"
+                   tal:define="cFolderUrl cFolder/absolute_url" width="100%;">
+              <tr>
+                <th class="nosort" width="200px">
+                    <span tal:content="cFolder/Title">Folder title</span>
+                    <input type="image"
+                           style="cursor:pointer"
+                           class="imageInput"
+                           tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=DashboardCollection\'' % cFolderUrl;
+                                 src string: $portal_url/plus.png"
+                 title="add_object" i18n:attributes="title"
+                 tal:condition="isRealManager"/>
+                </th>
+                <th class="nosort" width="400px" i18n:translate="heading_criteria">Criteria</th>
+                <th class="nosort" i18n:translate="">Condition</th>
+                <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+                <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+              </tr>
+              <tr tal:condition="python: not cFolder.objectValues('DashboardCollection')">
+                <td colspan="5" align="center" i18n:translate="">no_collection_folder</td>
+              </tr>
+              <tal:loop repeat="obj python:cFolder.objectValues('DashboardCollection')">
+              <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+                              oddrow repeat/obj/odd;
+                              classOddEven python: oddrow and 'even' or 'odd';"
+                  tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+                  valign="top">
+                <td>
+                  <a tal:attributes="href obj/absolute_url" tal:content="obj/Title">Collection title</a>
+                  <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr">Collection description</div>
+                </td>
+                <td>
+                  <span tal:content="obj/query">Criteria</span>
+                </td>
+                <td style="word-break: break-all;" >
+                  <span tal:content="obj/tal_condition">TAL Condition</span>
+                </td>
+                <td i18n:domain="plone">
+                  <span tal:condition="isActive" i18n:translate="">Yes</span>
+                  <span tal:condition="not: isActive" i18n:translate="">No</span>
+                </td>
+                <td align="right">
+                  <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                </td>
+              </tr>
+              </tal:loop>
+            </table>
+        </tal:searchesCategories>
+      </fieldset>
+
       <!-- Topics -->
       <a name="topics"></a>
       <fieldset>
         <legend>
-          <span i18n:translate="Topics"></span>
-          <input type="image" style="cursor:pointer" class="imageInput"
-                 tal:attributes="onClick python: 'href: window.location=\'%s/topics/createObject?type_name=Topic\'' % context.absolute_url();
-                                 src string: $portal_url/plus.png"
-                 title="add_object" i18n:attributes="title"
-                 tal:condition="isRealManager"/>
+          <span i18n:translate="Topics" style="color: red;">Old topics</span>
         </legend>
-        <p class="discreet" i18n:translate="topics_descr"></p><br />
+        <p class="discreet" style="color: red;">This is kept for migration purpose, do not use anymore.</p><br />
         <table class="listing nosort" align="right" width="100%"
                tal:define="tFolder python:context.topics;
                            tFolderUrl tFolder/absolute_url" width="100%;">
@@ -626,7 +685,7 @@
             <th class="nosort" i18n:translate="topic_linked_to_type">Linked to Meeting or MeetingItem?</th>
             <th class="nosort" i18n:translate="topic_search_script">Topic search script</th>
             <th class="nosort" i18n:translate="topic_tal_expression">Topic tal expression</th>
-            <th class="nosort" width="50px" i18n:translate="pod_template_is_active">Active?</th>
+            <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
             <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
           </tr>
           <tr tal:condition="python: not tFolder.objectValues('ATTopic')">
@@ -657,66 +716,6 @@
         </table>
       </fieldset>
 
-      <!-- Collections -->
-      <a name="searches"></a>
-      <fieldset>
-        <legend>
-          <span i18n:translate="Searches">Searches</span>
-        </legend>
-        <p class="discreet" i18n:translate="searches_descr"></p>
-        <p><img src="manage.png"
-                tal:attributes="src string:${portal_url}/manage.png;"/>&nbsp;<a href="searches/configure_faceted.html" i18n:translate="">Manage faceted navigation</a></p>
-
-        <tal:searchesCategories repeat="cFolder python: context.searches.objectValues()">
-            <table class="listing nosort" style="text-align: right;" width="100%"
-                   tal:define="cFolderUrl cFolder/absolute_url" width="100%;">
-              <tr>
-                <th class="nosort" width="200px">
-                    <span tal:content="cFolder/Title">Folder title</span>
-                    <input type="image"
-                           style="cursor:pointer"
-                           class="imageInput"
-                           tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=DashboardCollection\'' % cFolderUrl;
-                                 src string: $portal_url/plus.png"
-                 title="add_object" i18n:attributes="title"
-                 tal:condition="isRealManager"/>
-                </th>
-                <th class="nosort" width="400px" i18n:translate="">Criteria</th>
-                <th class="nosort" i18n:translate="">Condition</th>
-                <th class="nosort" width="50px" i18n:translate="pod_template_is_active">Active?</th>
-                <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
-              </tr>
-              <tr tal:condition="python: not cFolder.objectValues('DashboardCollection')">
-                <td colspan="5" align="center" i18n:translate="">no_collection_folder</td>
-              </tr>
-              <tal:loop repeat="obj python:cFolder.objectValues('DashboardCollection')">
-              <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                              oddrow repeat/obj/odd;
-                              classOddEven python: oddrow and 'even' or 'odd';"
-                  tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
-                  valign="top">
-                <td>
-                  <a tal:attributes="href obj/absolute_url" tal:content="obj/Title">Collection title</a>
-                  <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr">Collection description</div>
-                </td>
-                <td>
-                  <span tal:content="obj/getRawQuery">Criteria</span>
-                </td>
-                <td style="word-break: break-all;" >
-                  <span tal:content="obj/tal_condition">TAL Condition</span>
-                </td>
-                <td i18n:domain="plone">
-                  <span tal:condition="isActive" i18n:translate="">Yes</span>
-                  <span tal:condition="not: isActive" i18n:translate="">No</span>
-                </td>
-                <td align="right">
-                  <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
-                </td>
-              </tr>
-              </tal:loop>
-            </table>
-        </tal:searchesCategories>
-      </fieldset>
     </tal:gui>
 
     <tal:mail condition="python: pageName=='mail'">
@@ -932,7 +931,7 @@
         <th class="nosort" width="20%" i18n:translate="plonemeeting_identifier">Identifier</th>
         <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_duty">Duty</th>
         <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_usages">Usages</th>
-        <th class="nosort" width="50px" i18n:translate="pod_template_is_active">Active?</th>
+        <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
         <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
       </tr>
       <tr tal:condition="python: not mFolder.objectValues('MeetingUser')">
@@ -993,7 +992,7 @@
           <tr>
             <th class="nosort" width="20px"></th>
             <th class="nosort" i18n:translate="listingheader_title">Title</th>
-            <th class="nosort" width="50px"  i18n:translate="pod_template_is_active">Active?</th>
+            <th class="nosort" width="50px"  i18n:translate="heading_is_active">Active?</th>
             <th class="nosort" width="130px"  i18n:translate="heading_actions">Actions</th>
           </tr>
           <tal:comment replace="nothing">No template is defined.</tal:comment>

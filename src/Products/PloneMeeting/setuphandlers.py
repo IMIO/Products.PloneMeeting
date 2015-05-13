@@ -34,7 +34,7 @@ from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
 
-folderViews = ('meetingfolder_redirect_view', 'folder_contents', )
+folderViews = ('folder_contents', )
 noSearchTypes = ('Folder',)
 # Indexes used by PloneMeeting
 # XXX warning, do ONLY use ZCTextIndex for real text values,

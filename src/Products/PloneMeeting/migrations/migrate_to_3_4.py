@@ -3,6 +3,7 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
+from Products.CMFCore.utils import getToolByName
 
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import updateCollectionCriterion
@@ -28,12 +29,19 @@ class Migrate_To_3_4(Migrator):
         '''Now that we use imio.dashboard, we will adapt various things :
            - DashboardCollections, no more Topics, we will create a "searches" folder
              and keep existing Topics for now as we will not migrate topics to collections;
-           - move some parameters from the MeetingConfig to the relevant DashboardCollection.'''
+           - move some parameters from the MeetingConfig to the relevant DashboardCollection;
+           - migrate the toDoListTopics to toDoListSearches;
+           - remove the "meetingfolder_redirect_view" available for type Folder.'''
         logger.info('Moving to imio.dashboard...')
+        wft = getToolByName(self.portal, 'portal_workflow')
+
         for cfg in self.tool.objectValues('MeetingConfig'):
-            logger.info('Moving to imio.dashboard : adding DashboardCollections...')
+            logger.info('Moving to imio.dashboard : adding DashboardCollections and disabling Topics...')
             cfg._createSubFolders()
             cfg.createSearches(cfg._searchesInfo())
+            for topic in cfg.topics.objectValues():
+                if wft.getInfoFor(topic, 'review_state') == 'active':
+                    wft.doActionFor(topic, 'deactivate')
 
             logger.info('Moving to imio.dashboard : updating MeetingConfig parameters...')
             if hasattr(cfg, 'maxDaysDecisions'):
@@ -54,6 +62,25 @@ class Migrate_To_3_4(Migrator):
                                           'review_state',
                                           cfg.decisionTopicStates)
                 delattr(cfg, 'decisionTopicStates')
+
+            logger.info('Moving to imio.dashboard : moving toDoListTopics to toDoListSearches...')
+            if not cfg.getToDoListSearches():
+                topics = cfg.getReferences('ToDoTopics')
+                collectionIds = cfg.searches.meetingitems.objectIds()
+                toDoListSearches = []
+                for topic in topics:
+                    if topic.getId() in collectionIds:
+                        toDoListSearches.append(getattr(cfg.searches.meetingitems, topic.getId()))
+                cfg.setToDoListSearches(toDoListSearches)
+                cfg.deleteReferences('ToDoTopics')
+
+        logger.info('Moving to imio.dashboard : removing view "meetingfolder_redirect_view" '
+                    'from available views for "Folder"...')
+        folderType = self.portal.portal_types.Folder
+        available_views = list(folderType.getAvailableViewMethods(None))
+        if 'meetingfolder_redirect_view' in available_views:
+            available_views.remove('meetingfolder_redirect_view')
+            folderType.manage_changeProperties(view_methods=available_views)
 
         logger.info('Done.')
 
@@ -82,8 +109,9 @@ class Migrate_To_3_4(Migrator):
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
-        # update catalog as index "isDefinedInTool" changed
-        #self.refreshDatabase(workflows=False)
+        # update portal_catalog as index "isDefinedInTool" changed
+        # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics" was removed
+        self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
         self.finish()
 
 

@@ -1046,24 +1046,23 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     ReferenceField(
-        name='toDoListTopics',
+        name='toDoListSearches',
         widget=ReferenceBrowserWidget(
             allow_search=False,
             allow_browse=False,
-            description="ToDoListTopics",
-            description_msgid="to_do_list_topics",
-            startup_directory="topics",
+            description="ToDoListSearches",
+            description_msgid="to_do_list_searches",
+            startup_directory="searches/meetingitems",
             show_results_without_query=True,
             restrict_browsing_to_startup_directory=True,
-            base_query={'isDefinedInTool': True},
-            label='Todolisttopics',
-            label_msgid='PloneMeeting_label_toDoListTopics',
+            label='Todolistsearches',
+            label_msgid='PloneMeeting_label_toDoListSearches',
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
         multiValued=True,
-        relationship="ToDoTopics",
-        allowed_types=('Topic',),
+        relationship="ToDoSearches",
+        allowed_types=('DashboardCollection',),
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -1902,7 +1901,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      "'pre_validation' in here.getWorkflowAdaptations()"
                 }),
                 # Items to validate
-                ('searchitemstoprevalidate',
+                ('searchitemstovalidate',
                 {
                     'subFolderId': 'meetingitems',
                     'query':
@@ -3065,51 +3064,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        permission=('View',),
                                        visible=True)
 
-    security.declarePublic('getTopics')
-    def getTopics(self, topicType, fromPortletTodo=False):
-        '''
-          Gets topics related to type p_topicType ("MeetingItem",
-           "Meeting").
-          If p_fromPortletTodo is True, it means that we are evaluating topics to display in the portlet_todo.
-          In this case, a variable 'fromPortletTodo' set to True will be passed to the
-          TOPIC_TAL_EXPRESSION so it is possible to use this variable to discriminate topics to display in portlet_plonemeeting
-          and/or in portel_todo.
-          This is called to much times on the same page, we add some caching here...
-        '''
-        key = "meeting-config-gettopics-%s-%s-%s" % (self.getId(),
-                                                     topicType.lower(),
-                                                     str(fromPortletTodo))
-        cache = IAnnotations(self.REQUEST)
-        data = cache.get(key, None)
-        if data is None:
-            data = []
-            for topic in self.topics.objectValues('ATTopic'):
-                # Get the 2 properties : TOPIC_TYPE and TOPIC_SEARCH_SCRIPT
-                topicTypeProp = topic.getProperty(TOPIC_TYPE)
-                if topicTypeProp != topicType:
-                    continue
-                # We append the topic and the scriptId if it is not deactivated.
-                # We filter on the review_state; else, the Manager will see
-                # every topic in the portlets, which would be confusing.
-                wfTool = self.portal_workflow
-                if wfTool.getInfoFor(topic, 'review_state') != 'active':
-                    continue
-                tal_expr = topic.getProperty(TOPIC_TAL_EXPRESSION)
-                tal_res = True
-                if tal_expr:
-                    ctx = createExprContext(self.topics,
-                                            self.portal_url.getPortalObject(),
-                                            topic)
-                    ctx.setGlobal('fromPortletTodo', fromPortletTodo)
-                    try:
-                        tal_res = Expression(tal_expr)(ctx)
-                    except Exception:
-                        tal_res = False
-                if tal_res:
-                    data.append(topic)
-            cache[key] = data
-        return data
-
     security.declarePrivate('updateIsDefaultFields')
     def updateIsDefaultFields(self):
         '''If this config becomes the default one, all the others must not be
@@ -3254,8 +3208,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         s([self.getMeetingTypeName()], self.getMeetingWorkflow())
         # Update portal types
         self.updatePortalTypes()
-        # Update topics
-        self.updateTopics()
         # Update item tags order if I must sort them
         self.setAllItemTagsField()
         self.updateIsDefaultFields()
@@ -3645,72 +3597,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     break
             if filterIsRight:
                 res.append(brain)
-        return res
-
-    security.declarePublic('getTopicResults')
-    def getTopicResults(self, topic, isFake):
-        '''This method computes results of p_topic. If p_topic is a fake one
-           (p_isFake is True), it means that some information in the request
-           will allow to perform a direct query in portal_catalog (the user
-           triggered an advanced search).'''
-        rq = self.REQUEST
-        # How must we sort the result?
-        sortKey = rq.get('sortKey', None)
-        sortOrder = 'reverse'
-        if sortKey and (rq.get('sortOrder', 'asc') == 'asc'):
-            sortOrder = None
-        # Is there a filter defined?
-        filterKey = rq.get('filterKey', '')
-        filterValue = rq.get('filterValue', '').decode('utf-8')
-
-        if not isFake:
-            tool = getToolByName(self, 'portal_plonemeeting')
-            # Execute the query corresponding to the topic.
-            if not sortKey:
-                sortCriterion = topic.getSortCriterion()
-                if sortCriterion:
-                    sortKey = sortCriterion.Field()
-                    sortOrder = sortCriterion.reversed and 'reverse' or None
-                else:
-                    sortKey = 'created'
-            methodId = topic.getProperty(TOPIC_SEARCH_SCRIPT, None)
-            # if search is made by portlet_todo, we have a 'MaxShownFound' in the REQUEST
-            batchSize = self.REQUEST.get('MaxShownFound') or tool.getMaxShownFound()
-            if methodId:
-                # Topic params are not sufficient, use a specific method.
-                # keep topics defined paramaters
-                kwargs = {}
-                kwargs['isDefinedInTool'] = False
-                for criterion in topic.listSearchCriteria():
-                    # Only take criterion with a defined value into account
-                    criterionValue = criterion.value
-                    if criterionValue:
-                        kwargs[str(criterion.field)] = criterionValue
-                # if the topic has a TOPIC_SEARCH_FILTERS, we add it to kwargs
-                # also because it is the called search script that will use it
-                searchFilters = topic.getProperty(TOPIC_SEARCH_FILTERS, None)
-                if searchFilters:
-                    # the search filters are stored in a text property but are
-                    # in reality dicts, so use eval() so it is considered correctly
-                    kwargs[TOPIC_SEARCH_FILTERS] = eval(searchFilters)
-                brains = getattr(self, methodId)(sortKey, sortOrder,
-                                                 filterKey, filterValue, **kwargs)
-            else:
-                # Execute the topic, but decide ourselves for sorting and filtering
-                params = topic.buildQuery()
-                params['sort_on'] = sortKey
-                params['sort_order'] = sortOrder
-                params['isDefinedInTool'] = False
-                if filterKey:
-                    params[filterKey] = prepareSearchValue(filterValue)
-                brains = self.portal_catalog(**params)
-            res = tool.batchAdvancedSearch(
-                brains, topic, rq, batch_size=batchSize)
-        else:
-            # This is an advanced search. Use the Searcher.
-            searchedType = topic.getProperty('meeting_topic_type', 'MeetingFile')
-            return Searcher(self, searchedType, sortKey, sortOrder,
-                            filterKey, filterValue).run()
         return res
 
     security.declarePublic('getQueryColumns')

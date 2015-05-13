@@ -10,6 +10,12 @@ from plone.portlets.interfaces import IPortletDataProvider
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
+from collective.behavior.talcondition.interfaces import ITALConditionable
+from collective.behavior.talcondition.utils import evaluateExpressionFor
+from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
+from eea.facetednavigation.interfaces import ICriteria
+from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
+
 from zope.i18nmessageid import MessageFactory
 _ = MessageFactory('PloneMeeting')
 
@@ -47,7 +53,7 @@ class Assignment(base.Assignment):
         return _(u"To do")
 
 
-class Renderer(base.Renderer):
+class Renderer(base.Renderer, FacetedRenderer):
 
     _template = ViewPageTemplateFile('templates/portlet_todo.pt')
 
@@ -62,7 +68,8 @@ class Renderer(base.Renderer):
         """
           Defines if the portlet is available in the context
         """
-        return self.showTodoPortlet(self.context)
+        available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
+        return available and self.showTodoPortlet(self.context)
 
     def render(self):
         return self._template()
@@ -70,13 +77,13 @@ class Renderer(base.Renderer):
     @memoize
     def showTodoPortlet(self, context):
         '''Must we show the portlet_todo ?'''
-        meetingConfig = self.getCurrentMeetingConfig()
-        if not meetingConfig:
+        cfg = self.getCurrentMeetingConfig()
+        if not cfg:
             return False
         tool = self.getPloneMeetingTool()
         if tool.isPloneMeetingUser() and tool.isInPloneMeeting(context) and \
-           (meetingConfig.getToDoListTopics()) and \
-           (self.getTopicsForPortletToDo()):
+           (cfg.getToDoListSearches()) and \
+           (self.getSearches()):
             return True
         return False
 
@@ -99,7 +106,7 @@ class Renderer(base.Renderer):
         """
           Returns the current PM folder
         """
-        return self.getPloneMeetingTool().getPloneMeetingFolder(self.getCurrentMeetingConfig().id)
+        return self.getPloneMeetingTool().getPloneMeetingFolder(self.getCurrentMeetingConfig().getId())
 
     @memoize
     def showColors(self):
@@ -107,24 +114,29 @@ class Renderer(base.Renderer):
           Check what kind of color system we are using
         """
         tool = self.getPloneMeetingTool()
-        return tool.portal_plonemeeting.showColorsForUser()
+        return tool.showColorsForUser()
 
     @memoize
-    def getTopicsForPortletToDo(self):
-        ''' Returns a list of topics to display in portlet_todo.'''
+    def getSearches(self):
+        ''' Returns the list of searches to display in portlet_todo.'''
+        res = []
         cfg = self.getCurrentMeetingConfig()
         if not cfg:
-            return []
-        # Keep only relevant topics
-        return [t for t in cfg.getTopics('MeetingItem', fromPortletTodo=True) if t in cfg.getToDoListTopics()]
+            return res
+
+        for search in cfg.getToDoListSearches():
+            if ITALConditionable.providedBy(search):
+                if not evaluateExpressionFor(search):
+                    continue
+            res.append(search)
+        return res
 
     @memoize
-    def getBrainsForPortletTodo(self, topic):
+    def getBrainsForPortletTodo(self, search):
         """
           Return the brains for portlet todo...
         """
-        self.context.REQUEST.set('MaxShownFound', self.data.batch_size)
-        return self.getCurrentMeetingConfig().getTopicResults(topic, False)
+        return search.getQuery({'limit': self.data.batch_size, })
 
     @memoize
     def getTitleLength(self):
@@ -139,10 +151,20 @@ class Renderer(base.Renderer):
           In some case, due to current roles changes, the brain.getObject
           will not work, that is why we use unrestricted getObject.
         """
-        item = brain._unrestrictedGetObject()
+        # received brain is a plone.app.contentlisting.catalog.CatalogContentListingObject instance
+        item = brain._brain._unrestrictedGetObject()
         tool = self.getPloneMeetingTool()
         showColors = self.showColors()
         return tool.getColoredLink(item, showColors=showColors, maxLength=self.getTitleLength())
+
+    def getCollectionWidgetId(self):
+        """Returns the collection widget id to be used in the URL generated on the collection link."""
+        criteriaHolder = self._criteriaHolder
+        criteria = ICriteria(criteriaHolder)
+        for criterion in criteria.values():
+            if criterion.widget == CollectionWidget.widget_type:
+                return criterion.getId()
+        return ''
 
 
 class AddForm(base.AddForm):

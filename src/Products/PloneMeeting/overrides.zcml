@@ -46,14 +46,6 @@
         permission="plone.app.controlpanel.Overview"
         />
 
-    <!-- Override the delete_givenuid view of imio.actionspanel -->
-    <browser:page
-        for="*"
-        name="delete_givenuid"
-        class=".browser.overrides.PMDeleteGivenUidView"
-        layer="imio.actionspanel.interfaces.IActionsPanelLayer"
-        permission="zope2.View" />
-
     <!-- Folder contents -->
     <configure package="plone.app.content">
         <browser:page
