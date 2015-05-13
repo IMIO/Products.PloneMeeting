@@ -2,8 +2,6 @@ from zope.component import getMultiAdapter
 from zope.interface import implements
 from zope.formlib import form
 
-from DateTime import DateTime
-
 from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 
 from plone.memoize.instance import memoize
@@ -42,39 +40,29 @@ class Renderer(base.Renderer, FacetedRenderer):
         base.Renderer.__init__(self, *args)
         portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
         self.portal = portal_state.portal()
+        self.tool = getToolByName(self.portal, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     @property
     def available(self):
         '''Defines if the portlet is available in the context.'''
         available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
-        return available and self.getPloneMeetingTool().isPloneMeetingUser()
+        return available and self.tool.isPloneMeetingUser()
+
+    @property
+    def _criteriaHolder(self):
+        '''Override method coming from FacetedRenderer as we know that criteria
+           are stored on the meetingFolder.'''
+        return self.getPloneMeetingFolder()
 
     def render(self):
         return self._template()
 
     @memoize
-    def getPloneMeetingTool(self):
-        '''Returns the tool.'''
-        return getToolByName(self.portal, 'portal_plonemeeting')
-
-    @memoize
-    def getCurrentMeetingConfig(self):
-        '''Returns the current meetingConfig.'''
-        tool = self.getPloneMeetingTool()
-        res = tool.getMeetingConfig(self.context)
-        return res
-
-    @memoize
     def getPloneMeetingFolder(self):
         '''Returns the current PM folder.'''
-        cfg = self.getCurrentMeetingConfig()
-        if cfg:
-            return self.getPloneMeetingTool().getPloneMeetingFolder(cfg.getId())
-
-    @memoize
-    def getCurrentDateTime(self):
-        '''Returns now.'''
-        return DateTime()
+        if self.cfg:
+            return self.tool.getPloneMeetingFolder(self.cfg.getId())
 
     @memoize
     def templateItems(self):
