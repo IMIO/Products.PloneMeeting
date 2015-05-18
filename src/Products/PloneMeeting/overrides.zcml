@@ -176,6 +176,15 @@
             />
     </configure>
 
+    <configure package="collective.eeafaceted.z3ctable">
+        <browser:view
+            for="Products.ATContentTypes.interfaces.folder.IATFolder"
+            name="faceted-table-view"
+            class="Products.PloneMeeting.browser.overrides.PMFacetedTableView"
+            permission="zope2.View"
+        />
+    </configure>
+
     <configure package="eea.facetednavigation">
         <browser:page
             for=".interfaces.IFacetedNavigable"

@@ -35,7 +35,6 @@ import os
 import os.path
 import re
 import string
-import time
 import transaction
 import OFS.Moniker
 from appy.gen import No
@@ -57,7 +56,6 @@ from eea.facetednavigation.interfaces import IHidePloneLeftColumn
 from plone.memoize import ram
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import View
-from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.PloneBatch import Batch
 from Products.DCWorkflow.Transitions import TRIGGER_USER_ACTION
 from Products.DCWorkflow.Expression import StateChangeInfo, createExprContext
@@ -75,6 +73,7 @@ logger = logging.getLogger('PloneMeeting')
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.security import is_develop_environment
 from imio.helpers.security import generate_password
+from imio.prettylink.interfaces import IPrettyLink
 
 # Some constants ---------------------------------------------------------------
 MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
@@ -1080,9 +1079,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return ' '.join(res)
 
     security.declarePublic('getColoredLink')
-    def getColoredLink(self, obj, showColors, showIcon=False, contentValue=None,
-                       target='', maxLength=0, highlight=False, inMeeting=True,
-                       meeting=None, appendToUrl='', additionalCSSClasses='', tag_title=None):
+    def getLink(self, obj, showColors, showIcon=False, contentValue=None,
+                target='_self', maxLength=0, inMeeting=True,
+                meeting=None, appendToUrl='', additionalCSSClasses='', tag_title=None, annexInfo=False):
         '''Produces the link to an item or annex with the right color (if the
            colors must be shown depending on p_showColors). p_target optionally
            specifies the 'target' attribute of the 'a' tag. p_maxLength
@@ -1104,148 +1103,32 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             If p_tag_title is given, it will be translated and used as return link
             title tag.
         '''
-        isPrivacyViewable = True
-        objClassName = obj.__class__.__name__
-        portal_url = self.portal_url.getPortalObject().absolute_url()
-        # if we received a tag_title, try to translate it!
+        adapted = IPrettyLink(obj)
+        adapted.showColors = showColors
+        adapted.showContentIcon = showIcon
+        adapted.contentValue = contentValue
+        # if we received annexInfo, the adapted element is the meeting but we want actually
+        # to display a link to an annex and for performance reason, we received the annexIndex
+        if annexInfo:
+            if annexInfo['warnSize']:
+                content = contentValue + "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
+                    translate("annex_size_warning",
+                              domain="PloneMeeting",
+                              context=self.REQUEST,
+                              default="Annex size is huge, it could be difficult to be downloaded!").encode('utf-8'),
+                    obj['friendlySize'])
+                adapted.contentValue = content
+        adapted.target = target
+        adapted.maxLength = maxLength
+        adapted.appendToUrl = appendToUrl
+        adapted.additionalClasses = additionalCSSClasses
         if tag_title:
             tag_title = translate(tag_title, domain='PloneMeeting', context=self.REQUEST, ).encode('utf-8')
-        if objClassName in self.ploneMeetingTypes:
-            isFromAnnexIndex = False
-            uid = obj.UID()
-            modifDate = obj.pm_modification_date
-            url = obj.absolute_url() + appendToUrl
-            content = contentValue or obj.getName()
-            title = tag_title or content
-            if maxLength:
-                content = self.truncate(content, maxLength)
-            if highlight:
-                content = self.highlight(content)
-            # Display trailing icons if it is a MeetingItem
-            if objClassName == "MeetingItem":
-                icons = obj.adapted().getIcons(inMeeting, meeting)
-                icons.reverse()
-                if isinstance(content, unicode):
-                    content = content.encode('utf-8')
-                for iconname, msgid in icons:
-                    mapping = {}
-                    # we can receive a msgid as a string or as a list.
-                    # if it is a list, the second element is a mapping
-                    if not isinstance(msgid, basestring):
-                        mappings = msgid[1]
-                        for mapping in mappings:
-                            # avoid problems with translate here under
-                            if not isinstance(mappings[mapping], unicode):
-                                mappings[mapping] = unicode(mappings[mapping], 'utf-8')
-                        msgid, mapping = msgid[0], mappings
-                    content = '<img src="%s/%s" title="%s" />&nbsp;' % \
-                        (portal_url, iconname,
-                         translate(msgid, domain="PloneMeeting", mapping=mapping,
-                                   context=self.REQUEST).encode('utf-8')) + content
-            # Is this a not-privacy-viewable item?
-            if (objClassName == 'MeetingItem') and not obj.adapted().isPrivacyViewable():
-                isPrivacyViewable = False
-        else:
-            # It is an annex entry in an annexIndex
-            isFromAnnexIndex = True
-            uid = obj['UID']
-            modifDate = obj['modification_date']
-            portal_url = self.portal_url.getPortalObject().absolute_url()
-            url = portal_url + '/' + obj['absolute_url'] + appendToUrl
-            content = contentValue or obj['Title']
-            title = tag_title or content
-            if showIcon:
-                content = '<img src="%s"/><b>1</b>' % (portal_url + '/' + obj['iconUrl'])
-            else:
-                if maxLength:
-                    content = self.truncate(content, maxLength)
-                if highlight:
-                    content = self.highlight(content)
-                # add a warning regarding file size if necessary
-                if obj['warnSize']:
-                    content = content + "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
-                        translate("annex_size_warning",
-                                  domain="PloneMeeting",
-                                  context=self.REQUEST,
-                                  default="Annex size is huge, it could be difficult to be downloaded!").encode('utf-8'),
-                        obj['friendlySize'])
-        tg = target
-        if target:
-            tg = ' target="%s"' % target
-        if not showColors:
-            # We do not want to colorize the link, we just return a classical
-            # link. We apply the 'pmNoNewContent" id so the link is not colored.
-            if isPrivacyViewable:
-                css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
-                return '<a href="%s" title="%s" id="pmNoNewContent"%s%s>%s</a>' %\
-                       (url, title, tg, css_classes, content)
-            else:
-                msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
-                return '<div title="%s"><i>%s</i></div>' % \
-                       (msg.encode('utf-8'), content)
-
-        # If we are here, we need to colorize the link, but how?
-        if self.getUsedColorSystem() == "state_color":
-            # We just colorize the link depending on the workflow state of
-            # the item
-            try:
-                if isFromAnnexIndex:
-                    obj_state = obj['review_state']
-                else:
-                    obj_state = obj.queryState()
-                wf_class = "state-%s" % obj_state
-                if isPrivacyViewable:
-                    css_classes = wf_class + (additionalCSSClasses and (' ' + additionalCSSClasses) or '')
-                    res = '<a href="%s" title="%s" class="%s"%s>%s</a>' % \
-                          (url, title, css_classes, tg, content)
-                else:
-                    msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
-                    res = '<div title="%s"><i>%s</i></div>' % \
-                          (msg.encode('utf-8'), content)
-            except (KeyError, WorkflowException):
-                # If there is no workflow associated with the type
-                # catch the exception or error and return a not colored link
-                # this is the case for annexes that does not have an
-                # associated workflow.
-                if isPrivacyViewable:
-                    css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
-                    res = '<a href="%s" title="%s" id="pmNoNewContent"%s%s>%s' \
-                          '</a>' % (url, title, tg, css_classes, content)
-                else:
-                    msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
-                    res = '<div title="%s"><i>%s</i></div>' % \
-                          (msg.encode('utf-8'), content)
-        else:
-            # We colorize the link depending on the last modification of the
-            # item.
-            # Did the user already consult last modifs on the object?
-            modifsConsulted, neverConsulted = self.lastModifsConsultedOn(
-                uid, modifDate)
-            # Compute href
-            href = url
-            # If the user did not consult last modification on this object,
-            # we need to append a given suffix to the href. This way, the
-            # link will not appear as visited and the user will know that he
-            # needs to consult the item again because a change occurred on
-            # it.
-            if (not neverConsulted) and (not modifsConsulted):
-                href += '?time=%f' % time.time()
-            # Compute id
-            linkId = None
-            if modifsConsulted:
-                linkId = 'pmNoNewContent'
-            idPart = ''
-            if linkId:
-                idPart = ' id="%s"' % linkId
-            if isPrivacyViewable:
-                css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
-                res = '<a href="%s" title="%s"%s%s%s>%s</a>' % \
-                      (href, title, idPart, tg, css_classes, content)
-            else:
-                msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
-                res = '<div title="%s"><i>%s</i></div>' % \
-                      (msg.encode('utf-8'), content)
-        return res
+            adapted.tag_title = tag_title
+        # Is this a not-privacy-viewable item?
+        if obj.meta_type == 'MeetingItem' and not obj.adapted().isPrivacyViewable():
+            adapted.isViewable = False
+        return adapted.getLink()
 
     security.declarePublic('showColorsForUser')
     def showColorsForUser(self):

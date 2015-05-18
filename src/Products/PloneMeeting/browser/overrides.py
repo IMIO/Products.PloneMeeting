@@ -19,12 +19,14 @@ from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryV
 from collective.eeafaceted.collectionwidget.browser.views import RenderTermView
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.actionspanel.browser.views import ActionsPanelView
+from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.history.browser.views import IHDocumentBylineViewlet
 
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
@@ -191,6 +193,17 @@ class PMRenderCategoryView(RenderCategoryView):
     def templateItems(self):
         '''Check if there are item templates defined or not.'''
         return self.tool.getPloneMeetingFolder(self.cfg.getId()).restrictedTraverse('createitemfromtemplate').getItemTemplates()
+
+
+class PMFacetedTableView(IDFacetedTableView):
+
+    def _manualColumnFor(self, colName):
+        """Manage our own columns."""
+        column = super(PMFacetedTableView, self)._manualColumnFor(colName)
+        # we use our own column to manage the 'pretty_link'
+        if colName == u'pretty_link':
+            column = PMPrettyLinkColumn(self.context, self.request, self)
+        return column
 
 
 class BaseActionsPanelView(ActionsPanelView):

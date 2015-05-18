@@ -99,7 +99,6 @@
   <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
 
-
   <!-- add the blob field to MeetingFile -->
   <adapter
     name="plone.app.blob.subtypes.file"
@@ -110,6 +109,11 @@
   <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
     <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />
   </class>
+
+  <!-- IPrettyLink for MeetingItem -->
+  <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
+           factory=".adapters.PMPrettyLinkAdapter"
+           provides="imio.prettylink.interfaces.IPrettyLink" />
 
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
