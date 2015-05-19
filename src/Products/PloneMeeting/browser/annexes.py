@@ -24,8 +24,8 @@
 
 import logging
 logger = logging.getLogger('PloneMeeting')
-from DateTime import DateTime
 
+from Products.CMFCore.utils import getToolByName
 from Products.Five import BrowserView
 from Products.PloneMeeting.interfaces import IAnnexable
 
@@ -56,8 +56,24 @@ class AnnexesView(BrowserView):
 
 class AnnexesMacros(BrowserView):
     """
-      Manage macros used for annexes
+      Manage macros used for annexes.
     """
 
-    def now(self):
-        return DateTime()
+
+class AnnexesIcons(BrowserView):
+    """
+      Annexes displayed as icons.
+    """
+    def __init__(self, context, request):
+        """ """
+        super(AnnexesIcons, self).__init__(context, request)
+        self.tool = getToolByName(self, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def __call__(self, relatedTo):
+        self.relatedTo = relatedTo
+        return super(AnnexesIcons, self).__call__()
+
+    def getAnnexesByType(self):
+        """ """
+        return self.context.restrictedTraverse('@@annexes').getAnnexesByType(self.relatedTo)

@@ -4,7 +4,6 @@
                  tool python:context.portal_plonemeeting;
                  member tool/getUser;
                  meetingConfig python: tool.getMeetingConfig(here);
-                 showColors tool/showColorsForUser;
                  extractTextFromFiles tool/extractTextFromFiles;
                  itemNumber python: context.getItemNumber(relativeTo='meeting');
                  portal_url context/@@plone_portal_state/portal_url;">
@@ -264,7 +263,11 @@
                tal:attributes="src string:${portal_url}/download_icon.png" />
        </a>
        <div class="annexTitle" tal:condition="python: conversionStatus == 'successfully_converted'">
-         <span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target, appendToUrl='/documentviewer#document/p1', additionalCSSClasses='classicpopup')"/>
+         <span tal:replace="structure python: tool.getColoredLink(context,
+                                                                  target=target,
+                                                                  appendToUrl='/documentviewer#document/p1',
+                                                                  additionalCSSClasses='classicpopup',
+                                                                  annexInfo=annex)"/>
        </div>
        <div class="annexTitle annexTitleNotPrintable" tal:condition="python: conversionStatus == 'under_conversion'"
             title="help_no_preview_available_under_conversion"
@@ -280,12 +283,12 @@
          <span class="erroredConversion" tal:content="annex/Title" />
        </div>
        <div class="annexTitle" tal:condition="python: conversionStatus == 'conversion_error' and isRealManager">
-         <span tal:replace="structure python: tool.getColoredLink(annex,
-                                                                  showColors,
+         <span tal:replace="structure python: tool.getColoredLink(context,
                                                                   target=target,
                                                                   appendToUrl='/documentviewer',
                                                                   additionalCSSClasses='annexTitleNotPrintable erroredConversion',
-                                                                  tag_title='help_no_preview_available_conversion_error_manager')"/>
+                                                                  tag_title='help_no_preview_available_conversion_error_manager',
+                                                                  annexInfo=annex)"/>
        </div>
        <div tal:condition="python: conversionStatus == 'not_convertable'"
              tal:content="annex/Title"
@@ -294,67 +297,9 @@
 
     </tal:withPreview>
     <tal:withoutPreview condition="not: previewEnabled">
-       <span tal:replace="structure python: tool.getColoredLink(annex, showColors, target=target)"/>
+       <span tal:replace="structure python: tool.getColoredLink(context, target=target, annexInfo=annex)"/>
     </tal:withoutPreview>
 </metal:withOrWithoutPreview>
-
-
-<tal:comment replace="nothing">Requires "obj".
-     Optional: "relatedTo". If True, decision-related annexes are shown
-               instead of item-related annexes.
-               Extra css_class "extra_css_class" can be given to be applied on the icon <a> node.
-               This makes it possible to display a actionMenuAX in a actionMenuAX and getting it working...</tal:comment>
-<metal:icons define-macro="annexesIcons"
-     i18n:domain="PloneMeeting"
-     tal:define="annexesByType python: obj.restrictedTraverse('@@annexes').getAnnexesByType(relatedTo);">
-
-  <table tal:condition="annexesByType" cellpadding="0" cellspacing="0"
-         class="contentActionsAX no-style-table" style="margin: 0;">
-    <tr valign="top"
-        tal:define="DateTime python: modules['DateTime'];
-                    now python: DateTime.DateTime();
-                    target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows', context.REQUEST) and '_blank' or '';
-                    tool python: context.portal_plonemeeting;
-                    cssClasses python: 'contentActionsAX no-style-table';
-                    global count python:0;
-                    portal_url context/@@plone_portal_state/portal_url;
-                    previewEnabled tool/getEnableAnnexPreview;
-                    extra_css_class extra_css_class|nothing;">
-      <td tal:condition="python: relatedTo == 'item_decision'">
-        <span class="discreet" style="padding-left: 0.7em;"
-              i18n:translate="AnnexesDecisionShort"></span>
-        <span class="discreet">:</span>
-      </td>
-      <td tal:repeat="annexesGroup annexesByType" class="noPadding">
-        <tal:comment replace="nothing">Several annexes of this type are present</tal:comment>
-        <dl class="actionMenuAX"
-            tal:define="imgUrl python:portal_url + '/' + annexesGroup[0]['iconUrl'];
-                        global count python:count+1"
-            tal:attributes="id python:'annexesMenu_' + str(count) + '_' + obj.UID() + '_' + str(relatedTo)">
-            <dt class="actionMenuHeaderAX pmLinks">
-                <a href="#" class="#" tal:attributes="class extra_css_class">
-                    <img tal:attributes="src imgUrl" />
-                    <b tal:condition="showColors"
-                       tal:content="python: len(annexesGroup)"
-                       tal:attributes="id python: tool.lastModifsConsultedOnAnnexes(annexesGroup) and 'pmNoNewContent' or 'pmNewContent';">
-                    </b>
-                    <b tal:condition="not: showColors"
-                       tal:content="python: len(annexesGroup)" id="pmNoNewContent">
-                    </b>
-                </a>
-          </dt>
-          <dd class="actionMenuContentAX">
-            <ul>
-              <li class="pmLinks" tal:repeat="annex annexesGroup">
-                <metal:withOrWithoutPreview use-macro="obj/@@annexes-macros/withOrWithoutPreview" />
-              </li>
-            </ul>
-          </dd>
-        </dl>
-      </td>
-    </tr>
-  </table>
-</metal:icons>
 
 
 <tal:comment replace="nothing">

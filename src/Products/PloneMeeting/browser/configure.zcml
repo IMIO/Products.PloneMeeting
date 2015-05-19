@@ -363,6 +363,12 @@
         class=".annexes.AnnexesMacros"
         template="templates/annexes_macros.pt"
         permission="zope2.View"/>
+    <browser:page
+        name="annexes-icons"
+        for="*"
+        class=".annexes.AnnexesIcons"
+        template="templates/annexes_icons.pt"
+        permission="zope2.View"/>
     <browser:view
         name="annexes"
         class=".annexes.AnnexesView"

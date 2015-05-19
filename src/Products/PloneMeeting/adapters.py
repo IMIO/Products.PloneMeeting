@@ -12,6 +12,7 @@ logger = logging.getLogger('PloneMeeting')
 from AccessControl import Unauthorized
 
 from zope.annotation import IAnnotations
+from zope.i18n import translate
 
 from plone.memoize import ram
 
@@ -359,26 +360,40 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                 # deadline.
                 if meeting.attributeIsUsed('deadlineFreeze') and \
                    not self.context.lastValidatedBefore(meeting.getDeadlineFreeze()):
-                    res.append(('deadlineKo.png', 'icon_help_publish_freeze_ko'))
+                    res.append(('deadlineKo.png', translate('icon_help_publish_freeze_ko',
+                                                            domain="PloneMeeting",
+                                                            context=self.request)))
                 else:
-                    res.append(('late.png', 'icon_help_late'))
+                    res.append(('late.png', translate('icon_help_late',
+                                                      domain="PloneMeeting",
+                                                      context=self.request)))
             elif (meeting.queryState() == 'created') and \
                     meeting.attributeIsUsed('deadlinePublish') and \
                     not self.context.lastValidatedBefore(meeting.getDeadlinePublish()):
-                res.append(('deadlineKo.png', 'icon_help_publish_deadline_ko'))
+                res.append(('deadlineKo.png', translate('icon_help_publish_deadline_ko',
+                                                        domain="PloneMeeting",
+                                                        context=self.request)))
         else:
             # The item is in the list of normal or late items for p_meeting.
             # Check if we must show a decision-related status for the item
             # (delayed, refused...).
             itemState = self.context.queryState()
             if itemState == 'delayed':
-                res.append(('delayed.png', 'icon_help_delayed'))
+                res.append(('delayed.png', translate('icon_help_delayed',
+                                                     domain="PloneMeeting",
+                                                     context=self.request)))
             elif itemState == 'refused':
-                res.append(('refused.png', 'icon_help_refused'))
+                res.append(('refused.png', translate('icon_help_refused',
+                                                     domain="PloneMeeting",
+                                                     context=self.request)))
             elif itemState == 'returned_to_proposing_group':
-                res.append(('return_to_proposing_group.png', 'icon_help_returned_to_proposing_group'))
+                res.append(('return_to_proposing_group.png', translate('icon_help_returned_to_proposing_group',
+                                                                       domain="PloneMeeting",
+                                                                       context=self.request)))
             elif itemState == 'prevalidated':
-                res.append(('prevalidate.png', 'icon_help_prevalidated'))
+                res.append(('prevalidate.png', translate('icon_help_prevalidated',
+                                                         domain="PloneMeeting",
+                                                         context=self.request)))
             # Display icons about sent/cloned to other meetingConfigs
             clonedToOtherMCIds = self.context._getOtherMeetingConfigsImAmClonedIn()
             for clonedToOtherMCId in clonedToOtherMCIds:
@@ -386,13 +401,12 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                 # the msgid and the mapping as a dict
                 res.append(("%s.png" %
                             cfg._getCloneToOtherMCActionId(clonedToOtherMCId, cfg.getId()),
-                            ('sentto_othermeetingconfig',
-                                {
-                                    'meetingConfigTitle': getattr(tool,
-                                                                  clonedToOtherMCId).Title()
-                                }
-                             )
-                            ))
+                            translate('sentto_othermeetingconfig',
+                                      mapping={
+                                      'meetingConfigTitle': getattr(tool,
+                                                                    clonedToOtherMCId).Title()},
+                                      domain="PloneMeeting",
+                                      context=self.request)))
             # if not already cloned to another mc, maybe it will be?
             if not clonedToOtherMCIds:
                 otherMeetingConfigsClonableTo = self.context.getOtherMeetingConfigsClonableTo()
@@ -401,13 +415,12 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                     # the msgid and the mapping as a dict
                     res.append(("will_be_%s.png" %
                                 cfg._getCloneToOtherMCActionId(otherMeetingConfigClonableTo, cfg.getId()),
-                                ('will_be_sentto_othermeetingconfig',
-                                    {
-                                        'meetingConfigTitle': getattr(tool,
-                                                                      otherMeetingConfigClonableTo).Title()
-                                    }
-                                 )
-                                ))
+                                translate('will_be_sentto_othermeetingconfig',
+                                          mapping={
+                                          'meetingConfigTitle': getattr(tool,
+                                                                        otherMeetingConfigClonableTo).Title()},
+                                          domain="PloneMeeting",
+                                          context=self.request)))
             # display icons if element is down the workflow or up for at least second time...
             # display it only for items before state 'validated'
             if not self.context.hasMeeting() and not itemState == 'validated':
@@ -415,7 +428,9 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                 lastEvent = self.context.getLastEvent()
                 if lastEvent['action']:
                     if lastEvent['action'].startswith('back'):
-                        res.append(('wf_down.png', 'icon_help_wf_down'))
+                        res.append(('wf_down.png', translate('icon_help_wf_down',
+                                                             domain="PloneMeeting",
+                                                             context=self.request)))
                     else:
                         # up the workflow for at least second times and not linked to a meeting
                         # check if last event was already made in item workflow_history
@@ -425,29 +440,41 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                             if event['action'] == lastEvent['action']:
                                 i = i + 1
                                 if i > 1:
-                                    res.append(('wf_up.png', 'icon_help_wf_up'))
+                                    res.append(('wf_up.png', translate('icon_help_wf_up',
+                                                                       domain="PloneMeeting",
+                                                                       context=self.request)))
                                     break
         # In some cases, it does not matter if an item is inMeeting or not.
         if 'oralQuestion' in usedItemAttributes:
             if self.context.getOralQuestion():
-                res.append(('oralQuestion.png', 'this_item_is_an_oral_question'))
+                res.append(('oralQuestion.png', translate('this_item_is_an_oral_question',
+                                                          domain="PloneMeeting",
+                                                          context=self.request)))
         if 'emergency' in usedItemAttributes:
             # display an icon if emergency asked/accepted/refused
             itemEmergency = self.context.getEmergency()
             if itemEmergency == 'emergency_asked':
-                res.append(('emergency_asked.png', 'emergency_asked'))
+                res.append(('emergency_asked.png', translate('emergency_asked',
+                                                             domain="PloneMeeting",
+                                                             context=self.request)))
             elif itemEmergency == 'emergency_accepted':
-                res.append(('emergency_accepted.png', 'emergency_accepted'))
+                res.append(('emergency_accepted.png', translate('emergency_accepted',
+                                                                domain="PloneMeeting",
+                                                                context=self.request)))
             elif itemEmergency == 'emergency_refused':
-                res.append(('emergency_refused.png', 'emergency_refused'))
+                res.append(('emergency_refused.png', translate('emergency_refused',
+                                                               domain="PloneMeeting",
+                                                               context=self.request)))
         if 'takenOverBy' in usedItemAttributes:
             takenOverBy = self.context.getTakenOverBy()
             if takenOverBy:
                 # if taken over, display a different icon if taken over by current user or not
                 takenOverByCurrentUser = self.request['AUTHENTICATED_USER'].getId() == takenOverBy and True or False
                 iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
-                res.append((iconName, ('Taken over by ${fullname}',
-                                       {'fullname': tool.getUserName(takenOverBy)})))
+                res.append((iconName, translate('Taken over by ${fullname}',
+                                                domain="PloneMeeting",
+                                                mapping={'fullname': tool.getUserName(takenOverBy)},
+                                                context=self.request)))
         return res
 
 

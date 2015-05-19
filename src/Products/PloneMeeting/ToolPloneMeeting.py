@@ -62,7 +62,7 @@ from Products.DCWorkflow.Expression import StateChangeInfo, createExprContext
 from Products.ATContentTypes import permission as ATCTPermissions
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
-from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.interfaces import IAnnexable, IMeetingFile
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
@@ -1079,9 +1079,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return ' '.join(res)
 
     security.declarePublic('getColoredLink')
-    def getLink(self, obj, showColors, showIcon=False, contentValue=None,
-                target='_self', maxLength=0, inMeeting=True,
-                meeting=None, appendToUrl='', additionalCSSClasses='', tag_title=None, annexInfo=False):
+    def getColoredLink(self, obj, showColors=True, showIcon=False, contentValue='',
+                       target='_self', maxLength=0, inMeeting=True,
+                       meeting=None, appendToUrl='', additionalCSSClasses='',
+                       tag_title=None, annexInfo=False):
         '''Produces the link to an item or annex with the right color (if the
            colors must be shown depending on p_showColors). p_target optionally
            specifies the 'target' attribute of the 'a' tag. p_maxLength
@@ -1107,17 +1108,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         adapted.showColors = showColors
         adapted.showContentIcon = showIcon
         adapted.contentValue = contentValue
-        # if we received annexInfo, the adapted element is the meeting but we want actually
-        # to display a link to an annex and for performance reason, we received the annexIndex
-        if annexInfo:
-            if annexInfo['warnSize']:
-                content = contentValue + "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
-                    translate("annex_size_warning",
-                              domain="PloneMeeting",
-                              context=self.REQUEST,
-                              default="Annex size is huge, it could be difficult to be downloaded!").encode('utf-8'),
-                    obj['friendlySize'])
-                adapted.contentValue = content
         adapted.target = target
         adapted.maxLength = maxLength
         adapted.appendToUrl = appendToUrl
@@ -1128,6 +1118,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Is this a not-privacy-viewable item?
         if obj.meta_type == 'MeetingItem' and not obj.adapted().isPrivacyViewable():
             adapted.isViewable = False
+
+        # if we received annexInfo, the adapted element is the meetingItem but we want actually
+        # to display a link to an annex and for performance reason, we received the annexIndex
+        if annexInfo:
+            # do not display colors
+            adapted.showColors = False
+            # do not showIcons or icons of the item are shown...
+            adapted.showIcons = False
+            # annexInfo is either an annexInfo or a MeetingFile instance...
+            if IMeetingFile.providedBy(annexInfo):
+                annexInfo = annexInfo.getAnnexInfo()
+            adapted.contentValue = unicode(annexInfo['Title'], 'utf-8')
+            adapted.appendToUrl = "/" + annexInfo['id']
+            if annexInfo['warnSize']:
+                adapted.contentValue += u"&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
+                    translate("annex_size_warning",
+                              domain="PloneMeeting",
+                              context=self.REQUEST,
+                              default="Annex size is huge, it could be difficult to be downloaded!"),
+                    annexInfo['friendlySize'])
+
         return adapted.getLink()
 
     security.declarePublic('showColorsForUser')
