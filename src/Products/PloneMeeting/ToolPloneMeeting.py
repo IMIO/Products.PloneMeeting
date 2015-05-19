@@ -1129,14 +1129,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # annexInfo is either an annexInfo or a MeetingFile instance...
             if IMeetingFile.providedBy(annexInfo):
                 annexInfo = annexInfo.getAnnexInfo()
-            adapted.contentValue = unicode(annexInfo['Title'], 'utf-8')
+            adapted.contentValue = annexInfo['Title']
             adapted.appendToUrl = "/" + annexInfo['id']
             if annexInfo['warnSize']:
-                adapted.contentValue += u"&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
+                adapted.contentValue += "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
                     translate("annex_size_warning",
                               domain="PloneMeeting",
                               context=self.REQUEST,
-                              default="Annex size is huge, it could be difficult to be downloaded!"),
+                              default="Annex size is huge, it could be difficult to be downloaded!").encode('utf-8'),
                     annexInfo['friendlySize'])
 
         return adapted.getLink()

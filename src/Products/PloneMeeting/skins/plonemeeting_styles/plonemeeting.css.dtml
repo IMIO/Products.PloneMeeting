@@ -697,8 +697,8 @@ TD acronym {
 
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
-.pm_listing_th_actions, .pm_listing_th_toDiscuss, .pm_listing_th_itemIsSigned,
-.pm_meeting_listing_th_actions, .pm_meeting_listing_th_toDiscuss, .pm_meeting_listing_th_itemIsSigned,
+.header_th_actions, .pm_listing_th_toDiscuss, .pm_listing_th_itemIsSigned,
+.pm_meeting_listing_th_toDiscuss, .pm_meeting_listing_th_itemIsSigned,
 .pm_meeting_listing_th_checkBoxes, .pm_listing_th_advices, .pm_meeting_listing_th_advices {
     width: 1%;
 }
@@ -708,7 +708,7 @@ TD acronym {
 .pm_meeting_listing_th_proposingGroup,
 .pm_meeting_listing_th_proposingGroupAcronym,
 .pm_meeting_listing_th_categoryOrProposingGroup,
-.pm_listing_th_creationDate,
+.header_th_CreationDate,
 .pm_listing_th_modificationDate {
     width: 100px;
 }
@@ -716,10 +716,10 @@ TD acronym {
 .pm_listing_th_preferredMeeting {
     width: 90px;
 }
-.pm_listing_th_creator, .pm_meeting_listing_th_creator {
+.header_th_Creator {
     width: 100px;
 }
-.pm_listing_th_state, .pm_meeting_listing_th_state, .pm_listing_th_privacy, .pm_meeting_listing_th_privacy {
+.header_th_review_state, .pm_listing_th_privacy, .pm_meeting_listing_th_privacy {
     width: 60px;
 }
 
@@ -1091,10 +1091,10 @@ td.pretty_link table.contentActionsAX {
 }
 
 /* skin element that will trigger the show/hide item details */
-#content span.showHideDetails,
-a:link.showHideDetails,
-a:hover.showHideDetails,
-a:visited.showHideDetails {
+#content th span.showHideDetails,
+#content th a.showHideDetails:link,
+#content th a.showHideDetails:hover,
+#content th a.showHideDetails:visited {
     cursor: pointer;
     margin-left: 3em;
     color: &dtml-discreetColor; !important;

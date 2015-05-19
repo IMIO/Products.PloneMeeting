@@ -24,6 +24,7 @@ from Products.PloneMeeting.utils import checkPermission
 
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
+from imio.dashboard.adapters import CustomViewFieldsVocabularyAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from collective.documentviewer.settings import GlobalSettings

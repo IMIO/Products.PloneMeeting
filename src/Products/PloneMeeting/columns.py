@@ -2,6 +2,7 @@
 import urllib2
 
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.interfaces import IMeeting
 
 from imio.dashboard.columns import PrettyLinkColumn
 from imio.prettylink.interfaces import IPrettyLink
@@ -25,7 +26,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         else:
             # we use method imio.actionspanel.views.ActionsPanelView.buildBackURL that build the url we want
             url = urllib2.unquote(self.context.restrictedTraverse('@@actions_panel').buildBackURL())
-            header += u'<a class="showHideDetails" onclick="javascript:toggleMeetingDescriptions(); document.location(this.href);" href="{0}">({1})</a>'.format(url, showHideMsg)
+            header += u'<a class="showHideDetails" onclick="javascript:toggleMeetingDescriptions();" href="{0}">({1})</a>'.format(url, showHideMsg)
         return header.format(super(PMPrettyLinkColumn, self).renderHeadCell())
 
     def renderCell(self, item):
@@ -36,12 +37,19 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         annexes = moreInfos = ''
 
         if obj.meta_type == 'MeetingItem':
+            tool = getToolByName(self.context, 'portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
             # display annexes if item and item isPrivacyViewable
             annexes = ''
             if obj.adapted().isPrivacyViewable():
                 annexes = obj.restrictedTraverse('@@annexes-icons')(relatedTo='item')
                 # display moreInfos about item
-                visibleColumns = [col.attrName for col in self.table.columns]
+                # visible columns are one define for items listings or when the meeting is displayed
+                # so check where we are
+                if IMeeting.providedBy(self.context):
+                    # on the meeting
+                    visibleColumns = cfg.getItemsListVisibleColumns()
+                else:
+                    visibleColumns = cfg.getItemColumns()
                 moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
-
-        return pretty_link + annexes + moreInfos
+        return unicode(pretty_link, 'utf-8') + annexes + moreInfos

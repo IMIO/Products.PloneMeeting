@@ -74,6 +74,20 @@ class Migrate_To_3_4(Migrator):
                 cfg.setToDoListSearches(toDoListSearches)
                 cfg.deleteReferences('ToDoTopics')
 
+            logger.info('Moving to imio.dashboard : removing optional columns "annexes" and "decision annexe", no more optional...')
+            itemsListVisibleColumns = list(cfg.getItemsListVisibleColumns())
+            itemColumns = list(cfg.getItemColumns())
+            if 'annexes' in itemsListVisibleColumns:
+                itemsListVisibleColumns.remove('annexes')
+            if 'annexesDecision' in itemsListVisibleColumns:
+                itemsListVisibleColumns.remove('annexesDecision')
+            cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
+            if 'annexes' in itemColumns:
+                itemColumns.remove('annexes')
+            if 'annexesDecision' in itemColumns:
+                itemColumns.remove('annexesDecision')
+            cfg.setItemColumns(itemColumns)
+
         logger.info('Moving to imio.dashboard : removing view "meetingfolder_redirect_view" '
                     'from available views for "Folder"...')
         folderType = self.portal.portal_types.Folder
@@ -116,7 +130,7 @@ class Migrate_To_3_4(Migrator):
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         # update portal_catalog as index "isDefinedInTool" changed
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics" was removed
-        self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
+        #self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
         self.finish()
 
 

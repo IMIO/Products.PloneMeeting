@@ -2627,6 +2627,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            information about an item.'''
         d = 'PloneMeeting'
         res = [
+            ("budgetInfos", translate("budget_infos_column", domain=d, context=self.REQUEST)),
             ("creator", translate('pm_creator', domain=d, context=self.REQUEST)),
             ("creationDate", translate('pm_creation_date', domain=d, context=self.REQUEST)),
             ("modificationDate", translate('pm_modification_date', domain=d, context=self.REQUEST)),
@@ -2637,16 +2638,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                          domain=d,
                                          context=self.REQUEST)),
             ("proposingGroupAcronym", translate("proposing_group_acronym", domain=d, context=self.REQUEST)),
-            ("toDiscuss", translate('PloneMeeting_label_toDiscuss', domain=d, context=self.REQUEST)),
             ("associatedGroups",
                 translate("PloneMeeting_label_associatedGroups", domain=d, context=self.REQUEST)),
             ("associatedGroupsAcronyms",
                 translate("associated_groups_acronyms", domain=d, context=self.REQUEST)),
-            ("annexes", translate("annexes", domain=d, context=self.REQUEST)),
-            ("annexesDecision", translate("AnnexesDecision", domain=d, context=self.REQUEST)),
+            ("toDiscuss", translate('PloneMeeting_label_toDiscuss', domain=d, context=self.REQUEST)),
             ("advices", translate("PloneMeeting_label_advices", domain=d, context=self.REQUEST)),
             ("privacy", translate("PloneMeeting_label_privacy", domain=d, context=self.REQUEST)),
-            ("budgetInfos", translate("PloneMeeting_label_budgetInfos", domain=d, context=self.REQUEST)),
             ("itemIsSigned", translate('PloneMeeting_label_itemIsSigned', domain=d, context=self.REQUEST)),
             ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
         ]
@@ -2655,7 +2653,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemsListVisibleColumns')
     def listItemsListVisibleColumns(self):
         res = self.listItemRelatedColumns()
-        return DisplayList(tuple(res)).sortedByValue()
+        return DisplayList(tuple(res))
 
     def listItemsListVisibleFields(self):
         '''Vocabulary for the 'itemsListVisibleFields' field.
@@ -2666,13 +2664,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemColumns')
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.append(('meeting', translate('presented_in_meeting',
-                                         domain='PloneMeeting',
-                                         context=self.REQUEST)))
-        res.append(('preferredMeeting', translate('PloneMeeting_label_preferredMeeting',
-                                                  domain='PloneMeeting',
-                                                  context=self.REQUEST)))
-        return DisplayList(tuple(res)).sortedByValue()
+        res.insert(-1, ('meeting', translate('presented_in_meeting',
+                                             domain='PloneMeeting',
+                                             context=self.REQUEST)))
+        res.insert(-1, ('preferredMeeting', translate('PloneMeeting_label_preferredMeeting',
+                                                      domain='PloneMeeting',
+                                                      context=self.REQUEST)))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingColumns')
     def listMeetingColumns(self):
