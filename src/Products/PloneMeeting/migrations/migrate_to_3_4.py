@@ -82,6 +82,11 @@ class Migrate_To_3_4(Migrator):
             available_views.remove('meetingfolder_redirect_view')
             folderType.manage_changeProperties(view_methods=available_views)
 
+        logger.info('Moving to imio.dashboard : removing action "toggleDescriptions" from document_actions...')
+        dactions = self.portal.portal_actions.document_actions
+        if 'toggleDescriptions' in dactions.objectIds():
+            dactions.manage_delObjects(ids=['toggleDescriptions'])
+
         logger.info('Done.')
 
     def _adaptMeetingConfigFolderLayout(self):

@@ -1999,20 +1999,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return not rq['ACTUAL_URL'].endswith('edit')
         # If we are displaying search results (excepted for lists of meetings),
         # return True
-        topicId = rq.get('search', None)
-        if topicId:
-            topic = getattr(self.getMeetingConfig(context).topics,
-                            topicId, None)
-            if topic and (topic.getProperty('meeting_topic_type') == 'MeetingItem'):
-                return True
-        elif rq['ACTUAL_URL'].endswith('/search_results'):
-            if 'search_types' in rq.form:
-                sTypes = rq.form['search_types']
-            else:
-                sTypes = ()
-            if (isinstance(sTypes, basestring) and (sTypes == 'search_type_items')) or \
-               ('search_type_items' in sTypes):
-                return True
+        import ipdb; ipdb.set_trace()
+        if str(rq).endswith('@@faceted_query'):
+            pass
 
     security.declarePublic('showTogglePersons')
     def showTogglePersons(self, context):

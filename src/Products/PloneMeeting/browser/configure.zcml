@@ -169,22 +169,6 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
-    <!-- the plonemeeting_topic_view used to display list of items (my items, all items, ...) -->
-    <browser:page
-        name="plonemeeting_topic_view"
-        for="Products.ATContentTypes.interfaces.folder.IATFolder"
-        class=".views.PloneMeetingTopicView"
-        template="templates/plonemeeting_topic_view.pt"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-    <browser:page
-        name="plonemeeting_topic_view"
-        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
-        class=".views.PloneMeetingTopicView"
-        template="templates/plonemeeting_topic_view.pt"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-
     <!-- the plonemeeting_redirect_to_app_view.pt that redirect the connected user to the default meetingConfig just after connection -->
     <browser:page
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
@@ -283,6 +267,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that display moreInfos about item in the PrettyLink column -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-more-infos"
+        class=".views.ItemMoreInfosView"
+        template="templates/itemmoreinfos.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- this view will contains some methods doing unrestricted things.  It replaces Manager Proxy roled python Scripts -->
     <browser:page
         for="*"
@@ -297,7 +290,7 @@
     <browser:page
         for="*"
         name="delete_history_event"
-        class=".views.DeleteHistoryEvent"
+        class=".views.DeleteHistoryEventView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
 
@@ -337,12 +330,6 @@
         for="*"
         class=".macros.MeetingItemsListMacros"
         template="templates/meetingitems_list.pt"
-        permission="zope2.View"/>
-    <browser:page
-        name="plonemeeting-topic-result-macros"
-        for="*"
-        class=".macros.PloneMeetingTopicResultMacros"
-        template="templates/plonemeeting_topic_result.pt"
         permission="zope2.View"/>
     <browser:page
         name="advices-macros"

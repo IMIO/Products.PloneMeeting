@@ -4,18 +4,7 @@
   <action-provider name="portal_actions"/>
   <object name="document_actions" meta_type="CMF Action Category">
 
-    <!-- Show icon for hiding/showing item descriptions. -->
-    <object name="toggleDescriptions" meta_type="CMF Action" i18n:domain="PloneMeeting">
-      <property name="title" i18n:translate="">show_or_hide_details</property>
-      <property name="description" i18n:translate="">Toggle descriptions of items</property>
-      <property name="url_expr">string:javascript:toggleMeetingDescriptions()</property>
-      <property name="icon_expr">string:$portal_url/collapseDescrs.gif</property>
-      <property name="available_expr">python: object.portal_plonemeeting.showToggleDescriptions(context)</property>
-      <property name="permissions">
-        <element value="View"/>
-      </property>
-      <property name="visible">True</property>
-    </object>
+    <!-- Icon for hiding/showing persons -->
     <object name="togglePersons" meta_type="CMF Action" i18n:domain="PloneMeeting">
       <property name="title" i18n:translate="">show_or_hide_persons</property>
       <property name="description" i18n:translate="">Show or hide persons</property>

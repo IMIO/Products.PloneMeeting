@@ -3,46 +3,40 @@ from AccessControl import Unauthorized
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 
-from plone.memoize.instance import memoize
+from plone.memoize.view import memoize
+from plone.memoize.view import memoize_contextless
 
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 
 
-class PloneMeetingTopicView(BrowserView):
+class ItemMoreInfosView(BrowserView):
     """
-      This manage the view displaying list of items
+      This manage the view displaying more infos about an item in the PrettyLink column
     """
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = portal_state.portal()
+        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
-    @memoize
-    def getTopicName(self):
+    def __call__(self, visibleColumns):
+        """ """
+        self.visibleColumns = visibleColumns
+        return super(ItemMoreInfosView, self).__call__()
+
+    @memoize_contextless
+    def getItemsListVisibleFields(self):
         """
           Get the topicName from the request and returns it.
         """
-        return self.request.get('search', None)
+        return self.cfg.getItemsListVisibleFields()
 
-    @memoize
-    def getPloneMeetingTool(self):
-        '''Returns the tool.'''
-        return getToolByName(self.portal, 'portal_plonemeeting')
-
-    @memoize
-    def getCurrentMeetingConfig(self):
-        '''Returns the current meetingConfig.'''
-        tool = self.getPloneMeetingTool()
-        res = tool.getMeetingConfig(self.context)
-        return res
-
-    @memoize
-    def getTopic(self):
-        '''Return the concerned topic.'''
-        return getattr(self.getCurrentMeetingConfig().topics, self.getTopicName())
+    @memoize_contextless
+    def showMoreInfos(self):
+        """ """
+        return self.tool.readCookie('pmShowDescriptions') == 'true' and True or False
 
 
 class PloneMeetingRedirectToAppView(BrowserView):
@@ -258,7 +252,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         return query
 
 
-class DeleteHistoryEvent(BrowserView):
+class DeleteHistoryEventView(BrowserView):
     """
       Delete an event in an object's history.
     """
