@@ -516,7 +516,7 @@ class Migrate_To_3_3(Migrator):
                     new_state = wf.transitions[transition].new_state_id
                     state = wf.states[new_state]
                 if not couldStillWalk:
-                    logger.warning('Unable to compute \'transitionsForPresentingAnItem\' for MeetingConfig % !!!'
+                    logger.warning('Unable to compute \'transitionsForPresentingAnItem\' for MeetingConfig %s !!!'
                                    % cfg.getId())
                 else:
                     cfg.setTransitionsForPresentingAnItem(res)
