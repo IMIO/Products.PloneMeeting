@@ -44,7 +44,7 @@ from plone.app.portlets.portlets import navigation
 from plone.portlets.interfaces import IPortletManager
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from Products.CMFCore.ActionInformation import Action
-from Products.CMFCore.Expression import Expression, createExprContext
+from Products.CMFCore.Expression import Expression
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
 from Products.PloneMeeting import PMMessageFactory as _
@@ -55,7 +55,6 @@ from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.Searcher import Searcher
 defValues = MeetingConfigDescriptor.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
@@ -904,22 +903,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='itemsListVisibleColumns',
-        widget=MultiSelectionWidget(
-            description="ItemsListVisibleColumns",
-            description_msgid="items_list_visible_columns_descr",
-            label='Itemslistvisiblecolumns',
-            label_msgid='PloneMeeting_label_itemsListVisibleColumns',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listItemsListVisibleColumns',
-        default=defValues.itemsListVisibleColumns,
-        enforceVocabulary=False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
         name='itemColumns',
         widget=MultiSelectionWidget(
             description="ItemColumns",
@@ -948,6 +931,22 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingColumns',
         default=defValues.meetingColumns,
+        enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemsListVisibleColumns',
+        widget=MultiSelectionWidget(
+            description="ItemsListVisibleColumns",
+            description_msgid="items_list_visible_columns_descr",
+            label='Itemslistvisiblecolumns',
+            label_msgid='PloneMeeting_label_itemsListVisibleColumns',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listItemsListVisibleColumns',
+        default=defValues.itemsListVisibleColumns,
         enforceVocabulary=False,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2625,28 +2624,38 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemRelatedColumns(self):
         '''Lists all the attributes that can be used as columns for displaying
            information about an item.'''
-        d = 'PloneMeeting'
+        d = 'collective.eeafaceted.z3ctable'
         res = [
-            ("budgetInfos", translate("budget_infos_column", domain=d, context=self.REQUEST)),
-            ("creator", translate('pm_creator', domain=d, context=self.REQUEST)),
-            ("creationDate", translate('pm_creation_date', domain=d, context=self.REQUEST)),
-            ("modificationDate", translate('pm_modification_date', domain=d, context=self.REQUEST)),
-            ("state", translate('item_state', domain=d, context=self.REQUEST)),
-            ("categoryOrProposingGroup",
-                translate("category_or_proposing_group", domain=d, context=self.REQUEST)),
-            ("proposingGroup", translate("PloneMeeting_label_proposingGroup",
-                                         domain=d,
-                                         context=self.REQUEST)),
-            ("proposingGroupAcronym", translate("proposing_group_acronym", domain=d, context=self.REQUEST)),
+            ("budget_infos",
+                translate("budget_infos_column", domain=d, context=self.REQUEST)),
+            ("Creator",
+                translate('Creator__header_title', domain=d, context=self.REQUEST)),
+            ("CreationDate",
+                translate('CreationDate__header_title', domain=d, context=self.REQUEST)),
+            ("ModificationDate",
+                translate('ModificationDate__header_title', domain=d, context=self.REQUEST)),
+            ("review_state",
+                translate('review_state__header_title', domain=d, context=self.REQUEST)),
+            ("getCategory",
+                translate("getCategory__header_title", domain=d, context=self.REQUEST)),
+            ("proposing_group",
+                translate("proposingGroup__header_title", domain=d, context=self.REQUEST)),
+            ("proposingGroupAcronym",
+                translate("proposingGroupAcronym__header_title", domain=d, context=self.REQUEST)),
             ("associatedGroups",
-                translate("PloneMeeting_label_associatedGroups", domain=d, context=self.REQUEST)),
+                translate("associatedGroups__header_title", domain=d, context=self.REQUEST)),
             ("associatedGroupsAcronyms",
-                translate("associated_groups_acronyms", domain=d, context=self.REQUEST)),
-            ("toDiscuss", translate('PloneMeeting_label_toDiscuss', domain=d, context=self.REQUEST)),
-            ("advices", translate("PloneMeeting_label_advices", domain=d, context=self.REQUEST)),
-            ("privacy", translate("PloneMeeting_label_privacy", domain=d, context=self.REQUEST)),
-            ("itemIsSigned", translate('PloneMeeting_label_itemIsSigned', domain=d, context=self.REQUEST)),
-            ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
+                translate("associatedGroupsAcronyms__header_title", domain=d, context=self.REQUEST)),
+            ("toDiscuss",
+                translate('toDiscuss__header_title', domain=d, context=self.REQUEST)),
+            ("advices",
+                translate("advices__header_title", domain=d, context=self.REQUEST)),
+            ("privacy",
+                translate("privacy__header_title", domain=d, context=self.REQUEST)),
+            ("itemIsSigned",
+                translate('itemIsSigned__header_title', domain=d, context=self.REQUEST)),
+            ("actions",
+                translate("actions__header_title", domain=d, context=self.REQUEST)),
         ]
         return res
 
@@ -2664,22 +2673,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemColumns')
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('meeting', translate('presented_in_meeting',
-                                             domain='PloneMeeting',
+        res.insert(-1, ('meeting', translate('meeting__header_title',
+                                             domain='collective.eeafaceted.z3ctable',
                                              context=self.REQUEST)))
-        res.insert(-1, ('preferredMeeting', translate('PloneMeeting_label_preferredMeeting',
-                                                      domain='PloneMeeting',
-                                                      context=self.REQUEST)))
+        res.insert(-1, ('preferred_meeting', translate('preferred_meeting__header_title',
+                                                       domain='collective.eeafaceted.z3ctable',
+                                                       context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingColumns')
     def listMeetingColumns(self):
-        d = 'PloneMeeting'
+        d = 'collective.eeafaceted.z3ctable'
         res = [
-            ("creator", translate('pm_creator', domain=d, context=self.REQUEST)),
-            ("creationDate", translate('pm_creation_date', domain=d, context=self.REQUEST)),
-            ("state", translate('item_state', domain=d, context=self.REQUEST)),
-            ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
+            ("Creator", translate('Creator__header_title', domain=d, context=self.REQUEST)),
+            ("CreationDate", translate('CreationDate__header_title', domain=d, context=self.REQUEST)),
+            ("review_state", translate('review_state__header_title', domain=d, context=self.REQUEST)),
+            ("actions", translate("actions__header_title", domain=d, context=self.REQUEST)),
         ]
         return DisplayList(tuple(res))
 
@@ -2867,6 +2876,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.getItemIconColor() == "default":
             iconName = "MeetingItem{0}.png".format(self.getItemIconColor().capitalize())
         return iconName
+
+    security.declarePrivate('updateCollectionColumns')
+    def updateCollectionColumns(self):
+        '''Update customViewFields defined on DashboardCollection
+           from what is defined in self.itemColumns and self.meetingColumns:
+           - column 'pretty_link' will be always dispalyed;
+           - some columns could be defined in itemColumns or meetingColumns
+             but not in the customViewFields of the Collection (it is the case
+             for budgetInfos for example), in this case we pass;
+           - no matter the values were changed for a Collection,
+             for now every collections of a type (item, meeting)
+             will use same columns.'''
+        # update item related collections
+        itemColumns = (u'pretty_link', ) + self.getItemColumns()
+        for collection in self.searches.meetingitems.objectValues('DashboardCollection'):
+            # available customViewFieldIds, as done in an adapter, we compute it for each collection
+            customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
+            # set elements existing in both lists, we do not use set() because it is not ordered
+            collection.setCustomViewFields(tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds]))
+        # update meeting related collections
+        meetingColumns = (u'pretty_link', ) + self.getMeetingColumns()
+        for collection in (self.searches.meetings.objectValues('DashboardCollection') +
+                           self.searches.decisions.objectValues('DashboardCollection')):
+            # available customViewFieldIds, as done in an adapter, we compute it for each collection
+            customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
+            # set elements existing in both lists, we do not use set() because it is not ordered
+            collection.setCustomViewFields(tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds]))
 
     security.declarePrivate('updatePortalTypes')
     def updatePortalTypes(self):
@@ -3206,6 +3242,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         s([self.getMeetingTypeName()], self.getMeetingWorkflow())
         # Update portal types
         self.updatePortalTypes()
+        # Update customViewFields defined on DashboardCollections
+        self.updateCollectionColumns()
         # Update item tags order if I must sort them
         self.setAllItemTagsField()
         self.updateIsDefaultFields()

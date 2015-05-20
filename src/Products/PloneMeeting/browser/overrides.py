@@ -17,6 +17,7 @@ from plone.memoize.view import memoize_contextless
 
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.eeafaceted.collectionwidget.browser.views import RenderTermView
+from collective.eeafaceted.z3ctable.columns import VocabularyColumn
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDFacetedTableView
@@ -203,6 +204,9 @@ class PMFacetedTableView(IDFacetedTableView):
         # we use our own column to manage the 'pretty_link'
         if colName == u'pretty_link':
             column = PMPrettyLinkColumn(self.context, self.request, self)
+        elif colName == u'getCategory':
+            column = VocabularyColumn(self.context, self.request, self)
+            column.vocabulary = u'Products.PloneMeeting.vocabularies.categoriesvocabulary'
         return column
 
 

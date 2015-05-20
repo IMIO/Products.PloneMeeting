@@ -20,7 +20,7 @@ Fields are only displayed if :
     </tal:loop>
 </span>
 
-<tal:budget condition="python: 'budgetInfos' in view.visibleColumns and context.adapted().isPrivacyViewable() and context.getBudgetRelated() and not context.fieldIsEmpty('budgetInfos')">
+<tal:budget condition="python: 'budget_infos' in view.visibleColumns and context.adapted().isPrivacyViewable() and context.getBudgetRelated() and not context.fieldIsEmpty('budgetInfos')">
   <span tal:define="field python: context.getField('budgetInfos');
                     mode string:view;">
     <span metal:use-macro="context/widgets/field/macros/view" />

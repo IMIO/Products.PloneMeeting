@@ -1,6 +1,8 @@
 # encoding: utf-8
 import urllib2
 
+from zope.i18n import translate
+
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeeting
 
@@ -14,20 +16,26 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
     def renderHeadCell(self):
         """Override rendering of head of the cell to include jQuery
            call to initialize annexes menu and to show the 'more/less details' if we are listing items."""
-        header = u'<script type="text/javascript">jQuery(document).ready(initializeMenusAXStartingAt($("#content")));</script>{0}'
-        # manage link around 'Show/hide details' for listing of items
-        # if shown, we render javascript that show/hide it, but if hidden, we render
-        # a link that will reload current page of the listing if we activate the details
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-        showDetails = tool.readCookie('pmShowDescriptions') == 'true' and True or False
-        showHideMsg = u'Afficher/cacher les détails'
-        if showDetails:
-            header += u'<span class="showHideDetails" onclick="javascript:toggleMeetingDescriptions()">({0})</span>'.format(showHideMsg)
-        else:
-            # we use method imio.actionspanel.views.ActionsPanelView.buildBackURL that build the url we want
-            url = urllib2.unquote(self.context.restrictedTraverse('@@actions_panel').buildBackURL())
-            header += u'<a class="showHideDetails" onclick="javascript:toggleMeetingDescriptions();" href="{0}">({1})</a>'.format(url, showHideMsg)
-        return header.format(super(PMPrettyLinkColumn, self).renderHeadCell())
+        if self.table.batch[0].meta_type == 'MeetingItem':
+            # change header title to "Purpose"
+            self.header = translate("purpose__header_title",
+                                    domain="collective.eeafaceted.z3ctable",
+                                    context=self.request)
+            header = u'<script type="text/javascript">jQuery(document).ready(initializeMenusAXStartingAt($("#content")));</script>{0}'
+            # manage link around 'Show/hide details' for listing of items
+            # if shown, we render javascript that show/hide it, but if hidden, we render
+            # a link that will reload current page of the listing if we activate the details
+            tool = getToolByName(self.context, 'portal_plonemeeting')
+            showDetails = tool.readCookie('pmShowDescriptions') == 'true' and True or False
+            showHideMsg = u'Afficher/cacher les détails'
+            if showDetails:
+                header += u'<span class="showHideDetails" onclick="javascript:toggleMeetingDescriptions()">({0})</span>'.format(showHideMsg)
+            else:
+                # we use method imio.actionspanel.views.ActionsPanelView.buildBackURL that build the url we want
+                url = urllib2.unquote(self.context.restrictedTraverse('@@actions_panel').buildBackURL())
+                header += u'<a class="showHideDetails" onclick="javascript:toggleMeetingDescriptions();" href="{0}">({1})</a>'.format(url, showHideMsg)
+            return header.format(super(PMPrettyLinkColumn, self).renderHeadCell())
+        return super(PMPrettyLinkColumn, self).renderHeadCell()
 
     def renderCell(self, item):
         """ """
@@ -53,3 +61,4 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                     visibleColumns = cfg.getItemColumns()
                 moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
         return unicode(pretty_link, 'utf-8') + annexes + moreInfos
+

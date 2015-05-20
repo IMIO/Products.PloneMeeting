@@ -115,6 +115,10 @@
            factory=".adapters.PMPrettyLinkAdapter"
            provides="imio.prettylink.interfaces.IPrettyLink" />
 
+  <!-- Vocabularies -->
+  <utility component=".vocabularies.ItemCategoriesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.categoriesvocabulary" />
+
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
   <five:deprecatedManageAddDelete class=".MeetingFile.MeetingFile" />

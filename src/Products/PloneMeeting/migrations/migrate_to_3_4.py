@@ -31,7 +31,8 @@ class Migrate_To_3_4(Migrator):
              and keep existing Topics for now as we will not migrate topics to collections;
            - move some parameters from the MeetingConfig to the relevant DashboardCollection;
            - migrate the toDoListTopics to toDoListSearches;
-           - remove the "meetingfolder_redirect_view" available for type Folder.'''
+           - remove the "meetingfolder_redirect_view" available for type Folder;
+           - update MeetingConfig.itemsListVisibleColumns and MeetingConfig.itemColumns.'''
         logger.info('Moving to imio.dashboard...')
         wft = getToolByName(self.portal, 'portal_workflow')
 
@@ -74,18 +75,33 @@ class Migrate_To_3_4(Migrator):
                 cfg.setToDoListSearches(toDoListSearches)
                 cfg.deleteReferences('ToDoTopics')
 
-            logger.info('Moving to imio.dashboard : removing optional columns "annexes" and "decision annexe", no more optional...')
+            logger.info('Moving to imio.dashboard : updating "itemsListVisibleColumns" and "itemColumns"...')
+            # remove columns annexes and annexesDecision
             itemsListVisibleColumns = list(cfg.getItemsListVisibleColumns())
             itemColumns = list(cfg.getItemColumns())
-            if 'annexes' in itemsListVisibleColumns:
-                itemsListVisibleColumns.remove('annexes')
-            if 'annexesDecision' in itemsListVisibleColumns:
-                itemsListVisibleColumns.remove('annexesDecision')
+            columnsToRemove = ('annexes', 'annexesDecision')
+            for colToRemove in columnsToRemove:
+                if colToRemove in itemsListVisibleColumns:
+                    itemsListVisibleColumns.remove(colToRemove)
+                if colToRemove in itemColumns:
+                    itemColumns.remove(colToRemove)
+
+            # translate some columns to fit to the value used in the collection
+            columnMappings = {'creator': 'Creator',
+                              'creationDate': 'CreationDate',
+                              'modificationDate': 'ModificationDate',
+                              'state': 'review_state',
+                              'budgetInfos': 'budget_infos',
+                              'preferredMeeting': 'preferred_meeting',
+                              'categoryOrProposingGroup': 'getCategory'}
+            for k, v in columnMappings.items():
+                if k in itemsListVisibleColumns:
+                    itemsListVisibleColumns.remove(k)
+                    itemsListVisibleColumns.append(v)
+                if k in itemColumns:
+                    itemColumns.remove(k)
+                    itemColumns.append(v)
             cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
-            if 'annexes' in itemColumns:
-                itemColumns.remove('annexes')
-            if 'annexesDecision' in itemColumns:
-                itemColumns.remove('annexesDecision')
             cfg.setItemColumns(itemColumns)
 
         logger.info('Moving to imio.dashboard : removing view "meetingfolder_redirect_view" '
