@@ -18,7 +18,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
            call to initialize annexes menu and to show the 'more/less details' if we are listing items."""
         if self.table.batch[0].meta_type == 'MeetingItem':
             # change header title to "Purpose"
-            self.header = translate("purpose__header_title",
+            self.header = translate("header_purpose",
                                     domain="collective.eeafaceted.z3ctable",
                                     context=self.request)
             header = u'<script type="text/javascript">jQuery(document).ready(initializeMenusAXStartingAt($("#content")));</script>{0}'

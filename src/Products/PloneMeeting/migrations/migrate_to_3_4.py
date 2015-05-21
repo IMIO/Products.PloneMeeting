@@ -94,6 +94,7 @@ class Migrate_To_3_4(Migrator):
                               'budgetInfos': 'budget_infos',
                               'preferredMeeting': 'preferred_meeting',
                               'proposingGroup': 'getProposingGroup',
+                              'ProposingGroupAcronym': 'proposing_group_acronym',
                               'categoryOrProposingGroup': 'getCategory'}
             for k, v in columnMappings.items():
                 if k in itemsListVisibleColumns:

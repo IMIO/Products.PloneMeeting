@@ -24,6 +24,7 @@ from Products.PloneMeeting.utils import checkPermission
 
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
+from imio.dashboard.adapters import CustomViewFieldsVocabularyAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from collective.documentviewer.settings import GlobalSettings
@@ -476,6 +477,16 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                                                 mapping={'fullname': tool.getUserName(takenOverBy)},
                                                 context=self.request)))
         return res
+
+
+class PMCustomViewFieldsVocabularyAdapter(CustomViewFieldsVocabularyAdapter):
+    """Add some additional fields."""
+
+    def additionalViewFields(self):
+        """See docstring in interfaces.py."""
+        additionalFields = super(PMCustomViewFieldsVocabularyAdapter, self).additionalViewFields()
+        additionalFields.add('proposing_group_acronym', 'Proposing group acronym')
+        return additionalFields
 
 
 class PMHistoryAdapter(ImioWfHistoryAdapter):

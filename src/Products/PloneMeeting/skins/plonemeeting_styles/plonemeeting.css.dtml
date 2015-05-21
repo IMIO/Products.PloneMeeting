@@ -694,24 +694,30 @@ TD acronym {
 
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
-.header_th_actions, .pm_listing_th_toDiscuss, .pm_listing_th_itemIsSigned,
-.pm_meeting_listing_th_toDiscuss, .pm_meeting_listing_th_itemIsSigned,
-.pm_meeting_listing_th_checkBoxes, .pm_listing_th_advices, .pm_meeting_listing_th_advices {
+.th_header_actions,
+.pm_listing_th_toDiscuss,
+.pm_listing_th_itemIsSigned,
+.pm_meeting_listing_th_toDiscuss,
+.pm_meeting_listing_th_itemIsSigned,
+.pm_meeting_listing_th_checkBoxes,
+.pm_listing_th_advices,
+.pm_meeting_listing_th_advices {
     width: 1%;
 }
-.header_th_Creator,
-.header_th_getProposingGroup,
+.th_header_Creator,
+.th_header_getProposingGroup,
+.th_header_proposing_group_acronym,
 .pm_listing_th_proposingGroupAcronym,
 .pm_meeting_listing_th_proposingGroupAcronym,
 .pm_meeting_listing_th_categoryOrProposingGroup {
     width: 100px;
 }
-.header_th_review_state,
+.th_header_review_state,
 .pm_listing_th_relatedMeeting,
 .pm_listing_th_preferredMeeting,
-.header_th_getCategory,
-.header_th_ModificationDate,
-.header_th_CreationDate {
+.th_header_getCategory,
+.th_header_ModificationDate,
+.th_header_CreationDate {
     width: 90px;
 }
 .pm_listing_th_privacy,
