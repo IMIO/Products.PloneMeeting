@@ -700,9 +700,8 @@ TD acronym {
     width: 1%;
 }
 .header_th_Creator,
-.pm_listing_th_proposingGroup,
+.header_th_getProposingGroup,
 .pm_listing_th_proposingGroupAcronym,
-.pm_meeting_listing_th_proposingGroup,
 .pm_meeting_listing_th_proposingGroupAcronym,
 .pm_meeting_listing_th_categoryOrProposingGroup {
     width: 100px;

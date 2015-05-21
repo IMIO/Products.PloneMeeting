@@ -207,6 +207,9 @@ class PMFacetedTableView(IDFacetedTableView):
         elif colName == u'getCategory':
             column = VocabularyColumn(self.context, self.request, self)
             column.vocabulary = u'Products.PloneMeeting.vocabularies.categoriesvocabulary'
+        elif colName == u'getProposingGroup':
+            column = VocabularyColumn(self.context, self.request, self)
+            column.vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
         return column
 
 

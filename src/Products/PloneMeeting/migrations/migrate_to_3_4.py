@@ -93,6 +93,7 @@ class Migrate_To_3_4(Migrator):
                               'state': 'review_state',
                               'budgetInfos': 'budget_infos',
                               'preferredMeeting': 'preferred_meeting',
+                              'proposingGroup': 'getProposingGroup',
                               'categoryOrProposingGroup': 'getCategory'}
             for k, v in columnMappings.items():
                 if k in itemsListVisibleColumns:

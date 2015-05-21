@@ -27,3 +27,23 @@ class ItemCategoriesVocabulary(object):
         return SimpleVocabulary(res)
 
 ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
+
+
+class ItemProposingGroupsVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+
+        tool = getToolByName(context, 'portal_plonemeeting')
+        groups = tool.getMeetingGroups(onlyActive=False)
+        res = []
+        for group in groups:
+            res.append(SimpleTerm(group.getId(),
+                                  group.getId(),
+                                  safe_unicode(group.Title())
+                                  )
+                       )
+        sorted(res)
+        return SimpleVocabulary(res)
+
+ItemProposingGroupsVocabularyFactory = ItemProposingGroupsVocabulary()
