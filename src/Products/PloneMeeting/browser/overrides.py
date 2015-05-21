@@ -17,6 +17,8 @@ from plone.memoize.view import memoize_contextless
 
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.eeafaceted.collectionwidget.browser.views import RenderTermView
+from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
+from collective.eeafaceted.z3ctable.columns import I18nColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.actionspanel.browser.views import ActionsPanelView
@@ -217,7 +219,12 @@ class PMFacetedTableView(IDFacetedTableView):
             column.vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
         elif colName == u'toDiscuss':
             column = ToDiscussColumn(self.context, self.request, self)
-
+        elif colName == u'advices':
+            column = BrowserViewCallColumn(self.context, self.request, self)
+            column.view_name = 'advices-icons'
+        elif colName == u'privacy':
+            column = I18nColumn(self.context, self.request, self)
+            column.i18n_domain = 'PloneMeeting'
         return column
 
 

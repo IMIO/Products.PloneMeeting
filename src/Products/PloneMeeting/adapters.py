@@ -487,6 +487,7 @@ class PMCustomViewFieldsVocabularyAdapter(CustomViewFieldsVocabularyAdapter):
         additionalFields = super(PMCustomViewFieldsVocabularyAdapter, self).additionalViewFields()
         additionalFields.add('proposing_group_acronym', 'Proposing group acronym')
         additionalFields.add('toDiscuss', 'To discuss?')
+        additionalFields.add('advices', 'Advices')
         return additionalFields
 
 

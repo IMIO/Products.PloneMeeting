@@ -338,6 +338,12 @@
         template="templates/advices_macros.pt"
         permission="zope2.View"/>
     <browser:page
+        name="advices-icons"
+        for="*"
+        class=".advices.AdvicesIcons"
+        template="templates/advices_icons.pt"
+        permission="zope2.View"/>
+    <browser:page
         name="navigate-macros"
         for="*"
         class=".macros.NavigateMacros"

@@ -2642,14 +2642,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getProposingGroup", domain=d, context=self.REQUEST)),
             ("proposing_group_acronym",
                 translate("header_proposing_group_acronym", domain=d, context=self.REQUEST)),
-            ("toDiscuss",
-                translate('header_toDiscuss', domain=d, context=self.REQUEST)),
             ("advices",
                 translate("header_advices", domain=d, context=self.REQUEST)),
-            ("privacy",
-                translate("header_privacy", domain=d, context=self.REQUEST)),
+            ("toDiscuss",
+                translate('header_toDiscuss', domain=d, context=self.REQUEST)),
             ("itemIsSigned",
                 translate('header_itemIsSigned', domain=d, context=self.REQUEST)),
+            ("privacy",
+                translate("header_privacy", domain=d, context=self.REQUEST)),
             ("actions",
                 translate("header_actions", domain=d, context=self.REQUEST)),
         ]
@@ -4264,7 +4264,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getUserName_cachekey(method, self, param, request, userId=None, caching=True):
         '''cachekey method for self.getUserParam.'''
-        return (param, str(request.debug), userId)
+        return (param, str(request._debug), userId)
 
     security.declarePublic('getUserParam')
     @ram.cache(getUserName_cachekey)

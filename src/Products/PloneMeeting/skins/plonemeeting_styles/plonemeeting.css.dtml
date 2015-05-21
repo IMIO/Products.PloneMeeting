@@ -719,7 +719,7 @@ TD acronym {
 .th_header_CreationDate {
     width: 90px;
 }
-.pm_listing_th_privacy,
+.th_header_privacy,
 .pm_meeting_listing_th_privacy {
     width: 60px;
 }

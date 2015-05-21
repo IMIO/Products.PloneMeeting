@@ -1611,7 +1611,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeeting_cachekey(method, self, brain=False):
         '''cachekey method for self.getMeeting.'''
-        return (self, str(self.REQUEST.debug), brain)
+        return (self, str(self.REQUEST._debug), brain)
 
     security.declarePublic('getMeeting')
     @ram.cache(getMeeting_cachekey)
@@ -1643,7 +1643,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
         # do only recompute once by REQUEST
-        return str(self.REQUEST.debug)
+        return str(self.REQUEST._debug)
 
     @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey)
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self):
@@ -1673,7 +1673,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self.isPrivacyViewable.'''
         item = self.getSelf()
-        return (item, str(item.REQUEST.debug))
+        return (item, str(item.REQUEST._debug))
 
     security.declarePublic('isPrivacyViewable')
     @ram.cache(isPrivacyViewable_cachekey)
@@ -1878,8 +1878,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''An item be "public" or "secret".'''
         d = 'PloneMeeting'
         res = DisplayList((
-            ("public", translate('ip_public', domain=d, context=self.REQUEST)),
-            ("secret", translate('ip_secret', domain=d, context=self.REQUEST)),
+            ("public", translate('public', domain=d, context=self.REQUEST)),
+            ("secret", translate('secret', domain=d, context=self.REQUEST)),
         ))
         return res
 
@@ -2039,7 +2039,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def attributeIsUsed_cachekey(method, self, name):
         '''cachekey method for self.attributeIsUsed.'''
-        return (name, str(self.REQUEST.debug))
+        return (name, str(self.REQUEST._debug))
 
     security.declarePublic('attributeIsUsed')
     @ram.cache(attributeIsUsed_cachekey)
@@ -2051,7 +2051,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showAnnexesTab_cachekey(method, self, decisionRelated):
         '''cachekey method for self.showAnnexesTab.'''
-        return (decisionRelated, str(self.REQUEST.debug))
+        return (decisionRelated, str(self.REQUEST._debug))
 
     security.declarePublic('showAnnexesTab')
     @ram.cache(showAnnexesTab_cachekey)
@@ -2503,7 +2503,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _findOneLevelFor_cachekey(method, self, insertMethod):
         '''cachekey method for self._findOneLevelFor.'''
-        return (insertMethod, str(self.REQUEST.debug))
+        return (insertMethod, str(self.REQUEST._debug))
 
     @ram.cache(_findOneLevelFor_cachekey)
     def _findOneLevelFor(self, insertMethod):
@@ -4068,7 +4068,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showDuplicateItemAction_cachekey(method, self, brain=False):
         '''cachekey method for self.showDuplicateItemAction.'''
-        return (self, str(self.REQUEST.debug))
+        return (self, str(self.REQUEST._debug))
 
     security.declarePublic('showDuplicateItemAction')
     @ram.cache(showDuplicateItemAction_cachekey)

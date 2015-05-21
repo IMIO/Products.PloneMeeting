@@ -986,9 +986,9 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
         if i > stopIndex:
             break
         event = history[i]
+        # We take a copy, because we will modify it.
+        event = history[i].copy()
         if event['action'] == '_datachange_':
-            # We take a copy, because we will modify it.
-            event = history[i].copy()
             event['changes'] = {}
             for name, oldValue in history[i]['changes'].iteritems():
                 widgetName = obj.getField(name).widget.getName()
@@ -1022,13 +1022,13 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
                     event['changes'][name] = val
                 else:
                     event['changes'][name] = oldValue
-        elif checkMayView:
-            # workflow history event
-            # hide comment if user may not access it
-            if not IImioHistory(obj).mayViewComment(event):
-                # We take a copy, because we will modify it.
-                event = history[i].copy()
-                event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
+        else:
+            event['type'] = 'workflow'
+            if checkMayView:
+                # workflow history event
+                # hide comment if user may not access it
+                if not IImioHistory(obj).mayViewComment(event):
+                    event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
         res.append(event)
     return res
 

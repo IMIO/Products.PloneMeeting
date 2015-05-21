@@ -1009,7 +1009,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def getBeforeFrozenStates_cachekey(method, self):
         '''cachekey method for self.getBeforeFrozenStates.'''
         # do only recompute once by REQUEST
-        return (self, str(self.REQUEST.debug))
+        return (self, str(self.REQUEST._debug))
 
     @ram.cache(getBeforeFrozenStates_cachekey)
     def getBeforeFrozenStates(self):

@@ -300,7 +300,7 @@
             <div class="item_attribute_label"
                  tal:define="privacy context/getPrivacy"
                  tal:condition="python: ('privacy' in usedAttrs) and privacy">
-              <span class="#" tal:attributes="class string:item_privacy_${privacy}" tal:content="python: 'ip_%s' % privacy" i18n:translate="" />
+              <span class="#" tal:attributes="class string:item_privacy_${privacy}" tal:content="privacy" i18n:translate="" />
             </div>
             <tal:comment replace="nothing">Oral question or item</tal:comment>
             <div class="discreet" tal:condition="python: 'oralQuestion' in usedAttrs">
@@ -408,7 +408,7 @@
             <td class="itemAdvicesCell" width="50%">
                 <fieldset style="margin: 0;" tal:define="meetingItem python: context">
                 <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
-                    <metal:advices use-macro="context/@@advices-macros/macros/advicesIcons"/>
+                    <tal:advice replace="structure context/@@advices-icons" />
                 </fieldset>
             </td>
         </tr>

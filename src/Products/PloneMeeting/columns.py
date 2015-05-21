@@ -23,7 +23,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
             self.header = translate("header_purpose",
                                     domain="collective.eeafaceted.z3ctable",
                                     context=self.request)
-            header = u'<script type="text/javascript">jQuery(document).ready(initializeMenusAXStartingAt($("#content")));</script>{0}'
+            # activate necessary javascripts
+            header = u'<script type="text/javascript">jQuery(document).ready(initializeMenusAXStartingAt($("#content")));initializePMOverlays()</script>{0}'
             # manage link around 'Show/hide details' for listing of items
             # if shown, we render javascript that show/hide it, but if hidden, we render
             # a link that will reload current page of the listing if we activate the details

@@ -594,7 +594,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffix=None, zope=False, omittedSuffixes=[]):
         '''cachekey method for self.getGroupsForUser.'''
         # we only recompute if param or REQUEST changed
-        return (str(self.REQUEST.debug), userId, active, suffix, zope, omittedSuffixes)
+        return (str(self.REQUEST._debug), userId, active, suffix, zope, omittedSuffixes)
 
     security.declarePublic('getGroupsForUser')
     @ram.cache(getGroupsForUser_cachekey)
@@ -909,7 +909,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
         # we only recompute if REQUEST changed
-        return (str(self.REQUEST.debug), context, realManagers)
+        return (str(self.REQUEST._debug), context, realManagers)
 
     security.declarePublic('isManager')
     @ram.cache(isManager_cachekey)
@@ -925,7 +925,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def isPowerObserverForCfg_cachekey(method, self, cfg, isRestricted=False):
         '''cachekey method for self.isPowerObserverForCfg.'''
         # we only recompute if REQUEST changed
-        return (str(self.REQUEST.debug), cfg, isRestricted)
+        return (str(self.REQUEST._debug), cfg, isRestricted)
 
     security.declarePublic('isPowerObserverForCfg')
     @ram.cache(isPowerObserverForCfg_cachekey)
