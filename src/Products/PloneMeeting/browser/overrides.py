@@ -28,6 +28,7 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
+from Products.PloneMeeting.columns import ToDiscussColumn
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
@@ -214,6 +215,8 @@ class PMFacetedTableView(IDFacetedTableView):
             column = VocabularyColumn(self.context, self.request, self)
             column.attrName = 'getProposingGroup'
             column.vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
+        elif colName == u'toDiscuss':
+            column = ToDiscussColumn(self.context, self.request, self)
 
         return column
 

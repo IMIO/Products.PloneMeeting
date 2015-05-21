@@ -76,10 +76,10 @@ class Migrate_To_3_4(Migrator):
                 cfg.deleteReferences('ToDoTopics')
 
             logger.info('Moving to imio.dashboard : updating "itemsListVisibleColumns" and "itemColumns"...')
-            # remove columns annexes and annexesDecision
+            # remove some columns
             itemsListVisibleColumns = list(cfg.getItemsListVisibleColumns())
             itemColumns = list(cfg.getItemColumns())
-            columnsToRemove = ('annexes', 'annexesDecision')
+            columnsToRemove = ('annexes', 'annexesDecision', 'associatedGroups', 'associatedGroupsAcronyms')
             for colToRemove in columnsToRemove:
                 if colToRemove in itemsListVisibleColumns:
                     itemsListVisibleColumns.remove(colToRemove)

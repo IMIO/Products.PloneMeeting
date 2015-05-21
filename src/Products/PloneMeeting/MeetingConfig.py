@@ -2642,10 +2642,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getProposingGroup", domain=d, context=self.REQUEST)),
             ("proposing_group_acronym",
                 translate("header_proposing_group_acronym", domain=d, context=self.REQUEST)),
-            ("associatedGroups",
-                translate("header_associatedGroups", domain=d, context=self.REQUEST)),
-            ("associatedGroupsAcronyms",
-                translate("header_associatedGroupsAcronyms", domain=d, context=self.REQUEST)),
             ("toDiscuss",
                 translate('header_toDiscuss', domain=d, context=self.REQUEST)),
             ("advices",
@@ -2673,10 +2669,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemColumns')
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('meeting', translate('meeting__header_title',
+        res.insert(-1, ('meeting', translate('header_meeting',
                                              domain='collective.eeafaceted.z3ctable',
                                              context=self.REQUEST)))
-        res.insert(-1, ('preferred_meeting', translate('preferred_meeting__header_title',
+        res.insert(-1, ('preferred_meeting', translate('header_preferred_meeting',
                                                        domain='collective.eeafaceted.z3ctable',
                                                        context=self.REQUEST)))
         return DisplayList(tuple(res))
@@ -2685,10 +2681,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listMeetingColumns(self):
         d = 'collective.eeafaceted.z3ctable'
         res = [
-            ("Creator", translate('Creator__header_title', domain=d, context=self.REQUEST)),
-            ("CreationDate", translate('CreationDate__header_title', domain=d, context=self.REQUEST)),
-            ("review_state", translate('review_state__header_title', domain=d, context=self.REQUEST)),
-            ("actions", translate("actions__header_title", domain=d, context=self.REQUEST)),
+            ("Creator", translate('header_Creator', domain=d, context=self.REQUEST)),
+            ("CreationDate", translate('header_CreationDate', domain=d, context=self.REQUEST)),
+            ("review_state", translate('header_review_state', domain=d, context=self.REQUEST)),
+            ("actions", translate("header_actions", domain=d, context=self.REQUEST)),
         ]
         return DisplayList(tuple(res))
 

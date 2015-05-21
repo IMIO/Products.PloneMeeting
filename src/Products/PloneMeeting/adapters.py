@@ -486,6 +486,7 @@ class PMCustomViewFieldsVocabularyAdapter(CustomViewFieldsVocabularyAdapter):
         """See docstring in interfaces.py."""
         additionalFields = super(PMCustomViewFieldsVocabularyAdapter, self).additionalViewFields()
         additionalFields.add('proposing_group_acronym', 'Proposing group acronym')
+        additionalFields.add('toDiscuss', 'To discuss?')
         return additionalFields
 
 

@@ -695,9 +695,8 @@ TD acronym {
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
 .th_header_actions,
-.pm_listing_th_toDiscuss,
 .pm_listing_th_itemIsSigned,
-.pm_meeting_listing_th_toDiscuss,
+.th_header_toDiscuss,
 .pm_meeting_listing_th_itemIsSigned,
 .pm_meeting_listing_th_checkBoxes,
 .pm_listing_th_advices,
