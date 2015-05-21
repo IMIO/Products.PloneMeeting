@@ -3011,7 +3011,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if collectionId in container.objectIds():
                 logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
                 continue
-            container.invokeFactory('DashboardCollection', collectionId, **collectionData)
+            try:
+                container.invokeFactory('DashboardCollection', collectionId, **collectionData)
+            except:
+                import ipdb; ipdb.set_trace()
             collection = getattr(container, collectionId)
             # update query so it is stored correctly because we pass a dict
             # but it is actually stored as instances of ZPublisher.HTTPRequest.record
@@ -3022,44 +3025,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                           default=collectionId))
             collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
             collection.reindexObject()
-
-    security.declarePrivate('createTopics')
-    def createTopics(self, topicsInfo):
-        '''Adds a bunch of topics within the 'topics' sub-folder.'''
-        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in topicsInfo:
-            if topicId in self.topics.objectIds():
-                logger.info("Trying to add an already existing topic with id '%s', skipping..." % topicId)
-                continue
-            self.topics.invokeFactory('Topic', topicId)
-            topic = getattr(self.topics, topicId)
-            topic.setExcludeFromNav(True)
-            topic.setTitle(topicId)
-            for criterionName, criterionType, criterionValue in topicCriteria:
-                criterion = topic.addCriterion(field=criterionName,
-                                               criterion_type=criterionType)
-                if criterionValue is not None:
-                    if criterionType == 'ATPortalTypeCriterion':
-                        concernedType = criterionValue[0]
-                        topic.manage_addProperty(
-                            TOPIC_TYPE, concernedType, 'string')
-                        # This is necessary to add a script doing the search
-                        # when the it is too complicated for a topic.
-                        topic.manage_addProperty(
-                            TOPIC_SEARCH_SCRIPT, searchScriptId, 'string')
-                        # Add a tal expression property
-                        topic.manage_addProperty(
-                            TOPIC_TAL_EXPRESSION, topic_tal_expr, 'string')
-                        criterionValue = '%s%s' % \
-                            (concernedType, self.getShortName())
-                    criterion.setValue(criterionValue)
-            topic.setLimitNumber(True)
-            topic.setItemCount(20)
-            topic.setSortCriterion(sortCriterion, True)
-            topic.setCustomView(True)
-            topic.setCustomViewFields(['Title', 'CreationDate', 'Creator',
-                                       'review_state'])
-            # call processForm passing dummy values so existing values are not touched
-            topic.processForm(values={'dummy': None})
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId):
         '''Returns the name of the action used for the cloneToOtherMC
@@ -3210,8 +3175,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self._createSubFolders()
         # Set a property allowing to know in which MeetingConfig we are
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
-        # Create the topics related to this meeting config
-        self.createTopics(self.topicsInfo)
         # Create the collections related to this meeting config
         self.createSearches(self._searchesInfo())
         # Create the action (tab) that corresponds to this meeting config

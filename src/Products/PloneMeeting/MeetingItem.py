@@ -1805,19 +1805,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If this item is being created or edited in portal_plonemeeting (as a
            recurring item), the list of active groups is returned.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        groupId = self.getField('proposingGroup').get(self)
         isDefinedInTool = self.isDefinedInTool()
         # bypass for Managers, pass idDefinedInTool to True so Managers
         # can select any available MeetingGroup
         isManager = tool.isManager(self, realManagers=True)
-        res = tool.getSelectableGroups(isDefinedInTool=(isDefinedInTool or isManager),
-                                       existingGroupId=groupId)
+        # show every groups for Managers or when isDefinedInTool
+        res = tool.getSelectableGroups(onlySelectable=not bool(isDefinedInTool or isManager))
+        res = DisplayList(tuple(res))
+        # make sure current selected proposingGroup is listed here
+        if self.getProposingGroup() and not self.getProposingGroup() in res.keys():
+            current_group = self.getProposingGroup(theObject=True)
+            res.add(current_group.getId(), current_group.getName())
         # add a 'make_a_choice' value when the item is in the tool
         if isDefinedInTool:
             res.insert(0, ('', translate('make_a_choice',
                            domain='PloneMeeting',
                            context=self.REQUEST)))
-        return DisplayList(tuple(res))
+        return res
 
     security.declarePublic('listAssociatedGroups')
     def listAssociatedGroups(self):

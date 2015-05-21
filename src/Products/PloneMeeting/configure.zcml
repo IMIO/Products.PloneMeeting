@@ -15,9 +15,12 @@
   <include package="collective.iconifieddocumentactions"/>
   <include package="imio.pm.locales"/>
   <include package="imio.actionspanel"/>
+  <include package="imio.dashboard"/>
   <include package="imio.history"/>
+  <include package="collective.compoundcriterion"/>
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
+  <include package="collective.eeafaceted.collectionwidget"/>
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="communesplone.layout"/>

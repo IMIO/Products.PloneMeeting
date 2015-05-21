@@ -632,23 +632,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getSelectableGroups')
-    def getSelectableGroups(self, isDefinedInTool=False, existingGroupId=None, userId=None):
+    def getSelectableGroups(self, onlySelectable=True, userId=None):
         """
           Returns the selectable groups for given p_userId or currently connected user.
+          If p_onlySelectable is True, we will only return groups for which current user is creator.
+          If p_userId is given, it will get groups for which p_userId is creator.
         """
         res = []
-        if not isDefinedInTool:
+        if onlySelectable:
             userMeetingGroups = self.getGroupsForUser(userId=userId, suffix="creators")
             for group in userMeetingGroups:
                 res.append((group.id, group.getName()))
-            if existingGroupId:
-                # Try to get the corresponding meeting group
-                group = getattr(self, existingGroupId, None)
-                if group:
-                    if group not in userMeetingGroups:
-                        res.append((existingGroupId, group.getName()))
-                else:
-                    res.append((existingGroupId, existingGroupId))
         else:
             for group in self.getMeetingGroups():
                 res.append((group.id, group.getName()))

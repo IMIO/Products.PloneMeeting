@@ -289,6 +289,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # no matter he is a creator or not
         self.changeUser('admin')
         self.assertTrue(item.listProposingGroups().sortedByKey().keys() == ['developers', 'vendors', ])
+        # if 'developers' was selected on the item, it will be available to 'pmReviewer1'
+        item.setProposingGroup('developers')
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.listProposingGroups().sortedByKey().keys() == ['developers', 'vendors', ])
 
     def test_pm_SendItemToOtherMC(self):
         '''Test the send an item to another meetingConfig functionnality'''
