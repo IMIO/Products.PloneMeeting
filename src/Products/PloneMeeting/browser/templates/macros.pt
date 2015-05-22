@@ -241,41 +241,6 @@ document.location.reload(true);
 </metal:itemHeader>
 
 <tal:comment replace="nothing">
-  This macro manage the itemIsSigned attribute of MeetingItem viewed on different views.
-  It manage the fact that it can be Ajax-edited in several context.
-  This macro need :
-  ajaxEdit : a relevant info about the fact that we will activate the Ajax edition
-  meetingItem : the relevant MeetingItem
-</tal:comment>
-<metal:itemIsSigned define-macro="itemIsSigned" i18n:domain="PloneMeeting"
-                    tal:define="showItemIsSigned meetingItem/showItemIsSigned;
-                                mayEdit python: ajaxEdit==False and False or meetingItem.adapted().maySignItem(member);
-                                isManager python: tool.isManager(meetingItem);
-                                itemIsSigned meetingItem/getItemIsSigned;">
-  <span id="marker_toggle_itemissigned_UID#"
-        tal:attributes="id string:marker_toggle_itemissigned_$UID;"
-        tal:define="UID meetingItem/UID;
-                    baseUrl meetingItem/absolute_url;"
-        tal:condition="python: showItemIsSigned and mayEdit and isManager">
-    <img class="itemIsSignedEditable" tal:condition="itemIsSigned" name="itemIsSignedNo"
-         title="item_is_signed_yes_edit" i18n:attributes="title"
-         tal:attributes="src string:$portal_url/itemIsSignedYes.png;
-                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
-    <img class="itemIsSignedEditable" tal:condition="not: itemIsSigned" name="itemIsSignedYes"
-         title="item_is_signed_no_edit" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/itemIsSignedNo.png;
-                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
-  </span>
-  <tal:showItemIsSigned condition="python: not showItemIsSigned">-</tal:showItemIsSigned>
-  <tal:forTheOthers condition="python: showItemIsSigned and not mayEdit">
-    <img tal:condition="itemIsSigned" title="item_is_signed_yes" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/itemIsSignedYes.png"/>
-    <img tal:condition="not: itemIsSigned" title="item_is_signed_no" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/itemIsSignedNo.png"/>
-  </tal:forTheOthers>
-</metal:itemIsSigned>
-
-<tal:comment replace="nothing">
   This macro manage the takenOverBy attribute of MeetingItem viewed on different views.
   It manage the fact that it can be Ajax-edited in several context.
   This macro need :

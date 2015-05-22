@@ -58,7 +58,7 @@
                    i18n:translate="to_discuss_yes"></label>
           </div>
         </td>
-        <td tal:condition="python: context.adapted().maySignItem(member)">
+        <td tal:condition="python: context.adapted().maySignItem()">
           <div id="archetypes-fieldname-itemIsSigned" class="field"
                tal:define="field python: here.getField('itemIsSigned');
                            reqValue request/itemIsSigned|nothing;

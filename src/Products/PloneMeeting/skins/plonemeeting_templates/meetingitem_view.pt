@@ -217,10 +217,7 @@
                  tal:condition="python: 'itemIsSigned' in usedAttrs">
               <span class="item_attribute_label"
                     i18n:translate="PloneMeeting_label_itemIsSigned"></span>:&nbsp;&nbsp;
-              <tal:defines define="meetingItem python: context;
-                                   ajaxEdit python: True;">
-               <metal:itemIsSigned use-macro="here/@@pm-macros/itemIsSigned" />
-              </tal:defines>
+                <tal:itemIsSigned replace="structure context/@@item-is-signed" />
             </div>
             <div class="discreet"
                  tal:condition="python: 'takenOverBy' in usedAttrs">

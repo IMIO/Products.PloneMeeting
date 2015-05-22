@@ -39,6 +39,16 @@ class ItemMoreInfosView(BrowserView):
         return self.tool.readCookie('pmShowDescriptions') == 'true' and True or False
 
 
+class ItemIsSignedView(BrowserView):
+    """
+      This manage the view displaying itemIsSigned widget
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+
+
 class PloneMeetingRedirectToAppView(BrowserView):
     """
       This manage the view set on the Plone Site that redirects the connected user

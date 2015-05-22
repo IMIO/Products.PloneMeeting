@@ -91,8 +91,7 @@ class ItemSign(BrowserView):
         self.portal = portal_state.portal()
 
     def toggle(self, UID):
-        member = self.portal.restrictedTraverse('@@plone_portal_state').member()
-        if not self.context.adapted().maySignItem(member):
+        if not self.context.adapted().maySignItem():
             raise Unauthorized
 
         # save current SecurityManager to fall back to it after deletion
@@ -108,7 +107,7 @@ class ItemSign(BrowserView):
 
         # check again if member can signItem now that it has been signed
         # by default, when an item is signed, it can not be unsigned
-        maySignItem = item.maySignItem(member)
+        maySignItem = item.adapted().maySignItem()
         if itemIsSigned:
             filename = 'itemIsSignedYes.png'
             name = 'itemIsSignedNo'

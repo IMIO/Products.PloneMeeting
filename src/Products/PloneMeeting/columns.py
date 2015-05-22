@@ -1,5 +1,4 @@
 # encoding: utf-8
-import lxml
 import urllib2
 
 from zope.i18n import translate
@@ -69,26 +68,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
 class ToDiscussColumn(BaseColumn):
     """Display an icon to represent if item is toDiscuss or not."""
 
-    def renderHeadCell(self):
-        """Display the toDiscussYes.png icon."""
-        # keep the original behaviour, just change the content of the <a> tag
-        a_tag = lxml.html.fromstring(super(ToDiscussColumn, self).renderHeadCell())
-        a_tag.text = ''
-        # insert the image
-        img = u"<img  title='{0}' src='{1}/toDiscussYes.png' />".format(translate('header_toDiscuss',
-                                                                                  domain='collective.eeafaceted.z3ctable',
-                                                                                  context=self.request),
-                                                                        self.table.portal_url)
-        a_tag.append(lxml.html.fromstring(img))
-        # are we sorting on toDiscuss?, if it is the case, append the u'▲' or u'▼'
-        if self.request.form.get(self.table.sorting_criterion_name + '[]', None) == 'toDiscuss':
-            # check if we are doing the sort reversed or not
-            if self.request.form.get('reversed[]', None) == 'on':
-                span = u"<span>▼</span>"
-            else:
-                span = u"<span>▲</span>"
-            a_tag.append(lxml.html.fromstring(span))
-        return unicode(lxml.html.tostring(a_tag), 'utf-8')
+    header_image = 'toDiscussYes.png'
 
     def renderCell(self, item):
         """Display right icon depending on toDiscuss or not."""

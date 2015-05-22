@@ -1274,7 +1274,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.queryState() in cfg.getItemDecidedStates()
 
     security.declarePublic('maySignItem')
-    def maySignItem(self, member):
+    def maySignItem(self):
         '''Condition for editing 'itemIsSigned' field.
            As the item signature comes after the item is decided/closed,
            we use an unrestricted call in @@toggle_item_is_signed that is protected by
@@ -1287,7 +1287,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
 
         # bypass for the Manager role
-        if 'Manager' in member.getRoles():
+        if tool.isManager(item, realManagers=True):
             return True
 
         # If the meeting is in a closed state, the item can only be signed but
@@ -1435,10 +1435,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setItemIsSigned(self, value, **kwargs):
         '''Overrides the field 'itemIsSigned' mutator to check if the field is
            actually editable.'''
-        member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
         #if we are not in the creation process (setting the default value)
         #and if the user can not sign the item, we raise an Unauthorized
-        if not self._at_creation_flag and not self.adapted().maySignItem(member):
+        if not self._at_creation_flag and not self.adapted().maySignItem():
             raise Unauthorized
         self.getField('itemIsSigned').set(self, value, **kwargs)
 

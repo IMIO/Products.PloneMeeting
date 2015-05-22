@@ -67,7 +67,8 @@ indexInfos = {
               'getConfigId': ('FieldIndex', {}),
               'indexUsages': ('KeywordIndex', {}), }
 # Metadata to create in portal_catalog, it has to correspond to an index in indexInfo
-columnInfos = ('getTitle2', 'getDate', 'getProposingGroup', 'getPreferredMeeting', 'title_or_id', 'toDiscuss', 'privacy')
+columnInfos = ('getTitle2', 'getDate', 'getProposingGroup', 'getPreferredMeeting',
+               'getItemIsSigned', 'title_or_id', 'toDiscuss', 'privacy')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # Index "indexUsages" does not use Archetype-generated getter "getUsages"
 # because in this case, both fields MeetingUser.usages and MeetingItem.usages

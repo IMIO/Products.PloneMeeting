@@ -225,6 +225,10 @@ class PMFacetedTableView(IDFacetedTableView):
         elif colName == u'privacy':
             column = I18nColumn(self.context, self.request, self)
             column.i18n_domain = 'PloneMeeting'
+        elif colName == u'getItemIsSigned':
+            column = BrowserViewCallColumn(self.context, self.request, self)
+            column.view_name = 'item-is-signed'
+            column.header_image = 'itemIsSignedYes.png'
         return column
 
 

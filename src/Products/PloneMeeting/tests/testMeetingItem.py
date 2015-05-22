@@ -1253,7 +1253,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setCategory('development')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         # MeetingMember can not setItemIsSigned
-        self.assertEquals(item.maySignItem(self.member), False)
+        self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         # MeetingManagers neither, the item must be decided...
         self.changeUser('pmManager')
@@ -1261,11 +1261,11 @@ class testMeetingItem(PloneMeetingTestCase):
         meetingDate = DateTime('2008/06/12 08:00:00')
         meeting = self.create('Meeting', date=meetingDate)
         self.presentItem(item)
-        self.assertEquals(item.maySignItem(self.member), False)
+        self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.freezeMeeting(meeting)
-        self.assertEquals(item.maySignItem(self.member), False)
+        self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.decideMeeting(meeting)
@@ -1273,10 +1273,10 @@ class testMeetingItem(PloneMeetingTestCase):
         if not item.queryState() == 'accepted':
             self.do(item, 'accept')
         # now that the item is accepted, MeetingManagers can sign it
-        self.assertEquals(item.maySignItem(self.member), True)
+        self.assertEquals(item.maySignItem(), True)
         item.setItemIsSigned(True)
         # a signed item can still be unsigned until the meeting is closed
-        self.assertEquals(item.maySignItem(self.member), True)
+        self.assertEquals(item.maySignItem(), True)
         # call to @@toggle_item_is_signed will set it back to False (toggle)
         item.restrictedTraverse('@@toggle_item_is_signed')(item.UID())
         self.assertEquals(item.getItemIsSigned(), False)
@@ -1287,10 +1287,10 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setItemIsSigned(False)
         self.closeMeeting(meeting)
         # still able to sign an unsigned item in a closed meeting
-        self.assertEquals(item.maySignItem(self.member), True)
+        self.assertEquals(item.maySignItem(), True)
         # once signed in a closed meeting, no more able to unsign the item
         item.setItemIsSigned(True)
-        self.assertEquals(item.maySignItem(self.member), False)
+        self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, False)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
 
