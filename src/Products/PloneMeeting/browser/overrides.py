@@ -31,6 +31,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.columns import ToDiscussColumn
+from Products.PloneMeeting.columns import LinkedMeetingColumn
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
@@ -229,6 +230,8 @@ class PMFacetedTableView(IDFacetedTableView):
             column = BrowserViewCallColumn(self.context, self.request, self)
             column.view_name = 'item-is-signed'
             column.header_image = 'itemIsSignedYes.png'
+        elif colName == u'linkedMeetingDate':
+            column = LinkedMeetingColumn(self.context, self.request, self)
         return column
 
 

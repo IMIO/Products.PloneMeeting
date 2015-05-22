@@ -10,8 +10,10 @@
 from OFS.interfaces import IItem
 
 from plone.indexer import indexer
+from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 
 
 @indexer(IMeetingItem)
@@ -65,6 +67,45 @@ def reviewProcessInfo(obj):
       and the item review_state so it can be queryable in the catalog.
     """
     return '%s__reviewprocess__%s' % (obj.getProposingGroup(), obj.queryState())
+
+
+@indexer(IMeetingItem)
+def linkedMeetingUID(obj):
+    """
+      Store the linked meeting UID.
+    """
+    res = ''
+    meeting = obj.getMeeting()
+    if meeting:
+        res = meeting.UID()
+    return res
+
+
+@indexer(IMeetingItem)
+def linkedMeetingDate(obj):
+    """
+      Store the linked meeting date.
+    """
+    res = ''
+    meeting = obj.getMeeting()
+    if meeting:
+        res = meeting.getDate()
+    return res
+
+
+@indexer(IMeetingItem)
+def getPreferredMeetingDate(obj):
+    """
+      Store the preferredMeeting date.
+    """
+    res = ''
+    preferredMeetingUID = obj.getPreferredMeeting()
+    if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
+        # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
+        # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
+        uid_catalog = getToolByName(obj, 'uid_catalog')
+        res = uid_catalog(UID=preferredMeetingUID)[0].getDate
+    return res
 
 
 @indexer(IItem)

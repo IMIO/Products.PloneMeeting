@@ -82,3 +82,18 @@ class ToDiscussColumn(BaseColumn):
                                                                                       domain='PloneMeeting',
                                                                                       context=self.request),
                                                                             self.table.portal_url)
+
+
+class LinkedMeetingColumn(BaseColumn):
+    """Display the formatted date and a link to the linked meeting if any."""
+
+    def renderCell(self, item):
+        """Display right icon depending on toDiscuss or not."""
+        if not item.linkedMeetingDate:
+            return u'-'
+        else:
+            catalog = getToolByName(item, 'portal_catalog')
+            tool = getToolByName(item, 'portal_plonemeeting')
+            meeting = catalog(UID=item.linkedMeetingUID)[0]
+            formattedMeetingDate = tool.formatMeetingDate(meeting, withHour=True)
+            return u'<a href="{0}">{1}</a>'.format(meeting.getURL(), formattedMeetingDate)

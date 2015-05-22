@@ -96,7 +96,8 @@ class Migrate_To_3_4(Migrator):
                               'proposingGroup': 'getProposingGroup',
                               'ProposingGroupAcronym': 'proposing_group_acronym',
                               'categoryOrProposingGroup': 'getCategory',
-                              'itemIsSigned': 'getItemIsSigned'}
+                              'itemIsSigned': 'getItemIsSigned',
+                              'meeting': 'linkedMeetingDate'}
             for k, v in columnMappings.items():
                 if k in itemsListVisibleColumns:
                     itemsListVisibleColumns.remove(k)

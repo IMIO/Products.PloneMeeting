@@ -111,7 +111,8 @@ def onItemTransition(item, event):
     # after the onItemTransition event
     notify(ItemAfterTransitionEvent(item))
     # update relevant indexes
-    item.reindexObject(idxs=['previous_review_state', 'reviewProcessInfo', 'getTakenOverBy', ])
+    item.reindexObject(idxs=['previous_review_state', 'reviewProcessInfo',
+                             'getTakenOverBy', 'linkedMeetingUID', 'linkedMeetingDate'])
 
 
 def onMeetingTransition(meeting, event):

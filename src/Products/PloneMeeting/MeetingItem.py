@@ -1281,14 +1281,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            this method.'''
         item = self.getSelf()
         tool = getToolByName(item, 'portal_plonemeeting')
-        # Only MeetingManagers can sign an item if it is decided
-        if not item.showItemIsSigned() or \
-           not tool.isManager(item):
-            return False
 
         # bypass for the Manager role
         if tool.isManager(item, realManagers=True):
             return True
+
+        # Only MeetingManagers can sign an item if it is decided
+        if not item.showItemIsSigned() or \
+           not tool.isManager(item):
+            return False
 
         # If the meeting is in a closed state, the item can only be signed but
         # not "unsigned".  This way, a final state 'signed' exists for the item

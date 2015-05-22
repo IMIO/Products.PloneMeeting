@@ -2669,9 +2669,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemColumns')
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('meeting', translate('header_meeting',
-                                             domain='collective.eeafaceted.z3ctable',
-                                             context=self.REQUEST)))
+        res.insert(-1, ('linkedMeetingDate', translate('header_linkedMeetingDate',
+                                                       domain='collective.eeafaceted.z3ctable',
+                                                       context=self.REQUEST)))
         res.insert(-1, ('preferred_meeting', translate('header_preferred_meeting',
                                                        domain='collective.eeafaceted.z3ctable',
                                                        context=self.REQUEST)))

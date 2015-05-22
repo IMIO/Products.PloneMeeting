@@ -695,39 +695,26 @@ TD acronym {
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
 .th_header_actions,
-.pm_listing_th_itemIsSigned,
+.th_header_itemIsSigned,
 .th_header_toDiscuss,
-.pm_meeting_listing_th_itemIsSigned,
-.pm_meeting_listing_th_checkBoxes,
-.pm_listing_th_advices,
-.pm_meeting_listing_th_advices {
+.pm_meeting_listing_th_checkBoxes {
     width: 1%;
 }
 .th_header_Creator,
 .th_header_getProposingGroup,
-.th_header_proposing_group_acronym,
-.pm_listing_th_proposingGroupAcronym,
-.pm_meeting_listing_th_proposingGroupAcronym,
-.pm_meeting_listing_th_categoryOrProposingGroup {
+.th_header_proposing_group_acronym {
     width: 100px;
 }
 .th_header_review_state,
-.pm_listing_th_relatedMeeting,
+.th_header_linkedMeetingDate,
 .pm_listing_th_preferredMeeting,
 .th_header_getCategory,
 .th_header_ModificationDate,
 .th_header_CreationDate {
     width: 90px;
 }
-.th_header_privacy,
-.pm_meeting_listing_th_privacy {
+.th_header_privacy {
     width: 60px;
-}
-
-/* TH of the table listing on the meeting view are stylable th by th */
-/* using 1% limit the width as much as possible... */
-.pm_meeting_listing_th_toDiscuss {
-    width: 1%;
 }
 
 .pm_meeting_listing_th_itemsNumbering {

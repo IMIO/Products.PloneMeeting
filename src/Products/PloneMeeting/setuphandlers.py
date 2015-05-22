@@ -40,35 +40,40 @@ noSearchTypes = ('Folder',)
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''
 indexInfos = {
-              # MeetingItem-related indexes
-              'getTitle2': ('ZCTextIndex', {}),
-              'getCategory': ('FieldIndex', {}),
-              'getItemIsSigned': ('FieldIndex', {}),
-              'getRawClassifier': ('FieldIndex', {}),
-              'getProposingGroup': ('FieldIndex', {}),
-              'getAssociatedGroups': ('KeywordIndex', {}),
-              'getPreferredMeeting': ('FieldIndex', {}),
-              'getDeliberation': ('ZCTextIndex', {}),
-              'getCopyGroups': ('KeywordIndex', {}),
-              'indexAdvisers': ('KeywordIndex', {}),
-              'previous_review_state': ('FieldIndex', {}),
-              'isDefinedInTool': ('BooleanIndex', {}),
-              'templateUsingGroups': ('KeywordIndex', {}),
-              'getCompleteness': ('KeywordIndex', {}),
-              'getTakenOverBy': ('FieldIndex', {}),
-              'reviewProcessInfo': ('FieldIndex', {}),
-              'toDiscuss': ('BooleanIndex', {}),
-              'privacy': ('FieldIndex', {}),
-              # Meeting-related indexes
-              'getDate': ('DateIndex', {}),
-              # MeetingFile-related indexes
-              'indexExtractedText': ('ZCTextIndex', {}),
-              # MeetingUser-related indexes
-              'getConfigId': ('FieldIndex', {}),
-              'indexUsages': ('KeywordIndex', {}), }
-# Metadata to create in portal_catalog, it has to correspond to an index in indexInfo
-columnInfos = ('getTitle2', 'getDate', 'getProposingGroup', 'getPreferredMeeting',
-               'getItemIsSigned', 'title_or_id', 'toDiscuss', 'privacy')
+    # MeetingItem-related indexes
+    'getTitle2': ('ZCTextIndex', {}),
+    'getCategory': ('FieldIndex', {}),
+    'getItemIsSigned': ('FieldIndex', {}),
+    'getRawClassifier': ('FieldIndex', {}),
+    'getProposingGroup': ('FieldIndex', {}),
+    'getAssociatedGroups': ('KeywordIndex', {}),
+    'getPreferredMeeting': ('FieldIndex', {}),
+    'getPreferredMeetingDate': ('DateIndex', {}),
+    'linkedMeetingUID': ('FieldIndex', {}),
+    'linkedMeetingDate': ('DateIndex', {}),
+    'getDeliberation': ('ZCTextIndex', {}),
+    'getCopyGroups': ('KeywordIndex', {}),
+    'indexAdvisers': ('KeywordIndex', {}),
+    'previous_review_state': ('FieldIndex', {}),
+    'isDefinedInTool': ('BooleanIndex', {}),
+    'templateUsingGroups': ('KeywordIndex', {}),
+    'getCompleteness': ('KeywordIndex', {}),
+    'getTakenOverBy': ('FieldIndex', {}),
+    'reviewProcessInfo': ('FieldIndex', {}),
+    'toDiscuss': ('BooleanIndex', {}),
+    'privacy': ('FieldIndex', {}),
+    # Meeting-related indexes
+    'getDate': ('DateIndex', {}),
+    # MeetingFile-related indexes
+    'indexExtractedText': ('ZCTextIndex', {}),
+    # MeetingUser-related indexes
+    'getConfigId': ('FieldIndex', {}),
+    'indexUsages': ('KeywordIndex', {}), }
+# Metadata to create in portal_catalog
+columnInfos = ('getTitle2', 'getDate', 'getProposingGroup',
+               'getPreferredMeeting', 'getPreferredMeetingDate',
+               'linkedMeetingDate', 'linkedMeetingUID',
+               'getItemIsSigned', 'title_or_id', 'toDiscuss', 'privacy', )
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # Index "indexUsages" does not use Archetype-generated getter "getUsages"
 # because in this case, both fields MeetingUser.usages and MeetingItem.usages

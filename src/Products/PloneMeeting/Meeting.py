@@ -880,6 +880,27 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                               meetingForRepls=meetingForRepls)
         return res
 
+    security.declareProtected('Modify portal content', 'setDate')
+    def setDate(self, value, **kwargs):
+        '''Overrides the field 'date' mutator so we reindex every linked
+           items if date value changed.'''
+        current_date = self.getField('date').get(self, **kwargs)
+        if not value == current_date:
+            catalog = getToolByName(self, 'portal_catalog')
+            tool = getToolByName(self, 'portal_catalog')
+            cfg = tool.getMeetingConfig(self)
+            # items linked to the meeting
+            brains = catalog(portal_type=cfg.getItemTypeName(),
+                             linkedMeetingUID=self.UID())
+            # items having the meeting as the preferredMeeting
+            brains = brains + catalog(portal_type=cfg.getItemTypeName(),
+                                      getPreferredMeeting=self.UID())
+            for brain in brains:
+                item = brain.getObject()
+                item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
+
+        self.getField('itemIsSigned').set(self, value, **kwargs)
+
     security.declarePublic('showObs')
     def showObs(self, name):
         '''When must field named p_name be shown? p_name can be "observations"
