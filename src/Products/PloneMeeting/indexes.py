@@ -104,7 +104,7 @@ def getPreferredMeetingDate(obj):
         # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
         # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
         uid_catalog = getToolByName(obj, 'uid_catalog')
-        res = uid_catalog(UID=preferredMeetingUID)[0].getDate
+        res = uid_catalog(UID=preferredMeetingUID)[0].getObject().getDate()
     return res
 
 

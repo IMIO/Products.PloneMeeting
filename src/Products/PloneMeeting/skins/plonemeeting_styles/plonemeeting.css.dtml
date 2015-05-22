@@ -707,7 +707,7 @@ TD acronym {
 }
 .th_header_review_state,
 .th_header_linkedMeetingDate,
-.pm_listing_th_preferredMeeting,
+.th_header_getPreferredMeetingDate,
 .th_header_getCategory,
 .th_header_ModificationDate,
 .th_header_CreationDate {

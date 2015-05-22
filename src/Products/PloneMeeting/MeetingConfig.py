@@ -2672,9 +2672,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res.insert(-1, ('linkedMeetingDate', translate('header_linkedMeetingDate',
                                                        domain='collective.eeafaceted.z3ctable',
                                                        context=self.REQUEST)))
-        res.insert(-1, ('preferred_meeting', translate('header_preferred_meeting',
-                                                       domain='collective.eeafaceted.z3ctable',
-                                                       context=self.REQUEST)))
+        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
+                                                             domain='collective.eeafaceted.z3ctable',
+                                                             context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingColumns')

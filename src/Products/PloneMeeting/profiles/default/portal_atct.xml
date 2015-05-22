@@ -1,7 +1,31 @@
 <?xml version="1.0"?>
 <atcttool
     xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+
  <topic_indexes i18n:domain="plone">
   <index name="portal_type" enabled="True" />
  </topic_indexes>
+
+ <topic_metadata i18n:domain="plone">
+  <metadata name="getCategory" friendlyName="Category" enabled="True" />
+ </topic_metadata>
+ <topic_metadata i18n:domain="plone">
+  <metadata name="getItemIsSigned" friendlyName="Item is signed?" enabled="True" />
+ </topic_metadata>
+ <topic_metadata i18n:domain="plone">
+  <metadata name="getPreferredMeetingDate" friendlyName="Preferred meeting date" enabled="True" />
+ </topic_metadata>
+ <topic_metadata i18n:domain="plone">
+  <metadata name="getProposingGroup" friendlyName="Proposing group" enabled="True" />
+ </topic_metadata>
+ <topic_metadata i18n:domain="plone">
+  <metadata name="linkedMeetingDate" friendlyName="Linked meeting date" enabled="True" />
+ </topic_metadata>
+ <topic_metadata i18n:domain="plone">
+  <metadata name="privacy" friendlyName="Privacy" enabled="True" />
+ </topic_metadata>
+ <topic_metadata i18n:domain="plone">
+  <metadata name="toDiscuss" friendlyName="To discuss?" enabled="True" />
+ </topic_metadata>
+
 </atcttool>

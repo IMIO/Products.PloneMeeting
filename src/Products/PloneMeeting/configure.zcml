@@ -128,6 +128,8 @@
            name="Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" />
   <utility component=".vocabularies.ItemProposingGroupAcronymsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" />
+  <utility component=".vocabularies.ItemReviewStatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary" />
 
   <configure package="imio.dashboard">
     <adapter for="plone.app.collection.collection.Collection"
