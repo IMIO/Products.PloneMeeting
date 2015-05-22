@@ -98,6 +98,7 @@
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
   <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
+  <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
   <adapter name="isDefinedInTool" factory=".indexes.isDefinedInTool" />
   <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
@@ -135,6 +136,8 @@
            name="Products.PloneMeeting.vocabularies.meetingdatesvocabulary" />
   <utility component=".vocabularies.AskedAdvicesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.askedadvicesvocabulary" />
+  <utility component=".vocabularies.SentToInfosVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
 
   <configure package="imio.dashboard">
     <adapter for="plone.app.collection.collection.Collection"

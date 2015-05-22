@@ -109,6 +109,25 @@ def getPreferredMeetingDate(obj):
 
 
 @indexer(IItem)
+def sentToInfos(obj):
+    """
+      Index other meetingConfigs the item will be/has been cloned to.
+      We append :
+      - __clonable_to to a meetingConfig id the item is clonable to;
+      - __cloned_to to a meetingConfig id the item is cloned to.
+    """
+    res = []
+    clonableTo = obj.getOtherMeetingConfigsClonableTo()
+    clonedTo = obj._getOtherMeetingConfigsImAmClonedIn()
+    for cfgId in clonableTo:
+        if not cfgId in clonedTo:
+            res.append(cfgId + '__clonable_to')
+    for cfgId in clonedTo:
+        res.append(cfgId + '__cloned_to')
+    return res
+
+
+@indexer(IItem)
 def isDefinedInTool(obj):
     """
       Do items defined in the tool visible by catalog searches only

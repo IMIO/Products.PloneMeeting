@@ -55,6 +55,7 @@ indexInfos = {
     'getCopyGroups': ('KeywordIndex', {}),
     'indexAdvisers': ('KeywordIndex', {}),
     'previous_review_state': ('FieldIndex', {}),
+    'sentToInfos': ('KeywordIndex', {}),
     'isDefinedInTool': ('BooleanIndex', {}),
     'templateUsingGroups': ('KeywordIndex', {}),
     'getCompleteness': ('KeywordIndex', {}),

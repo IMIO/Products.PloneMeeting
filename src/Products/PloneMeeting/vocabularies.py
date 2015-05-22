@@ -158,3 +158,27 @@ class AskedAdvicesVocabulary(object):
 AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
 
 
+class SentToInfosVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+
+        res = []
+        tool = getToolByName(context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        for cfgInfo in cfg.getMeetingConfigsToCloneTo():
+            cfgId = cfgInfo['meeting_config']
+            cfgTitle = getattr(tool, cfgId).getName()
+            # add 'clonable to' and 'cloned to' options
+            for suffix in ('__clonable_to', '__cloned_to'):
+                termId = cfgId + suffix
+                res.append(SimpleTerm(termId,
+                                      termId,
+                                      safe_unicode(translate('sent_to_other_mc_term' + suffix,
+                                                             mapping={'meetingConfigTitle': cfgTitle},
+                                                             domain='PloneMeeting',
+                                                             context=context.REQUEST)))
+                           )
+        return SimpleVocabulary(res)
+
+SentToInfosVocabularyFactory = SentToInfosVocabulary()
