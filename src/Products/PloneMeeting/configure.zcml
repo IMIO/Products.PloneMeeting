@@ -106,10 +106,9 @@
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
 
   <!-- add the blob field to MeetingFile -->
-  <adapter
-    name="plone.app.blob.subtypes.file"
-    for="Products.PloneMeeting.interfaces.IMeetingFile"
-    factory="plone.app.blob.subtypes.file.SchemaExtender" />
+  <adapter name="plone.app.blob.subtypes.file"
+           for="Products.PloneMeeting.interfaces.IMeetingFile"
+           factory="plone.app.blob.subtypes.file.SchemaExtender" />
 
   <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
   <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
@@ -130,6 +129,12 @@
            name="Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" />
   <utility component=".vocabularies.ItemReviewStatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary" />
+  <utility component=".vocabularies.CreatorsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.creatorsvocabulary" />
+  <utility component=".vocabularies.MeetingDatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.meetingdatesvocabulary" />
+  <utility component=".vocabularies.AskedAdvicesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.askedadvicesvocabulary" />
 
   <configure package="imio.dashboard">
     <adapter for="plone.app.collection.collection.Collection"

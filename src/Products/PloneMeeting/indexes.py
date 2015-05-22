@@ -186,6 +186,10 @@ def indexAdvisers(obj):
         # compute suffix
         suffix = _computeSuffixFor(groupId, advice)
 
+        # we also index the groupId so we can query who we asked
+        # advice to, without passing the advice state
+        res.append('real_group_id_' + groupId)
+
         if isDelayAware:
             res.append('delay__' + groupId + suffix)
         else:

@@ -887,7 +887,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         current_date = self.getField('date').get(self, **kwargs)
         if not value == current_date:
             catalog = getToolByName(self, 'portal_catalog')
-            tool = getToolByName(self, 'portal_catalog')
+            tool = getToolByName(self, 'portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             # items linked to the meeting
             brains = catalog(portal_type=cfg.getItemTypeName(),
@@ -898,8 +898,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             for brain in brains:
                 item = brain.getObject()
                 item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
-
-        self.getField('itemIsSigned').set(self, value, **kwargs)
+        self.getField('date').set(self, value, **kwargs)
 
     security.declarePublic('showObs')
     def showObs(self, name):

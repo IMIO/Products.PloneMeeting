@@ -93,3 +93,68 @@ class ItemReviewStatesVocabulary(object):
         return SimpleVocabulary(res)
 
 ItemReviewStatesVocabularyFactory = ItemReviewStatesVocabulary()
+
+
+class CreatorsVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+
+        catalog = getToolByName(context, 'portal_catalog')
+        membershipTool = getToolByName(context, 'portal_membership')
+        res = []
+        for creator in catalog.uniqueValuesFor('Creator'):
+            res.append(SimpleTerm(creator,
+                                  creator,
+                                  safe_unicode(membershipTool.getMemberInfo(creator)['fullname']))
+                       )
+        res = sorted(res, key=attrgetter('title'))
+        return SimpleVocabulary(res)
+
+CreatorsVocabularyFactory = CreatorsVocabulary()
+
+
+class MeetingDatesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+
+        catalog = getToolByName(context, 'portal_catalog')
+        tool = getToolByName(context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        brains = catalog(portal_type=cfg.getMeetingTypeName())
+        res = []
+        for brain in brains:
+            res.append(SimpleTerm(brain.UID,
+                                  brain.getDate,
+                                  tool.formatMeetingDate(brain, withHour=True))
+                       )
+        res = sorted(res, key=attrgetter('token'))
+        res.reverse()
+        return SimpleVocabulary(res)
+
+MeetingDatesVocabularyFactory = MeetingDatesVocabulary()
+
+
+class AskedAdvicesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+
+        res = []
+        catalog = getToolByName(context, 'portal_catalog')
+        tool = getToolByName(context, 'portal_plonemeeting')
+        advisers = catalog.uniqueValuesFor('indexAdvisers')
+        # keep values beginning with 'real_group_id_'
+        for adviser in advisers:
+            if adviser.startswith('real_group_id_'):
+                res.append(SimpleTerm(adviser,
+                                      adviser,
+                                      safe_unicode(getattr(tool, adviser.split('real_group_id_')[-1]).getName()))
+                           )
+        res = sorted(res, key=attrgetter('title'))
+        return SimpleVocabulary(res)
+
+AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
+
+
