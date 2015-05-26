@@ -35,6 +35,7 @@ from DateTime import DateTime
 from AccessControl import getSecurityManager
 from zope.annotation import IAnnotations
 from zope.i18n import translate
+from zope.component import getAdapter
 from zope.component import getUtility
 from zope.component.interfaces import ObjectEvent
 from zope.event import notify
@@ -1027,7 +1028,8 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
             if checkMayView:
                 # workflow history event
                 # hide comment if user may not access it
-                if not IImioHistory(obj).mayViewComment(event):
+                adapter = getAdapter(obj, IImioHistory, 'workflow')
+                if not adapter.mayViewComment(event):
                     event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
         res.append(event)
     return res

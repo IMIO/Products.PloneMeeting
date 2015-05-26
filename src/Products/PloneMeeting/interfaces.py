@@ -273,16 +273,7 @@ class IMeetingItemDocumentation:
            given in p_fieldName). The method must return the adapted version of
            p_richContent, which contains the XHTML content of the "richtext"
            field (a string). The default PloneMeeting behaviour for this method
-           is to return p_richContent untouched.
-
-           A current limitation of this mechanism: if you apply some
-           transformation on the field named "description", you will get
-           a conflict with the PloneMeeting "color system": this system will
-           always detect that some change occurred if this method updates the
-           field, and the pm_modification_date of the corresponding item will
-           be updated. With the field named "decision" this problem does not
-           occur because it is not taken into account by the PloneMeeting color
-           system.'''
+           is to return p_richContent untouched.'''
     def onEdit(isCreated):
         '''This method is called every time an item is created or updated.
            p_isCreated is True if the object was just created. It is called

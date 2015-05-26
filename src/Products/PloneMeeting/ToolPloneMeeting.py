@@ -148,20 +148,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    StringField(
-        name='usedColorSystem',
-        default=defValues.usedColorSystem,
-        widget=SelectionWidget(
-            description="UsedColorSystem",
-            description_msgid="used_color_system_descr",
-            format="select",
-            label='Usedcolorsystem',
-            label_msgid='PloneMeeting_label_usedColorSystem',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=True,
-        vocabulary='listAvailableColorSystems',
-    ),
     TextField(
         name='colorSystemDisabledFor',
         default=defValues.colorSystemDisabledFor,
@@ -1003,49 +989,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res.encode('utf-8')
         return res
 
-    security.declarePublic('rememberAccess')
-    def rememberAccess(self, uid, commitNeeded=True):
-        '''Remember the fact that the currently logged user just accessed
-           object with p_uid.'''
-        if self.getUsedColorSystem() == "modification_color":
-            member = self.portal_membership.getAuthenticatedMember()
-            memberId = member.getId()
-            if not memberId in self.accessInfo:
-                self.accessInfo[memberId] = OOBTree()
-            self.accessInfo[memberId][uid] = DateTime()  # Now
-            if commitNeeded:
-                transaction.commit()
-
-    security.declarePublic('lastModifsConsultedOn')
-    def lastModifsConsultedOn(self, uid, objModifDate):
-        '''Did the user already consult last modifications made on obj with uid
-           p_uid and that was last modified on p_objModifDate ?'''
-        res = True
-        neverConsulted = False
-        member = self.portal_membership.getAuthenticatedMember()
-        memberId = member.getId()
-        if memberId in self.accessInfo:
-            accessInfo = self.accessInfo[memberId]
-            if uid in accessInfo:
-                res = accessInfo[uid] > objModifDate
-            else:
-                res = False
-                neverConsulted = True
-        else:
-            res = False
-            neverConsulted = True
-        return (res, neverConsulted)
-
-    security.declarePublic('lastModifsConsultedOnAnnexes')
-    def lastModifsConsultedOnAnnexes(self, annexes):
-        '''Did the user already consult last modifications made on all annexes
-           in p_annexes ?'''
-        res = True
-        for annex in annexes:
-            res = res and self.lastModifsConsultedOn(
-                annex['UID'], annex['modification_date'])[0]
-        return res
-
     security.declarePublic('highlight')
     def highlight(self, text):
         '''This method highlights parts of p_text corresponding to keywords if
@@ -1134,21 +1077,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     annexInfo['friendlySize'])
 
         return adapted.getLink()
-
-    security.declarePublic('showColorsForUser')
-    def showColorsForUser(self):
-        '''Must I show the colors from the color system for the current user?'''
-        res = False
-        # If we choosed to use a coloration model, we check if we have to show
-        # colors to the current user.
-        if self.getUsedColorSystem() != 'no_color':
-            res = True
-            member = self.portal_membership.getAuthenticatedMember()
-            memberId = member.getId()
-            usersToExclude = [u.strip() for u in self.getColorSystemDisabledFor().split('\n')]
-            if usersToExclude and (memberId in usersToExclude):
-                res = False
-        return res
 
     security.declareProtected('Manage portal', 'purgeAccessInfo')
     def purgeAccessInfo(self):

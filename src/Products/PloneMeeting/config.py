@@ -181,16 +181,6 @@ TOOL_FOLDER_FILE_TYPES = 'meetingfiletypes'
 TOOL_FOLDER_POD_TEMPLATES = 'podtemplates'
 TOOL_FOLDER_MEETING_USERS = 'meetingusers'
 
-# Name of properties used on topics
-TOPIC_TYPE = 'meeting_topic_type'
-TOPIC_SEARCH_SCRIPT = 'topic_search_script'
-TOPIC_SEARCH_FILTERS = 'topic_search_filters'
-TOPIC_TAL_EXPRESSION = 'topic_tal_expression'
-
-# If, for a topic, a specific script is used for the search, and if this topic
-# does not define an "itemCount", we use this default value.
-DEFAULT_TOPIC_ITEM_COUNT = 20
-
 ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 
 # default fields kept when an item is cloned

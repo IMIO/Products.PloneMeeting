@@ -3768,9 +3768,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
-        # Add a custom modification_date that does not take into account some
-        # events like state changes
-        self.pm_modification_date = self.modification_date
         # Create a "black list" of annex names. Every time an annex will be
         # created for this item, the name used for it (=id) will be stored here
         # and will not be removed even if the annex is removed. This way, two
@@ -3801,8 +3798,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # is selected in MeetingConfig.itemPowerObserversStates or MeetingConfig.itemBudgetInfosStates
         self.updatePowerObserversLocalRoles()
         self.updateBudgetImpactEditorsLocalRoles()
-        # Tell the color system that the current user has consulted this item.
-        self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
@@ -3820,8 +3815,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isCopiesEnabled():
             self.addAutoCopyGroups(isCreated=False)
         self.updateLocalRoles()
-        # Tell the color system that the current user has consulted this item.
-        self.portal_plonemeeting.rememberAccess(self.UID(), commitNeeded=False)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
@@ -3959,20 +3952,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'processForm')
     def processForm(self, *args, **kwargs):
-        '''We override this method in order to be able to set correctly our own
-           pm_modification_date for this object: if a change occurred in the
-           title or description, we update the modification date.
-
-           Indeed, we need a specific modification date that does not take into
-           account some changes like state changes. This is a special
-           requirement for the "color system", that allows users to see in a
-           given color some changes that occurred on items and annexes.'''
-        if self.Title() != self.REQUEST.get('title'):
-            self.pm_modification_date = DateTime()
-            self._v_modified = True
-        if self.Description() != self.REQUEST.get('description'):
-            self.pm_modification_date = DateTime()
-            self._v_modified = True
+        ''' '''
         if not self.isTemporary():
             # Remember previous data if historization is enabled.
             self._v_previousData = rememberPreviousData(self)
@@ -4469,7 +4449,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def displayLinkedItem(self, item):
         '''Return a HTML structure to display a linked item.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        showColors = tool.showColorsForUser()
         meeting = item.getMeeting()
         # display the meeting date if the item is linked to a meeting
         if meeting:
@@ -4483,7 +4462,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                           domain='plone',
                                                                           context=self.REQUEST).encode('utf-8'),
                                                                 title)
-        coloredLink = tool.getColoredLink(item, showColors=showColors, contentValue=title)
+        coloredLink = tool.getColoredLink(item, showColors=True, contentValue=title)
         if not checkPermission(View, item):
             coloredLink = spanifyLink(coloredLink)
             coloredLink += "&nbsp;<span class='discreet'>({0})</span>".format(
@@ -4684,12 +4663,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayConsultVotes')
     def mayConsultVotes(self):
         '''Returns True if the current user may consult all votes for p_self.'''
-        user = self.portal_membership.getAuthenticatedMember()
+        membershipTool = getToolByName(self, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
         voters = self.getAttendees(usage='voter')
         if not voters:
             return False
         for mUser in voters:
-            if not mUser.adapted().mayConsultVote(user, self):
+            if not mUser.adapted().mayConsultVote(member, self):
                 return False
         return True
 

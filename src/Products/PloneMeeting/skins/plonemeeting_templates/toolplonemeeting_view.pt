@@ -175,21 +175,6 @@
             </td>
           </tr>
           <tr valign="top">
-            <td tal:define="field python:here.getField('usedColorSystem')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-              <!-- Form for purging user access info -->
-              <form tal:condition="python: context.getUsedColorSystem() == 'modification_color'"
-                    method="post" action="purge_user_access_info">
-                <input class="context" type="submit" id="purgeSubmit" value="purge_user_access_info"
-                       i18n:attributes="value"/>
-              </form>
-            </td>
-            <td tal:define="field python:here.getField('colorSystemDisabledFor')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
-            <td></td>
-          </tr>
-          <tr valign="top">
             <td tal:define="field python:here.getField('restrictUsers')">
                 <span metal:use-macro="here/widgets/field/macros/view" />
             </td>

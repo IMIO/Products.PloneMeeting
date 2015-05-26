@@ -33,7 +33,7 @@
                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
                   iStartNumber python: context.getBatchStartNumber(late=False);
                   lStartNumber python: context.getBatchStartNumber(late=True);
-                  showColors tool/showColorsForUser;
+                  showColors python: False;
                   showPage tool/showMeetingView;
                   showLateItems python: context.mustShowLateItems(iStartNumber, meetingConfig.getMaxShownMeetingItems());
                   usedAttrs meetingConfig/getUsedMeetingAttributes;

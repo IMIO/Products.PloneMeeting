@@ -22,13 +22,11 @@
 # 02110-1301, USA.
 #
 
-import logging
+from collections import OrderedDict
+
 from DateTime import DateTime
 
 from zope.i18n import translate
-
-from plone.app.textfield.value import RichTextValue
-from plone.dexterity.utils import createContentInContainer
 
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
@@ -39,381 +37,15 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
-from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import TOPIC_SEARCH_FILTERS
 from Products.PloneMeeting.config import WriteHarmlessConfig
-from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 
 
 class testMeetingConfig(PloneMeetingTestCase):
     '''Tests the MeetingConfig class methods.'''
-
-    def test_pm_SearchItemsToAdvice(self):
-        '''Test the searchItemsToAdvice method.  This should return a list of items
-           a user has to give an advice for.'''
-        self.meetingConfig.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
-              'group': 'vendors',
-              'delay': '5', }, ])
-        # by default, no item to advice...
-        self.changeUser('pmAdviser1')
-        self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
-        # an advice can be given when an item is 'proposed'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
-                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        # create an item to advice
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('developers', 'vendors__rowid__unique_id_123'))
-        # as the item is "itemcreated", advices are not givable
-        self.changeUser('pmAdviser1')
-        self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
-        # now propose the item
-        self.changeUser('pmCreator1')
-        self.proposeItem(item)
-        # only advisers can give an advice, so a creator for example will not see it
-        self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 0)
-        # now test as advisers
-        self.changeUser('pmAdviser1')
-        self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 1)
-        self.assertEquals(self.meetingConfig.searchItemsToAdvice('', '', '', '')[0].UID, item.UID())
-        # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
-        # so pmAdviser1 gives his advice
-        createContentInContainer(item,
-                                 'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
-                                    'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
-        self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
-        # pmReviewer2 is adviser for 'vendors', delay-aware advices are also returned
-        self.changeUser('pmReviewer2')
-        self.failUnless(len(self.meetingConfig.searchItemsToAdvice('', '', '', '')) == 1)
-        self.assertEquals(self.meetingConfig.searchItemsToAdvice('', '', '', '')[0].UID, item.UID())
-        # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
-        # so pmReviewer2 gives his advice
-        createContentInContainer(item,
-                                 'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
-                                    'advice_type': u'negative',
-                                    'advice_comment': RichTextValue(u'My comment')})
-        self.failIf(self.meetingConfig.searchItemsToAdvice('', '', '', ''))
-
-    def test_pm_SearchAdvisedItems(self):
-        '''Test the searchAdvisedItems method.  This should return a list of items
-           a user has already give an advice for.'''
-        # by default, no advices item...
-        self.changeUser('pmAdviser1')
-        self.failIf(self.meetingConfig.searchAdvisedItems('', '', '', ''))
-        # an advice can be given when an item is 'proposed'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
-                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        # create an item to advice
-        self.changeUser('pmCreator1')
-        item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers(('developers',))
-        self.proposeItem(item1)
-        # give an advice
-        self.changeUser('pmAdviser1')
-        createContentInContainer(item1,
-                                 'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
-                                    'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
-        self.failUnless(self.meetingConfig.searchAdvisedItems('', '', '', ''))
-        # another user will not see given advices
-        self.changeUser('pmCreator1')
-        self.failIf(self.meetingConfig.searchAdvisedItems('', '', '', ''))
-        # other advisers of the same group will also see advised items
-        self.changeUser('pmManager')
-        self.failUnless(self.meetingConfig.searchAdvisedItems('', '', '', ''))
-        # now create a second item and ask advice to the vendors (pmManager)
-        # it will be returned for pmManager but not for pmAdviser1
-        self.changeUser('pmCreator1')
-        item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('vendors',))
-        self.proposeItem(item2)
-        self.changeUser('pmManager')
-        createContentInContainer(item2,
-                                 'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
-                                    'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
-        # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
-        self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 2)
-        self.changeUser('pmAdviser1')
-        self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 1)
-        self.changeUser('pmCreator1')
-        self.failUnless(len(self.meetingConfig.searchAdvisedItems('', '', '', '')) == 0)
-
-    def test_pm_SearchAdvisedItemsWithDelay(self):
-        '''Test the searchAdvisedItemsWithDelay method.  This should return a list
-           of items a user has already give a delay-aware advice for.'''
-        # by default, no advices item...
-        self.changeUser('pmAdviser1')
-        self.failIf(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', ''))
-        # an advice can be given when an item is 'proposed'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
-                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        # create an item to advice
-        self.changeUser('pmCreator1')
-        item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers(('developers',))
-        self.proposeItem(item1)
-        # give a non delay-aware advice
-        self.changeUser('pmAdviser1')
-        createContentInContainer(item1,
-                                 'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
-                                    'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
-        # non delay-aware advices are not found
-        self.failIf(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', ''))
-        # now create a second item and ask a delay-aware advice
-        self.changeUser('admin')
-        originalCustomAdvisers = {'row_id': 'unique_id_123',
-                                  'group': 'developers',
-                                  'gives_auto_advice_on': '',
-                                  'for_item_created_from': '2012/01/01',
-                                  'for_item_created_until': '',
-                                  'gives_auto_advice_on_help_message': '',
-                                  'delay': '10',
-                                  'delay_left_alert': '',
-                                  'delay_label': 'Delay label', }
-        self.meetingConfig.setCustomAdvisers([originalCustomAdvisers, ])
-        self.changeUser('pmCreator1')
-        item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('developers__rowid__unique_id_123',))
-        self.proposeItem(item2)
-        self.changeUser('pmAdviser1')
-        createContentInContainer(item2,
-                                 'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
-                                    'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
-        # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
-        self.failUnless(len(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', '')) == 1)
-        self.changeUser('pmCreator1')
-        self.failUnless(len(self.meetingConfig.searchAdvisedItemsWithDelay('', '', '', '')) == 0)
-
-    def test_pm_SearchItemsInCopy(self):
-        '''Test the searchItemsInCopy method.  This should return a list of items
-           a user is in copy of.'''
-        # specify that copyGroups can see the item when it is proposed
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
-        # create an item and set another proposing group in copy of
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        # give a view access to members of vendors, like pmReviewer2
-        item.setCopyGroups(('vendors_reviewers',))
-        item.at_post_edit_script()
-        self.failIf(self.meetingConfig.searchItemsInCopy('', '', '', ''))
-        # connect as a member of 'developers_reviewers'
-        self.changeUser('pmReviewer2')
-        # the item is not proposed so not listed
-        self.failIf(self.meetingConfig.searchItemsInCopy('', '', '', ''))
-        # propose the item, it will be listed
-        self.proposeItem(item)
-        self.failUnless(self.meetingConfig.searchItemsInCopy('', '', '', ''))
-
-    def test_pm_SearchMyItemsTakenOver(self):
-        '''Test the searchMyItemsTakenOver method.  This should return
-           a list of items a user has taken over.'''
-        self.changeUser('pmManager')
-        item = self.create('MeetingItem')
-        # by default nothing is returned
-        self.failIf(self.meetingConfig.searchMyItemsTakenOver('', '', '', ''))
-        # now take item over
-        item.setTakenOverBy(self.member.getId())
-        item.reindexObject(idxs=['getTakenOverBy', ])
-        # now it is returned
-        self.failUnless(self.meetingConfig.searchMyItemsTakenOver('', '', '', ''))
-        # takenOverBy is set back to '' on each transition
-        self.proposeItem(item)
-        self.assertTrue(not item.getTakenOverBy())
-        self.failIf(self.meetingConfig.searchMyItemsTakenOver('', '', '', ''))
-
-    def test_pm_SearchItemsToValidateOfHighestHierarchicLevel(self):
-        '''Test the searchItemsToValidateOfHighestHierarchicLevel method.
-           This should return a list of items a user ***really*** has to validate.
-           Items to validate are items for which user is a reviewer and only regarding
-           his higher hierarchic level.
-           So a reviewer level 1 and level 2 will only see items in level 2, a reviewer in level
-           1 (only) will only see items in level 1.'''
-        # activate 'prevalidation' if necessary
-        if 'prereviewers' in MEETINGREVIEWERS:
-            self.meetingConfig.setWorkflowAdaptations('pre_validation')
-            logger = logging.getLogger('PloneMeeting: testing')
-            performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
-        # create an item
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        # jump to first level of validation
-        self.do(item, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
-        self.changeUser('pmReviewerLevel1')
-        self.failUnless(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
-        # now as 'pmReviewerLevel2', the item should not be returned
-        # as he only see items of his highest hierarchic level
-        self.changeUser('pmReviewerLevel2')
-        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
-        # pass the item to second last level of hierarchy, where 'pmReviewerLevel2' is reviewer for
-        self.changeUser('pmReviewerLevel1')
-        # jump to last level of validation
-        self.proposeItem(item)
-        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
-        self.changeUser('pmReviewerLevel2')
-        self.failUnless(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
-
-        # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
-        # the search does returns him the item, it should not as he is just a reviewer
-        # but not able to really validate the new item
-        self.meetingConfig.setUseCopies(True)
-        review_states = MEETINGREVIEWERS[MEETINGREVIEWERS.keys()[0]]
-        if 'prereviewers' in MEETINGREVIEWERS:
-            review_states = ('prevalidated',)
-        self.meetingConfig.setItemCopyGroupsStates(review_states)
-        item.setCopyGroups(('vendors_reviewers',))
-        item.at_post_edit_script()
-        self.changeUser('pmReviewer2')
-        # the user can see the item
-        self.failUnless(self.hasPermission('View', item))
-        # but the search will not return it
-        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
-        # if the item is validated, it will not appear for pmReviewer1 anymore
-        self.changeUser('pmReviewer1')
-        self.failUnless(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
-        self.validateItem(item)
-        self.failIf(self.meetingConfig.searchItemsToValidateOfHighestHierarchicLevel('', '', '', ''))
-
-    def test_pm_SearchItemsToValidateOfMyReviewerGroups(self):
-        '''Test the searchItemsToValidateOfMyReviewerGroups method.
-           This should return a list of items a user could validate at any level,
-           so not only his highest hierarchic level.  This will return finally every items
-           corresponding to Plone reviewer groups the user is in.'''
-        logger = logging.getLogger('PloneMeeting: testing')
-        # activate the 'pre_validation' wfAdaptation if it exists in current profile...
-        # if not, then MEETINGREVIEWERS must be at least 2 elements long
-        if not len(MEETINGREVIEWERS) > 1:
-            logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' because "
-                        "we need at least 2 levels of item validation.")
-        if 'pre_validation' in self.meetingConfig.listWorkflowAdaptations():
-            self.meetingConfig.setWorkflowAdaptations('pre_validation')
-            logger = logging.getLogger('PloneMeeting: testing')
-            performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
-        # create 2 items
-        self.changeUser('pmCreator1')
-        item1 = self.create('MeetingItem')
-        item2 = self.create('MeetingItem')
-        self.do(item1, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        self.do(item2, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        self.failIf(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', ''))
-        # as first level user, he will see items
-        self.changeUser('pmReviewerLevel1')
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')) == 2)
-        # as second level user, he will not see items of first level also
-        self.changeUser('pmReviewerLevel2')
-        self.failIf(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', ''))
-
-        # define 'pmReviewerLevel2' as a prereviewer (first validation level reviewer)
-        self._turnUserIntoPrereviewer(self.member)
-        # change again to 'pmReviewerLevel2' so changes in his groups are taken into account
-        self.changeUser('pmReviewerLevel2')
-        # he can access first validation level items
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')) == 2)
-        # move item1 to last validation level
-        self.proposeItem(item1)
-        # both items still returned by the search for 'pmReviewerLevel2'
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')) == 2)
-        # but now, the search only returns item2 to 'pmReviewerLevel1'
-        self.changeUser('pmReviewerLevel1')
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')) == 1)
-        self.failUnless(self.meetingConfig.searchItemsToValidateOfMyReviewerGroups('', '', '', '')[0].UID == item2.UID())
-
-    def runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest(self):
-        '''
-          Helper method for activating the test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels
-          test when called from a subplugin.
-        '''
-        return False
-
-    def test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels(self):
-        '''Test the searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels method.
-           This will return items to validate of his highest hierarchic level and every levels
-           under, even if user is not in the corresponding Plone reviewer groups.'''
-        logger = logging.getLogger('PloneMeeting: testing')
-        # by default we use the 'pre_validation_keep_reviewer_permissions' to check
-        # this, but if a subplugin has the right workflow behaviour, this can works also
-        # so if we have 'pre_validation_keep_reviewer_permissions' apply it, either,
-        # check if self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest() is True
-        if not 'pre_validation_keep_reviewer_permissions' and not \
-           self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest():
-            logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels'"
-                        "because we need a correctly configured workflow.")
-        if 'pre_validation_keep_reviewer_permissions' in self.meetingConfig.listWorkflowAdaptations():
-            self.meetingConfig.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
-            logger = logging.getLogger('PloneMeeting: testing')
-            performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
-        # create 2 items
-        self.changeUser('pmCreator1')
-        item1 = self.create('MeetingItem')
-        item2 = self.create('MeetingItem')
-        self.do(item1, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        self.do(item2, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        self.failIf(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', ''))
-        # as first level user, he will see items
-        self.changeUser('pmReviewerLevel1')
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 2)
-        # as second level user, he will also see items because items are from lower reviewer levels
-        self.changeUser('pmReviewerLevel2')
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 2)
-
-        # now propose item1, both items are still viewable to 'pmReviewerLevel2', but 'pmReviewerLevel1'
-        # will only see item of 'his' highest hierarchic level
-        self.proposeItem(item1)
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 2)
-        self.changeUser('pmReviewerLevel1')
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 1)
-        self.failUnless(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')[0].UID == item2.UID())
-
-    def test_pm_SearchItemsWithFilters(self):
-        '''Test the searchItemsWithFilters method.  This should return a list of items
-           depending on the 'topic_search_script' property defined values.'''
-        # while a 'topic_search_filters' if defined on the relevant topic, it is passed
-        # as kwargs to searchItemsWithFilters, so do the same here
-        # the 'query' will restrict list of brains to be treated
-        # by filters defined in 'filters'.  The filters are applied with a 'OR', so, if one of
-        # the filters is correct, the brain is kept
-        kwargs = {}
-        # we want items of 'vendors' that are 'proposed' and items of 'developers' that are 'validated'
-        filters = {'query': {'review_state': (self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ),
-                             'getProposingGroup': ('vendors', 'developers'), },
-                   'filters': ({'getProposingGroup': ('vendors', ),
-                                'review_state': (self.WF_STATE_NAME_MAPPINGS['proposed'], )},
-                               {'getProposingGroup': ('developers', ),
-                                'review_state': ('validated', )},),
-                   }
-        kwargs[TOPIC_SEARCH_FILTERS] = filters
-        self.changeUser('pmManager')
-        vendors_item = self.create('MeetingItem')
-        vendors_item.setProposingGroup('vendors')
-        developers_item = self.create('MeetingItem')
-        developers_item.setProposingGroup('developers')
-        # as items are not in the correct state, nothing is returned for now
-        self.failIf(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs))
-        # set vendors_item in right state
-        self.proposeItem(vendors_item)
-        self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 1)
-        # set developers_item to proposed, not listed...
-        self.proposeItem(developers_item)
-        self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 1)
-        # now set developers_item to validated, it will be listed
-        self.validateItem(developers_item)
-        self.failUnless(len(self.meetingConfig.searchItemsWithFilters('', '', '', '', **kwargs)) == 2)
 
     def test_pm_Validate_customAdvisersEnoughData(self):
         '''Test the MeetingConfig.customAdvisers validate method.
@@ -1351,52 +983,19 @@ class testMeetingConfig(PloneMeetingTestCase):
         podTemplate.setPodPermission('Manage portal')
         self.assertTrue(len(cfg.getAvailablePodTemplates(meeting)) == 1)
 
-    def test_pm_AddingExistingTopicDoesNotBreak(self):
+    def test_pm_AddingExistingSearchDoesNotBreak(self):
         '''
-          Check that we can call MeetingConfig.createTopics and that if
-          a topic already exist, it does not break.
+          Check that we can call MeetingConfig.createSearches and that if
+          a search already exist, it does not break.
         '''
-        # try to add a topic name 'searchmyitems' that already exist...
-        self.assertTrue(hasattr(self.meetingConfig.topics, 'searchmyitems'))
-        topicInfo = self.meetingConfig.topicsInfo[0]
-        self.assertTrue(topicInfo[0] == 'searchmyitems')
-        self.meetingConfig.createTopics((topicInfo, ))
-
-    def test_pm_GetTopics(self):
-        '''Test the MeetingConfig.getTopics method.  This returns topics depending on :
-           - topicType parameter (Meeting or MeetingItem);
-           - the evaluation of the TAL expression defined on the topic.
-        '''
-        self.changeUser('pmManager')
         cfg = self.meetingConfig
-        numberOfItemRelatedTopics = len(cfg.getTopics('MeetingItem'))
-        # we have item related topics
-        self.assertTrue(numberOfItemRelatedTopics > 1)
-        # 2 topics related to meetings
-        self.assertTrue(len(cfg.getTopics('Meeting')) == 2)
-        # now deactivate one MeetingItem related topic and check that it is no more returned
-        topic = cfg.getTopics('MeetingItem')[0]
-        self.changeUser('admin')
-        self.do(topic, 'deactivate')
-        self.changeUser('pmManager')
-        self.cleanMemoize()
-        self.assertTrue(len(cfg.getTopics('MeetingItem')) == numberOfItemRelatedTopics - 1)
-        # if we define a wrong TAL expression on a topic, it is no more taken into account
-        topic = cfg.getTopics('MeetingItem')[0]
-        topic.manage_changeProperties(topic_tal_expression='context/wrong_expression_method')
-        self.cleanMemoize()
-        self.assertTrue(len(cfg.getTopics('MeetingItem')) == numberOfItemRelatedTopics - 2)
-        # test the fromPortletTodo parameter so we can have it in the TAL expression and take it into account
-        # define a TAL expression on a topic using the 'fromPortletTodo'
-        topic = cfg.getTopics('MeetingItem')[0]
-        # make it only be displayed in portlet_todo
-        topic.manage_changeProperties(topic_tal_expression='python: fromPortletTodo')
-        # if called from portlet_todo, it is taken into account
-        self.cleanMemoize()
-        self.assertTrue(len(cfg.getTopics('MeetingItem', fromPortletTodo=True)) == numberOfItemRelatedTopics - 2)
-        # else it is not...
-        self.cleanMemoize()
-        self.assertTrue(len(cfg.getTopics('MeetingItem', fromPortletTodo=False)) == numberOfItemRelatedTopics - 3)
+        # try to add a topic name 'searchmyitems' that already exist...
+        self.assertTrue(hasattr(cfg.searches.meetingitems, 'searchmyitems'))
+        searchInfo = cfg._searchesInfo().items()[0]
+        self.assertEquals(searchInfo[0], 'searchmyitems')
+        self.meetingConfig.createSearches(OrderedDict((searchInfo, )))
+        # we can evrn call it again with full searchesInfo
+        cfg.createSearches(cfg._searchesInfo())
 
     def test_pm_MeetingManagersMayEditHarmlessConfigFields(self):
         '''A MeetingManager may edit some harmless fields on the MeetingConfig,

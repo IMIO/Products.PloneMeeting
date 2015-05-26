@@ -6,7 +6,7 @@
 from Products.Archetypes.atapi import *
 from Products.CMFCore.permissions import DeleteObjects
 from Products.PloneMeeting.config import ReadDecision, WriteDecision
-
+from Products.PloneMeeting.utils import updateCollectionCriterion
 
 # Stuff for performing workflow adaptations ------------------------------------
 noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',
@@ -556,14 +556,12 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 toConfirm = list(toConfirm)
                 toConfirm.append('Meeting.backToDecisionsPublished')
                 meetingConfig.setTransitionsToConfirm(toConfirm)
-            # State "decisions_published" must be selected in DecisionTopicStates (queries)
-            queryStates = meetingConfig.getDecisionTopicStates()
-            if 'decisions_published' not in queryStates:
-                queryStates = list(queryStates)
-                queryStates.append('decisions_published')
-                meetingConfig.setDecisionTopicStates(queryStates)
-                # Update the topics definitions for taking this into account.
-                meetingConfig.updateTopics()
+            # State "decisions_published" must be selected in decisions DashboardCollections
+            for collection in meetingConfig.searches.decisions.objectValues('DashboardCollection'):
+                for criterion in collection.query:
+                    if criterion['i'] == 'review_state' and \
+                       not 'decisions_published' in criterion['v']:
+                        updateCollectionCriterion(collection, criterion['i'], tuple(criterion['v']) + ('decisions_published', ))
         logger.info(WF_APPLIED % ("hide_decisions_when_under_writing", meetingConfig.getId()))
 
 

@@ -237,7 +237,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates', 'decisionTopicStates',
                          'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues', 'insertingMethodsOnAddItem'
                          )
-    excludedFields = ['maxDaysDecisions', ]
+    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
@@ -412,7 +412,7 @@ class MeetingConfigDescriptor(Descriptor):
         # this will be applied on the 'searchalldecisions' Collection
         self.maxDaysDecisions = 60
         # Which view do you want to select when entering a PloneMeeting folder ?
-        self.meetingAppDefaultView = 'topic_searchallmeetings'
+        self.meetingAppDefaultView = 'searchallitems'
         # In the meetingitems_list.pt, you can choose which columns are shown
         self.itemsListVisibleColumns = ['state', 'categoryOrProposingGroup',
                                         'annexes', 'annexesDecision', 'actions']
@@ -515,7 +515,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.openOfficePort = 2002
         self.functionalAdminEmail = ''
         self.functionalAdminName = ''
-        self.usedColorSystem = 'no_color'
         self.colorSystemDisabledFor = ''
         self.restrictUsers = False
         self.unrestrictedUsers = ''

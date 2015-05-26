@@ -51,13 +51,16 @@
            provides=".interfaces.IAnnexable" />
   <adapter for="Products.PloneMeeting.interfaces.IMeeting"
            factory=".adapters.PMHistoryAdapter"
-           provides="imio.history.interfaces.IImioHistory" />
+           name="workflow"
+           provides="imio.history.interfaces.IImioWfHistory" />
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
            factory=".adapters.PMHistoryAdapter"
-           provides="imio.history.interfaces.IImioHistory" />
+           name="workflow"
+           provides="imio.history.interfaces.IImioWfHistory" />
   <adapter for="Products.PloneMeeting.content.advice.IMeetingAdvice"
            factory=".adapters.PMHistoryAdapter"
-           provides="imio.history.interfaces.IImioHistory" />
+           name="workflow"
+           provides="imio.history.interfaces.IImioWfHistory" />
 
   <!-- searches useable as compoundcriterion -->
   <adapter for="*"
@@ -77,9 +80,37 @@
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-validate-of-highest-hierarchic-level" />
   <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToValidateOfMyReviewerGroupsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-validate-of-my-reviewer-groups" />
+  <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToAdviceAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-advice" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToAdviceWithoutDelayAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-advice-without-delay" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToAdviceWithDelayAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-advice-with-delay" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToAdviceWithExceededDelayAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-advice-with-exceeded-delay" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.AdvisedItemsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="advised-items" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.AdvisedItemsWithDelayAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="advised-items-with-delay" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.DecidedItemsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="decided-items" />
 
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="Products.PloneMeeting.Meeting.Meeting"

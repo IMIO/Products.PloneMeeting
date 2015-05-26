@@ -27,7 +27,6 @@ from Products.PloneMeeting.config import *
 ##code-section module-header #fill in your manual code here
 import os
 import os.path
-from Acquisition import aq_base
 from AccessControl import Unauthorized
 from zope.annotation import IAnnotations
 from zope.i18n import translate
@@ -221,7 +220,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         '''Download the file'''
         if not self.isViewableForCurrentUser():
             raise Unauthorized
-        self.portal_plonemeeting.rememberAccess(self.UID())
         return ATBlob.index_html(self, REQUEST, RESPONSE)
 
     security.declareProtected(View, 'download')
@@ -229,7 +227,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         """Download the file"""
         if not self.isViewableForCurrentUser():
             raise Unauthorized
-        self.portal_plonemeeting.rememberAccess(self.UID())
         return ATBlob.download(self, REQUEST, RESPONSE)
 
     security.declarePublic('isViewableForCurrentUser')
@@ -259,14 +256,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
 
     security.declarePublic('at_post_create_script')
     def at_post_create_script(self):
-        # We define here a PloneMeeting-specific modification date for this
-        # annex. Indeed, we can't use the standard Plone modification_date for
-        # the PloneMeeting color system because some events like parent state
-        # changes update security settings on annexes and modification_date is
-        # updated.
         tool = getToolByName(self, 'portal_plonemeeting')
-        self.pm_modification_date = self.modification_date
-        tool.rememberAccess(self.UID(), commitNeeded=False)
         parent = self.getParent()
         if parent:
             # update parent.annexIndex if it was not already set
@@ -318,9 +308,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'mftId': fileTypeData['id'],
                'id': self.getId(),
                'iconUrl': self.getIcon(),
-               # if the parent also has a pm_modification_date,
-               # make sure we use the real MeetingFile's one
-               'modification_date': aq_base(self).pm_modification_date,
+               'modification_date': self.modified(),
                'relatedTo': self.findRelatedTo(),
                'conversionStatus': self.conversionStatus(),
                'isConfidential': self.getIsConfidential(),
@@ -650,11 +638,6 @@ def checkAfterConversion(obj, event):
             sendMailIfRelevant(parent, 'annexConversionError', 'PloneMeeting: Add annex', isRole=False)
 
     # update the conversionStatus value in the annexIndex
-    # if this is triggered before at_post_create_script,
-    # a pm_modification_date is not available
-    # this is tested in testConversionWithDocumentViewer.testConvert
-    if not hasattr(aq_base(obj), 'pm_modification_date'):
-        obj.pm_modification_date = obj.modification_date
     IAnnexable(parent).updateAnnexIndex()
 
     # remove saved_request on annex

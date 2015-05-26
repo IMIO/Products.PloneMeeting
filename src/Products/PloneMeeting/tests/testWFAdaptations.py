@@ -962,6 +962,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
 
+        # moreover when the 'decisions_published' is activated,
+        # 'decisions' searches take this new state into account
+        for collection in self.meetingConfig.searches.decisions.objectValues('DashboardCollection'):
+            for criterion in collection.query:
+                if criterion['i'] == 'review_state':
+                    self.assertTrue('decisions_published' in criterion['v'])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

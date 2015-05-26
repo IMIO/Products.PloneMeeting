@@ -33,7 +33,7 @@ def DefinedInToolAwareCatalog():
             if 'livesearch_reply' in path_translated or \
                '@@search' in path_translated or \
                'updated_search' in path_translated or \
-               'plonemeeting_topic_view' in path_translated or \
+               ('portal_plonemeeting' in path_translated and 'searches' in path_translated) or \
                'search_form' in path_translated or \
                '@@faceted_query' in path_translated:
                 kw['isDefinedInTool'] = False

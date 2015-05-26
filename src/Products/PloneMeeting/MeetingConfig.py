@@ -887,21 +887,6 @@ schema = Schema((
         schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='meetingAppDefaultView',
-        widget=SelectionWidget(
-            description="MeetingAppDefaultView",
-            description_msgid="meeting_app_default_view_descr",
-            label='Meetingappdefaultview',
-            label_msgid='PloneMeeting_label_meetingAppDefaultView',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        vocabulary='listMeetingAppAvailableViews',
-        default=defValues.meetingAppDefaultView,
-        enforceVocabulary=False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='itemColumns',
         widget=MultiSelectionWidget(
@@ -1714,96 +1699,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     metaNames = ('Item', 'Meeting')
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
-    # Format is :
-    # - collectionId
-    # - a list of collection criteria
-    # - a sort_on attribute
-    # - a tal_cond used to manage complex searches
-    topicsInfo = (
-
-
-
-
-        # Items to advice without delay : need a script to do this search
-        ('searchitemstoadvicewithoutdelay',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToAdviceWithoutDelay',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Items to advice with delay : need a script to do this search
-        ('searchitemstoadvicewithdelay',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToAdviceWithDelay',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Items to advice with exceeded delay : need a script to do this search
-        ('searchitemstoadvicewithdexceededelay',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToAdviceWithExceededDelay',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Advised items : need a script to do this search
-        ('searchalladviseditems',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchAdvisedItems',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Advised items with delay : need a script to do this search
-        ('searchalladviseditemswithdelay',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchAdvisedItemsWithDelay',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Items to correct : search items in state 'returned_to_proposing_group'
-        ('searchitemstocorrect',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ('review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
-         ),
-         'created',
-         '',
-         "python: here.portal_plonemeeting.userIsAmong('creators') and "
-         "'return_to_proposing_group' in here.getWorkflowAdaptations()",
-         ),
-        # Corrected items : search items for wich previous_review_state was 'returned_to_proposing_group'
-        ('searchcorrecteditems',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ('previous_review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
-         ),
-         'created',
-         '',
-         "python: here.portal_plonemeeting.isManager(here) and "
-         "'return_to_proposing_group' in here.getWorkflowAdaptations()",
-         ),
-        # All 'decided' items
-        ('searchdecideditems',
-         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-          ),
-         'created',
-         'searchDecidedItems',
-         '',
-         ),
-
-
-    )
-
-    # List of topics related to Meetings that take care
-    # of the states defined in a meetingConfig
-    meetingTopicsUsingMeetingConfigStates = ('searchallmeetings', 'searchalldecisions', )
     # Names of workflow adaptations.
     wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
                      'only_creator_may_delete', 'pre_validation',  'pre_validation_keep_reviewer_permissions',
@@ -1923,6 +1818,111 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                }),
+                # Items to advice without delay
+                ('searchitemstoadvicewithoutdelay',
+                {
+                    'subFolderId': 'meetingitems',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-without-delay'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                }),
+                # Items to advice with delay
+                ('searchitemstoadvicewithdelay',
+                {
+                    'subFolderId': 'meetingitems',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-delay'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                }),
+                # Items to advice with exceeded delay
+                ('searchitemstoadvicewithexceededdelay',
+                {
+                    'subFolderId': 'meetingitems',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-exceeded-delay'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                }),
+                # Every advised items
+                ('searchalladviseditems',
+                {
+                    'subFolderId': 'meetingitems',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                }),
+                # Advised items with delay
+                ('searchalladviseditemswithdelay',
+                {
+                    'subFolderId': 'meetingitems',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items-with-delay'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                }),
+                # Items to correct
+                ('searchitemstocorrect',
+                {
+                    'subFolderId': 'meetingitems',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['returned_to_proposing_group']}
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators') and "
+                                     "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()"
+                }),
+                # Corrected items
+                ('searchcorrecteditems',
+                {
+                    'subFolderId': 'meetingitems',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                        {'i': 'previous_review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['returned_to_proposing_group']}
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.isManager(here) and "
+                                     "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()"
+                }),
+                # Decided items
+                ('searchdecideditems',
+                {
+                    'subFolderId': 'meetingitems',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'decided-items'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': ""
                 }),
                 # All not-yet-decided meetings
                 ('searchallmeetings',
@@ -3192,8 +3192,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
 
     def at_post_edit_script(self):
-        '''Updates the workflows for items and meetings, and the
-           item/meeting/decisionTopicStates.'''
+        ''' '''
         s = self.portal_workflow.setChainForPortalTypes
         # Update meeting item workflow
         s([self.getItemTypeName()], self.getItemWorkflow())
@@ -3311,42 +3310,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if "_%s'" % reviewSuffix in strGroupIds:
                 return reviewSuffix
 
-    security.declarePublic('searchItemsToValidateOfMyReviewerGroups')
-    def searchItemsToValidateOfMyReviewerGroups(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Return a list of items that the user could validate.  So it returns every items the current
-           user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
-           and 'reviewer' for a group, the search will return items in both states.'''
-        member = self.portal_membership.getAuthenticatedMember()
-        groupIds = self.portal_groups.getGroupsForPrincipal(member)
-        reviewProcessInfos = []
-        for groupId in groupIds:
-            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
-                # current user may be able to validate at at least
-                # one level of the entire validation process, we take it into account
-                if groupId.endswith('_%s' % reviewer_suffix):
-                    # specific management for workflows using the 'pre_validation' wfAdaptation
-                    if reviewer_suffix == 'reviewers' and \
-                       ('pre_validation' in self.getWorkflowAdaptations() or
-                       'pre_validation_keep_reviewer_permissions' in self.getWorkflowAdaptations()):
-                        review_state = 'prevalidated'
-                    reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
-                                                                         review_state))
-        if not reviewProcessInfos:
-            return []
-
-        params = {'portal_type': self.getItemTypeName(),
-                  'reviewProcessInfo': reviewProcessInfos,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
     security.declarePublic('searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels')
     def searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
         '''This will check for user highest reviewer level of each of his groups and return these items and
@@ -3403,209 +3366,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         params.update(kwargs)
         # Perform the query in portal_catalog
         return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToAdviceWithoutDelay')
-    def searchItemsToAdviceWithoutDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries items for which the current user must give a delay-aware advice.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
-        # this search will only return 'not delay-aware' advices
-        groupIds = [g.getId() + '_advice_not_given' for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToAdviceWithDelay')
-    def searchItemsToAdviceWithDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries items for which the current user must give a delay-aware advice.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
-        # this search will only return 'delay-aware' advices
-        groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToAdviceWithExceededDelay')
-    def searchItemsToAdviceWithExceededDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries items for which the current user had to give a
-           delay-aware advice for but did not give it in the deadline.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
-        # this search will only return 'delay-aware' advices for wich delay is exceeded
-        groupIds = ['delay__' + g.getId() + '_advice_delay_exceeded' for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchAdvisedItems')
-    def searchAdvisedItems(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items for which the current user has given an advice.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # advised items are items that has an advice in a particular review_state
-        # just append every available meetingadvice state: we want "given" advices.
-        # this search will return every advices
-        wfTool = getToolByName(self, 'portal_workflow')
-        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
-        adviceStates = adviceWF.states.keys()
-        groupIds = []
-        for adviceState in adviceStates:
-            groupIds += [g.getId() + '_%s' % adviceState for g in groups]
-            groupIds += groupIds + ['delay__' + groupId for groupId in groupIds]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchAdvisedItemsWithDelay')
-    def searchAdvisedItemsWithDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items for which the current user has given an advice that was delay-aware.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # advised items are items that has an advice in a particular review_state
-        # just append every available meetingadvice state: we want "given" advices.
-        # this search will only return 'delay-aware' advices
-        wfTool = getToolByName(self, 'portal_workflow')
-        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
-        adviceStates = adviceWF.states.keys()
-        groupIds = []
-        for adviceState in adviceStates:
-            groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchDecidedItems')
-    def searchDecidedItems(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items that are decided, depending on MeetingConfig.itemDecidedStates.'''
-        params = {'portal_type': self.getItemTypeName(),
-                  'review_state': self.getItemDecidedStates(),
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsWithFilters')
-    def searchItemsWithFilters(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Returns a list of items.  Do the search regarding parameters defined in the
-           'topic_search_filters' property defined on the topic.  This contains 2 particular values :
-           - 'query' that does a first query filtering as much as possible (first filter);
-           - 'filters' that will apply on brains returned by 'query'.
-           kwargs[TOPIC_SEARCH_FILTERS] is like :
-           {'query': {'review_state': ('itemcreated', 'validated', ),
-                      'getProposingGroup': ('group_id_1', 'group_id_2'), },
-            'filters': ({'getProposingGroup': ('group_id_1', ), 'review_state': ('itemcreated', )},
-                        {'getProposingGroup': ('group_id_2', ), 'review_state': ('validated', )},),
-            }
-        '''
-        params = {'portal_type': self.getItemTypeName(),
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder
-                  }
-        # search filters are passed in kwargs
-        searchFilters = kwargs.pop(TOPIC_SEARCH_FILTERS)
-        # Manage additional ui filters
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # update params with 'query' given in searchFilters
-        params.update(searchFilters['query'])
-        # Perform the first filtering query in portal_catalog
-        brains = self.portal_catalog(**params)
-        # now apply filters
-        res = []
-        for brain in brains:
-            # now apply every searchFilter, if one is correct, then we keep the brain
-            # searchFilters are applied with a 'OR' behaviour, so if one is ok, we keep the brain
-            for searchFilter in searchFilters['filters']:
-                # now compare every searchFilter to the current brain, if a complete searchFilter
-                # is ok, then we keep the brain, either, we do not append it to 'res'
-                for key in searchFilter:
-                    filterIsRight = True
-                    if not getattr(brain, key) in searchFilter[key]:
-                        filterIsRight = False
-                        break
-                # if we found a sub_filter that works, then we keep the brain
-                if filterIsRight:
-                    break
-            if filterIsRight:
-                res.append(brain)
-        return res
-
-    security.declarePublic('getQueryColumns')
-    def getQueryColumns(self, metaType):
-        '''What columns must we show when displaying results of a query for
-           objects of p_metaType ?'''
-        res = ('title',)
-        if metaType == 'MeetingItem':
-            res += tuple(self.getUserParam('itemColumns', self.REQUEST))
-        elif metaType == 'Meeting':
-            res += tuple(self.getUserParam('meetingColumns', self.REQUEST))
-        else:
-            res += ('creator', 'creationDate')
-        return res
 
     security.declarePublic('listWorkflows')
     def listWorkflows(self):
@@ -3917,34 +3677,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 cache[key] = data
         return data
 
-    security.declarePublic('listMeetingAppAvailableViews')
-    def listMeetingAppAvailableViews(self):
-        '''Returns a list of views available when a user clicks on a particular
-           tab choosing a kind of meeting. This gives the admin a way to choose
-           between the folder available views (from portal_type) or a
-           PloneMeeting-managed view based on PloneMeeting topics.
-
-           We add a 'folder_' or a 'topic_' suffix to precise the kind of view.
-        '''
-        res = []
-        # Add the topic-based views
-        if not hasattr(self.aq_base, 'topics'):
-            # This can be the case if we are creating this meeting config.
-            return DisplayList(tuple(res))
-        for topic in self.topics.objectValues():
-            topicData = ('topic_' + topic.id, translate(unicode(topic.Title(), 'utf-8'),
-                                                        domain="Plone",
-                                                        context=self.REQUEST))
-            if topic.id == 'searchallitemsincopy':
-                if self.getUseCopies():
-                    res.append(topicData)
-            elif topic.id in ('searchalladviseditems', 'searchallitemstoadvice'):
-                if self.getUseAdvices():
-                    res.append(topicData)
-            else:
-                res.append(topicData)
-        return DisplayList(tuple(res))
-
     security.declarePublic('listRoles')
     def listRoles(self):
         res = []
@@ -4169,8 +3901,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if not userTitle:
             userTitle = mud.id
         data = mud.getData(title=userTitle)
-        folder.invokeFactory('MeetingUser', **data)
-        meetingUser = getattr(folder, mud.id)
+        newId = folder.invokeFactory('MeetingUser', **data)
+        meetingUser = getattr(folder, newId)
         if mud.signatureImage:
             if isinstance(source, basestring):
                 # The image must be retrieved on disk from a profile

@@ -554,8 +554,7 @@
       <p i18n:translate="meetingconfig_gui_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td tal:define="field python:here.getField('meetingAppDefaultView')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
+          <td>
           </td>
           <td tal:define="field python:here.getField('maxShownMeetings')">
             <span metal:use-macro="here/widgets/field/macros/view" />

@@ -102,21 +102,6 @@ class Renderer(base.Renderer, FacetedRenderer):
         return self.getPloneMeetingTool().getMeetingConfig(self.context)
 
     @memoize
-    def getPloneMeetingFolder(self):
-        """
-          Returns the current PM folder
-        """
-        return self.getPloneMeetingTool().getPloneMeetingFolder(self.getCurrentMeetingConfig().getId())
-
-    @memoize
-    def showColors(self):
-        """
-          Check what kind of color system we are using
-        """
-        tool = self.getPloneMeetingTool()
-        return tool.showColorsForUser()
-
-    @memoize
     def getSearches(self):
         ''' Returns the list of searches to display in portlet_todo.'''
         res = []
@@ -154,8 +139,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         # received brain is a plone.app.contentlisting.catalog.CatalogContentListingObject instance
         item = brain._brain._unrestrictedGetObject()
         tool = self.getPloneMeetingTool()
-        showColors = self.showColors()
-        return tool.getColoredLink(item, showColors=showColors, maxLength=self.getTitleLength())
+        return tool.getColoredLink(item, showColors=True, maxLength=self.getTitleLength())
 
     def getCollectionWidgetId(self):
         """Returns the collection widget id to be used in the URL generated on the collection link."""

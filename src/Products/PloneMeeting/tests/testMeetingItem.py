@@ -117,157 +117,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
 
-    def test_pm_UsedColorSystemShowColors(self):
-        '''The showColors is initialized by the showColorsForUser method that
-           depends on the value selected in portal_plonemeeting.usedColorSystem
-           and portal_plonemeeting.colorSystemDisabledFor.'''
-        #check with an empty list of colorSystemDisabledFor users
-        self.tool.setColorSystemDisabledFor(None)
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-        #check with state_color
-        self.tool.setUsedColorSystem('state_color')
-        self.assertEquals(self.tool.showColorsForUser(), True)
-        #check with modification_color
-        self.tool.setUsedColorSystem('modification_color')
-        self.assertEquals(self.tool.showColorsForUser(), True)
-
-        #check with an list of user the current user is not in
-        self.tool.setColorSystemDisabledFor("user1\nuser2\nuser3")
-        #login as a user that is not in the list here above
-        self.changeUser('pmCreator1')
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-        #check with state_color
-        self.tool.setUsedColorSystem('state_color')
-        self.assertEquals(self.tool.showColorsForUser(), True)
-        #check with modification_color
-        self.tool.setUsedColorSystem('modification_color')
-        self.assertEquals(self.tool.showColorsForUser(), True)
-
-        #check with an list of user the current user is in
-        self.changeUser('admin')
-        self.tool.setColorSystemDisabledFor("user1\nuser2\nuser3\npmCreator1")
-        #login as a user that is not in the list here above
-        self.changeUser('pmCreator1')
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-        #check with state_color
-        self.tool.setUsedColorSystem('state_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-        #check with modification_color
-        self.tool.setUsedColorSystem('modification_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-
-    def test_pm_UsedColorSystemGetColoredLink(self):
-        '''The colorization of the item depends on the usedColorSystem value of
-           the tool.'''
-        #colorization modes are applied on MeetingItem, MeetingFile and Meeting
-        #1. first check with a MeetingItem
-        #1.1 check when the user is not in colorSystemDisabledFor
-        self.tool.setColorSystemDisabledFor(None)
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        #create an item for test
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setTitle('item_title')
-        #here, the resulting item should not be colored
-        showColors = self.tool.showColorsForUser()
-        title = item.Title()
-        url = item.absolute_url()
-        content = item.Title()
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % (url, title, content))
-        self.changeUser('admin')
-        #use colors depdending on item workflow state
-        self.tool.setUsedColorSystem('state_color')
-        self.changeUser('pmCreator1')
-        showColors = self.tool.showColorsForUser()
-        wf_class = "state-" + item.queryState()
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" class="%s">%s</a>' % (url, title, wf_class, content))
-        self.changeUser('admin')
-        #use colors depdending on item modification
-        self.tool.setUsedColorSystem('modification_color')
-        self.changeUser('pmCreator1')
-        # Now that we are in modification_color mode, we have to remember the
-        # access.
-        self.tool.rememberAccess(uid=item.UID(), commitNeeded=False)
-        showColors = self.tool.showColorsForUser()
-        wf_class = self.portal.portal_workflow.getInfoFor(item, 'review_state')
-        #the item should not be colored as the creator already saw it
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s"%s>%s</a>' %
-                          (url, title, " id=\"pmNoNewContent\"", content))
-        #change the item and check if the color appear for pmCreator1
-        self.changeUser('admin')
-        #use process_form
-        self.portal.REQUEST.set('title', 'my_new_title')
-        self.portal.REQUEST.set('description', 'description')
-        item.processForm()
-        item.at_post_edit_script()
-        self.changeUser('pmCreator1')
-        showColors = self.tool.showColorsForUser()
-        #as 'admin' changed the content, it must be colored to 'pmCreator1'
-        self.failIf('pmNoNewContent' in self.tool.getColoredLink(item, showColors),
-                    '<a href="%s" title="%s"%s>%s</a>' % (url, title, "", content))
-        #1.2 check when the user is in colorSystemDisabledFor
-        #in this case, colors are never shown...
-        self.tool.setColorSystemDisabledFor("user1\nuser2\npmCreator1")
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        #create an item for test
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setTitle('item_title')
-        #here, the resulting item should not be colored
-        showColors = self.tool.showColorsForUser()
-        title = item.Title()
-        url = item.absolute_url()
-        content = item.Title()
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, content))
-        self.changeUser('admin')
-        #use colors depdending on item workflow state
-        self.tool.setUsedColorSystem('state_color')
-        self.changeUser('pmCreator1')
-        showColors = self.tool.showColorsForUser()
-        wf_class = "state-" + item.queryState()
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, content))
-        self.changeUser('admin')
-        #use colors depdending on item modification
-        self.tool.setUsedColorSystem('modification_color')
-        self.changeUser('pmCreator1')
-        # Now that we are in modification_color mode, we have to remember the
-        # access
-        self.tool.rememberAccess(uid=item.UID(), commitNeeded=False)
-        showColors = self.tool.showColorsForUser()
-        wf_class = self.portal.portal_workflow.getInfoFor(item, 'review_state')
-        #the item should not be colored as the creator already saw it
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, content))
-        #change the item and check if the color appear for pmCreator1
-        self.changeUser('admin')
-        item.at_post_edit_script()
-        self.changeUser('pmCreator1')
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, content))
-        #check the maxLength attribute, "item_title" becomes "it..."
-        self.assertEquals(self.tool.getColoredLink(item, showColors, maxLength=2),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, "it..."))
-        #2. check with a Meeting
-        #3. check with a MeetingFile
-
     def test_pm_ListProposingGroups(self):
         '''Check that the user is creator for the proposing groups.'''
         # test that if a user is cretor for a group but only reviewer for
@@ -631,7 +480,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                     domain='PloneMeeting',
                                     context=self.request)
         # 2 messages, the expected and the message 'item successfully sent to other mc'
-        self.assertTrue(messages[0].message == expectedMessage)
+        self.assertTrue(messages[-2].message == expectedMessage)
 
         # now test when cloning locally, just disable every available mft
         self.changeUser('admin')
@@ -650,7 +499,7 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedMessage = translate("annexes_not_kept_because_no_available_mft_warning",
                                     mapping={'cfg': self.meetingConfig.Title()},
                                     domain='PloneMeeting',
-                                    context=self.request)
+                                        context=self.request)
         self.assertTrue(messages[0].message == expectedMessage)
 
     def test_pm_SendItemToOtherMCWithAdvices(self):
@@ -2168,7 +2017,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item4.getDecision(keepWithNext=False) == '<p>My decision that will not be touched.</p>')
         # a portal_message is displayed to the user that triggered the transition
         messages = IStatusMessage(self.request).show()
-        self.assertTrue(messages[0].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % ('decision',
+        self.assertTrue(messages[-1].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % ('decision',
                                                                                          "'some_wrong_tal_expression'"))
 
     def test_pm_TakenOverBy(self):
@@ -2206,18 +2055,20 @@ class testMeetingItem(PloneMeetingTestCase):
         # if actual taker does not correspond to takenOverByFrom, it fails
         # and return a portal message to the user
         messages = IStatusMessage(self.request).show()
-        self.assertTrue(not messages)
+        # for now, just one message '
+        self.assertTrue(len(messages) == 1)
+        self.assertTrue(messages[-1].message == u'Faceted navigation enabled')
         view.toggle(takenOverByFrom='')
         # now we have a message
         messages = IStatusMessage(self.request).show()
-        self.assertTrue(len(messages) == 1)
+        self.assertTrue(len(messages) == 2)
         expectedMessage = translate("The item you tried to take over was already taken over in between by "
                                     "${fullname}. You can take it over now if you are sure that the other "
                                     "user do not handle it.",
                                     mapping={'fullname': 'pmVirtualReviewer1'},
                                     domain='PloneMeeting',
                                     context=self.request)
-        self.assertTrue(messages[0].message == expectedMessage)
+        self.assertTrue(messages[1].message == expectedMessage)
         # not changed
         self.assertTrue(item.getTakenOverBy() == 'pmVirtualReviewer1')
         # and a message is displayed

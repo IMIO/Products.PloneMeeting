@@ -132,20 +132,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
-        name='meetingAppDefaultView',
-        widget=SelectionWidget(
-            description="MeetingAppDefaultView",
-            description_msgid="meeting_app_default_view_descr",
-            label='Meetingappdefaultview',
-            label_msgid='PloneMeeting_label_meetingAppDefaultView',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-        vocabulary='listMeetingAppAvailableViews',
-        default_method='getMeetingAppDefaultValue',
-    ),
-    StringField(
         name='mailFormat',
         widget=SelectionWidget(
             description="MailFormat",
@@ -411,12 +397,6 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         '''Has logged user role Manager?'''
         user = self.portal_membership.getAuthenticatedMember()
         return user.has_role('Manager')
-
-    def listMeetingAppAvailableViews(self):
-        return self.config().listMeetingAppAvailableViews()
-
-    def getMeetingAppDefaultValue(self):
-        return self.config().getMeetingAppDefaultView()
 
     def listMailFormats(self):
         return self.config().listMailFormats()

@@ -23,7 +23,6 @@
                                   dummy context/checkPrivacyViewable;
                                   meetingConfig python:tool.getMeetingConfig(context);
                                   meeting context/getMeeting;
-                                  showColors tool/showColorsForUser;
                                   usedAttrs meetingConfig/getUsedItemAttributes;
                                   usedMeetingAttributes meetingConfig/getUsedMeetingAttributes;
                                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
@@ -440,9 +439,6 @@
       </tal:transitionsForRecurring>
 
     </tal:itemInConfig>
-
-    <tal:comment replace="nothing">Remember when this item was last accessed</tal:comment>
-    <span tal:define="dummy python: tool.rememberAccess(context.UID())"></span>
 
        </metal:body_macro>
     </metal:fill>

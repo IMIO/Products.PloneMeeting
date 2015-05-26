@@ -621,6 +621,39 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapte
                 'review_state': review_state}
 
 
+class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Return a list of items that the user could validate.  So it returns every items the current
+           user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
+           and 'reviewer' for a group, the search will return items in both states.'''
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        groupsTool = getToolByName(self.context, 'portal_groups')
+        member = membershipTool.getAuthenticatedMember()
+        groupIds = groupsTool.getGroupsForPrincipal(member)
+        reviewProcessInfos = []
+        for groupId in groupIds:
+            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
+                # current user may be able to validate at at least
+                # one level of the entire validation process, we take it into account
+                if groupId.endswith('_%s' % reviewer_suffix):
+                    # specific management for workflows using the 'pre_validation' wfAdaptation
+                    if reviewer_suffix == 'reviewers' and \
+                       ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+                       'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+                        review_state = 'prevalidated'
+                    reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
+                                                                         review_state))
+        if not reviewProcessInfos:
+            # in this case, we do not want to display a result
+            # we return an unknown review_state
+            return {'review_state': ['unknown_review_state', ]}
+
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'reviewProcessInfo': reviewProcessInfos}
+
+
 class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
 
     @property
@@ -635,3 +668,101 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
         return {'portal_type': self.cfg.getItemTypeName(),
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
                 'indexAdvisers': groupIds}
+
+
+class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user must give an advice without delay.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
+        # this search will only return 'not delay-aware' advices
+        groupIds = [g.getId() + '_advice_not_given' for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user must give an advice with delay.'''
+
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
+        # this search will only return 'delay-aware' advices
+        groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user must give an advice with exceeded delay.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
+        # this search will only return 'delay-aware' advices for wich delay is exceeded
+        groupIds = ['delay__' + g.getId() + '_advice_delay_exceeded' for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries items for which an advice has been given.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # advised items are items that has an advice in a particular review_state
+        # just append every available meetingadvice state: we want "given" advices.
+        # this search will return every advices
+        wfTool = getToolByName(self.context, 'portal_workflow')
+        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
+        adviceStates = adviceWF.states.keys()
+        groupIds = []
+        for adviceState in adviceStates:
+            groupIds += [g.getId() + '_%s' % adviceState for g in groups]
+            groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries items for which an advice has been given with delay.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # advised items are items that has an advice in a particular review_state
+        # just append every available meetingadvice state: we want "given" advices.
+        # this search will only return 'delay-aware' advices
+        wfTool = getToolByName(self.context, 'portal_workflow')
+        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
+        adviceStates = adviceWF.states.keys()
+        groupIds = []
+        for adviceState in adviceStates:
+            groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries decided items.'''
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'review_state': self.cfg.getItemDecidedStates()}

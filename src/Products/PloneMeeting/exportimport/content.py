@@ -28,6 +28,9 @@ __docformat__ = 'plaintext'
 
 # ------------------------------------------------------------------------------
 from zExceptions import BadRequest
+from eea.facetednavigation.interfaces import ICriteria
+from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
+
 from Products.PloneMeeting.config import registerClasses, PROJECTNAME
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.ToolPloneMeeting import PloneMeetingError, MEETING_CONFIG_ERROR
@@ -125,12 +128,20 @@ class ToolInitializer:
         """When the MeetingConfig has been created, some parameters still need to be applied
            because they need the MeetingConfig to exist."""
         # apply the meetingTopicStates to the 'searchallmeetings' DashboardCollection
-        updateCollectionCriterion(cfg.searches.meetings.searchallmeetings, 'review_state', str(data.meetingTopicStates))
+        updateCollectionCriterion(cfg.searches.meetings.searchallmeetings, 'review_state', data.meetingTopicStates)
         # apply the maxDaysDecisions to the 'searchlastdecisions' DashboardCollection
-        updateCollectionCriterion(cfg.searches.decisions.searchlastdecisions, 'getDate', str(data.maxDaysDecisions))
+        updateCollectionCriterion(cfg.searches.decisions.searchlastdecisions, 'getDate', data.maxDaysDecisions)
         # apply the meetingTopicStates to the 'searchlastdecisions' and 'searchalldecision' DashboardCollection
-        updateCollectionCriterion(cfg.searches.decisions.searchlastdecisions, 'review_state', str(data.decisionTopicStates))
-        updateCollectionCriterion(cfg.searches.decisions.searchalldecisions, 'review_state', str(data.decisionTopicStates))
+        updateCollectionCriterion(cfg.searches.decisions.searchlastdecisions, 'review_state', data.decisionTopicStates)
+        updateCollectionCriterion(cfg.searches.decisions.searchalldecisions, 'review_state', data.decisionTopicStates)
+        # select correct default view
+        meetingAppDefaultView = data.meetingAppDefaultView
+        if meetingAppDefaultView in cfg.searches.meetingitems.objectIds():
+            # update the criterion default value
+            for criterion in ICriteria(cfg.searches).values():
+                if criterion.widget == CollectionWidget.widget_type:
+                    criterion.default = getattr(cfg.searches.meetingitems, meetingAppDefaultView).UID()
+                    break
 
 
 def isTestOrArchiveProfile(context):

@@ -21,4 +21,17 @@
        <value key="group" i18n:translate="">Dates</value>
     </records>
 
+    <records interface="plone.app.querystring.interfaces.IQueryField"
+             prefix="plone.app.querystring.field.previous_review_state">
+        <value key="title" i18n:translate="">Previous review state</value>
+        <value key="description" i18n:translate="">The item previous review state</value>
+        <value key="enabled">True</value>
+        <value key="sortable">True</value>
+        <value key="operations">
+            <element>plone.app.querystring.operation.selection.is</element>
+        </value>
+        <value key="vocabulary">plone.app.vocabularies.WorkflowStates</value>
+       <value key="group" i18n:translate="">Metadata</value>
+    </records>
+
 </registry>

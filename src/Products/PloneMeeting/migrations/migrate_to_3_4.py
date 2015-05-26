@@ -4,6 +4,9 @@ logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
+from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
+from eea.facetednavigation.interfaces import ICriteria
+
 
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import updateCollectionCriterion
@@ -63,6 +66,17 @@ class Migrate_To_3_4(Migrator):
                                           'review_state',
                                           cfg.decisionTopicStates)
                 delattr(cfg, 'decisionTopicStates')
+            if hasattr(cfg, 'meetingAppDefaultView'):
+                # if cfg.meetingAppDefaultView is like 'topic_searchmyitems', try to recover it...
+                default_view = cfg.meetingAppDefaultView.split('topic_')[-1]
+                if not default_view in cfg.searches.meetingitems.objectIds():
+                    default_view = 'searchallitems'
+                # update the criterion default value
+                for criterion in ICriteria(cfg.searches).values():
+                    if criterion.widget == CollectionWidget.widget_type:
+                        criterion.default = getattr(cfg.searches.meetingitems, default_view).UID()
+                        break
+                delattr(cfg, 'meetingAppDefaultView')
 
             logger.info('Moving to imio.dashboard : moving toDoListTopics to toDoListSearches...')
             if not cfg.getToDoListSearches():
@@ -121,6 +135,13 @@ class Migrate_To_3_4(Migrator):
         dactions = self.portal.portal_actions.document_actions
         if 'toggleDescriptions' in dactions.objectIds():
             dactions.manage_delObjects(ids=['toggleDescriptions'])
+
+        logger.info('Moving to imio.dashboard : removing parameters "usedColorSystem" and '
+                    '"colorSystemDisabledFor" from portal_plonemeeting...')
+        if hasattr(self.tool, 'usedColorSystem'):
+            delattr(self.tool, 'usedColorSystem')
+        if hasattr(self.tool, 'colorSystemDisabledFor'):
+            delattr(self.tool, 'colorSystemDisabledFor')
 
         logger.info('Done.')
 

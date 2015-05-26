@@ -52,13 +52,15 @@ class testWorkflows(PloneMeetingTestCase):
         # May the creator see his item ?
         self.failUnless(self.hasPermission('View', item))
         self.failUnless(self.hasPermission('Access contents information', item))
-        myItems = self.meetingConfig.topics.searchmyitems.queryCatalog()
-        self.failIf(len(myItems) != 1)
+        myItems = self.meetingConfig.searches.meetingitems.searchmyitems.getQuery()
+        self.assertEquals(len(myItems), 1)
         self.changeUser('pmManager')
         # The manager may not see the item yet except if item is already 'validated'
         # this could be the case if item initial_state is 'validated' or when using
         # wfAdaptation 'items_come_validated'
-        allItems = self.meetingConfig.topics.searchallitems.queryCatalog()
+        collection = self.meetingConfig.searches.meetingitems.searchallitems
+        self.request['PATH_TRANSLATED'] = collection.absolute_url()
+        allItems = collection.getQuery()
         numberOfFoundItems = 0
         if item.queryState() == 'validated':
             numberOfFoundItems = 1

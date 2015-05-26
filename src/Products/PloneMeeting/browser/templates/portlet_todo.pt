@@ -1,8 +1,5 @@
 <dl i18n:domain="PloneMeeting" class="portlet portletTodo"
-    tal:define="showColors view/showColors;
-                meetingFolder view/getPloneMeetingFolder;
-                wid view/getCollectionWidgetId;
-                tool view/getPloneMeetingTool">
+    tal:define="wid view/getCollectionWidgetId;">
 
     <dt class="portletHeader" i18n:translate="To do">To do</dt>
 
