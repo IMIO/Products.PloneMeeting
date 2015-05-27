@@ -54,7 +54,7 @@
   </criterion>
 
   <!-- advanced widgets -->
-  <criterion name="c5">
+  <criterion name="c4">
    <property name="widget">checkbox</property>
    <property name="title">Groupes</property>
    <property name="position">top</property>
@@ -74,27 +74,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c6">
-   <property name="widget">checkbox</property>
-   <property name="title">Auteur</property>
-   <property name="position">top</property>
-   <property name="section">advanced</property>
-   <property name="hidden">0</property>
-   <property name="count">0</property>
-   <property name="sortcountable">0</property>
-   <property name="hidezerocount">0</property>
-   <property name="index">Creator</property>
-   <property name="operator">or</property>
-   <property name="operator_visible">0</property>
-   <property
-      name="vocabulary">Products.PloneMeeting.vocabularies.creatorsvocabulary</property>
-   <property name="catalog"></property>
-   <property name="maxitems"></property>
-   <property name="sortreversed">0</property>
-   <property name="default"/>
-  </criterion>
-
-  <criterion name="c7">
+  <criterion name="c5">
    <property name="widget">checkbox</property>
    <property name="title">Categorie</property>
    <property name="position">top</property>
@@ -114,7 +94,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c8">
+  <criterion name="c6">
    <property name="widget">checkbox</property>
    <property name="title">Etat</property>
    <property name="position">top</property>
@@ -134,7 +114,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c9">
+  <criterion name="c7">
    <property name="widget">checkbox</property>
    <property name="title">Avis</property>
    <property name="position">top</property>
@@ -154,7 +134,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c10">
+  <criterion name="c8">
    <property name="widget">checkbox</property>
    <property name="title">Seance</property>
    <property name="position">top</property>
@@ -174,7 +154,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c11">
+  <criterion name="c9">
    <property name="widget">checkbox</property>
    <property name="title">Seance souhaitee</property>
    <property name="position">top</property>
@@ -188,6 +168,46 @@
    <property name="operator_visible">0</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.meetingdatesvocabulary</property>
+   <property name="catalog"></property>
+   <property name="maxitems"></property>
+   <property name="sortreversed">0</property>
+   <property name="default"/>
+  </criterion>
+
+  <criterion name="c10">
+   <property name="widget">checkbox</property>
+   <property name="title">Auteur</property>
+   <property name="position">top</property>
+   <property name="section">advanced</property>
+   <property name="hidden">0</property>
+   <property name="count">0</property>
+   <property name="sortcountable">0</property>
+   <property name="hidezerocount">0</property>
+   <property name="index">Creator</property>
+   <property name="operator">or</property>
+   <property name="operator_visible">0</property>
+   <property
+      name="vocabulary">Products.PloneMeeting.vocabularies.creatorsvocabulary</property>
+   <property name="catalog"></property>
+   <property name="maxitems"></property>
+   <property name="sortreversed">0</property>
+   <property name="default"/>
+  </criterion>
+
+  <criterion name="c11">
+   <property name="widget">checkbox</property>
+   <property name="title">Pris en charge par</property>
+   <property name="position">top</property>
+   <property name="section">advanced</property>
+   <property name="hidden">0</property>
+   <property name="count">0</property>
+   <property name="sortcountable">0</property>
+   <property name="hidezerocount">0</property>
+   <property name="index">getTakenOverBy</property>
+   <property name="operator">or</property>
+   <property name="operator_visible">0</property>
+   <property
+      name="vocabulary">Products.PloneMeeting.vocabularies.creatorsvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems"></property>
    <property name="sortreversed">0</property>
