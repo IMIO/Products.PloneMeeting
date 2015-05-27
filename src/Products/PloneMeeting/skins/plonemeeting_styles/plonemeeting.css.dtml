@@ -590,6 +590,9 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
     padding-top: 0.2em;
     padding-bottom: 0.2em;
 }
+#portal-columns dl.portletTodo a {
+    display: inline;
+}
 .portletPloneMeetingHeaderIcons {
     float:right;
     display: inline;
