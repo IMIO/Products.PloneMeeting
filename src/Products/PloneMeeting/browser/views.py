@@ -49,6 +49,32 @@ class ItemIsSignedView(BrowserView):
         self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
 
 
+class ItemToDiscussView(BrowserView):
+    """
+      This manage the view displaying toDiscuss widget
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+
+    def mayEdit(self):
+        """ """
+        member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+        return member.has_permission(self.context.getField('toDiscuss').write_permission, self.context) and self.context.showToDiscuss()
+
+    @memoize_contextless
+    def userIsReviewer(self):
+        """ """
+        return self.tool.userIsAmong('reviewers')
+
+    @memoize_contextless
+    def useToggleDiscuss(self):
+        """ """
+        return self.context.restrictedTraverse('@@toggle_to_discuss').isAsynchToggleEnabled()
+
+
 class PloneMeetingRedirectToAppView(BrowserView):
     """
       This manage the view set on the Plone Site that redirects the connected user
@@ -125,7 +151,7 @@ class ChangeItemOrderView(BrowserView):
           We double check that current user can actually mayChangeItemsOrder.
           Anyway, this method move an item, one level up/down or at a given position.
         """
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        gotoReferer = self.context.restrictedTraverse('@@actions_panel')._gotoReferer
 
         # we do this unrestrictively but anyway respect the Meeting.mayChangeItemsOrder
         meeting = self.context.getMeeting()
@@ -145,7 +171,7 @@ class ChangeItemOrderView(BrowserView):
                     translate(msgid='item_number_invalid',
                               domain='PloneMeeting',
                               context=self.request))
-                return tool.gotoReferer()
+                return gotoReferer()
         else:
             isDelta = True
             if moveType == 'up':
@@ -170,13 +196,13 @@ class ChangeItemOrderView(BrowserView):
                     translate(msgid='item_did_not_move',
                               domain='PloneMeeting',
                               context=self.request))
-                return tool.gotoReferer()
+                return gotoReferer()
             if (move < 1) or (move > (nbOfItems+1)):
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_move',
                               domain='PloneMeeting',
                               context=self.request))
-                return tool.gotoReferer()
+                return gotoReferer()
 
         # Move the item
         if nbOfItems >= 2:
@@ -193,8 +219,10 @@ class ChangeItemOrderView(BrowserView):
                     for item in itemsList:
                         if item.getItemNumber() == newIndex:
                             item.setItemNumber(oldIndex)
+                            item.reindexObject(idxs=['getItemNumber'])
                             break
                     self.context.setItemNumber(newIndex)
+                    self.context.reindexObject(idxs=['getItemNumber'])
             else:
                 # Move the item to an absolute position
                 oldIndex = self.context.getItemNumber()
@@ -208,21 +236,25 @@ class ChangeItemOrderView(BrowserView):
                         itemNumber = item.getItemNumber()
                         if (itemNumber < oldIndex) and (itemNumber >= move):
                             item.setItemNumber(itemNumber+1)
+                            item.reindexObject(idxs=['getItemNumber'])
                         elif itemNumber == oldIndex:
                             item.setItemNumber(move)
+                            item.reindexObject(idxs=['getItemNumber'])
                 else:
                     # We must move the item closer to the last items (down)
                     for item in itemsList:
                         itemNumber = item.getItemNumber()
                         if itemNumber == oldIndex:
                             item.setItemNumber(move-1)
+                            item.reindexObject(idxs=['getItemNumber'])
                         elif (itemNumber > oldIndex) and (itemNumber < move):
                             item.setItemNumber(itemNumber-1)
+                            item.reindexObject(idxs=['getItemNumber'])
 
         # when items order on meeting changed, it is considered modified
         meeting.notifyModified()
 
-        return tool.gotoReferer()
+        return gotoReferer()
 
 
 class UpdateDelayAwareAdvicesView(BrowserView):

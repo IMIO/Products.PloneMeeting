@@ -700,6 +700,7 @@ TD acronym {
 .th_header_actions,
 .th_header_itemIsSigned,
 .th_header_toDiscuss,
+.th_header_getItemIsSigned,
 .pm_meeting_listing_th_checkBoxes {
     width: 1%;
 }
@@ -720,7 +721,7 @@ TD acronym {
     width: 60px;
 }
 
-.pm_meeting_listing_th_itemsNumbering {
+.th_header_getItemNumber {
     width: 25px;
 }
 

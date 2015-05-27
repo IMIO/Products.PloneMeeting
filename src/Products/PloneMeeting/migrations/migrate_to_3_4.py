@@ -28,7 +28,7 @@ class Migrate_To_3_4(Migrator):
                 cfg.setItemsListVisibleFields(res)
         logger.info('Done.')
 
-    def _adaptConfigForImioDashboard(self):
+    def _adaptAppForImioDashboard(self):
         '''Now that we use imio.dashboard, we will adapt various things :
            - DashboardCollections, no more Topics, we will create a "searches" folder
              and keep existing Topics for now as we will not migrate topics to collections;
@@ -161,6 +161,12 @@ class Migrate_To_3_4(Migrator):
         if hasattr(self.tool, 'showItemKeywordsTargets'):
             delattr(self.tool, 'showItemKeywordsTargets')
 
+        logger.info('Moving to imio.dashboard : enabling faceted view for existing Meetings...')
+        brains = self.portal.portal_catalog(meta_type='Meeting')
+        for brain in brains:
+            meeting = brain.getObject()
+            self.tool._enableFacetedFor(meeting)
+
         logger.info('Done.')
 
     def _adaptMeetingConfigFolderLayout(self):
@@ -184,7 +190,7 @@ class Migrate_To_3_4(Migrator):
         logger.info('Migrating to PloneMeeting 3.4...')
         self.cleanRegistries()
         self._updateItemsListVisibleFields()
-        self._adaptConfigForImioDashboard()
+        self._adaptAppForImioDashboard()
         self._adaptMeetingConfigFolderLayout()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)

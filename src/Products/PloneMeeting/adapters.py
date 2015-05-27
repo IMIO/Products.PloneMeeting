@@ -536,7 +536,13 @@ class Criteria(eeaCriteria):
         cfg = tool.getMeetingConfig(self.context)
         if cfg:
             self.context = cfg.searches
-            self.criteria = self._criteria()
+            criteria = list(self._criteria())
+            if context.meta_type == 'Meeting':
+                # remove the 'collection' widget
+                for criterion in criteria:
+                    if criterion.widget == 'collection-link':
+                        criteria.remove(criterion)
+            self.criteria = criteria
 
 
 class CompoundCriterionBaseAdapter(object):

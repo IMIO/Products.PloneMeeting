@@ -65,25 +65,6 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         return unicode(pretty_link, 'utf-8') + annexes + moreInfos
 
 
-class ToDiscussColumn(BaseColumn):
-    """Display an icon to represent if item is toDiscuss or not."""
-
-    header_image = 'toDiscussYes.png'
-
-    def renderCell(self, item):
-        """Display right icon depending on toDiscuss or not."""
-        if self.getValue(item):
-            return u"<img  title='{0}' src='{1}/toDiscussYes.png' />".format(translate('to_discuss_yes',
-                                                                                       domain='PloneMeeting',
-                                                                                       context=self.request),
-                                                                             self.table.portal_url)
-        else:
-            return u"<img  title='{0}' src='{1}/toDiscussNo.png' />".format(translate('to_discuss_no',
-                                                                                      domain='PloneMeeting',
-                                                                                      context=self.request),
-                                                                            self.table.portal_url)
-
-
 class ItemMeetingColumn(BaseColumn):
     """
       Display the formatted date and a link to the linked meeting if any.

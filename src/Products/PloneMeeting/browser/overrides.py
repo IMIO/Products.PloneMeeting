@@ -17,6 +17,7 @@ from plone.memoize.view import memoize_contextless
 
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.eeafaceted.collectionwidget.browser.views import RenderTermView
+from collective.eeafaceted.z3ctable.columns import BaseColumn
 from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
 from collective.eeafaceted.z3ctable.columns import I18nColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
@@ -30,7 +31,6 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
-from Products.PloneMeeting.columns import ToDiscussColumn
 from Products.PloneMeeting.columns import ItemMeetingColumn
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
@@ -200,11 +200,11 @@ class PMRenderCategoryView(RenderCategoryView):
         return self.tool.getPloneMeetingFolder(self.cfg.getId()).restrictedTraverse('createitemfromtemplate').getItemTemplates()
 
 
-class PMFacetedTableView(IDFacetedTableView):
+class FolderFacetedTableView(IDFacetedTableView):
 
     def _manualColumnFor(self, colName):
         """Manage our own columns."""
-        column = super(PMFacetedTableView, self)._manualColumnFor(colName)
+        column = super(FolderFacetedTableView, self)._manualColumnFor(colName)
         # we use our own column to manage the 'pretty_link'
         if colName == u'pretty_link':
             column = PMPrettyLinkColumn(self.context, self.request, self)
@@ -218,14 +218,16 @@ class PMFacetedTableView(IDFacetedTableView):
             column = VocabularyColumn(self.context, self.request, self)
             column.attrName = 'getProposingGroup'
             column.vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
-        elif colName == u'toDiscuss':
-            column = ToDiscussColumn(self.context, self.request, self)
         elif colName == u'advices':
             column = BrowserViewCallColumn(self.context, self.request, self)
             column.view_name = 'advices-icons'
         elif colName == u'privacy':
             column = I18nColumn(self.context, self.request, self)
             column.i18n_domain = 'PloneMeeting'
+        elif colName == u'toDiscuss':
+            column = BrowserViewCallColumn(self.context, self.request, self)
+            column.view_name = 'item-to-discuss'
+            column.header_image = 'toDiscussYes.png'
         elif colName == u'getItemIsSigned':
             column = BrowserViewCallColumn(self.context, self.request, self)
             column.view_name = 'item-is-signed'
@@ -235,6 +237,26 @@ class PMFacetedTableView(IDFacetedTableView):
         elif colName == u'getPreferredMeetingDate':
             column = ItemMeetingColumn(self.context, self.request, self)
             column.meeting_uid_attr = 'getPreferredMeeting'
+        return column
+
+
+class MeetingFacetedTableView(FolderFacetedTableView):
+
+    def _manualColumnFor(self, colName):
+        """Manage our own columns displayed on Meeting."""
+        column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
+        if colName == u'getItemNumber':
+            column = BaseColumn(self.context, self.request, self)
+        # change parameters for actions, we want to showArrows
+        if colName == u'actions':
+            column.params['showArrows'] = True
+            column.params['totalNbOfItems'] = self.batch.length
+        return column
+
+    def _getColumnFor(self, colName):
+        """Disable sorting for every columns."""
+        column = super(MeetingFacetedTableView, self)._getColumnFor(colName)
+        column.sort_index = -1
         return column
 
 

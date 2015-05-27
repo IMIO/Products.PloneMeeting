@@ -721,15 +721,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Give MeetingManager localrole to relevant _meetingmanagers group
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
 
-    def _enableFacetedFor(self, folder):
-        '''Configure the faceted view for given p_folder.'''
-        subtyper = getMultiAdapter((folder, self.REQUEST), name=u'faceted_subtyper')
+    def _enableFacetedFor(self, obj):
+        '''Configure the faceted view for given p_obj.'''
+        subtyper = getMultiAdapter((obj, self.REQUEST), name=u'faceted_subtyper')
         subtyper.enable()
         # use correct layout in the faceted
-        IFacetedLayout(folder).update_layout('faceted-table-items')
+        IFacetedLayout(obj).update_layout('faceted-table-items')
         # show the left portlets
-        if IHidePloneLeftColumn.providedBy(folder):
-            noLongerProvides(folder, IHidePloneLeftColumn)
+        if IHidePloneLeftColumn.providedBy(obj):
+            noLongerProvides(obj, IHidePloneLeftColumn)
 
     security.declarePublic('getMeetingConfig')
     def getMeetingConfig(self, context, caching=True):

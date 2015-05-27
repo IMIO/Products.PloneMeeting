@@ -103,6 +103,7 @@
         class=".async.Discuss"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         attribute="asynchToggle"
+        allowed_attributes="isAsynchToggleEnabled"
         permission="zope2.View"/>
     <browser:page
         name="synchronous_toggle_to_discuss"
@@ -285,6 +286,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that display itemIsSigned widget -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-to-discuss"
+        class=".views.ItemToDiscussView"
+        template="templates/itemtodiscuss.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- this view will contains some methods doing unrestricted things.  It replaces Manager Proxy roled python Scripts -->
     <browser:page
         for="*"
@@ -320,12 +330,7 @@
         class=".views.ChangeItemOrderView"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         permission="zope2.View" />
-    <browser:page
-        name="toggle_to_discuss_on_item"
-        class=".async.Discuss"
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        permission="zope2.View"
-        allowed_attributes="isAsynchToggleEnabled"/>
+
     <!-- Macros -->
     <browser:page
         name="pm-macros"

@@ -19,7 +19,7 @@ class Discuss(BrowserView):
     def isAsynchToggleEnabled(self):
         """
           Return True if the asynchronous call is enabled.
-          Indeed, in some case, it can be necessary to deactivate to asynchronous call
+          Indeed, in some case, it can be necessary to deactivate the asynchronous call
           so the page is reloaded entirely if some other area are updated after
           having toggled the toDiscuss value.
         """

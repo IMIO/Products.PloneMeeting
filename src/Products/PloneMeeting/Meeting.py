@@ -642,6 +642,27 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     # Manually created methods
 
+    security.declarePublic('getRawQuery')
+    def getRawQuery(self):
+        """ """
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        res = [{'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': cfg.getItemTypeName()},
+               {'i': 'linkedMeetingUID', 'o': 'plone.app.querystring.operation.selection.is', 'v': self.UID()},]
+        return res
+
+    security.declarePublic('getSort_on')
+    def getSort_on(self):
+        """ """
+        return 'getItemNumber'
+
+    security.declarePublic('getCustomViewFields')
+    def getCustomViewFields(self):
+        """ """
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return (u'getItemNumber', u'pretty_link', ) + cfg.getItemsListVisibleColumns()
+
     security.declarePrivate('validate_date')
     def validate_date(self, value):
         '''There can't be several meetings with the same date and hour.'''

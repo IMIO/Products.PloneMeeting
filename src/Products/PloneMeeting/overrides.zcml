@@ -180,7 +180,13 @@
         <browser:view
             for="Products.ATContentTypes.interfaces.folder.IATFolder"
             name="faceted-table-view"
-            class="Products.PloneMeeting.browser.overrides.PMFacetedTableView"
+            class="Products.PloneMeeting.browser.overrides.FolderFacetedTableView"
+            permission="zope2.View"
+        />
+        <browser:view
+            for="plone.app.collection.interfaces.ICollection"
+            name="faceted-table-view"
+            class="Products.PloneMeeting.browser.overrides.MeetingFacetedTableView"
             permission="zope2.View"
         />
     </configure>

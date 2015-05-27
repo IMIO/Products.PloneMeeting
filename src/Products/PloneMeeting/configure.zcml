@@ -203,6 +203,14 @@
   <class class="Products.PloneMeeting.MeetingConfig.MeetingConfig">
     <implements interface="plone.portlets.interfaces.ILocalPortletAssignable" />
   </class>
+  <!-- Make Meeting behave like a Collection to be faceted navigable -->
+  <class class="Products.PloneMeeting.Meeting.Meeting">
+    <implements interface="plone.app.collection.interfaces.ICollection" />
+  </class>
+  <class class="Products.PloneMeeting.Meeting.Meeting">
+    <implements interface="eea.facetednavigation.interfaces.IPossibleFacetedNavigable" />
+  </class>
+
   <!-- ##/code-section configure.zcml.core -->
 
 </configure>
