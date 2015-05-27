@@ -525,12 +525,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.modelAdaptations = []
         self.enableUserPreferences = False
         self.enableAnnexPreview = False
-        # number of elements displayed in dashboards
-        self.maxShownFound = 20
-        # If True, the following param will, on the search screen, display
-        # radio buttons allowing to choose if item keywords encompass index
-        # Title, Description, getDeliberation or SearchableText.
-        self.showItemKeywordsTargets = True
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [{'date': '2015/01/01', },
                          {'date': '2015/04/06', },

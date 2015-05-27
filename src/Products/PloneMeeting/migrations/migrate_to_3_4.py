@@ -6,7 +6,7 @@ from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
 from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 from eea.facetednavigation.interfaces import ICriteria
-from eea.facetednavigation.widgets.resultsfilter.widget import Widget as ResultsPerPageWidget
+from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import updateCollectionCriterion
@@ -123,6 +123,15 @@ class Migrate_To_3_4(Migrator):
             cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
             cfg.setItemColumns(itemColumns)
 
+            logger.info('Moving to imio.dashboard : migrating parameter "maxShownFound" from portal_plonemeeting...')
+            if hasattr(self.tool, 'maxShownFound'):
+                # update the results criterion value
+                for criterion in ICriteria(cfg.searches).values():
+                    if criterion.widget == ResultsPerPageWidget.widget_type:
+                        new_value = self.tool.maxShownFound / 20 * 20
+                        criterion.default = unicode(new_value)
+                        break
+
         logger.info('Moving to imio.dashboard : removing view "meetingfolder_redirect_view" '
                     'from available views for "Folder"...')
         folderType = self.portal.portal_types.Folder
@@ -147,6 +156,10 @@ class Migrate_To_3_4(Migrator):
             delattr(self.tool, 'publicUrl')
         if hasattr(self.tool, 'deferredNotificationsHandling'):
             delattr(self.tool, 'deferredNotificationsHandling')
+        if hasattr(self.tool, 'maxShownFound'):
+            delattr(self.tool, 'maxShownFound')
+        if hasattr(self.tool, 'showItemKeywordsTargets'):
+            delattr(self.tool, 'showItemKeywordsTargets')
 
         logger.info('Done.')
 

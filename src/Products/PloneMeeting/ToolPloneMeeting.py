@@ -255,30 +255,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    IntegerField(
-        name='maxShownFound',
-        default=defValues.maxShownFound,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownFound",
-            description_msgid="max_shown_found_descr",
-            label='Maxshownfound',
-            label_msgid='PloneMeeting_label_maxShownFound',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="pm_search",
-    ),
-    BooleanField(
-        name='showItemKeywordsTargets',
-        default=defValues.showItemKeywordsTargets,
-        widget=BooleanField._properties['widget'](
-            description="ShowItemKeywordsTargets",
-            description_msgid="show_item_keywords_targets_descr",
-            label='Showitemkeywordstargets',
-            label_msgid='PloneMeeting_label_showItemKeywordsTargets',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="pm_search",
-    ),
     LinesField(
         name='workingDays',
         default=defValues.workingDays,

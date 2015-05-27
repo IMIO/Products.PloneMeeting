@@ -141,22 +141,6 @@
         </table>
       </fieldset>
 
-      <!-- Advanced search -->
-      <a name="advancedSearch"></a>
-      <fieldset>
-        <legend><span i18n:translate="label_schema_pm_search"></span></legend>
-        <table width="100%">
-          <tr valign="top">
-            <td tal:define="field python:here.getField('maxShownFound')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
-            <td tal:define="field python:here.getField('showItemKeywordsTargets')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-
       <!-- Misc -->
       <fieldset>
         <legend>
