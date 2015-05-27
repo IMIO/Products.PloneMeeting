@@ -322,9 +322,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     # Create the message parts
     d = 'PloneMeeting'
     portal = obj.portal_url.getPortalObject()
-    portalUrl = tool.getPublicUrl().strip()
-    if not portalUrl:
-        portalUrl = portal.absolute_url()
+    portalUrl = portal.absolute_url()
     if mapping:
         # we need every mappings to be unicode
         for elt in mapping:

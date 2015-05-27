@@ -35,14 +35,12 @@ import os
 import os.path
 import re
 import string
-import transaction
 import OFS.Moniker
 from appy.gen import No
 from datetime import datetime
 from AccessControl import Unauthorized
 from AccessControl import getSecurityManager
 from Acquisition import aq_base
-from BTrees.OOBTree import OOBTree
 from DateTime import DateTime
 from OFS import CopySupport
 from zExceptions import NotFound
@@ -148,19 +146,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    TextField(
-        name='colorSystemDisabledFor',
-        default=defValues.colorSystemDisabledFor,
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
-            description="ColorSystemDisabledFor",
-            description_msgid="color_system_disabled_for_descr",
-            label='Colorsystemdisabledfor',
-            label_msgid='PloneMeeting_label_colorSystemDisabledFor',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type='text/plain',
-    ),
     BooleanField(
         name='restrictUsers',
         default=defValues.restrictUsers,
@@ -247,29 +232,6 @@ schema = Schema((
         ),
         multiValued=1,
         vocabulary='listModelAdaptations',
-    ),
-    StringField(
-        name='publicUrl',
-        default=defValues.publicUrl,
-        widget=StringField._properties['widget'](
-            size=60,
-            description="ToolPublicUrl",
-            description_msgid="tool_public_url_descr",
-            label='Publicurl',
-            label_msgid='PloneMeeting_label_publicUrl',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
-    BooleanField(
-        name='deferredNotificationsHandling',
-        default=defValues.deferredNotificationsHandling,
-        widget=BooleanField._properties['widget'](
-            description="DeferredNotificationsHandling",
-            description_msgid="deferred_notifs_handling_descr",
-            label='Deferrednotificationshandling',
-            label_msgid='PloneMeeting_label_deferredNotificationsHandling',
-            i18n_domain='PloneMeeting',
-        ),
     ),
     BooleanField(
         name='enableUserPreferences',

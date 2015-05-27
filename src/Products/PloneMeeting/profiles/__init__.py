@@ -523,8 +523,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.availableOcrLanguages = ('eng',)
         self.defaultOcrLanguage = 'eng'
         self.modelAdaptations = []
-        self.publicUrl = ''
-        self.deferredNotificationsHandling = False
         self.enableUserPreferences = False
         self.enableAnnexPreview = False
         # number of elements displayed in dashboards

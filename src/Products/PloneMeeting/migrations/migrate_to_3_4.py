@@ -6,7 +6,7 @@ from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
 from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 from eea.facetednavigation.interfaces import ICriteria
-
+from eea.facetednavigation.widgets.resultsfilter.widget import Widget as ResultsPerPageWidget
 
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import updateCollectionCriterion
@@ -136,12 +136,17 @@ class Migrate_To_3_4(Migrator):
         if 'toggleDescriptions' in dactions.objectIds():
             dactions.manage_delObjects(ids=['toggleDescriptions'])
 
-        logger.info('Moving to imio.dashboard : removing parameters "usedColorSystem" and '
-                    '"colorSystemDisabledFor" from portal_plonemeeting...')
+        logger.info('Moving to imio.dashboard : removing parameters "usedColorSystem", '
+                    '"colorSystemDisabledFor", "publicUrl" and "deferredNotificationsHandling" '
+                    'from portal_plonemeeting...')
         if hasattr(self.tool, 'usedColorSystem'):
             delattr(self.tool, 'usedColorSystem')
         if hasattr(self.tool, 'colorSystemDisabledFor'):
             delattr(self.tool, 'colorSystemDisabledFor')
+        if hasattr(self.tool, 'publicUrl'):
+            delattr(self.tool, 'publicUrl')
+        if hasattr(self.tool, 'deferredNotificationsHandling'):
+            delattr(self.tool, 'deferredNotificationsHandling')
 
         logger.info('Done.')
 
