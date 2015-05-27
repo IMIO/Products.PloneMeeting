@@ -172,7 +172,8 @@ class Migrate_To_3_4(Migrator):
             if not hasattr(aq_base(userFolder), 'mymeetings'):
                 continue
             for mc_folder in userFolder.mymeetings.objectValues():
-                self.tool._enableFacetedFor(mc_folder)
+                if not mc_folder.getLayout() == 'facetednavigation_view':
+                    self.tool._enableFacetedFor(mc_folder)
         logger.info('Done.')
 
     def _cleanMeetingConfigAttributes(self):
