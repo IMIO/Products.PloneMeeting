@@ -1169,7 +1169,7 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
     for config in cfg.getOnMeetingTransitionItemTransitionToTrigger():
         if config['meeting_transition'] == transitionId:
             # execute corresponding transition on every items
-            for item in meeting.getAllItems():
+            for item in meeting.getItems():
                 # do not fail if a transition could not be triggered, just add an
                 # info message to the log so configuration can be adapted to avoid this
                 try:

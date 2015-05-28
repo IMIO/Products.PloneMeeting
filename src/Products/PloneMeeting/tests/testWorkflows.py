@@ -214,7 +214,6 @@ class testWorkflows(PloneMeetingTestCase):
         # So now I should have 5 normal items (do not forget the autoadded
         # recurring item) and no late item
         self.failIf(len(meeting.getItems()) != 5)
-        self.failIf(len(meeting.getLateItems()) != 0)
         # pmReviewer1 now adds an annex to item1
         self.changeUser('pmReviewer1')
         self.addAnnex(item1)
@@ -371,6 +370,8 @@ class testWorkflows(PloneMeetingTestCase):
 
     def test_pm_RecurringItems(self):
         '''Tests the recurring items system.'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                                          'reverse': '0'}, ))
         self._setupRecurringItems()
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
@@ -379,36 +380,32 @@ class testWorkflows(PloneMeetingTestCase):
             self.assertEquals(item.getOwner().getId(), 'pmManager')
         # 1 recurring item is inserted at meeting creation
         self.failIf(len(meeting.getItems()) != 3)
-        self.failIf(len(meeting.getLateItems()) != 0)
         # meeting has not already been frozen, so when publishing, the added recurring
         # item is considered as a normal item
         self.publishMeeting(meeting)
         self.failIf(len(meeting.getItems()) != 4)
-        self.failIf(len(meeting.getLateItems()) != 0)
+        self.assertFalse(meeting.getItemsInOrder()[-1].isLate())
         # now freeze the meeting, future added items will be considered as late
         self.freezeMeeting(meeting)
-        self.failIf(len(meeting.getItems()) != 4)
-        self.failIf(len(meeting.getLateItems()) != 1)
+        self.failIf(len(meeting.getItems()) != 5)
+        self.assertTrue(meeting.getItemsInOrder()[-1].isLate())
         # Back to created: rec item 2 is not inserted.
-        # We can not 'backToCreated' a meeting if some late items are into it...
-        self.portal.restrictedTraverse('@@delete_givenuid')(meeting.getLateItems()[0].UID())
         self.backToState(meeting, 'created')
-        self.failIf(len(meeting.getItems()) != 4)
-        self.failIf(len(meeting.getLateItems()) != 0)
+        self.failIf(len(meeting.getItems()) != 5)
         # a recurring item can be added several times...
         self.freezeMeeting(meeting)
         # one normal recurring item is added when meeting is published, and so meeting still not frozen
-        self.failIf(len(meeting.getItems()) != 5)
         # and one recurring item is added when meeting is frozen, so item considered as late
-        self.failIf(len(meeting.getLateItems()) != 1)
+        self.failIf(len(meeting.getItems()) != 7)
+        self.assertFalse(meeting.getItemsInOrder()[-2].isLate())
+        self.assertTrue(meeting.getItemsInOrder()[-1].isLate())
         # an item need a decisionText to be decided...
-        for item in (meeting.getItems() + meeting.getLateItems()):
+        for item in (meeting.getItems()):
             item.setDecision(self.decisionText)
         self.decideMeeting(meeting)
         # a recurring item is added during the 'decide' transition
-        self.failIf(len(meeting.getItems()) != 5)
-        # one additional recurring item is added when meeting is decided
-        self.failIf(len(meeting.getLateItems()) != 2)
+        self.failIf(len(meeting.getItems()) != 8)
+        self.assertTrue(meeting.getItemsInOrder()[-1].isLate())
 
     def test_pm_NoDefinedRecurringItems(self):
         '''When no recurring items exist in the meetingConfig, we can add a meeting,
@@ -417,7 +414,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._removeConfigObjectsFor(self.meetingConfig)
         meetingWithoutRecurringItems = self.create('Meeting', date='2008/12/11 09:00:00')
-        self.assertTrue(meetingWithoutRecurringItems.getAllItems() == [])
+        self.assertTrue(meetingWithoutRecurringItems.getItems() == [])
 
     def test_pm_RecurringItemsBypassSecutiry(self):
         '''Tests that recurring items are addable by a MeetingManager even if by default,
@@ -447,8 +444,8 @@ class testWorkflows(PloneMeetingTestCase):
             self.assertTrue(len(availableTransitions) == 1 and availableTransitions[0]['id'].startswith('back'))
         # now, create a meeting, the item is correctly added no matter MeetingManager could not validate it
         meeting = self.create('Meeting', date=DateTime('2013/01/01'))
-        self.assertTrue(len(meeting.getAllItems()) == 1)
-        self.assertTrue(meeting.getAllItems()[0].getProposingGroup() == 'developers')
+        self.assertTrue(len(meeting.getItems()) == 1)
+        self.assertTrue(meeting.getItems()[0].getProposingGroup() == 'developers')
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted

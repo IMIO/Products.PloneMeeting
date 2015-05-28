@@ -1454,7 +1454,6 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setDecision('<p>A decision</p>')
         # until the item is not in a meeting, the call to
         # getItemNumber will return None
-        self.assertIsNone(item.getItemNumber(relativeTo='itemsList'))
         self.assertIsNone(item.getItemNumber(relativeTo='meeting'))
         self.assertIsNone(item.getItemNumber(relativeTo='meetingConfig'))
         # so insert the item in a meeting
@@ -1463,8 +1462,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.presentItem(item)
         # the item is inserted in 5th position so stored itemNumber is 5
         self.assertTrue(item.getField('itemNumber').get(item) == 5)
-        # it is the same than calling with relativeTo='itemsList' and relativeTo='meeting'
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
         # as no other meeting exist, it is the same result also for relativeTo='meetingConfig'
         self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 5)
@@ -1474,15 +1471,11 @@ class testMeetingItem(PloneMeetingTestCase):
         lateItem.setDecision('<p>A decision</p>')
         lateItem.setPreferredMeeting(meeting.UID())
         self.presentItem(lateItem)
-        # it is presented as late item
+        # it is presented as late item, it will be just inserted at the end
         self.assertTrue(lateItem.isLate())
-        # it is the first late item so his number in the late items list is 1
-        self.assertTrue(lateItem.getField('itemNumber').get(lateItem) == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        # but regarding the whole meeting, his number his len of normal items + his stored number
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        # only existing meeting, so relativeTo='meetingConfig' is the same as relativeTo='meeting'
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == len(meeting.getItems()) + 1)
+        self.assertTrue(lateItem.getField('itemNumber').get(lateItem) == 6)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 6)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 6)
 
         # now create a meeting BEFORE meeting so meeting will not be considered as only meeting
         # in the meetingConfig and relativeTo='meeting' behaves normally
@@ -1493,28 +1486,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # itemNumber relativeTo itemsList/meeting does not change but relativeTo meetingConfig changed
         # for the normal item
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
-        self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
-        self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
-        # for the late item
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
         # make sure it is the same result for non MeetingManagers as previous
         # meeting2 is not viewable by common users by default as in state 'created'
-        self.changeUser('pmCreator1')
-        # the user can see item and lateItem
-        self.assertTrue(self.hasPermission('View', (item, lateItem, )))
-        # and getItemNumber returns the same result than for the MeetingManagers
-        # for item
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
-        self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
-        # a cleanMemoize is done when calling changeUser
-        self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
-        # for lateItem
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        for memberId in ('pmManager', 'pmCreator1'):
+            self.changeUser(memberId)
+            self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
+            self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
+            # for the late item
+            self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 6)
+            self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (6+7))
         # now set firstItemNumber for meeting2
         self.changeUser('pmManager')
         self.closeMeeting(meeting2)
@@ -1524,13 +1504,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # getItemNumber is still behaving the same
         # for item
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
         # for lateItem
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 6)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (6+7))
         # and set firstItemNumber for meeting
         self.assertTrue(meeting.getFirstItemNumber() == -1)
         self.closeMeeting(meeting)
@@ -1539,32 +1517,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(meeting.getFirstItemNumber() == 8)
         # getItemNumber is still behaving the same
         # for item
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
         # for lateItem
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 6)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (6+7))
         # if we remove one item, other items number is correct
         # remove normal item number 3 and check others
         self.changeUser('admin')
         # we have 8 items, if we remove item number 5, others are correct
-        self.assertTrue(len(meeting.getItemsInOrder()) == 8)
-        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem
-                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7, 8])
-        # 1 late item
-        self.assertTrue(len(meeting.getItemsInOrder(late=True)) == 1)
-        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem
-                         in meeting.getItemsInOrder(late=True)] == [9, ])
+        self.assertTrue(len(meeting.getItemsInOrder()) == 9)
+        self.assertTrue([anItem.getItemNumber(relativeTo='meeting') for anItem
+                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7, 8, 9])
+        # relative to meetingConfig
+        self.assertTrue([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
+                         in meeting.getItemsInOrder()] == [8, 9, 10, 11, 12, 13, 14, 15, 16])
         # item is 5th of normal items
         self.assertTrue(item.UID() == meeting.getItemsInOrder()[4].UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
-        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem
-                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7])
-        # and late items are correct too
-        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem
-                         in meeting.getItemsInOrder(late=True)] == [8, ])
+        self.assertTrue([anItem.getItemNumber(relativeTo='meeting') for anItem
+                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7, 8])
+        # relative to meetingConfig
+        self.assertTrue([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
+                         in meeting.getItemsInOrder()] == [8, 9, 10, 11, 12, 13, 14, 15])
 
     def test_pm_ListMeetingsAcceptingItems(self):
         '''
@@ -2543,7 +2518,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
                          'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
                          'itemKeywords', 'itemNumber', 'itemSignatories',
-                         'itemSignatures', 'itemTags', 'manuallyLinkedItems',
+                         'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
                          'meetingTransitionInsertingMe', 'observations',
                          'predecessor', 'preferredMeeting', 'proposingGroup',
                          'questioners', 'takenOverBy', 'templateUsingGroups',

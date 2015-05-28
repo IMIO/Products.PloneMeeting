@@ -163,10 +163,10 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item2.getItemNumber(), 2)
         self.assertEquals(item3.getItemNumber(), 3)
         self.assertEquals(item4.getItemNumber(), 4)
-        self.assertEquals(late1.getItemNumber(), 1)
-        self.assertEquals(late2.getItemNumber(), 2)
-        self.assertEquals(late3.getItemNumber(), 3)
-        self.assertEquals(late4.getItemNumber(), 4)
+        self.assertEquals(late1.getItemNumber(), 5)
+        self.assertEquals(late2.getItemNumber(), 6)
+        self.assertEquals(late3.getItemNumber(), 7)
+        self.assertEquals(late4.getItemNumber(), 8)
         # move a late item and check that normal items are not changed
         view = late2.restrictedTraverse('@@change_item_order')
         view('up')
@@ -175,10 +175,10 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item2.getItemNumber(), 2)
         self.assertEquals(item3.getItemNumber(), 3)
         self.assertEquals(item4.getItemNumber(), 4)
-        self.assertEquals(late1.getItemNumber(), 2)
-        self.assertEquals(late2.getItemNumber(), 1)
-        self.assertEquals(late3.getItemNumber(), 3)
-        self.assertEquals(late4.getItemNumber(), 4)
+        self.assertEquals(late1.getItemNumber(), 6)
+        self.assertEquals(late2.getItemNumber(), 5)
+        self.assertEquals(late3.getItemNumber(), 7)
+        self.assertEquals(late4.getItemNumber(), 8)
 
     def test_pm_MayChangeItemOrder(self):
         """

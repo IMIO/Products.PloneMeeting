@@ -605,18 +605,14 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         # by default, 7 normal items and none late
         self.assertTrue(meeting.numberOfItems() == 7)
-        self.assertTrue(meeting.numberOfItems(late=True) == 0)
         # add a late item
         self.freezeMeeting(meeting)
         item = self.create('MeetingItem')
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
-        # still 7 normal items
-        self.assertTrue(meeting.numberOfItems() == 7)
-        self.assertTrue(len(meeting.getRawItems()) == 7)
-        # but one late now
-        self.assertTrue(meeting.numberOfItems(late=True) == 1)
-        self.assertTrue(len(meeting.getRawLateItems()) == 1)
+        # now 8 items
+        self.assertTrue(meeting.numberOfItems() == 8)
+        self.assertTrue(len(meeting.getRawItems()) == 8)
 
     def test_pm_AvailableItems(self):
         """
@@ -993,16 +989,6 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(len(itemsInOrder) == 7)
         itemUids = [item.UID() for item in itemsInOrder]
 
-        # ask a batch of 5 elements
-        batchedItemsInOrder = meeting.getItemsInOrder(batchSize=5)
-        self.assertTrue(len(batchedItemsInOrder) == 5)
-        self.assertTrue(itemUids[0:5] == [item.UID() for item in batchedItemsInOrder])
-
-        # ask batch of 5 elements beginning at 6 (so 2 last ones)
-        batchedItemsInOrderStartingAt2 = meeting.getItemsInOrder(batchSize=5, startNumber=6)
-        self.assertTrue(len(batchedItemsInOrderStartingAt2) == 2)
-        self.assertTrue(itemUids[5:7] == [item.UID() for item in batchedItemsInOrderStartingAt2])
-
         # remove some items UID then pass it to getItemsInOrder
         itemUids.pop(4)
         itemUids.pop(2)
@@ -1014,6 +1000,9 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_GetItemByNumber(self):
         '''Test the Meeting.getItemByNumber method.'''
+        # make items inserted in a meeting inserted in this order
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                                          'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         itemsInOrder = meeting.getItemsInOrder()
@@ -1025,13 +1014,12 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(not meeting.getItemByNumber(8))
         # it also take late items into account
         self.freezeMeeting(meeting)
-        item = self.create('MeetingItem')
-        item.setPreferredMeeting(meeting.UID())
-        self.presentItem(item)
+        lateItem = self.create('MeetingItem')
+        lateItem.setPreferredMeeting(meeting.UID())
+        self.presentItem(lateItem)
         # if we ask 8th item, so the late item, it works
-        lateItemsInOrder = meeting.getItemsInOrder(late=True)
-        self.assertTrue(len(lateItemsInOrder) == 1)
-        self.assertTrue(meeting.getItemByNumber(8).UID() == lateItemsInOrder[0].UID())
+        self.assertTrue(lateItem.isLate())
+        self.assertTrue(meeting.getItemByNumber(8).UID() == lateItem.UID())
 
     def test_pm_RemoveWholeMeeting(self):
         '''Test the 'remove whole meeting' functionnality, so removing a meeting

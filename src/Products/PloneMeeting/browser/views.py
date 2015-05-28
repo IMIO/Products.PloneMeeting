@@ -120,7 +120,7 @@ class PloneMeetingRedirectToAppView(BrowserView):
 class ObjectGoToView(BrowserView):
     """
       Manage the fact of going to a given item uid.  This method is used
-      in the item navigation widget (go to previous item, go to newt item, ...)
+      in the item navigation widget (go to previous item, go to next item, ...)
     """
     def __call__(self, objectId, idType):
         """
@@ -179,17 +179,10 @@ class ChangeItemOrderView(BrowserView):
             elif moveType == 'down':
                 move = 1
 
-        isLate = self.context.UID() in meeting.getRawLateItems()
-        if isLate:
-            nbOfItems = len(meeting.getRawLateItems())
-        else:
-            nbOfItems = len(meeting.getRawItems())
+        nbOfItems = len(meeting.getRawItems())
 
         # Calibrate and validate moveValue
         if not isDelta:
-            # Recompute p_move according to "normal" or "late" items list
-            if isLate:
-                move -= len(meeting.getRawItems())
             # Is this move allowed ?
             if move in (self.context.getItemNumber(), self.context.getItemNumber()+1):
                 self.context.plone_utils.addPortalMessage(
@@ -211,12 +204,7 @@ class ChangeItemOrderView(BrowserView):
                 oldIndex = self.context.getItemNumber()
                 newIndex = oldIndex + move
                 if (newIndex >= 1) and (newIndex <= nbOfItems):
-                    # Find the item having newIndex and intervert indexes
-                    if isLate:
-                        itemsList = meeting.getLateItems()
-                    else:
-                        itemsList = meeting.getItems()
-                    for item in itemsList:
+                    for item in meeting.getItems():
                         if item.getItemNumber() == newIndex:
                             item.setItemNumber(oldIndex)
                             item.reindexObject(idxs=['getItemNumber'])
@@ -226,10 +214,7 @@ class ChangeItemOrderView(BrowserView):
             else:
                 # Move the item to an absolute position
                 oldIndex = self.context.getItemNumber()
-                if isLate:
-                    itemsList = meeting.getLateItems()
-                else:
-                    itemsList = meeting.getItems()
+                itemsList = meeting.getItems()
                 if move < oldIndex:
                     # We must move the item closer to the first items (up)
                     for item in itemsList:

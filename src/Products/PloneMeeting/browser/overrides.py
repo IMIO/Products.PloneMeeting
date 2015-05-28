@@ -30,8 +30,9 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
+from Products.PloneMeeting.columns import ItemNumberColumn
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
-from Products.PloneMeeting.columns import ItemMeetingColumn
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
@@ -233,9 +234,9 @@ class FolderFacetedTableView(IDFacetedTableView):
             column.view_name = 'item-is-signed'
             column.header_image = 'itemIsSignedYes.png'
         elif colName == u'linkedMeetingDate':
-            column = ItemMeetingColumn(self.context, self.request, self)
+            column = ItemLinkedMeetingColumn(self.context, self.request, self)
         elif colName == u'getPreferredMeetingDate':
-            column = ItemMeetingColumn(self.context, self.request, self)
+            column = ItemLinkedMeetingColumn(self.context, self.request, self)
             column.meeting_uid_attr = 'getPreferredMeeting'
         return column
 
@@ -246,7 +247,7 @@ class MeetingFacetedTableView(FolderFacetedTableView):
         """Manage our own columns displayed on Meeting."""
         column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
         if colName == u'getItemNumber':
-            column = BaseColumn(self.context, self.request, self)
+            column = ItemNumberColumn(self.context, self.request, self)
         # change parameters for actions, we want to showArrows
         if colName == u'actions':
             column.params['showArrows'] = True
@@ -430,7 +431,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
            - meeting is modified (modified is also triggered when review_state changed);
-           - getRawItems or getRawLateItems changed;
+           - getRawItems changed;
            - different item or user;
            - user groups changed.'''
         user = self.request['AUTHENTICATED_USER']
@@ -440,7 +441,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
             invalidate_meeting_actions_panel_cache = True
             delattr(self.context, 'invalidate_meeting_actions_panel_cache')
-        return (self.context, self.context.modified(), self.context.getRawItems(), self.context.getRawLateItems(),
+        return (self.context, self.context.modified(), self.context.getRawItems(),
                 user.getId(), userGroups, userRoles, invalidate_meeting_actions_panel_cache,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,

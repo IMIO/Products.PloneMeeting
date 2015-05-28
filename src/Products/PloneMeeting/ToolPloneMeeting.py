@@ -1215,43 +1215,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res.append([meetingGroup.getId(), meetingGroup.Title()])
         return DisplayList(res).sortedByValue()
 
-    security.declarePublic('getItemsList')
-    def getItemsList(self, meeting, whichItems, startNumber=1):
-        '''On meeting_view, we need to display various lists of items: items,
-           late items or available items. This method returns a 5-tuple with:
-           (1) the needed list, (2) the total number of items, (3) the batch
-           size, (4) the first number of the whole list (which is not 1
-           for the list of late items) and (5) the number of the first item
-           in the result.'''
-        meetingConfig = self.getMeetingConfig(meeting)
-        firstNumber = 1
-        firstBatchNumber = 1
-        if whichItems == 'availableItems':
-            batchSize = meetingConfig.getMaxShownAvailableItems()
-            res = [b.getObject() for b in meeting.adapted().getAvailableItems()]
-            totalNbOfItems = len(res)
-            if batchSize and (totalNbOfItems > batchSize):
-                if startNumber > totalNbOfItems:
-                    startNumber = 1
-            endNumber = min(startNumber + batchSize - 1, totalNbOfItems)
-            res = res[startNumber - 1:endNumber]
-        elif whichItems == 'meetingItems':
-            batchSize = meetingConfig.getMaxShownMeetingItems()
-            res = meeting.getItemsInOrder(batchSize=batchSize,
-                                          startNumber=startNumber)
-            totalNbOfItems = len(meeting.getRawItems())
-            if res:
-                firstBatchNumber = res[0].getItemNumber()
-        elif whichItems == 'lateItems':
-            batchSize = meetingConfig.getMaxShownLateItems()
-            res = meeting.getItemsInOrder(batchSize=batchSize,
-                                          startNumber=startNumber, late=True)
-            totalNbOfItems = len(meeting.getRawLateItems())
-            firstNumber = len(meeting.getRawItems()) + 1
-            if res:
-                firstBatchNumber = res[0].getItemNumber(relativeTo='meeting')
-        return res, totalNbOfItems, batchSize, firstNumber, firstBatchNumber
-
     security.declarePublic('gotoReferer')
     def gotoReferer(self):
         '''This method allows to go back to the referer URL after a script has
@@ -1859,7 +1822,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return not rq['ACTUAL_URL'].endswith('edit')
         # If we are displaying search results (excepted for lists of meetings),
         # return True
-        import ipdb; ipdb.set_trace()
         if str(rq).endswith('@@faceted_query'):
             pass
 
@@ -2129,6 +2091,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if len(form) <= 1:
             return
         self.REQUEST.SESSION['searchParams'] = form.copy()
+
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

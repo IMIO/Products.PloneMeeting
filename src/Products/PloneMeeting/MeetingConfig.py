@@ -961,19 +961,6 @@ schema = Schema((
         schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
-    IntegerField(
-        name='maxShownLateItems',
-        default=defValues.maxShownLateItems,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownLateItems",
-            description_msgid="max_shown_late_items_descr",
-            label='Maxshownlateitems',
-            label_msgid='PloneMeeting_label_maxShownLateItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     BooleanField(
         name='enableGotoPage',
         default=defValues.enableGotoPage,
@@ -3008,10 +2995,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if collectionId in container.objectIds():
                 logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
                 continue
-            try:
-                container.invokeFactory('DashboardCollection', collectionId, **collectionData)
-            except:
-                import ipdb; ipdb.set_trace()
+            container.invokeFactory('DashboardCollection', collectionId, **collectionData)
             collection = getattr(container, collectionId)
             # update query so it is stored correctly because we pass a dict
             # but it is actually stored as instances of ZPublisher.HTTPRequest.record

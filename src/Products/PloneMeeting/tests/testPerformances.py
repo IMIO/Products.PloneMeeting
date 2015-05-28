@@ -147,7 +147,7 @@ class testPerformances(PloneMeetingTestCase):
     @timecall
     def _computeItemNumbersForMeeting(self, meeting):
         '''Helper method that actually compute item number for every items of the given p_meeting.'''
-        for item in meeting.getAllItems():
+        for item in meeting.getItems():
             item.getItemNumber(relativeTo='meetingConfig')
 
     def _setupForMeetingGroups(self, number_of_groups):

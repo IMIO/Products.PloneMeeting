@@ -554,11 +554,10 @@
       <p i18n:translate="meetingconfig_gui_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td>
-          </td>
           <td tal:define="field python:here.getField('maxShownMeetings')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
           <td></td>
         </tr>
         <tr valign="top">
@@ -579,9 +578,7 @@
           <td tal:define="field python:here.getField('maxShownMeetingItems')">
               <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('maxShownLateItems')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('enableGotoPage')">

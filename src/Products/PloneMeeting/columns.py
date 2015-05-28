@@ -65,7 +65,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         return unicode(pretty_link, 'utf-8') + annexes + moreInfos
 
 
-class ItemMeetingColumn(BaseColumn):
+class ItemLinkedMeetingColumn(BaseColumn):
     """
       Display the formatted date and a link to the linked meeting if any.
       This column is used for 'linkedMeetingDate' and 'getPreferredMeetingDate'.
@@ -83,3 +83,12 @@ class ItemMeetingColumn(BaseColumn):
             meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0]
             formattedMeetingDate = tool.formatMeetingDate(meeting, withHour=True)
             return u'<a href="{0}">{1}</a>'.format(meeting.getURL(), formattedMeetingDate)
+
+
+class ItemNumberColumn(BaseColumn):
+    """
+      Display the itemNumber column, used on meetings.
+    """
+
+    def renderCell(self, item):
+        return 'rkmreerklm'

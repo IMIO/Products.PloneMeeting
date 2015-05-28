@@ -571,6 +571,18 @@ schema = Schema((
         vocabulary='listAssociatedGroups',
     ),
     StringField(
+        name='listType',
+        default='normal',
+        widget=SelectionWidget(
+            condition="python: here.hasMeeting()",
+            label='Listtype',
+            label_msgid='PloneMeeting_label_listType',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=True,
+        vocabulary='listListTypes',
+    ),
+    StringField(
         name='emergency',
         default='no_emergency',
         widget=SelectionWidget(
@@ -1553,11 +1565,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('getItemNumber')
-    def getItemNumber(self, relativeTo='itemsList', **kwargs):
+    def getItemNumber(self, relativeTo='meeting', **kwargs):
         '''This accessor for 'itemNumber' field is overridden in order to allow
            to get the item number in various flavours:
-           - the item number relative to the items list into which it is
-             included ("normal" or "late" items list): p_relativeTo="itemsList";
            - the item number relative to the whole meeting (no matter the item
              being "normal" or "late"): p_relativeTo="meeting";
            - the item number relative to the whole meeting config:
@@ -1567,15 +1577,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return None
 
         res = self.getField('itemNumber').get(self, **kwargs)
-        if relativeTo == 'itemsList':
-            # we use the value stored in the 'itemNumber' field
-            pass
-        elif relativeTo == 'meeting':
-            # either we use the value stored in the 'itemNumber' field if
-            # it is a normal item, and if it is a late item, we compute length
-            # of normal items + value stored in the 'itemNumber' field
-            if self.isLate():
-                res += len(self.getMeeting().getRawItems())
+        if relativeTo == 'meeting':
+            return res
         elif relativeTo == 'meetingConfig':
             meeting = self.getMeeting()
             meetingFirstItemNumber = meeting.getFirstItemNumber()
@@ -1883,6 +1886,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
+    security.declarePublic('listListTypes')
+    def listListTypes(self):
+        '''Types of list : 'normal' or 'late'.'''
+        d = 'PloneMeeting'
+        res = DisplayList((
+            ("normal", translate('normal', domain=d, context=self.REQUEST)),
+            ("late", translate('late', domain=d, context=self.REQUEST)),
+        ))
+        return res
+
     security.declarePublic('listEmergencies')
     def listEmergencies(self):
         '''Vocabulary for the 'emergency' field.'''
@@ -1933,11 +1946,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('isLate')
     def isLate(self):
-        '''Am I included in a meeting as a late item?'''
-        refCatalog = getToolByName(self, 'reference_catalog')
-        if refCatalog.getBackReferences(self, 'MeetingLateItems'):
-            return True
-        return False
+        '''Am I a late item?'''
+        return bool(self.getListType() == 'late')
 
     security.declarePublic('showCategory')
     def showCategory(self):
@@ -2594,7 +2604,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if 'adviceToGive' not in cfg.getMailItemEvents():
             return
         for groupId, adviceInfo in self.adviceIndex.iteritems():
-            # call hook 'sendAdviceToGiveToGroup' to be able to bypass
+            # call hook '_sendAdviceToGiveToGroup' to be able to bypass
             # send of this notification to some defined groups
             if not self.adapted()._sendAdviceToGiveToGroup(groupId):
                 continue
@@ -2625,7 +2635,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              'adviceToGive',
                              mapping={'type': translated_type})
 
-    security.declarePublic('sendAdviceToGiveToGroup')
     def _sendAdviceToGiveToGroup(self, groupId):
         """See docstring in interfaces.py"""
         return True
@@ -3672,6 +3681,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 data['delay_status'] = 'never_giveable'
                 return data
 
+        tool = getToolByName(self, 'portal_plonemeeting')
+        holidays = tool.getHolidaysAs_datetime()
+        weekends = tool.getNonWorkingDayNumbers()
+        unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
+        date_until = workday(delay_started_on,
+                             delay,
+                             holidays=holidays,
+                             weekends=weekends,
+                             unavailable_weekdays=unavailable_weekdays)
+        data['limit_date'] = date_until
+        data['limit_date_localized'] = toLocalizedTime(date_until)
+
         # if delay is stopped, it means that we can no more give the advice
         if delay_stopped_on:
             data['left_delay'] = delay
@@ -3689,17 +3710,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return data
 
         # compute left delay taking holidays, and unavailable weekday into account
-        tool = getToolByName(self, 'portal_plonemeeting')
-        holidays = tool.getHolidaysAs_datetime()
-        weekends = tool.getNonWorkingDayNumbers()
-        unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
-        date_until = workday(delay_started_on,
-                             delay,
-                             holidays=holidays,
-                             weekends=weekends,
-                             unavailable_weekdays=unavailable_weekdays)
-        data['limit_date'] = date_until
-        data['limit_date_localized'] = toLocalizedTime(date_until)
         left_delay = networkdays(datetime.now(),
                                  date_until,
                                  holidays=holidays,
@@ -3997,8 +4007,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting = self.getMeeting()
             itemUids = meeting.getRawItems()
             if itemUids:
-                lastItemNumber = len(meeting.getRawItems()) + \
-                    len(meeting.getRawLateItems())
+                lastItemNumber = len(meeting.getRawItems())
                 itemNumber = self.getItemNumber(relativeTo='meeting')
                 if whichItem == 'previous':
                     # Is a previous item available ?

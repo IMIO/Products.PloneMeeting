@@ -428,7 +428,6 @@ class MeetingConfigDescriptor(Descriptor):
         # the maximum number of items to show at once?
         self.maxShownAvailableItems = 50
         self.maxShownMeetingItems = 50
-        self.maxShownLateItems = 50
         # When showing paginated lists of items, two functions may be visible:
         # go to the page where a given item lies, and go to the meetingitem_view
         # of a given item.

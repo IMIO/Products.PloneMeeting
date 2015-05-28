@@ -77,6 +77,9 @@ class Migrate_To_3_4(Migrator):
                         criterion.default = getattr(cfg.searches.meetingitems, default_view).UID()
                         break
                 delattr(cfg, 'meetingAppDefaultView')
+            # no more used as lateItems are displayed together with normal items now
+            if hasattr(cfg, 'maxShownLateItems'):
+                delattr(cfg, 'maxShownLateItems')
 
             logger.info('Moving to imio.dashboard : moving toDoListTopics to toDoListSearches...')
             if not cfg.getToDoListSearches():
@@ -166,7 +169,27 @@ class Migrate_To_3_4(Migrator):
         for brain in brains:
             meeting = brain.getObject()
             self.tool._enableFacetedFor(meeting)
+        logger.info('Done.')
 
+    def _migrateLateItems(self):
+        """The field 'lateItems' disappeared on the Meeting, now a late
+           item is an item for which 'listType' is 'late'."""
+        logger.info('Migrating late items...')
+        brains = self.portal.portal_catalog(meta_type='Meeting')
+        for brain in brains:
+            meeting = brain.getObject()
+            lateItems = meeting.getReferences('MeetingLateItems')
+            if not lateItems:
+                continue
+            # Sort late items according to item number
+            lateItems.sort(key=lambda x: x.getItemNumber())
+            lenNormalItems = len(meeting.getItemsInOrder())
+            for lateItem in lateItems:
+                lateItem.setListType('late')
+                lateItem.setItemNumber(lateItem.getItemNumber() + lenNormalItems)
+            # now join lateItems to Meeting.items
+            meeting.setItems(meeting.getItems() + lateItems)
+            meeting.deleteReferences('MeetingLateItems')
         logger.info('Done.')
 
     def _adaptMeetingConfigFolderLayout(self):
@@ -190,14 +213,16 @@ class Migrate_To_3_4(Migrator):
         logger.info('Migrating to PloneMeeting 3.4...')
         self.cleanRegistries()
         self._updateItemsListVisibleFields()
+        self._migrateLateItems()
         self._adaptAppForImioDashboard()
         self._adaptMeetingConfigFolderLayout()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         # update portal_catalog as index "isDefinedInTool" changed
-        # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics" was removed
-        #self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
+        # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
+        # and "Meeting.lateItems" were removed
+        self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
         self.finish()
 
 
