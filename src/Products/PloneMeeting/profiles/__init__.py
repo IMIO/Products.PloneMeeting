@@ -515,7 +515,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.openOfficePort = 2002
         self.functionalAdminEmail = ''
         self.functionalAdminName = ''
-        self.colorSystemDisabledFor = ''
         self.restrictUsers = False
         self.unrestrictedUsers = ''
         self.dateFormat = '%d %mt %Y'
