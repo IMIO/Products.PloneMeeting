@@ -3775,6 +3775,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 data['delay_status'] = 'never_giveable'
                 return data
 
+        tool = getToolByName(self, 'portal_plonemeeting')
+        holidays = tool.getHolidaysAs_datetime()
+        weekends = tool.getNonWorkingDayNumbers()
+        unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
+        date_until = workday(delay_started_on,
+                             delay,
+                             holidays=holidays,
+                             weekends=weekends,
+                             unavailable_weekdays=unavailable_weekdays)
+        data['limit_date'] = date_until
+        data['limit_date_localized'] = toLocalizedTime(date_until)
+
         # if delay is stopped, it means that we can no more give the advice
         if delay_stopped_on:
             data['left_delay'] = delay
@@ -3792,17 +3804,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return data
 
         # compute left delay taking holidays, and unavailable weekday into account
-        tool = getToolByName(self, 'portal_plonemeeting')
-        holidays = tool.getHolidaysAs_datetime()
-        weekends = tool.getNonWorkingDayNumbers()
-        unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
-        date_until = workday(delay_started_on,
-                             delay,
-                             holidays=holidays,
-                             weekends=weekends,
-                             unavailable_weekdays=unavailable_weekdays)
-        data['limit_date'] = date_until
-        data['limit_date_localized'] = toLocalizedTime(date_until)
         left_delay = networkdays(datetime.now(),
                                  date_until,
                                  holidays=holidays,
