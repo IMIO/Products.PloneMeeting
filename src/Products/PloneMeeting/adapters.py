@@ -10,6 +10,7 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 from AccessControl import Unauthorized
+from persistent.list import PersistentList
 
 from zope.annotation import IAnnotations
 from zope.i18n import translate
@@ -542,7 +543,7 @@ class Criteria(eeaCriteria):
                 for criterion in criteria:
                     if criterion.widget == 'collection-link':
                         criteria.remove(criterion)
-            self.criteria = criteria
+            self.criteria = PersistentList(criteria)
 
 
 class CompoundCriterionBaseAdapter(object):
