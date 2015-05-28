@@ -1714,7 +1714,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Informations used to create DashboardCollections in the searches."""
         itemType = self.getItemTypeName()
         meetingType = self.getMeetingTypeName()
-        return OrderedDict(
+        infos = OrderedDict(
             [
                 # My items
                 ('searchmyitems',
@@ -1966,6 +1966,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 }),
             ]
         )
+        return infos
 
     security.declarePublic('getName')
     def getName(self, force=None):
