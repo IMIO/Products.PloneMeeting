@@ -1459,6 +1459,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
         # is selected as viewable by 'powerobservers'
         self.updatePowerObserversLocalRoles()
+        # activate the faceted navigation
+        tool = getToolByName(self, 'portal_plonemeeting')
+        tool._enableFacetedFor(self)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
