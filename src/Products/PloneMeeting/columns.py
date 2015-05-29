@@ -29,7 +29,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
             # a link that will reload current page of the listing if we activate the details
             tool = getToolByName(self.context, 'portal_plonemeeting')
             showDetails = tool.readCookie('pmShowDescriptions') == 'true' and True or False
-            showHideMsg = u'Afficher/cacher les détails'
+            showHideMsg = u'Afficher/cacher les details'
             if showDetails:
                 header += u'<span class="showHideDetails" onclick="javascript:toggleMeetingDescriptions()">({0})</span>'.format(showHideMsg)
             else:
@@ -89,6 +89,13 @@ class ItemNumberColumn(BaseColumn):
     """
       Display the itemNumber column, used on meetings.
     """
+    def getCSSClasses(self, item):
+        """Apply a particular class on the table row depending on the item's privacy."""
+        # for TR
+        trCSSClasses = []
+        trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
+        return {'tr': ' '.join(trCSSClasses)}
 
     def renderCell(self, item):
-        return 'rkmreerklm'
+        """ """
+        pass

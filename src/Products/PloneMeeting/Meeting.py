@@ -647,7 +647,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         """ """
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return (u'getItemNumber', u'pretty_link', ) + cfg.getItemsListVisibleColumns()
+        return (u'listType', u'getItemNumber', u'pretty_link', ) + cfg.getItemsListVisibleColumns()
 
     security.declarePrivate('validate_date')
     def validate_date(self, value):

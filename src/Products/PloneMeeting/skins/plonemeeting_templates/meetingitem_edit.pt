@@ -97,6 +97,7 @@
         <td><metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/></td>
         <td><metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/></td>
         <td><metal:field use-macro="python:here.widget('privacy', mode='edit')"/></td>
+        <td><metal:field use-macro="python:here.widget('listType', mode='edit')"/></td>
       </tr>
     </table>
 

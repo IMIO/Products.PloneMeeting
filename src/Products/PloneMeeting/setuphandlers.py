@@ -63,6 +63,7 @@ indexInfos = {
     'reviewProcessInfo': ('FieldIndex', {}),
     'toDiscuss': ('BooleanIndex', {}),
     'privacy': ('FieldIndex', {}),
+    'listType': ('FieldIndex', {}),
     # Meeting-related indexes
     'getDate': ('DateIndex', {}),
     # MeetingFile-related indexes
@@ -74,7 +75,8 @@ indexInfos = {
 columnInfos = ('getTitle2', 'getDate', 'getProposingGroup',
                'getPreferredMeeting', 'getPreferredMeetingDate',
                'linkedMeetingDate', 'linkedMeetingUID',
-               'getItemIsSigned', 'title_or_id', 'toDiscuss', 'privacy', )
+               'getItemIsSigned', 'title_or_id', 'toDiscuss',
+               'privacy', 'listType')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # Index "indexUsages" does not use Archetype-generated getter "getUsages"
 # because in this case, both fields MeetingUser.usages and MeetingItem.usages

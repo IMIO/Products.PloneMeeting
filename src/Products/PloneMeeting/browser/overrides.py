@@ -17,8 +17,8 @@ from plone.memoize.view import memoize_contextless
 
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.eeafaceted.collectionwidget.browser.views import RenderTermView
-from collective.eeafaceted.z3ctable.columns import BaseColumn
 from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
+from collective.eeafaceted.z3ctable.columns import ColorColumn
 from collective.eeafaceted.z3ctable.columns import I18nColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
 from eea.facetednavigation.browser.app.view import FacetedContainerView
@@ -31,7 +31,6 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
-from Products.PloneMeeting.columns import ItemNumberColumn
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
@@ -247,7 +246,12 @@ class MeetingFacetedTableView(FolderFacetedTableView):
         """Manage our own columns displayed on Meeting."""
         column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
         if colName == u'getItemNumber':
-            column = ItemNumberColumn(self.context, self.request, self)
+            column = BrowserViewCallColumn(self.context, self.request, self)
+            column.view_name = 'item-number'
+        if colName == u'listType':
+            column = ColorColumn(self.context, self.request, self)
+            column.cssClassPrefix = 'meeting_item'
+
         # change parameters for actions, we want to showArrows
         if colName == u'actions':
             column.params['showArrows'] = True
@@ -255,9 +259,10 @@ class MeetingFacetedTableView(FolderFacetedTableView):
         return column
 
     def _getColumnFor(self, colName):
-        """Disable sorting for every columns."""
+        """Disable sorting for every columns and disable odd/even on table."""
         column = super(MeetingFacetedTableView, self)._getColumnFor(colName)
         column.sort_index = -1
+        self.cssClasses['table'] = self.cssClasses['table'] + ' meeting_view'
         return column
 
 
@@ -270,7 +275,9 @@ class BaseActionsPanelView(ActionsPanelView):
     """
     def __init__(self, context, request):
         super(BaseActionsPanelView, self).__init__(context, request)
-        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste')
+        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste',
+                                  'faceted.disable', 'faceted.enable',
+                                  'faceted.search.disable', 'faceted.search.enable')
 
     def mayEdit(self):
         """

@@ -49,6 +49,20 @@ class ItemIsSignedView(BrowserView):
         self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
 
 
+class ItemNumberView(BrowserView):
+    """
+      This manage the view displaying the itemNumber on the meeting view
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+
+    def mayChangeOrder(self):
+        """ """
+        return self.context.getMeeting().wfConditions().mayChangeItemsOrder()
+
+
 class ItemToDiscussView(BrowserView):
     """
       This manage the view displaying toDiscuss widget

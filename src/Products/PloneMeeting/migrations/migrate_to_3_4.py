@@ -94,8 +94,9 @@ class Migrate_To_3_4(Migrator):
 
             logger.info('Moving to imio.dashboard : updating "itemsListVisibleColumns" and "itemColumns"...')
             # remove some columns
-            itemsListVisibleColumns = list(cfg.getItemsListVisibleColumns())
             itemColumns = list(cfg.getItemColumns())
+            meetingColumns = list(cfg.getMeetingColumns())
+            itemsListVisibleColumns = list(cfg.getItemsListVisibleColumns())
             columnsToRemove = ('annexes', 'annexesDecision', 'associatedGroups', 'associatedGroupsAcronyms')
             for colToRemove in columnsToRemove:
                 if colToRemove in itemsListVisibleColumns:
@@ -117,14 +118,33 @@ class Migrate_To_3_4(Migrator):
                               'meeting': 'linkedMeetingDate',
                               'preferred_meeting': 'getPreferredMeetingDate'}
             for k, v in columnMappings.items():
-                if k in itemsListVisibleColumns:
-                    itemsListVisibleColumns.remove(k)
-                    itemsListVisibleColumns.append(v)
+                # columns of listing of items
                 if k in itemColumns:
                     itemColumns.remove(k)
                     itemColumns.append(v)
-            cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
+                # columns of listing of meetings
+                if k in meetingColumns:
+                    meetingColumns.remove(k)
+                    meetingColumns.append(v)
+                # columns of the meeting view
+                if k in itemsListVisibleColumns:
+                    itemsListVisibleColumns.remove(k)
+                    itemsListVisibleColumns.append(v)
+
+            # reorder columns in itemColumns, meetingColumns and itemsListVisibleColumns
+            # the correct order is the order of the vocabulary
+            itemColumnsVoc = cfg.listItemColumns().keys()
+            meetingColumnsVoc = cfg.listMeetingColumns().keys()
+            itemsListVisibleColumnsVoc = cfg.listItemsListVisibleColumns().keys()
+            itemColumns = [k for k in itemColumnsVoc if k in itemColumns]
+            meetingColumns = [k for k in meetingColumnsVoc if k in meetingColumns]
+            itemsListVisibleColumns = [k for k in itemsListVisibleColumnsVoc if k in itemsListVisibleColumns]
+
+            # finally set new columns values
             cfg.setItemColumns(itemColumns)
+            cfg.setMeetingColumns(meetingColumns)
+            cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
+            cfg.updateCollectionColumns()
 
             logger.info('Moving to imio.dashboard : migrating parameter "maxShownFound" from portal_plonemeeting...')
             if hasattr(self.tool, 'maxShownFound'):

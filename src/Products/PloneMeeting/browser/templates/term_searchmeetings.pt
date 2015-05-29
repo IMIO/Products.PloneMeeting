@@ -35,7 +35,7 @@
           <option tal:repeat="brain brains"
                   tal:content="python:tool.formatMeetingDate(brain, short=True, withHour=True)"
                   tal:attributes="value brain/getURL;
-                                  selected python:context.absolute_url().startswith(brain.getURL())"></option>
+                                  selected python:view.request['ACTUAL_URL'].startswith(brain.getURL())"></option>
         </select>
       </form>
     </div>

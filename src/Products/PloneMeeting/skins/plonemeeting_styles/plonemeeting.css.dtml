@@ -6,8 +6,46 @@ fieldset {line-height: 1em; margin: 0.5em 0; }
 p {
     line-height: 1em;
 }
-.even {
-    background-color: #f5f5f5;
+
+table.listing tbody tr.even.meeting_item_privacy_secret td {
+    background-color: #ffcc33;
+}
+table.listing tbody tr.odd.meeting_item_privacy_secret td {
+    background-color: #ffff99;
+}
+
+table.listing tr.odd td.meeting_item_listType_late,
+table.listing tr.even td.meeting_item_listType_late,
+table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_late,
+table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_late {
+    background-color: red;
+}
+table.listing tr.odd td.meeting_item_listType_late,
+table.listing tr.even td.meeting_item_listType_late,
+table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_late,
+table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_late,
+table.listing tr.odd td.meeting_item_listType_normal,
+table.listing tr.even td.meeting_item_listType_normal,
+table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_normal,
+table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_normal {
+    padding: 0em;
+    border-right: 0px;
+    height: 100%;
+}
+
+/* hide div of the ColorColumn for normal items */
+.meeting_item_listType_normal > div {
+    display: none;
+}
+/* show div of the ColorColumn for late items */
+.meeting_item_listType_late > div {
+    height: 100%;
+    width: 100%;
+    cursor: help;
+}
+
+table.listing tbody tr {
+    height: 100%;
 }
 
 .ploneMeetingRef{
@@ -697,32 +735,40 @@ TD acronym {
 
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
-.th_header_actions,
-.th_header_advices,
-.th_header_itemIsSigned,
-.th_header_toDiscuss,
-.th_header_getItemIsSigned,
+table.listing th.th_header_actions,
+table.listing th.th_header_advices,
+table.listing th.th_header_itemIsSigned,
+table.listing th.th_header_toDiscuss,
+table.listing th.th_header_getItemIsSigned,
 .pm_meeting_listing_th_checkBoxes {
     width: 1%;
 }
-.th_header_Creator,
-.th_header_getProposingGroup,
-.th_header_proposing_group_acronym {
+table.listing th.th_header_listType {
+    width: 10px;
+    padding: 0em;
+    border-right: 0px;
+}
+
+table.listing th.th_header_Creator,
+table.listing th.th_header_getProposingGroup,
+table.listing th.th_header_proposing_group_acronym {
     width: 100px;
 }
-.th_header_review_state,
-.th_header_linkedMeetingDate,
-.th_header_getPreferredMeetingDate,
-.th_header_getCategory,
-.th_header_ModificationDate,
-.th_header_CreationDate {
+table.listing th.th_header_review_state,
+table.listing th.th_header_linkedMeetingDate,
+table.listing th.th_header_getPreferredMeetingDate,
+table.listing th.th_header_getCategory,
+table.listing th.th_header_ModificationDate,
+table.listing th.th_header_CreationDate {
     width: 90px;
 }
-.th_header_privacy {
+table.listing th.th_header_privacy {
     width: 60px;
 }
 
-.th_header_getItemNumber {
+/* hide border between listType and itemNumber */
+table.listing th.th_header_getItemNumber {
+    border-left: 0px;
     width: 25px;
 }
 

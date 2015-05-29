@@ -1,0 +1,27 @@
+<tal:defines define="mayChangeOrder view/mayChangeOrder;
+                     itemNumber context/getItemNumber;">
+  <table class="no-style-table" cellspacing="0" cellpadding="0"
+         tal:condition="mayChangeOrder">
+    <tr>
+      <tal:comment replace="nothing">In the following "td"s, keep all tags as is: if you add spaces
+         or carriage returns, the DOM tree created by Firefox will add additional nodes and some
+         Javascript expressions will fail.</tal:comment>
+      <td><input type="text" size="1" name="moveValue"
+                 tal:attributes="id string:moveValue_${itemNumber};
+                                 value itemNumber;
+                                 onFocus string:onImageButtonFocus(${itemNumber});"/>
+      </td>
+      <td>
+        <img
+           style="visibility: hidden;"
+           title="move_several" i18n:attributes="title" name="moveImageButton"
+           tal:attributes="id itemNumber;
+                           src string: ${view/portal_url}/arrowSeveral.png;
+                           onClick python:'moveMeetingItem(\''+ context.absolute_url() +'/@@change_item_order?moveType=number\', this.parentNode.previousSibling.firstChild)'"/>
+      </td>
+    </tr>
+  </table>
+  <tal:comment replace="nothing">For the others</tal:comment>
+  <span tal:condition="not: mayChangeOrder"
+        tal:replace="itemNumber"></span>
+</tal:defines>
