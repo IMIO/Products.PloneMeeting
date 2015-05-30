@@ -104,9 +104,11 @@ class CreatorsVocabulary(object):
         membershipTool = getToolByName(context, 'portal_membership')
         res = []
         for creator in catalog.uniqueValuesFor('Creator'):
+            memberInfo = membershipTool.getMemberInfo(creator)
+            value = memberInfo and memberInfo['fullname'] or creator
             res.append(SimpleTerm(creator,
                                   creator,
-                                  safe_unicode(membershipTool.getMemberInfo(creator)['fullname']))
+                                  safe_unicode(value))
                        )
         res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
