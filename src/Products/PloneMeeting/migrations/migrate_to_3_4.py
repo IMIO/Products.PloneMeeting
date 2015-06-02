@@ -222,7 +222,8 @@ class Migrate_To_3_4(Migrator):
                 continue
             for mc_folder in userFolder.mymeetings.objectValues():
                 if not mc_folder.getLayout() == 'facetednavigation_view':
-                    self.tool._enableFacetedFor(mc_folder)
+                    cfg = self.tool.getMeetingConfig(mc_folder)
+                    cfg._createSearchesSubFolders(mc_folder)
         logger.info('Done.')
 
     def _cleanMeetingConfigAttributes(self):
@@ -242,7 +243,7 @@ class Migrate_To_3_4(Migrator):
         # update portal_catalog as index "isDefinedInTool" changed
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
-        self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
+        #self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
         self.finish()
 
 

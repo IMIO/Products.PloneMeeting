@@ -16,8 +16,29 @@ from zope.publisher.interfaces.browser import IBrowserRequest
 
 class IFacetedSearchesMarker(Interface):
     """
-      Marker interface applied to the 'searches' folder added
-      to each MeetingConfig.
+      Marker interface applied to the 'searches'
+      folder added to each MeetingConfig.
+    """
+
+
+class IFacetedSearchesMeetingItemsMarker(Interface):
+    """
+      Marker interface applied to the 'searches/meetingitems'
+      folder added to each MeetingConfig.
+    """
+
+
+class IFacetedSearchesMeetingsMarker(Interface):
+    """
+      Marker interface applied to the 'searches/meetings'
+      folder added to each MeetingConfig.
+    """
+
+
+class IFacetedSearchesDecisionsMarker(Interface):
+    """
+      Marker interface applied to the 'searches/decisions'
+      folder added to each MeetingConfig.
     """
 
 

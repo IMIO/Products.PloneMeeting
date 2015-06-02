@@ -10,7 +10,6 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 from AccessControl import Unauthorized
-from persistent.list import PersistentList
 
 from zope.annotation import IAnnotations
 from zope.i18n import translate
@@ -23,7 +22,6 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.utils import checkPermission
 
-from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.dashboard.adapters import CustomViewFieldsVocabularyAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -523,27 +521,6 @@ class PMHistoryAdapter(ImioWfHistoryAdapter):
     def getHistory(self, checkMayView=True):
         """Override getHistory because it manages data changes."""
         return self.context.getHistory(checkMayView=checkMayView)
-
-
-class Criteria(eeaCriteria):
-    """ Handle criteria
-    """
-
-    def __init__(self, context):
-        """ Handle criteria
-        """
-        super(Criteria, self).__init__(context)
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if cfg:
-            self.context = cfg.searches
-            criteria = list(self._criteria())
-            if context.meta_type == 'Meeting':
-                # remove the 'collection' widget
-                for criterion in criteria:
-                    if criterion.widget == 'collection-link':
-                        criteria.remove(criterion)
-            self.criteria = PersistentList(criteria)
 
 
 class CompoundCriterionBaseAdapter(object):

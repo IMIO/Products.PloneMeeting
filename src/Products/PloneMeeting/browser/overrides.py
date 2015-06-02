@@ -31,6 +31,7 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
+from Products.PloneMeeting.columns import ItemNumberColumn
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
@@ -246,7 +247,7 @@ class MeetingFacetedTableView(FolderFacetedTableView):
         """Manage our own columns displayed on Meeting."""
         column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
         if colName == u'getItemNumber':
-            column = BrowserViewCallColumn(self.context, self.request, self)
+            column = ItemNumberColumn(self.context, self.request, self)
             column.view_name = 'item-number'
         if colName == u'listType':
             column = ColorColumn(self.context, self.request, self)

@@ -895,6 +895,7 @@ schema = Schema((
             label='Itemcolumns',
             label_msgid='PloneMeeting_label_itemColumns',
             i18n_domain='PloneMeeting',
+            format="checkbox",
         ),
         schemata="gui",
         multiValued=1,
@@ -911,6 +912,7 @@ schema = Schema((
             label='Meetingcolumns',
             label_msgid='PloneMeeting_label_meetingColumns',
             i18n_domain='PloneMeeting',
+            format="checkbox",
         ),
         schemata="gui",
         multiValued=1,
@@ -927,6 +929,7 @@ schema = Schema((
             label='Itemslistvisiblecolumns',
             label_msgid='PloneMeeting_label_itemsListVisibleColumns',
             i18n_domain='PloneMeeting',
+            format="checkbox",
         ),
         schemata="gui",
         multiValued=1,
@@ -1644,6 +1647,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     ##code-section class-header #fill in your manual code here
     # Information about each sub-folder that will be created within a meeting
     # config.
+    searchesSubFoldersInfo = {
+        TOOL_FOLDER_SEARCHES: ('Searches',
+                               ('Folder', 'DashboardCollection', ),
+                               # 'items' is a reserved word
+                               (('meetingitems', 'Meeting items'),
+                                ('meetings', 'Meetings'),
+                                ('decisions', 'Decisions'))
+                               ),
+    }
+
     subFoldersInfo = {
         TOOL_FOLDER_CATEGORIES: ('Categories',
                                  ('MeetingCategory', ),
@@ -1653,13 +1666,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   ('MeetingCategory', ),
                                   ()
                                   ),
-        TOOL_FOLDER_SEARCHES: ('Searches',
-                               ('Folder', 'DashboardCollection', ),
-                               # 'items' is a reserved word
-                               (('meetingitems', 'Meeting items'),
-                                ('meetings', 'Meetings'),
-                                ('decisions', 'Decisions'))
-                               ),
         TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems',
                                       ('itemType', ),
                                       ()
@@ -3201,7 +3207,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
           Create necessary subfolders for the MeetingConfig.
         '''
-        tool = getToolByName(self, 'portal_plonemeeting')
         for folderId, folderInfo in self.subFoldersInfo.iteritems():
             # if a folder already exists, we continue
             # this is done because this method is used as helper
@@ -3210,12 +3215,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             self.invokeFactory('Folder', folderId)
             folder = getattr(self, folderId)
-
-            # special case for folder 'searches' that we mark with the IFacetedSearchesMarker
-            # and for wich we enable the faceted navigation
-            if folderId == TOOL_FOLDER_SEARCHES:
-                alsoProvides(folder, IFacetedSearchesMarker)
-                tool._enableFacetedFor(folder)
 
             # special case for folder 'itemtemplates' for which we want
             # to display the 'navigation' portlet and use the 'folder_contents' layout
@@ -3252,6 +3251,58 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 subFolder.setTitle(translate(subFolderTitle,
                                              domain="PloneMeeting",
                                              context=self.REQUEST,
+                                             default=subFolderTitle))
+                subFolder.processForm(values={'dummy': None})
+
+        # create searches subFolders
+        self._createSearchesSubFolders()
+
+    def _createSearchesSubFolders(self, destFolder=None):
+        """ """
+        tool = getToolByName(self, 'portal_plonemeeting')
+        if not destFolder:
+            destFolder = self
+        for folderId, folderInfo in self.searchesSubFoldersInfo.iteritems():
+            # we use this method to create elements in the MeetingConfig
+            # and in each user folder, so either we add a 'searches' folder
+            # or we take the user folder
+            if destFolder.meta_type == 'MeetingConfig':
+                if folderId in destFolder.objectIds('ATFolder'):
+                    continue
+                destFolder.invokeFactory('Folder', folderId)
+                folder = getattr(destFolder, folderId)
+                folder.setTitle(translate(folderInfo[0],
+                                          domain="PloneMeeting",
+                                          context=destFolder.REQUEST,
+                                          default=folderInfo[0]))
+                folder.setConstrainTypesMode(1)
+                allowedTypes = list(folderInfo[1])
+                folder.setLocallyAllowedTypes(allowedTypes)
+                folder.setImmediatelyAddableTypes(allowedTypes)
+                # call processForm passing dummy values so existing values are not touched
+                folder.processForm(values={'dummy': None})
+            else:
+                folder = destFolder
+
+            # special case for folder 'searches' that we mark with the IFacetedSearchesMarker
+            alsoProvides(folder, IFacetedSearchesMarker)
+            tool._enableFacetedFor(folder)
+
+            for subFolderId, subFolderTitle in folderInfo[2]:
+                if subFolderId in folder.objectIds():
+                    continue
+                folder.invokeFactory('Folder', subFolderId)
+                subFolder = getattr(folder, subFolderId)
+                if subFolderId == 'meetingitems':
+                    alsoProvides(subFolder, IFacetedSearchesMeetingItemsMarker)
+                elif subFolderId == 'meetings':
+                    alsoProvides(subFolder, IFacetedSearchesMeetingsMarker)
+                elif subFolderId == 'meetings':
+                    alsoProvides(subFolder, IFacetedSearchesDecisionsMarker)
+                tool._enableFacetedFor(subFolder)
+                subFolder.setTitle(translate(subFolderTitle,
+                                             domain="PloneMeeting",
+                                             context=destFolder.REQUEST,
                                              default=subFolderTitle))
                 subFolder.processForm(values={'dummy': None})
 

@@ -18,7 +18,7 @@ table.listing tr.odd td.meeting_item_listType_late,
 table.listing tr.even td.meeting_item_listType_late,
 table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_late,
 table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_late {
-    background-color: red;
+    background-color: #ed0000;
 }
 table.listing tr.odd td.meeting_item_listType_late,
 table.listing tr.even td.meeting_item_listType_late,

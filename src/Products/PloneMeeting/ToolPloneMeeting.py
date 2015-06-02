@@ -689,8 +689,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # We add the MEETING_CONFIG property to the folder
         mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
 
-        # enable the faceted view
-        self._enableFacetedFor(mc_folder)
+        # create relevant folders for faceted
+        cfg._createSearchesSubFolders(destFolder=mc_folder)
 
         # constrain types
         mc_folder.setConstrainTypesMode(1)
@@ -723,7 +723,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def _enableFacetedFor(self, obj):
         '''Configure the faceted view for given p_obj.'''
-        subtyper = getMultiAdapter((obj, self.REQUEST), name=u'faceted_subtyper')
+        subtyper = getMultiAdapter((obj, self.REQUEST),
+                                   name=u'faceted_subtyper')
         subtyper.enable()
         # use correct layout in the faceted
         IFacetedLayout(obj).update_layout('faceted-table-items')

@@ -7,6 +7,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeeting
 
 from collective.eeafaceted.z3ctable.columns import BaseColumn
+from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
 from imio.dashboard.columns import PrettyLinkColumn
 from imio.prettylink.interfaces import IPrettyLink
 
@@ -85,7 +86,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
             return u'<a href="{0}">{1}</a>'.format(meeting.getURL(), formattedMeetingDate)
 
 
-class ItemNumberColumn(BaseColumn):
+class ItemNumberColumn(BrowserViewCallColumn):
     """
       Display the itemNumber column, used on meetings.
     """
@@ -95,7 +96,3 @@ class ItemNumberColumn(BaseColumn):
         trCSSClasses = []
         trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
         return {'tr': ' '.join(trCSSClasses)}
-
-    def renderCell(self, item):
-        """ """
-        pass
