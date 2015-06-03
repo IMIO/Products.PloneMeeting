@@ -49,12 +49,6 @@ class Renderer(base.Renderer, FacetedRenderer):
         available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
         return available and self.tool.isPloneMeetingUser()
 
-    @property
-    def _criteriaHolder(self):
-        '''Override method coming from FacetedRenderer as we know that criteria
-           are stored on the meetingFolder.'''
-        return self.getPloneMeetingFolder()
-
     def render(self):
         return self._template()
 

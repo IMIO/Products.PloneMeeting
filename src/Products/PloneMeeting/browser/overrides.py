@@ -153,6 +153,7 @@ class PMFacetedContainerView(FacetedContainerView):
     def __init__(self, context, request):
         super(PMFacetedContainerView, self).__init__(context, request)
         # hide the green bar on the faceted if not in the configuration
+        return
         if not 'portal_plonemeeting' in self.context.absolute_url():
             self.request.set('disable_border', 1)
 
@@ -255,12 +256,13 @@ class MeetingFacetedTableView(FolderFacetedTableView):
         elif colName == u'listType':
             column = ColorColumn(self.context, self.request, self)
             column.cssClassPrefix = 'meeting_item'
-        # change parameters for actions, we want to showArrows
-        elif colName == u'actions':
-            column.params['showArrows'] = True
-            column.params['totalNbOfItems'] = self.batch.length
         else:
             column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
+
+        # change parameters for actions, we want to showArrows
+        if colName == u'actions':
+            column.params['showArrows'] = True
+            column.params['totalNbOfItems'] = self.batch.length
 
         return column
 

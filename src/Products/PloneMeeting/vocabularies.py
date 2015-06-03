@@ -9,44 +9,6 @@ from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
-from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
-from collective.eeafaceted.collectionwidget.vocabulary import CollectionCategoryVocabulary
-
-
-class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
-    implements(IVocabularyFactory)
-
-    def _compute_redirect_to(self, collection, criterion):
-        """The computed redirect_to has an URL to the collection in the configuration,
-           so like .../portal_plonemeeting/cfg-id/searches/decisions#c1=collection_uid,
-           we need a link to the local configuration, so replace to correct link."""
-        redirect_to = super(PMConditionAwareCollectionVocabulary, self)._compute_redirect_to(collection, criterion)
-        if redirect_to:
-            tool = getToolByName(self.context, 'portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self.context)
-            cfg_url = cfg.absolute_url()
-            cfg_searches_url = '/'.join((cfg_url, 'searches'))
-            if redirect_to.startswith(cfg_searches_url):
-                redirect_to = redirect_to.replace(cfg_searches_url, self.context.absolute_url())
-        return redirect_to
-
-    def _brains(self, context):
-        context = self.context.portal_plonemeeting.getMeetingConfig(self.context).searches
-        return super(PMConditionAwareCollectionVocabulary, self)._brains(context)
-
-
-PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
-
-
-class PMCollectionCategoryVocabulary(CollectionCategoryVocabulary):
-    implements(IVocabularyFactory)
-
-    def __call__(self, context, query=None):
-        context = context.portal_plonemeeting.getMeetingConfig(context).searches
-        return super(PMCollectionCategoryVocabulary, self).__call__(context, query=query)
-
-
-PMCollectionCategoryVocabularyFactory = PMCollectionCategoryVocabulary()
 
 
 class ItemCategoriesVocabulary(object):

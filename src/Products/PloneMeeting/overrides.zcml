@@ -160,12 +160,6 @@
             />
     </configure>
 
-    <!-- Vocabularies -->
-    <utility component="Products.PloneMeeting.vocabularies.PMConditionAwareCollectionVocabularyFactory"
-             name="imio.dashboard.conditionawarecollectionvocabulary" />
-    <utility component="Products.PloneMeeting.vocabularies.PMCollectionCategoryVocabularyFactory"
-             name="collective.eeafaceted.collectionwidget.collectioncategoryvocabulary" />
-
     <configure package="imio.dashboard">
         <browser:page
             for="*"
