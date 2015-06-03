@@ -11,9 +11,18 @@ from OFS.interfaces import IItem
 
 from plone.indexer import indexer
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+
+
+@indexer(IMeeting)
+def sortable_title(obj):
+    """
+      Indexes the sortable_title of meeting based on meeting.date
+    """
+    return obj.getDate().strftime('%Y%m%d%H%M')
 
 
 @indexer(IMeetingItem)

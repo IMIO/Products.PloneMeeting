@@ -136,6 +136,7 @@
   <adapter name="title_or_id" factory=".indexes.title_or_id" />
   <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
+  <adapter name="sortable_title" factory=".indexes.sortable_title" />
 
   <!-- add the blob field to MeetingFile -->
   <adapter name="plone.app.blob.subtypes.file"

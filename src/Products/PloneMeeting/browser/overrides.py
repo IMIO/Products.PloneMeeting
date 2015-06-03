@@ -205,7 +205,6 @@ class FolderFacetedTableView(IDFacetedTableView):
 
     def _manualColumnFor(self, colName):
         """Manage our own columns."""
-        column = super(FolderFacetedTableView, self)._manualColumnFor(colName)
         # we use our own column to manage the 'pretty_link'
         if colName == u'pretty_link':
             column = PMPrettyLinkColumn(self.context, self.request, self)
@@ -238,6 +237,9 @@ class FolderFacetedTableView(IDFacetedTableView):
         elif colName == u'getPreferredMeetingDate':
             column = ItemLinkedMeetingColumn(self.context, self.request, self)
             column.meeting_uid_attr = 'getPreferredMeeting'
+        else:
+            column = super(FolderFacetedTableView, self)._manualColumnFor(colName)
+
         return column
 
 
@@ -245,18 +247,21 @@ class MeetingFacetedTableView(FolderFacetedTableView):
 
     def _manualColumnFor(self, colName):
         """Manage our own columns displayed on Meeting."""
-        column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
-        if colName == u'getItemNumber':
+        if colName == u'pretty_link':
+            column = PMPrettyLinkColumn(self.context, self.request, self)
+        elif colName == u'getItemNumber':
             column = ItemNumberColumn(self.context, self.request, self)
             column.view_name = 'item-number'
-        if colName == u'listType':
+        elif colName == u'listType':
             column = ColorColumn(self.context, self.request, self)
             column.cssClassPrefix = 'meeting_item'
-
         # change parameters for actions, we want to showArrows
-        if colName == u'actions':
+        elif colName == u'actions':
             column.params['showArrows'] = True
             column.params['totalNbOfItems'] = self.batch.length
+        else:
+            column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
+
         return column
 
     def _getColumnFor(self, colName):
