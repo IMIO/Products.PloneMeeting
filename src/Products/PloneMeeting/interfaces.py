@@ -23,21 +23,21 @@ class IFacetedSearchesMarker(Interface):
 
 class IFacetedSearchesMeetingItemsMarker(Interface):
     """
-      Marker interface applied to the 'searches/meetingitems'
+      Marker interface applied to the 'searches/searches_meetingitems'
       folder added to each MeetingConfig.
     """
 
 
 class IFacetedSearchesMeetingsMarker(Interface):
     """
-      Marker interface applied to the 'searches/meetings'
+      Marker interface applied to the 'searches/searches_meetings'
       folder added to each MeetingConfig.
     """
 
 
 class IFacetedSearchesDecisionsMarker(Interface):
     """
-      Marker interface applied to the 'searches/decisions'
+      Marker interface applied to the 'searches/searches_decisions'
       folder added to each MeetingConfig.
     """
 

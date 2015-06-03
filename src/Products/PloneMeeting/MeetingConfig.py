@@ -1026,7 +1026,7 @@ schema = Schema((
             allow_browse=False,
             description="ToDoListSearches",
             description_msgid="to_do_list_searches",
-            startup_directory="searches/meetingitems",
+            startup_directory="searches/searches_meetingitems",
             show_results_without_query=True,
             restrict_browsing_to_startup_directory=True,
             label='Todolistsearches',
@@ -1651,9 +1651,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         TOOL_FOLDER_SEARCHES: ('Searches',
                                ('Folder', 'DashboardCollection', ),
                                # 'items' is a reserved word
-                               (('meetingitems', 'Meeting items'),
-                                ('meetings', 'Meetings'),
-                                ('decisions', 'Decisions'))
+                               (('searches_meetingitems', 'Meeting items'),
+                                ('searches_meetings', 'Meetings'),
+                                ('searches_decisions', 'Decisions'))
                                ),
     }
 
@@ -1712,7 +1712,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # My items
                 ('searchmyitems',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1725,7 +1725,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items of my groups
                 ('searchitemsofmygroups',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-of-my-groups'},
@@ -1737,7 +1737,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items I take over
                 ('searchmyitemstakenover',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'my-items-taken-over'},
@@ -1751,7 +1751,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # All (visible) items
                 ('searchallitems',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1763,7 +1763,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items in copy
                 ('searchallitemsincopy',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-in-copy'},
@@ -1776,7 +1776,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to prevalidate
                 ('searchitemstoprevalidate',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1790,7 +1790,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to validate
                 ('searchitemstovalidate',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-validate-of-highest-hierarchic-level'},
@@ -1802,7 +1802,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to advice
                 ('searchallitemstoadvice',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice'},
@@ -1815,7 +1815,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to advice without delay
                 ('searchitemstoadvicewithoutdelay',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-without-delay'},
@@ -1828,7 +1828,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to advice with delay
                 ('searchitemstoadvicewithdelay',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-delay'},
@@ -1841,7 +1841,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to advice with exceeded delay
                 ('searchitemstoadvicewithexceededdelay',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-exceeded-delay'},
@@ -1854,7 +1854,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Every advised items
                 ('searchalladviseditems',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items'},
@@ -1867,7 +1867,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Advised items with delay
                 ('searchalladviseditemswithdelay',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items-with-delay'},
@@ -1880,7 +1880,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to correct
                 ('searchitemstocorrect',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1894,7 +1894,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Corrected items
                 ('searchcorrecteditems',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1908,7 +1908,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Decided items
                 ('searchdecideditems',
                 {
-                    'subFolderId': 'meetingitems',
+                    'subFolderId': 'searches_meetingitems',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'decided-items'},
@@ -1920,7 +1920,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # All not-yet-decided meetings
                 ('searchallmeetings',
                 {
-                    'subFolderId': 'meetings',
+                    'subFolderId': 'searches_meetings',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
@@ -1933,7 +1933,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Last decided meetings
                 ('searchlastdecisions',
                 {
-                    'subFolderId': 'decisions',
+                    'subFolderId': 'searches_decisions',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
@@ -1947,7 +1947,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # All decided meetings
                 ('searchalldecisions',
                 {
-                    'subFolderId': 'decisions',
+                    'subFolderId': 'searches_decisions',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
@@ -2880,15 +2880,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              will use same columns.'''
         # update item related collections
         itemColumns = (u'pretty_link', ) + self.getItemColumns()
-        for collection in self.searches.meetingitems.objectValues('DashboardCollection'):
+        for collection in self.searches.searches_meetingitems.objectValues('DashboardCollection'):
             # available customViewFieldIds, as done in an adapter, we compute it for each collection
             customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
             # set elements existing in both lists, we do not use set() because it is not ordered
             collection.setCustomViewFields(tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds]))
         # update meeting related collections
         meetingColumns = (u'pretty_link', ) + self.getMeetingColumns()
-        for collection in (self.searches.meetings.objectValues('DashboardCollection') +
-                           self.searches.decisions.objectValues('DashboardCollection')):
+        for collection in (self.searches.searches_meetings.objectValues('DashboardCollection') +
+                           self.searches.searches_decisions.objectValues('DashboardCollection')):
             # available customViewFieldIds, as done in an adapter, we compute it for each collection
             customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
             # set elements existing in both lists, we do not use set() because it is not ordered
@@ -2997,7 +2997,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             container = getattr(self, TOOL_FOLDER_SEARCHES)
             subFolderId = collectionData['subFolderId']
             if subFolderId:
-                container = getattr(container, subFolderId)
+                try:
+                    container = getattr(container, subFolderId)
+                except:
+                    import ipdb; ipdb.set_trace()
             if collectionId in container.objectIds():
                 logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
                 continue
@@ -3284,7 +3287,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 folder = destFolder
 
-            # special case for folder 'searches' that we mark with the IFacetedSearchesMarker
             alsoProvides(folder, IFacetedSearchesMarker)
             tool._enableFacetedFor(folder)
 
@@ -3293,13 +3295,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 folder.invokeFactory('Folder', subFolderId)
                 subFolder = getattr(folder, subFolderId)
-                if subFolderId == 'meetingitems':
-                    alsoProvides(subFolder, IFacetedSearchesMeetingItemsMarker)
-                elif subFolderId == 'meetings':
+                if subFolderId == 'searches_meetingitems':
+                    # we do not apply a facetednav for the searches_meetingitems
+                    # folder or it mess the "redirect to default collection"
+                    # because collections are in the configuration
+                    pass
+                elif subFolderId == 'searches_meetings':
                     alsoProvides(subFolder, IFacetedSearchesMeetingsMarker)
-                elif subFolderId == 'meetings':
-                    alsoProvides(subFolder, IFacetedSearchesDecisionsMarker)
-                tool._enableFacetedFor(subFolder)
+                    tool._enableFacetedFor(subFolder)
+                elif subFolderId == 'searches_decisions':
+                    alsoProvides(subFolder, IFacetedSearchesMeetingsMarker)
+                    tool._enableFacetedFor(subFolder)
                 subFolder.setTitle(translate(subFolderTitle,
                                              domain="PloneMeeting",
                                              context=destFolder.REQUEST,

@@ -161,6 +161,8 @@
            name="Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" />
   <utility component=".vocabularies.ItemReviewStatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary" />
+  <utility component=".vocabularies.MeetingReviewStatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.meetingreviewstatesvocabulary" />
   <utility component=".vocabularies.CreatorsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.creatorsvocabulary" />
   <utility component=".vocabularies.MeetingDatesVocabularyFactory"
