@@ -2,7 +2,6 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 
-from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
 from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 from eea.facetednavigation.interfaces import ICriteria
@@ -155,6 +154,9 @@ class Migrate_To_3_4(Migrator):
                         criterion.default = unicode(new_value)
                         break
 
+            logger.info('Moving to imio.dashboard : enabling faceted view for ever user folders...')
+            cfg._synchSearches()
+
         logger.info('Moving to imio.dashboard : removing view "meetingfolder_redirect_view" '
                     'from available views for "Folder"...')
         folderType = self.portal.portal_types.Folder
@@ -189,6 +191,7 @@ class Migrate_To_3_4(Migrator):
         for brain in brains:
             meeting = brain.getObject()
             self.tool._enableFacetedFor(meeting)
+
         logger.info('Done.')
 
     def _migrateLateItems(self):
@@ -212,20 +215,6 @@ class Migrate_To_3_4(Migrator):
             meeting.deleteReferences('MeetingLateItems')
         logger.info('Done.')
 
-    def _adaptMeetingConfigFolderLayout(self):
-        '''Adapt every meetingConfig folder for every users (folders that are
-           located in the "mymeetings" folder) to use the faceted view.'''
-        logger.info('Updating the layout for every meetingConfig folders...')
-        for userFolder in self.portal.Members.objectValues():
-            # if something else than a userFolder, pass
-            if not hasattr(aq_base(userFolder), 'mymeetings'):
-                continue
-            for mc_folder in userFolder.mymeetings.objectValues():
-                if not mc_folder.getLayout() == 'facetednavigation_view':
-                    cfg = self.tool.getMeetingConfig(mc_folder)
-                    cfg._createSearchesSubFolders(mc_folder)
-        logger.info('Done.')
-
     def _cleanMeetingConfigAttributes(self):
         '''Some parameters are now directly managed by the Collections
            of the dashboard, move these paramaters and clean the configs.'''
@@ -236,7 +225,6 @@ class Migrate_To_3_4(Migrator):
         self._updateItemsListVisibleFields()
         self._migrateLateItems()
         self._adaptAppForImioDashboard()
-        self._adaptMeetingConfigFolderLayout()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])

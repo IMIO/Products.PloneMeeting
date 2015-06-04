@@ -453,7 +453,7 @@
 
     <!-- Faceted configuration for collection widget -->
     <browser:page
-        for="Products.PloneMeeting.interfaces.IFacetedSearchesMarker"
+        for="Products.PloneMeeting.interfaces.IFacetedSearchesItemsMarker"
         name="default_widgets.xml"
         template="default_dashboard_items_widgets.xml"
         permission="eea.faceted.configure"

@@ -128,19 +128,19 @@ class ToolInitializer:
         """When the MeetingConfig has been created, some parameters still need to be applied
            because they need the MeetingConfig to exist."""
         # apply the meetingTopicStates to the 'searchallmeetings' DashboardCollection
-        updateCollectionCriterion(cfg.searches.meetings.searchallmeetings, 'review_state', data.meetingTopicStates)
+        updateCollectionCriterion(cfg.searches.searches_meetings.searchallmeetings, 'review_state', data.meetingTopicStates)
         # apply the maxDaysDecisions to the 'searchlastdecisions' DashboardCollection
-        updateCollectionCriterion(cfg.searches.decisions.searchlastdecisions, 'getDate', data.maxDaysDecisions)
+        updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions, 'getDate', data.maxDaysDecisions)
         # apply the meetingTopicStates to the 'searchlastdecisions' and 'searchalldecision' DashboardCollection
-        updateCollectionCriterion(cfg.searches.decisions.searchlastdecisions, 'review_state', data.decisionTopicStates)
-        updateCollectionCriterion(cfg.searches.decisions.searchalldecisions, 'review_state', data.decisionTopicStates)
+        updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions, 'review_state', data.decisionTopicStates)
+        updateCollectionCriterion(cfg.searches.searches_decisions.searchalldecisions, 'review_state', data.decisionTopicStates)
         # select correct default view
         meetingAppDefaultView = data.meetingAppDefaultView
-        if meetingAppDefaultView in cfg.searches.meetingitems.objectIds():
+        if meetingAppDefaultView in cfg.searches.searches_meetingitems.objectIds():
             # update the criterion default value
             for criterion in ICriteria(cfg.searches).values():
                 if criterion.widget == CollectionWidget.widget_type:
-                    criterion.default = getattr(cfg.searches.meetingitems, meetingAppDefaultView).UID()
+                    criterion.default = getattr(cfg.searches.searches_meetingitems, meetingAppDefaultView).UID()
                     break
 
 

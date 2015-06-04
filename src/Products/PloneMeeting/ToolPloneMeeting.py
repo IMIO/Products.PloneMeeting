@@ -690,7 +690,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
 
         # create relevant folders for faceted
-        cfg._createSearchesSubFolders(destFolder=mc_folder)
+        cfg._synchSearches(mc_folder)
 
         # constrain types
         mc_folder.setConstrainTypesMode(1)
@@ -731,6 +731,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # show the left portlets
         if IHidePloneLeftColumn.providedBy(obj):
             noLongerProvides(obj, IHidePloneLeftColumn)
+        obj.reindexObject()
 
     security.declarePublic('getMeetingConfig')
     def getMeetingConfig(self, context, caching=True):
