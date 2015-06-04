@@ -2,6 +2,7 @@ from zope.component import getMultiAdapter
 from zope.interface import implements
 from zope.formlib import form
 
+from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 
 from plone.memoize.instance import memoize
@@ -48,6 +49,19 @@ class Renderer(base.Renderer, FacetedRenderer):
         '''Defines if the portlet is available in the context.'''
         available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
         return available and self.tool.isPloneMeetingUser()
+
+    @property
+    def _criteriaHolder(self):
+        '''Override method coming from FacetedRenderer as we know that criteria are stored on the meetingFolder.'''
+        pmFolder = self.getPloneMeetingFolder()
+        # if we are on a Meeting, it provides IFacetedNavigable but we want to display user pmFolder facetednav
+        if not self.context.absolute_url().startswith(pmFolder.absolute_url()):
+            return pmFolder
+        # we are on a subFolder of the pmFolder (searches_meetingitems for example)
+        if IFacetedNavigable.providedBy(self.context):
+            return self.context
+        else:
+            return pmFolder
 
     def render(self):
         return self._template()
