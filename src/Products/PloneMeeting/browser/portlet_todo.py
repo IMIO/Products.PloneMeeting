@@ -62,6 +62,8 @@ class Renderer(base.Renderer, FacetedRenderer):
 
         portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
         self.portal = portal_state.portal()
+        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     @property
     def available(self):
@@ -77,43 +79,30 @@ class Renderer(base.Renderer, FacetedRenderer):
     @memoize
     def showTodoPortlet(self, context):
         '''Must we show the portlet_todo ?'''
-        cfg = self.getCurrentMeetingConfig()
-        if not cfg:
+        if not self.cfg:
             return False
-        tool = self.getPloneMeetingTool()
-        if tool.isPloneMeetingUser() and tool.isInPloneMeeting(context) and \
-           (cfg.getToDoListSearches()) and \
+        if self.tool.isPloneMeetingUser() and \
+           self.tool.isInPloneMeeting(context) and \
+           (self.cfg.getToDoListSearches()) and \
            (self.getSearches()):
             return True
         return False
 
     @memoize
-    def getPloneMeetingTool(self):
-        """
-          Returns the portal_plonemeeting
-        """
-        return getToolByName(self.portal, 'portal_plonemeeting')
-
-    @memoize
-    def getCurrentMeetingConfig(self):
-        """
-          Returns the current meetingConfig
-        """
-        return self.getPloneMeetingTool().getMeetingConfig(self.context)
-
-    @memoize
     def getSearches(self):
         ''' Returns the list of searches to display in portlet_todo.'''
         res = []
-        cfg = self.getCurrentMeetingConfig()
-        if not cfg:
+        if not self.cfg:
             return res
+        pmFolder = self.tool.getPloneMeetingFolder(self.cfg.getId())
 
-        for search in cfg.getToDoListSearches():
-            if ITALConditionable.providedBy(search):
-                if not evaluateExpressionFor(search):
+        for search in self.cfg.getToDoListSearches():
+            # get the corresponding search in the pmFolder
+            local_search = getattr(pmFolder.searches_meetingitems, search.getId())
+            if ITALConditionable.providedBy(local_search):
+                if not evaluateExpressionFor(local_search):
                     continue
-            res.append(search)
+            res.append(local_search)
         return res
 
     @memoize
@@ -138,8 +127,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         """
         # received brain is a plone.app.contentlisting.catalog.CatalogContentListingObject instance
         item = brain._brain._unrestrictedGetObject()
-        tool = self.getPloneMeetingTool()
-        return tool.getColoredLink(item, showColors=True, maxLength=self.getTitleLength())
+        return self.tool.getColoredLink(item, showColors=True, maxLength=self.getTitleLength())
 
     def getCollectionWidgetId(self):
         """Returns the collection widget id to be used in the URL generated on the collection link."""

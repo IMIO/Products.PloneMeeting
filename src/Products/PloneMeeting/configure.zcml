@@ -172,6 +172,9 @@
            name="Products.PloneMeeting.vocabularies.askedadvicesvocabulary" />
   <utility component=".vocabularies.SentToInfosVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
+  <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
+  <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary" />
 
   <configure package="imio.dashboard">
     <adapter for="plone.app.collection.collection.Collection"

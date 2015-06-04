@@ -1785,7 +1785,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
-                                     "'pre_validation' in here.getWorkflowAdaptations()"
+                                     "'pre_validation' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()"
                 }),
                 # Items to validate
                 ('searchitemstovalidate',
@@ -1797,7 +1797,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.userIsAReviewer()"
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here).userIsAReviewer()"
                 }),
                 # Items to advice
                 ('searchallitemstoadvice',

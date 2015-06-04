@@ -10,6 +10,29 @@ from zope.schema.vocabulary import SimpleTerm
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 
+from plone import api
+from eea.facetednavigation.interfaces import IFacetedNavigable
+from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
+
+
+class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
+    implements(IVocabularyFactory)
+
+    def _brains(self, context):
+        """We override the method because Meetings also provides the ICollection interface..."""
+        root = context
+        while IFacetedNavigable.providedBy(root.aq_inner.aq_parent):
+            root = root.aq_inner.aq_parent
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(
+            path=dict(query='/'.join(root.getPhysicalPath())),
+            meta_type='DashboardCollection',
+            sort_on='getObjPositionInParent'
+        )
+        return brains
+
+PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
+
 
 class ItemCategoriesVocabulary(object):
     implements(IVocabularyFactory)
