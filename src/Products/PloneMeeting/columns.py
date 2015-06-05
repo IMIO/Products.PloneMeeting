@@ -63,7 +63,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 else:
                     visibleColumns = cfg.getItemColumns()
                 moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
-        return unicode(pretty_link, 'utf-8') + annexes + moreInfos
+        return pretty_link + annexes + moreInfos
 
 
 class ItemLinkedMeetingColumn(BaseColumn):
