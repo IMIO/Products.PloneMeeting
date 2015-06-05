@@ -153,7 +153,6 @@ class PMFacetedContainerView(FacetedContainerView):
     def __init__(self, context, request):
         super(PMFacetedContainerView, self).__init__(context, request)
         # hide the green bar on the faceted if not in the configuration
-        return
         if not 'portal_plonemeeting' in self.context.absolute_url():
             self.request.set('disable_border', 1)
 
