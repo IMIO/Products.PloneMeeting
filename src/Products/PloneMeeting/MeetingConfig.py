@@ -31,6 +31,7 @@ import mimetypes
 from DateTime import DateTime
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
+from persistent.list import PersistentList
 from zope.annotation import IAnnotations
 from zope.component import getGlobalSiteManager
 from zope.component import getUtility
@@ -1025,7 +1026,7 @@ schema = Schema((
             allow_browse=False,
             description="ToDoListSearches",
             description_msgid="to_do_list_searches",
-            startup_directory="searches/searches_meetingitems",
+            startup_directory="searches/searches_items",
             show_results_without_query=True,
             restrict_browsing_to_startup_directory=True,
             label='Todolistsearches',
@@ -1659,7 +1660,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         TOOL_FOLDER_SEARCHES: ('Searches',
                                ('Folder', 'DashboardCollection', ),
                                # 'items' is a reserved word
-                               (('searches_meetingitems', 'Meeting items'),
+                               (('searches_items', 'Meeting items'),
                                 ('searches_meetings', 'Meetings'),
                                 ('searches_decisions', 'Decisions'))
                                ),
@@ -1709,7 +1710,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # My items
                 ('searchmyitems',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1717,24 +1718,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators')"
+                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators')",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my groups
                 ('searchitemsofmygroups',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-of-my-groups'},
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getGroupsForUser()"
+                    'tal_condition': "python: here.portal_plonemeeting.getGroupsForUser()",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items I take over
                 ('searchmyitemstakenover',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'my-items-taken-over'},
@@ -1743,24 +1746,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'tal_condition': "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
                                      "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or "
-                                     "here.portal_plonemeeting.isManager(here))"
+                                     "here.portal_plonemeeting.isManager(here))",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All (visible) items
                 ('searchallitems',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
-                    'tal_condition': ""
+                    'tal_condition': "",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items in copy
                 ('searchallitemsincopy',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-in-copy'},
@@ -1768,12 +1773,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')"
+                                     "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to prevalidate
                 ('searchitemstoprevalidate',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1782,24 +1788,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
-                                     "'pre_validation' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()"
+                                     "'pre_validation' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to validate
                 ('searchitemstovalidate',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-validate-of-highest-hierarchic-level'},
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here).userIsAReviewer()"
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here).userIsAReviewer()",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice
                 ('searchallitemstoadvice',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice'},
@@ -1807,12 +1815,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice without delay
                 ('searchitemstoadvicewithoutdelay',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-without-delay'},
@@ -1820,12 +1829,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with delay
                 ('searchitemstoadvicewithdelay',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-delay'},
@@ -1833,12 +1843,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with exceeded delay
                 ('searchitemstoadvicewithexceededdelay',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-exceeded-delay'},
@@ -1846,12 +1857,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Every advised items
                 ('searchalladviseditems',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items'},
@@ -1859,12 +1871,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Advised items with delay
                 ('searchalladviseditemswithdelay',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items-with-delay'},
@@ -1872,12 +1885,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')"
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to correct
                 ('searchitemstocorrect',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1886,12 +1900,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators') and "
-                                     "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()"
+                                     "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Corrected items
                 ('searchcorrecteditems',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
@@ -1900,19 +1915,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'created',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.isManager(here) and "
-                                     "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()"
+                                     "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Decided items
                 ('searchdecideditems',
                 {
-                    'subFolderId': 'searches_meetingitems',
+                    'subFolderId': 'searches_items',
                     'query':
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'decided-items'},
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
-                    'tal_condition': ""
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All not-yet-decided meetings
                 ('searchallmeetings',
@@ -1925,7 +1942,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'getDate',
                     'sort_reversed': True,
-                    'tal_condition': ''
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Last decided meetings
                 ('searchlastdecisions',
@@ -1939,7 +1957,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'getDate',
                     'sort_reversed': True,
-                    'tal_condition': ''
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All decided meetings
                 ('searchalldecisions',
@@ -1952,7 +1971,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'getDate',
                     'sort_reversed': True,
-                    'tal_condition': ''
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
                 }),
             ]
         )
@@ -2877,7 +2897,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              will use same columns.'''
         # update item related collections
         itemColumns = (u'pretty_link', ) + self.getItemColumns()
-        for collection in self.searches.searches_meetingitems.objectValues('DashboardCollection'):
+        for collection in self.searches.searches_items.objectValues('DashboardCollection'):
             # available customViewFieldIds, as done in an adapter, we compute it for each collection
             customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
             # set elements existing in both lists, we do not use set() because it is not ordered
@@ -3014,13 +3034,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
            every user folder for this MeetingConfig will be synchronized.
            We will :
-           - remove every relevant folders from the given p_folder (folders searches_meetingitems, ...);
+           - remove every relevant folders from the given p_folder (folders searches_items, ...);
            - we will copy the searches_* folders from the configuration to the p_folder;
-           - we will copy the facetednav annotation from the MeetingConfig.searches folder
-             to the p_folder;
+           - we will copy the facetednav annotation from the MeetingConfig.searches and
+             MeetingConfig.searches_* folders to the corresponding folders in p_folder;
            - we will update the default for the collection widget."""
 
-        tool = getToolByName(self, 'portal_plonemeeting')
+        # use uid_catalog to be sure to find the element
+        uid_catalog = getToolByName(self, 'uid_catalog')
+
         folders = []
         # synchronize onl one folder
         if folder:
@@ -3040,54 +3062,63 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
             # remove searches_* folders from the given p_folder
-            dummyInfo, dummyInfo2, folderInfos = self.subFoldersInfo['searches']
-            folderIds = [folderId for folderId, folderTitle in folderInfos]
+            subFolderIds = [folderId for folderId in self.searches.objectIds() if folderId.startswith('searches_')]
             toDelete = []
-            for folderId in folderIds:
+            for folderId in subFolderIds:
                 if folderId in folder.objectIds():
                     toDelete.append(folderId)
             folder.manage_delObjects(toDelete)
 
             # copy searches_* folder from the MeetingConfig to the p_folder
-            copiedData = self.searches.manage_copyObjects(ids=folderIds)
+            copiedData = self.searches.manage_copyObjects(ids=subFolderIds)
             folder.manage_pasteObjects(copiedData)
 
-            # copy facetednav ann from config to p_folder
-            config_faceted_ann = list(IAnnotations(self.searches)['FacetedCriteria'])
-            if 'FacetedCriteria' in IAnnotations(folder):
-                del IAnnotations(folder)['FacetedCriteria']
-            IAnnotations(folder)['FacetedCriteria'] = list(config_faceted_ann)
+            # copy facetednav ann from config to p_folder and sub_folders
+            def _copyFacetedCriteriaFor(sourceFolder, destFolder):
+                """ """
+                config_faceted_ann = list(IAnnotations(sourceFolder)['FacetedCriteria'])
+                if 'FacetedCriteria' in IAnnotations(destFolder):
+                    del IAnnotations(destFolder)['FacetedCriteria']
+                IAnnotations(destFolder)['FacetedCriteria'] = PersistentList(config_faceted_ann)
+            _copyFacetedCriteriaFor(self.searches, folder)
+            for subFolderId in subFolderIds:
+                subFolderConfig = getattr(self.searches, subFolderId)
+                subFolderUser = getattr(folder, subFolderId)
+                _copyFacetedCriteriaFor(subFolderConfig, subFolderUser)
 
             # update the default collection
-            catalog = getToolByName(self, 'portal_catalog')
             current_default_id = u''
             criteria = ICriteria(self.searches).criteria
             # find the id of the default collection
             for criterion in criteria:
                 if criterion.widget == CollectionWidget.widget_type:
-                    brains = catalog(UID=criterion.default)
+                    brains = uid_catalog(UID=criterion.default)
                     if brains:
                         collection = brains[0].getObject()
                         current_default_id = collection.getId()
-
             new_default_uid = ''
             if current_default_id:
-                new_default_uid = getattr(folder.searches_meetingitems, current_default_id).UID()
+                new_default_uid = getattr(folder.searches_items, current_default_id).UID()
+            # update folder and folder.searches_items
+            self._updateDefaultCollectionFor(folder, new_default_uid)
+            self._updateDefaultCollectionFor(folder.searches_items, new_default_uid)
+            # for other subFolders, make sure there is no default
+            for subFolderId in subFolderIds:
+                if subFolderId == 'searches_items':
+                    continue
+                self._updateDefaultCollectionFor(getattr(folder, subFolderId), '')
 
-            # update root faceted...
-            criteria = ICriteria(folder).criteria
-            for criterion in criteria:
-                if criterion.widget == CollectionWidget.widget_type:
-                    criterion.default = new_default_uid
-            # ... and the searches_meetingitems faceted
-            try:
-                criteria = ICriteria(folder.searches_meetingitems).criteria
-            except:
-                import ipdb; ipdb.set_trace()
-            for criterion in criteria:
-                if criterion.widget == CollectionWidget.widget_type:
-                    criterion.default = new_default_uid
-            tool._enableFacetedFor(folder)
+    def _updateDefaultCollectionFor(self, folderObj, default_uid):
+        """Use p_default_uid as the default collection selected
+           for the CollectionWidget used on p_folderObj."""
+        tool = getToolByName(self, 'portal_plonemeeting')
+        # make sure the folder is a facetednav, it should always be the case but...
+        if not folderObj.getLayout() == 'facetednavigation_view':
+            tool._enableFacetedFor(folderObj)
+        criteria = ICriteria(folderObj).criteria
+        for criterion in criteria:
+            if criterion.widget == CollectionWidget.widget_type:
+                criterion.default = default_uid
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId):
         '''Returns the name of the action used for the cloneToOtherMC
@@ -3296,7 +3327,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # special case for folder 'searches' that we mark with the IFacetedSearchesMarker
             # and for which we enable the faceted navigation if not already done
             if folderId == TOOL_FOLDER_SEARCHES:
-                alsoProvides(folder, IFacetedSearchesItemsMarker)
+                alsoProvides(folder, IFacetedSearchesMarker)
                 tool._enableFacetedFor(folder)
 
             # special case for folder 'itemtemplates' for which we want
@@ -3331,7 +3362,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for subFolderId, subFolderTitle in folderInfo[2]:
                 folder.invokeFactory('Folder', subFolderId)
                 subFolder = getattr(folder, subFolderId)
-                if subFolderId == 'searches_meetingitems':
+                if subFolderId == 'searches_items':
                     alsoProvides(subFolder, IFacetedSearchesItemsMarker)
                     tool._enableFacetedFor(subFolder)
                 elif subFolderId == 'searches_meetings':

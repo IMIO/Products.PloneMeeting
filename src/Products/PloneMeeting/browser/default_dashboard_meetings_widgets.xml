@@ -27,7 +27,7 @@
    <property name="hidealloption">1</property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default">123</property>
+   <property name="default"></property>
   </criterion>
 
   <criterion name="c2">

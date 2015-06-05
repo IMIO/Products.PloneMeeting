@@ -16,7 +16,7 @@ from zope.publisher.interfaces.browser import IBrowserRequest
 
 class IFacetedSearchesItemsMarker(Interface):
     """
-      Marker interface applied to the 'searches/searches_meetingitems'
+      Marker interface applied to the 'searches/searches_items'
       folder added to each MeetingConfig.
     """
 

@@ -98,7 +98,7 @@ class Renderer(base.Renderer, FacetedRenderer):
 
         for search in self.cfg.getToDoListSearches():
             # get the corresponding search in the pmFolder
-            local_search = getattr(pmFolder.searches_meetingitems, search.getId())
+            local_search = getattr(pmFolder.searches_items, search.getId())
             if ITALConditionable.providedBy(local_search):
                 if not evaluateExpressionFor(local_search):
                     continue

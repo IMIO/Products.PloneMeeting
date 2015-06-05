@@ -11,6 +11,7 @@ from plone.portlets.interfaces import IPortletDataProvider
 
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.interfaces import IMeeting
 
 from zope.i18nmessageid import MessageFactory
 _ = MessageFactory('PloneMeeting')
@@ -55,7 +56,8 @@ class Renderer(base.Renderer, FacetedRenderer):
         '''Override method coming from FacetedRenderer as we know that criteria are stored on the meetingFolder.'''
         pmFolder = self.getPloneMeetingFolder()
         # if we are on a Meeting, it provides IFacetedNavigable but we want to display user pmFolder facetednav
-        if not self.context.absolute_url().startswith(pmFolder.absolute_url()):
+        if not self.context.absolute_url().startswith(pmFolder.absolute_url()) or \
+           IMeeting.providedBy(self.context):
             return pmFolder
         # we are on a subFolder of the pmFolder (searches_meetingitems for example)
         if IFacetedNavigable.providedBy(self.context):

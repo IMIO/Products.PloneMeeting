@@ -3,7 +3,6 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 
 from Products.CMFCore.utils import getToolByName
-from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 
@@ -39,6 +38,9 @@ class Migrate_To_3_4(Migrator):
         wft = getToolByName(self.portal, 'portal_workflow')
 
         for cfg in self.tool.objectValues('MeetingConfig'):
+            # already migrated?
+            if 'searches' in cfg.objectIds():
+                continue
             logger.info('Moving to imio.dashboard : adding DashboardCollections and disabling Topics...')
             cfg._createSubFolders()
             cfg.createSearches(cfg._searchesInfo())
@@ -68,13 +70,13 @@ class Migrate_To_3_4(Migrator):
             if hasattr(cfg, 'meetingAppDefaultView'):
                 # if cfg.meetingAppDefaultView is like 'topic_searchmyitems', try to recover it...
                 default_view = cfg.meetingAppDefaultView.split('topic_')[-1]
-                if not default_view in cfg.searches.searches_meetingitems.objectIds():
+                if not default_view in cfg.searches.searches_items.objectIds():
                     default_view = 'searchallitems'
                 # update the criterion default value
-                for criterion in ICriteria(cfg.searches).values():
-                    if criterion.widget == CollectionWidget.widget_type:
-                        criterion.default = getattr(cfg.searches.searches_meetingitems, default_view).UID()
-                        break
+                default_uid = getattr(cfg.searches.searches_items, default_view).UID()
+                # update the criterion default value in searches and searches_items folders
+                cfg._updateDefaultCollectionFor(cfg.searches, default_uid)
+                cfg._updateDefaultCollectionFor(cfg.searches.searches_items, default_uid)
                 delattr(cfg, 'meetingAppDefaultView')
             # no more used as lateItems are displayed together with normal items now
             if hasattr(cfg, 'maxShownLateItems'):
@@ -83,11 +85,11 @@ class Migrate_To_3_4(Migrator):
             logger.info('Moving to imio.dashboard : moving toDoListTopics to toDoListSearches...')
             if not cfg.getToDoListSearches():
                 topics = cfg.getReferences('ToDoTopics')
-                collectionIds = cfg.searches.searches_meetingitems.objectIds()
+                collectionIds = cfg.searches.searches_items.objectIds()
                 toDoListSearches = []
                 for topic in topics:
                     if topic.getId() in collectionIds:
-                        toDoListSearches.append(getattr(cfg.searches.searches_meetingitems, topic.getId()))
+                        toDoListSearches.append(getattr(cfg.searches.searches_items, topic.getId()))
                 cfg.setToDoListSearches(toDoListSearches)
                 cfg.deleteReferences('ToDoTopics')
 
@@ -231,7 +233,7 @@ class Migrate_To_3_4(Migrator):
         # update portal_catalog as index "isDefinedInTool" changed
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
-        self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
+        #self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
         self.finish()
 
 
