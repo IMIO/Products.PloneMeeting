@@ -132,7 +132,8 @@ class ToolInitializer:
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
                                   'getDate',
                                   data.maxDaysDecisions)
-        # apply the meetingTopicStates to the 'searchlastdecisions' and 'searchalldecision' DashboardCollection
+        # apply the decisionTopicStates to the 'searchlastdecisions'
+        # and 'searchalldecision' DashboardCollections
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
                                   'review_state',
                                   data.decisionTopicStates)

@@ -43,7 +43,7 @@ class testSearches(PloneMeetingTestCase):
         '''Test that the 'meetingAppDefaultView' defined in the MeetingConfig data
            is correctly applied to the collection-link widget on the facetednavigation view.'''
         # selected meetingAppDefaultView is 'searchallitems'
-        searchallitems = self.meetingConfig.searches.meetingitems.searchallitems
+        searchallitems = self.meetingConfig.searches.searches_items.searchallitems
         for criterion in ICriteria(self.meetingConfig.searches).values():
             if criterion.widget == CollectionWidget.widget_type:
                 collectionCriterion = criterion
@@ -77,7 +77,7 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchallitemstoadvice"
-        collection = self.meetingConfig.searches.meetingitems.searchallitemstoadvice
+        collection = self.meetingConfig.searches.searches_items.searchallitemstoadvice
         # by default, no item to advice...
         self.failIf(collection.getQuery())
         # an advice can be given when an item is 'proposed'
@@ -143,7 +143,7 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchalladviseditems"
-        collection = self.meetingConfig.searches.meetingitems.searchalladviseditems
+        collection = self.meetingConfig.searches.searches_items.searchalladviseditems
         # by default, no advised item...
         self.changeUser('pmAdviser1')
         self.failIf(collection.getQuery())
@@ -211,7 +211,7 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchalladviseditemswithdelay"
-        collection = self.meetingConfig.searches.meetingitems.searchalladviseditemswithdelay
+        collection = self.meetingConfig.searches.searches_items.searchalladviseditemswithdelay
         # by default, no advised item...
         self.changeUser('pmAdviser1')
         self.failIf(collection.getQuery())
@@ -285,7 +285,7 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchallitemsincopy"
-        collection = self.meetingConfig.searches.meetingitems.searchallitemsincopy
+        collection = self.meetingConfig.searches.searches_items.searchallitemsincopy
         # create an item and set another proposing group in copy of
         item = self.create('MeetingItem')
         # give a view access to members of vendors, like pmReviewer2
@@ -322,7 +322,7 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchmyitemstakenover"
-        collection = self.meetingConfig.searches.meetingitems.searchmyitemstakenover
+        collection = self.meetingConfig.searches.searches_items.searchmyitemstakenover
         item = self.create('MeetingItem')
         # by default nothing is returned
         self.failIf(collection.getQuery())
@@ -368,7 +368,7 @@ class testSearches(PloneMeetingTestCase):
             performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         # now do the query
         # this adapter is used by the "searchitemstovalidate"
-        collection = self.meetingConfig.searches.meetingitems.searchitemstovalidate
+        collection = self.meetingConfig.searches.searches_items.searchitemstovalidate
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -446,7 +446,7 @@ class testSearches(PloneMeetingTestCase):
         # now do the query
         # this adapter is not used by default, but is intended to be used with
         # the "searchitemstovalidate" collection so use it with it
-        collection = self.meetingConfig.searches.meetingitems.searchitemstovalidate
+        collection = self.meetingConfig.searches.searches_items.searchitemstovalidate
         patchedQuery = list(collection.query)
         patchedQuery[0]['v'] = 'items-to-validate-of-my-reviewer-groups'
         collection.query = patchedQuery

@@ -30,6 +30,9 @@ from DateTime.DateTime import _findLocalTimeZoneName
 from AccessControl import Unauthorized
 from zope.i18n import translate
 
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
+
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
@@ -1025,11 +1028,31 @@ class testMeeting(PloneMeetingTestCase):
         '''Test the 'remove whole meeting' functionnality, so removing a meeting
            including every items that are presented into it.
            The functionnality is only available to role 'Manager'.'''
+        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
+        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
+        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
+
         # create a meeting with several items
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # the meeting contains items
         self.assertTrue(len(meeting.getItems()))
+        # as removing a meeting will update items preferredMeeting
+        # make sure it works here too...
+        anItem = meeting.getItems()[0]
+        anItem.setPreferredMeeting(meeting.UID())
+        # add an annex as removing an item/annex calls onAnnexRemoved
+        self.addAnnex(anItem)
+        # add an advice as removing item/advice calls onAdviceRemoved
+        anItem.setOptionalAdvisers(('vendors',))
+        anItem.at_post_edit_script()
+        self.changeUser('pmReviewer2')
+        createContentInContainer(anItem,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmManager')
         meetingParentFolder = meeting.getParentNode()
         self.assertTrue(set(meetingParentFolder.objectValues('MeetingItem')) == set(meeting.getItems()))
         # as a non 'Manager', if 'wholeMeeting' is found in the REQUEST
@@ -1041,8 +1064,9 @@ class testMeeting(PloneMeetingTestCase):
         self.request.set('wholeMeeting', True)
         # now if we remove the meeting, every items will be removed as well
         meeting.restrictedTraverse('@@delete_givenuid')(meeting.UID())
-        # nothing left in the folder
-        self.assertFalse(meetingParentFolder.objectValues())
+        # nothing left in the folder but the searches_* folders
+        self.assertFalse([folderId for folderId in meetingParentFolder.objectIds()
+                          if not folderId.startswith('searches_')])
 
     def test_pm_DeletingMeetingUpdateItemsPreferredMeeting(self):
         '''When a meeting is deleted, if it was selected as preferredMeeting

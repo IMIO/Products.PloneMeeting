@@ -417,7 +417,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(len(IAnnexable(newItem).getAnnexes(relatedTo='item')) == 2)
         self.failUnless(len(IAnnexable(newItem).getAnnexes(relatedTo='item_decision')) == 2)
         # As annexes are references from the item, check that these are not
-        self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues()))
+        self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues('MeetingItem')))
         # Especially test that references are ok about the MeetingFileTypes
         existingMeetingFileTypeIds = [ft['id'] for ft in self.meetingConfig.getFileTypes(relatedTo='item')]
         existingMeetingFileTypeDecisionIds = [ft['id'] for ft in

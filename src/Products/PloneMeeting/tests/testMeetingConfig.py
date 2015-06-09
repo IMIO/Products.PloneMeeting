@@ -990,7 +990,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         '''
         cfg = self.meetingConfig
         # try to add a topic name 'searchmyitems' that already exist...
-        self.assertTrue(hasattr(cfg.searches.meetingitems, 'searchmyitems'))
+        self.assertTrue(hasattr(cfg.searches.searches_items, 'searchmyitems'))
         searchInfo = cfg._searchesInfo().items()[0]
         self.assertEquals(searchInfo[0], 'searchmyitems')
         self.meetingConfig.createSearches(OrderedDict((searchInfo, )))

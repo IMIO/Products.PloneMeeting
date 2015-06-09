@@ -52,13 +52,13 @@ class testWorkflows(PloneMeetingTestCase):
         # May the creator see his item ?
         self.failUnless(self.hasPermission('View', item))
         self.failUnless(self.hasPermission('Access contents information', item))
-        myItems = self.meetingConfig.searches.meetingitems.searchmyitems.getQuery()
+        myItems = self.meetingConfig.searches.searches_items.searchmyitems.getQuery()
         self.assertEquals(len(myItems), 1)
         self.changeUser('pmManager')
         # The manager may not see the item yet except if item is already 'validated'
         # this could be the case if item initial_state is 'validated' or when using
         # wfAdaptation 'items_come_validated'
-        collection = self.meetingConfig.searches.meetingitems.searchallitems
+        collection = self.meetingConfig.searches.searches_items.searchallitems
         self.request['PATH_TRANSLATED'] = collection.absolute_url()
         allItems = collection.getQuery()
         numberOfFoundItems = 0
@@ -74,10 +74,10 @@ class testWorkflows(PloneMeetingTestCase):
         parentFolder = item.getParentNode()
         # test that we can remove an empty item...
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
-        self.failIf(len(parentFolder.objectValues()) != 0)
+        self.failIf(len(parentFolder.objectValues('MeetingItem')) != 0)
         # test removal of an item with annexes
         item = self.create('MeetingItem')
-        annex1 = self.addAnnex(item)
+        self.addAnnex(item)
         self.changeUser('pmCreator1b')
         annex2 = self.addAnnex(item)
         self.failIf(len(item.objectValues()) != 2)
@@ -92,9 +92,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), item.UID())
         # but a super user could
         self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(annex1.UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
-        self.failIf(len(parentFolder.objectValues()) != 0)
+        self.failIf(len(parentFolder.objectValues('MeetingItem')) != 0)
 
     def test_pm_RemoveContainer(self):
         '''We avoid a strange behaviour of Plone.  Removal of a container
@@ -124,27 +123,29 @@ class testWorkflows(PloneMeetingTestCase):
         # The folder should not have been deleted...
         self.failUnless(hasattr(pmManagerFolder, item.getId()))
         # Try with a meeting in it now
-        meetingDate = DateTime('2008/06/12 08:00:00')
-        meeting = self.create('Meeting', date=meetingDate)
+        meeting = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
         self.assertRaises(BeforeDeleteException,
                           unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         self.failUnless(hasattr(pmManagerFolder, item.getId()))
         self.failUnless(hasattr(pmManagerFolder, meeting.getId()))
-        self.assertEquals(len(pmManagerFolder.objectValues()), 2)
+        self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 1)
+        self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 1)
         # Now, remove things in the good order. Remove the item and check
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.changeUser('pmManager')
-        self.assertEquals(len(pmManagerFolder.objectValues()), 1)
+        self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 0)
+        self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 1)
         # Try to remove the folder again but with a contained meeting only
         self.assertRaises(BeforeDeleteException,
                           unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         # Remove the meeting
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
-        self.assertEquals(len(pmManagerFolder.objectValues()), 0)
+        self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 0)
+        self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 0)
         # Check that now that the pmManagerFolder is empty, we can remove it.
         pmManagerFolderParent = pmManagerFolder.getParentNode()
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())

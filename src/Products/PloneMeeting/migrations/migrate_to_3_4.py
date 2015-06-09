@@ -90,6 +90,9 @@ class Migrate_To_3_4(Migrator):
                 for topic in topics:
                     if topic.getId() in collectionIds:
                         toDoListSearches.append(getattr(cfg.searches.searches_items, topic.getId()))
+                    else:
+                        logger.warn('Moving to imio.dashboard : could not select a '
+                                    'collection with id "%s" for portlet_todo!' % topic.getId())
                 cfg.setToDoListSearches(toDoListSearches)
                 cfg.deleteReferences('ToDoTopics')
 

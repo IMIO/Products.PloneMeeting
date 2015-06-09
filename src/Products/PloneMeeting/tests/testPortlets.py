@@ -68,7 +68,7 @@ class testPortlets(PloneMeetingTestCase):
         itemTemplate = itemTemplateView.getItemTemplates()[0]
         itemTemplateUID = itemTemplate.UID()
         # for now, no items in the user folder
-        self.assertTrue(not folder.objectIds())
+        self.assertTrue(not folder.objectIds('MeetingItem'))
         newItem = itemTemplateView.createItemFromTemplate(itemTemplateUID)
         # the new item is the itemTemplate clone
         self.assertTrue(newItem.Title() == itemTemplate.Title())

@@ -260,6 +260,10 @@ def onAdviceRemoved(advice, event):
         return
 
     item = advice.getParentNode()
+    # do not call this if an advice is removed because the item is removed
+    if not item in item.aq_inner.aq_parent.objectValues():
+        return
+
     try:
         item.updateAdvices()
     except TypeError:
@@ -274,7 +278,7 @@ def onAnnexAdded(annex, event):
     '''When an annex is added, we need to update item modification date.'''
     item = annex.getParent()
     item.setModificationDate(DateTime())
-    event.object.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
+    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
 
 
 def onAnnexRemoved(annex, event):
@@ -284,6 +288,10 @@ def onAnnexRemoved(annex, event):
         return
 
     item = annex.getParent()
+    # do not call this if an annex is removed because the item is removed
+    if not item in item.aq_inner.aq_parent.objectValues():
+        return
+
     IAnnexable(item).updateAnnexIndex(annex, removeAnnex=True)
     item.updateHistory('delete',
                        annex,
@@ -293,7 +301,7 @@ def onAnnexRemoved(annex, event):
 
     # update item modification date
     item.setModificationDate(DateTime())
-    event.object.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
+    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
 
 
 def onItemDuplicated(item, event):
