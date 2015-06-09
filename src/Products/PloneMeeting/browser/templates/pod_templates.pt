@@ -1,4 +1,4 @@
-<div i18n:domain="PloneMeeting" align="right" style="margin-bottom: 0.4em"
+<div i18n:domain="PloneMeeting" align="right" style="margin-bottom: 0.4em; padding-top: 1em;"
      tal:define="tool view/getPloneMeetingTool;
                  meetingConfig view/getCurrentMeetingConfig;
                  portal_url view/getPortalUrl;

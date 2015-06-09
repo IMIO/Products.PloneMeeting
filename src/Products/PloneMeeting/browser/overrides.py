@@ -33,6 +33,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
 from Products.PloneMeeting.columns import ItemNumberColumn
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
+from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
@@ -153,7 +154,8 @@ class PMFacetedContainerView(FacetedContainerView):
     def __init__(self, context, request):
         super(PMFacetedContainerView, self).__init__(context, request)
         # hide the green bar on the faceted if not in the configuration
-        if not 'portal_plonemeeting' in self.context.absolute_url():
+        if not 'portal_plonemeeting' in self.context.absolute_url() and \
+           not IMeeting.providedBy(self.context):
             self.request.set('disable_border', 1)
 
 

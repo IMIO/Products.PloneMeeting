@@ -185,7 +185,6 @@ div.pm_search_no_result_info {
 
 .pm_workflowstate {
     float: right;
-    margin-top: -1.1em;
 }
 
 /* Colors on states */
