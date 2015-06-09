@@ -1483,7 +1483,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # we have 7 items in meeting2 and firstItemNumber is not set
         self.assertTrue(meeting2.getItemsCount() == 7)
         self.assertTrue(meeting2.getFirstItemNumber() == -1)
-        self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        self.assertTrue(meeting2.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # itemNumber relativeTo itemsList/meeting does not change but relativeTo meetingConfig changed
         # for the normal item
         # make sure it is the same result for non MeetingManagers as previous
@@ -1501,7 +1501,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.assertTrue(meeting2.queryState(), 'closed')
         self.assertTrue(meeting2.getFirstItemNumber() == 1)
-        self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        self.assertTrue(meeting2.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # getItemNumber is still behaving the same
         # for item
         self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
@@ -1526,20 +1526,20 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove normal item number 3 and check others
         self.changeUser('admin')
         # we have 8 items, if we remove item number 5, others are correct
-        self.assertTrue(len(meeting.getItemsInOrder()) == 9)
+        self.assertTrue(len(meeting.getItems(ordered=True)) == 9)
         self.assertTrue([anItem.getItemNumber(relativeTo='meeting') for anItem
-                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7, 8, 9])
+                         in meeting.getItems(ordered=True)] == [1, 2, 3, 4, 5, 6, 7, 8, 9])
         # relative to meetingConfig
         self.assertTrue([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
-                         in meeting.getItemsInOrder()] == [8, 9, 10, 11, 12, 13, 14, 15, 16])
+                         in meeting.getItems(ordered=True)] == [8, 9, 10, 11, 12, 13, 14, 15, 16])
         # item is 5th of normal items
-        self.assertTrue(item.UID() == meeting.getItemsInOrder()[4].UID())
+        self.assertTrue(item.UID() == meeting.getItems(ordered=True)[4].UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.assertTrue([anItem.getItemNumber(relativeTo='meeting') for anItem
-                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7, 8])
+                         in meeting.getItems(ordered=True)] == [1, 2, 3, 4, 5, 6, 7, 8])
         # relative to meetingConfig
         self.assertTrue([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
-                         in meeting.getItemsInOrder()] == [8, 9, 10, 11, 12, 13, 14, 15])
+                         in meeting.getItems(ordered=True)] == [8, 9, 10, 11, 12, 13, 14, 15])
 
     def test_pm_ListMeetingsAcceptingItems(self):
         '''

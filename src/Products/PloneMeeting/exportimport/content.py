@@ -148,6 +148,9 @@ class ToolInitializer:
             # update the criterion default value in searches and searches_items folders
             cfg._updateDefaultCollectionFor(cfg.searches, default_uid)
             cfg._updateDefaultCollectionFor(cfg.searches.searches_items, default_uid)
+        else:
+            error = 'meetingAppDefaultView : No DashboardCollection with id %s' % meetingAppDefaultView
+            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
 
 
 def isTestOrArchiveProfile(context):

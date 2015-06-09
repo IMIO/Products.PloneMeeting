@@ -39,10 +39,10 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # 4 items are created
-        item1 = meeting.getItemsInOrder()[0]
-        item2 = meeting.getItemsInOrder()[1]
-        item3 = meeting.getItemsInOrder()[2]
-        item4 = meeting.getItemsInOrder()[3]
+        item1 = meeting.getItems(ordered=True)[0]
+        item2 = meeting.getItems(ordered=True)[1]
+        item3 = meeting.getItems(ordered=True)[2]
+        item4 = meeting.getItems(ordered=True)[3]
         self.assertEquals(item1.getItemNumber(), 1)
         self.assertEquals(item2.getItemNumber(), 2)
         self.assertEquals(item3.getItemNumber(), 3)
@@ -73,10 +73,10 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # 4 items are created
-        item1 = meeting.getItemsInOrder()[0]
-        item2 = meeting.getItemsInOrder()[1]
-        item3 = meeting.getItemsInOrder()[2]
-        item4 = meeting.getItemsInOrder()[3]
+        item1 = meeting.getItems(ordered=True)[0]
+        item2 = meeting.getItems(ordered=True)[1]
+        item3 = meeting.getItems(ordered=True)[2]
+        item4 = meeting.getItems(ordered=True)[3]
         self.assertEquals(item1.getItemNumber(), 1)
         self.assertEquals(item2.getItemNumber(), 2)
         self.assertEquals(item3.getItemNumber(), 3)
@@ -154,10 +154,10 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         # present the items
         for item in (late1, late2, late3, late4):
             self.presentItem(item)
-        item1 = meeting.getItemsInOrder()[0]
-        item2 = meeting.getItemsInOrder()[1]
-        item3 = meeting.getItemsInOrder()[2]
-        item4 = meeting.getItemsInOrder()[3]
+        item1 = meeting.getItems(ordered=True)[0]
+        item2 = meeting.getItems(ordered=True)[1]
+        item3 = meeting.getItems(ordered=True)[2]
+        item4 = meeting.getItems(ordered=True)[3]
         # normal and late items manage their own order
         self.assertEquals(item1.getItemNumber(), 1)
         self.assertEquals(item2.getItemNumber(), 2)
@@ -187,7 +187,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         # create a meetingWithItems and play
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
-        item = meeting.getItemsInOrder()[0]
+        item = meeting.getItems(ordered=True)[0]
         view = item.restrictedTraverse('@@change_item_order')
         self.assertTrue(meeting.wfConditions().mayChangeItemsOrder())
         view('down')

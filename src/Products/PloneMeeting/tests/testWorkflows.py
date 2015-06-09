@@ -385,11 +385,11 @@ class testWorkflows(PloneMeetingTestCase):
         # item is considered as a normal item
         self.publishMeeting(meeting)
         self.failIf(len(meeting.getItems()) != 4)
-        self.assertFalse(meeting.getItemsInOrder()[-1].isLate())
+        self.assertFalse(meeting.getItems(ordered=True)[-1].isLate())
         # now freeze the meeting, future added items will be considered as late
         self.freezeMeeting(meeting)
         self.failIf(len(meeting.getItems()) != 5)
-        self.assertTrue(meeting.getItemsInOrder()[-1].isLate())
+        self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
         # Back to created: rec item 2 is not inserted.
         self.backToState(meeting, 'created')
         self.failIf(len(meeting.getItems()) != 5)
@@ -398,15 +398,15 @@ class testWorkflows(PloneMeetingTestCase):
         # one normal recurring item is added when meeting is published, and so meeting still not frozen
         # and one recurring item is added when meeting is frozen, so item considered as late
         self.failIf(len(meeting.getItems()) != 7)
-        self.assertFalse(meeting.getItemsInOrder()[-2].isLate())
-        self.assertTrue(meeting.getItemsInOrder()[-1].isLate())
+        self.assertFalse(meeting.getItems(ordered=True)[-2].isLate())
+        self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
         # an item need a decisionText to be decided...
         for item in (meeting.getItems()):
             item.setDecision(self.decisionText)
         self.decideMeeting(meeting)
         # a recurring item is added during the 'decide' transition
         self.failIf(len(meeting.getItems()) != 8)
-        self.assertTrue(meeting.getItemsInOrder()[-1].isLate())
+        self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
 
     def test_pm_NoDefinedRecurringItems(self):
         '''When no recurring items exist in the meetingConfig, we can add a meeting,
@@ -467,7 +467,7 @@ class testWorkflows(PloneMeetingTestCase):
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
         # after every recurring items have been inserted, the last is the 'secret' one
         self.assertTrue(len(meeting.getItems()) == 3)
-        self.assertTrue(meeting.getItemsInOrder()[-1].getPrivacy() == 'secret')
+        self.assertTrue(meeting.getItems(ordered=True)[-1].getPrivacy() == 'secret')
 
     def test_pm_RecurringItemsWithWrongTransitionsForPresentingAnItem(self):
         '''Tests the recurring items system when using a wrong MeetingConfig.transitionsForPresentingAnItem.'''

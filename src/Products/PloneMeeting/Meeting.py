@@ -932,14 +932,15 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             label = 'pre_date_after_meeting_date'
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
-    security.declarePublic('getItemsInOrder')
-    def getItemsInOrder(self, uids=[]):
-        '''Get items in order.
-           If p_uids is not empty, only items whose
-           uids are in it are returned.
+    security.declarePublic('getItems')
+    def getItems(self, uids=[], listType=None, ordered=False, **kwargs):
+        '''Overrides the Meeting.items accessor.
+           Items can be filtered depending on :
+           - list of given p_uids;
+           - given p_listType;
+           - returned ordered (by getItemNumber) if p_ordered is True.
         '''
-        # Keep only some of those items if required by method parameters.
-        res = self.getItems()
+        res = self.getField('items').get(self, **kwargs)
         if uids:
             member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
             keptItems = []
@@ -947,8 +948,11 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 if item.UID() in uids and member.has_permission(View, item):
                     keptItems.append(item)
             res = keptItems
-        # Sort items according to item number
-        res.sort(key=lambda x: x.getItemNumber())
+        if listType:
+            res = [item for item in res if item.getListType() == listType]
+        if ordered:
+            # Sort items according to item number
+            res.sort(key=lambda x: x.getItemNumber())
         return res
 
     security.declarePublic('getJsItemUids')
@@ -963,7 +967,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getItemByNumber')
     def getItemByNumber(self, number):
         '''Gets the item thas has number p_number.'''
-        items = self.getItemsInOrder()
+        items = self.getItems(ordered=True)
         res = None
         if number <= len(items):
             return items[number-1]
@@ -1033,7 +1037,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             toDiscussValue = cfg.getToDiscussLateDefault()
         else:
             toDiscussValue = cfg.getToDiscussDefault()
-        items = self.getItemsInOrder()
+        items = self.getItems(ordered=True)
         # Set the correct value for the 'toDiscuss' field if required
         if cfg.getToDiscussSetOnItemInsert():
             item.setToDiscuss(toDiscussValue)

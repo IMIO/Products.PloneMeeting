@@ -554,13 +554,11 @@ class IMeetingWorkflowActions(Interface):
     def doDecide(stateChange):
         '''Executes when all items contained in me are "decided". In the default
            PloneMeeting implementation, Meeting.doDecide calls Item.doAccept
-           for every "frozen" item contained in the meeting. It does so on the
-           sorted list of items because we use getItemsInOrder.'''
+           for every "frozen" item contained in the meeting.'''
     def doClose(stateChange):
         '''Executes when all decisions are finalized. In the default
            PloneMeeting implementation, Meeting.doClose calls Item.doConfirm
-           for every "accepted" item contained in the meeting. It does so on the
-           sorted list of items because we use getItemsInOrder.'''
+           for every "accepted" item contained in the meeting.'''
     def doArchive(stateChange):
         '''Executes when the meeting is archived.'''
     def doRepublish(stateChange):
