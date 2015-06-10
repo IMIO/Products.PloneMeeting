@@ -96,6 +96,11 @@ class Renderer(base.Renderer, FacetedRenderer):
             return res
         pmFolder = self.tool.getPloneMeetingFolder(self.cfg.getId())
 
+        # add a special key in the REQUEST specifying that we are querying
+        # available searches from the portlet_todo, this way, we can use a different
+        # condition to display search in the portlet_todo, for example shown for everyone in the
+        # plonemeeting_portlet but only for some users in the portlet_todo
+        self.request.set('fromPortletTodo', True)
         for search in self.cfg.getToDoListSearches():
             # get the corresponding search in the pmFolder
             local_search = getattr(pmFolder.searches_items, search.getId())
@@ -103,6 +108,7 @@ class Renderer(base.Renderer, FacetedRenderer):
                 if not evaluateExpressionFor(local_search):
                     continue
             res.append(local_search)
+        self.request.set('fromPortletTodo', False)
         return res
 
     @memoize
