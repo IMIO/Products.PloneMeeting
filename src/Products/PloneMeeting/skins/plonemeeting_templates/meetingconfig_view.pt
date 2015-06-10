@@ -668,7 +668,7 @@
 
       <!-- Topics -->
       <a name="topics"></a>
-      <fieldset>
+      <fieldset tal:condition="python: 'topics' in context.objectIds('ATFolder')">
         <legend>
           <span i18n:translate="Topics" style="color: red;">Old topics</span>
         </legend>
