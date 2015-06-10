@@ -50,6 +50,7 @@ from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
@@ -4464,21 +4465,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             title = item.Title(withMeetingDate=True)
         else:
             title = item.Title()
+        title = safe_unicode(title)
         # show the meetingConfig type of the linked item, no matter
         # it is from same portal_type of current item or not
-        title = "<img src='{0}' title='{1}' />&nbsp;{2}".format(item.getIcon(),
-                                                                translate(item.portal_type,
-                                                                          domain='plone',
-                                                                          context=self.REQUEST).encode('utf-8'),
-                                                                title)
+        title = u"<img src='{0}' title='{1}' />&nbsp;{2}".format(item.getIcon(),
+                                                                 translate(item.portal_type,
+                                                                           domain='plone',
+                                                                           context=self.REQUEST),
+                                                                 title)
         coloredLink = tool.getColoredLink(item, showColors=True, contentValue=title)
         if not checkPermission(View, item):
             coloredLink = spanifyLink(coloredLink)
-            coloredLink += "&nbsp;<span class='discreet'>({0})</span>".format(
+            coloredLink += u"&nbsp;<span class='discreet'>({0})</span>".format(
                 translate('can_not_access_this_item',
                           domain="PloneMeeting",
                           context=self.REQUEST,
-                          default="You can not access this item").encode('utf-8'))
+                          default="You can not access this item"))
         return coloredLink
 
     security.declarePublic('showVotes')
