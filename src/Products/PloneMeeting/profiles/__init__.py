@@ -413,16 +413,16 @@ class MeetingConfigDescriptor(Descriptor):
         self.maxDaysDecisions = 60
         # Which view do you want to select when entering a PloneMeeting folder ?
         self.meetingAppDefaultView = 'searchallitems'
-        # In the meetingitems_list.pt, you can choose which columns are shown
-        self.itemsListVisibleColumns = ['state', 'categoryOrProposingGroup',
-                                        'annexes', 'annexesDecision', 'actions']
+        # Columns shown on the meeting view.  Order is important!
+        self.itemsListVisibleColumns = ['Creator', 'CreationDate', 'review_state',
+                                        'getProposingGroup', 'advices', 'meeting', 'actions']
         # what fields of the item will be displayed in the items listings
         # while clicking on the show more infos action (glasses icon)
         self.itemsListVisibleFields = ['MeetingItem.description', 'MeetingItem.decision']
-        # In item-related topic results, what columns are shown?
-        self.itemColumns = ['creationDate', 'creator', 'state', 'annexes',
-                            'annexesDecision', 'advices', 'actions', 'meeting']
-        # In meeting-related topic results, what columns are shown?
+        # columns shown on items listings.  Order is important!
+        self.itemColumns = ['Creator', 'CreationDate', 'review_state',
+                            'getProposingGroup', 'advices', 'meeting', 'actions']
+        # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['creationDate', 'creator', 'state', 'actions']
         # Lists of available, meeting and late-items are paginated. What are
         # the maximum number of items to show at once?
