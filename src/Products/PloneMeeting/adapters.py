@@ -18,6 +18,7 @@ from plone.memoize import ram
 
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.utils import checkPermission
@@ -471,9 +472,9 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                 # if taken over, display a different icon if taken over by current user or not
                 takenOverByCurrentUser = self.request['AUTHENTICATED_USER'].getId() == takenOverBy and True or False
                 iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
-                res.append((iconName, translate('Taken over by ${fullname}',
+                res.append((iconName, translate(u'Taken over by ${fullname}',
                                                 domain="PloneMeeting",
-                                                mapping={'fullname': tool.getUserName(takenOverBy)},
+                                                mapping={'fullname': safe_unicode(tool.getUserName(takenOverBy))},
                                                 context=self.request)))
         return res
 
