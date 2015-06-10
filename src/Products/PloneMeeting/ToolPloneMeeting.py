@@ -47,6 +47,7 @@ from zExceptions import NotFound
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
+from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
 from zope.i18n import translate
 from eea.facetednavigation.interfaces import IFacetedLayout
@@ -722,8 +723,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Give MeetingManager localrole to relevant _meetingmanagers group
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
 
-    def _enableFacetedFor(self, obj):
-        '''Configure the faceted view for given p_obj.'''
+    def _enableFacetedFor(self, obj, marker_interface=None):
+        '''Configure the faceted view for given p_obj.
+           We mark the obj with given p_marker_interface if given
+           so the right widget config xml is used.'''
+        if marker_interface:
+            alsoProvides(obj, marker_interface)
         subtyper = getMultiAdapter((obj, self.REQUEST),
                                    name=u'faceted_subtyper')
         subtyper.enable()
@@ -732,6 +737,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # show the left portlets
         if IHidePloneLeftColumn.providedBy(obj):
             noLongerProvides(obj, IHidePloneLeftColumn)
+        if marker_interface:
+            noLongerProvides(obj, marker_interface)
         obj.reindexObject()
 
     security.declarePublic('getMeetingConfig')

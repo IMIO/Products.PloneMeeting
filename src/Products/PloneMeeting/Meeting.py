@@ -38,7 +38,9 @@ from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalConten
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions, IMeetingWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
+from Products.PloneMeeting.interfaces import IFacetedSearchesItemsMarker
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
     fieldIsEmpty, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
     getMeetingUsers, getFieldVersion, getDateFromDelta, \
@@ -1379,7 +1381,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.updatePowerObserversLocalRoles()
         # activate the faceted navigation
         tool = getToolByName(self, 'portal_plonemeeting')
-        tool._enableFacetedFor(self)
+        tool._enableFacetedFor(self, IFacetedSearchesItemsMarker)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()

@@ -44,6 +44,7 @@ indexInfos = {
     'getTitle2': ('ZCTextIndex', {}),
     'getCategory': ('FieldIndex', {}),
     'getItemIsSigned': ('FieldIndex', {}),
+    'getItemNumber': ('FieldIndex', {}),
     'getRawClassifier': ('FieldIndex', {}),
     'getProposingGroup': ('FieldIndex', {}),
     'getAssociatedGroups': ('KeywordIndex', {}),

@@ -38,7 +38,6 @@ from zope.component import getUtility
 from zope.component import getMultiAdapter
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
-from zope.interface import alsoProvides
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
@@ -3327,8 +3326,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # special case for folder 'searches' that we mark with the IFacetedSearchesMarker
             # and for which we enable the faceted navigation if not already done
             if folderId == TOOL_FOLDER_SEARCHES:
-                alsoProvides(folder, IFacetedSearchesMarker)
-                tool._enableFacetedFor(folder)
+                tool._enableFacetedFor(folder, IFacetedSearchesMarker)
 
             # special case for folder 'itemtemplates' for which we want
             # to display the 'navigation' portlet and use the 'folder_contents' layout
@@ -3363,14 +3361,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 folder.invokeFactory('Folder', subFolderId)
                 subFolder = getattr(folder, subFolderId)
                 if subFolderId == 'searches_items':
-                    alsoProvides(subFolder, IFacetedSearchesItemsMarker)
-                    tool._enableFacetedFor(subFolder)
+                    tool._enableFacetedFor(subFolder, IFacetedSearchesItemsMarker)
                 elif subFolderId == 'searches_meetings':
-                    alsoProvides(subFolder, IFacetedSearchesMeetingsMarker)
-                    tool._enableFacetedFor(subFolder)
+                    tool._enableFacetedFor(subFolder, IFacetedSearchesMeetingsMarker)
                 elif subFolderId == 'searches_decisions':
-                    alsoProvides(subFolder, IFacetedSearchesMeetingsMarker)
-                    tool._enableFacetedFor(subFolder)
+                    tool._enableFacetedFor(subFolder, IFacetedSearchesMeetingsMarker)
                 subFolder.setTitle(translate(subFolderTitle,
                                              domain="PloneMeeting",
                                              context=self.REQUEST,

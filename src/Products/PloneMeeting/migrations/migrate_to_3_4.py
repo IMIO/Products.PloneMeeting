@@ -6,6 +6,7 @@ from Products.CMFCore.utils import getToolByName
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 
+from Products.PloneMeeting.interfaces import IFacetedSearchesItemsMarker
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
@@ -195,7 +196,7 @@ class Migrate_To_3_4(Migrator):
         brains = self.portal.portal_catalog(meta_type='Meeting')
         for brain in brains:
             meeting = brain.getObject()
-            self.tool._enableFacetedFor(meeting)
+            self.tool._enableFacetedFor(meeting, IFacetedSearchesItemsMarker)
 
         logger.info('Done.')
 
@@ -226,17 +227,17 @@ class Migrate_To_3_4(Migrator):
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
+        # reinstall so versions are correctly shown in portal_quickinstaller
+        # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
+        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         self.cleanRegistries()
         self._updateItemsListVisibleFields()
         self._migrateLateItems()
         self._adaptAppForImioDashboard()
-        # reinstall so versions are correctly shown in portal_quickinstaller
-        # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
-        self.reinstall(profiles=[u'profile-Products.PloneMeeting:default', ])
         # update portal_catalog as index "isDefinedInTool" changed
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
-        #self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
+        self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
         self.finish()
 
 
