@@ -37,6 +37,7 @@ class Migrate_To_3_4(Migrator):
            - update MeetingConfig.itemsListVisibleColumns and MeetingConfig.itemColumns.'''
         logger.info('Moving to imio.dashboard...')
         wft = getToolByName(self.portal, 'portal_workflow')
+        portal_tabs = getToolByName(self.portal, 'portal_actions').portal_tabs
 
         for cfg in self.tool.objectValues('MeetingConfig'):
             # already migrated?
@@ -162,6 +163,12 @@ class Migrate_To_3_4(Migrator):
 
             logger.info('Moving to imio.dashboard : enabling faceted view for ever user folders...')
             cfg._synchSearches()
+
+            logger.info('Moving to imio.dashboard : updating url_expr of action in portal_tabs...')
+            tabId = '%s_action' % cfg.getId()
+            action = getattr(portal_tabs, tabId, None)
+            if action and not action.url_expr.endswith(' + "/searches_items"'):
+                action._setPropValue('url_expr', action.url_expr + ' + "/searches_items"')
 
         logger.info('Moving to imio.dashboard : removing view "meetingfolder_redirect_view" '
                     'from available views for "Folder"...')

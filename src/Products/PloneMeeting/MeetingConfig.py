@@ -902,7 +902,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemColumns',
         default=defValues.itemColumns,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -3197,7 +3197,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return
         # The action corresponding to the tab does not exist. Create it.
         urlExpr = 'python:portal.portal_plonemeeting.getPloneMeetingFolder(' \
-                  '"%s").absolute_url()' % configId
+                  '"%s").absolute_url() + "/searches_items"' % configId
         availExpr = 'python:portal.portal_plonemeeting.showPloneMeetingTab(' \
                     '"%s")' % configId
         configTab = Action(configId, title=self.Title().decode('utf-8'),
@@ -3278,6 +3278,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.createSearches(self._searchesInfo())
         # Create the action (tab) that corresponds to this meeting config
         self.createTab()
+        # Update customViewFields defined on DashboardCollections
+        self.updateCollectionColumns()
         # Sort the item tags if needed
         self.setAllItemTagsField()
         self.updateIsDefaultFields()

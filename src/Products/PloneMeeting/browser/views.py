@@ -115,7 +115,7 @@ class PloneMeetingRedirectToAppView(BrowserView):
         # redirect the user to the default meeting config if possible
         if defaultMeetingConfig:
             pmFolder = self.getPloneMeetingTool().getPloneMeetingFolder(defaultMeetingConfig.getId())
-            return self.request.RESPONSE.redirect(pmFolder.absolute_url())
+            return self.request.RESPONSE.redirect(pmFolder.absolute_url() + "/searches_items")
 
         return self.index()
 
