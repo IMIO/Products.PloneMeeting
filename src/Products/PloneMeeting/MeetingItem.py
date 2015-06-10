@@ -4473,15 +4473,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                            domain='plone',
                                                                            context=self.REQUEST),
                                                                  title)
-        coloredLink = tool.getColoredLink(item, showColors=True, contentValue=title)
-        if not checkPermission(View, item):
-            coloredLink = spanifyLink(coloredLink)
-            coloredLink += u"&nbsp;<span class='discreet'>({0})</span>".format(
-                translate('can_not_access_this_item',
-                          domain="PloneMeeting",
-                          context=self.REQUEST,
-                          default="You can not access this item"))
-        return coloredLink
+        return tool.getColoredLink(item, showColors=True, contentValue=title)
 
     security.declarePublic('showVotes')
     def showVotes(self):

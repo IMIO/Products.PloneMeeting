@@ -1001,7 +1001,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             tag_title = translate(tag_title, domain='PloneMeeting', context=self.REQUEST, ).encode('utf-8')
             adapted.tag_title = tag_title
         # Is this a not-privacy-viewable item?
-        if obj.meta_type == 'MeetingItem' and not obj.adapted().isPrivacyViewable():
+        if obj.meta_type == 'MeetingItem' and \
+           (not _checkPermission(View, obj) or
+           not obj.adapted().isPrivacyViewable()):
             adapted.isViewable = False
 
         # if we received annexInfo, the adapted element is the meetingItem but we want actually
