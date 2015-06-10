@@ -1975,6 +1975,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 }),
             ]
         )
+        # manage extra searches defined in a subplugin
+        infos = self.adapted()._extraSearchesInfo(infos)
+        return infos
+
+    def _extraSearchesInfo(self, infos):
+        '''This is made to be overrided by a subplugin, to insert it's own searches.'''
         return infos
 
     security.declarePublic('getName')
