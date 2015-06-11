@@ -1,6 +1,4 @@
 # encoding: utf-8
-import urllib2
-
 from zope.i18n import translate
 
 from Products.CMFCore.utils import getToolByName
@@ -25,18 +23,11 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                                     context=self.request)
             # activate necessary javascripts
             header = u'<script type="text/javascript">jQuery(document).ready(initializeMenusAXStartingAt($("#content")));initializePMOverlays()</script>{0}'
-            # manage link around 'Show/hide details' for listing of items
-            # if shown, we render javascript that show/hide it, but if hidden, we render
-            # a link that will reload current page of the listing if we activate the details
-            tool = getToolByName(self.context, 'portal_plonemeeting')
-            showDetails = tool.readCookie('pmShowDescriptions') == 'true' and True or False
-            showHideMsg = u'Afficher/cacher les details'
-            if showDetails:
-                header += u'<span class="showHideDetails" onclick="javascript:toggleMeetingDescriptions()">({0})</span>'.format(showHideMsg)
-            else:
-                # we use method imio.actionspanel.views.ActionsPanelView.buildBackURL that build the url we want
-                url = urllib2.unquote(self.context.restrictedTraverse('@@actions_panel').buildBackURL())
-                header += u'<a class="showHideDetails" onclick="javascript:toggleMeetingDescriptions();" href="{0}">({1})</a>'.format(url, showHideMsg)
+            showHideMsg = translate("show_or_hide_details",
+                                    domain="PloneMeeting",
+                                    context=self.request,
+                                    default="Show/hide details")
+            header += u'<span class="showHideDetails" onclick="javascript:toggleMeetingDescriptions()">({0})</span>'.format(showHideMsg)
             return header.format(super(PMPrettyLinkColumn, self).renderHeadCell())
         return super(PMPrettyLinkColumn, self).renderHeadCell()
 

@@ -237,8 +237,12 @@ function computeStartNumberFrom(itemNumber, totalNbOfItems, batchSize) {
 
 // Function that toggles the descriptions visibility
 function toggleMeetingDescriptions() {
-  if (readCookie('pmShowDescriptions')=='true') setDescriptionsVisiblity(false);
-  else setDescriptionsVisiblity(true);
+  if (readCookie('pmShowDescriptions')=='true') {
+      setDescriptionsVisiblity(false);
+  }
+  else {
+      setDescriptionsVisiblity(true);
+  }
 };
 
 // Function that, depending on p_mustShow, shows or hides the descriptions.
@@ -247,6 +251,10 @@ function setDescriptionsVisiblity(mustShow) {
   // hide or show every pmMoreInfo element
   var $pmMoreInfos = $('.pmMoreInfo');
 
+  if (!$pmMoreInfos.length) {
+      // reload the faceted
+      Faceted.URLHandler.hash_changed();
+  }
 
   // show/hide the infos and update the cookie
   if (mustShow) {
