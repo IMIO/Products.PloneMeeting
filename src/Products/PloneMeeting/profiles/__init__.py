@@ -415,15 +415,15 @@ class MeetingConfigDescriptor(Descriptor):
         self.meetingAppDefaultView = 'searchallitems'
         # Columns shown on the meeting view.  Order is important!
         self.itemsListVisibleColumns = ['Creator', 'CreationDate', 'review_state',
-                                        'getProposingGroup', 'advices', 'meeting', 'actions']
+                                        'getProposingGroup', 'actions']
         # what fields of the item will be displayed in the items listings
         # while clicking on the show more infos action (glasses icon)
         self.itemsListVisibleFields = ['MeetingItem.description', 'MeetingItem.decision']
         # columns shown on items listings.  Order is important!
         self.itemColumns = ['Creator', 'CreationDate', 'review_state',
-                            'getProposingGroup', 'advices', 'meeting', 'actions']
+                            'getProposingGroup', 'linkedMeetingDate', 'actions']
         # columns shown on meetings listings.  Order is important!
-        self.meetingColumns = ['creationDate', 'creator', 'state', 'actions']
+        self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
         # Lists of available, meeting and late-items are paginated. What are
         # the maximum number of items to show at once?
         self.maxShownAvailableItems = 50

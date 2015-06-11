@@ -246,7 +246,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemIconColor',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
         vocabulary='listItemIconColors',
     ),
@@ -360,7 +360,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listUsedItemAttributes',
         default=defValues.usedItemAttributes,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -377,7 +377,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemAttributes',
         default=defValues.historizedItemAttributes,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -393,7 +393,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.recordItemHistoryStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -410,7 +410,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listUsedMeetingAttributes',
         default=defValues.usedMeetingAttributes,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -427,7 +427,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingAttributes',
         default=defValues.historizedMeetingAttributes,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -443,7 +443,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingStates',
         default=defValues.recordMeetingHistoryStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -776,7 +776,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemDecidedStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -792,7 +792,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listWorkflowAdaptations',
         default=defValues.workflowAdaptations,
-        enforceVocabulary= True,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -808,7 +808,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listAllTransitions',
         default=defValues.transitionsToConfirm,
-        enforceVocabulary= False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -918,7 +918,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingColumns',
         default=defValues.meetingColumns,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -934,7 +934,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemsListVisibleColumns',
         default=defValues.itemsListVisibleColumns,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     IntegerField(
@@ -1015,7 +1015,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemsListVisibleFields',
         default=defValues.itemsListVisibleFields,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     ReferenceField(
@@ -1126,7 +1126,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemAdviceStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1142,7 +1142,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemAdviceEditStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1158,7 +1158,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemAdviceViewStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1233,7 +1233,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemAdviceInvalidateStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -1309,7 +1309,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemPowerObserversStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1325,7 +1325,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingStates',
         default=defValues.meetingPowerObserversStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1341,7 +1341,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemRestrictedPowerObserversStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1357,7 +1357,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingStates',
         default=defValues.meetingRestrictedPowerObserversStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1373,7 +1373,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemBudgetInfosStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1434,7 +1434,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemCopyGroupsStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
