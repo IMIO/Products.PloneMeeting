@@ -133,14 +133,10 @@
                       </a>
                     </td>
                     <td align="right" width="20px" class="noPadding">
-                      <form action="deleteAdvice" name="deleteAdvice" tal:attributes="action python: context.absolute_url() + '/@@delete_givenuid'">
-                        <input type="hidden" value="#" name="object_uid" tal:attributes="value advice/advice_uid">
-                        <img style="cursor:pointer"
-                             tal:attributes="src string:$portal_url/delete_icon.png;"
-                             i18n:attributes="title"
-                             title="Delete advice"
-                             onclick="javascript:confirmDeleteObject(this)" />
-                      </form>
+                        <img i18n:attributes="title" title="Delete"
+                             tal:attributes="src string: ${portal_url}/delete_icon.png;
+                                             onClick string:javascript:confirmDeleteObject(this, base_url='${context/absolute_url}', object_uid='${advice/advice_uid}');;"
+                             onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                     </td>
                   </tr>
                   <tr tal:condition="python: (adviceType != 'not_given')">
