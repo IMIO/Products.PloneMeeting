@@ -176,6 +176,11 @@ def postInstall(context):
             available_views.append(folderView)
     portalType.manage_changeProperties(view_methods=available_views)
 
+    # Make sure folder "Members" is private
+    wft = getToolByName(site, 'portal_workflow')
+    if not wft.getInfoFor(site.Members, 'review_state') == 'private':
+        wft.doActionFor(site.Members, 'retract')
+
     # Make "Unauthorized" exceptions appear in the error log.
     site.error_log.setProperties(
         25, copy_to_zlog=1, ignored_exceptions=('NotFound', 'Redirect'))
