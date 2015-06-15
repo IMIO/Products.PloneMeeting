@@ -4,16 +4,20 @@
          tal:define="dummy view/saveHasActions;">
     <tr>
       <td tal:condition="python: context.getItemNumber() &gt; 1" class="noPadding">
-        <a href="#" tal:attributes="href string:${context/absolute_url}/@@change_item_order?moveType=up&backURL=${view/buildBackURL}">
-          <img name="moveUp" title="move_item_up" i18n:domain="PloneMeeting" i18n:attributes="title" style="cursor:pointer"
-               tal:attributes="src string: $portal_url/arrowUp.png;"/>
-        </a>
+        <img name="moveUp"
+             title="move_item_up"
+             i18n:domain="PloneMeeting"
+             i18n:attributes="title" style="cursor:pointer"
+             tal:attributes="src string: $portal_url/arrowUp.png;
+                             onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='up', this);"/>
       </td>
       <td tal:condition="python: context.getItemNumber() &lt; view.totalNbOfItems" class="noPadding">
-        <a href="#" tal:attributes="href string:${context/absolute_url}/@@change_item_order?moveType=down&backURL=${view/buildBackURL}">
-          <img name="moveDown" title="move_item_down" i18n:domain="PloneMeeting" i18n:attributes="title" style="cursor:pointer"
-               tal:attributes="src string: $portal_url/arrowDown.png;"/>
-        </a>
+        <img name="moveDown"
+             title="move_item_down"
+             i18n:domain="PloneMeeting"
+             i18n:attributes="title" style="cursor:pointer"
+             tal:attributes="src string: $portal_url/arrowDown.png;
+                             onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='down', this);"/>
       </td>
     </tr>
   </table>

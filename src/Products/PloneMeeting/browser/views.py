@@ -165,8 +165,6 @@ class ChangeItemOrderView(BrowserView):
           We double check that current user can actually mayChangeItemsOrder.
           Anyway, this method move an item, one level up/down or at a given position.
         """
-        gotoReferer = self.context.restrictedTraverse('@@actions_panel')._gotoReferer
-
         # we do this unrestrictively but anyway respect the Meeting.mayChangeItemsOrder
         meeting = self.context.getMeeting()
 
@@ -184,8 +182,9 @@ class ChangeItemOrderView(BrowserView):
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_number_invalid',
                               domain='PloneMeeting',
-                              context=self.request))
-                return gotoReferer()
+                              context=self.request),
+                    type='warning')
+                return
         else:
             isDelta = True
             if moveType == 'up':
@@ -203,13 +202,13 @@ class ChangeItemOrderView(BrowserView):
                     translate(msgid='item_did_not_move',
                               domain='PloneMeeting',
                               context=self.request))
-                return gotoReferer()
+                return
             if (move < 1) or (move > (nbOfItems+1)):
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_move',
                               domain='PloneMeeting',
                               context=self.request))
-                return gotoReferer()
+                return
 
         # Move the item
         if nbOfItems >= 2:
@@ -252,8 +251,6 @@ class ChangeItemOrderView(BrowserView):
 
         # when items order on meeting changed, it is considered modified
         meeting.notifyModified()
-
-        return gotoReferer()
 
 
 class UpdateDelayAwareAdvicesView(BrowserView):

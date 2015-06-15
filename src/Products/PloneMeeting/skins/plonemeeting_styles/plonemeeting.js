@@ -661,3 +661,44 @@ function decideSelectedItems(transition){
         selectForm.submit();
     }
 }
+
+// show/hide "move item to position" action icon button
+function onImageButtonFocus(itemNumber) {
+  var imageButtons = document.getElementsByName('moveImageButton');
+  for (var i=0; i<imageButtons.length; i++) {
+      if (imageButtons[i].id != 'moveAction_' + itemNumber) {
+          imageButtons[i].style.visibility = 'hidden';
+      }
+      else {
+          imageButtons[i].style.visibility = 'visible';
+          imageButtons[i].style.cursor = 'pointer';
+          document.getElementById('value_moveAction_' + itemNumber).select();
+      }
+  }
+}
+
+// ajax call managing the @@change_item_order view
+function moveItem(baseUrl, moveType, tag) {
+  // if moveType is 'number', get the number from the input tag
+  moveNumber = '';
+  if (moveType === 'number') {
+    input_tag = $('input#value_' + tag.id)
+    moveNumber = input_tag.attr('value');
+  }
+  $.ajax({
+    url: baseUrl + "/@@change_item_order",
+    dataType: 'html',
+    data: {'moveType': moveType,
+           'moveNumber': moveNumber},
+    cache: false,
+    async: false,
+    success: function(data) {
+        // reload the faceted page
+        Faceted.URLHandler.hash_changed();
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      /*console.log(textStatus);*/
+      window.location.href = window.location.href;
+      }
+    });
+}

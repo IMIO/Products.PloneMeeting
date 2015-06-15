@@ -115,19 +115,6 @@
         }
     }
 
-  function onImageButtonFocus(itemNumber) {
-    var imageButtons = document.getElementsByName('moveImageButton');
-    for (var i=0; i<imageButtons.length; i++) {
-        if (imageButtons[i].id != itemNumber) {
-            imageButtons[i].style.visibility = 'hidden';
-        }
-        else {
-            imageButtons[i].style.visibility = 'visible';
-            imageButtons[i].style.cursor = 'pointer';
-            document.getElementById('moveValue_' + itemNumber).select();
-        }
-    }
-  }
   function toggleCheckboxes(checkBoxId) {
     var checkBoxes = document.getElementsByName(checkBoxId);
     if (checkBoxesChecked) newCheckValue = false;

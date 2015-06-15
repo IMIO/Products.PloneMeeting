@@ -7,7 +7,7 @@
          or carriage returns, the DOM tree created by Firefox will add additional nodes and some
          Javascript expressions will fail.</tal:comment>
       <td><input type="text" size="1" name="moveValue"
-                 tal:attributes="id string:moveValue_${itemNumber};
+                 tal:attributes="id string:value_moveAction_${itemNumber};
                                  value itemNumber;
                                  onFocus string:onImageButtonFocus(${itemNumber});"/>
       </td>
@@ -15,9 +15,9 @@
         <img
            style="visibility: hidden;"
            title="move_several" i18n:attributes="title" name="moveImageButton"
-           tal:attributes="id itemNumber;
+           tal:attributes="id string:moveAction_${itemNumber};
                            src string: ${view/portal_url}/arrowSeveral.png;
-                           onClick python:'moveMeetingItem(\''+ context.absolute_url() +'/@@change_item_order?moveType=number\', this.parentNode.previousSibling.firstChild)'"/>
+                           onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', this);"/>
       </td>
     </tr>
   </table>
