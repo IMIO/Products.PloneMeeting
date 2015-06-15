@@ -6,6 +6,7 @@ from Products.PloneMeeting.interfaces import IMeeting
 
 from collective.eeafaceted.z3ctable.columns import BaseColumn
 from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
+from collective.eeafaceted.z3ctable.columns import CheckBoxColumn
 from imio.dashboard.columns import PrettyLinkColumn
 from imio.prettylink.interfaces import IPrettyLink
 
@@ -87,3 +88,19 @@ class ItemNumberColumn(BrowserViewCallColumn):
         trCSSClasses = []
         trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
         return {'tr': ' '.join(trCSSClasses)}
+
+
+class MeetingCheckBoxColumn(CheckBoxColumn):
+    """ """
+
+    def renderHeadCell(self):
+        """Display the 'unpresent every selected items' action."""
+        head = super(MeetingCheckBoxColumn, self).renderHeadCell()
+        if self.context.adapted().showRemoveSelectedItemsAction():
+            unpresent_msg = translate('remove_several_items',
+                                      domain='PloneMeeting',
+                                      context=self.request)
+            head = u'''<table class="actionspanel-no-style-table nosort"><tr><td>{0}</td><td><button onclick="removeSelectedItems()" title="{1}" class="noborder" type="button">
+    <img src="{2}/removeSeveral.png">
+</button></td></tr></table>'''.format(head, unpresent_msg, self.table.portal_url)
+        return head

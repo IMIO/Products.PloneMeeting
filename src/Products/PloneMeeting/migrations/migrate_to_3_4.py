@@ -204,6 +204,7 @@ class Migrate_To_3_4(Migrator):
         for brain in brains:
             meeting = brain.getObject()
             self.tool._enableFacetedFor(meeting, IFacetedSearchesItemsMarker)
+            meeting.setLayout('meeting_view')
 
         logger.info('Done.')
 

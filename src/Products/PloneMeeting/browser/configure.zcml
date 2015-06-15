@@ -43,23 +43,39 @@
 
     <!-- Override imio.actionspanel viewlet, hide it in viewlets.xml and display our own on Meeting and MeetingItem -->
     <configure package="imio.actionspanel">
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
-        template="browser/actions_panel_viewlet.pt"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
-        template="browser/actions_panel_viewlet.pt"
-        permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="Products.PloneMeeting.interfaces.IMeeting"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
     </configure>
+
+    <!-- override the facetednavigation view for Meeting -->
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="meeting_view"
+      template="templates/meeting_view.pt"
+      class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+      permission="zope2.View"
+      />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="meeting-before-faceted-infos"
+      template="templates/meeting_before_faceted_infos.pt"
+      class="Products.PloneMeeting.browser.views.MeetingBeforeFacetedInfosView"
+      permission="zope2.View"
+      />
 
     <!-- a view that will make some utils available -->
     <browser:page

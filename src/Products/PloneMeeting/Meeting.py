@@ -649,7 +649,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         """ """
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return (u'listType', u'getItemNumber', u'pretty_link', ) + cfg.getItemsListVisibleColumns()
+        return (u'listType', u'getItemNumber', u'pretty_link', ) + \
+            cfg.getItemsListVisibleColumns() + (u'check_box_item', )
 
     security.declarePrivate('validate_date')
     def validate_date(self, value):
@@ -1382,6 +1383,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # activate the faceted navigation
         tool = getToolByName(self, 'portal_plonemeeting')
         tool._enableFacetedFor(self, IFacetedSearchesItemsMarker)
+        self.setLayout('meeting_view')
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()

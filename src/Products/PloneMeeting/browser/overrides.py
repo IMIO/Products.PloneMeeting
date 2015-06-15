@@ -32,6 +32,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
 from Products.PloneMeeting.columns import ItemNumberColumn
+from Products.PloneMeeting.columns import MeetingCheckBoxColumn
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -257,6 +258,8 @@ class MeetingFacetedTableView(FolderFacetedTableView):
         elif colName == u'listType':
             column = ColorColumn(self.context, self.request, self)
             column.cssClassPrefix = 'meeting_item'
+        elif colName == u'check_box_item':
+            column = MeetingCheckBoxColumn(self.context, self.request, self)
         else:
             column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
 
@@ -268,7 +271,7 @@ class MeetingFacetedTableView(FolderFacetedTableView):
         return column
 
     def _getColumnFor(self, colName):
-        """Disable sorting for every columns and disable odd/even on table."""
+        """Disable sorting for every columns."""
         column = super(MeetingFacetedTableView, self)._getColumnFor(colName)
         column.sort_index = -1
         self.cssClasses['table'] = self.cssClasses['table'] + ' meeting_view'

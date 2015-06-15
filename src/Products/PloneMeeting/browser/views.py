@@ -89,6 +89,17 @@ class ItemToDiscussView(BrowserView):
         return self.context.restrictedTraverse('@@toggle_to_discuss').isAsynchToggleEnabled()
 
 
+class MeetingBeforeFacetedInfosView(BrowserView):
+    """Informations displayed before the faceted view."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+
 class PloneMeetingRedirectToAppView(BrowserView):
     """
       This manage the view set on the Plone Site that redirects the connected user

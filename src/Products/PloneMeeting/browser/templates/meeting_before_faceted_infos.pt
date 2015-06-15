@@ -1,0 +1,163 @@
+<tal:defines define="cfg python: view.cfg;
+                     portal_url python: view.portal_url;
+                     usedAttrs cfg/getUsedMeetingAttributes;
+                     toLocalizedTime nocall: context/@@plone/toLocalizedTime;">
+  <div class="discreet">
+  <tal:comment replace="nothing">Place</tal:comment>
+  <tal:place condition="python: ('place' in usedAttrs) and context.getPlace()">
+    <b i18n:translate="PloneMeeting_label_place"></b>&nbsp;&nbsp;
+    <span tal:replace="context/getPlace"></span>&nbsp;&nbsp;
+  </tal:place>
+
+  <tal:comment replace="nothing">Start date</tal:comment>
+  <tal:date condition="python: ('startDate' in usedAttrs) and context.getStartDate()">
+    <b i18n:translate="PloneMeeting_label_startDate"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getStartDate(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+
+  <tal:comment replace="nothing">Mid date</tal:comment>
+  <tal:date condition="python: ('midDate' in usedAttrs) and context.getMidDate()">
+    <b i18n:translate="PloneMeeting_label_midDate"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getMidDate(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+
+  <tal:comment replace="nothing">End date</tal:comment>
+  <tal:date condition="python: ('endDate' in usedAttrs) and context.getEndDate()">
+    <b i18n:translate="PloneMeeting_label_endDate"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getEndDate(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+  <br/>
+  </div>
+
+  <div class="discreet" tal:condition="cfg/deadlinesAreEnabled">
+  <tal:comment replace="nothing">Publish deadline</tal:comment>
+  <tal:date condition="python: ('deadlinePublish' in usedAttrs) and context.getDeadlinePublish()">
+    <b i18n:translate="PloneMeeting_label_deadlinePublish"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getDeadlinePublish(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+  <tal:date condition="python: ('deadlineFreeze' in usedAttrs) and context.getDeadlineFreeze()">
+    <b i18n:translate="PloneMeeting_label_deadlineFreeze"></b>&nbsp;&nbsp;
+    <span tal:replace="python:toLocalizedTime(context.getDeadlineFreeze(),long_format=1)"></span>&nbsp;&nbsp;
+  </tal:date>
+  </div>
+
+  <tal:comment replace="nothing">Assembly and signatures.  Backward compatibility for people that used the 'assembly' or 'signatures'
+   field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
+  <tal:assemblyFields condition="python: 'assembly' in usedAttrs or 'signatures' in usedAttrs">
+  <table class="no-style-table discreet"
+         style="width: auto;"
+         tal:define="usedAssemblyFields python: ((context.getAssembly() and True) or 'assembly' in usedAttrs,
+                                                 (context.getAssemblyExcused() and True) or 'assemblyExcused' in usedAttrs,
+                                                 (context.getAssemblyAbsents() and True) or 'assemblyAbsents' in usedAttrs,
+                                                 (context.getSignatures() and True) or 'signatures' in usedAttrs).count(True);
+                     colWidthPercentage python: int(100/usedAssemblyFields);">
+    <tr>
+        <td width="25%"
+            style="padding-right: 0.3em !important;"
+            tal:attributes="width string:${colWidthPercentage}%">
+            <fieldset tal:condition="python: 'assembly' in usedAttrs or context.getAssembly()">
+                <legend tal:content="context/getLabelAssembly">Assembly</legend>
+                <span tal:replace="structure context/getStrikedAssembly"/>
+            </fieldset>
+        </td>
+        <td width="25%"
+            style="padding-right: 0.3em !important;"
+            tal:condition="python: 'assemblyExcused' in usedAttrs or context.getAssemblyExcused()"
+            tal:attributes="width string:${colWidthPercentage}%">
+            <fieldset>
+                <legend i18n:translate="PloneMeeting_label_assemblyExcused">Assembly</legend>
+                <span tal:replace="structure python: context.getAssemblyExcused() or '-'"/>
+            </fieldset>
+        </td>
+        <td width="25%"
+            tal:condition="python: 'assemblyAbsents' in usedAttrs or context.getAssemblyAbsents()"
+            style="padding-right: 0.3em !important;"
+            tal:attributes="width string:${colWidthPercentage}%">
+            <fieldset>
+                <legend i18n:translate="PloneMeeting_label_assemblyAbsents">Assembly</legend>
+                <span tal:replace="structure python: context.getAssemblyAbsents() or '-'"/>
+            </fieldset>
+        </td>
+        <td width="25%"
+            tal:condition="python: 'signatures' in usedAttrs or context.getSignatures()"
+            tal:attributes="width string:${colWidthPercentage}%">
+            <fieldset>
+                <legend i18n:translate="meeting_signatures">Signatures</legend>
+                <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '-'"/>
+            </fieldset>
+        </td>
+    </tr>
+  </table>
+  </tal:assemblyFields>
+
+  <tal:comment replace="nothing">Attendees, excused, absents, replacements</tal:comment>
+  <table id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0"
+         tal:condition="python: ('attendees' in usedAttrs) and not context.getAssembly()"
+         tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display:table' or 'display:none'"
+         tal:define="allUsers context/getAllUsedMeetingUsers;
+                     attendees context/getAttendees;
+                     excused context/getExcused;
+                     absents context/getAbsents;
+                     signers context/getSignatories;
+                     lateAttendees context/getLateAttendees;
+                     userReplacements context/getUserReplacements">
+    <tal:comment replace="nothing">Column captions</tal:comment>
+    <thead>
+    <tr>
+      <th class="nosort"></th>
+      <th class="nosort" i18n:translate="is_attendee"></th>
+      <th class="nosort" tal:condition="python: 'excused' in usedAttrs" i18n:translate="is_excused"></th>
+      <th class="nosort" tal:condition="python: 'absents' in usedAttrs" i18n:translate="is_absent"></th>
+      <th class="nosort" tal:condition="python: 'signatories' in usedAttrs" i18n:translate="is_signer"></th>
+      <th class="nosort" tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr tal:repeat="mUser allUsers">
+      <td><b tal:content="mUser/Title"></b></td>
+      <td align="center" tal:define="aId mUser/getId">
+        <img tal:attributes="src string: $portal_url/checked.gif"
+             tal:condition="python: aId in attendees"/>
+        <tal:comment replace="nothing">Info about users late-entering the meeting</tal:comment>
+        <tal:late condition="python: aId in lateAttendees">
+          <img tal:attributes="src string: $portal_url/entrance.gif"
+            title="present_since" i18n:attributes="title"/><span style="color:black"
+            tal:content="python: context.getEntranceItem(aId) or '?'"></span>
+        </tal:late>
+        <tal:left define="departNumber python: context.getDepartureItem(aId)" condition="departNumber">
+          <img tal:attributes="src string: $portal_url/departure.gif"
+               title="left_after" i18n:attributes="title"/><span style="color:black" tal:content="python: departNumber-1"></span>
+        </tal:left>
+      </td>
+      <td align="center" tal:condition="python: 'excused' in usedAttrs">
+        <img tal:attributes="src string: $portal_url/checked.gif"
+             tal:condition="python: mUser.getId() in excused"/>
+      </td>
+      <td align="center" tal:condition="python: 'absents' in usedAttrs">
+        <img tal:attributes="src string: $portal_url/checked.gif"
+             tal:condition="python: mUser.getId() in absents"/>
+      </td>
+      <td align="center" tal:condition="python: 'signatories' in usedAttrs">
+        <img tal:attributes="src string: $portal_url/checked.gif"
+             tal:condition="python: mUser.getId() in signers"/>
+      </td>
+      <td tal:condition="useUserReplacements">
+        <span tal:condition="python: mUser.getId() in userReplacements" tal:content="python: getattr(cfg.meetingusers, userReplacements[mUser.getId()]).Title()"></span>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div class="discreet">
+  <tal:comment replace="nothing">Pre-meeting info</tal:comment>
+  <tal:pre condition="python: 'preMeetingDate' in usedAttrs">
+  <b i18n:translate="pre_meeting"></b>:&nbsp;&nbsp;
+  <b i18n:translate="PloneMeeting_label_preMeetingDate"></b>&nbsp;&nbsp;<span
+     tal:replace="python: toLocalizedTime(context.getPreMeetingDate(),long_format=1)"></span>
+  </tal:pre>
+  <tal:prePlace tal:condition="python: 'preMeetingPlace' in usedAttrs">
+    &nbsp;&nbsp;<b i18n:translate="PloneMeeting_label_preMeetingPlace"></b>&nbsp;&nbsp;
+    <span tal:replace="context/getPreMeetingPlace"></span>
+  </tal:prePlace>
+  </div>
+</tal:defines>
