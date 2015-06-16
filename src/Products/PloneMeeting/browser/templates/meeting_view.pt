@@ -19,7 +19,11 @@
 
 <body>
 
-<div metal:fill-slot="content-core">
+<div metal:fill-slot="content-core"
+     tal:define="tool python: context.portal_plonemeeting;
+                 showPage tool/showMeetingView;">
+
+<tal:showPage condition="showPage">
 
 <tal:comment replace="nothing">XXX changed for PM, infos displayed before the faceted table.</tal:comment>
 <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-before-faceted-infos" />
@@ -40,6 +44,12 @@
   <div style="display: none" id="faceted-version"
     tal:content="here/@@faceted_version|string:" />
 </div>
+
+</tal:showPage>
+
+<tal:notShowPage condition="not: showPage">
+  <p i18n:domain="PloneMeeting" i18n:translate="hide_meeting_view_page">This page is currently not accessible. Meeting managers will soon allow you to access it again. Sorry for the inconvenience.</p>
+</tal:notShowPage>
 
 </div>
 </body>
