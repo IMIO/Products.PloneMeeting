@@ -639,29 +639,6 @@ function getRichTextContent(rq, params) {
   return params
 }
 
-function decideSelectedItems(transition){
-    // Called when the user wants to decided several items at once in a meeting.
-    var itemsCheckboxes = document.getElementsByName('itemCbToDump');
-    var itemsUids = '';
-    var atLeastOneSelected = false;
-    for (var i=0; i < itemsCheckboxes.length; i++) {
-        if (itemsCheckboxes[i].checked) {
-            atLeastOneSelected = true;
-            itemsUids += itemsCheckboxes[i].value + ',';
-        }
-    }
-    if (! atLeastOneSelected) alert(no_selected_items);
-    else {
-        // Update the form and submit it.
-        var selectForm = document.forms['decideItemsForm'];
-        selectForm.uids.value = itemsUids;
-        selectForm.iStartNumber.value = iStartNumber;
-        selectForm.lStartNumber.value = lStartNumber;
-        selectForm.transition.value = transition;
-        selectForm.submit();
-    }
-}
-
 // Function that allows to remove several items from a meeting
 function removeSelectedItems(baseUrl) {
     var uids = selectedCheckBoxes('select_item');
@@ -669,7 +646,7 @@ function removeSelectedItems(baseUrl) {
       alert(no_selected_items);
     }
     else {
-        // Ask confirmation then update the form and submit it if confirmed.
+        // Ask confirmation
         var msg = window.eval('sure_to_remove_selected_items');
         if (confirm(msg)) {
           // avoid Arrays to be passed as uids[]
@@ -691,6 +668,33 @@ function removeSelectedItems(baseUrl) {
             });
         }
     }
+}
+
+// Function that allows to decide several items at once in a meeting
+function decideSelectedItems(baseUrl,tag){
+    var uids = selectedCheckBoxes('select_item');
+    if (!uids.length) {
+      alert(no_selected_items);
+    }
+    else {
+          // avoid Arrays to be passed as uids[]
+          params = $.param({uids: uids, transition: tag.name}, traditional=true)
+          $.ajax({
+            url: baseUrl + "/@@decide-several-items",
+            dataType: 'html',
+            data: params,
+            cache: false,
+            async: false,
+            success: function(data) {
+                // reload the faceted page
+                Faceted.URLHandler.hash_changed();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              /*console.log(textStatus);*/
+              window.location.href = window.location.href;
+              }
+            });
+        }
 }
 
 // show/hide "move item to position" action icon button

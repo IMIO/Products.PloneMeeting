@@ -36,7 +36,6 @@ from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
-from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
@@ -1683,35 +1682,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if not self.isTemporary():
             self._v_previousData = rememberPreviousData(self)
         return BaseContent.processForm(self, *args, **kwargs)
-
-    security.declarePublic('decideSeveralItems')
-    def decideSeveralItems(self, uids=None, transition=None):
-        '''On meeting, we can decided severals items at once.
-           p_uids is A STRING representing items separated by commas.
-           This string ENDS WITH a final comma so is like :
-           'itemuid1,itemuid2,itemuid3,itemuid4,'
-           p_transition is the transition to trigger on given items.'''
-        if transition is None:
-            return self.portal_plonemeeting.gotoReferer()
-
-        if not uids:
-            msg = self.translate('no_selected_items', domain='PloneMeeting')
-            self.plone_utils.addPortalMessage(msg)
-            return self.portal_plonemeeting.gotoReferer()
-
-        uid_catalog = getToolByName(self, 'uid_catalog')
-        wf_tool = getToolByName(self, 'portal_workflow')
-        for uid in uids.split(','):
-            if not uid:
-                continue
-            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
-            try:
-                wf_tool.doActionFor(obj, transition)
-            except WorkflowException:
-                continue
-        msg = self.translate('decide_several_items_done', domain='PloneMeeting')
-        self.plone_utils.addPortalMessage(msg)
-        return self.portal_plonemeeting.gotoReferer()
 
     security.declarePublic('presentSeveralItems')
     def presentSeveralItems(self, uids=None):

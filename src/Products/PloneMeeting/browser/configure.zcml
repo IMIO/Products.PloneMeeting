@@ -76,10 +76,23 @@
       class="Products.PloneMeeting.browser.views.MeetingBeforeFacetedInfosView"
       permission="zope2.View"
       />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="meeting-after-faceted-infos"
+      template="templates/meeting_after_faceted_infos.pt"
+      class="Products.PloneMeeting.browser.views.MeetingAfterFacetedInfosView"
+      permission="zope2.View"
+      />
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="remove-several-items"
       class="Products.PloneMeeting.browser.views.RemoveSeveralItemsView"
+      permission="zope2.View"
+      />
+    <browser:view
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="decide-several-items"
+      class="Products.PloneMeeting.browser.views.DecideSeveralItemsView"
       permission="zope2.View"
       />
 

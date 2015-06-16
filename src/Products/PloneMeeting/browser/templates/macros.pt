@@ -777,21 +777,15 @@ Needs moveUrl, firstId, lastId, obj</tal:comment>
     <tal:comment replace="nothing">We show at the end the buttons
          for deciding several items at once</tal:comment>
     <p class="discreet"><span i18n:translate="decide_several_items_help">For every selected items, appy following action</span> :</p>
-    <form name="decideItemsForm"
-          tal:attributes="action python: context.absolute_url_path() + '/decideSeveralItems'">
-      <input type="hidden" name="uids" value=""/>
-      <input type="hidden" name="iStartNumber"/>
-      <input type="hidden" name="lStartNumber"/>
-      <input type="hidden" name="transition" value=""/>
-      <span tal:repeat="transition python: meetingConfig.listTransitionsDecidingItem().items()"
+      <span tal:repeat="transition python: cfg.listTransitionsDecidingItem().items()"
           class="noPadding">
         <input type="submit"
-               tal:attributes="name python:transition[0];
+               tal:define="transition_id python:transition[0]"
+               tal:attributes="name transition_id;
                                value python:transition[1];
-                               class string:apButton apButtonWF apButtonWF_$transition;
-                               onClick python: 'decideSelectedItems(\'%s\')' % transition[0]"/>
+                               class string:apButton apButtonWF apButtonWF_$transition_id;
+                               onClick string:decideSelectedItems('${context/absolute_url}', this)"/>
       </span>
-    </form>
 </metal:decideSeveralItems>
 
 <tal:comment replace="nothing">In case we are using a popup, add a button 'Close' at the

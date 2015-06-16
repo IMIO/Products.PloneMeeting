@@ -21,29 +21,36 @@
 
 <div metal:fill-slot="content-core"
      tal:define="tool python: context.portal_plonemeeting;
+                 member context/@@plone_portal_state/member;
                  showPage tool/showMeetingView;">
 
 <tal:showPage condition="showPage">
+  <script language="javascript"
+    tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
+  </script>
 
-<tal:comment replace="nothing">XXX changed for PM, infos displayed before the faceted table.</tal:comment>
-<tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-before-faceted-infos" />
+  <tal:comment replace="nothing">XXX changed for PM, infos displayed before the faceted table.</tal:comment>
+  <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-before-faceted-infos" />
 
-<!-- Folder contents -->
-<div class="faceted-form" metal:define-macro="widgets" id="faceted-form"
-  tal:define="mode view/mode | string:view" tal:attributes="data-mode mode">
+  <!-- Folder contents -->
+  <div class="faceted-form" metal:define-macro="widgets" id="faceted-form"
+    tal:define="mode view/mode | string:view" tal:attributes="data-mode mode">
 
-  <!-- Basic/Extended search -->
-  <div class="faceted-sections-buttons">
-    <a href="#" class="faceted-sections-buttons-more" i18n:translate="">More filters</a>
-    <a href="#" class="faceted-sections-buttons-less" i18n:translate="">Less filters</a>
+    <!-- Basic/Extended search -->
+    <div class="faceted-sections-buttons">
+      <a href="#" class="faceted-sections-buttons-more" i18n:translate="">More filters</a>
+      <a href="#" class="faceted-sections-buttons-less" i18n:translate="">Less filters</a>
+    </div>
+
+    <metal:widgets use-macro="here/@@faceted_widgets/macros/widgets" />
+
+    <!-- Faceted version -->
+    <div style="display: none" id="faceted-version"
+      tal:content="here/@@faceted_version|string:" />
   </div>
 
-  <metal:widgets use-macro="here/@@faceted_widgets/macros/widgets" />
-
-  <!-- Faceted version -->
-  <div style="display: none" id="faceted-version"
-    tal:content="here/@@faceted_version|string:" />
-</div>
+  <tal:comment replace="nothing">XXX changed for PM, infos displayed after the faceted table.</tal:comment>
+  <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-after-faceted-infos" />
 
 </tal:showPage>
 

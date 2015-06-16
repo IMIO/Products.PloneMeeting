@@ -809,8 +809,16 @@ class testMeeting(PloneMeetingTestCase):
 
         # use the first decidingTransition and check that elements are decided
         decidingTransition = itemWF.transitions[decidingTransitions[0]]
-        # initialize request variables used in decideSeveralItems method
-        meeting.decideSeveralItems(",".join(itemUids), decidingTransition.id)
+        decideView = meeting.restrictedTraverse('@@decide-several-items')
+        # uids can be a string or a list of uids...
+        item1 = allItems[0]
+        item1_old_state = item1.queryState()
+        decideView(item1.UID(), transition=decidingTransition.id)
+        # item state changed
+        self.assertTrue(item1_old_state != item1.queryState())
+
+        # decide other items including UID of already decided item
+        decideView(itemUids, transition=decidingTransition.id)
         # after execute method, all items, except the last, are decided
         for item in allItems[:-1]:
             self.assertEquals(item.queryState(), decidingTransition.new_state_id)

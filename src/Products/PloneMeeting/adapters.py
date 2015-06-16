@@ -395,6 +395,15 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                 res.append(('prevalidate.png', translate('icon_help_prevalidated',
                                                          domain="PloneMeeting",
                                                          context=self.request)))
+            elif itemState == 'accepted_but_modified':
+                res.append(('accepted_but_modified.png', translate('icon_help_accepted_but_modified',
+                                                                   domain="PloneMeeting",
+                                                                   context=self.request)))
+            elif itemState == 'pre_accepted':
+                res.append(('pre_accepted.png', translate('icon_help_pre_accepted',
+                                                          domain="PloneMeeting",
+                                                          context=self.request)))
+
             # Display icons about sent/cloned to other meetingConfigs
             clonedToOtherMCIds = self.context._getOtherMeetingConfigsImAmClonedIn()
             for clonedToOtherMCId in clonedToOtherMCIds:

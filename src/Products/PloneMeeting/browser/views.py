@@ -8,6 +8,7 @@ from plone.memoize.view import memoize_contextless
 
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 
 
@@ -80,6 +81,38 @@ class RemoveSeveralItemsView(BrowserView):
                         wfTool.doActionFor(obj, tr['id'])
                         changedState = True
                         break
+        msg = translate('remove_several_items_done', domain='PloneMeeting', context=self.request)
+        plone_utils = getToolByName(self.context, 'plone_utils')
+        plone_utils.addPortalMessage(msg)
+
+
+class DecideSeveralItemsView(BrowserView):
+    """
+      This manage the view that devide several items at once in a meeting
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+
+    def __call__(self, uids, transition):
+        """ """
+        uid_catalog = getToolByName(self.context, 'uid_catalog')
+        wfTool = getToolByName(self.context, 'portal_workflow')
+        # make sure we have a list of uids, in some case, as it is called
+        # by jQuery, we receive only one uid, as a string...
+        if isinstance(uids, str):
+            uids = [uids]
+
+        for uid in uids:
+            obj = uid_catalog(UID=uid)[0].getObject()
+            try:
+                wfTool.doActionFor(obj, transition)
+            except WorkflowException:
+                continue
+        msg = translate('decide_several_items_done', domain='PloneMeeting', context=self.request)
+        plone_utils = getToolByName(self.context, 'plone_utils')
+        plone_utils.addPortalMessage(msg)
 
 
 class ItemNumberView(BrowserView):
@@ -123,7 +156,18 @@ class ItemToDiscussView(BrowserView):
 
 
 class MeetingBeforeFacetedInfosView(BrowserView):
-    """Informations displayed before the faceted view."""
+    """Informations displayed before the faceted on the meeting_view."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+
+class MeetingAfterFacetedInfosView(BrowserView):
+    """Informations displayed after the faceted on the meeting_view."""
 
     def __init__(self, context, request):
         self.context = context
