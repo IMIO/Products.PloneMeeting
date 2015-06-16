@@ -76,6 +76,12 @@
       class="Products.PloneMeeting.browser.views.MeetingBeforeFacetedInfosView"
       permission="zope2.View"
       />
+    <browser:view
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="remove-several-items"
+      class="Products.PloneMeeting.browser.views.RemoveSeveralItemsView"
+      permission="zope2.View"
+      />
 
     <!-- a view that will make some utils available -->
     <browser:page
@@ -351,7 +357,7 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
     <browser:page
-        name="change_item_order"
+        name="change-item-order"
         class=".views.ChangeItemOrderView"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         permission="zope2.View" />

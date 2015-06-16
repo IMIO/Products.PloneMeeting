@@ -185,6 +185,7 @@ div.pm_search_no_result_info {
 
 .pm_workflowstate {
     float: right;
+    margin-top: -1.1em;
 }
 
 /* Colors on states */
@@ -1137,6 +1138,16 @@ td.pretty_link table.contentActionsAX {
     margin-left: 3em;
     color: &dtml-discreetColor; !important;
 }
+
+/* button for removing several items from a meeting */
+button.remove_several {
+    margin-left: 0.5em;
+}
+button.remove_several img {
+    position: relative;
+    top: 2px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

@@ -178,7 +178,7 @@ def postInstall(context):
 
     # Make sure folder "Members" is private
     wft = getToolByName(site, 'portal_workflow')
-    if not wft.getInfoFor(site.Members, 'review_state') == 'private':
+    if hasattr(site, 'Members') and not wft.getInfoFor(site.Members, 'review_state') == 'private':
         wft.doActionFor(site.Members, 'retract')
 
     # Make "Unauthorized" exceptions appear in the error log.

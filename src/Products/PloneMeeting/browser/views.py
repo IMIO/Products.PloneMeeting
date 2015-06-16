@@ -49,6 +49,39 @@ class ItemIsSignedView(BrowserView):
         self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
 
 
+class RemoveSeveralItemsView(BrowserView):
+    """
+      This manage the view that removes several items from a meeting
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+
+    def __call__(self, uids):
+        """ """
+        uid_catalog = getToolByName(self.context, 'uid_catalog')
+        wfTool = getToolByName(self.context, 'portal_workflow')
+        # make sure we have a list of uids, in some case, as it is called
+        # by jQuery, we receive only one uid, as a string...
+        if isinstance(uids, str):
+            uids = [uids]
+        for uid in uids:
+            obj = uid_catalog(UID=uid)[0].getObject()
+            # execute every 'back' transitions until item is in state 'validated'
+            changedState = True
+            while not obj.queryState() == 'validated':
+                availableTransitions = wfTool.getTransitionsFor(obj)
+                if not availableTransitions or not changedState:
+                    break
+                changedState = False
+                for tr in availableTransitions:
+                    if tr['id'].startswith('back'):
+                        wfTool.doActionFor(obj, tr['id'])
+                        changedState = True
+                        break
+
+
 class ItemNumberView(BrowserView):
     """
       This manage the view displaying the itemNumber on the meeting view

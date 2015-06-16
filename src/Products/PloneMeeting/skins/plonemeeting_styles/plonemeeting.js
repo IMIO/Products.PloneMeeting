@@ -662,6 +662,37 @@ function decideSelectedItems(transition){
     }
 }
 
+// Function that allows to remove several items from a meeting
+function removeSelectedItems(baseUrl) {
+    var uids = selectedCheckBoxes('select_item');
+    if (!uids.length) {
+      alert(no_selected_items);
+    }
+    else {
+        // Ask confirmation then update the form and submit it if confirmed.
+        var msg = window.eval('sure_to_remove_selected_items');
+        if (confirm(msg)) {
+          // avoid Arrays to be passed as uids[]
+          params = $.param({uids: uids}, traditional=true)
+          $.ajax({
+            url: baseUrl + "/@@remove-several-items",
+            dataType: 'html',
+            data: params,
+            cache: false,
+            async: false,
+            success: function(data) {
+                // reload the faceted page
+                Faceted.URLHandler.hash_changed();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              /*console.log(textStatus);*/
+              window.location.href = window.location.href;
+              }
+            });
+        }
+    }
+}
+
 // show/hide "move item to position" action icon button
 function onImageButtonFocus(itemNumber) {
   var imageButtons = document.getElementsByName('moveImageButton');
@@ -677,7 +708,7 @@ function onImageButtonFocus(itemNumber) {
   }
 }
 
-// ajax call managing the @@change_item_order view
+// ajax call managing the @@change-item-order view
 function moveItem(baseUrl, moveType, tag) {
   // if moveType is 'number', get the number from the input tag
   moveNumber = '';
@@ -686,7 +717,7 @@ function moveItem(baseUrl, moveType, tag) {
     moveNumber = input_tag.attr('value');
   }
   $.ajax({
-    url: baseUrl + "/@@change_item_order",
+    url: baseUrl + "/@@change-item-order",
     dataType: 'html',
     data: {'moveType': moveType,
            'moveNumber': moveNumber},

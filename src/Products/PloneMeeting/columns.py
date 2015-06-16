@@ -100,7 +100,7 @@ class MeetingCheckBoxColumn(CheckBoxColumn):
             unpresent_msg = translate('remove_several_items',
                                       domain='PloneMeeting',
                                       context=self.request)
-            head = u'''<table class="actionspanel-no-style-table nosort"><tr><td>{0}</td><td><button onclick="removeSelectedItems()" title="{1}" class="noborder" type="button">
-    <img src="{2}/removeSeveral.png">
-</button></td></tr></table>'''.format(head, unpresent_msg, self.table.portal_url)
+            head = u'''<table class="actionspanel-no-style-table nosort"><tr><td>{0}</td><td><button onclick="removeSelectedItems('{1}')" title="{2}" class="remove_several" type="button">
+    <img src="{3}/removeSeveral.png">
+</button></td></tr></table>'''.format(head, self.context.absolute_url(), unpresent_msg, self.table.portal_url)
         return head

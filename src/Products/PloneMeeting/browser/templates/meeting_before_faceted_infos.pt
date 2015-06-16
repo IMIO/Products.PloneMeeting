@@ -1,7 +1,8 @@
 <tal:defines define="cfg python: view.cfg;
                      portal_url python: view.portal_url;
                      usedAttrs cfg/getUsedMeetingAttributes;
-                     toLocalizedTime nocall: context/@@plone/toLocalizedTime;">
+                     toLocalizedTime nocall: context/@@plone/toLocalizedTime;"
+             i18n:domain="PloneMeeting">
   <div class="discreet">
   <tal:comment replace="nothing">Place</tal:comment>
   <tal:place condition="python: ('place' in usedAttrs) and context.getPlace()">

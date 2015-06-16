@@ -750,32 +750,33 @@ class testMeeting(PloneMeetingTestCase):
         """
           Test the functionnality to remove several items at once from a meeting.
         """
-        # create a meeting with items, unpresent presented items
+        # create a meeting with items, unpresent items
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # every items are 'presented'
         for item in meeting.getItems():
             self.assertTrue(item.queryState() == 'presented')
-        # remove every items
-        items = meeting.getItems()
-        meeting.removeSeveralItems(",".join([item.UID() for item in items]))
+        removeView = meeting.restrictedTraverse('@@remove-several-items')
+        # the view can receive a single uid (as a string) or several as a list of uids
+        removeView(meeting.getItems()[0].UID())
+        # remove every items left
+        removeView([item.UID() for item in meeting.getItems()])
         # every items are now 'validated'
-        for item in items:
+        for item in meeting.getItems():
             self.assertTrue(item.queryState() == 'validated')
 
-        # if we call removeSeveralItems and we are not able to
-        # correct the items, it does not break
+        # if we are not able to correct the items, it does not break
         meeting2 = self._createMeetingWithItems()
-        items = meeting2.getItems()
         self.closeMeeting(meeting2)
         # every items are in a final state
-        for item in items:
+        for item in meeting2.getItems():
             self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
         # we can not correct the items
-        self.assertTrue(not [tr for tr in self.transitions(items[0]) if tr.startswith('back')])
-        meeting2.removeSeveralItems(",".join([item.UID() for item in items]))
+        self.assertTrue(not [tr for tr in self.transitions(meeting2.getItems()[0]) if tr.startswith('back')])
+        removeView = meeting2.restrictedTraverse('@@remove-several-items')
+        removeView([item.UID() for item in meeting2.getItems()])
         # items state was not changed
-        for item in items:
+        for item in meeting2.getItems():
             self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
 
     def test_pm_DecideSeveralItems(self):

@@ -1742,40 +1742,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return bool(member.has_permission(ModifyPortalContent, meeting) and
                     not meeting.queryState() in meeting.meetingClosedStates)
 
-    security.declarePublic('removeSeveralItems')
-    def removeSeveralItems(self, uids=None):
-        '''On meeting, we can remove severals items at once.
-           p_uids is A STRING representing items separated by commas.
-           This string ENDS WITH a final comma so is like :
-           'itemuid1,itemuid2,itemuid3,itemuid4,'.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        if not uids:
-            msg = self.translate('no_selected_items', domain='PloneMeeting')
-            plone_utils = getToolByName(self, 'plone_utils')
-            plone_utils.addPortalMessage(msg)
-            return tool.gotoReferer()
-
-        uid_catalog = getToolByName(self, 'uid_catalog')
-        wfTool = getToolByName(self, 'portal_workflow')
-        for uid in uids.split(','):
-            if not uid:
-                continue
-            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
-            # execute every 'back' transitions until item is in state 'validated'
-            changedState = True
-            while not obj.queryState() == 'validated':
-                availableTransitions = wfTool.getTransitionsFor(obj)
-                if not availableTransitions or not changedState:
-                    break
-                changedState = False
-                for tr in availableTransitions:
-                    if tr['id'].startswith('back'):
-                        wfTool.doActionFor(obj, tr['id'])
-                        changedState = True
-                        break
-
-        return tool.gotoReferer()
-
     security.declarePublic('getLabelAssembly')
     def getLabelAssembly(self):
         '''
