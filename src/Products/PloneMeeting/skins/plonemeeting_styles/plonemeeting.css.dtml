@@ -1150,13 +1150,6 @@ button.present_several img {
     top: 2px;
 }
 
-/* display a spinner when loading iframe */
-iframe {
-    background-image: url('spinner.gif');
-    background-repeat: no-repeat;
-    background-position: 50% 50%;
-}
-
 /* override CSS from eea.facetednavigation so 'more filters' works in the iframe */
 #top-area {
     display: inline-block;
