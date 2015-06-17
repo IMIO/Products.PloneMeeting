@@ -1481,7 +1481,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # in the meetingConfig and relativeTo='meeting' behaves normally
         meeting2 = self._createMeetingWithItems(meetingDate=DateTime('2012/05/05 12:00'))
         # we have 7 items in meeting2 and firstItemNumber is not set
-        self.assertTrue(meeting2.getItemsCount() == 7)
+        self.assertTrue(meeting2.numberOfItems() == 7)
         self.assertTrue(meeting2.getFirstItemNumber() == -1)
         self.assertTrue(meeting2.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # itemNumber relativeTo itemsList/meeting does not change but relativeTo meetingConfig changed

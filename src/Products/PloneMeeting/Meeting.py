@@ -634,9 +634,19 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         """ """
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        res = [{'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': cfg.getItemTypeName()},
-               {'i': 'linkedMeetingUID', 'o': 'plone.app.querystring.operation.selection.is', 'v': self.UID()},]
+        # available items?
+
+        if self._displayingAvailableItems():
+            res = [{'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': cfg.getItemTypeName()},
+                   {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': 'validated'},]
+        else:
+            res = [{'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': cfg.getItemTypeName()},
+                   {'i': 'linkedMeetingUID', 'o': 'plone.app.querystring.operation.selection.is', 'v': self.UID()},]
         return res
+
+    def _displayingAvailableItems(self):
+        """Is the meeting view displaying available items?"""
+        return bool("@@meeting_available_items_view" in self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('getSort_on')
     def getSort_on(self):
@@ -648,13 +658,17 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         """ """
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return (u'listType', u'getItemNumber', u'pretty_link', ) + \
-            cfg.getItemsListVisibleColumns() + (u'check_box_item', )
+        if self._displayingAvailableItems():
+            return (u'pretty_link', ) + cfg.getItemsListVisibleColumns() + (u'check_box_item', )
+        else:
+            return (u'listType', u'getItemNumber', u'pretty_link', ) + \
+                cfg.getItemsListVisibleColumns() + (u'check_box_item', )
 
     security.declarePrivate('validate_date')
     def validate_date(self, value):
         '''There can't be several meetings with the same date and hour.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         # add GMT+x value
         localizedValue0 = value + ' ' + _findLocalTimeZoneName(0)
         localizedValue1 = value + ' ' + _findLocalTimeZoneName(1)
@@ -1064,10 +1078,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     # continue to visit the items in order to increment their
                     # number.
                     anItem.setItemNumber(anItem.getItemNumber()+1)
+                    anItem.reindexObject(idxs=['getItemNumber', ])
                 elif anItem.adapted().getInsertOrder(insertMethods) > itemOrder:
                     higherItemFound = True
                     insertIndex = anItem.getItemNumber()-1
                     anItem.setItemNumber(anItem.getItemNumber()+1)
+                    anItem.reindexObject(idxs=['getItemNumber', ])
             if higherItemFound:
                 items.insert(insertIndex, item)
                 item.setItemNumber(insertIndex+1)
@@ -1077,9 +1093,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             # Add the item at the end of the items list
             items.append(item)
             item.setItemNumber(len(items))
+
         self.setItems(items)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
+        # reindex getItemNumber when item is in the meeting or getItemNumber returns None
+        item.reindexObject(idxs=['getItemNumber', ])
         # meeting is considered modified
         self.notifyModified()
 
@@ -1102,6 +1121,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         for anItem in items:
             if anItem.getItemNumber() > itemNumber:
                 anItem.setItemNumber(anItem.getItemNumber()-1)
+                anItem.reindexObject(idxs=['getItemNumber', ])
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # meeting is considered modified
@@ -1276,11 +1296,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             delta = cfg.getPreMeetingDateDefault()
             if not delta.strip() in ('', '0',):
                 self.setPreMeetingDate(getDateFromDelta(meetingDate, '-' + delta))
-
-    security.declarePublic('getItemsCount')
-    def getItemsCount(self):
-        '''Returns the amount of MeetingItems in a Meeting'''
-        return len(self.getRawItems())
 
     security.declarePublic('getUserReplacements')
     def getUserReplacements(self):
@@ -1682,27 +1697,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if not self.isTemporary():
             self._v_previousData = rememberPreviousData(self)
         return BaseContent.processForm(self, *args, **kwargs)
-
-    security.declarePublic('presentSeveralItems')
-    def presentSeveralItems(self, uids=None):
-        '''On meeting, we can present severals items at once.
-           p_uids is A STRING representing items separated by commas.
-           This string ENDS WITH a final comma so is like :
-           'itemuid1,itemuid2,itemuid3,itemuid4,'.'''
-        if not uids:
-            msg = self.translate('no_selected_items', domain='PloneMeeting')
-            self.plone_utils.addPortalMessage(msg)
-            return self.portal_plonemeeting.gotoReferer()
-
-        uid_catalog = getToolByName(self, 'uid_catalog')
-        wfTool = getToolByName(self, 'portal_workflow')
-        for uid in uids.split(','):
-            if not uid:
-                continue
-            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
-            wfTool.doActionFor(obj, 'present')
-
-        return self.portal_plonemeeting.gotoReferer()
 
     security.declarePublic('showRemoveSelectedItemsAction')
     def showRemoveSelectedItemsAction(self):

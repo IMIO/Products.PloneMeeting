@@ -1140,12 +1140,26 @@ td.pretty_link table.contentActionsAX {
 }
 
 /* button for removing several items from a meeting */
-button.remove_several {
+button.remove_several,
+button.present_several {
     margin-left: 0.5em;
 }
-button.remove_several img {
+button.remove_several img,
+button.present_several img {
     position: relative;
     top: 2px;
+}
+
+/* display a spinner when loading iframe */
+iframe {
+    background-image: url('spinner.gif');
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+}
+
+/* override CSS from eea.facetednavigation so 'more filters' works in the iframe */
+#top-area {
+    display: inline-block;
 }
 
 /* </dtml-with> */

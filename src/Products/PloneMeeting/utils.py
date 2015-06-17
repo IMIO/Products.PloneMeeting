@@ -153,6 +153,8 @@ def getCurrentMeetingObject(context):
     '''What is the object currently published by Plone ?'''
     obj = context.REQUEST.get('PUBLISHED')
     className = obj.__class__.__name__
+    if className == 'present-several-items':
+        return obj.context
     if not (className in ('Meeting', 'MeetingItem')):
         # check if we are on a Script or so or calling a BrowserView
         if className in methodTypes or 'SimpleViewClass' in className:
@@ -161,6 +163,7 @@ def getCurrentMeetingObject(context):
             refererUrl = context.REQUEST.get('HTTP_REFERER')
             referer = urlparse.urlparse(refererUrl)[2]
             if referer.endswith('/view') or \
+               referer.endswith('/@@meeting_available_items_view') or \
                referer.endswith('/edit') or \
                referer.endswith('/search_form') or \
                referer.endswith('/plonemeeting_topic_view'):
@@ -187,6 +190,7 @@ def getCurrentMeetingObject(context):
             else:
                 # It can be a method with attribute im_class
                 obj = None
+
     toReturn = None
     if obj and hasattr(obj, 'meta_type') and obj.meta_type == 'Meeting':
         toReturn = obj

@@ -61,7 +61,6 @@
             permission="zope2.View"/>
     </configure>
 
-    <!-- override the facetednavigation view for Meeting -->
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting_view"
@@ -69,6 +68,14 @@
       class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
       permission="zope2.View"
       />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="meeting_available_items_view"
+      template="templates/meeting_available_items_view.pt"
+      class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+      permission="zope2.View"
+      />
+
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting-before-faceted-infos"
@@ -81,6 +88,12 @@
       name="meeting-after-faceted-infos"
       template="templates/meeting_after_faceted_infos.pt"
       class="Products.PloneMeeting.browser.views.MeetingAfterFacetedInfosView"
+      permission="zope2.View"
+      />
+    <browser:view
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="present-several-items"
+      class="Products.PloneMeeting.browser.views.PresentSeveralItemsView"
       permission="zope2.View"
       />
     <browser:view

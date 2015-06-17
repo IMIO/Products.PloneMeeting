@@ -50,6 +50,32 @@ class ItemIsSignedView(BrowserView):
         self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
 
 
+class PresentSeveralItemsView(BrowserView):
+    """
+      This manage the view that presents several items into a meeting
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, uids):
+        """ """
+        uid_catalog = getToolByName(self.context, 'uid_catalog')
+        wfTool = getToolByName(self, 'portal_workflow')
+        # make sure we have a list of uids, in some case, as it is called
+        # by jQuery, we receive only one uid, as a string...
+        if isinstance(uids, str):
+            uids = [uids]
+        for uid in uids:
+            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
+            wfTool.doActionFor(obj, 'present')
+        msg = translate('present_several_items_done',
+                        domain='PloneMeeting',
+                        context=self.request)
+        plone_utils = getToolByName(self.context, 'plone_utils')
+        plone_utils.addPortalMessage(msg)
+
+
 class RemoveSeveralItemsView(BrowserView):
     """
       This manage the view that removes several items from a meeting
@@ -57,7 +83,6 @@ class RemoveSeveralItemsView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
 
     def __call__(self, uids):
         """ """
@@ -81,7 +106,9 @@ class RemoveSeveralItemsView(BrowserView):
                         wfTool.doActionFor(obj, tr['id'])
                         changedState = True
                         break
-        msg = translate('remove_several_items_done', domain='PloneMeeting', context=self.request)
+        msg = translate('remove_several_items_done',
+                        domain='PloneMeeting',
+                        context=self.request)
         plone_utils = getToolByName(self.context, 'plone_utils')
         plone_utils.addPortalMessage(msg)
 

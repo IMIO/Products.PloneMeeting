@@ -639,6 +639,39 @@ function getRichTextContent(rq, params) {
   return params
 }
 
+// Function that allows to present several items in a meeting
+function presentSelectedItems(baseUrl) {
+    var uids = selectedCheckBoxes('select_item');
+    if (!uids.length) {
+      alert(no_selected_items);
+    }
+    else {
+          // avoid Arrays to be passed as uids[]
+          params = $.param({uids: uids}, traditional=true)
+          $.ajax({
+            url: baseUrl + "/@@present-several-items",
+            dataType: 'html',
+            data: params,
+            cache: false,
+            async: false,
+            success: function(data) {
+                // update number of items
+                updateNumberOfItems();
+                // reload the faceted page
+                Faceted.URLHandler.hash_changed();
+                // and the presented items (parent)
+                if (window != parent) {
+                    parent.Faceted.URLHandler.hash_changed();
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              /*console.log(textStatus);*/
+              window.location.href = window.location.href;
+              }
+            });
+        }
+}
+
 // Function that allows to remove several items from a meeting
 function removeSelectedItems(baseUrl) {
     var uids = selectedCheckBoxes('select_item');
@@ -658,9 +691,15 @@ function removeSelectedItems(baseUrl) {
             cache: false,
             async: false,
             success: function(data) {
+                // update number of items
+                updateNumberOfItems();
                 // reload the faceted page
                 Faceted.URLHandler.hash_changed();
-            },
+                // and the available items iframe
+                if ((window.frames[0]) && (window.frames[0] != window)) {
+                    window.frames[0].Faceted.URLHandler.hash_changed();
+                    }
+                },
             error: function(jqXHR, textStatus, errorThrown) {
               /*console.log(textStatus);*/
               window.location.href = window.location.href;
@@ -735,5 +774,34 @@ function moveItem(baseUrl, moveType, tag) {
       /*console.log(textStatus);*/
       window.location.href = window.location.href;
       }
+    });
+}
+
+// event subscriber when a transition is triggered
+$(document).on('ap_transition_triggered', synchronizeMeetingFaceteds);
+// synchronize faceted displayed on the meeting_view, available items and presented items
+function synchronizeMeetingFaceteds(infos) {
+    // refresh iframe 'available items' while removing an item
+    if ((infos.transition === 'backToValidated') && ((window.frames[0]) && (window.frames[0] != window))) {
+      window.frames[0].Faceted.URLHandler.hash_changed();
+      updateNumberOfItems();
+    }
+    // refresh main frame while presenting an item
+    if ((infos.transition === 'present') && (window != parent)) {
+      parent.Faceted.URLHandler.hash_changed();
+      updateNumberOfItems();
+    }
+}
+
+// update the number of items displayed on the meeting_view when items have been presented/removed of the meeting
+function updateNumberOfItems(infos) {
+  // get numberOfItems using an ajax call
+  response = $.ajax({
+    url: document.baseURI + '/numberOfItems',
+    dataType: 'html',
+    cache: false,
+    async: false});
+  parent.$('.meeting_number_of_items').each(function() {
+      this.innerHTML = response.responseText;
     });
 }
