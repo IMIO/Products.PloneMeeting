@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<object name="searches" meta_type="ATFolder">
+<object name="searches" meta_type="ATFolder"
+        xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+        i18n:domain="eea">
  <criteria>
-
   <!-- default widgets -->
-  <criterion name="c0">
+  <criterion name="c0" i18n:attributes="title">
    <property name="widget">sorting</property>
    <property name="title">Sort on</property>
    <property name="position">bottom</property>
@@ -13,7 +14,7 @@
    <property name="default"></property>
   </criterion>
 
-  <criterion name="c1">
+  <criterion name="c1" i18n:attributes="title">
    <property name="widget">collection-link</property>
    <property name="title">Base collections</property>
    <property name="position">bottom</property>
@@ -30,9 +31,9 @@
    <property name="default"></property>
   </criterion>
 
-  <criterion name="c2">
+  <criterion name="c2" i18n:attributes="title">
    <property name="widget">text</property>
-   <property name="title">Rechercher</property>
+   <property name="title">Search</property>
    <property name="position">center</property>
    <property name="section">default</property>
    <property name="hidden">0</property>
@@ -41,9 +42,9 @@
    <property name="onlyallelements">1</property>
   </criterion>
 
-  <criterion name="c3">
+  <criterion name="c3" i18n:attributes="title">
    <property name="widget">resultsperpage</property>
-   <property name="title">Par page</property>
+   <property name="title">Batching</property>
    <property name="position">center</property>
    <property name="section">default</property>
    <property name="hidden">0</property>
@@ -54,9 +55,9 @@
   </criterion>
 
   <!-- advanced widgets -->
-  <criterion name="c4">
+  <criterion name="c4" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Etat</property>
+   <property name="title">Review state</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>

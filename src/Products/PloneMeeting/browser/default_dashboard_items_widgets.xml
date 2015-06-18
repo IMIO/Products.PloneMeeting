@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<object name="searches" meta_type="ATFolder">
+<object name="searches" meta_type="ATFolder"
+        xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+        i18n:domain="eea">
  <criteria>
 
   <!-- default widgets -->
-  <criterion name="c0">
+  <criterion name="c0" i18n:attributes="title">
    <property name="widget">sorting</property>
    <property name="title">Sort on</property>
    <property name="position">bottom</property>
@@ -13,7 +15,7 @@
    <property name="default"></property>
   </criterion>
 
-  <criterion name="c1">
+  <criterion name="c1" i18n:attributes="title">
    <property name="widget">collection-link</property>
    <property name="title">Base collections</property>
    <property name="position">bottom</property>
@@ -30,9 +32,9 @@
    <property name="default"></property>
   </criterion>
 
-  <criterion name="c2">
+  <criterion name="c2" i18n:attributes="title">
    <property name="widget">text</property>
-   <property name="title">Rechercher</property>
+   <property name="title">Search</property>
    <property name="position">center</property>
    <property name="section">default</property>
    <property name="hidden">0</property>
@@ -41,9 +43,9 @@
    <property name="onlyallelements">1</property>
   </criterion>
 
-  <criterion name="c3">
+  <criterion name="c3" i18n:attributes="title">
    <property name="widget">resultsperpage</property>
-   <property name="title">Par page</property>
+   <property name="title">Per page</property>
    <property name="position">center</property>
    <property name="section">default</property>
    <property name="hidden">0</property>
@@ -54,9 +56,9 @@
   </criterion>
 
   <!-- advanced widgets -->
-  <criterion name="c4">
+  <criterion name="c4" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Groupes</property>
+   <property name="title">Groups</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -74,9 +76,9 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c5">
+  <criterion name="c5" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Categorie</property>
+   <property name="title">Category</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -94,9 +96,9 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c6">
+  <criterion name="c6" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Etat</property>
+   <property name="title">Review state</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -114,9 +116,9 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c7">
+  <criterion name="c7" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Avis</property>
+   <property name="title">Advice</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -134,9 +136,9 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c8">
+  <criterion name="c8" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Seance</property>
+   <property name="title">Meeting</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -154,9 +156,9 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c9">
+  <criterion name="c9" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Seance souhaitee</property>
+   <property name="title">Preferred meeting</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -174,9 +176,9 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c10">
+  <criterion name="c10" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Auteur</property>
+   <property name="title">Creator</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -194,9 +196,9 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c11">
+  <criterion name="c11" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Pris en charge par</property>
+   <property name="title">Taken over by</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -214,9 +216,9 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c12">
+  <criterion name="c12" i18n:attributes="title">
    <property name="widget">daterange</property>
-   <property name="title">Modifie le</property>
+   <property name="title">Modified</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -225,9 +227,9 @@
    <property name="calYearRange">c-10:c+10</property>
   </criterion>
 
-  <criterion name="c13">
+  <criterion name="c13" i18n:attributes="title">
    <property name="widget">daterange</property>
-   <property name="title">Cree le</property>
+   <property name="title">Created</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
@@ -236,9 +238,20 @@
    <property name="calYearRange">c-10:c+10</property>
   </criterion>
 
-  <criterion name="c14">
+  <criterion name="c14" i18n:attributes="title">
+   <property name="widget">daterange</property>
+   <property name="title">Meeting date</property>
+   <property name="position">top</property>
+   <property name="section">advanced</property>
+   <property name="hidden">0</property>
+   <property name="index">linkedMeetingDate</property>
+   <property name="default"></property>
+   <property name="calYearRange">c-10:c+10</property>
+  </criterion>
+
+  <criterion name="c15" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">A envoyer vers</property>
+   <property name="title">To send to</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">0</property>
