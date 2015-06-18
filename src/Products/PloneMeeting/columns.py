@@ -35,7 +35,9 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
     def renderCell(self, item):
         """ """
         obj = self._getObject(item)
-        pretty_link = IPrettyLink(obj).getLink()
+        prettyLinker = IPrettyLink(obj)
+        prettyLinker.target = '_parent'
+        pretty_link = prettyLinker.getLink()
 
         annexes = moreInfos = ''
 
