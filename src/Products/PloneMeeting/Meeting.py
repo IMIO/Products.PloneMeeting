@@ -637,16 +637,54 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # available items?
 
         if self._displayingAvailableItems():
-            res = [{'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': cfg.getItemTypeName()},
-                   {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': 'validated'},]
+            res = self._availableItemsQuery()
         else:
-            res = [{'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': cfg.getItemTypeName()},
-                   {'i': 'linkedMeetingUID', 'o': 'plone.app.querystring.operation.selection.is', 'v': self.UID()},]
+            res = [{'i': 'portal_type',
+                    'o': 'plone.app.querystring.operation.selection.is',
+                    'v': cfg.getItemTypeName()},
+                   {'i': 'linkedMeetingUID',
+                    'o': 'plone.app.querystring.operation.selection.is',
+                    'v': self.UID()},]
         return res
 
     def _displayingAvailableItems(self):
         """Is the meeting view displaying available items?"""
         return bool("@@meeting_available_items_view" in self.REQUEST['HTTP_REFERER'])
+
+    def _availableItemsQuery(self):
+        '''Check docstring in IMeeting.'''
+        meeting = self.getSelf()
+        if meeting.queryState() not in MEETING_STATES_ACCEPTING_ITEMS:
+            # make sure the query returns nothing, add a dummy parameter
+            return [{'i': 'getPreferredMeeting',
+                     'o': 'plone.app.querystring.operation.selection.is',
+                     'v': 'dummy_unexisting_uid'}]
+        tool = getToolByName(meeting, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        res = [{'i': 'portal_type',
+                'o': 'plone.app.querystring.operation.selection.is',
+                'v': cfg.getItemTypeName()},
+               {'i': 'review_state',
+                'o': 'plone.app.querystring.operation.selection.is',
+                'v': 'validated'},
+               ]
+        # First, get meetings accepting items for which the date is lower or
+        # equal to the date of this meeting (self)
+        meetings = meeting.portal_catalog(
+            portal_type=cfg.getMeetingTypeName(),
+            getDate={'query': meeting.getDate(), 'range': 'max'}, )
+        meetingUids = [b.getObject().UID() for b in meetings]
+        meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
+
+        if not meeting.queryState() in MEETING_NOT_CLOSED_STATES:
+            res.append({'i': 'getPreferredMeeting',
+                        'o': 'plone.app.querystring.operation.selection.is',
+                        'v': meetingUids})
+        else:
+            res.append({'i': 'getPreferredMeeting',
+                        'o': 'plone.app.querystring.operation.selection.is',
+                        'v': meeting.UID()})
+        return res
 
     security.declarePublic('getSort_on')
     def getSort_on(self):
@@ -1098,7 +1136,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # reindex getItemNumber when item is in the meeting or getItemNumber returns None
-        item.reindexObject(idxs=['getItemNumber', ])
+        item.reindexObject(idxs=['getItemNumber', 'listType'])
         # meeting is considered modified
         self.notifyModified()
 
@@ -1111,6 +1149,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         items = self.getItems()
         try:
             items.remove(item)
+            # set listType back to 'normal'
+            item.setListType('normal')
+            item.reindexObject(idxs=['listType', ])
         except ValueError:
             # in case this is called by onItemRemoved, the item
             # does not exist anymore and is no more in the items list
@@ -1126,42 +1167,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # meeting is considered modified
         self.notifyModified()
-
-    security.declarePublic('getAvailableItems')
-    def getAvailableItems(self):
-        '''Check docstring in IMeeting.'''
-        meeting = self.getSelf()
-        if meeting.queryState() not in MEETING_STATES_ACCEPTING_ITEMS:
-            return []
-        tool = getToolByName(meeting, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(meeting)
-        # First, get meetings accepting items for which the date is lower or
-        # equal to the date of this meeting (self)
-        meetings = meeting.portal_catalog(
-            portal_type=cfg.getMeetingTypeName(),
-            getDate={'query': meeting.getDate(), 'range': 'max'}, )
-        meetingUids = [b.getObject().UID() for b in meetings]
-        meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
-        # Then, get the items whose preferred meeting is None or is among
-        # those meetings.
-        brains = meeting.portal_catalog(
-            portal_type=cfg.getItemTypeName(),
-            review_state='validated',
-            getPreferredMeeting=meetingUids,
-            sort_on="modified")
-        if meeting.queryState() in MEETING_NOT_CLOSED_STATES:
-            # Oups. I can only take items which are "late" items.
-            res = []
-            meetingUID = meeting.UID()
-            for brain in brains:
-                # first bypass brains for which preferredMeeting is not current meeting
-                if not brain.getPreferredMeeting == meetingUID:
-                    continue
-                if brain.getObject().wfConditions().isLateFor(meeting):
-                    res.append(brain)
-        else:
-            res = brains
-        return res
 
     security.declarePrivate('getDefaultAssembly')
     def getDefaultAssembly(self):

@@ -31,6 +31,7 @@ from AccessControl import Unauthorized
 from zope.i18n import translate
 
 from plone.app.textfield.value import RichTextValue
+from plone.app.querystring.querybuilder import queryparser
 from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -619,10 +620,13 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_AvailableItems(self):
         """
-          By default, available items should be :
-          - validated items
-          - with no preferred meeting
-          - items for wich the preferredMeeting is not a future meeting
+          Available items are either 'normal' items that are :
+          - validated items;
+          - with no preferred meeting;
+          - items for wich the preferredMeeting is not a future meeting.
+          Or 'late' items, in this case, items are :
+          - validated items;
+          - with no preferredMeeting equals to current meeting.
         """
         self.changeUser('pmManager')
         for meetingConfig in (self.meetingConfig.getId(), self.meetingConfig2.getId()):
@@ -631,6 +635,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def _checkAvailableItems(self):
         """Helper method for test_pm_AvailableItems."""
+        catalog = self.portal.portal_catalog
         #create 3 meetings
         #we can do every steps as a MeetingManager
         self.changeUser('pmManager')
@@ -666,23 +671,29 @@ class testMeeting(PloneMeetingTestCase):
         # for now, no items are presentable...
         # except if items are already 'validated', this could be the case when using
         # 'items_come_validated' wfAdaptation or if item initial_state is 'validated'
+        m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
+        m2_query = queryparser.parseFormquery(m2, m2.adapted()._availableItemsQuery())
+        m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
+
         if not self.wfTool[i1.getWorkflowName()].initial_state == 'validated':
-            self.assertEquals(len(m1.adapted().getAvailableItems()), 0)
-            self.assertEquals(len(m2.adapted().getAvailableItems()), 0)
-            self.assertEquals(len(m3.adapted().getAvailableItems()), 0)
+            self.assertEquals(len(catalog(m1_query)), 0)
+            self.assertEquals(len(catalog(m2_query)), 0)
+            self.assertEquals(len(catalog(m3_query)), 0)
         # validate the items
         for item in (i1, i2, i3):
             self.validateItem(item)
         #now, check that available items have some respect
         #the first meeting has only one item, the one with no preferred meeting selected
         itemTitles = []
-        for brain in m1.adapted().getAvailableItems():
+        m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
+        for brain in catalog(m1_query):
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', ])
         #the second meeting has 2 items, the no preferred meeting one and the i2
         #for wich we selected this meeting as preferred
         itemTitles = []
-        for brain in m2.adapted().getAvailableItems():
+        m2_query = queryparser.parseFormquery(m2, m2.adapted()._availableItemsQuery())
+        for brain in catalog(m2_query):
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', 'i2', ])
         #the third has 3 items
@@ -690,7 +701,8 @@ class testMeeting(PloneMeetingTestCase):
         #--> the second item because the meeting date is in the future
         #--> the i3 where we selected m3 as preferred meeting
         itemTitles = []
-        for brain in m3.adapted().getAvailableItems():
+        m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
+        for brain in catalog(m3_query):
             itemTitles.append(brain.Title)
         self.assertEquals(itemTitles, ['i1', 'i2', 'i3', ])
 
@@ -699,7 +711,8 @@ class testMeeting(PloneMeetingTestCase):
         self.setCurrentMeeting(m1)
         self.presentItem(i1)
         self.freezeMeeting(m1)
-        self.assertTrue(not m1.adapted().getAvailableItems())
+        m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
+        self.assertTrue(not catalog(m1_query))
         # turn i2 into a late item
         proposedState = self.WF_STATE_NAME_MAPPINGS['proposed']
         # if current workflow does not use late items, we pass this test...
@@ -711,13 +724,15 @@ class testMeeting(PloneMeetingTestCase):
             self.validateItem(i2)
             # i1 is a late item
             self.assertTrue(i2.wfConditions().isLateFor(m1))
-            self.assertTrue([item.UID for item in m1.adapted().getAvailableItems()] == [i2.UID()])
+            m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
+            self.assertTrue([brain.UID for brain in catalog(m1_query)] == [i2.UID()])
 
         # if a meeting is not in a MEETING_STATES_ACCEPTING_ITEMS state
         # it can not accept any kind of items, getAvailableItems returns []
         self.closeMeeting(m1)
         self.assertTrue(not m1.queryState() in MEETING_STATES_ACCEPTING_ITEMS)
-        self.assertTrue(not m1.adapted().getAvailableItems())
+        m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
+        self.assertTrue(not catalog(m1_query))
 
     def test_pm_PresentSeveralItems(self):
         """
