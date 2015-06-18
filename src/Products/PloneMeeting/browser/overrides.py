@@ -368,7 +368,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 isPresentable, kwargs)
 
-    #@ram.cache(__call___cachekey)
+    @ram.cache(__call___cachekey)
     def __call__(self,
                  useIcons=True,
                  showTransitions=True,
