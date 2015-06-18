@@ -15,15 +15,15 @@ function advicePopup() {
             onClose : function (e) {
                 // make sure CKeditor instances are destroyed because
                 // it can not be initialized twice
-                if (CKEDITOR.instances['form.widgets.advice_comment']) {
-                    CKEDITOR.instances['form.widgets.advice_comment'].destroy();
-                }
+                $.each(CKEDITOR.tools.objectKeys(CKEDITOR.instances), function(k, v) {
+                  CKEDITOR.instances[v].destroy();
+                })
                 // unlock current element
                 // compute url, find link to advice edit and remove trailing '/edit'
                 var rel_num = this.getOverlay().attr('id');
                 advice_url = $("[rel='#" + rel_num + "']").attr('href')
                 // do not unlock if we were on the '++add++meetingadvice' form
-                if (!advice_url.endsWith('++add++meetingadvice')) {
+                if (advice_url.indexOf('++add++meetingadvice') === -1) {
                     // remove '/edit'
                     advice_url = advice_url.slice(0, -5);
                     // now we have the edit link, take the href and remove the '/edit'
