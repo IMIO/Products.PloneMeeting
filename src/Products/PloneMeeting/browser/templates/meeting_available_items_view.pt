@@ -15,7 +15,22 @@
     tal:content="string:jQuery(window).unload(function(){
         Faceted.Unload();
     });"></script>
+  <tal:comment replace="nothing">Make sure this view is only displayed in an iframe.
+    It can be reached when using action 'edit' in the dashboard then 'cancel' on the edit form.</tal:comment>
+  <script type="text/javascript">
+    if (parent == window) {
+      window.location.href = document.baseURI;
+    }
+</script>
 </metal:jsslot>
+<tal:comment replace="nothing">Avoid portal_message displayed twice, in the available items and in the presented items.</tal:comment>
+<metal:csssolt fill-slot="style_slot">
+<style>
+  dl.portalMessage.info {
+    display: none;
+  }
+</style>
+</metal:csssolt>
 
 <body>
   <tal:comment replace="nothing">Remove title and description</tal:comment>
