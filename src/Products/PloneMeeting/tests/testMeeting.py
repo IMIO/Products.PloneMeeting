@@ -739,8 +739,13 @@ class testMeeting(PloneMeetingTestCase):
         for item in items:
             self.assertEquals(item.queryState(), 'validated')
             self.assertFalse(item.hasMeeting())
-        # present every items
-        meeting.presentSeveralItems(",".join([item.UID() for item in items]))
+        # present items
+        presentView = meeting.restrictedTraverse('@@present-several-items')
+        # we can present one single item...
+        presentView(items[0].UID())
+        self.assertEquals(items[0].queryState(), 'presented')
+        # or many items
+        presentView([item.UID() for item in items[1:]])
         # every items are 'presented' in the meeting
         for item in items:
             self.assertEquals(item.queryState(), 'presented')

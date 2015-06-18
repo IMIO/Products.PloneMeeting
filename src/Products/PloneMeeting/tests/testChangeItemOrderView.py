@@ -112,7 +112,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         # nothing changed
         self.assertEquals(item2.getItemNumber(), 2)
         # move one of the last items upper
-        view = item4.restrictedTraverse('@@change_item_order')
+        view = item4.restrictedTraverse('@@change-item-order')
         view('number', 1)
         self.assertEquals(item4.getItemNumber(), 1)
         # and other items position are adapted

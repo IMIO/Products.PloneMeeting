@@ -69,7 +69,7 @@ class UnrestrictedMethodsView(BrowserView):
             # either we have a firstItemNumber defined on the meeting
             # or -1, in this last case, we save number of items of the meeting
             # and we continue to the previous meeting
-            numberOfItemsBefore += meetingObj.getItemsCount()
+            numberOfItemsBefore += meetingObj.numberOfItems()
             if not meetingObj.getFirstItemNumber() == -1:
                 previousFirstItemNumber = meetingObj.getFirstItemNumber()
                 break
