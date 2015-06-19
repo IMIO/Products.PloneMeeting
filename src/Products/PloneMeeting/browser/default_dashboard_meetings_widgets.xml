@@ -49,7 +49,7 @@
    <property name="section">default</property>
    <property name="hidden">0</property>
    <property name="start">20</property>
-   <property name="end">200</property>
+   <property name="end">1000</property>
    <property name="step">20</property>
    <property name="default">20</property>
   </criterion>

@@ -11,6 +11,7 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 from AccessControl import Unauthorized
 
+from persistent.list import PersistentList
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 
@@ -19,15 +20,19 @@ from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting import PMMessageFactory as _
-from Products.PloneMeeting.config import MEETINGREVIEWERS
-from Products.PloneMeeting.utils import checkPermission
 
+from collective.documentviewer.settings import GlobalSettings
+from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
+from eea.facetednavigation.interfaces import IFacetedNavigable
+from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.dashboard.adapters import CustomViewFieldsVocabularyAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
-from collective.documentviewer.settings import GlobalSettings
+from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.utils import checkPermission
 
 
 class AnnexableAdapter(object):
@@ -531,6 +536,60 @@ class PMHistoryAdapter(ImioWfHistoryAdapter):
     def getHistory(self, checkMayView=True):
         """Override getHistory because it manages data changes."""
         return self.context.getHistory(checkMayView=checkMayView)
+
+
+class Criteria(eeaCriteria):
+    """
+      Override method that gets criteria to be able to manage various use cases :
+      - for meetings : get the criteria from the MeetingConfig (searches_items) and filter
+        out elements not in MeetingConfig.getDashboardAvailableItemsFilters and not in
+        MeetingConfig.getDashboardPresentedItemsFilters;
+      - for listing of items : filter out criteria no in MeetingConfig.getDashboardItemsFilters;
+      - for listing of meetings : filter out criteria no in MeetingConfig.getDashboardMeetingsFilters.
+    """
+
+    def __init__(self, context):
+        """ """
+        super(Criteria, self).__init__(context)
+        if 'portal_plonemeeting' in context.absolute_url():
+            return
+        tool = getToolByName(context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        if not cfg:
+            return
+        # meeting view
+        kept_filters = []
+        resultsperpagedefault = "20"
+        if IMeeting.providedBy(context):
+            self.context = cfg.searches.searches_items
+            if context._displayingAvailableItems():
+                kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
+                resultsperpagedefault = cfg.getMaxShownAvailableItems()
+            else:
+                kept_filters = cfg.getDashboardMeetingLinkedItemsFilters()
+                resultsperpagedefault = cfg.getMaxShownMeetingItems()
+        else:
+            # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
+            self.context = context
+            resultsperpagedefault = cfg.getMaxShownListings()
+            if IFacetedNavigable.providedBy(context):
+                # listings of items has some configuration but not listings of meetings
+                if context.getId() == 'searches_items':
+                    kept_filters = cfg.getDashboardItemsListingsFilters()
+                else:
+                    return
+        self.criteria = self._criteria()
+
+        res = PersistentList()
+        for criterion in self.criteria:
+            if criterion.section != u'advanced' or \
+               criterion.__name__ in kept_filters:
+                res.append(criterion)
+            # manage default value for the 'resultsperpage' criterion
+            if criterion.widget == ResultsPerPageWidget.widget_type:
+                criterion.default = resultsperpagedefault
+
+        self.criteria = res
 
 
 class CompoundCriterionBaseAdapter(object):

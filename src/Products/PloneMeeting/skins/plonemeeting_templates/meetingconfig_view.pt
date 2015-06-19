@@ -572,21 +572,8 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('maxShownAvailableItems')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('maxShownMeetingItems')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td></td>
-        </tr>
-        <tr valign="top">
-          <td tal:define="field python:here.getField('enableGotoPage')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('enableGotoItem')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
+          <td></td>
           <td tal:define="field python:here.getField('openAnnexesInSeparateWindows')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
@@ -599,6 +586,28 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td></td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('dashboardItemsListingsFilters')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('dashboardMeetingAvailableItemsFilters')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('dashboardMeetingLinkedItemsFilters')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('maxShownListings')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('maxShownMeetingAvailableItems')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('maxShownMeetingLinkedItems')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
       </table>
 

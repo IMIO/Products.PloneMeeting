@@ -649,7 +649,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     def _displayingAvailableItems(self):
         """Is the meeting view displaying available items?"""
-        return bool("@@meeting_available_items_view" in self.REQUEST['HTTP_REFERER'])
+        return bool("@@meeting_available_items_view" in self.REQUEST['HTTP_REFERER'] or \
+                    "@@meeting_available_items_view" in self.REQUEST['URL'])
 
     def _availableItemsQuery(self):
         '''Check docstring in IMeeting.'''
@@ -1734,3 +1735,4 @@ registerType(Meeting, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
+

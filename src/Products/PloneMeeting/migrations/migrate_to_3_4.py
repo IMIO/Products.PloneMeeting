@@ -3,8 +3,6 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 
 from Products.CMFCore.utils import getToolByName
-from eea.facetednavigation.interfaces import ICriteria
-from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 
 from Products.PloneMeeting.interfaces import IFacetedSearchesItemsMarker
 from Products.PloneMeeting.migrations import Migrator
@@ -83,6 +81,10 @@ class Migrate_To_3_4(Migrator):
             # no more used as lateItems are displayed together with normal items now
             if hasattr(cfg, 'maxShownLateItems'):
                 delattr(cfg, 'maxShownLateItems')
+            if hasattr(cfg, 'enableGotoItem'):
+                delattr(cfg, 'enableGotoItem')
+            if hasattr(cfg, 'enableGotoPage'):
+                delattr(cfg, 'enableGotoPage')
 
             logger.info('Moving to imio.dashboard : moving toDoListTopics to toDoListSearches...')
             if not cfg.getToDoListSearches():
@@ -152,14 +154,25 @@ class Migrate_To_3_4(Migrator):
             cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
             cfg.updateCollectionColumns()
 
-            logger.info('Moving to imio.dashboard : migrating parameter "maxShownFound" from portal_plonemeeting...')
+            logger.info('Moving to imio.dashboard : migrating parameters "maxShown..."...')
             if hasattr(self.tool, 'maxShownFound'):
-                # update the results criterion value
-                for criterion in ICriteria(cfg.searches).values():
-                    if criterion.widget == ResultsPerPageWidget.widget_type:
-                        new_value = self.tool.maxShownFound / 20 * 20
-                        criterion.default = unicode(new_value)
-                        break
+                # parameter was moved to the MeetingConfig.maxShownListings
+                new_value = self.tool.maxShownFound / 20 * 20
+                if not new_value:
+                    new_value = 20
+                cfg.setMaxShownListings(str(new_value))
+            maxShownAvailableItems = cfg.maxShownAvailableItems
+            if isinstance(maxShownAvailableItems, int):
+                new_value = maxShownAvailableItems / 20 * 20
+                if not new_value:
+                    new_value = 20
+                cfg.setMaxShownAvailableItems(str(new_value))
+            maxShownMeetingItems = cfg.maxShownMeetingItems
+            if isinstance(maxShownMeetingItems, int):
+                new_value = maxShownMeetingItems / 20 * 20
+                if not new_value:
+                    new_value = 20
+                cfg.setMaxShownMeetingItems(str(new_value))
 
             logger.info('Moving to imio.dashboard : enabling faceted view for ever user folders...')
             cfg._synchSearches()

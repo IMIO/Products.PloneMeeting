@@ -937,58 +937,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    IntegerField(
-        name='maxShownAvailableItems',
-        default=defValues.maxShownAvailableItems,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownAvailableItems",
-            description_msgid="max_shown_available_items_descr",
-            label='Maxshownavailableitems',
-            label_msgid='PloneMeeting_label_maxShownAvailableItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    IntegerField(
-        name='maxShownMeetingItems',
-        default=defValues.maxShownMeetingItems,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownMeetingitems",
-            description_msgid="max_shown_meeting_items_descr",
-            label='Maxshownmeetingitems',
-            label_msgid='PloneMeeting_label_maxShownMeetingItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='enableGotoPage',
-        default=defValues.enableGotoPage,
-        widget=BooleanField._properties['widget'](
-            description="EnableGotoPage",
-            description_msgid="enable_goto_page_descr",
-            label='Enablegotopage',
-            label_msgid='PloneMeeting_label_enableGotoPage',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='enableGotoItem',
-        default=defValues.enableGotoItem,
-        widget=BooleanField._properties['widget'](
-            description="EnableGotoItem",
-            description_msgid="enable_goto_item_descr",
-            label='Enablegotoitem',
-            label_msgid='PloneMeeting_label_enableGotoItem',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     BooleanField(
         name='openAnnexesInSeparateWindows',
         default=defValues.openAnnexesInSeparateWindows,
@@ -1036,6 +984,102 @@ schema = Schema((
         multiValued=True,
         relationship="ToDoSearches",
         allowed_types=('DashboardCollection',),
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='dashboardItemsListingsFilters',
+        widget=MultiSelectionWidget(
+            description="DashboardItemsListingsFilters",
+            description_msgid="dashboard_items_listings_filters_descr",
+            format="checkbox",
+            label='Dashboarditemslistingsfilters',
+            label_msgid='PloneMeeting_label_dashboardItemsListingsFilters',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDashboardItemsListingsFilters',
+        default=defValues.dashboardItemsListingsFilters,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='dashboardMeetingAvailableItemsFilters',
+        widget=MultiSelectionWidget(
+            description="DashboardMeetingAvailableItemsFilters",
+            description_msgid="dashboard_meeting_available_items_filters_descr",
+            format="checkbox",
+            label='Dashboardmeetingavailableitemsfilters',
+            label_msgid='PloneMeeting_label_dashboardMeetingAvailableItemsFilters',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDashboardItemsListingsFilters',
+        default=defValues.dashboardMeetingAvailableItemsFilters,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='dashboardMeetingLinkedItemsFilters',
+        widget=MultiSelectionWidget(
+            description="DashboardMeetingLinkedItemsFilters",
+            description_msgid="dashboard_meeting_linked_items_filters_descr",
+            format="checkbox",
+            label='Dashboardmeetinglinkeditemsfilters',
+            label_msgid='PloneMeeting_label_dashboardMeetingLinkedItemsFilters',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDashboardItemsListingsFilters',
+        default=defValues.dashboardMeetingLinkedItemsFilters,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='maxShownListings',
+        widget=SelectionWidget(
+            description="MaxShownListings",
+            description_msgid="max_shown_listings_descr",
+            label='Maxshownlistings',
+            label_msgid='PloneMeeting_label_maxShownListings',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        vocabulary='listResultsPerPage',
+        default=defValues.maxShownListings,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='maxShownAvailableItems',
+        widget=SelectionWidget(
+            description="MaxShownMeetingAvailableItems",
+            description_msgid="max_shown_meeting_available_items_descr",
+            label='Maxshownavailableitems',
+            label_msgid='PloneMeeting_label_maxShownAvailableItems',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        vocabulary='listResultsPerPage',
+        default=defValues.maxShownMeetingAvailableItems,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='maxShownMeetingItems',
+        widget=SelectionWidget(
+            description="MaxShownMeetingLinkedItems",
+            description_msgid="max_shown_meeting_linked_items_descr",
+            label='Maxshownmeetingitems',
+            label_msgid='PloneMeeting_label_maxShownMeetingItems',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        vocabulary='listResultsPerPage',
+        default=defValues.maxShownMeetingLinkedItems,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -2047,6 +2091,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listMeetingAttributes')
     def listMeetingAttributes(self):
         return self.listAttributes(Meeting.schema)
+
+    security.declarePrivate('listDashboardItemsListingsFilters')
+    def listDashboardItemsListingsFilters(self):
+        """ """
+        criteria = ICriteria(self.searches.searches_items).criteria
+        res = []
+        for criterion in criteria:
+            if criterion.section == u'advanced':
+                res.append((criterion.__name__, criterion.title))
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listResultsPerPage')
+    def listResultsPerPage(self):
+        """ """
+        res = []
+        for number in range(20, 1001, 20):
+            res.append((str(number), str(number)))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('validate_shortName')
     def validate_shortName(self, value):
