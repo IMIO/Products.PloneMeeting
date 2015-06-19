@@ -1150,11 +1150,6 @@ button.present_several img {
     top: 2px;
 }
 
-/* override CSS from eea.facetednavigation so 'more filters' works in the iframe */
-#top-area {
-    display: inline-block;
-}
-
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
