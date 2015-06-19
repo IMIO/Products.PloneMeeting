@@ -611,7 +611,7 @@
         <p class="discreet" i18n:translate="searches_descr"></p>
         <p><img src="manage.png"
                 tal:attributes="src string:${portal_url}/manage.png;"/>&nbsp;
-            <a href="searches/configure_faceted.html" i18n:translate="">
+            <a href="searches/folder_contents" i18n:translate="">
                 Manage dashboard
             </a>
         </p>
