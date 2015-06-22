@@ -48,6 +48,7 @@ from Products.CMFCore.Expression import Expression
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
 from eea.facetednavigation.interfaces import ICriteria
+from eea.facetednavigation.widgets.storage import Criterion
 from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
@@ -3147,9 +3148,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             def _copyFacetedCriteriaFor(sourceFolder, destFolder):
                 """ """
                 config_faceted_ann = list(IAnnotations(sourceFolder)['FacetedCriteria'])
+                # make new criteria out of existing one because copying annotation would
+                # create references to these criteria and not not ones
+                folder_faceted_ann = []
+                for criterion in config_faceted_ann:
+                    folder_faceted_ann.append(Criterion(**criterion.__dict__))
                 if 'FacetedCriteria' in IAnnotations(destFolder):
                     del IAnnotations(destFolder)['FacetedCriteria']
-                IAnnotations(destFolder)['FacetedCriteria'] = PersistentList(config_faceted_ann)
+                IAnnotations(destFolder)['FacetedCriteria'] = PersistentList(folder_faceted_ann)
             _copyFacetedCriteriaFor(self.searches, folder)
             for subFolderId in subFolderIds:
                 subFolderConfig = getattr(self.searches, subFolderId)
