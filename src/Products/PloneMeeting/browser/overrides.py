@@ -106,8 +106,6 @@ class PloneMeetingDocumentBylineViewlet(IHDocumentBylineViewlet):
       Overrides the IHDocumentBylineViewlet to hide it for some layouts.
     '''
 
-    index = ViewPageTemplateFile("templates/document_byline.pt")
-
     def show(self):
         oldShow = super(PloneMeetingDocumentBylineViewlet, self).show()
         if not oldShow:

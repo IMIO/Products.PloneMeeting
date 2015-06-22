@@ -209,15 +209,6 @@
         for="Products.PloneMeeting.interfaces.IMeeting"
         permission="zope2.View" />
 
-    <!-- The ajax view -->
-    <browser:page
-        name="ajax"
-        for="*"
-        class=".ajax.PloneMeetingAjaxView"
-        template="templates/ajax.pt"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-
     <!-- the plonemeeting_redirect_to_app_view.pt that redirect the connected user to the default meetingConfig just after connection -->
     <browser:page
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
@@ -396,12 +387,6 @@
         template="templates/macros.pt"
         permission="zope2.View"
         allowed_attributes="callMacro"/>
-    <browser:page
-        name="meetingitemslist-macros"
-        for="*"
-        class=".macros.MeetingItemsListMacros"
-        template="templates/meetingitems_list.pt"
-        permission="zope2.View"/>
     <browser:page
         name="advices-macros"
         for="*"

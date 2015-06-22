@@ -35,11 +35,6 @@
             <img style="cursor:pointer" title="user_preferences" i18n:attributes="title"
                  tal:attributes="src string:$portal_url/pm_preferences.png"/>
             </a>
-            <a style="display: inline;" href="#" tal:attributes="href string:${meetingFolder/absolute_url}/search_form;">
-            <img style="cursor:pointer" title="search_advanced"
-                 i18n:attributes="title"
-                 tal:attributes="src string:$portal_url/pm_search.png"/>
-            </a>
         </div>
     </dt>
 

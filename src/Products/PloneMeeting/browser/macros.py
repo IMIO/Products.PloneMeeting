@@ -12,16 +12,6 @@ class PloneMeetingMacros(BrowserView):
         return self.context.unrestrictedTraverse(page)[macro]
 
 
-class MeetingItemsListMacros(BrowserView):
-    """
-    """
-
-
-class PloneMeetingTopicResultMacros(BrowserView):
-    """
-    """
-
-
 class AdvicesMacros(BrowserView):
     """
     """
