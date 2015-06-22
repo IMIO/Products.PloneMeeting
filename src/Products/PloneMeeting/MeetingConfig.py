@@ -1063,7 +1063,7 @@ schema = Schema((
         ),
         schemata="gui",
         vocabulary='listResultsPerPage',
-        default=defValues.maxShownMeetingAvailableItems,
+        default=defValues.maxShownAvailableItems,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -1078,7 +1078,7 @@ schema = Schema((
         ),
         schemata="gui",
         vocabulary='listResultsPerPage',
-        default=defValues.maxShownMeetingLinkedItems,
+        default=defValues.maxShownMeetingItems,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2099,7 +2099,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for criterion in criteria:
             if criterion.section == u'advanced':
-                res.append((criterion.__name__, criterion.title))
+                res.append((criterion.__name__,
+                            translate(criterion.title,
+                                      domain="eea",
+                                      context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listResultsPerPage')

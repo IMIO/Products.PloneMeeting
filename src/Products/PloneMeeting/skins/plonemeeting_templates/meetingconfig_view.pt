@@ -602,10 +602,10 @@
           <td tal:define="field python:here.getField('maxShownListings')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('maxShownMeetingAvailableItems')">
+          <td tal:define="field python:here.getField('maxShownAvailableItems')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('maxShownMeetingLinkedItems')">
+          <td tal:define="field python:here.getField('maxShownMeetingItems')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>

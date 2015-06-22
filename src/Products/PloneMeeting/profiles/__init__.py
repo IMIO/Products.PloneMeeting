@@ -424,12 +424,14 @@ class MeetingConfigDescriptor(Descriptor):
                             'getProposingGroup', 'linkedMeetingDate', 'actions']
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
+        # advanced filters shown
         self.dashboardItemsListingsFilters = []
         self.dashboardMeetingAvailableItemsFilters = []
         self.dashboardMeetingLinkedItemsFilters = []
+        # default batching value, this must be a multiple of "20"
         self.maxShownListings = "20"
-        self.maxShownMeetingAvailableItems = "20"
-        self.maxShownMeetingLinkedItems = "20"
+        self.maxShownAvailableItems = "20"
+        self.maxShownMeetingItems = "40"
         # When opening annexes, some users want to get them in separate windows.
         self.openAnnexesInSeparateWindows = False
 
