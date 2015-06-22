@@ -1,0 +1,24 @@
+<tal:comment replace="nothing">
+  This page is called by a XmlHttpRequest object. It requires parameters "page" and "macro":
+  they are used to call the macro that will render the HTML chunk to be returned to the browser.
+</tal:comment>
+<tal:ajax define="page request/page;
+                  macro request/macro;
+                  response request/RESPONSE;
+                  action request/action|nothing;
+                  member context/@@plone_portal_state/member;
+                  portal context/@@plone_portal_state/portal;
+                  tool python: context.portal_plonemeeting;
+                  meetingConfig python: tool.getMeetingConfig(context);
+                  portal_url portal/absolute_url;
+                  dummy python:response.setHeader('Content-Type','text/html;;charset=utf-8');
+                  dummy2 python:response.setHeader('Expires', 'Mon, 11 Dec 1975 12:05:05 GMT');
+                  dummy3 python:response.setHeader('CacheControl', 'no-cache')">
+  <tal:comment replace="nothing">Keys "Expires" and "CacheControl" are used for preventing IE to cache
+    this page. Indeed, this page is retrieved through an asynchronous XMLHttpRequest by the browser, and
+    IE caches this by default.</tal:comment>
+  <tal:executeAction condition="action">
+    <tal:do define="dummy python: getattr(context, 'on'+action)()" omit-tag=""/>
+  </tal:executeAction>
+  <metal:callMacro use-macro="python: context.restrictedTraverse('@@pm-macros').callMacro(page, macro)"/>
+</tal:ajax>

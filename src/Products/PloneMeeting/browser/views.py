@@ -12,6 +12,12 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 
 
+class PloneMeetingAjaxView(BrowserView):
+    """
+      Manage ajax PloneMeeting functionnalities.
+    """
+
+
 class ItemMoreInfosView(BrowserView):
     """
       This manage the view displaying more infos about an item in the PrettyLink column

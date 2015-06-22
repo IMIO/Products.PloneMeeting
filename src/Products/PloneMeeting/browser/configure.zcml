@@ -61,6 +61,14 @@
             permission="zope2.View"/>
     </configure>
 
+    <!-- The ajax view -->
+    <browser:page
+        name="ajax"
+        for="*"
+        class=".views.PloneMeetingAjaxView"
+        template="templates/ajax.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting_view"
