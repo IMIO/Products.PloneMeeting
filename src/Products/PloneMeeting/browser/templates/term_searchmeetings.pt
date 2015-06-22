@@ -15,7 +15,7 @@
         <li tal:condition="python: nbOfMeetings <= maxShownMeetings"
                   tal:repeat="brain brains">
             <a tal:attributes="href brain/getURL;
-                               class python: context.absolute_url().startswith(brain.getURL()) and 'portletSelected' or ''"
+                               class python: context.REQUEST['URL'].startswith(brain.getURL()) and 'portletSelected' or ''"
                tal:content="python:tool.formatMeetingDate(brain, short=True, withHour=True)">
                 Meeting date
             </a>
@@ -35,7 +35,7 @@
           <option tal:repeat="brain brains"
                   tal:content="python:tool.formatMeetingDate(brain, short=True, withHour=True)"
                   tal:attributes="value brain/getURL;
-                                  selected python:view.request['ACTUAL_URL'].startswith(brain.getURL())"></option>
+                                  selected python:view.request['URL'].startswith(brain.getURL())"></option>
         </select>
       </form>
     </div>
