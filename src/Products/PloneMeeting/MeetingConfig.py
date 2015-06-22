@@ -889,6 +889,19 @@ schema = Schema((
         schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='openAnnexesInSeparateWindows',
+        default=defValues.openAnnexesInSeparateWindows,
+        widget=BooleanField._properties['widget'](
+            description="OpenAnnexesInSeparateWindows",
+            description_msgid="open_annexes_in_separate_windows_descr",
+            label='Openannexesinseparatewindows',
+            label_msgid='PloneMeeting_label_openAnnexesInSeparateWindows',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='itemColumns',
         widget=MultiSelectionWidget(
@@ -935,19 +948,6 @@ schema = Schema((
         vocabulary='listItemsListVisibleColumns',
         default=defValues.itemsListVisibleColumns,
         enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='openAnnexesInSeparateWindows',
-        default=defValues.openAnnexesInSeparateWindows,
-        widget=BooleanField._properties['widget'](
-            description="OpenAnnexesInSeparateWindows",
-            description_msgid="open_annexes_in_separate_windows_descr",
-            label='Openannexesinseparatewindows',
-            label_msgid='PloneMeeting_label_openAnnexesInSeparateWindows',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(

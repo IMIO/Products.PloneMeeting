@@ -557,7 +557,9 @@
           <td tal:define="field python:here.getField('maxShownMeetings')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('openAnnexesInSeparateWindows')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td></td>
         </tr>
         <tr valign="top">
@@ -568,13 +570,6 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('itemsListVisibleColumns')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-        </tr>
-        <tr valign="top">
-          <td></td>
-          <td></td>
-          <td tal:define="field python:here.getField('openAnnexesInSeparateWindows')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
