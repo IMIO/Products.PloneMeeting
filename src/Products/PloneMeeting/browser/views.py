@@ -18,6 +18,23 @@ class PloneMeetingAjaxView(BrowserView):
     """
 
 
+class ItemNavigationWidgetView(BrowserView):
+    """
+      This manage the view displaying the navigation widget on the item view
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+
+    @memoize
+    def __call__(self):
+        """Memoize as this widget is displayed identically at the top and the bottom of the item view."""
+        return super(ItemNavigationWidgetView, self).__call__()
+
+
 class ItemMoreInfosView(BrowserView):
     """
       This manage the view displaying more infos about an item in the PrettyLink column
@@ -257,19 +274,22 @@ class ObjectGoToView(BrowserView):
       Manage the fact of going to a given item uid.  This method is used
       in the item navigation widget (go to previous item, go to next item, ...)
     """
-    def __call__(self, objectId, idType):
+    def __call__(self, uid):
         """
-          objectId is either an uid or an item number.  idType discriminate this.
+          p_uid is the UID the item to go to.
         """
-        if idType == 'uid':
-            # Search the object in the uid catalog
-            obj = self.context.uid_catalog(UID=objectId)[0].getObject()
-        elif idType == 'number':
-            # The object is an item whose number is given in objectId
-            meeting = self.context.uid_catalog(UID=self.context.REQUEST.get('meetingUid'))[0].getObject()
-            obj = meeting.getItemByNumber(int(objectId))
-        objectUrl = obj.absolute_url()
-        return self.context.REQUEST.RESPONSE.redirect(objectUrl)
+        catalog = getToolByName(self.context, 'portal_catalog')
+        brains = catalog(UID=uid)
+        if not brains:
+            self.context.plone_utils.addPortalMessage(
+                translate(msgid='item_number_not_accessible',
+                          domain='PloneMeeting',
+                          context=self.request),
+                type='warning')
+            return self.request.RESPONSE.redirect(self.context.absolute_url())
+        else:
+            obj = brains[0].getObject()
+            return self.request.RESPONSE.redirect(obj.absolute_url())
 
 
 class ChangeItemOrderView(BrowserView):

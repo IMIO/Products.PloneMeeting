@@ -202,15 +202,14 @@ function toggleMenu(menuId){
 }
 
 var wrongTextInput = '#ff934a none';
-function gotoItem(inputWidget, totalNbOfItems, meetingUid) {
+function gotoItem(inputWidget, uid) {
   // Go to meetingitem_view for the item whose number is in p_inputWidget
   try {
     var itemNumber = parseInt(inputWidget.value);
     if (!isNaN(itemNumber)) {
       if ((itemNumber>=1) && (itemNumber<=totalNbOfItems)) {
         var theForm = document.forms["formGotoItem"];
-        theForm.objectId.value = itemNumber;
-        theForm.meetingUid.value = meetingUid;
+        theForm.uid.value = uid;
         theForm.submit();
       }
       else inputWidget.style.background = wrongTextInput;

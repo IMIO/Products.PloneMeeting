@@ -32,7 +32,9 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
+from plone.app.querystring.querybuilder import queryparser
 from plone.memoize import ram
+from plone.memoize.view import memoize
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
@@ -987,27 +989,49 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             label = 'pre_date_after_meeting_date'
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
+    def getItems_cachekey(method, self, uids=[], listType=None, ordered=False, useCatalog=False, **kwargs):
+        '''cachekey method for self.getItems.'''
+        return (self, str(self.REQUEST._debug), uids, listType, ordered, useCatalog, kwargs, self.modified())
+
     security.declarePublic('getItems')
-    def getItems(self, uids=[], listType=None, ordered=False, **kwargs):
+    @ram.cache(getItems_cachekey)
+    def getItems(self, uids=[], listType=None, ordered=False, useCatalog=False, **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
            - list of given p_uids;
            - given p_listType;
            - returned ordered (by getItemNumber) if p_ordered is True.
         '''
-        res = self.getField('items').get(self, **kwargs)
-        if uids:
-            member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
-            keptItems = []
-            for item in res:
-                if item.UID() in uids and member.has_permission(View, item):
-                    keptItems.append(item)
-            res = keptItems
-        if listType:
-            res = [item for item in res if item.getListType() == listType]
-        if ordered:
-            # Sort items according to item number
-            res.sort(key=lambda x: x.getItemNumber())
+        if useCatalog:
+            # execute the query using the portal_catalog
+            catalog = getToolByName(self, 'portal_catalog')
+            catalog_query = self.getRawQuery()
+            if listType:
+                catalog_query.append({'i': 'listType',
+                                      'o': 'plone.app.querystring.operation.selection.is',
+                                      'v': listType},)
+            if ordered:
+                query = queryparser.parseFormquery(self, catalog_query, sort_on=self.getSort_on())
+            else:
+                query = queryparser.parseFormquery(self, catalog_query)
+            brains = catalog(**query)
+            if uids:
+                brains = [brain for brain in brains if brain.UID in uids]
+            res = brains
+        else:
+            res = self.getField('items').get(self, **kwargs)
+            if uids:
+                member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
+                keptItems = []
+                for item in res:
+                    if item.UID() in uids and member.has_permission(View, item):
+                        keptItems.append(item)
+                res = keptItems
+            if listType:
+                res = [item for item in res if item.getListType() == listType]
+            if ordered:
+                # Sort items according to item number
+                res.sort(key=lambda x: x.getItemNumber())
         return res
 
     security.declarePublic('getJsItemUids')
@@ -1735,4 +1759,3 @@ registerType(Meeting, PROJECTNAME)
 
 ##code-section module-footer #fill in your manual code here
 ##/code-section module-footer
-

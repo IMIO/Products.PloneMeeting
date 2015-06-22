@@ -324,6 +324,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that display the item navigation widget -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-navigation-widget"
+        class=".views.ItemNavigationWidgetView"
+        template="templates/item_navigation_widget.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the view that display itemIsSigned widget -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
@@ -375,12 +384,7 @@
         class=".views.ObjectGoToView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
-    <browser:page
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        name="object_goto"
-        class=".views.ObjectGoToView"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
+
     <browser:page
         name="change-item-order"
         class=".views.ChangeItemOrderView"

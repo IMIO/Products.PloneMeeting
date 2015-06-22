@@ -36,15 +36,13 @@
         whose number is given by the user.</tal:comment>
 
     <form name="formGotoItem" tal:attributes="action python: context.absolute_url_path() + '/object_goto'">
-        <input type="hidden" name="objectId"/>
-        <input type="hidden" name="meetingUid"/>
-        <input type="hidden" name="idType" value="number"/>
+        <input type="hidden" name="uid"/>
     </form>
 
-<!--    <tal:comment replace="nothing">Show navigation between items of the same meeting</tal:comment>
+    <tal:comment replace="nothing">Show navigation between items of the same meeting</tal:comment>
     <tal:itemNavigation tal:condition="python: meeting">
-      <metal:itemNavigation  use-macro="here/@@navigate-macros/item"/>
-    </tal:itemNavigation>-->
+      <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
+    </tal:itemNavigation>
 
     <table width="100%">
       <tr valign="top">
@@ -415,11 +413,10 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
-<!--    <tal:comment replace="nothing">Show navigation between items of the same meeting</tal:comment>
     <tal:itemNavigation tal:condition="python: meeting">
-      <metal:itemNavigation  use-macro="here/@@navigate-macros/item"/>
+      <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
-    <br />-->
+    <br />
 
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
     <tal:itemInConfig condition="context/isDefinedInTool">

@@ -4008,33 +4008,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            sibling), the method returns None. If there is a sibling, but the
            user can't see it, the method returns False.
         '''
-        res = None
         sibling = None
         if self.hasMeeting():
             meeting = self.getMeeting()
-            itemUids = meeting.getRawItems()
-            if itemUids:
-                lastItemNumber = len(meeting.getRawItems())
-                itemNumber = self.getItemNumber(relativeTo='meeting')
-                if whichItem == 'previous':
-                    # Is a previous item available ?
-                    if itemNumber != 1:
-                        sibling = meeting.getItemByNumber(itemNumber-1)
-                elif whichItem == 'next':
-                    # Is a next item available ?
-                    if itemNumber != lastItemNumber:
-                        sibling = meeting.getItemByNumber(itemNumber+1)
-                elif whichItem == 'first':
-                    sibling = meeting.getItemByNumber(1)
-                elif whichItem == 'last':
-                    sibling = meeting.getItemByNumber(lastItemNumber)
-        if sibling:
-            user = self.portal_membership.getAuthenticatedMember()
-            if user.has_permission('View', sibling):
-                res = sibling.UID()
-            else:
-                res = False
-        return res
+            # use catalog query so returned items are really accessible by current user
+            brains = meeting.getItems(ordered=True, useCatalog=True)
+            itemUids = [brain.UID for brain in brains]
+            itemUid = self.UID()
+            itemUidIndex = itemUids.index(itemUid)
+            if whichItem == 'previous':
+                # Is a previous item available ?
+                if not itemUidIndex == 0:
+                    sibling = brains[itemUidIndex - 1].UID
+            elif whichItem == 'next':
+                # Is a next item available ?
+                if not itemUidIndex == len(itemUids) - 1:
+                    sibling = brains[itemUidIndex + 1].UID
+            elif whichItem == 'first':
+                sibling = brains[0].UID
+            elif whichItem == 'last':
+                sibling = brains[-1].UID
+
+        return sibling
 
     security.declarePublic('listCopyGroups')
     def listCopyGroups(self):
