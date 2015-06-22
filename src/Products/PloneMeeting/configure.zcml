@@ -191,7 +191,6 @@
   <five:deprecatedManageAddDelete class=".MeetingConfig.MeetingConfig" />
   <five:deprecatedManageAddDelete class=".MeetingUser.MeetingUser" />
   <five:deprecatedManageAddDelete class=".PodTemplate.PodTemplate" />
-  <five:deprecatedManageAddDelete class=".Searcher.Searcher" />
   <five:deprecatedManageAddDelete class=".ToolPloneMeeting.ToolPloneMeeting" />
 
   <!-- ##/code-section configure.zcml.header -->
