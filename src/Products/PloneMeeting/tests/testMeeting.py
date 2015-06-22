@@ -73,6 +73,48 @@ class testMeeting(PloneMeetingTestCase):
                                for item in meeting.getItems(ordered=True)],
                               expectedInsertOrderIndexes)
 
+    def test_pm_InsertItemOnListTypeThenProposingGroup(self):
+        '''Test inserting an item using the "on_list_type" then "on_proposing_group" sorting methods.'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
+                                                          'reverse': '0'},
+                                                         {'insertingMethod': 'on_proposing_groups',
+                                                          'reverse': '0'},))
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEquals([item.getId() for item in orderedItems],
+                          ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
+        # all these items are 'normal' items
+        self.assertEquals([item.getListType() for item in orderedItems],
+                          ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal'])
+        self.assertEquals([item.getProposingGroup() for item in orderedItems],
+                          ['developers', 'developers', 'developers', 'developers', 'vendors', 'vendors', 'vendors'])
+        # ok, now insert some late items using different proposingGroups
+        lateItem1 = self.create('MeetingItem')
+        lateItem1.setProposingGroup('vendors')
+        lateItem1.setPreferredMeeting(meeting.UID())
+        lateItem2 = self.create('MeetingItem')
+        lateItem2.setProposingGroup('developers')
+        lateItem2.setPreferredMeeting(meeting.UID())
+        lateItem3 = self.create('MeetingItem')
+        lateItem3.setProposingGroup('vendors')
+        lateItem3.setPreferredMeeting(meeting.UID())
+        lateItem4 = self.create('MeetingItem')
+        lateItem4.setProposingGroup('developers')
+        lateItem4.setPreferredMeeting(meeting.UID())
+        self.freezeMeeting(meeting)
+        self.presentItem(lateItem1)
+        self.presentItem(lateItem2)
+        self.presentItem(lateItem3)
+        self.presentItem(lateItem4)
+        # we now have late items all at the end of the meeting
+        self.assertEquals([item.getListType() for item in meeting.getItems(ordered=True)],
+                          ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal',
+                           'late', 'late', 'late', 'late'])
+        self.assertEquals([item.getProposingGroup() for item in orderedItems],
+                          ['developers', 'developers', 'developers', 'developers', 'vendors', 'vendors', 'vendors',
+                           'developers', 'developers', 'vendors', 'vendors'])
+
     def test_pm_InsertItemOnProposingGroupsWithDisabledGroup(self):
         '''Test that inserting an item using the "on_proposing_groups" sorting method
            in a meeting having items using a disabled proposing group and inserting an item

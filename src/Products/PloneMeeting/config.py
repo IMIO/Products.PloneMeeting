@@ -199,6 +199,7 @@ ITEM_ICON_COLORS = ("azur", "black", "green", "grey", "orange", "pink", "purple"
 # There are various ways to insert items into meetings
 ITEM_INSERT_METHODS = (  # Items are inserted:
     'at_the_end',  # at the end of meetings;
+    'on_list_type',  # depending on the item's listType, by default 'normal' or 'late';
     'on_categories',  # according to category order;
     'on_proposing_groups',  # according to proposing group order;
     'on_all_groups',  # according to all groups (among proposing group AND

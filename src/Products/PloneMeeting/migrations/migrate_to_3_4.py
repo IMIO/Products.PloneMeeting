@@ -183,6 +183,16 @@ class Migrate_To_3_4(Migrator):
             if action and not action.url_expr.endswith(' + "/searches_items"'):
                 action._setPropValue('url_expr', action.url_expr + ' + "/searches_items"')
 
+            logger.info('Moving to imio.dashboard : adding "on list type" as first value of "insertingMethodsOnAddItem"...')
+            insertingMethodsOnAddItem = list(cfg.getInsertingMethodsOnAddItem())
+            if not insertingMethodsOnAddItem[0]['insertingMethod'] == 'on_list_type':
+                insertingMethodsOnAddItem.insert(0, {'insertingMethod': 'on_list_type', 'reverse': '0'})
+                cfg.setInsertingMethodsOnAddItem(insertingMethodsOnAddItem)
+            tabId = '%s_action' % cfg.getId()
+            action = getattr(portal_tabs, tabId, None)
+            if action and not action.url_expr.endswith(' + "/searches_items"'):
+                action._setPropValue('url_expr', action.url_expr + ' + "/searches_items"')
+
         logger.info('Moving to imio.dashboard : removing view "meetingfolder_redirect_view" '
                     'from available views for "Folder"...')
         folderType = self.portal.portal_types.Folder

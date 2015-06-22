@@ -48,7 +48,7 @@ from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
+from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PMMessageFactory as _
@@ -62,7 +62,7 @@ from Products.PloneMeeting.utils import \
     getCurrentMeetingObject, checkPermission, sendMail, sendMailIfRelevant, \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
-    setFieldFromAjax, spanifyLink, transformAllRichTextFields, signatureNotAlone,\
+    setFieldFromAjax, transformAllRichTextFields, signatureNotAlone,\
     forceHTMLContentTypeForEmptyRichFields, workday, networkdays, cleanMemoize
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
 import logging
@@ -2525,7 +2525,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if insertMethod == 'on_categories':
+        if insertMethod == 'on_list_type':
+            # by default, 2 listTypes, 'normal' and 'late'
+            return len(self.listListTypes())
+        elif insertMethod == 'on_categories':
             return len(cfg.getCategories(onlySelectable=False))
         elif insertMethod in ('on_proposing_groups', 'on_all_groups'):
             return len(tool.getMeetingGroups(onlyActive=False))
@@ -2554,7 +2557,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           Find the order of given p_insertMethod.
         '''
         res = ''
-        if insertMethod == 'on_categories':
+        if insertMethod == 'on_list_type':
+            values = self.listListTypes().keys()
+            return values.index(self.getListType())
+        elif insertMethod == 'on_categories':
             # get the category order, pass onlySelectable to False so disabled categories
             # are taken into account also, so we avoid problems with freshly disabled categories
             # or when a category is restricted to a group a MeetingManager is not member of
