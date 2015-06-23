@@ -1126,13 +1126,10 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meetingParentFolder = meeting.getParentNode()
         self.assertTrue(set(meetingParentFolder.objectValues('MeetingItem')) == set(meeting.getItems()))
-        # as a non 'Manager', if 'wholeMeeting' is found in the REQUEST
-        # it will raise Unauthorized
-        self.request.set('wholeMeeting', True)
+        # if trying to remove a meeting containing items as non Manager, it will raise Unauthorized
         self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), meeting.UID())
-        # as a Manager, use the functionnality
+        # as a Manager, the meeting including items will be removed
         self.changeUser('admin')
-        self.request.set('wholeMeeting', True)
         # now if we remove the meeting, every items will be removed as well
         meeting.restrictedTraverse('@@delete_givenuid')(meeting.UID())
         # nothing left in the folder but the searches_* folders

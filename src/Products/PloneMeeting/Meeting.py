@@ -1637,7 +1637,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if item.meta_type == 'Meeting':
             membershipTool = getToolByName(item, 'portal_membership')
             member = membershipTool.getAuthenticatedMember()
-            if 'wholeMeeting' in item.REQUEST and member.has_role('Manager'):
+            if member.has_role('Manager'):
                 item.REQUEST.set('items_to_remove', item.getItems())
         BaseContent.manage_beforeDelete(self, item, container)
 

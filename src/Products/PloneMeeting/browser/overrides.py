@@ -464,7 +464,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 kwargs)
 
-    @ram.cache(__call___cachekey)
+    #@ram.cache(__call___cachekey)
     def __call__(self,
                  useIcons=True,
                  showTransitions=True,
@@ -498,6 +498,15 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         """
         if self.member.has_role('Manager'):
             return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
+
+    def renderOwnDelete(self):
+        """
+          If user is Manager, this action is not available, he will use the 'delete whole meeting'.
+        """
+        if self.member.has_role('Manager'):
+            return ''
+        else:
+            return super(MeetingActionsPanelView, self).renderOwnDelete()
 
 
 class ConfigActionsPanelView(ActionsPanelView):

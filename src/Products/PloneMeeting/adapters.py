@@ -303,8 +303,8 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
     """
       Manage the mayDelete for Meeting.
       - must have 'Delete objects' on the meeting;
-      - must be 'Manager' to remove 'wholeMeeting';
-      - meeting must be empty to be removed.
+      - if user is Manager, this will remove the meeting including items;
+      - if user is MeetingManager, the meeting must be empty to be removed.
     """
     def __init__(self, context):
         self.context = context
@@ -314,15 +314,12 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         if not super(MeetingContentDeletableAdapter, self).mayDelete():
             return False
 
-        if 'wholeMeeting' in self.context.REQUEST:
-            member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
-            # if we try to remove a 'Meeting' using the 'wholeMeeting' option
-            # we need to check that current user is a 'Manager'
-            if member.has_role('Manager'):
-                return True
-        else:
-            if not self.context.getRawItems():
-                return True
+        if not self.context.getRawItems():
+            return True
+
+        member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+        if member.has_role('Manager'):
+            return True
 
 
 class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):

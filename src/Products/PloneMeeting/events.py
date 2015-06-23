@@ -352,12 +352,12 @@ def onItemEditBegun(item, event):
 
 def onMeetingRemoved(meeting, event):
     '''When a meeting is removed, check if we need to remove every linked items,
-       this is the case if we have a 'wholeMeeting' value in the REQUEST.
+       this is the case if the current user is a Manager.
        Moreover, check that meeting is no more selected as preferred meeting for existing items.'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
-    if 'wholeMeeting' in meeting.REQUEST and 'items_to_remove' in meeting.REQUEST:
+    if 'items_to_remove' in meeting.REQUEST:
         logger.info('Removing %d item(s) linked to meeting at %s...' % (len(meeting.REQUEST.get('items_to_remove')),
                                                                         meeting.absolute_url()))
         # use an intermediate list to avoid changing value in REQUEST

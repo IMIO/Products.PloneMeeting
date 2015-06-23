@@ -14,6 +14,11 @@
   </roles>
   <permissions>
 <!-- ##code-section permissions -->
+    <permission name="eea.facetednavigation: Configure faceted"
+                acquire="False">
+      <role name="Manager"/>
+      <role name="Site Administrator"/>
+    </permission>
 <!-- ##/code-section permissions -->
   </permissions>
 </rolemap>
