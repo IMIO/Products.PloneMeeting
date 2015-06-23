@@ -152,6 +152,16 @@ class ToolInitializer:
             error = 'meetingAppDefaultView : No DashboardCollection with id %s' % meetingAppDefaultView
             raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
 
+        # now we can set values for dashboard...Filters fields as the 'searches' folder has been created
+        for fieldName in ('dashboardItemsListingsFilters',
+                          'dashboardMeetingAvailableItemsFilters',
+                          'dashboardMeetingLinkedItemsFilters'):
+            field = cfg.getField(fieldName)
+            # we want to validate the vocabulay, as if enforceVocabulary was True
+            error = field.validate_vocabulary(cfg, cfg.getField(field.getName()).get(cfg), {})
+            if error:
+                raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
+
 
 def isTestOrArchiveProfile(context):
     isTest = context.readDataFile("PloneMeeting_testing_marker.txt")

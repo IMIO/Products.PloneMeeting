@@ -1001,7 +1001,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listDashboardItemsListingsFilters',
         default=defValues.dashboardItemsListingsFilters,
-        enforceVocabulary=True,
+        enforceVocabulary=False,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1018,7 +1018,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listDashboardItemsListingsFilters',
         default=defValues.dashboardMeetingAvailableItemsFilters,
-        enforceVocabulary=True,
+        enforceVocabulary=False,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1035,7 +1035,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listDashboardItemsListingsFilters',
         default=defValues.dashboardMeetingLinkedItemsFilters,
-        enforceVocabulary=True,
+        enforceVocabulary=False,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
