@@ -698,11 +698,14 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         """ """
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
+        # some columns are displayed in the 'Prupose' column
+        itemsListVisibleColumns = [col for col in cfg.getItemsListVisibleColumns() if
+                                   not col in ('budget_infos', 'item_reference')]
         if self._displayingAvailableItems():
-            return (u'pretty_link', ) + cfg.getItemsListVisibleColumns() + (u'check_box_item', )
+            return (u'pretty_link', ) + itemsListVisibleColumns + (u'check_box_item', )
         else:
             return (u'listType', u'getItemNumber', u'pretty_link', ) + \
-                cfg.getItemsListVisibleColumns() + (u'check_box_item', )
+                itemsListVisibleColumns + (u'check_box_item', )
 
     security.declarePrivate('validate_date')
     def validate_date(self, value):

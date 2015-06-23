@@ -2708,6 +2708,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            information about an item.'''
         d = 'collective.eeafaceted.z3ctable'
         res = [
+            ("item_reference",
+                translate("item_reference_column", domain=d, context=self.REQUEST)),
             ("budget_infos",
                 translate("budget_infos_column", domain=d, context=self.REQUEST)),
             ("Creator",

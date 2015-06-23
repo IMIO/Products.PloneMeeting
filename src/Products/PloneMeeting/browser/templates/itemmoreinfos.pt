@@ -1,9 +1,15 @@
-<tal:comment replace="nothing">Macro that display more informations about item depending
-on what is defined in MeetingConfig.itemsListVisibleFields, when user click on the glasses icon action.
-Fields are only displayed if :
-- not empty;
-- not already in visibleColumns (that can be the case for budgetInfos);
-- for bufgetInfos, if budgetRelated is True.</tal:comment>
+<tal:reference condition="python: 'item_reference' in view.visibleColumns">
+    <p class="discreet"
+       tal:define="itemReference context/getItemReference"
+       tal:condition="itemReference"
+       tal:content="itemReference" />
+</tal:reference>
+<tal:budget condition="python: 'budget_infos' in view.visibleColumns and context.adapted().isPrivacyViewable() and context.getBudgetRelated() and not context.fieldIsEmpty('budgetInfos')">
+  <span tal:define="field python: context.getField('budgetInfos');
+                    mode string:view;">
+    <span metal:use-macro="context/widgets/field/macros/view" />
+  </span>
+</tal:budget>
 <span name="pmDescription"
       i18n:domain="PloneMeeting"
       class="pmMoreInfo"
@@ -20,9 +26,3 @@ Fields are only displayed if :
     </tal:loop>
 </span>
 
-<tal:budget condition="python: 'budget_infos' in view.visibleColumns and context.adapted().isPrivacyViewable() and context.getBudgetRelated() and not context.fieldIsEmpty('budgetInfos')">
-  <span tal:define="field python: context.getField('budgetInfos');
-                    mode string:view;">
-    <span metal:use-macro="context/widgets/field/macros/view" />
-  </span>
-</tal:budget>
