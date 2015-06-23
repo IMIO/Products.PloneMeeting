@@ -9,7 +9,8 @@
       <td><input type="text" size="1" name="moveValue"
                  tal:attributes="id string:value_moveAction_${itemNumber};
                                  value itemNumber;
-                                 onFocus string:onImageButtonFocus(${itemNumber});"/>
+                                 onFocus string:onImageButtonFocus(${itemNumber});
+                                 onKeyPress string:if (event.keyCode==13) moveItem(baseUrl='${context/absolute_url}', moveType='number', $$(this));"/>
       </td>
       <td>
         <img
@@ -17,7 +18,7 @@
            title="move_several" i18n:attributes="title" name="moveImageButton"
            tal:attributes="id string:moveAction_${itemNumber};
                            src string: ${view/portal_url}/arrowSeveral.png;
-                           onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', this);"/>
+                           onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${itemNumber}'));"/>
       </td>
     </tr>
   </table>

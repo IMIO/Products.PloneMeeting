@@ -747,8 +747,7 @@ function moveItem(baseUrl, moveType, tag) {
   // if moveType is 'number', get the number from the input tag
   moveNumber = '';
   if (moveType === 'number') {
-    input_tag = $('input#value_' + tag.id)
-    moveNumber = input_tag.attr('value');
+    moveNumber = tag.attr('value');
   }
   $.ajax({
     url: baseUrl + "/@@change-item-order",
