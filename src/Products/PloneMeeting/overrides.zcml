@@ -35,7 +35,7 @@
         name="imio.history.documentbyline"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class=".browser.overrides.PloneMeetingDocumentBylineViewlet"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        layer="imio.history.interfaces.IImioHistoryLayer"
         permission="zope2.View"
         />
 
