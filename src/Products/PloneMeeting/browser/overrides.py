@@ -262,7 +262,7 @@ class MeetingFacetedTableView(FolderFacetedTableView):
             column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
 
         # change parameters for actions, we want to showArrows
-        if colName == u'actions':
+        if colName == u'actions' and not self.context._displayingAvailableItems():
             column.params['showArrows'] = True
             column.params['totalNbOfItems'] = self.context.numberOfItems()
 
@@ -464,7 +464,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 kwargs)
 
-    #@ram.cache(__call___cachekey)
+    @ram.cache(__call___cachekey)
     def __call__(self,
                  useIcons=True,
                  showTransitions=True,
