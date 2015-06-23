@@ -425,9 +425,9 @@ class MeetingConfigDescriptor(Descriptor):
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
         # advanced filters shown
-        self.dashboardItemsListingsFilters = []
-        self.dashboardMeetingAvailableItemsFilters = []
-        self.dashboardMeetingLinkedItemsFilters = []
+        self.dashboardItemsListingsFilters = ('c4', 'c6', 'c7', 'c8', 'c9', 'c10', 'c11', 'c12', 'c13', 'c14', 'c15')
+        self.dashboardMeetingAvailableItemsFilters = ('c4', 'c10', 'c15')
+        self.dashboardMeetingLinkedItemsFilters = ('c4', 'c6', 'c7', 'c12', 'c13', 'c14', 'c15')
         # default batching value, this must be a multiple of "20"
         self.maxShownListings = "20"
         self.maxShownAvailableItems = "20"
