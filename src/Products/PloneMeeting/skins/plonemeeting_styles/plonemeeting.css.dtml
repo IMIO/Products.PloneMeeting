@@ -191,19 +191,25 @@ div.pm_search_no_result_info {
 /* Colors on states */
 .state-active, .label-state-inactive {color: green !important;}
 .state-inactive, .state-inactive a, .label-state-inactive {color: red !important; }
-.state-created, .state-itemcreated, .label-state-itemcreated, .state-advice_under_edit, .label-state-advice_under_edit { color: red !important; }
+.state-created, .label-state-created,
+.state-itemcreated, .label-state-itemcreated,
+.state-advice_under_edit, .label-state-advice_under_edit { color: red !important; }
 .state-proposed, .label-state-proposed { color: DarkOrange !important; }
 .state-validated, .label-state-validated { color: blue !important; }
 .state-presented, .label-state-presented { color: brown !important; }
 .state-itemfrozen, .label-state-itemfrozen,
 .state-frozen, .label-state-frozen { color: cornflowerBlue !important; }
 .state-returned_to_proposing_group, .label-state-returned_to_proposing_group, .state-advice_given, .label-state-advice_given { color: grey !important; }
-.state-itempublished, .label-state-itempublished, .state-published, .label-state-published { color: darkgoldenrod !important; }
-.state-accepted, .label-state-accepted { color: #64c168 !important; }
+.state-itempublished, .label-state-itempublished,
+.state-published, .label-state-published { color: darkgoldenrod !important; }
+.state-decided, .label-state-decided,
+.state-decisions_published, .label-state-decisions_published { color: black !important; }
+.state-accepted, .label-state-accepted,
 .state-confirmed, .label-state-confirmed { color: green !important; }
 .state-delayed, .label-state-delayed { color: grey !important; }
 .state-refused, .label-state-refused { color: violet !important; }
-.state-closed, .label-state-closed { color: black !important; }
+.state-closed, .label-state-closed { color: grey !important; }
+
 /* Colors on transitions, used in the item wf history */
 /* this correspond to the element creation */
 .transition-none { color: red !important; }

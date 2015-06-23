@@ -73,11 +73,11 @@ class ItemLinkedMeetingColumn(BaseColumn):
         if not self.getValue(item):
             return u'-'
         else:
-            catalog = getToolByName(item, 'portal_catalog')
-            tool = getToolByName(item, 'portal_plonemeeting')
-            meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0]
-            formattedMeetingDate = tool.formatMeetingDate(meeting, withHour=True)
-            return u'<a href="{0}">{1}</a>'.format(meeting.getURL(), formattedMeetingDate)
+            catalog = getToolByName(item, 'uid_catalog')
+            meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0].getObject()
+            prettyLinker = IPrettyLink(meeting)
+            pretty_link = prettyLinker.getLink()
+            return pretty_link
 
 
 class ItemNumberColumn(BrowserViewCallColumn):
