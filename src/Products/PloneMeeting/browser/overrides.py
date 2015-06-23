@@ -264,7 +264,7 @@ class MeetingFacetedTableView(FolderFacetedTableView):
         # change parameters for actions, we want to showArrows
         if colName == u'actions':
             column.params['showArrows'] = True
-            column.params['totalNbOfItems'] = self.batch.length
+            column.params['totalNbOfItems'] = self.context.numberOfItems()
 
         return column
 
