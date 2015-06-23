@@ -271,15 +271,17 @@ class PloneMeetingRedirectToAppView(BrowserView):
 
 class ObjectGoToView(BrowserView):
     """
-      Manage the fact of going to a given item uid.  This method is used
+      Manage go to a given itemNumber.  This method is used
       in the item navigation widget (go to previous item, go to next item, ...)
     """
-    def __call__(self, uid):
+    def __call__(self, itemNumber):
         """
-          p_uid is the UID the item to go to.
+          p_itemNumber is the number of the item we want to go to.  This item
+          is in the same meeting than self.context.
         """
         catalog = getToolByName(self.context, 'portal_catalog')
-        brains = catalog(UID=uid)
+        meeting = self.context.getMeeting()
+        brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=itemNumber)
         if not brains:
             self.context.plone_utils.addPortalMessage(
                 translate(msgid='item_number_not_accessible',
