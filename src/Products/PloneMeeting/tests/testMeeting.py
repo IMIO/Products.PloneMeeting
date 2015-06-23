@@ -108,7 +108,8 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(lateItem3)
         self.presentItem(lateItem4)
         # we now have late items all at the end of the meeting
-        self.assertEquals([item.getListType() for item in meeting.getItems(ordered=True)],
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEquals([item.getListType() for item in orderedItems],
                           ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal',
                            'late', 'late', 'late', 'late'])
         self.assertEquals([item.getProposingGroup() for item in orderedItems],
@@ -786,7 +787,8 @@ class testMeeting(PloneMeetingTestCase):
         # remove every presented items so we can
         # present them at once
         items = []
-        for item in meeting.getItems():
+        presentedItems = [item for item in meeting.getItems()]
+        for item in presentedItems:
             # save items uid so we will present them after
             items.append(item)
             self.do(item, 'backToValidated')
@@ -1068,8 +1070,6 @@ class testMeeting(PloneMeetingTestCase):
         itemUids.pop(2)
         itemUids.pop(0)
         # we removed 3 items
-        self.assertTrue(len(meeting.getItems(uids=itemUids)) == 4)
-        # ask a batch of 2 elements
         self.assertTrue(len(meeting.getItems(uids=itemUids)) == 4)
 
     def test_pm_GetItemByNumber(self):

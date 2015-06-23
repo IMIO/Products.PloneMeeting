@@ -360,7 +360,9 @@ def onMeetingRemoved(meeting, event):
     if 'wholeMeeting' in meeting.REQUEST and 'items_to_remove' in meeting.REQUEST:
         logger.info('Removing %d item(s) linked to meeting at %s...' % (len(meeting.REQUEST.get('items_to_remove')),
                                                                         meeting.absolute_url()))
-        for item in meeting.REQUEST.get('items_to_remove'):
+        # use an intermediate list to avoid changing value in REQUEST
+        items_to_remove = [item for item in meeting.REQUEST.get('items_to_remove')]
+        for item in items_to_remove:
             unrestrictedRemoveGivenObject(item)
         meeting.REQUEST.set('items_to_remove', ())
 

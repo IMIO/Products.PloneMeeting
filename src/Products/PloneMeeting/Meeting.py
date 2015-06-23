@@ -34,7 +34,6 @@ from zope.event import notify
 from zope.i18n import translate
 from plone.app.querystring.querybuilder import queryparser
 from plone.memoize import ram
-from plone.memoize.view import memoize
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
