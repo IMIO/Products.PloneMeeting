@@ -345,6 +345,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
            - different item or user;
            - user groups changed;
            - if item query_state is 'validated', check also if it is presentable;
+           - we receive some kwargs when we want to 'showArrows';
            - finally, invalidate if annotations changed.'''
         meetingModified = ''
         meeting = self.context.getMeeting()
