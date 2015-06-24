@@ -135,7 +135,7 @@
                     <td align="right" width="20px" class="noPadding">
                         <img i18n:attributes="title" title="Delete"
                              tal:attributes="src string: ${portal_url}/delete_icon.png;
-                                             onClick string:javascript:confirmDeleteObject(this, base_url='${context/absolute_url}', object_uid='${advice/advice_uid}');;"
+                                             onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${advice/advice_uid}', this);;"
                              onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                     </td>
                   </tr>

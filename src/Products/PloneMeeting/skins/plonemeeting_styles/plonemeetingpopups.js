@@ -1,6 +1,5 @@
 /* The jQuery here above will load a jQuery popup */
 
-
 // function that initialize advice add, edit or view advice popup
 function advicePopup() {
   $('a.link-overlay-pm-advice').prepOverlay({
@@ -10,6 +9,7 @@ function advicePopup() {
             onBeforeLoad : function (e) {
                 // CKeditor instances need to be initialized
                 launchCKInstances();
+                saveAdvice();
                 return true;
             },
             onClose : function (e) {
@@ -36,6 +36,57 @@ function advicePopup() {
   });
 };
 
+// when opened in an overlay, save advice using an ajax call, this is done for faceted
+function saveAdvice() {
+$('input#form-buttons-save').click(function(event) {
+  event.preventDefault();
+  var data = {};
+  $(this.form.elements).each(function(){
+    // special handling for CKeditor instances
+    if (CKEDITOR.instances[this.name]) {
+      data[this.name] = CKEDITOR.instances[this.name].getData();
+    }
+    else if (this.id.match("-0$") || this.id.match("-1$")) {
+      // pass some elements, like radio button subelements
+      data[this.name] = this.form.elements[this.name].value
+    }
+    else {
+      data[this.name] = this.value;
+    }
+    });
+  $.ajax({
+      type: 'POST',
+      url: this.form.action,
+      data: data,
+      cache: false,
+      async: false,
+      success: function(data) {
+        $('input#form-buttons-cancel').click();
+          // in a faceted?  Reload it...
+          if ($('#faceted-form').length) {
+            Faceted.URLHandler.hash_changed();
+          }
+          else {
+            // not in a faceted, refresh the page adding #adviceAndAnnexes if necessary
+            var href_location = window.location.href;
+            if (!href_location.match('#adviceAndAnnexes$')) {
+              href_location = document.baseURI + '#adviceAndAnnexes'
+              window.location.href = href_location;
+            }
+            else{
+              window.location.reload(true);
+            }
+          }
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        /*console.log(textStatus);*/
+        window.location.href = window.location.href;
+        },
+  });
+
+});
+}
+
 // prepare overlays for normal (non-ajax) pages
 // like meetingitem_view or overlays that you can raise from the portlet_plonemeeting
 jQuery(document).ready(function($) {
@@ -52,7 +103,6 @@ jQuery(document).ready(function($) {
     });
 });
 
-
 // prepare overlays in ajax frames
 // this method is made to initialize overlays in the ajax-frame
 // because they are not correctly initialized at page load
@@ -60,7 +110,6 @@ jQuery(document).ready(function($) {
 // containing the ajax-frame that only appear when the ajax-frame is loaded
 // "onmouseover" we initialize the overlays than remove the "onmouseover" event
 // so overlays are only initialized once...
-
 function initializePMOverlays(){
     // advice popup
     advicePopup();

@@ -220,10 +220,6 @@ def onAdviceAdded(advice, event):
     userId = advice.portal_membership.getAuthenticatedMember().getId()
     logger.info('Advice at %s created by "%s".' %
                 (advice.absolute_url_path(), userId))
-    # redirect to referer after add if it is not the edit form
-    http_referer = item.REQUEST['HTTP_REFERER']
-    if not http_referer.endswith('/edit'):
-        advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
 
 def onAdviceModified(advice, event):
@@ -242,15 +238,8 @@ def onAdviceModified(advice, event):
 
 def onAdviceEditFinished(advice, event):
     '''Called when a meetingadvice is edited and we are at the end of the editing process.'''
-    # redirect to referer after edit if it is not the edit form
-    # this can not be done on zope.lifecycleevent.IObjectModifiedEvent because
-    # it is too early and the redirect is not done, but in the plone.dexterity.events.EditFinishedEvent
-    # it works as expected ;-)
     item = advice.getParentNode()
     item.updateAdvices()
-    http_referer = item.REQUEST['HTTP_REFERER']
-    if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
-        advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
 
 def onAdviceRemoved(advice, event):
