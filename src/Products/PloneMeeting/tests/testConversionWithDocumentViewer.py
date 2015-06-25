@@ -101,9 +101,6 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'not_convertable')
         # a convertable format but an error during conversion, it adds a portal_message
         messages = IStatusMessage(self.request)
-        # we already have a message about faceted navigation enabled
-        self.assertEquals(len(messages.show()), 1)
-        self.assertTrue(messages.show()[-1].message == u'Faceted navigation enabled')
         self.annexFile = 'tests/file_errorDuringConversion.pdf'
         annex3 = self.addAnnex(item)
         # the element is convertable

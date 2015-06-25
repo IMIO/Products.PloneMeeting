@@ -2032,18 +2032,18 @@ class testMeetingItem(PloneMeetingTestCase):
         messages = IStatusMessage(self.request).show()
         # for now, just one message '
         self.assertTrue(len(messages) == 1)
-        self.assertTrue(messages[-1].message == u'Faceted navigation enabled')
+        self.assertTrue(messages[0].message == u'Faceted navigation enabled')
         view.toggle(takenOverByFrom='')
-        # now we have a message
+        # now we have the takenOverBy message
         messages = IStatusMessage(self.request).show()
-        self.assertTrue(len(messages) == 2)
+        self.assertTrue(len(messages) == 1)
         expectedMessage = translate("The item you tried to take over was already taken over in between by "
                                     "${fullname}. You can take it over now if you are sure that the other "
                                     "user do not handle it.",
                                     mapping={'fullname': 'pmVirtualReviewer1'},
                                     domain='PloneMeeting',
                                     context=self.request)
-        self.assertTrue(messages[1].message == expectedMessage)
+        self.assertTrue(messages[0].message == expectedMessage)
         # not changed
         self.assertTrue(item.getTakenOverBy() == 'pmVirtualReviewer1')
         # and a message is displayed

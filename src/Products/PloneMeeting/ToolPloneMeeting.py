@@ -731,7 +731,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             alsoProvides(obj, marker_interface)
         subtyper = getMultiAdapter((obj, self.REQUEST),
                                    name=u'faceted_subtyper')
+        response_location = self.REQUEST.RESPONSE.getHeader('location')
         subtyper.enable()
+        # cancel redirect
+        self.REQUEST.RESPONSE.status = 200
+        self.REQUEST.RESPONSE.setHeader('location', response_location)
+
         # use correct layout in the faceted
         IFacetedLayout(obj).update_layout('faceted-table-items')
         # show the left portlets
