@@ -1016,14 +1016,15 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 catalog_query.append({'i': 'listType',
                                       'o': 'plone.app.querystring.operation.selection.is',
                                       'v': listType},)
+            if uids:
+                catalog_query.append({'i': 'UID',
+                                      'o': 'plone.app.querystring.operation.selection.is',
+                                      'v': uids},)
             if ordered:
                 query = queryparser.parseFormquery(self, catalog_query, sort_on=self.getSort_on())
             else:
                 query = queryparser.parseFormquery(self, catalog_query)
-            brains = catalog(**query)
-            if uids:
-                brains = [brain for brain in brains if brain.UID in uids]
-            res = brains
+            res = catalog(**query)
         else:
             res = self.getField('items').get(self, **kwargs)
             if uids:
@@ -1038,15 +1039,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             if ordered:
                 # Sort items according to item number
                 res.sort(key=lambda x: x.getItemNumber())
-        return res
-
-    security.declarePublic('getJsItemUids')
-    def getJsItemUids(self):
-        '''Returns Javascript code for initializing a Javascript variable with
-           all item UIDs.'''
-        res = ''
-        for uid in self.getRawItems():
-            res += 'itemUids["%s"] = true;\n' % uid
         return res
 
     security.declarePublic('getItemByNumber')
@@ -1087,23 +1079,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     res.append(new_state_id)
                     new_state = meetingWF.states[new_state_id]
         return res
-
-    security.declarePublic('getBeforeFrozenState')
-    def getBeforeFrozenState(self):
-        '''Predecessor of state "frozen" in a meeting can be "published" or
-           "created", depending on workflow adaptations.
-           So get the workflow state and check where is leading
-           the 'backToXXX' leaving transition.'''
-        wfTool = getToolByName(self, 'portal_workflow')
-        meetingWF = wfTool.getWorkflowsFor(self)[0]
-        # get the 'frozen' state
-        if not 'frozen' in meetingWF.states:
-            return ''
-        frozenState = meetingWF.states['frozen']
-        for transition in frozenState.transitions:
-            if transition.startswith('backTo'):
-                return meetingWF.transitions[transition].new_state_id
-        return ''
 
     security.declareProtected("Modify portal content", 'insertItem')
     def insertItem(self, item, forceNormal=False):

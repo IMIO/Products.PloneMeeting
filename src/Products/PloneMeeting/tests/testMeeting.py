@@ -29,6 +29,7 @@ from DateTime.DateTime import _findLocalTimeZoneName
 
 from AccessControl import Unauthorized
 from zope.i18n import translate
+from Products.ZCatalog.Catalog import AbstractCatalogBrain
 
 from plone.app.textfield.value import RichTextValue
 from plone.app.querystring.querybuilder import queryparser
@@ -37,6 +38,7 @@ from plone.dexterity.utils import createContentInContainer
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
+from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import cleanRamCacheFor
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -1063,6 +1065,11 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         itemsInOrder = meeting.getItems(ordered=True)
         self.assertTrue(len(itemsInOrder) == 7)
+        # we have objects
+        self.assertTrue(isinstance(itemsInOrder[0], MeetingItem))
+        # items are ordered
+        self.assertEquals([item.getItemNumber() for item in itemsInOrder],
+                          [1, 2, 3, 4, 5, 6, 7])
         itemUids = [item.UID() for item in itemsInOrder]
 
         # remove some items UID then pass it to getItems
@@ -1071,6 +1078,22 @@ class testMeeting(PloneMeetingTestCase):
         itemUids.pop(0)
         # we removed 3 items
         self.assertTrue(len(meeting.getItems(uids=itemUids)) == 4)
+        # we can specify the listType
+        self.assertTrue(len(meeting.getItems(listType='normal')) == 7)
+        self.assertTrue(len(meeting.getItems(listType='late')) == 0)
+
+        # can also use catalog
+        brainsInOrder = meeting.getItems(ordered=True, useCatalog=True)
+        self.assertTrue(len(brainsInOrder) == 7)
+        # we have brains
+        self.assertTrue(isinstance(brainsInOrder[0], AbstractCatalogBrain))
+        # items are ordered
+        self.assertEquals([brain.getItemNumber for brain in brainsInOrder],
+                          [1, 2, 3, 4, 5, 6, 7])
+        self.assertTrue(len(meeting.getItems(uids=itemUids, useCatalog=True)) == 4)
+        # we can specify the listType
+        self.assertTrue(len(meeting.getItems(listType='normal', useCatalog=True)) == 7)
+        self.assertTrue(len(meeting.getItems(listType='late', useCatalog=True)) == 0)
 
     def test_pm_GetItemByNumber(self):
         '''Test the Meeting.getItemByNumber method.'''
