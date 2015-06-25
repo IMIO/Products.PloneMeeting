@@ -30,6 +30,7 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
 from Products.PloneMeeting.columns import ItemNumberColumn
 from Products.PloneMeeting.columns import MeetingCheckBoxColumn
@@ -147,15 +148,27 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
 
 class PMFacetedContainerView(FacetedContainerView):
     '''
-      Override to disable border on the meetingFolder view.
+      Override to disable border on the meetingFolder view and to redirect to correct pmFolder
+      in case a user is sent to the pmFolder of another user.
     '''
 
     def __init__(self, context, request):
+        """Hide the green bar on the faceted if not in the configuration."""
         super(PMFacetedContainerView, self).__init__(context, request)
-        # hide the green bar on the faceted if not in the configuration
         if not 'portal_plonemeeting' in self.context.absolute_url() and \
            not IMeeting.providedBy(self.context):
             self.request.set('disable_border', 1)
+
+    def __call__(self):
+        """Make sure a user, even a Manager that is not the Zope Manager is redirected
+           to it's own pmFolder if it is on the pmFolder of another user."""
+        if not check_zope_admin():
+            if self.context.getProperty('meeting_config') and \
+               not self.context.getOwner().getId() == getToolByName(self.context, 'portal_membership').getAuthenticatedMember():
+                tool = getToolByName(self.context, 'portal_plonemeeting')
+                userPMFolder = tool.getPloneMeetingFolder(self.context.getProperty('meeting_config'))
+                self.request.RESPONSE.redirect(userPMFolder.absolute_url())
+        return super(PMFacetedContainerView, self).__call__()
 
 
 class PMRenderTermView(RenderTermView):
