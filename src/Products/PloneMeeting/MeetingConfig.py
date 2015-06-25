@@ -3103,101 +3103,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
             collection.reindexObject()
 
-    def _synchSearches(self, folder=None):
-        """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
-           every user folder for this MeetingConfig will be synchronized.
-           We will :
-           - remove every relevant folders from the given p_folder (folders searches_items, ...);
-           - we will copy the searches_* folders from the configuration to the p_folder;
-           - we will copy the facetednav annotation from the MeetingConfig.searches and
-             MeetingConfig.searches_* folders to the corresponding folders in p_folder;
-           - we will update the default for the collection widget."""
-
-        # use uid_catalog to be sure to find the element
-        uid_catalog = getToolByName(self, 'uid_catalog')
-
-        folders = []
-        # synchronize onl one folder
-        if folder:
-            folders = [folder, ]
-        else:
-            # synchronize every user folders
-            portal = getToolByName(self, 'portal_url').getPortalObject()
-            for userFolder in portal.Members.objectValues():
-                mymeetings = getattr(userFolder, 'mymeetings', None)
-                if not mymeetings:
-                    continue
-                meetingFolder = getattr(mymeetings, self.getId(), None)
-                if not meetingFolder:
-                    continue
-                folders.append(meetingFolder)
-
-        for folder in folders:
-            logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
-            # remove searches_* folders from the given p_folder
-            subFolderIds = [folderId for folderId in self.searches.objectIds() if folderId.startswith('searches_')]
-            toDelete = []
-            for folderId in subFolderIds:
-                if folderId in folder.objectIds():
-                    toDelete.append(folderId)
-            folder.manage_delObjects(toDelete)
-
-            # copy searches_* folder from the MeetingConfig to the p_folder
-            copiedData = self.searches.manage_copyObjects(ids=subFolderIds)
-            folder.manage_pasteObjects(copiedData)
-
-            # copy facetednav ann from config to p_folder and sub_folders
-            def _copyFacetedCriteriaFor(sourceFolder, destFolder):
-                """ """
-                config_faceted_ann = list(IAnnotations(sourceFolder)['FacetedCriteria'])
-                # make new criteria out of existing one because copying annotation would
-                # create references to these criteria and not not ones
-                folder_faceted_ann = []
-                for criterion in config_faceted_ann:
-                    folder_faceted_ann.append(Criterion(**criterion.__dict__))
-                if 'FacetedCriteria' in IAnnotations(destFolder):
-                    del IAnnotations(destFolder)['FacetedCriteria']
-                IAnnotations(destFolder)['FacetedCriteria'] = PersistentList(folder_faceted_ann)
-            _copyFacetedCriteriaFor(self.searches, folder)
-            for subFolderId in subFolderIds:
-                subFolderConfig = getattr(self.searches, subFolderId)
-                subFolderUser = getattr(folder, subFolderId)
-                _copyFacetedCriteriaFor(subFolderConfig, subFolderUser)
-
-            # update the default collection
-            current_default_id = u''
-            criteria = ICriteria(self.searches).criteria
-            # find the id of the default collection
-            for criterion in criteria:
-                if criterion.widget == CollectionWidget.widget_type:
-                    brains = uid_catalog(UID=criterion.default)
-                    if brains:
-                        collection = brains[0].getObject()
-                        current_default_id = collection.getId()
-            new_default_uid = ''
-            if current_default_id:
-                new_default_uid = getattr(folder.searches_items, current_default_id).UID()
-            # update folder and folder.searches_items
-            self._updateDefaultCollectionFor(folder, new_default_uid)
-            self._updateDefaultCollectionFor(folder.searches_items, new_default_uid)
-            # for other subFolders, make sure there is no default
-            for subFolderId in subFolderIds:
-                if subFolderId == 'searches_items':
-                    continue
-                self._updateDefaultCollectionFor(getattr(folder, subFolderId), '')
-
-    def _updateDefaultCollectionFor(self, folderObj, default_uid):
-        """Use p_default_uid as the default collection selected
-           for the CollectionWidget used on p_folderObj."""
-        tool = getToolByName(self, 'portal_plonemeeting')
-        # make sure the folder is a facetednav, it should always be the case but...
-        if not folderObj.getLayout() == 'facetednavigation_view':
-            tool._enableFacetedFor(folderObj)
-        criteria = ICriteria(folderObj).criteria
-        for criterion in criteria:
-            if criterion.widget == CollectionWidget.widget_type:
-                criterion.default = default_uid
-
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId):
         '''Returns the name of the action used for the cloneToOtherMC
            functionnality'''
@@ -4269,6 +4174,111 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 advice['isConfidential'] = adviceConfidentialityDefault
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
+
+    security.declarePublic('synchSearches')
+    def synchSearches(self, folder=None):
+        """Action that launch self._synchSearches."""
+        if not self.isManager(self, realManagers=True):
+            raise Unauthorized
+
+        self._synchSearches()
+        self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
+
+    def _synchSearches(self, folder=None):
+        """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
+           every user folder for this MeetingConfig will be synchronized.
+           We will :
+           - remove every relevant folders from the given p_folder (folders searches_items, ...);
+           - we will copy the searches_* folders from the configuration to the p_folder;
+           - we will copy the facetednav annotation from the MeetingConfig.searches and
+             MeetingConfig.searches_* folders to the corresponding folders in p_folder;
+           - we will update the default for the collection widget."""
+
+        # use uid_catalog to be sure to find the element
+        uid_catalog = getToolByName(self, 'uid_catalog')
+
+        folders = []
+        # synchronize only one folder
+        if folder:
+            folders = [folder, ]
+        else:
+            # synchronize every user folders
+            portal = getToolByName(self, 'portal_url').getPortalObject()
+            for userFolder in portal.Members.objectValues():
+                mymeetings = getattr(userFolder, 'mymeetings', None)
+                if not mymeetings:
+                    continue
+                meetingFolder = getattr(mymeetings, self.getId(), None)
+                if not meetingFolder:
+                    continue
+                folders.append(meetingFolder)
+
+        for folder in folders:
+            logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
+            # remove searches_* folders from the given p_folder
+            subFolderIds = [folderId for folderId in self.searches.objectIds() if folderId.startswith('searches_')]
+            toDelete = []
+            for folderId in subFolderIds:
+                if folderId in folder.objectIds():
+                    toDelete.append(folderId)
+            folder.manage_delObjects(toDelete)
+
+            # copy searches_* folder from the MeetingConfig to the p_folder
+            copiedData = self.searches.manage_copyObjects(ids=subFolderIds)
+            folder.manage_pasteObjects(copiedData)
+
+            # copy facetednav ann from config to p_folder and sub_folders
+            def _copyFacetedCriteriaFor(sourceFolder, destFolder):
+                """ """
+                config_faceted_ann = list(IAnnotations(sourceFolder)['FacetedCriteria'])
+                # make new criteria out of existing one because copying annotation would
+                # create references to these criteria and not not ones
+                folder_faceted_ann = []
+                for criterion in config_faceted_ann:
+                    folder_faceted_ann.append(Criterion(**criterion.__dict__))
+                if 'FacetedCriteria' in IAnnotations(destFolder):
+                    del IAnnotations(destFolder)['FacetedCriteria']
+                IAnnotations(destFolder)['FacetedCriteria'] = PersistentList(folder_faceted_ann)
+            _copyFacetedCriteriaFor(self.searches, folder)
+            for subFolderId in subFolderIds:
+                subFolderConfig = getattr(self.searches, subFolderId)
+                subFolderUser = getattr(folder, subFolderId)
+                _copyFacetedCriteriaFor(subFolderConfig, subFolderUser)
+
+            # update the default collection
+            current_default_id = u''
+            criteria = ICriteria(self.searches).criteria
+            # find the id of the default collection
+            for criterion in criteria:
+                if criterion.widget == CollectionWidget.widget_type:
+                    brains = uid_catalog(UID=criterion.default)
+                    if brains:
+                        collection = brains[0].getObject()
+                        current_default_id = collection.getId()
+            new_default_uid = ''
+            if current_default_id:
+                new_default_uid = getattr(folder.searches_items, current_default_id).UID()
+            # update folder and folder.searches_items
+            self._updateDefaultCollectionFor(folder, new_default_uid)
+            self._updateDefaultCollectionFor(folder.searches_items, new_default_uid)
+            # for other subFolders, make sure there is no default
+            for subFolderId in subFolderIds:
+                if subFolderId == 'searches_items':
+                    continue
+                self._updateDefaultCollectionFor(getattr(folder, subFolderId), '')
+
+    def _updateDefaultCollectionFor(self, folderObj, default_uid):
+        """Use p_default_uid as the default collection selected
+           for the CollectionWidget used on p_folderObj."""
+        tool = getToolByName(self, 'portal_plonemeeting')
+        # make sure the folder is a facetednav, it should always be the case but...
+        if not folderObj.getLayout() == 'facetednavigation_view':
+            tool._enableFacetedFor(folderObj)
+        criteria = ICriteria(folderObj).criteria
+        for criterion in criteria:
+            if criterion.widget == CollectionWidget.widget_type:
+                criterion.default = default_uid
 
     def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
         '''This returns meetings that are still accepting items.'''
