@@ -54,27 +54,32 @@
     <property name="permissions">
      <element value="Manage portal"/>
     </property>
+    <property name="visible">True</property>
    </object>
    <object name="copy" meta_type="CMF Action">
     <property name="permissions">
      <element value="Manage portal"/>
     </property>
+    <property name="visible">True</property>
    </object>
    <object name="paste" meta_type="CMF Action">
     <property name="permissions">
      <element value="Manage portal"/>
     </property>
+    <property name="visible">True</property>
    </object>
    <object name="delete" meta_type="CMF Action">
     <property name="permissions">
      <element value="Manage portal"/>
     </property>
+    <property name="visible">True</property>
    </object>
    <object name="documentviewer_convert" meta_type="CMF Action">
     <property name="icon_expr">string:$portal_url/documentviewer_convert.png</property>
     <property name="permissions">
      <element value="Manage portal"/>
     </property>
+    <property name="visible">True</property>
    </object>
   </object>
 
