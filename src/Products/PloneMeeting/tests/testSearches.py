@@ -504,27 +504,44 @@ class testSearches(PloneMeetingTestCase):
             self.meetingConfig.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
             logger = logging.getLogger('PloneMeeting: testing')
             performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+        itemTypeName = self.meetingConfig.getItemTypeName()
         # create 2 items
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
         self.do(item1, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
         self.do(item2, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        self.failIf(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', ''))
+        adapter = getAdapter(self.meetingConfig,
+                             ICompoundCriterionFilter,
+                             name='items-to-validate-of-every-reviewer-levels-and-lower-levels')
+        self.assertEquals(adapter.query,
+                          {'review_state': ['unknown_review_state']})
+        # now do the query
+        # this adapter is not used by default, but is intended to be used with
+        # the "searchitemstovalidate" collection so use it with it
+        collection = self.meetingConfig.searches.searches_items.searchitemstovalidate
+        patchedQuery = list(collection.query)
+        patchedQuery[0]['v'] = 'items-to-validate-of-every-reviewer-levels-and-lower-levels'
+        collection.query = patchedQuery
+        self.failIf(collection.getQuery())
         # as first level user, he will see items
         self.changeUser('pmReviewerLevel1')
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 2)
+        self.assertEquals(adapter.query,
+                          {'portal_type': itemTypeName,
+                           'reviewProcessInfo': ['developers__reviewprocess__proposed']})
+
+        self.failUnless(len(collection.getQuery()) == 2)
         # as second level user, he will also see items because items are from lower reviewer levels
         self.changeUser('pmReviewerLevel2')
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 2)
+        self.failUnless(len(collection.getQuery()) == 2)
 
         # now propose item1, both items are still viewable to 'pmReviewerLevel2', but 'pmReviewerLevel1'
         # will only see item of 'his' highest hierarchic level
         self.proposeItem(item1)
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 2)
+        self.failUnless(len(collection.getQuery()) == 2)
         self.changeUser('pmReviewerLevel1')
-        self.failUnless(len(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')) == 1)
-        self.failUnless(self.meetingConfig.searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels('', '', '', '')[0].UID == item2.UID())
+        self.failUnless(len(collection.getQuery()) == 1)
+        self.failUnless(collection.getQuery()[0].UID == item2.UID())
 
 
 def test_suite():

@@ -81,6 +81,10 @@
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-validate-of-highest-hierarchic-level" />
   <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-validate-of-every-reviewer-levels-and-lower-levels" />
+  <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToValidateOfMyReviewerGroupsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-validate-of-my-reviewer-groups" />

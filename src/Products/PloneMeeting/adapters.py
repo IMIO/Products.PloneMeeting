@@ -674,6 +674,59 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapte
                 'review_state': review_state}
 
 
+class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''This will check for user highest reviewer level of each of his groups and return these items and
+           items of lower reviewer levels.
+           This search works if the workflow manage reviewer levels where higher reviewer level
+           can validate lower reviewer levels EVEN IF THE USER IS NOT IN THE CORRESPONDING PLONE SUBGROUP.
+           For example with a 3 levels reviewer workflow, called review1 (lowest level), review2 and review3 (highest level) :
+           - reviewer1 may validate items in reviewer1;
+           - reviewer2 may validate items in reviewer1 and reviewer2;
+           - reviewer3 may validate items in reviewer1, reviewer2 and reviewer3.
+           So get highest hierarchic level of each group of the user and take into account lowest levels too.'''
+        # search every highest reviewer level for each group of the user
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        groupsTool = getToolByName(self.context, 'portal_groups')
+        userMeetingGroups = self.tool.getGroupsForUser()
+        member = membershipTool.getAuthenticatedMember()
+        groupIds = groupsTool.getGroupsForPrincipal(member)
+        reviewProcessInfos = []
+        for mGroup in userMeetingGroups:
+            ploneGroups = []
+            # find Plone groups of the mGroup the user is in
+            mGroupId = mGroup.getId()
+            for groupId in groupIds:
+                if groupId.startswith('%s_' % mGroupId):
+                    ploneGroups.append(groupId)
+            # now that we have Plone groups of the mGroup
+            # we can get highest hierarchic level and find sub levels
+            highestReviewerLevel = self.cfg._highestReviewerLevel(ploneGroups)
+            if not highestReviewerLevel:
+                continue
+            foundLevel = False
+            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
+                if not foundLevel and not reviewer_suffix == highestReviewerLevel:
+                    continue
+                foundLevel = True
+                # specific management for workflows using the 'pre_validation'/'pre_validation_keep_reviewer_permissions' wfAdaptation
+                if reviewer_suffix == 'reviewers' and \
+                   ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+                   'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+                    review_state = 'prevalidated'
+                reviewProcessInfos.append('%s__reviewprocess__%s' % (mGroupId,
+                                                                     review_state))
+        if not reviewProcessInfos:
+            # in this case, we do not want to display a result
+            # we return an unknown review_state
+            return {'review_state': ['unknown_review_state', ]}
+
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'reviewProcessInfo': reviewProcessInfos}
+
+
 class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
 
     @property
