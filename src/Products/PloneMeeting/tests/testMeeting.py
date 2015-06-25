@@ -1260,6 +1260,40 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(not self.member.has_role('MeetingManager', meeting))
         self.assertTrue(not meetingManager_rendered_actions_panel == actions_panel())
 
+    def test_pm_GetNextMeeting(self):
+        """Test the getNextMeeting method that will return the next meeting
+           regarding the meeting date."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2015/01/15'))
+        # no next meeting for now
+        self.assertFalse(meeting.getNextMeeting())
+        # create meetings after
+        meeting2 = self.create('Meeting', date=DateTime('2015/01/20'))
+        meeting3 = self.create('Meeting', date=DateTime('2015/01/25'))
+        self.assertEquals(meeting.getNextMeeting(), meeting2)
+        self.assertEquals(meeting2.getNextMeeting(), meeting3)
+        self.assertFalse(meeting3.getNextMeeting())
+
+    def test_pm_GetPreviousMeeting(self):
+        """Test the getPreviousMeeting method that will return the previous meeting
+           regarding the meeting date and within a given interval that is 60 days by default."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2015/01/15'))
+        # no previous meeting for now
+        self.assertFalse(meeting.getPreviousMeeting())
+        # create meetings after
+        meeting2 = self.create('Meeting', date=DateTime('2014/12/25'))
+        meeting3 = self.create('Meeting', date=DateTime('2014/12/20'))
+        self.assertEquals(meeting.getPreviousMeeting(), meeting2)
+        self.assertEquals(meeting2.getPreviousMeeting(), meeting3)
+        self.assertFalse(meeting3.getPreviousMeeting())
+
+        # very old meeting, previous meeting is searched by default with max 60 days
+        meeting4 = self.create('Meeting', date=meeting3.getDate() - 61)
+        # still no meeting
+        self.assertFalse(meeting3.getPreviousMeeting())
+        self.assertEquals(meeting3.getPreviousMeeting(searchMeetingsInterval=61), meeting4)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
