@@ -121,7 +121,7 @@ class testWorkflows(PloneMeetingTestCase):
         # @@delete_givenuid added one statusMessage about BeforeDeleteException
         messages = statusMessages.show()
         self.assertEquals(len(messages), 1)
-        self.assertEquals(messages.show()[0].message, u'can_not_delete_meetingitem_container')
+        self.assertEquals(messages[0].message, u'can_not_delete_meetingitem_container')
         # The folder should not have been deleted...
         self.failUnless(hasattr(pmManagerFolder, item.getId()))
         # Try with a meeting in it now
