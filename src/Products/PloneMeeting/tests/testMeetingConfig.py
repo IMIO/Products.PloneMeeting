@@ -42,10 +42,22 @@ from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import WriteHarmlessConfig
+from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
 
 
 class testMeetingConfig(PloneMeetingTestCase):
     '''Tests the MeetingConfig class methods.'''
+
+    def test_pm_Validate_shortName(self):
+        '''Test the MeetingConfig.shortName validate method.
+           This validates that the shortName is unique across every MeetingConfigs.'''
+        cfg = self.meetingConfig
+        cfg2Name = self.meetingConfig2.getShortName()
+        # can validate it's own shortName
+        self.assertFalse(cfg.validate_shortName(cfg.getShortName()))
+        # can validate an unknown shortName
+        self.assertFalse(cfg.validate_shortName('other-short-name'))
+        self.assertTrue(cfg.validate_shortName(cfg2Name) == DUPLICATE_SHORT_NAME % cfg2Name)
 
     def test_pm_Validate_customAdvisersEnoughData(self):
         '''Test the MeetingConfig.customAdvisers validate method.
