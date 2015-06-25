@@ -25,9 +25,9 @@ import transaction
 from BTrees.OOBTree import OOBTree
 from zope.component import queryUtility
 from zope.i18n import translate
-from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import \
-    WorkflowPolicyConfig_id
+from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
+from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -350,26 +350,22 @@ def postInstall(context):
 def _configureCKeditor(site):
     '''Make sure CKeditor is the new default editor used by everyone...'''
     logger.info('Defining CKeditor as the new default editor for every users and configuring it (styles)...')
-    try:
-        # this will install collective.ckeditor if it is not already the case...
-        site.cputils_configure_ckeditor(custom='plonemeeting')
-        # remove every styles defined by default and add the "highlight red" style if not already done...
-        cke_props = site.portal_properties.ckeditor_properties
-        if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
-            enc = site.portal_properties.site_properties.getProperty('default_charset')
-            msg = translate('ckeditor_style_highlight_in_red',
-                            domain='PloneMeeting',
-                            context=site.REQUEST).encode('utf-8')
-            cke_props.menuStyles = \
-                unicode("[\n%s\n{ name : '%s'\t\t, element : 'span', "
-                        "attributes : { 'class' : 'highlight-red' } },\n]\n" %
-                        (CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg),
-                        enc)
-        # activate SCAYT auto-start
-        cke_props.enableScaytOnStartup = True
-    except AttributeError:
-        logger.warning("Could not configure CKeditor for every users, make sure Products.CPUtils is correctly "
-                       "installed and that the cputils_configure_ckeditor method is available")
+    # this will install collective.ckeditor if it is not already the case...
+    configure_ckeditor(site, custom='plonemeeting')
+    # remove every styles defined by default and add the "highlight red" style if not already done...
+    cke_props = site.portal_properties.ckeditor_properties
+    if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
+        enc = site.portal_properties.site_properties.getProperty('default_charset')
+        msg = translate('ckeditor_style_highlight_in_red',
+                        domain='PloneMeeting',
+                        context=site.REQUEST).encode('utf-8')
+        cke_props.menuStyles = \
+            unicode("[\n%s\n{ name : '%s'\t\t, element : 'span', "
+                    "attributes : { 'class' : 'highlight-red' } },\n]\n" %
+                    (CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg),
+                    enc)
+    # activate SCAYT auto-start
+    cke_props.enableScaytOnStartup = True
 
 
 def _congfigureSafeHtml(site):
