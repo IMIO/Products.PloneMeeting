@@ -11,7 +11,7 @@
         <a id="newItemCreation" href="#"
            style="display: inline;"
            tal:condition="python: not cfg.getItemCreatedOnlyUsingTemplate()"
-           tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=Meeting${cfg/getShortName};">
+           tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=MeetingItem${cfg/getShortName};">
             <img tal:attributes="src string: $portal_url/new.png"
               title="create_meeting_item" i18n:attributes="title" />
         </a>

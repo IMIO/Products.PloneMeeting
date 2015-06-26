@@ -202,9 +202,9 @@ class PMRenderCategoryView(RenderCategoryView):
         self.tool = getToolByName(self, 'portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-        if category[0] == 'meetingitems':
+        if category[0] == 'searches_items':
             return ViewPageTemplateFile("templates/category_meetingitems.pt")(self)
-        if category[0] == 'meetings':
+        if category[0] == 'searches_meetings':
             self.member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
             return ViewPageTemplateFile("templates/category_meetings.pt")(self)
         else:

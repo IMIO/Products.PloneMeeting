@@ -16,7 +16,7 @@
             <a style="display: inline;"
                tal:condition="python: cfg"
                href="#"
-               tal:attributes="href meetingFolder/absolute_url">
+               tal:attributes="href meetingFolder/searches_items/absolute_url">
             <img style="cursor:pointer"
                  tal:attributes="src string:$portal_url/pm_home.png;
                                  title cfg/getName"/>
