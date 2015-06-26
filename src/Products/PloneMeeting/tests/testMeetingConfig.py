@@ -26,6 +26,8 @@ from collections import OrderedDict
 
 from DateTime import DateTime
 
+from AccessControl import Unauthorized
+from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -1087,6 +1089,57 @@ class testMeetingConfig(PloneMeetingTestCase):
         itemInConfigBrain = self.portal.portal_catalog(UID=itemInConfig.UID())[0]
         self.assertTrue(itemBrain.getIcon == getIcon(item)())
         self.assertTrue(itemInConfigBrain.getIcon == getIcon(itemInConfig)())
+
+    def test_pm_CanNotRemoveUsedMeetingConfig(self):
+        '''While removing a MeetingConfig, it should raise if it is used somewhere...'''
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
+
+        # a user can not delete the MeetingConfig
+        self.changeUser('pmManager')
+        self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId, ])
+
+        # fails if items left in the meetingConfig
+        # we have recurring items
+        self.changeUser('admin')
+        self.assertTrue(cfg.getItems())
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects([cfgId, ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetingitem_container')
+        self._removeConfigObjectsFor(cfg)
+
+        # fails if a meeting exists
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date='2008/06/23 15:39:00')
+        self.changeUser('admin')
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects([cfgId, ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetingconfig_meeting')
+        self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
+
+        # fails if an item exists
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.changeUser('admin')
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects([cfgId, ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetingconfig_meetingitem')
+        self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
+
+        # fails if another element then searches_xxx folder exists in the pmFolders
+        self.changeUser('pmManager')
+        pmFolder = self.tool.getPloneMeetingFolder(cfgId)
+        afileId = pmFolder.invokeFactory('File', id='afile')
+        afile = getattr(pmFolder, afileId)
+        self.changeUser('admin')
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects([cfgId, ])
+        self.assertEquals(cm.exception.message, 'can_not_delete_meetingconfig_meetingfolder')
+        self.portal.restrictedTraverse('@@delete_givenuid')(afile.UID())
+
+        self.assertTrue(cfgId in self.tool.objectIds())
+        self.tool.manage_delObjects([cfgId, ])
+        self.assertFalse(cfgId in self.tool.objectIds())
 
 
 def test_suite():

@@ -3708,13 +3708,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 cache[key] = data
         return data
 
-    security.declarePublic('listRoles')
-    def listRoles(self):
-        res = []
-        for role in self.acl_users.portal_role_manager.listRoleIds():
-            res.append((role, role))
-        return DisplayList(tuple(res))
-
     security.declarePublic('getAvailablePodTemplates')
     def getAvailablePodTemplates(self, obj):
         '''Returns the list of POD templates that the currently logged in user
@@ -3789,6 +3782,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             membershipTool = getToolByName(self, 'portal_membership')
             members = membershipTool.getMembersFolder()
             meetingFolderId = self.getId()
+            searches_folder_ids = [info[0] for info in self.subFoldersInfo[TOOL_FOLDER_SEARCHES][2]]
             for member in members.objectValues():
                 # Get the right meetingConfigFolder
                 if hasattr(member, ROOT_FOLDER):
@@ -3796,7 +3790,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     if hasattr(root_folder, meetingFolderId):
                         # We found the right folder, check if it is empty
                         configFolder = getattr(root_folder, meetingFolderId)
-                        if configFolder.objectValues():
+                        objectIds = configFolder.objectIds()
+                        if set(objectIds).difference(searches_folder_ids):
                             raise BeforeDeleteException("can_not_delete_meetingconfig_meetingfolder")
             # If everything is OK, we can remove every meetingFolder
             for member in members.objectValues():
