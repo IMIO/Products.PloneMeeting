@@ -1822,10 +1822,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.add(current_group.getId(), current_group.getName())
         # add a 'make_a_choice' value when the item is in the tool
         if isDefinedInTool:
-            res.insert(0, ('', translate('make_a_choice',
-                           domain='PloneMeeting',
-                           context=self.REQUEST)))
-        return res
+            res.add('', translate('make_a_choice',
+                                  domain='PloneMeeting',
+                                  context=self.REQUEST).encode('utf-8'))
+        return res.sortedByValue()
 
     security.declarePublic('listAssociatedGroups')
     def listAssociatedGroups(self):
