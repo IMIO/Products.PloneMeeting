@@ -2756,6 +2756,47 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(i4.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i5UID])
         self.assertTrue(i5.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i4UID])
 
+    def test_pm_Completeness(self):
+        '''Test the item-completeness view and relevant methods in MeetingItem.'''
+        # by default, a MeetingMember can not evaluate completeness
+        # user must have role ITEM_COMPLETENESS_EVALUATORS, like MeetingManager
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.getCompleteness() == 'completeness_not_yet_evaluated')
+        # item completeness history is empty
+        self.assertTrue(not item.completeness_changes_history)
+        itemCompletenessView = item.restrictedTraverse('item-completeness')
+        changeCompletenessView = item.restrictedTraverse('change-item-completeness')
+        self.assertFalse(item.adapted().mayEvaluateCompleteness())
+        self.assertFalse(itemCompletenessView.listSelectableCompleteness())
+
+        # a MeetingReviewer may evaluate completeness if he is able the edit the item
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.adapted().mayEvaluateCompleteness())
+        selectableCompleness = itemCompletenessView.listSelectableCompleteness()
+        self.assertTrue(selectableCompleness)
+        # can not 'ask evaluation again' as not in 'completeness_incomplete'
+        self.assertFalse(item.adapted().mayAskCompletenessEvalAgain())
+
+        # may not evaluate if may not edit
+        self.validateItem(item)
+        self.assertFalse(item.adapted().mayEvaluateCompleteness())
+        self.assertFalse(itemCompletenessView.listSelectableCompleteness())
+
+        # as pmManager, may ask evaluation again if it is 'completeness_incomplete'
+        self.changeUser('pmManager')
+        self.assertTrue(item.adapted().mayEvaluateCompleteness())
+        self.assertFalse(item.adapted().mayAskCompletenessEvalAgain())
+        self.request['new_completeness_value'] = 'completeness_incomplete'
+        self.request.form['form.submitted'] = True
+        changeCompletenessView()
+        self.assertTrue(item.getCompleteness() == 'completeness_incomplete')
+        self.assertTrue(item.adapted().mayEvaluateCompleteness())
+        self.assertTrue(item.adapted().mayAskCompletenessEvalAgain())
+        self.assertTrue(item.completeness_changes_history and
+                        item.completeness_changes_history[0]['action'] == 'completeness_incomplete')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

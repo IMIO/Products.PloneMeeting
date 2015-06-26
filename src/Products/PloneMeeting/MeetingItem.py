@@ -109,29 +109,6 @@ class MeetingItemWorkflowConditions:
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
-    def _getDateOfAction(self, obj, action):
-        '''Returns the date of the last p_action that was performed on p_obj.'''
-        # Get the last validation date of p_obj
-        wfs = obj.portal_workflow.getWorkflowsFor(obj)
-        # This should never happen...
-        if not wfs:
-            return
-        objWfName = wfs[0].getId()
-        if objWfName in obj.workflow_history:
-            history = obj.workflow_history[objWfName]
-        else:
-            return
-        i = len(history)-1
-        while i >= 0:
-            if history[i]['action'] == action:
-                return history[i]['time']
-            i -= 1
-        # Manage the absence of some actions due to workflow adaptations.
-        if action == 'publish':
-            return self._getDateOfAction(obj, 'freeze')
-        elif action == 'itempublish':
-            return self._getDateOfAction(obj, 'itemfreeze')
-
     security.declarePublic('mayPropose')
     def mayPropose(self):
         '''We may propose an item if the workflow permits it and if the
