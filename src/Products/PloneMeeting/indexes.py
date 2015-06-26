@@ -142,9 +142,7 @@ def isDefinedInTool(obj):
       Do items defined in the tool visible by catalog searches only
       when an admin is in the tool...
     """
-    if not obj.meta_type == 'MeetingItem':
-        return False
-    return bool(obj.isDefinedInTool())
+    return ('portal_plonemeeting' in obj.absolute_url())
 
 
 @indexer(IItem)

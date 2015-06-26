@@ -123,15 +123,9 @@ class ItemTemplateView(BrowserView):
         # now compute folder paths so only these paths will be passed to buildFolderTree
         # and this method will not consider any other folders
         for itemTemplate in itemTemplates:
-            path = itemTemplate.getPath()
-            # remove last part of the path, aka the item template id
-            path = path.rstrip(itemTemplate.getId)
-            path = path.replace(itemTemplatesPath + '/', '')
-            splittedPath = path.split('/')
-            for i in range(len(splittedPath)):
-                folderPathToKeep = '/'.join([itemTemplatesPath, ] + splittedPath[0:i+1]).rstrip('/')
-                if not folderPathToKeep in folderPathsToKeep:
-                    folderPathsToKeep.append(folderPathToKeep)
+            folderPath = '/'.join(itemTemplate.getPath().split('/')[0:-1])
+            if not folderPath in folderPathsToKeep:
+                folderPathsToKeep.append(folderPath)
         # first query was to find items, but now, we want to query items and folders...
         query.pop('meta_type')
         query['path'] = {'query': folderPathsToKeep, 'depth': 1}
