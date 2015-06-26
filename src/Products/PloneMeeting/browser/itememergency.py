@@ -64,7 +64,8 @@ class ChangeItemEmergencyView(BrowserView):
             # check that given 'new_emergency_value' is available in the field vocabulary
             # if not available, just raise Unauthorized
             new_emergency_value = self.request.get('new_emergency_value')
-            if not new_emergency_value in self.context.listEmergencies().keys():
+            itemEmergencyView = self.context.restrictedTraverse('@@item-emergency')
+            if not new_emergency_value in itemEmergencyView.listSelectableEmergencies():
                 raise Unauthorized
             self.context.setEmergency(new_emergency_value)
             # add a line to the item's emergency_change_history

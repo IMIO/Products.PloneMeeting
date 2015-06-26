@@ -53,8 +53,8 @@ from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidg
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
-    getCustomSchemaFields, getFieldContent, prepareSearchValue, \
-    forceHTMLContentTypeForEmptyRichFields, computeCertifiedSignatures
+    getCustomSchemaFields, getFieldContent, forceHTMLContentTypeForEmptyRichFields, \
+    computeCertifiedSignatures
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem

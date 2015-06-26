@@ -2797,6 +2797,65 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.completeness_changes_history and
                         item.completeness_changes_history[0]['action'] == 'completeness_incomplete')
 
+        # ask evaluation again
+        self.backToState(item, 'itemcreated')
+        self.changeUser('pmCreator1')
+        self.request['new_completeness_value'] = 'completeness_evaluation_asked_again'
+        changeCompletenessView()
+        self.assertTrue(item.getCompleteness() == 'completeness_evaluation_asked_again')
+        # trying to change completeness if he can not will raise Unauthorized
+        self.assertFalse(item.adapted().mayEvaluateCompleteness())
+        self.request['new_completeness_value'] = 'completeness_complete'
+        self.assertRaises(Unauthorized, changeCompletenessView)
+
+    def test_pm_Emergency(self):
+        '''Test the item-emergency view and relevant methods in MeetingItem.'''
+        # by default, every user able to edit the item may ask emergency
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.getEmergency() == 'no_emergency')
+        self.assertTrue(item.adapted().mayAskEmergency())
+        # only MeetingManager may accept/refuse emergency
+        self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
+        # item emergency history is empty
+        self.assertTrue(not item.emergency_changes_history)
+        itemEmergencyView = item.restrictedTraverse('item-emergency')
+        changeEmergencyView = item.restrictedTraverse('change-item-emergency')
+        # ask emergency
+        self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['emergency_asked'])
+        self.request['new_emergency_value'] = 'emergency_asked'
+        self.request.form['form.submitted'] = True
+        changeEmergencyView()
+        self.assertTrue(item.getEmergency() == 'emergency_asked')
+        # history was updated
+        self.assertTrue(item.emergency_changes_history and
+                        item.emergency_changes_history[0]['action'] == 'emergency_asked')
+        # when asked, asker can do nothing else but back to 'no_emergency'
+        self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['no_emergency'])
+        self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
+        self.validateItem(item)
+        # no more editable, can do nothing
+        self.assertFalse(itemEmergencyView.listSelectableEmergencies().keys())
+
+        # MeetingManager may accept/refuse emergency
+        self.changeUser('pmManager')
+        self.assertTrue(item.adapted().mayAskEmergency())
+        self.assertTrue(item.adapted().mayAcceptOrRefuseEmergency())
+        # accept emergency
+        self.request['new_emergency_value'] = 'emergency_accepted'
+        changeEmergencyView()
+        self.assertTrue(item.getEmergency() == 'emergency_accepted')
+        # history was updated
+        self.assertTrue(item.emergency_changes_history and
+                        item.emergency_changes_history[1]['action'] == 'emergency_accepted')
+
+        # trying to change emergency if can not will raise Unauthorized
+        self.changeUser('pmCreator1')
+        self.assertFalse(item.adapted().mayAskEmergency())
+        self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
+        self.request['new_emergency_value'] = 'no_emergency'
+        self.assertRaises(Unauthorized, changeEmergencyView)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
