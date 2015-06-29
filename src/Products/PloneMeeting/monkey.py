@@ -33,7 +33,6 @@ def DefinedInToolAwareCatalog():
             if 'livesearch_reply' in path_translated or \
                '@@search' in path_translated or \
                'updated_search' in path_translated or \
-               ('portal_plonemeeting' in path_translated and 'searches' in path_translated) or \
                'search_form' in path_translated or \
                '@@faceted_query' in path_translated:
                 kw['isDefinedInTool'] = False
@@ -48,7 +47,7 @@ def DefinedInToolAwareCatalog():
                         self.REQUEST['PUBLISHED']
                     context_url = context.absolute_url()
                     if ('portal_plonemeeting' in context_url or 'portal_plonemeeting' in repr(context)) and \
-                       ('itemtemplates' in context_url or 'recurringitems' in context_url):
+                       ('itemtemplates' in context_url or 'searches' in context_url):
                         kw['isDefinedInTool'] = True
 
         # for other cases, the 'isDefinedInTool' index is not in the
