@@ -57,6 +57,7 @@ indexInfos = {
     'indexAdvisers': ('KeywordIndex', {}),
     'previous_review_state': ('FieldIndex', {}),
     'sentToInfos': ('KeywordIndex', {}),
+    'sendToAuthority': ('FieldIndex', {}),
     'isDefinedInTool': ('BooleanIndex', {}),
     'templateUsingGroups': ('KeywordIndex', {}),
     'getCompleteness': ('KeywordIndex', {}),

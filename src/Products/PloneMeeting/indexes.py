@@ -124,6 +124,8 @@ def sentToInfos(obj):
       We append :
       - __clonable_to to a meetingConfig id the item is clonable to;
       - __cloned_to to a meetingConfig id the item is cloned to.
+      An item that does not have to be send to another meetingConfig
+      will receive the 'not_to_be_cloned_to' value so we can filter it out.
     """
     res = []
     clonableTo = obj.getOtherMeetingConfigsClonableTo()
@@ -133,7 +135,20 @@ def sentToInfos(obj):
             res.append(cfgId + '__clonable_to')
     for cfgId in clonedTo:
         res.append(cfgId + '__cloned_to')
+    if not clonableTo and not clonedTo:
+        res.append('not_to_be_cloned_to')
     return res
+
+
+@indexer(IMeetingItem)
+def sendToAuthority(obj):
+    """
+      Index the MeetingItem.sendToAuthority to be searchable in a faceted navigation.
+    """
+    if obj.getSendToAuthority():
+        return '1'
+    else:
+        return '0'
 
 
 @indexer(IItem)

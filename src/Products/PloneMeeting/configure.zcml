@@ -142,6 +142,7 @@
   <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
   <adapter name="sortable_title" factory=".indexes.sortable_title" />
+  <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
 
   <!-- add the blob field to MeetingFile -->
   <adapter name="plone.app.blob.subtypes.file"
@@ -177,6 +178,9 @@
            name="Products.PloneMeeting.vocabularies.askedadvicesvocabulary" />
   <utility component=".vocabularies.SentToInfosVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
+  <utility component=".vocabularies.SendToAuthorityVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary" />
+
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary" />

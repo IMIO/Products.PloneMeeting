@@ -38,7 +38,7 @@ class ItemCategoriesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-
+        """ """
         tool = getToolByName(context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         categories = cfg.getCategories(onlySelectable=False)
@@ -59,7 +59,7 @@ class ItemProposingGroupsVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-
+        """ """
         tool = getToolByName(context, 'portal_plonemeeting')
         groups = tool.getMeetingGroups(onlyActive=False)
         res = []
@@ -79,7 +79,7 @@ class ItemProposingGroupAcronymsVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-
+        """ """
         tool = getToolByName(context, 'portal_plonemeeting')
         groups = tool.getMeetingGroups(onlyActive=False)
         res = []
@@ -99,7 +99,7 @@ class MeetingReviewStatesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-
+        """ """
         wfTool = getToolByName(context, 'portal_workflow')
         tool = getToolByName(context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -122,7 +122,7 @@ class ItemReviewStatesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-
+        """ """
         wfTool = getToolByName(context, 'portal_workflow')
         tool = getToolByName(context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -145,7 +145,7 @@ class CreatorsVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-
+        """ """
         catalog = getToolByName(context, 'portal_catalog')
         membershipTool = getToolByName(context, 'portal_membership')
         res = []
@@ -166,7 +166,7 @@ class MeetingDatesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-
+        """ """
         catalog = getToolByName(context, 'portal_catalog')
         tool = getToolByName(context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -188,7 +188,7 @@ class AskedAdvicesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-
+        """ """
         res = []
         catalog = getToolByName(context, 'portal_catalog')
         tool = getToolByName(context, 'portal_plonemeeting')
@@ -210,10 +210,17 @@ class SentToInfosVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-
+        """ """
         res = []
         tool = getToolByName(context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        # the 'not to be cloned anywhere' term
+        res.append(SimpleTerm('not_to_be_cloned_to',
+                              'not_to_be_cloned_to',
+                              safe_unicode(translate('not_to_be_cloned_to_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
         for cfgInfo in cfg.getMeetingConfigsToCloneTo():
             cfgId = cfgInfo['meeting_config']
             cfgTitle = getattr(tool, cfgId).getName()
@@ -230,3 +237,27 @@ class SentToInfosVocabulary(object):
         return SimpleVocabulary(res)
 
 SentToInfosVocabularyFactory = SentToInfosVocabulary()
+
+
+class SendToAuthorityVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        res = []
+        res.append(SimpleTerm('1',
+                              '1',
+                              safe_unicode(translate('to_be_send_to_authority_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+        res.append(SimpleTerm('0',
+                              '0',
+                              safe_unicode(translate('not_to_be_send_to_authority_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+
+        return SimpleVocabulary(res)
+
+SendToAuthorityVocabularyFactory = SendToAuthorityVocabulary()
