@@ -841,7 +841,12 @@ def getLastEvent(obj, transition=None, notBefore='transfer'):
        everything that occurrred before the last "transfer" transition.
        If p_transition is None, the very last event is returned'''
     wfTool = getToolByName(obj, 'portal_workflow')
-    history = obj.workflow_history[wfTool.getWorkflowsFor(obj)[0].getId()]
+
+    try:
+        history = obj.workflow_history[wfTool.getWorkflowsFor(obj)[0].getId()]
+    except KeyError:
+        # if relevant workflow is not found in the history, return None
+        return None
     if not transition:
         return history[-1]
     i = len(history)-1
