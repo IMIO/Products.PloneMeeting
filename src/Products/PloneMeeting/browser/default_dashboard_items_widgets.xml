@@ -289,7 +289,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c16" i18n:attributes="title">
+  <criterion name="c17" i18n:attributes="title">
    <property name="widget">checkbox</property>
    <property name="title">Item up/down workflow</property>
    <property name="position">top</property>
