@@ -46,8 +46,8 @@ def DefinedInToolAwareCatalog():
                         self.REQUEST['PUBLISHED'].context or \
                         self.REQUEST['PUBLISHED']
                     context_url = context.absolute_url()
-                    if ('portal_plonemeeting' in context_url or 'portal_plonemeeting' in repr(context)) and \
-                       ('itemtemplates' in context_url or 'searches' in context_url):
+                    #s show elements in the configuration
+                    if ('portal_plonemeeting' in context_url or 'portal_plonemeeting' in repr(context)):
                         kw['isDefinedInTool'] = True
 
         # for other cases, the 'isDefinedInTool' index is not in the
