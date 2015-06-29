@@ -344,13 +344,16 @@ class ChangeItemOrderView(BrowserView):
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_did_not_move',
                               domain='PloneMeeting',
-                              context=self.request))
+                              context=self.request),
+                    type='warning')
                 return
             if (move < 1) or (move > nbOfItems):
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_move',
+                              mapping={'nbOfItems': nbOfItems},
                               domain='PloneMeeting',
-                              context=self.request))
+                              context=self.request),
+                    type='warning')
                 return
 
         # Move the item
