@@ -77,20 +77,21 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item2 = meeting.getItems(ordered=True)[1]
         item3 = meeting.getItems(ordered=True)[2]
         item4 = meeting.getItems(ordered=True)[3]
+        item5 = meeting.getItems(ordered=True)[4]
         self.assertEquals(item1.getItemNumber(), 1)
         self.assertEquals(item2.getItemNumber(), 2)
         self.assertEquals(item3.getItemNumber(), 3)
         self.assertEquals(item4.getItemNumber(), 4)
+        self.assertEquals(item5.getItemNumber(), 5)
         view = item2.restrictedTraverse('@@change-item-order')
         # move the item2 to position 3
-        # in fact we move it to the position before entered number
-        # so to put an item in position 3, we mean, put it before the number 4
-        view('number', 4)
+        view('number', 3)
         self.assertEquals(item2.getItemNumber(), 3)
         # and other items position are adapted
         self.assertEquals(item1.getItemNumber(), 1)
         self.assertEquals(item3.getItemNumber(), 2)
         self.assertEquals(item4.getItemNumber(), 4)
+        self.assertEquals(item5.getItemNumber(), 5)
         # put the item2 back to position 2
         view('up')
         self.assertEquals(item2.getItemNumber(), 2)
@@ -98,6 +99,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item1.getItemNumber(), 1)
         self.assertEquals(item3.getItemNumber(), 3)
         self.assertEquals(item4.getItemNumber(), 4)
+        self.assertEquals(item5.getItemNumber(), 5)
         # no valid number does not cause crash
         view('number', 0)
         # nothing changed
@@ -119,6 +121,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item1.getItemNumber(), 2)
         self.assertEquals(item2.getItemNumber(), 3)
         self.assertEquals(item3.getItemNumber(), 4)
+        self.assertEquals(item5.getItemNumber(), 5)
         # change the item to the same place, a message is displayed
         messages = IStatusMessage(self.request)
         view('number', item4.getItemNumber())

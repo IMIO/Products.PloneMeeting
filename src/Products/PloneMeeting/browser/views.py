@@ -340,13 +340,13 @@ class ChangeItemOrderView(BrowserView):
         # Calibrate and validate moveValue
         if not isDelta:
             # Is this move allowed ?
-            if move in (self.context.getItemNumber(), self.context.getItemNumber()+1):
+            if move == self.context.getItemNumber():
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_did_not_move',
                               domain='PloneMeeting',
                               context=self.request))
                 return
-            if (move < 1) or (move > (nbOfItems+1)):
+            if (move < 1) or (move > nbOfItems):
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_move',
                               domain='PloneMeeting',
@@ -386,9 +386,9 @@ class ChangeItemOrderView(BrowserView):
                     for item in itemsList:
                         itemNumber = item.getItemNumber()
                         if itemNumber == oldIndex:
-                            item.setItemNumber(move-1)
+                            item.setItemNumber(move)
                             item.reindexObject(idxs=['getItemNumber'])
-                        elif (itemNumber > oldIndex) and (itemNumber < move):
+                        elif (itemNumber > oldIndex) and (itemNumber <= move):
                             item.setItemNumber(itemNumber-1)
                             item.reindexObject(idxs=['getItemNumber'])
 
