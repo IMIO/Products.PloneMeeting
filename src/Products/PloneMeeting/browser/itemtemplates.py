@@ -52,7 +52,7 @@ class ItemTemplateView(BrowserView):
         '''The user wants to create an item from a item template that lies in
            this meeting configuration. Item id is in the request.'''
         catalog = getToolByName(self.context, 'portal_catalog')
-        templateItem = catalog(UID=templateUID)[0].getObject()
+        templateItem = catalog(UID=templateUID, isDefinedInTool=True)[0].getObject()
         # Create the new item by duplicating the template item
         membershipTool = getToolByName(self.context, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()

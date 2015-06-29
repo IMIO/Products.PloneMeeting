@@ -42,7 +42,7 @@ class testWorkflows(PloneMeetingTestCase):
        to do so (getSecurityManager().checkPermission).'''
 
     def test_pm_CreateItem(self):
-        '''Creates an item (in "created" state) and checks that only
+        '''Creates an item (in "itemcreated" state) and checks that only
            allowed persons may see this item.'''
         # Create an item as creator
         self.changeUser('pmCreator2')
@@ -52,13 +52,15 @@ class testWorkflows(PloneMeetingTestCase):
         # May the creator see his item ?
         self.failUnless(self.hasPermission('View', item))
         self.failUnless(self.hasPermission('Access contents information', item))
-        myItems = self.meetingConfig.searches.searches_items.searchmyitems.getQuery()
+        pmFolder = self.tool.getPloneMeetingFolder(self.meetingConfig.getId())
+        myItems = pmFolder.searches_items.searchmyitems.getQuery()
         self.assertEquals(len(myItems), 1)
         self.changeUser('pmManager')
         # The manager may not see the item yet except if item is already 'validated'
         # this could be the case if item initial_state is 'validated' or when using
         # wfAdaptation 'items_come_validated'
-        collection = self.meetingConfig.searches.searches_items.searchallitems
+        pmFolder = self.tool.getPloneMeetingFolder(self.meetingConfig.getId())
+        collection = pmFolder.searches_items.searchallitems
         self.request['PATH_TRANSLATED'] = collection.absolute_url()
         allItems = collection.getQuery()
         numberOfFoundItems = 0
