@@ -28,13 +28,26 @@ def DefinedInToolAwareCatalog():
             providing the hidden=true/all keyword.
         """
         if not 'isDefinedInTool' in kw:
-            kw['isDefinedInTool'] = False
+            path_translated = self.REQUEST.get('PATH_TRANSLATED', '')
+            # do not return items of tool if using application
+            if 'livesearch_reply' in path_translated or \
+               '@@search' in path_translated or \
+               'updated_search' in path_translated or \
+               'search_form' in path_translated or \
+               '@@faceted_query' in path_translated:
+                kw['isDefinedInTool'] = False
             # if show_inactive is True, it means that we are using a layout
             # like folder_listing or folder_contents, check if we are in the configuration
-            if 'portal_plonemeeting' in repr(self) or \
-               'portal_plonemeeting' in repr(self.REQUEST):
-                kw['isDefinedInTool'] = True
-
+            elif kw.get('show_inactive', False):
+                # only query elements of the config if we are in the config...
+                kw['isDefinedInTool'] = False
+                if hasattr(self.REQUEST, 'PUBLISHED'):
+                    context = hasattr(self.REQUEST['PUBLISHED'], 'context') and \
+                        self.REQUEST['PUBLISHED'].context or \
+                        self.REQUEST['PUBLISHED']
+                    context_url = context.absolute_url()
+                    if ('portal_plonemeeting' in context_url or 'portal_plonemeeting' in repr(context)):
+                        kw['isDefinedInTool'] = True
         # for other cases, the 'isDefinedInTool' index is not in the
         # query so elements defined in the tool and not defined in the tool are taken into account
         return self.__pm_old_searchResults(REQUEST, **kw)
