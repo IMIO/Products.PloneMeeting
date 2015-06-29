@@ -261,3 +261,27 @@ class SendToAuthorityVocabulary(object):
         return SimpleVocabulary(res)
 
 SendToAuthorityVocabularyFactory = SendToAuthorityVocabulary()
+
+
+class DownOrUpWorkflowAgainVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        res = []
+        res.append(SimpleTerm('down',
+                              'down',
+                              safe_unicode(translate('item_down_wf_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+        res.append(SimpleTerm('up',
+                              'up',
+                              safe_unicode(translate('item_up_wf_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+
+        return SimpleVocabulary(res)
+
+DownOrUpWorkflowAgainVocabularyFactory = DownOrUpWorkflowAgainVocabulary()

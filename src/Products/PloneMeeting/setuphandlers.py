@@ -58,6 +58,7 @@ indexInfos = {
     'previous_review_state': ('FieldIndex', {}),
     'sentToInfos': ('KeywordIndex', {}),
     'sendToAuthority': ('FieldIndex', {}),
+    'downOrUpWorkflowAgain': ('FieldIndex', {}),
     'isDefinedInTool': ('BooleanIndex', {}),
     'templateUsingGroups': ('KeywordIndex', {}),
     'getCompleteness': ('KeywordIndex', {}),

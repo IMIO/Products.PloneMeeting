@@ -4451,6 +4451,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                  title)
         return tool.getColoredLink(item, showColors=True, contentValue=title)
 
+    security.declarePrivate('downOrUpWorkflowAgain')
+    def downOrUpWorkflowAgain(self):
+        """Was current item already in same review_state before?
+           And if so, is it up or down the workflow?"""
+        res = None
+        if not self.hasMeeting() and not self.queryState() == 'validated':
+            # down the workflow, the last transition was a backTo... transition
+            lastEvent = getLastEvent(self)
+            if lastEvent['action']:
+                if lastEvent['action'].startswith('back'):
+                    res = "down"
+                else:
+                    # up the workflow for at least second times and not linked to a meeting
+                    # check if last event was already made in item workflow_history
+                    tool = getToolByName(self, 'portal_plonemeeting')
+                    cfg = tool.getMeetingConfig(self)
+                    history = self.workflow_history[cfg.getItemWorkflow()]
+                    i = 0
+                    for event in history:
+                        if event['action'] == lastEvent['action']:
+                            i = i + 1
+                            if i > 1:
+                                res = "up"
+                                break
+        return res
+
     security.declarePublic('showVotes')
     def showVotes(self):
         '''Must I show the "votes" tab on this item?'''

@@ -437,27 +437,15 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
 
         # display icons if element is down the workflow or up for at least second time...
         # display it only for items before state 'validated'
-        if not self.context.hasMeeting() and not itemState == 'validated':
-            # down the workflow, the last transition was a backTo... transition
-            lastEvent = self.context.getLastEvent()
-            if lastEvent['action']:
-                if lastEvent['action'].startswith('back'):
-                    res.append(('wf_down.png', translate('icon_help_wf_down',
-                                                         domain="PloneMeeting",
-                                                         context=self.request)))
-                else:
-                    # up the workflow for at least second times and not linked to a meeting
-                    # check if last event was already made in item workflow_history
-                    history = self.context.workflow_history[cfg.getItemWorkflow()]
-                    i = 0
-                    for event in history:
-                        if event['action'] == lastEvent['action']:
-                            i = i + 1
-                            if i > 1:
-                                res.append(('wf_up.png', translate('icon_help_wf_up',
-                                                                   domain="PloneMeeting",
-                                                                   context=self.request)))
-                                break
+        downOrUpWorkflowAgain = self.context.downOrUpWorkflowAgain()
+        if downOrUpWorkflowAgain == "down":
+            res.append(('wf_down.png', translate('icon_help_wf_down',
+                                                 domain="PloneMeeting",
+                                                 context=self.request)))
+        elif downOrUpWorkflowAgain == "up":
+            res.append(('wf_up.png', translate('icon_help_wf_up',
+                                               domain="PloneMeeting",
+                                               context=self.request)))
 
         # In some cases, it does not matter if an item is inMeeting or not.
         if 'oralQuestion' in usedItemAttributes:
