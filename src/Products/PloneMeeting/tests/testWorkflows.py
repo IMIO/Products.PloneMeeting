@@ -61,7 +61,8 @@ class testWorkflows(PloneMeetingTestCase):
         # wfAdaptation 'items_come_validated'
         pmFolder = self.tool.getPloneMeetingFolder(self.meetingConfig.getId())
         collection = pmFolder.searches_items.searchallitems
-        self.request['PATH_TRANSLATED'] = collection.absolute_url()
+        self.request['PATH_TRANSLATED'] = "{0}/{1}".format(pmFolder.searches_items.absolute_url(),
+                                                           pmFolder.searches_items.getLayout())
         allItems = collection.getQuery()
         numberOfFoundItems = 0
         if item.queryState() == 'validated':

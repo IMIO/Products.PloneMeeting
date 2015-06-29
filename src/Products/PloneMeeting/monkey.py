@@ -34,6 +34,7 @@ def DefinedInToolAwareCatalog():
                '@@search' in path_translated or \
                'updated_search' in path_translated or \
                'search_form' in path_translated or \
+               'facetednavigation_view' in path_translated or \
                '@@faceted_query' in path_translated:
                 kw['isDefinedInTool'] = False
             # if show_inactive is True, it means that we are using a layout
