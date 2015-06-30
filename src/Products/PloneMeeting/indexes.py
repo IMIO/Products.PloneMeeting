@@ -235,4 +235,5 @@ def indexAdvisers(obj):
             res.append('delay__' + groupId + suffix)
         else:
             res.append(groupId + suffix)
+    res.sort()
     return res
