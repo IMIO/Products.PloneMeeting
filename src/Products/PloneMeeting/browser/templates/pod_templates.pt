@@ -30,6 +30,13 @@
           if ($('input[name="select_item"]').length === uids.length) {
             uids = [];
           }
+          // pass the facetedquery if we used it, aka not only the 2 default criteria 'b_start' and 'resultsPerPage'
+          if (Object.keys(Faceted.Query).length > 2) {
+            theForm.facetedQuery.value = JSON.stringify(Faceted.Query);
+          }
+          else {
+            theForm.facetedQuery.value = "";
+          }
           theForm.itemUids.value = uids;
           theForm.submit();
         }
@@ -46,6 +53,7 @@
     <input type="hidden" name="templateId"/>
     <input type="hidden" name="itemUids" value=""/>
     <input type="hidden" name="mailingList" value=""/>
+    <input type="hidden" name="facetedQuery" value=""/>
   </form>
   <span class="discreet" style="position: relative;"
         tal:attributes="title python: podTemplate.Description(mimetype='text/plain');"
