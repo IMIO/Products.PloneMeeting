@@ -53,6 +53,7 @@ from zope.i18n import translate
 from eea.facetednavigation.interfaces import IFacetedLayout
 from eea.facetednavigation.interfaces import IHidePloneLeftColumn
 from plone.memoize import ram
+from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.PloneBatch import Batch
@@ -994,6 +995,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             If p_tag_title is given, it will be translated and used as return link
             title tag.
         '''
+        # we may receive a brain
+        if isinstance(obj, AbstractCatalogBrain):
+            # we get the object unrestrictedly as we test for isViewable here under
+            obj = obj._unrestrictedGetObject()
+
         adapted = IPrettyLink(obj)
         adapted.showColors = showColors
         adapted.showContentIcon = showIcon
@@ -1009,6 +1015,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if obj.meta_type == 'MeetingItem' and \
            (not _checkPermission(View, obj) or
            not obj.adapted().isPrivacyViewable()):
+            adapted.isViewable = False
+        elif obj.meta_type == 'Meeting' and not _checkPermission(View, obj):
             adapted.isViewable = False
 
         # if we received annexInfo, the adapted element is the meetingItem but we want actually

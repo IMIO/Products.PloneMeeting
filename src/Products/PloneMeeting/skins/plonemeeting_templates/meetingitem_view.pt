@@ -243,13 +243,10 @@
                 <span class="item_attribute_label" i18n:translate="PloneMeeting_label_preferredMeeting"></span>:&nbsp;&nbsp;
                 <span tal:define="meetings python:here.portal_catalog(UID=here.getPreferredMeeting())">
                 <span tal:condition="meetings">
-                    <tal:block define="meeting python:meetings[0].getObject();
-                                       mayView python: tool.checkMayView(meeting)">
-                      <tal:link condition="mayView"
-                                define="contentValue python: tool.formatMeetingDate(meeting, prefixed=True, withHour=True)"
+                    <tal:block define="meeting python:meetings[0];">
+                      <tal:link define="contentValue python: tool.formatMeetingDate(meeting, prefixed=True, withHour=True)"
                                 tal:replace="structure python: tool.getColoredLink(meeting, contentValue=contentValue)">
                       </tal:link>
-                    <span tal:condition="not: mayView" tal:content="meeting/Title">Meeting title</span>
                     </tal:block>
                 </span>
                 <span tal:condition="not: meetings">-
@@ -262,13 +259,9 @@
               <span class="item_attribute_label"
                     i18n:translate="presented_in_meeting">Presented in meeting</span>:&nbsp;&nbsp;
               <tal:hasMeeting condition="python: meeting">
-                <tal:block define="mayView python: tool.checkMayView(meeting)">
-                  <tal:link condition="mayView"
-                            define="contentValue python: tool.formatMeetingDate(meeting, prefixed=True, withHour=True)"
+                  <tal:link define="contentValue python: tool.formatMeetingDate(meeting, prefixed=True, withHour=True)"
                             tal:replace="structure python: tool.getColoredLink(meeting, contentValue=contentValue)">
                   </tal:link>
-                  <span tal:condition="not: mayView" tal:content="python: context.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingTitle()"></span>
-                </tal:block>
               </tal:hasMeeting>
               <span tal:condition="python: not meeting">-</span>
             </div>
