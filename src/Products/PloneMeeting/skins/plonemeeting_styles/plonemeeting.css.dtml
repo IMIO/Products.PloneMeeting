@@ -137,8 +137,11 @@ table.listing tbody tr {
 }
 
 /* make sure table borders in pmMoreInfo (when using glasses icon) are displayed */
-#content span.pmMoreInfo td {
+#content div.pmMoreInfo td {
     border: 1px solid black;
+}
+#content div.pmMoreInfo {
+    padding-top: 0.5em;
 }
 
 /* used for extra infos displayed on items listings or on the meeting view when using 'glasses icon action' */

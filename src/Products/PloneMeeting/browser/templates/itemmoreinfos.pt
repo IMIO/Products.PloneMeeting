@@ -10,11 +10,10 @@
     <span metal:use-macro="context/widgets/field/macros/view" />
   </span>
 </tal:budget>
-<span name="pmDescription"
+<div name="pmDescription"
       i18n:domain="PloneMeeting"
       class="pmMoreInfo"
       tal:condition="view/showMoreInfos"
-      style="display: inline"
       tal:define="mode string:view;">
     <tal:loop repeat="visibleField view/getItemsListVisibleFields">
         <span tal:define="visibleFieldName python: visibleField.split('.')[1];
@@ -24,5 +23,4 @@
             <span metal:use-macro="context/widgets/field/macros/view" />
         </span>
     </tal:loop>
-</span>
-
+</div>

@@ -814,29 +814,6 @@ The name is form.button.cancel because it correspond to the overlay close select
 </tal:field>
 </metal:displayBudgetInfos>
 
-<metal:itemMoreInfos define-macro="itemMoreInfos" i18n:domain="PloneMeeting">
-<tal:comment replace="nothing">Macro that display more informations about item depending
-on what is defined in MeetingConfig.itemsListVisibleFields, when user click on the glasses icon action.
-Fields are only displayed if :
-- not empty;
-- not already in visibleColumns (that can be the case for budgetInfos);
-- foe bufgetInfos, if budgetRelated is True.</tal:comment>
-    <span name="pmDescription"
-          class="pmMoreInfo"
-          tal:attributes="style python:'display: %s' % descrsStyle"
-          tal:define="mode string:view;
-                      context python: meetingItem;">
-        <tal:loop repeat="visibleField meetingConfig/getItemsListVisibleFields">
-            <span tal:define="visibleFieldName python: visibleField.split('.')[1];
-                              field python: meetingItem.getField(visibleFieldName);"
-                  tal:condition="python: not meetingItem.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
-                                 meetingItem.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False) and not visibleFieldName in visibleColumns">
-                <span metal:use-macro="context/widgets/field/macros/view" />
-            </span>
-        </tal:loop>
-    </span>
-</metal:itemMoreInfos>
-
 <metal:additionalInformations define-macro="additionalInformations" i18n:domain="PloneMeeting">
 <tal:comment replace="nothing">Macro used to display additional informations coming from obj schema
 non metadata fields.  We receive 'obj' and 'excludedFields' that is a list of fields not to display information of.</tal:comment>
