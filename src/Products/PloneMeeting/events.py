@@ -231,7 +231,6 @@ def onAdviceModified(advice, event):
     item.updateAdvices()
     # log
     userId = advice.portal_membership.getAuthenticatedMember().getId()
-    logger = logging.getLogger('PloneMeeting')
     logger.info('Advice at %s edited by "%s".' %
                 (advice.absolute_url_path(), userId))
 
@@ -259,7 +258,6 @@ def onAdviceRemoved(advice, event):
         # while removing an advice, if it was not anymore in the advice index
         # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
         # the newItem has an empty adviceIndex but can contains advices that will be removed
-        logger = logging.getLogger('PloneMeeting')
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 
 
