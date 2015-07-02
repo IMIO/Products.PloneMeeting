@@ -57,6 +57,9 @@ class ChangeAdviceHiddenDuringRedactionView(BrowserView):
             # toggle the value
             self.context.advice_hide_during_redaction = not bool(self.context.advice_hide_during_redaction)
             notify(ObjectModifiedEvent(self.context))
+            if self.request.RESPONSE.status != 200:
+                self.request.RESPONSE.status = 200
+                return self.request.RESPONSE.getHeader('location')
 
 
 class AdviceConfidentialityView(BrowserView):

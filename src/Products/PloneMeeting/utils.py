@@ -58,7 +58,7 @@ from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
     IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, IPodTemplateCustom, \
     IToolPloneMeetingCustom, IMeetingUserCustom, IAnnexable, IAdvicesUpdatedEvent, IItemDuplicatedEvent, \
-    IItemDuplicatedFromConfigEvent, IItemAfterTransitionEvent
+    IItemDuplicatedFromConfigEvent, IItemAfterTransitionEvent, IAdviceAfterAddEvent, IAdviceAfterModifyEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -1386,9 +1386,33 @@ class ItemAfterTransitionEvent(ObjectEvent):
     '''
       Event triggered at the end of the onItemTransition,
       so we are sure that subplugins registering to this event
-      will be called after onItemTransition.
+      will be called after.
     '''
     implements(IItemAfterTransitionEvent)
+
+    def __init__(self, object):
+        self.object = object
+
+
+class AdviceAfterAddEvent(ObjectEvent):
+    '''
+      Event triggered at the end of the onAdviceAdded,
+      so we are sure that subplugins registering to this event
+      will be called after.
+    '''
+    implements(IAdviceAfterAddEvent)
+
+    def __init__(self, object):
+        self.object = object
+
+
+class AdviceAfterModifyEvent(ObjectEvent):
+    '''
+      Event triggered at the end of the onAdviceModified,
+      so we are sure that subplugins registering to this event
+      will be called after onItemTransition.
+    '''
+    implements(IAdviceAfterModifyEvent)
 
     def __init__(self, object):
         self.object = object

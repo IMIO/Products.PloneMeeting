@@ -31,6 +31,8 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
+from Products.PloneMeeting.utils import AdviceAfterAddEvent
+from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
@@ -216,6 +218,10 @@ def onAdviceAdded(advice, event):
     # make the entire _advisers group able to edit the meetingadvice
     advice.manage_addLocalRoles('%s_advisers' % advice.advice_group, ('Editor', ))
 
+    # notify our own PM event so we are sure that this event is called
+    # after the onAviceAdded event
+    notify(AdviceAfterAddEvent(advice))
+
     # log
     userId = advice.portal_membership.getAuthenticatedMember().getId()
     logger.info('Advice at %s created by "%s".' %
@@ -229,6 +235,11 @@ def onAdviceModified(advice, event):
 
     item = advice.getParentNode()
     item.updateAdvices()
+
+    # notify our own PM event so we are sure that this event is called
+    # after the onAviceModified event
+    notify(AdviceAfterModifyEvent(advice))
+
     # log
     userId = advice.portal_membership.getAuthenticatedMember().getId()
     logger.info('Advice at %s edited by "%s".' %
