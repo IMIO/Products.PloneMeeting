@@ -675,6 +675,10 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
     cursor: not-allowed !important;
 }
 
+.adviceHiddenDuringRedactionEditable {
+    cursor: pointer;
+}
+
 .adviceInfo,
 .budgetRelatedEditable,
 .toDiscussEditable,

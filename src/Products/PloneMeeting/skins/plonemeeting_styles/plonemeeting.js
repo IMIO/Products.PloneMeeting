@@ -767,6 +767,33 @@ function moveItem(baseUrl, moveType, tag) {
     });
 }
 
+// ajax call managing the @@change-advice-hidden-during-redaction
+function changeAdviceHiddenDuringRedaction(baseUrl, tag) {
+  redirect = '0';
+  if (!$('#faceted-form').has(tag).length) {
+    redirect = '1';
+  }
+  $.ajax({
+    url: baseUrl + "/@@change-advice-hidden-during-redaction",
+    dataType: 'html',
+    cache: false,
+    async: false,
+    success: function(data) {
+        // reload the faceted page if we are on it, refresh current if not
+        if ((redirect === '0') && !(data)) {
+            Faceted.URLHandler.hash_changed();
+        }
+        else {
+            window.location.href = data;
+        }
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      /*console.log(textStatus);*/
+      window.location.href = window.location.href;
+      }
+    });
+}
+
 // event subscriber when a transition is triggered
 $(document).on('ap_transition_triggered', synchronizeMeetingFaceteds);
 // synchronize faceted displayed on the meeting_view, available items and presented items

@@ -1483,6 +1483,43 @@ class testAdvices(PloneMeetingTestCase):
         # this will work...
         self.do(item, backToProposedTr)
 
+    def test_pm_ChangeAdviceHiddenDuringRedactionView(self):
+        """Test the view that will toggle the advice_hide_during_redaction attribute on an item."""
+        self.meetingConfig.setItemAdviceStates(['itemcreated', ])
+        self.meetingConfig.setItemAdviceEditStates(['itemcreated', ])
+        self.meetingConfig.setItemAdviceViewStates(['itemcreated', ])
+        self.changeUser('pmCreator1')
+        # create an item and ask the advice of group 'vendors'
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': ('vendors',)
+        }
+        item = self.create('MeetingItem', **data)
+        # give advice
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'positive',
+                                             'advice_hide_during_redaction': False,
+                                             'advice_comment': RichTextValue(u'My comment')})
+        # 'pmReviewer2', as adviser, is able to toggle advice_hide_during_redaction
+        self.assertTrue(advice.advice_hide_during_redaction is False)
+        self.assertTrue(item.adviceIndex['vendors']['hidden_during_redaction'] is False)
+        changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
+        changeView()
+        self.assertTrue(advice.advice_hide_during_redaction is True)
+        self.assertTrue(item.adviceIndex['vendors']['hidden_during_redaction'] is True)
+        changeView()
+        self.assertTrue(advice.advice_hide_during_redaction is False)
+        self.assertTrue(item.adviceIndex['vendors']['hidden_during_redaction'] is False)
+        # user must be able to edit the advice, here, it is not the case for 'pmCreator1'
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, changeView)
+        self.assertTrue(advice.advice_hide_during_redaction is False)
+        self.assertTrue(item.adviceIndex['vendors']['hidden_during_redaction'] is False)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

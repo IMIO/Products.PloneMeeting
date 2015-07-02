@@ -99,24 +99,36 @@
                   <tr tal:condition="mayEdit">
                     <td class="noPadding" width="auto">
                     </td>
+                    <tal:editableOrLocked define="adviceIsLocked python: obj and obj.wl_isLocked() or False;">
                     <td align="right" width="20px" class="noPadding">
-                        <tal:editableOrLocked define="adviceIsLocked python: obj and obj.wl_isLocked() or False;">
-                            <a href="edit"
-                               tal:condition="not: adviceIsLocked"
-                               class="link-overlay-pm-advice"
-                               tal:attributes="href string:${item_url}/${advice/advice_id}/edit">
-                              <img i18n:attributes="title" title="advice_edit"
-                                   tal:attributes="src string:$portal_url/edit.gif;" />
-                            </a>
-                            <a href="view"
-                               tal:condition="adviceIsLocked"
-                               tal:attributes="href string:${item_url}/${advice/advice_id}/view">
-                              <img i18n:attributes="title" title="Locked"
-                                   i18n:domain="plone"
-                                   tal:attributes="src string:$portal_url/lock_icon.png;" />
-                            </a>
-                        </tal:editableOrLocked>
+                      <a href="edit"
+                         tal:condition="not: adviceIsLocked"
+                         class="link-overlay-pm-advice"
+                         tal:attributes="href string:${item_url}/${advice/advice_id}/edit">
+                        <img i18n:attributes="title" title="advice_edit"
+                             tal:attributes="src string:$portal_url/edit.gif;" />
+                      </a>
+                      <a href="view"
+                         tal:condition="adviceIsLocked"
+                         tal:attributes="href string:${item_url}/${advice/advice_id}/view">
+                        <img i18n:attributes="title" title="Locked"
+                             i18n:domain="plone"
+                             tal:attributes="src string:$portal_url/lock_icon.png;" />
+                      </a>
                     </td>
+                    <td align="right" width="20px" class="noPadding" condition="not: adviceIsLocked">
+                      <img tal:condition="advice/hidden_during_redaction"
+                           class="adviceHiddenDuringRedactionEditable"
+                           i18n:attributes="title" title="to_not_hidden_during_redaction"
+                           tal:attributes="src string:$portal_url/advice_${adviceStyle}_enable_hidden_during_redaction.png;
+                                           onClick string:javascript:changeAdviceHiddenDuringRedaction(base_url='${item_url}/${advice/advice_id}', this);;"/>
+                      <img tal:condition="not: advice/hidden_during_redaction"
+                           class="adviceHiddenDuringRedactionEditable"
+                           i18n:attributes="title" title="to_hidden_during_redaction"
+                           tal:attributes="src string:$portal_url/advice_${adviceStyle}_disable_hidden_during_redaction.png;
+                                           onClick string:javascript:changeAdviceHiddenDuringRedaction(base_url='${item_url}/${advice/advice_id}', this);;"/>
+                    </td>
+                    </tal:editableOrLocked>
                     <td align="right" width="20px" class="noPadding">
                     <a href="view"
                        tal:attributes="href string:${item_url}/${advice/advice_id}/view">

@@ -22,7 +22,11 @@
 # 02110-1301, USA.
 #
 
+from AccessControl import Unauthorized
+from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.utils import getToolByName
+from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 
 
@@ -40,3 +44,16 @@ class AdvicesIcons(BrowserView):
         if not self.context.adapted().isPrivacyViewable():
             return '-'
         return super(AdvicesIcons, self).__call__()
+
+
+class ChangeAdviceHiddenDuringRedactionView(BrowserView):
+    """View that toggle the advice.advice_hide_during_redaction attribute."""
+
+    def __call__(self):
+        # user must be able to edit the advice
+        if not _checkPermission('Modify portal content', self.context):
+            raise Unauthorized
+        else:
+            # toggle the value
+            self.context.advice_hide_during_redaction = not bool(self.context.advice_hide_during_redaction)
+            notify(ObjectModifiedEvent(self.context))

@@ -234,6 +234,14 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
 
+    <!-- the view that toggle the advice hidden during redaction -->
+    <browser:view
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        name="change-advice-hidden-during-redaction"
+        class=".advices.ChangeAdviceHiddenDuringRedactionView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the view that show available delays for an advice on the advices list -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
