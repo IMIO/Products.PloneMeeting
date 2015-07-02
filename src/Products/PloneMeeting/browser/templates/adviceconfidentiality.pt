@@ -1,15 +1,13 @@
-<tal:comment replace="nothing">
-  This macro manage the isConfidential attribute of advices.
-  advice : the relevant adviceInfo from the context.adviceIndex and context, the MeetingItem
-</tal:comment>
-<metal:isConfidential define-macro="isConfidential" i18n:domain="PloneMeeting"
-                      tal:define="mayEdit python: context.adapted().mayEditAdviceConfidentiality();
-                                  isConfidential advice/isConfidential;">
+<tal:isConfidential i18n:domain="PloneMeeting"
+                    tal:define="mayEdit python: context.adapted().mayEditAdviceConfidentiality();
+                                advice python: view.advice;
+                                portal_url view/portal_url;
+                                isConfidential advice/isConfidential;">
   <span tal:condition="mayEdit"
-        id="marker_toggle_advice_isconfidential_UID__adviceId#"
-        tal:attributes="id string:marker_toggle_advice_isconfidential_${UID}__${advice/id};"
         tal:define="UID context/UID;
-                    baseUrl context/absolute_url;">
+                    baseUrl context/absolute_url;"
+        id="marker_toggle_advice_isconfidential_UID__adviceId#"
+        tal:attributes="id string:marker_toggle_advice_isconfidential_${UID}__${advice/id};">
     <img class="adviceIsConfidentialEditable" tal:condition="isConfidential" name="isConfidentialNo" style="cursor:pointer"
          title="advice_is_confidential_yes_edit" i18n:attributes="title"
          tal:attributes="src string:$portal_url/isConfidentialYes.png;
@@ -25,4 +23,4 @@
     <img tal:condition="not: isConfidential" title="advice_is_confidential_no" i18n:attributes="title"
          tal:attributes="src string: $portal_url/isConfidentialNo.png"/>
   </tal:notMayEdit>
-</metal:isConfidential>
+</tal:isConfidential>

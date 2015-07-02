@@ -70,7 +70,7 @@
                          <div style="max-width: 90px; float: right;" >
                          <acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
                          <acronym tal:condition="displayAdviceConfidentiality" style="border-bottom: none;">
-                            <metal:isConfidential use-macro="here/@@advices-macros/isConfidential" />
+                            <tal:confidentiality replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
                          </acronym>
                          <acronym tal:condition="advice/delay" title="Change delay" i18n:attributes="title">
                             <tal:advice-change-delay

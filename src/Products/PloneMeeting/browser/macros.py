@@ -10,13 +10,3 @@ class PloneMeetingMacros(BrowserView):
           Call the given p_macro on given p_page (that is a BrowserView containing macros)
         """
         return self.context.unrestrictedTraverse(page)[macro]
-
-
-class AdvicesMacros(BrowserView):
-    """
-    """
-
-
-class NavigateMacros(BrowserView):
-    """
-    """

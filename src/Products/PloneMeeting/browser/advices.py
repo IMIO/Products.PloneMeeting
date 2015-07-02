@@ -57,3 +57,16 @@ class ChangeAdviceHiddenDuringRedactionView(BrowserView):
             # toggle the value
             self.context.advice_hide_during_redaction = not bool(self.context.advice_hide_during_redaction)
             notify(ObjectModifiedEvent(self.context))
+
+
+class AdviceConfidentialityView(BrowserView):
+    """Display advice confidentiality infos."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+
+    def __call__(self, advice):
+        self.advice = advice
+        return super(AdviceConfidentialityView, self).__call__()
