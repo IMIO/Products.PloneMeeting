@@ -1827,7 +1827,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'query':
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
-                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['prevalidated']}
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['proposed']}
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
