@@ -38,53 +38,41 @@ function advicePopup() {
 
 // when opened in an overlay, save advice using an ajax call, this is done for faceted
 function saveAdvice() {
-$('input#form-buttons-save').click(function(event) {
-  event.preventDefault();
-  var data = {};
-  $(this.form.elements).each(function(){
-    // special handling for CKeditor instances
-    if (CKEDITOR.instances[this.name]) {
-      data[this.name] = CKEDITOR.instances[this.name].getData();
-    }
-    else if (this.id.match("-0$") || this.id.match("-1$")) {
-      // pass some elements, like radio button subelements
-      data[this.name] = this.form.elements[this.name].value
-    }
-    else {
-      data[this.name] = this.value;
-    }
-    });
-  $.ajax({
-      type: 'POST',
-      url: this.form.action,
-      data: data,
-      cache: false,
-      async: false,
-      success: function(data) {
-        $('input#form-buttons-cancel').click();
-          // in a faceted?  Reload it...
-          if ($('#faceted-form').length) {
-            Faceted.URLHandler.hash_changed();
-          }
-          else {
-            // not in a faceted, refresh the page adding #adviceAndAnnexes if necessary
-            var href_location = window.location.href;
-            if (!href_location.match('#adviceAndAnnexes$')) {
-              href_location = document.baseURI + '#adviceAndAnnexes'
-              window.location.href = href_location;
-            }
-            else{
-              window.location.reload(true);
-            }
-          }
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-        /*console.log(textStatus);*/
-        window.location.href = window.location.href;
-        },
-  });
+  if ($('#faceted-form').length) {
+    $('input#form-buttons-save').click(function(event) {
+      event.preventDefault();
+      var data = {};
+      $(this.form.elements).each(function(){
+        // special handling for CKeditor instances
+        if (CKEDITOR.instances[this.name]) {
+          data[this.name] = CKEDITOR.instances[this.name].getData();
+        }
+        else if (this.id.match("-0$") || this.id.match("-1$")) {
+          // pass some elements, like radio button subelements
+          data[this.name] = this.form.elements[this.name].value
+        }
+        else {
+          data[this.name] = this.value;
+        }
+        });
+      $.ajax({
+          type: 'POST',
+          url: this.form.action,
+          data: data,
+          cache: false,
+          async: true,
+          success: function(data) {
+              $('input#form-buttons-cancel').click();
+              Faceted.URLHandler.hash_changed();
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            /*console.log(textStatus);*/
+            window.location.href = window.location.href;
+            },
+      });
 
-});
+    });
+    }
 }
 
 // prepare overlays for normal (non-ajax) pages

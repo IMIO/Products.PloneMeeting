@@ -222,6 +222,11 @@ def onAdviceAdded(advice, event):
     # after the onAviceAdded event
     notify(AdviceAfterAddEvent(advice))
 
+    # redirect to referer after add if it is not the edit form
+    http_referer = item.REQUEST['HTTP_REFERER']
+    if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
+        advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
+
     # log
     userId = advice.portal_membership.getAuthenticatedMember().getId()
     logger.info('Advice at %s created by "%s".' %
@@ -250,6 +255,11 @@ def onAdviceEditFinished(advice, event):
     '''Called when a meetingadvice is edited and we are at the end of the editing process.'''
     item = advice.getParentNode()
     item.updateAdvices()
+
+    # redirect to referer after edit if it is not the edit form
+    http_referer = item.REQUEST['HTTP_REFERER']
+    if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
+        advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
 
 def onAdviceRemoved(advice, event):

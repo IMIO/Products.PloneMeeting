@@ -59,7 +59,8 @@ class ChangeAdviceHiddenDuringRedactionView(BrowserView):
             notify(ObjectModifiedEvent(self.context))
             if self.request.RESPONSE.status != 200:
                 self.request.RESPONSE.status = 200
-                return self.request.RESPONSE.getHeader('location')
+                if self.request.get('HTTP_REFERER') != self.request.RESPONSE.getHeader('location'):
+                    return self.request.RESPONSE.getHeader('location')
 
 
 class AdviceConfidentialityView(BrowserView):
