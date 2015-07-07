@@ -189,7 +189,7 @@ def indexAdvisers(obj):
       Non delay-aware advice is like "developers_advice_not_given".
       In both cases (delay-aware or not), we have a suffix :
         - '_advice_not_giveable' for advice not given and not giveable;
-        - '_advice_not_given' for advice not given but giveable;
+        - '_advice_not_given' for advice not given/asked again but giveable;
         - '_advice_delay_exceeded' for delay-aware advice not given but
            no more giveable because of delay exceeded;
     """
@@ -200,8 +200,8 @@ def indexAdvisers(obj):
         '''
           Compute the suffix that will be appended depending on advice state.
         '''
-        # still not given but still giveable?  Not giveable?  Delay exceeded?
-        if advice['type'] == NOT_GIVEN_ADVICE_VALUE:
+        # still not given but still giveable?  Not giveable?  Delay exceeded? Asked again?
+        if advice['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again'):
             delayIsExceeded = isDelayAware and \
                 obj.getDelayInfosForAdvice(groupId)['delay_status'] == 'timed_out'
             if delayIsExceeded:
@@ -211,6 +211,9 @@ def indexAdvisers(obj):
                 # does the relevant group may add the advice in current item state?
                 if advice['advice_addable']:
                     return '_advice_not_given'
+                elif advice['advice_editable']:
+                    # case when 'asked_again'
+                    return '_advice_asked_again'
                 else:
                     return '_advice_not_giveable'
         else:

@@ -675,7 +675,8 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
     cursor: not-allowed !important;
 }
 
-.adviceHiddenDuringRedactionEditable {
+.adviceHiddenDuringRedactionEditable,
+.askAdviceAgainEditable {
     cursor: pointer;
 }
 
@@ -690,7 +691,6 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 .itemAssemblyEditable i,
 .itemSignaturesEditable i {
     border-bottom: 1px dotted;
-    padding-bottom: 2px;
     cursor: pointer;
 }
 #content span.budgetRelated {
@@ -1165,6 +1165,16 @@ button.present_several img {
 
 table.meetingConfigActions td {
     padding: 1em;
+}
+
+div.advice_popup_label {
+    display: inline-block;
+    vertical-align: middle;
+    max-width: 385px;
+}
+div.advice_popup_actions {
+    float: right;
+    max-width: 100px;
 }
 
 /* </dtml-with> */

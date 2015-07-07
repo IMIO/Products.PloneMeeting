@@ -1,13 +1,16 @@
-<tal:defines define="selectableDelays python: view.advice['delay'] and view.listSelectableDelays(view.advice['row_id']) or [];
+<acronym tal:define="selectableDelays python: view.advice['delay'] and view.listSelectableDelays(view.advice['row_id']) or [];
                      menuId string:advice_change_delay_row_id_${view/advice/row_id}_${view/context/UID};
                      portal_url context/@@plone_portal_state/portal_url;
                      mayAccessDelayChangesHistory view/_mayAccessDelayChangesHistory;"
-             condition="python: selectableDelays or mayAccessDelayChangesHistory"
-             i18n:domain="PloneMeeting">
+         class="advice_change_delay Editable"
+         title="Change delay" i18n:attributes="title"
+         tal:condition="python: selectableDelays or mayAccessDelayChangesHistory"
+         i18n:domain="PloneMeeting"
+         style="margin-right: 2px;">
     <span onclick="javascript:toggleMenu('advice_change_delay_row_id_123')"
-          class="advice_change_delay Editable"
           tal:attributes="onclick string:javascript:toggleMenu('${menuId}')">
-        <img src="advice_with_delay.png" />
+        <img src="advice_with_delay.png"
+             tal:attributes="src string:${view/portal_url}/advice_with_delay.png"/>
     </span>
     <div id="pm_menu_advice_change_delay"
          name="pm_menu_advice_change_delay"
@@ -46,5 +49,4 @@
                  src="pb_close_small.png"
                  tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
         </div>
-    </div>
-</tal:defines>
+    </div></acronym>

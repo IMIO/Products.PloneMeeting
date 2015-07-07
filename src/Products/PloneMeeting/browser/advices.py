@@ -24,6 +24,7 @@
 
 from AccessControl import Unauthorized
 from zope.event import notify
+from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.utils import _checkPermission
@@ -61,6 +62,32 @@ class ChangeAdviceHiddenDuringRedactionView(BrowserView):
                 self.request.RESPONSE.status = 200
                 if self.request.get('HTTP_REFERER') != self.request.RESPONSE.getHeader('location'):
                     return self.request.RESPONSE.getHeader('location')
+
+
+class ChangeAdviceAskedAgainView(BrowserView):
+    """View that change advice from someting to 'asked_again' and
+       from 'asked_again' back to original advice."""
+
+    def __call__(self):
+        """ """
+        if not self.context.advice_type == 'asked_again':
+            # we are about to set advice to 'asked_again'
+            if not self.context.mayAskAdviceAgain():
+                raise Unauthorized
+            # historize the given advice
+            pr = getToolByName(self.context, 'portal_repository')
+            changeNote = translate('advice_asked_again_and_historized',
+                                   domain='PloneMeeting',
+                                   context=self.request)
+            pr.save(obj=self.context, comment=changeNote)
+            # now we may change advice_type to 'asked_again'
+            self.context.advice_type = 'asked_again'
+        else:
+            # we are about to set the advice back to original value
+            if not self.context.mayBackToOriginalAdvice():
+                raise Unauthorized
+            pass
+        notify(ObjectModifiedEvent(self.context))
 
 
 class AdviceConfidentialityView(BrowserView):

@@ -274,7 +274,7 @@ class AdviceIsConfidential(BrowserView):
     """
       View that switch an advice 'isConfidential' attribute using an ajax call.
     """
-    IMG_TEMPLATE = u'<img class="adviceIsConfidentialEditable" src="%s" title="%s" name="%s" />'
+    IMG_TEMPLATE = u'<img src="%s" title="%s" name="%s" />'
 
     def __init__(self, context, request):
         self.context = context

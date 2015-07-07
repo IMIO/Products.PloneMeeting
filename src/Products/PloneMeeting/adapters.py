@@ -757,7 +757,9 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will return 'not delay-aware' and 'delay-aware' advices
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
-                   ['delay__' + g.getId() + '_advice_not_given' for g in groups]
+                   ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
+                   [g.getId() + '_advice_asked_again' for g in groups] + \
+                   ['delay__' + g.getId() + '_advice_asked_again' for g in groups]
         # Create query parameters
         return {'portal_type': self.cfg.getItemTypeName(),
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
@@ -772,7 +774,8 @@ class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
         groups = self.tool.getGroupsForUser(suffix='advisers')
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'not delay-aware' advices
-        groupIds = [g.getId() + '_advice_not_given' for g in groups]
+        groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
+                   [g.getId() + '_advice_asked_again' for g in groups]
         # Create query parameters
         return {'portal_type': self.cfg.getItemTypeName(),
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
@@ -788,7 +791,8 @@ class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
         groups = self.tool.getGroupsForUser(suffix='advisers')
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
-        groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups]
+        groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
+                   ['delay__' + g.getId() + '_advice_asked_again' for g in groups]
         # Create query parameters
         return {'portal_type': self.cfg.getItemTypeName(),
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
