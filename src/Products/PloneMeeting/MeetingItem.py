@@ -3087,8 +3087,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if advice['id'] in adviceIdsToBypass and \
                adviceIdsToBypass[advice['id']] == advice['optional']:
                 continue
-            if (toGive and advice['type'] == NOT_GIVEN_ADVICE_VALUE) or \
-               (not toGive and not advice['type'] == NOT_GIVEN_ADVICE_VALUE):
+            if (toGive and advice['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again')) or \
+               (not toGive and not advice['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again')):
                 return True
 
         return False
