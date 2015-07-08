@@ -69,13 +69,13 @@
                          <div class="advice_popup_actions">
                          <acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
                          <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
-                         <acronym tal:condition="python: obj and obj.mayAskAdviceAgain()">
+                         <acronym tal:condition="python: obj and obj.restrictedTraverse('@@change-advice-asked-again').mayAskAdviceAgain()">
                             <img tal:condition="python: not advice['type'] == 'asked_again'"
                                  class="askAdviceAgainEditable"
                                  i18n:attributes="title" title="to_advice_asked_again"
                                  tal:attributes="src string:$portal_url/advice_${adviceStyle}_asked_again.png;
                                            onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-asked-again', this);;"/></acronym>
-                         <acronym tal:condition="python: obj and obj.mayBackToPreviousAdvice()">
+                         <acronym tal:condition="python: obj and obj.restrictedTraverse('@@change-advice-asked-again').mayBackToPreviousAdvice()">
                             <img tal:condition="python: advice['type'] == 'asked_again'"
                                  class="askAdviceAgainEditable"
                                  i18n:attributes="title" title="to_previous_given_advice"

@@ -1559,24 +1559,24 @@ class testAdvices(PloneMeetingTestCase):
         # 'asked_again' must be in usedAdviceTypes so the functionnality is activated
         self.assertTrue(not 'asked_again' in cfg.getUsedAdviceTypes())
         self.changeUser('pmManager')
-        self.assertFalse(advice.mayAskAdviceAgain())
+        self.assertFalse(changeView.mayAskAdviceAgain())
         cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
-        self.assertTrue(advice.mayAskAdviceAgain())
+        self.assertTrue(changeView.mayAskAdviceAgain())
 
         # advice can not be asked_again if current user may not edit the item
         self.changeUser('pmCreator1')
-        self.assertFalse(advice.mayAskAdviceAgain())
-        self.assertFalse(advice.mayBackToPreviousAdvice())
+        self.assertFalse(changeView.mayAskAdviceAgain())
+        self.assertFalse(changeView.mayBackToPreviousAdvice())
         self.assertRaises(Unauthorized, changeView)
         # except for MeetingManagers
         self.changeUser('pmManager')
-        self.assertTrue(advice.mayAskAdviceAgain())
-        self.assertFalse(advice.mayBackToPreviousAdvice())
+        self.assertTrue(changeView.mayAskAdviceAgain())
+        self.assertFalse(changeView.mayBackToPreviousAdvice())
         # send advice back to creator so advice may be asked_again
         self.changeUser('pmCreator1')
         self.backToState(item, 'itemcreated')
-        self.assertTrue(advice.mayAskAdviceAgain())
-        self.assertFalse(advice.mayBackToPreviousAdvice())
+        self.assertTrue(changeView.mayAskAdviceAgain())
+        self.assertFalse(changeView.mayBackToPreviousAdvice())
         # right, ask advice again
         changeView()
         # advice is asked_again and previous advice was historized
@@ -1585,8 +1585,8 @@ class testAdvices(PloneMeetingTestCase):
         # version 0 was saved
         self.assertTrue(pr.getHistoryMetadata(advice)._available == [0])
         # we may also revert to previous version
-        self.assertFalse(advice.mayAskAdviceAgain())
-        self.assertTrue(advice.mayBackToPreviousAdvice())
+        self.assertFalse(changeView.mayAskAdviceAgain())
+        self.assertTrue(changeView.mayBackToPreviousAdvice())
         changeView()
         self.assertTrue(advice.advice_type == 'negative')
         # ok, ask_again and send it again to 'pmReviewer2', he will be able to edit it

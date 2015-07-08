@@ -173,62 +173,6 @@ class MeetingAdvice(Container):
             else:
                 return modified
 
-    def mayAskAdviceAgain(self):
-        '''Returns True if current user may ask given p_advice_id advice again.
-           For this :
-           - advice must not be 'asked_again'...;
-           - advice is no more editable (except for MeetingManagers);
-           - item is editable by current user (including MeetingManagers).'''
-
-        if self.advice_type == 'asked_again':
-            return False
-
-        tool = getToolByName(self, 'portal_plonemeeting')
-        # 'asked_again' must be activated in the configuration
-        cfg = tool.getMeetingConfig(self)
-        if not 'asked_again' in cfg.getUsedAdviceTypes():
-            return False
-
-        # apart MeetingManagers, the advice can not be asked again
-        # if editable by the adviser
-        parent = self.getParentNode()
-        if parent.adviceIndex[self.advice_group]['advice_editable'] and \
-           not tool.isManager(self):
-            return False
-
-        membershipTool = getToolByName(self, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
-        if member.has_permission(ModifyPortalContent, parent):
-            return True
-        return False
-
-    def mayBackToPreviousAdvice(self):
-        '''Returns True if current user may go back to previous given advice.
-           It could be the case if someone asked advice again erroneously
-           or for any other reason.
-           For this :
-           - advice must be 'asked_again'...;
-           - advice is no more editable (except for MeetingManagers);
-           - item is editable by current user (including MeetingManagers).'''
-
-        if not self.advice_type == 'asked_again':
-            return False
-
-        tool = getToolByName(self, 'portal_plonemeeting')
-
-        # apart MeetingManagers, the advice can not be set back to previous
-        # if editable by the adviser
-        parent = self.getParentNode()
-        if parent.adviceIndex[self.advice_group]['advice_editable'] and \
-           not tool.isManager(self):
-            return False
-
-        membershipTool = getToolByName(self, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
-        if member.has_permission(ModifyPortalContent, parent):
-            return True
-        return False
-
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
     """ """
