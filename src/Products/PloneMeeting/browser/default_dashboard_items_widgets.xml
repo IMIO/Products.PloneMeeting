@@ -41,6 +41,7 @@
    <property name="index">SearchableText</property>
    <property name="default"/>
    <property name="onlyallelements">1</property>
+   <property name="wildcard">1</property>
   </criterion>
 
   <criterion name="c3" i18n:attributes="title">
