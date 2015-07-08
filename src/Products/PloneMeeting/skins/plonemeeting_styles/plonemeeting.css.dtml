@@ -1177,6 +1177,20 @@ div.advice_popup_actions {
     max-width: 100px;
 }
 
+/* hide some elements on the versions_history_form */
+body.template-versions_history_form.portaltype-meetingadvice table[summary="Content history"],
+body.template-versions_history_form.portaltype-meetingadvice form[action$="saveasnewversion"],
+body.template-versions_history_form.portaltype-meetingadvice #content-core div.documentByLine,
+body.template-versions_history_form.portaltype-meetingadvice #content-core fieldset#folder-listing {
+    display: none;
+}
+body.template-versions_history_form.portaltype-meetingadvice #content-core > div:first-of-type {
+    border: 0px solid transparent !important;
+}
+body.template-versions_history_form.portaltype-meetingadvice #content-core {
+    margin-top: 1em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

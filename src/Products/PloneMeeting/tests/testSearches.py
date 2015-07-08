@@ -72,7 +72,9 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         self.assertEquals(adapter.query,
                           {'indexAdvisers': ['developers_advice_not_given',
-                                             'delay__developers_advice_not_given'],
+                                             'delay__developers_advice_not_given',
+                                             'developers_advice_asked_again',
+                                             'delay__developers_advice_asked_again'],
                            'portal_type': itemTypeName})
 
         # now do the query
@@ -103,7 +105,7 @@ class testSearches(PloneMeetingTestCase):
         # so pmAdviser1 gives his advice
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                 **{'advice_group': self.tool.developers.getId(),
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         self.failIf(collection.getQuery())
@@ -113,12 +115,21 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(collection.getQuery()[0].UID, item.UID())
         # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
         # so pmReviewer2 gives his advice
-        createContentInContainer(item,
-                                 'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
-                                    'advice_type': u'negative',
-                                    'advice_comment': RichTextValue(u'My comment')})
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': self.tool.vendors.getId(),
+                                             'advice_type': u'negative',
+                                             'advice_comment': RichTextValue(u'My comment')})
         self.failIf(collection.getQuery())
+
+        # ask advice again, it will appear to 'pmReviewer2' in the query
+        self.backToState(item, 'itemcreated')
+        self.changeUser('pmCreator1')
+        advice.restrictedTraverse('@@change-advice-asked-again')()
+        self.proposeItem(item)
+        self.changeUser('pmReviewer2')
+        self.assertEquals(len(collection.getQuery()), 1)
+        self.assertEquals(collection.getQuery()[0].UID, item.UID())
 
     def test_pm_SearchAdvisedItems(self):
         '''Test the 'search-advised-items' adapter.  This should return a list of items
@@ -157,11 +168,11 @@ class testSearches(PloneMeetingTestCase):
         self.proposeItem(item1)
         # give an advice
         self.changeUser('pmAdviser1')
-        createContentInContainer(item1,
-                                 'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
-                                    'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+        advice = createContentInContainer(item1,
+                                          'meetingadvice',
+                                          **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                             'advice_type': u'positive',
+                                             'advice_comment': RichTextValue(u'My comment')})
         self.failUnless(collection.getQuery())
         # another user will not see given advices
         self.changeUser('pmCreator1')
@@ -186,6 +197,14 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         self.failUnless(len(collection.getQuery()) == 1)
         self.changeUser('pmCreator1')
+        self.failIf(collection.getQuery())
+
+        # ask advice again to 'pmAdviser1'
+        # if an advice is asked again, it is no more considered given
+        self.backToState(item1, 'itemcreated')
+        advice.restrictedTraverse('@@change-advice-asked-again')()
+        self.proposeItem(item1)
+        self.changeUser('pmAdviser1')
         self.failIf(collection.getQuery())
 
     def test_pm_SearchAdvisedItemsWithDelay(self):

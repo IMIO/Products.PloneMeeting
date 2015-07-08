@@ -70,12 +70,12 @@ class ChangeAdviceAskedAgainView(BrowserView):
 
     def __call__(self):
         """ """
+        pr = getToolByName(self.context, 'portal_repository')
         if not self.context.advice_type == 'asked_again':
             # we are about to set advice to 'asked_again'
             if not self.context.mayAskAdviceAgain():
                 raise Unauthorized
             # historize the given advice
-            pr = getToolByName(self.context, 'portal_repository')
             changeNote = translate('advice_asked_again_and_historized',
                                    domain='PloneMeeting',
                                    context=self.request)
@@ -84,9 +84,14 @@ class ChangeAdviceAskedAgainView(BrowserView):
             self.context.advice_type = 'asked_again'
         else:
             # we are about to set the advice back to original value
-            if not self.context.mayBackToOriginalAdvice():
+            if not self.context.mayBackToPreviousAdvice():
                 raise Unauthorized
-            pass
+            # get last version_id and fall back to it
+            last_version_id = pr.getHistoryMetadata(self.context)._available[-1]
+            self.context.revertversion(version_id=last_version_id)
+            # revertversion would redirect to somewhere, broke this
+            self.request.RESPONSE.status = 200
+
         notify(ObjectModifiedEvent(self.context))
 
 

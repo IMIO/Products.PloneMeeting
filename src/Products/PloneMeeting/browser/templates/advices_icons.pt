@@ -75,6 +75,12 @@
                                  i18n:attributes="title" title="to_advice_asked_again"
                                  tal:attributes="src string:$portal_url/advice_${adviceStyle}_asked_again.png;
                                            onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                         <acronym tal:condition="python: obj and obj.mayBackToPreviousAdvice()">
+                            <img tal:condition="python: advice['type'] == 'asked_again'"
+                                 class="askAdviceAgainEditable"
+                                 i18n:attributes="title" title="to_previous_given_advice"
+                                 tal:attributes="src string:$portal_url/advice_${adviceStyle}_asked_again_back_to_previous.png;
+                                           onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-asked-again', this);;"/></acronym>
                          <tal:advice-change-delay
                            condition="advice/delay"
                            tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
