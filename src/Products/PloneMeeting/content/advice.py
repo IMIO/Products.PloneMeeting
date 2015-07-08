@@ -184,10 +184,14 @@ class MeetingAdvice(Container):
             return False
 
         tool = getToolByName(self, 'portal_plonemeeting')
-        parent = self.getParentNode()
+        # 'asked_again' must be activated in the configuration
+        cfg = tool.getMeetingConfig(self)
+        if not 'asked_again' in cfg.getUsedAdviceTypes():
+            return False
 
         # apart MeetingManagers, the advice can not be asked again
         # if editable by the adviser
+        parent = self.getParentNode()
         if parent.adviceIndex[self.advice_group]['advice_editable'] and \
            not tool.isManager(self):
             return False
@@ -211,10 +215,10 @@ class MeetingAdvice(Container):
             return False
 
         tool = getToolByName(self, 'portal_plonemeeting')
-        parent = self.getParentNode()
 
         # apart MeetingManagers, the advice can not be set back to previous
         # if editable by the adviser
+        parent = self.getParentNode()
         if parent.adviceIndex[self.advice_group]['advice_editable'] and \
            not tool.isManager(self):
             return False

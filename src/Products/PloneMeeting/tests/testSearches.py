@@ -54,6 +54,7 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'search-items-to-advice' adapter that should return a list of items
            a user has to give an advice for.'''
         self.changeUser('admin')
+        self.meetingConfig.setUsedAdviceTypes(self.meetingConfig.getUsedAdviceTypes() + ('asked_again', ))
         self.meetingConfig.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
@@ -136,6 +137,7 @@ class testSearches(PloneMeetingTestCase):
            a user has already give an advice for.'''
         self.changeUser('admin')
         itemTypeName = self.meetingConfig.getItemTypeName()
+        self.meetingConfig.setUsedAdviceTypes(self.meetingConfig.getUsedAdviceTypes() + ('asked_again', ))
 
         # first test the generated query
         adapter = getAdapter(self.meetingConfig,

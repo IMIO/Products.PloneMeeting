@@ -465,6 +465,7 @@ class testAdvices(PloneMeetingTestCase):
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
               'delay': '5', }, ])
+        self.meetingConfig.setUsedAdviceTypes(self.meetingConfig.getUsedAdviceTypes() + ('asked_again', ))
         # an advice can be given when an item is 'proposed' or 'validated'
         self.assertEquals(self.meetingConfig.getItemAdviceStates(), (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # create an item to advice
@@ -1533,9 +1534,10 @@ class testAdvices(PloneMeetingTestCase):
 
     def test_pm_ChangeAdviceAskedAgainView(self):
         """Test the view that will change from advice asked_again/back to previous advice."""
-        self.meetingConfig.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        self.meetingConfig.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        self.meetingConfig.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -1554,6 +1556,13 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': RichTextValue(u'My comment')})
         changeView = advice.restrictedTraverse('@@change-advice-asked-again')
+        # 'asked_again' must be in usedAdviceTypes so the functionnality is activated
+        self.assertTrue(not 'asked_again' in cfg.getUsedAdviceTypes())
+        self.changeUser('pmManager')
+        self.assertFalse(advice.mayAskAdviceAgain())
+        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
+        self.assertTrue(advice.mayAskAdviceAgain())
+
         # advice can not be asked_again if current user may not edit the item
         self.changeUser('pmCreator1')
         self.assertFalse(advice.mayAskAdviceAgain())
