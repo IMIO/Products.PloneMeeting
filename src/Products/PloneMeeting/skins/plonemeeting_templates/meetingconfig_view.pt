@@ -28,7 +28,6 @@
 
     <tal:hideToNonManagers condition="python: isRealManager or context.portal_plonemeeting.isManager(context)">
 
-    <script language="javascript" tal:content="context/portal_plonemeeting/getJavascriptMessages"></script>
     <span tal:repeat="fieldset python: fieldsets + ['users', 'doc']">
       [
       <tal:otherFieldset condition="python: pageName!=fieldset"><a

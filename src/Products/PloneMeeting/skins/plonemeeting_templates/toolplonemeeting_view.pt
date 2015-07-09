@@ -18,7 +18,6 @@
                    mode string:view;">
 
     <tal:hideToNonManagers condition="python: isRealManager or context.isManager(context)">
-    <script language="javascript" tal:content="context/getJavascriptMessages"></script>
     <p i18n:translate="plonemeeting_descr"></p>
 
       <tal:comment replace="nothing">Meeting configurations</tal:comment>

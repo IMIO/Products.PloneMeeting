@@ -529,4 +529,10 @@
         permission="eea.faceted.configure"
         />
 
+    <browser:page
+        for="*"
+        name="plonemeeting_javascript_variables.js"
+        class=".jsvariables.JSVariables"
+        permission="zope.Public" />
+
 </configure>

@@ -637,6 +637,9 @@ function presentSelectedItems(baseUrl) {
       alert(no_selected_items);
     }
     else {
+        // Ask confirmation
+        var msg = window.eval('sure_to_present_selected_items');
+        if (confirm(msg)) {
           // avoid Arrays to be passed as uids[]
           params = $.param({uids: uids}, traditional=true)
           $.ajax({
@@ -661,6 +664,7 @@ function presentSelectedItems(baseUrl) {
               }
             });
         }
+    }
 }
 
 // Function that allows to remove several items from a meeting

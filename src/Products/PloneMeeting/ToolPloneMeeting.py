@@ -1883,20 +1883,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 return res and context.hasMeeting()
             return res
 
-    security.declarePublic('getJavascriptMessages')
-    def getJavascriptMessages(self):
-        '''Produces the Javascript code that will initialize some translated
-           messages for all pages.'''
-        args = {'domain': 'PloneMeeting', 'context': self.REQUEST}
-        res = ''
-        for msg in ('plonemeeting_delete_meeting_confirm_message',
-                    'no_selected_items',
-                    'sure_to_remove_selected_items',
-                    'are_you_sure'):
-            res += 'var %s = "%s";\n' % (msg, translate(msg, **args))
-        # escape_for_js from portal_skins/plone_scripts/translate.py does the .replace() here above
-        return res.replace("'", "\\'")
-
     security.declarePublic('getUserLanguage')
     def getUserLanguage(self):
         '''Gets the language (code) of the current user.'''

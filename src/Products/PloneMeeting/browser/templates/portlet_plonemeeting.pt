@@ -43,8 +43,6 @@
         <tal:block replace="structure view/widget_render" />
       </div>
     </dd>
-
-    <script language="javascript" tal:content="tool/getJavascriptMessages"></script>
 </dl>
 </body>
 </html>
