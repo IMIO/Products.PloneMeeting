@@ -5,25 +5,16 @@
            i18n_domain="PloneMeeting">
 
   <!-- ##code-section configure.zcml.header -->
-  <include package="eea.facetednavigation" />
   <include package="Products.PasswordStrength" />
-  <include file="events.zcml" />
-  <include file="profiling.zcml" />
-  <include package=".browser" />
-  <include package=".content" />
   <include package="collective.ckeditor"/>
-  <include package="collective.compoundcriterion"/>
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
-  <include package="collective.eeafaceted.collectionwidget"/>
   <include package="collective.iconifieddocumentactions"/>
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="communesplone.layout"/>
   <include package="imio.pm.locales"/>
-  <include package="imio.actionspanel"/>
   <include package="imio.dashboard"/>
-  <include package="imio.history"/>
   <include package="plone.app.dexterity" />
   <include package="plone.directives.form" file="meta.zcml" />
   <include package="plone.directives.form" />
@@ -31,6 +22,10 @@
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="Products.cron4plone" />
   <include package="Products.DataGridField" />
+  <include package=".browser" />
+  <include package=".content" />
+  <include file="events.zcml" />
+  <include file="profiling.zcml" />
 
   <permission id="PloneMeeting.AddAdvice"
               title="PloneMeeting: Add advice"/>
