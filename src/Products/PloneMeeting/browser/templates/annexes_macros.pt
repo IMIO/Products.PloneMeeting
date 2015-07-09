@@ -307,7 +307,7 @@
   annex : the relevant MeetingFile
 </tal:comment>
 <metal:annexToPrint define-macro="annexToPrint" i18n:domain="PloneMeeting"
-                    tal:define="mayEdit python: member.has_permission('Modify portal content', annex);
+                    tal:define="mayEdit python: annex.adapted().mayChangeToPrint();
                                 isPrintable python: annex.isConvertable() and not annex.conversionFailed();
                                 isAnnexToPrint annex/getToPrint;">
   <tal:isPrintable tal:condition="isPrintable">

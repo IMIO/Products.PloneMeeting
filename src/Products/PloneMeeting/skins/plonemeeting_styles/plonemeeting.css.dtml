@@ -404,6 +404,10 @@ li.pmLinks div.annexTitle {
     padding-right: 30px;
     display: block;
 }
+/* annexes displayed in the annexes_form */
+td.pmLinks div.annexTitle {
+    display: inline;
+}
 .annexTitleNotPrintable {
     cursor: help;
     white-space: nowrap;

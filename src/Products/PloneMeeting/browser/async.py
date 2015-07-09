@@ -102,8 +102,7 @@ class AnnexToPrint(BrowserView):
         self.portal = self.portal_state.portal()
 
     def toggle(self):
-        member = self.portal_state.member()
-        if not member.has_permission('Modify portal content', self.context):
+        if not self.context.adapted().mayChangeToPrint():
             raise Unauthorized
 
         try:
