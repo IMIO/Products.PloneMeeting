@@ -692,6 +692,7 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 .itemSignaturesEditable i {
     border-bottom: 1px dotted;
     cursor: pointer;
+    padding-bottom: 2px;
 }
 #content span.budgetRelated {
     color: green;

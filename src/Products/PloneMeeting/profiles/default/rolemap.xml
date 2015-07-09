@@ -33,6 +33,23 @@
                 acquire="False">
       <role name="Manager"/>
     </permission>
+    <permission name="eea.facetednavigation: Configure faceted"
+                acquire="False">
+      <role name="Manager"/>
+    </permission>
+    <permission name="WebDAV access"
+                acquire="False">
+      <role name="MeetingArchiveObserver"/>
+      <role name="MeetingObserverGlobal"/>
+      <role name="Manager"/>
+    </permission>
+    <permission name="Add portal member"
+                acquire="False">
+      <role name="Manager"/>
+    </permission>
+
+
+
 <!-- ##/code-section permissions -->
   </permissions>
 </rolemap>

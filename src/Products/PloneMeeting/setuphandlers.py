@@ -187,11 +187,6 @@ def postInstall(context):
     site.error_log.setProperties(
         25, copy_to_zlog=1, ignored_exceptions=('NotFound', 'Redirect'))
 
-    # Enable WevDAV access for meeting archive observers and any global observer
-    site.manage_permission('WebDAV access',
-                           ('MeetingArchiveObserver', 'MeetingObserverGlobal', 'Manager'),
-                           acquire=0)
-
     # Set a specific workflow policy for all objects created in the tool
     ppw = site.portal_placeful_workflow
     if not hasattr(ppw, 'portal_plonemeeting_policy'):
@@ -216,9 +211,6 @@ def postInstall(context):
 
     # We must be able to choose a user password on user creation.
     site.manage_changeProperties(validate_email=0)
-
-    # Do not allow an anonymous user to register himself as new user
-    site.manage_permission('Add portal member', ('Manager',), acquire=0)
 
     site.portal_plonemeeting.at_post_create_script()
 
@@ -343,9 +335,6 @@ def postInstall(context):
     if not cron_configlet.cronjobs:
         # add a cron job that will be launched at 00:00
         cron_configlet.cronjobs = [u'0 0 * * portal/@@update-delay-aware-advices']
-
-    # make sure the permission to Configure faceted is only given to Manager
-    site.manage_permission('eea.facetednavigation: Configure faceted', ('Manager', ))
 
 
 ##code-section FOOT

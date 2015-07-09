@@ -2095,7 +2095,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listDashboardItemsListingsFilters')
     def listDashboardItemsListingsFilters(self):
-        """ """
+        """Vocabulary for 'dashboardItemsListingsFilters',
+           'dashboardMeetingAvailableItemsFilters'
+            and 'dashboardMeetingLinkedItemsFilters' fields."""
         criteria = ICriteria(self.searches.searches_items).criteria
         res = []
         for criterion in criteria:
@@ -2108,7 +2110,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listResultsPerPage')
     def listResultsPerPage(self):
-        """ """
+        """Vocabulary for 'maxShownListings',
+           'maxShownAvailableItems'
+            and 'maxShownMeetingItems' fields."""
         res = []
         for number in range(20, 1001, 20):
             res.append((str(number), str(number)))

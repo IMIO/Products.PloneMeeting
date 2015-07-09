@@ -22,7 +22,6 @@
 
 import os
 import os.path
-import re
 import urlparse
 import socket
 from appy.shared.diff import HtmlDiff
@@ -1108,15 +1107,6 @@ def signatureNotAlone(xhtmlContent):
     # (if not already done) "podItemKeepWithNext"; if it is a "li" I will
     # add style "podParaKeepWithNext" (if not already done).
     return addClassToLastChildren(xhtmlContent)
-
-
-# ------------------------------------------------------------------------------
-def spanifyLink(htmltag):
-    '''Given p_htmltag is a string like <a ...</a> that will be converted to
-       a <span>...</span>'''
-    htmltag = re.sub('<a href="[^"]+"', '<span', htmltag)
-    htmltag = re.sub('</a>', '</span>', htmltag)
-    return htmltag
 
 
 # ------------------------------------------------------------------------------

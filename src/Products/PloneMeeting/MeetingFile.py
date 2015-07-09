@@ -98,6 +98,7 @@ schema = Schema((
         name='isConfidential',
         default=False,
         widget=BooleanField._properties['widget'](
+            condition="python: here.adapted().mayChangeConfidentiality()",
             description="IsConfidential",
             description_msgid="is_confidential_descr",
             label='Isconfidential',
@@ -208,6 +209,20 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         if mft:
             return mft['relatedTo']
         return ''
+
+    security.declarePublic('mayChangeConfidentiality')
+    def mayChangeConfidentiality(self):
+        '''
+          May current user change confidentiality?
+        '''
+        annex = self.getSelf()
+        membershipTool = getToolByName(annex, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        tool = getToolByName(annex, 'portal_plonemeeting')
+        if not member.has_permission('Modify portal content', annex) or \
+           not tool.isManager(annex):
+            return False
+        return True
 
     security.declarePublic('getParent')
     def getParent(self):

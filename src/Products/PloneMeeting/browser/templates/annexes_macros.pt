@@ -344,7 +344,7 @@
   annex : the relevant MeetingFile
 </tal:comment>
 <metal:isConfidential define-macro="isConfidential" i18n:domain="PloneMeeting"
-                      tal:define="mayEdit python: member.has_permission('Modify portal content', annex);
+                      tal:define="mayEdit python: annex.adapted().mayChangeConfidentiality();
                                   isConfidential annex/getIsConfidential;">
   <span tal:condition="mayEdit"
         id="marker_toggle_isconfidential_UID#"

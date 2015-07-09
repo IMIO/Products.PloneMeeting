@@ -2,6 +2,7 @@
 import logging
 logger = logging.getLogger('PloneMeeting')
 
+from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
 
 from Products.PloneMeeting.interfaces import IFacetedSearchesItemsMarker
@@ -252,9 +253,24 @@ class Migrate_To_3_4(Migrator):
             meeting.deleteReferences('MeetingLateItems')
         logger.info('Done.')
 
-    def _cleanMeetingConfigAttributes(self):
-        '''Some parameters are now directly managed by the Collections
-           of the dashboard, move these paramaters and clean the configs.'''
+    def _cleanPMModificationDateOnItemsAndAnnexes(self):
+        '''The colorization on 'modification date' has been removed, clean items and
+           annexes.'''
+        logger.info('Removing \'pm_modification_date\' from items and annexes...')
+        brains = self.portal.portal_catalog(meta_type='MeetingItem')
+        for brain in brains:
+            item = brain.getObject()
+            if hasattr(aq_base(item), 'pm_modification_date'):
+                delattr(aq_base(item), 'pm_modification_date')
+        brains = self.portal.portal_catalog(meta_type='MeetingFile')
+        for brain in brains:
+            annex = brain.getObject()
+            if hasattr(aq_base(annex), 'pm_modification_date'):
+                delattr(aq_base(annex), 'pm_modification_date')
+        # remove the 'accessInfo' stored on portal_plonemeeting
+        if hasattr(aq_base(self.tool), 'accessInfo'):
+            delattr(aq_base(self.tool), 'accessInfo')
+        logger.info('Done.')
 
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
@@ -265,6 +281,7 @@ class Migrate_To_3_4(Migrator):
         self._updateItemsListVisibleFields()
         self._migrateLateItems()
         self._adaptAppForImioDashboard()
+        self._cleanPMModificationDateOnItemsAndAnnexes()
         # update portal_catalog as index "isDefinedInTool" changed
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed

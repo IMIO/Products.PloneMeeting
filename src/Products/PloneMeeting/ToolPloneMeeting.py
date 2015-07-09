@@ -1043,19 +1043,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         return adapted.getLink()
 
-    security.declareProtected('Manage portal', 'purgeAccessInfo')
-    def purgeAccessInfo(self):
-        '''Removes all entries in self.accessInfo that are related to users that
-           do not exist anymore.'''
-        toDelete = []
-        for memberId in self.accessInfo.iterkeys():
-            member = self.portal_membership.getMemberById(memberId)
-            if not member:
-                toDelete.append(memberId)
-        for userId in toDelete:
-            del self.accessInfo[userId]
-        return toDelete
-
     security.declarePublic('generateDocument')
     def generateDocument(self):
         '''Generates the document from a template specified in the request
