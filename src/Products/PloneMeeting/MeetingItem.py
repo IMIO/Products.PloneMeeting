@@ -3150,14 +3150,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 advId = adviceInfo['id']
                 data[advId] = adviceInfo.copy()
                 # optimize some saved data
-                data[advId]['type'] = translate(data[advId]['type'],
-                                                domain='PloneMeeting',
-                                                context=self.REQUEST)
+                data[advId]['type_translated'] = translate(data[advId]['type'],
+                                                           domain='PloneMeeting',
+                                                           context=self.REQUEST)
         else:
             data = self.adviceIndex[adviserId].copy()
-            data['type'] = translate(data['type'],
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
+            data['type_translated'] = translate(data['type'],
+                                                domain='PloneMeeting',
+                                                context=self.REQUEST)
         return data
 
     security.declarePublic('printAdvicesInfos')
