@@ -89,6 +89,7 @@ schema = Schema((
         name='toPrint',
         default=False,
         widget=BooleanField._properties['widget'](
+            condition="python: here.adapted().mayChangeToPrint()",
             label='Toprint',
             label_msgid='PloneMeeting_label_toPrint',
             i18n_domain='PloneMeeting',
@@ -210,6 +211,21 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             return mft['relatedTo']
         return ''
 
+    security.declarePublic('mayChangeToPrint')
+    def mayChangeToPrint(self):
+        '''
+          May current user change toPrint?
+        '''
+        annex = self.getSelf()
+        membershipTool = getToolByName(annex, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        tool = getToolByName(annex, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(annex)
+        if not cfg.getEnableAnnexToPrint() or \
+           not member.has_permission('Modify portal content', annex):
+            return False
+        return True
+
     security.declarePublic('mayChangeConfidentiality')
     def mayChangeConfidentiality(self):
         '''
@@ -219,7 +235,9 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         membershipTool = getToolByName(annex, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
         tool = getToolByName(annex, 'portal_plonemeeting')
-        if not member.has_permission('Modify portal content', annex) or \
+        cfg = tool.getMeetingConfig(annex)
+        if not cfg.getEnableAnnexConfidentiality() or \
+           not member.has_permission('Modify portal content', annex) or \
            not tool.isManager(annex):
             return False
         return True
