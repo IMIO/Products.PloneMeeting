@@ -17,7 +17,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
     def renderHeadCell(self):
         """Override rendering of head of the cell to include jQuery
            call to initialize annexes menu and to show the 'more/less details' if we are listing items."""
-        if self.table.batch[0].meta_type == 'MeetingItem':
+        if self.table.batch and self.table.batch[0].meta_type == 'MeetingItem':
             # change header title to "Purpose"
             self.header = "header_purpose"
             # activate necessary javascripts
