@@ -4133,13 +4133,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            every user folder for this MeetingConfig will be synchronized.
            We will :
            - remove every relevant folders from the given p_folder (folders searches_items, ...);
-           - we will copy the searches_* folders from the configuration to the p_folder;
+           - we will copy the searches_* folders from the configuration to the p_folder, keeping same UID
+             than before in the user p_folder because this UID appears in the search URL and user may have
+             saved this URL, otherwise it would lead to broken searches called by this URL;
+           - delete inactive collections that have been copy/pasted;
            - we will copy the facetednav annotation from the MeetingConfig.searches and
              MeetingConfig.searches_* folders to the corresponding folders in p_folder;
            - we will update the default for the collection widget."""
 
         # use uid_catalog to be sure to find the element
         uid_catalog = getToolByName(self, 'uid_catalog')
+        catalog = getToolByName(self, 'portal_catalog')
 
         folders = []
         # synchronize only one folder
@@ -4157,19 +4161,49 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 folders.append(meetingFolder)
 
+        # check for inactiveCollections that we will remove after copy/paste
+        inactiveCollections = catalog(meta_type='DashboardCollection',
+                                      path={'query': '/'.join(self.getPhysicalPath()) + '/searches'},
+                                      review_state='inactive',
+                                      isDefinedInTool=True)
+        inactiveColEndURLs = []
+        for inactiveCol in inactiveCollections:
+            # find relevant collection in user folder
+            inactiveColEndURLs.append(tuple(inactiveCol.getURL().split('/')[-2:]))
+
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
             # remove searches_* folders from the given p_folder
             subFolderIds = [folderId for folderId in self.searches.objectIds() if folderId.startswith('searches_')]
             toDelete = []
+            oldUIDs = {}
             for folderId in subFolderIds:
                 if folderId in folder.objectIds():
+                    for collection in getattr(folder, folderId).objectValues('DashboardCollection'):
+                        oldUIDs['{0}__{1}'.format(folderId, collection.getId())] = collection.UID()
                     toDelete.append(folderId)
             folder.manage_delObjects(toDelete)
 
             # copy searches_* folder from the MeetingConfig to the p_folder
             copiedData = self.searches.manage_copyObjects(ids=subFolderIds)
             folder.manage_pasteObjects(copiedData)
+
+            # update pasted collection UIDs and remove copied collections that were actually 'inactive'
+            for folderId in subFolderIds:
+                for collection in getattr(folder, folderId).objectValues('DashboardCollection'):
+                    key = '{0}__{1}'.format(folderId, collection.getId())
+                    if key in oldUIDs:
+                        collection._setUID(oldUIDs[key])
+                        collection.reindexObject(idxs=['UID', ])
+
+            # remove inactiveCollections
+            if inactiveCollections:
+                paths = ['/'.join(folder.getPhysicalPath() + inactiveColEndURL) for inactiveColEndURL in inactiveColEndURLs]
+                brainsToDelete = catalog(meta_type='DashboardCollection',
+                                         path={'query': paths})
+                for brain in brainsToDelete:
+                    colToDelete = brain.getObject()
+                    colToDelete.getParentNode().manage_delObjects([colToDelete.getId(), ])
 
             # copy facetednav ann from config to p_folder and sub_folders
             def _copyFacetedCriteriaFor(sourceFolder, destFolder):
