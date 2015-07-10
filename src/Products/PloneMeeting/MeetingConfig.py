@@ -1056,8 +1056,8 @@ schema = Schema((
     StringField(
         name='maxShownAvailableItems',
         widget=SelectionWidget(
-            description="MaxShownMeetingAvailableItems",
-            description_msgid="max_shown_meeting_available_items_descr",
+            description="MaxShownAvailableItems",
+            description_msgid="max_shown_available_items_descr",
             label='Maxshownavailableitems',
             label_msgid='PloneMeeting_label_maxShownAvailableItems',
             i18n_domain='PloneMeeting',
@@ -1071,8 +1071,8 @@ schema = Schema((
     StringField(
         name='maxShownMeetingItems',
         widget=SelectionWidget(
-            description="MaxShownMeetingLinkedItems",
-            description_msgid="max_shown_meeting_linked_items_descr",
+            description="MaxShownMeetingItems",
+            description_msgid="max_shown_meeting_items_descr",
             label='Maxshownmeetingitems',
             label_msgid='PloneMeeting_label_maxShownMeetingItems',
             i18n_domain='PloneMeeting',
