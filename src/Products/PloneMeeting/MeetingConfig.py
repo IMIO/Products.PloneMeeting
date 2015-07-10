@@ -28,6 +28,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import mimetypes
+from AccessControl import Unauthorized
 from DateTime import DateTime
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
@@ -4248,9 +4249,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _updateDefaultCollectionFor(self, folderObj, default_uid):
         """Use p_default_uid as the default collection selected
            for the CollectionWidget used on p_folderObj."""
-        tool = getToolByName(self, 'portal_plonemeeting')
         # make sure the folder is a facetednav, it should always be the case but...
         if not folderObj.getLayout() == 'facetednavigation_view':
+            tool = getToolByName(self, 'portal_plonemeeting')
             tool._enableFacetedFor(folderObj)
         criteria = ICriteria(folderObj).criteria
         for criterion in criteria:

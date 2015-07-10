@@ -28,11 +28,15 @@ from DateTime import DateTime
 
 from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
+from zope.annotation import IAnnotations
 from zope.i18n import translate
 
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
+
+from eea.facetednavigation.interfaces import ICriteria
+from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -43,6 +47,7 @@ from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
 
@@ -1142,6 +1147,59 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(cfgId in self.tool.objectIds())
         self.tool.manage_delObjects([cfgId, ])
         self.assertFalse(cfgId in self.tool.objectIds())
+
+    def test_pm_SynchSearches(self):
+        '''Test the synchSearches functionnality.'''
+        cfg = self.meetingConfig
+        # correctly synchronized when a new pmFolder is created
+        createdFolders = [info[0] for info in cfg.subFoldersInfo[TOOL_FOLDER_SEARCHES][2]]
+        self.changeUser('pmManager')
+        pmFolder = self.getMeetingFolder()
+        for createdFolder in createdFolders:
+            self.assertTrue(createdFolder in pmFolder.objectIds('ATFolder'))
+            # collections are there
+            self.assertTrue(getattr(cfg.searches, createdFolder).objectIds('DashboardCollection')
+                            == getattr(pmFolder, createdFolder).objectIds('DashboardCollection'))
+
+        # while synchronizing searches, despite copy/paste that create new collections,
+        # original collection UIDs of collections of the user folder are kept
+        # so if a user saved a search URL, it still works
+        searchmyitemsCreated = pmFolder.searches_items.searchmyitems.created()
+        searchmyitemsUID = pmFolder.searches_items.searchmyitems.UID()
+        searchallitemsCreated = pmFolder.searches_items.searchallitems.created()
+        searchallitemsUID = pmFolder.searches_items.searchallitems.UID()
+        # synchronize again
+        # show here also that user must be Manager to synch
+        self.assertRaises(Unauthorized, cfg.synchSearches)
+        self.changeUser('siteadmin')
+        cfg._synchSearches(pmFolder)
+        self.assertTrue(not pmFolder.searches_items.searchmyitems.created() == searchmyitemsCreated)
+        self.assertTrue(pmFolder.searches_items.searchmyitems.UID() == searchmyitemsUID)
+        self.assertTrue(not pmFolder.searches_items.searchallitems.created() == searchallitemsCreated)
+        self.assertTrue(pmFolder.searches_items.searchallitems.UID() == searchallitemsUID)
+
+        # the defaut collection is kept
+        criteria = ICriteria(pmFolder.searches_items).criteria
+        userCollectionWidget = criteria[1]
+        self.assertTrue(userCollectionWidget.widget == CollectionWidget.widget_type)
+        self.assertTrue(userCollectionWidget.default == searchallitemsUID)
+
+        # if a collection is disabled in the configuration, it is not kept in the pmFolder
+        self.do(cfg.searches.searches_items.searchmyitems, 'deactivate')
+        cfg._synchSearches(pmFolder)
+        self.assertTrue(not 'searchmyitems' in pmFolder.searches_items.objectIds())
+        self.assertTrue(len(pmFolder.searches_items.objectIds()) ==
+                        len(cfg.searches.searches_items.objectIds()) - 1)
+
+        # if the default is changed in the configuration, it works too
+        criteria = ICriteria(pmFolder.searches_items).criteria
+        criteria[1].default = cfg.searches.searches_items.searchitemstovalidate.UID()
+        ICriteria(cfg.searches)._update(criteria)
+        cfg._synchSearches(pmFolder)
+        criteria = ICriteria(pmFolder.searches_items).criteria
+        userCollectionWidget = criteria[1]
+        self.assertTrue(userCollectionWidget.widget == CollectionWidget.widget_type)
+        self.assertTrue(userCollectionWidget.default == pmFolder.searches_items.searchitemstovalidate.UID())
 
 
 def test_suite():
