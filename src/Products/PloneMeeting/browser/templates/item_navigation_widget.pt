@@ -16,7 +16,7 @@
 
     <tal:comment replace="nothing">Go to the first item</tal:comment>
     <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:int=${firstItemNumber}">
-        <img tal:condition="python: (itemNumber != 1) and (itemNumber != 2) and firstItemNumber"
+        <img tal:condition="python: itemNumber != firstItemNumber"
              style="cursor:pointer" title="pm_goto_first" i18n:attributes="title"
              tal:attributes="src string: ${view/portal_url}/arrowLeftDouble.png;"/>
     </a>
@@ -32,7 +32,7 @@
         Show total number of items only if the user has the permission to view the last item).</tal:comment>
     <span class="discreet">
         <span i18n:domain="plone" i18n:translate="">MeetingItem</span>&nbsp;
-        <span tal:replace="itemNumber"/><span tal:condition="python: lastItemNumber!=False"> / <span tal:replace="totalNbOfItems"/></span>
+        <span tal:replace="itemNumber"/><span tal:condition="lastItemNumber"> / <span tal:replace="totalNbOfItems"/></span>
     </span>
 
     <tal:comment replace="nothing">Go to the next item</tal:comment>
@@ -44,7 +44,7 @@
 
     <tal:comment replace="nothing">Go to the last item</tal:comment>
     <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:int=${lastItemNumber}">
-        <img tal:condition="python: (itemNumber != totalNbOfItems) and (itemNumber != totalNbOfItems-1) and lastItemNumber"
+        <img tal:condition="python: itemNumber != lastItemNumber"
              style="cursor:pointer" title="pm_goto_last" i18n:attributes="title"
              tal:attributes="src string: ${view/portal_url}/arrowRightDouble.png;"/>
     </a>
