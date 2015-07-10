@@ -100,19 +100,14 @@ class MeetingReviewStatesVocabulary(object):
 
     def __call__(self, context):
         """ """
-        wfTool = getToolByName(context, 'portal_workflow')
         tool = getToolByName(context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        itemWF = wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
         res = []
-        for state in itemWF.states.values():
-            res.append(SimpleTerm(state.getId(),
-                                  state.getId(),
-                                  safe_unicode(translate(state.title,
-                                                         domain="plone",
-                                                         context=context.REQUEST)))
+        for state_id, state_title in cfg.listMeetingStates().items():
+            res.append(SimpleTerm(state_id,
+                                  state_id,
+                                  safe_unicode(state_title))
                        )
-        res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 MeetingReviewStatesVocabularyFactory = MeetingReviewStatesVocabulary()
@@ -123,19 +118,14 @@ class ItemReviewStatesVocabulary(object):
 
     def __call__(self, context):
         """ """
-        wfTool = getToolByName(context, 'portal_workflow')
         tool = getToolByName(context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        itemWF = wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         res = []
-        for state in itemWF.states.values():
-            res.append(SimpleTerm(state.getId(),
-                                  state.getId(),
-                                  safe_unicode(translate(state.title,
-                                                         domain="plone",
-                                                         context=context.REQUEST)))
+        for state_id, state_title in cfg.listItemStates().items():
+            res.append(SimpleTerm(state_id,
+                                  state_id,
+                                  safe_unicode(state_title))
                        )
-        res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 ItemReviewStatesVocabularyFactory = ItemReviewStatesVocabulary()
