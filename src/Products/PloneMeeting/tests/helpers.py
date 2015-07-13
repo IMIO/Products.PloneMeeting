@@ -204,7 +204,7 @@ class PloneMeetingTestingHelpers:
             if not useDefinedWfPath:
                 transitions = self.transitions(itemOrMeeting)
             for tr in transitions:
-                if tr.startswith('back') and tr in self.transitions(itemOrMeeting):
+                if (tr.startswith('back') or useDefinedWfPath) and tr in self.transitions(itemOrMeeting):
                     self.do(itemOrMeeting, tr)
                     break
         self.changeUser(currentUser)
