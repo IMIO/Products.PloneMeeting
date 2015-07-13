@@ -1109,6 +1109,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # MeetingMember can not setItemIsSigned
         self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
+        # Manager maySignItem when necessary
+        self.changeUser('siteadmin')
+        self.assertTrue(item.maySignItem())
         # MeetingManagers neither, the item must be decided...
         self.changeUser('pmManager')
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
@@ -1295,6 +1298,8 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime())
         # define an assembly on the meeting
         meeting.setAssembly('Meeting assembly')
+        meeting.setAssemblyAbsents('Meeting assembly absents')
+        meeting.setAssemblyExcused('Meeting assembly excused')
         meeting.setSignatures('Meeting signatures')
         self.presentItem(item)
         # make the form item_assembly_default works
@@ -1308,9 +1313,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, formSignatures.update)
         # so use this field
         self.meetingConfig.setUsedItemAttributes(self.meetingConfig.getUsedItemAttributes() +
-                                                 ('itemAssembly', 'itemSignatures', ))
+                                                 ('itemAssembly', 'itemAssemblyAbsents',
+                                                  'itemAssemblyExcused', 'itemSignatures', ))
         self.meetingConfig.setUsedMeetingAttributes(self.meetingConfig.getUsedMeetingAttributes() +
-                                                    ('assembly', 'signatures', ))
+                                                    ('assembly', 'assemblyAbsents',
+                                                     'assemblyExcused', 'signatures', ))
         # MeetingItem.attributeIsUsed is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         # current user must be at least MeetingManager to use this
@@ -1322,13 +1329,23 @@ class testMeetingItem(PloneMeetingTestCase):
         formSignatures.update()
         # by default, item assembly/signatures is the one defined on the meeting
         self.assertEquals(item.getItemAssembly(), meeting.getAssembly())
+        self.assertEquals(item.getItemAssemblyAbsents(), meeting.getAssemblyAbsents())
+        self.assertEquals(item.getItemAssemblyExcused(), meeting.getAssemblyExcused())
         self.assertEquals(item.getItemSignatures(), meeting.getSignatures())
+        # except if we ask real value
+        self.assertFalse(item.getItemAssembly(real=True))
+        self.assertFalse(item.getItemAssemblyAbsents(real=True))
+        self.assertFalse(item.getItemAssemblyExcused(real=True))
         # now use the form to change the item assembly/signatures
         self.request.form['form.widgets.item_assembly'] = u'Item assembly'
+        self.request.form['form.widgets.item_absents'] = u'Item assembly absents'
+        self.request.form['form.widgets.item_excused'] = u'Item assembly excused'
         self.request.form['form.widgets.item_signatures'] = u'Item signatures'
         formAssembly.handleApplyItemAssembly(formAssembly, None)
         formSignatures.handleApplyItemSignatures(formSignatures, None)
         self.assertNotEquals(item.getItemAssembly(), meeting.getAssembly())
+        self.assertNotEquals(item.getItemAssemblyAbsents(), meeting.getAssemblyAbsents())
+        self.assertNotEquals(item.getItemAssemblyExcused(), meeting.getAssemblyExcused())
         self.assertNotEquals(item.getItemSignatures(), meeting.getSignatures())
         self.assertEquals(item.getItemAssembly(), '<p>Item assembly</p>')
         self.assertEquals(item.getItemSignatures(), 'Item signatures')
@@ -2068,13 +2085,14 @@ class testMeetingItem(PloneMeetingTestCase):
            user that took over item first time.  So if a user take over an item in state1, it is saved.
            If item goes to state2, taken over by is set to '', if item comes back to state1, original user
            that took item over is automatically set again.'''
+        cfg = self.meetingConfig
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertTrue(not item.takenOverByInfos)
         # take item over
         item.setTakenOverBy('pmCreator1')
-        item_created_key = "%s__wfstate__%s" % (self.meetingConfig.getItemWorkflow(), item.queryState())
+        item_created_key = "%s__wfstate__%s" % (cfg.getItemWorkflow(), item.queryState())
         self.assertTrue(item.takenOverByInfos[item_created_key] == 'pmCreator1')
         # if takenOverBy is removed, takenOverByInfos is cleaned too
         item.setTakenOverBy('')
@@ -2105,6 +2123,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         self.assertTrue(not item.getTakenOverBy())
         self.assertTrue(not item_created_key in item.takenOverByInfos)
+
+        # we can set an arbitrary key in the takenOverByInfos
+        # instead of current item state if directly passed
+        arbitraryKey = "%s__wfstate__%s" % (cfg.getItemWorkflow(), 'validated')
+        self.assertTrue(not arbitraryKey in item.takenOverByInfos)
+        item.setTakenOverBy('pmReviewer1', **{'wf_state': arbitraryKey})
+        self.assertTrue(arbitraryKey in item.takenOverByInfos)
 
     def test_pm_ItemActionsPanelCaching(self):
         '''For performance, actions panel is cached,
@@ -2763,6 +2788,16 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_Completeness(self):
         '''Test the item-completeness view and relevant methods in MeetingItem.'''
+        # completeness widget is disabled for items of the config
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        recurringItem = cfg.getItems(recurring=True)[0]
+        templateItem = cfg.getItems(recurring=False)[0]
+        self.assertFalse(recurringItem.adapted().mayEvaluateCompleteness())
+        self.assertFalse(templateItem.adapted().mayEvaluateCompleteness())
+        self.assertFalse(recurringItem.adapted().mayAskCompletenessEvalAgain())
+        self.assertFalse(templateItem.adapted().mayAskCompletenessEvalAgain())
+
         # by default, a MeetingMember can not evaluate completeness
         # user must have role ITEM_COMPLETENESS_EVALUATORS, like MeetingManager
         self.changeUser('pmCreator1')
@@ -2815,6 +2850,13 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_Emergency(self):
         '''Test the item-emergency view and relevant methods in MeetingItem.'''
+        # emergency widget is disabled for items of the config
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        recurringItem = cfg.getItems(recurring=True)[0]
+        templateItem = cfg.getItems(recurring=False)[0]
+        self.assertFalse(recurringItem.adapted().mayAskEmergency())
+        self.assertFalse(templateItem.adapted().mayAskEmergency())
         # by default, every user able to edit the item may ask emergency
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
