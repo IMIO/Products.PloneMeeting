@@ -450,6 +450,18 @@
         permission="zope.Public"
         allowed_attributes="addAnnex
                             isValidAnnexId"/>
+    <browser:page
+        name="annex-to-print"
+        class=".annexes.AnnexToPrintView"
+        for="Products.PloneMeeting.interfaces.IMeetingFile"
+        template="templates/annextoprint.pt"
+        permission="zope.Public"/>
+    <browser:page
+        name="annex-title"
+        class=".annexes.AnnexTitleView"
+        for="*"
+        template="templates/annextitle.pt"
+        permission="zope.Public"/>
     <browser:view
         name="pm-notify-event"
         class=".notify.NotifyEvent"

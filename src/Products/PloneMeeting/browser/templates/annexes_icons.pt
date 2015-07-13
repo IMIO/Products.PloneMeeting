@@ -39,7 +39,7 @@
             <ul>
               <li tal:define="tool python: view.tool;
                               meetingConfig python: view.cfg;" class="pmLinks" tal:repeat="annex annexesGroup">
-                <metal:withOrWithoutPreview use-macro="context/@@annexes-macros/withOrWithoutPreview" />
+               <tal:annexTitle replace="structure python: context.restrictedTraverse('@@annex-title')(annex)" />
               </li>
             </ul>
           </dd>

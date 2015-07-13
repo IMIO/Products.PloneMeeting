@@ -218,7 +218,7 @@
        <span tal:define="annex python: context.uid_catalog(UID=annexInfo['UID'])[0].getObject()">
        <td class="pmLinks">
          <img tal:attributes="src string:${portal_url}/${annex/getIcon};"/>&nbsp;
-         <metal:withOrWithoutPreview use-macro="here/@@annexes-macros/withOrWithoutPreview" />
+         <tal:annexTitle replace="structure python: annex.restrictedTraverse('@@annex-title')(annex)" />
        </td>
        <td tal:content="python: annex.getMeetingFileType(theData=True)['name']"></td>
        <td tal:content="python: tool.getUserName(annex.Creator())"></td>
@@ -227,7 +227,7 @@
           <metal:isConfidential use-macro="here/@@annexes-macros/isConfidential" />
        </td>
        <td tal:condition="meetingConfig/getEnableAnnexToPrint">
-           <metal:annexToPrint use-macro="here/@@annexes-macros/annexToPrint" />
+           <tal:annexToPrint replace="structure annex/@@annex-to-print" />
        </td>
        <td tal:define="warnSize annex/warnSize"
            tal:attributes="class python: warnSize and 'pmAnnexSizeWarning' or '';
@@ -243,100 +243,6 @@
    </table>
   </tal:defines>
 </div>
-
-
-<tal:comment replace="nothing">Requires "tool", "meetingConfig".
-     This will display the link to the annex depending on the fact that we use preview or not.</tal:comment>
-<metal:withOrWithoutPreview define-macro="withOrWithoutPreview"
-                            tal:define="conversionStatus annex/conversionStatus;
-                                        previewEnabled tool/getEnableAnnexPreview;
-                                        target python: meetingConfig.getUserParam('openAnnexesInSeparateWindows', context.REQUEST) and '_blank' or '';">
-    <tal:withPreview define="isRealManager python: tool.isManager(context, realManagers=True);"
-                     condition="previewEnabled">
-       <a href="#"
-          tal:attributes="href string:${portal_url}/${annex/absolute_url}/download"
-          title="Download annex"
-          i18n:domain="PloneMeeting"
-          i18n:attributes="title">
-          <img style="float: right;"
-               src="download_icon.png"
-               tal:attributes="src string:${portal_url}/download_icon.png" />
-       </a>
-       <div class="annexTitle" tal:condition="python: conversionStatus == 'successfully_converted'">
-         <span tal:replace="structure python: tool.getColoredLink(context,
-                                                                  target=target,
-                                                                  appendToUrl='/documentviewer#document/p1',
-                                                                  additionalCSSClasses='classicpopup',
-                                                                  annexInfo=annex)"/>
-       </div>
-       <div class="annexTitle annexTitleNotPrintable" tal:condition="python: conversionStatus == 'under_conversion'"
-            title="help_no_preview_available_under_conversion"
-            i18n:domain="PloneMeeting"
-            i18n:attributes="title">
-         <img src="spinner.gif" tal:attributes="src string:${portal_url}/spinner.gif" width="16" height="16" />
-         <span tal:content="annex/Title" />
-       </div>
-       <div class="annexTitle annexTitleNotPrintable" tal:condition="python: conversionStatus == 'conversion_error' and not isRealManager"
-            title="help_no_preview_available_conversion_error"
-            i18n:domain="PloneMeeting"
-            i18n:attributes="title">
-         <span class="erroredConversion" tal:content="annex/Title" />
-       </div>
-       <div class="annexTitle" tal:condition="python: conversionStatus == 'conversion_error' and isRealManager">
-         <span tal:replace="structure python: tool.getColoredLink(context,
-                                                                  target=target,
-                                                                  appendToUrl='/documentviewer',
-                                                                  additionalCSSClasses='annexTitleNotPrintable erroredConversion',
-                                                                  tag_title='help_no_preview_available_conversion_error_manager',
-                                                                  annexInfo=annex)"/>
-       </div>
-       <div tal:condition="python: conversionStatus == 'not_convertable'"
-             tal:content="annex/Title"
-             class="annexTitle annexTitleNotPrintable"
-             title="help_no_preview_available" i18n:domain="PloneMeeting" i18n:attributes="title"/>
-
-    </tal:withPreview>
-    <tal:withoutPreview condition="not: previewEnabled">
-       <span tal:replace="structure python: tool.getColoredLink(context, target=target, annexInfo=annex)"/>
-    </tal:withoutPreview>
-</metal:withOrWithoutPreview>
-
-
-<tal:comment replace="nothing">
-  This macro manage the toPrint attribute of annexes.
-  annex : the relevant MeetingFile
-</tal:comment>
-<metal:annexToPrint define-macro="annexToPrint" i18n:domain="PloneMeeting"
-                    tal:define="mayEdit python: annex.adapted().mayChangeToPrint();
-                                isPrintable python: annex.isConvertable() and not annex.conversionFailed();
-                                isAnnexToPrint annex/getToPrint;">
-  <tal:isPrintable tal:condition="isPrintable">
-  <span id="marker_toggle_annextoprint_UID#"
-        tal:attributes="id string:marker_toggle_annextoprint_$UID;"
-        tal:define="UID annex/UID;
-                    baseUrl annex/absolute_url;"
-        tal:condition="mayEdit">
-    <img class="annexToPrintEditable" tal:condition="isAnnexToPrint" name="annexToPrintNo" style="cursor:pointer"
-         title="annex_to_print_yes_edit" i18n:attributes="title"
-         tal:attributes="src string:$portal_url/annexToPrintYes.png;
-                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_annex_to_print\', baseSelector=\'#marker_toggle_annextoprint_\')'"/>
-    <img class="annexToPrintEditable" tal:condition="not: isAnnexToPrint" name="annexToPrintYes" style="cursor:pointer"
-         title="annex_to_print_no_edit" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/annexToPrintNo.png;
-                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_annex_to_print\', baseSelector=\'#marker_toggle_annextoprint_\')'"/>
-  </span>
-  <tal:notMayEdit condition="python: not mayEdit">
-    <img tal:condition="isAnnexToPrint" title="annex_to_print_yes" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/annexToPrintYes.png"/>
-    <img tal:condition="not: isAnnexToPrint" title="annex_to_print_no" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/annexToPrintNo.png"/>
-  </tal:notMayEdit>
-  </tal:isPrintable>
-  <tal:isNotPrintable tal:condition="not: isPrintable">
-    <img title="annex_to_print_disabled" style="cursor: help;" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/annexToPrintDisabled.png"/>
-  </tal:isNotPrintable>
-</metal:annexToPrint>
 
 
 <tal:comment replace="nothing">

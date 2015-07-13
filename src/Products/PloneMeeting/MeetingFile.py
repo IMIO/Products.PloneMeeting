@@ -34,7 +34,6 @@ from plone.memoize.instance import memoize
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.CatalogTool import getObjSize
-from Products.MimetypesRegistry.common import MimeTypeException
 from collective.documentviewer.async import asyncInstalled
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import getCustomAdapter, sendMailIfRelevant
@@ -65,9 +64,6 @@ PDFTOTEXT_ERROR = 'An error occurred while converting a PDF file with ' \
 WVTEXT_COMMAND = 'wvText %s %s'
 WVTEXT_INFO_COMMAND = 'Launching wvText: %s'
 WVTEXT_ERROR = 'An error occurred while converting a Word document with wvText.'
-CONTENT_TYPE_NOT_FOUND = 'The content_type for MeetingFile at %s was not found in mimetypes_registry!'
-FILE_EXTENSION_NOT_FOUND = 'The extension used by MeetingFile at %s does not correspond to ' \
-    'an extension available in the mimetype %s found in mimetypes_registry!'
 CONVERSION_ERROR = u'There was an error during annex conversion, please contact system administrator.'
 CONVERSION_ERROR_MANAGER = u'There was an error during annex conversion at %s.'
 
@@ -343,7 +339,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'iconUrl': self.getIcon(),
                'modification_date': self.modified(),
                'relatedTo': self.findRelatedTo(),
-               'conversionStatus': self.conversionStatus(),
+               'conversionStatus': IAnnexable(self).conversionStatus(),
                'isConfidential': self.getIsConfidential(),
                'warnSize': self.warnSize(),
                'friendlySize': getObjSize(self)()
@@ -483,103 +479,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         # finally set the given value
         self.getField('toPrint').set(self, value)
 
-    security.declarePublic('conversionStatus')
-    def conversionStatus(self):
-        """
-          Returns the conversion status of current MeetingFile.
-          Status can be :
-          - not_convertable : the MeetingFile is not convertable by collective.documentviewer
-          - under_conversion : or awaiting conversion, the MeetingFile is convertable but is not yet converted
-          - conversion_error : there was an error during MeetingFile conversion.  Manager have access in the UI to more infos
-          - successfully_converted : the MeetingFile is converted correctly
-        """
-        annotations = IAnnotations(self)
-        # not_convertable or awaiting conversion?
-        if not 'collective.documentviewer' in annotations.keys() or not self.isConvertable():
-            return 'not_convertable'
-        # under conversion?
-        if not 'successfully_converted' in annotations['collective.documentviewer']:
-            return 'under_conversion'
-
-        if not annotations['collective.documentviewer']['successfully_converted'] is True:
-            return 'conversion_error'
-
-        return 'successfully_converted'
-
-    security.declarePublic('conversionFailed')
-    def conversionFailed(self):
-        """
-          Check if conversion failed
-        """
-        annotations = IAnnotations(self)
-        if 'collective.documentviewer' in annotations and \
-           'successfully_converted' in annotations['collective.documentviewer'] and \
-           annotations['collective.documentviewer']['successfully_converted'] is False:
-            return True
-        return False
-
-    security.declarePublic('isConvertable')
-    def isConvertable(self):
-        """
-          Check if the annex is convertable (hopefully).  If the annex mimetype is one taken into
-          account by collective.documentviewer CONVERTABLE_TYPES, then it should be convertable...
-        """
-        mr = self.mimetypes_registry
-        try:
-            content_type = mr.lookup(self.content_type)
-        except MimeTypeException:
-            content_type = None
-        if not content_type:
-            logger.warning(CONTENT_TYPE_NOT_FOUND % self.absolute_url_path())
-            return False
-        # get printable extensions from collective.documentviewer
-        printableExtensions = self._documentViewerPrintableExtensions()
-
-        # mr.lookup returns a list
-        extensions = content_type[0].extensions
-        # now that we have the extensions, find the one we are using
-        currentExtension = ''
-        # in case we have myimage.JPG, make sure extension is lowercase as
-        # extentions on mimetypes_registry are lowercase...
-        try:
-            filename = self.getFilename()
-        except AttributeError:
-            filename = self.getFile().filename
-        file_extension = filename.split('.')[-1].lower()
-        for extension in extensions:
-            if file_extension == extension:
-                currentExtension = extension
-                break
-
-        # if we found the exact extension we are using, we can see if it is in the list
-        # of printable extensions provided by collective.documentviewer
-        # most of times, this is True...
-        if currentExtension in printableExtensions:
-            return True
-        if not currentExtension:
-            logger.warning(FILE_EXTENSION_NOT_FOUND % (self.absolute_url_path(),
-                                                       content_type[0]))
-
-        # if we did not find the currentExtension in the mimetype's extensions,
-        # for example an uploaded element without extension, check nevertheless
-        # if the mimetype seems to be managed by collective.documentviewer
-        if set(extensions).intersection(set(printableExtensions)):
-            return True
-
-        return False
-
-    @memoize
-    def _documentViewerPrintableExtensions(self):
-        """
-          Compute file extensions that will be considered as printable.
-        """
-        from collective.documentviewer.config import CONVERTABLE_TYPES
-        printableExtensions = []
-        for convertable_type in CONVERTABLE_TYPES.iteritems():
-            printableExtensions.extend(convertable_type[1].extensions)
-        return printableExtensions
-
-
 
 registerType(MeetingFile, PROJECTNAME)
 # end of class MeetingFile
@@ -592,7 +491,7 @@ def convertToImages(object, event, force=False):
       Convert the MeetingFile to images so it can be printed or previewed.
     """
     if (not object.portal_plonemeeting.getEnableAnnexPreview() and not force) or  \
-       not object.isConvertable():
+       not IAnnexable(object).isConvertable():
         return
     # if the annex will be converted to images by plone.app.async
     # save some elements from the REQUEST that will be used after...

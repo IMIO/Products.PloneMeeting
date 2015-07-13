@@ -113,7 +113,7 @@ class AnnexToPrint(BrowserView):
             # check that this annex is printable
             # in case last conversion failed, we should not let the user
             # specify that the annex is toPrint
-            if self.context.conversionFailed():
+            if IAnnexable(self.context).conversionFailed():
                 raise Exception('This annex can not be printed because the conversion to a printable format failed!')
 
             if annexToPrint:

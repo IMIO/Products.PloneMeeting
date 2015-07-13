@@ -1,0 +1,31 @@
+<tal:defines define="mayEdit python: context.adapted().mayChangeToPrint();
+                     isPrintable view/isPrintable;
+                     isAnnexToPrint context/getToPrint;
+                     portal_url view/portal_url;">
+  <tal:isPrintable condition="isPrintable">
+  <span id="marker_toggle_annextoprint_UID#"
+        tal:attributes="id string:marker_toggle_annextoprint_$UID;"
+        tal:define="UID context/UID;
+                    baseUrl context/absolute_url;"
+        tal:condition="mayEdit">
+    <img class="annexToPrintEditable" tal:condition="isAnnexToPrint" name="annexToPrintNo" style="cursor:pointer"
+         title="annex_to_print_yes_edit" i18n:attributes="title"
+         tal:attributes="src string:$portal_url/annexToPrintYes.png;
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_annex_to_print\', baseSelector=\'#marker_toggle_annextoprint_\')'"/>
+    <img class="annexToPrintEditable" tal:condition="not: isAnnexToPrint" name="annexToPrintYes" style="cursor:pointer"
+         title="annex_to_print_no_edit" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/annexToPrintNo.png;
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_annex_to_print\', baseSelector=\'#marker_toggle_annextoprint_\')'"/>
+  </span>
+  <tal:notMayEdit condition="python: not mayEdit">
+    <img tal:condition="isAnnexToPrint" title="annex_to_print_yes" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/annexToPrintYes.png"/>
+    <img tal:condition="not: isAnnexToPrint" title="annex_to_print_no" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/annexToPrintNo.png"/>
+  </tal:notMayEdit>
+  </tal:isPrintable>
+  <tal:isNotPrintable condition="not: isPrintable">
+    <img title="annex_to_print_disabled" style="cursor: help;" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/annexToPrintDisabled.png"/>
+  </tal:isNotPrintable>
+</tal:defines>

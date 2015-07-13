@@ -1032,7 +1032,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if IMeetingFile.providedBy(annexInfo):
                 annexInfo = annexInfo.getAnnexInfo()
             adapted.contentValue = annexInfo['Title']
-            adapted.appendToUrl = "/" + annexInfo['id'] + appendToUrl
             if annexInfo['warnSize']:
                 adapted.contentValue += "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
                     translate("annex_size_warning",
