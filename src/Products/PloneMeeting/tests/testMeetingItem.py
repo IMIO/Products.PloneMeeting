@@ -117,6 +117,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
 
+        # if useGroupsAsCategories is on, getCategories will return proposingGroups
+        self.cleanMemoize()
+        cfg.setUseGroupsAsCategories(True)
+        self.failUnless([gr.getId() for gr in cfg.getCategories()] == ['developers', 'vendors'])
+
     def test_pm_ListProposingGroups(self):
         '''Check that the user is creator for the proposing groups.'''
         # test that if a user is cretor for a group but only reviewer for
