@@ -2903,6 +2903,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['new_emergency_value'] = 'no_emergency'
         self.assertRaises(Unauthorized, changeEmergencyView)
 
+    def test_pm_ItemStrikedAssembly(self):
+        """Test use of utils.toHTMLStrikedContent for itemAssembly."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setItemAssembly('Simple assembly')
+        self.assertEquals(item.getStrikedItemAssembly(),
+                          '<p class="mltAssembly">Simple assembly</p>')
+        item.setItemAssembly('Assembly with [[striked]] part')
+        self.assertEquals(item.getStrikedItemAssembly(),
+                          '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

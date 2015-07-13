@@ -46,7 +46,7 @@ from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
     getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields, \
-    ItemDuplicatedFromConfigEvent, cleanRamCacheFor
+    ItemDuplicatedFromConfigEvent, cleanRamCacheFor, toHTMLStrikedContent
 from Products.PloneMeeting import PMMessageFactory as _
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -1193,8 +1193,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         meeting = self.getSelf()
         # either we use free textarea to define assembly...
         if meeting.getAssembly():
-            tool = getToolByName(meeting, 'portal_plonemeeting')
-            return tool.toHTMLStrikedContent(meeting.getAssembly())
+            return toHTMLStrikedContent(meeting.getAssembly())
         # ... or we use MeetingUsers
         elif meeting.getAttendees():
             res = []

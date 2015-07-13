@@ -63,7 +63,8 @@ from Products.PloneMeeting.utils import \
     getMeetingUsers, getFieldContent, getFieldVersion, \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields, signatureNotAlone,\
-    forceHTMLContentTypeForEmptyRichFields, workday, networkdays, cleanMemoize
+    forceHTMLContentTypeForEmptyRichFields, workday, networkdays, cleanMemoize, \
+    toHTMLStrikedContent
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -2230,8 +2231,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         # either we use free textarea to define assembly...
         if item.getItemAssembly():
-            tool = getToolByName(item, 'portal_plonemeeting')
-            return tool.toHTMLStrikedContent(item.getItemAssembly())
+            return toHTMLStrikedContent(item.getItemAssembly())
         # ... or we use MeetingUsers
         elif item.getAttendees():
             res = []

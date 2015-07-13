@@ -1317,6 +1317,17 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse(meeting3.getPreviousMeeting())
         self.assertEquals(meeting3.getPreviousMeeting(searchMeetingsInterval=61), meeting4)
 
+    def test_pm_MeetingStrikedAssembly(self):
+        """Test use of utils.toHTMLStrikedContent for assembly."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        meeting.setAssembly('Simple assembly')
+        self.assertEquals(meeting.getStrikedAssembly(),
+                          '<p class="mltAssembly">Simple assembly</p>')
+        meeting.setAssembly('Assembly with [[striked]] part')
+        self.assertEquals(meeting.getStrikedAssembly(),
+                          '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

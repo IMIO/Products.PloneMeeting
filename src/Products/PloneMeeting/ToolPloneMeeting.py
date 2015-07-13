@@ -2086,27 +2086,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     toRemove.append(principalId)
         obj.manage_delLocalRoles(toRemove)
 
-    security.declarePublic('toHTMLStrikedContent')
-    def toHTMLStrikedContent(self, content):
-        """
-          p_content is HTML having elements to strike between [[]].
-          We will replace these [[]] by <strike> tags.  Moreover, we will append the 'mltAssembly'
-          class to the <p> that surrounds the given p_content HTML.
-        """
-        return content.replace('[[', '<strike>').replace(']]', '</strike>'). \
-            replace('<p>', '<p class="mltAssembly">')
-
-    security.declarePublic('storeSearchParams')
-    def storeSearchParams(self, form):
-        '''Stores, in the session, advanced-search-related parameters from the given p_form.'''
-        # In some specific cases (ie, when switching language), p_form is empty
-        # (or does only contain a single key) and must not be saved: we suppose
-        # a form was previously saved in the session.
-        if len(form) <= 1:
-            return
-        self.REQUEST.SESSION['searchParams'] = form.copy()
-
-
 
 registerType(ToolPloneMeeting, PROJECTNAME)
 # end of class ToolPloneMeeting

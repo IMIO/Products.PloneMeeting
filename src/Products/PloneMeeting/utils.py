@@ -1241,6 +1241,16 @@ def updateCollectionCriterion(collection, i, v):
             break
 
 
+def toHTMLStrikedContent(content):
+    """
+      p_content is HTML having elements to strike between [[]].
+      We will replace these [[]] by <strike> tags.  Moreover, we will append the 'mltAssembly'
+      class to the <p> that surrounds the given p_content HTML.
+    """
+    return content.replace('[[', '<strike>').replace(']]', '</strike>'). \
+        replace('<p>', '<p class="mltAssembly">')
+
+
 # ------------------------------------------------------------------------------
 tokens = (('<li', -1), ('</li>', 5))
 crlf = ('\r', '\n')
