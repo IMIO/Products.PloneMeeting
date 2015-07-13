@@ -1201,6 +1201,24 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(userCollectionWidget.widget == CollectionWidget.widget_type)
         self.assertTrue(userCollectionWidget.default == pmFolder.searches_items.searchitemstovalidate.UID())
 
+        # a folder is zynchronized when created, test for pmCreator1
+        # for now, no meetingFolder
+        self.assertTrue(not 'mymeetings' in self.portal.Members.pmCreator1.objectIds())
+        self.changeUser('pmCreator1')
+        pmCreator1Folder = self.getMeetingFolder()
+        self.assertTrue('mymeetings' in self.portal.Members.pmCreator1.objectIds())
+        self.assertTrue('searches_items' in pmCreator1Folder.objectIds())
+
+        # we may also call _synchSearch without param, in this case,
+        # every user folder will be synchronized
+        # get the pmFolder of creator1 so it's folder is syncrhonized
+        # add a new collection, it will be added to every pmFolders
+        self.changeUser('siteadmin')
+        cfg.searches.searches_items.invokeFactory('DashboardCollection', id='searchtest')
+        cfg._synchSearches()
+        self.assertTrue('searchtest' in pmFolder.searches_items.objectIds())
+        self.assertTrue('searchtest' in pmCreator1Folder.searches_items.objectIds())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
