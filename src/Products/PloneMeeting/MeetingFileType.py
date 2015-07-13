@@ -352,10 +352,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
     def isSelectable(self, row_id=None):
         '''See documentation in interfaces.py.'''
         mft = self.getSelf()
-        try:
-            wfTool = self.portal_workflow
-        except AttributeError:
-            wfTool = self.context.portal_workflow
+        wfTool = getToolByName(mft, 'portal_workflow')
         state = wfTool.getInfoFor(mft, 'review_state')
         return state == 'active'
 
