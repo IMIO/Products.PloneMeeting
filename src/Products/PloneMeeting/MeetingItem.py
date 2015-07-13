@@ -1301,7 +1301,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Override MeetingItem.takenOverBy mutator so we can manage
            history stored in 'takenOverByInfos'.
            We can receive a 'wf_state' in the kwargs, than needs to have format like :
-           workflowname__wfname__wfstate.'''
+           workflowname__wfstate__wfstatename.'''
         # Add a place to store takenOverBy by review_state user id
         # as we override mutator, this method is called before ObjectInitializedEvent
         # do not manage history while creating a new item
@@ -1603,22 +1603,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # *brains*.
 
         refCatalog = getToolByName(self, 'reference_catalog')
+        res = None
 
         if brain:  # Faster
-            res = refCatalog.getBackReferences(self, 'MeetingItems')
+            brains = refCatalog.getBackReferences(self, 'MeetingItems')
         else:
-            res = self.getBRefs('MeetingItems')
-        if res:
-            res = res[0]
-        else:
-            if brain:
-                res = refCatalog.getBackReferences(self, 'MeetingLateItems')
-            else:
-                res = self.getBRefs('MeetingLateItems')
-            if res:
-                res = res[0]
-            else:
-                res = None
+            brains = self.getBRefs('MeetingItems')
+        if brains:
+            res = brains[0]
         return res
 
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
