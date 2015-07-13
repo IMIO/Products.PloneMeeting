@@ -249,8 +249,6 @@ class AnnexableAdapter(object):
                          typesIds=[], realAnnexes=False):
         '''See docstring in interfaces.py'''
         res = []
-        if not hasattr(self.context, 'annexIndex'):
-            self.updateAnnexIndex()
         # bypass if no annex for current context
         if not self.context.annexIndex:
             return res
