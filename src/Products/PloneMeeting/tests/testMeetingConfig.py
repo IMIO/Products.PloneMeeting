@@ -28,7 +28,6 @@ from DateTime import DateTime
 
 from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
-from zope.annotation import IAnnotations
 from zope.i18n import translate
 
 from Products.CMFCore.permissions import ModifyPortalContent
