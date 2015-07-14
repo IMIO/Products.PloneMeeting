@@ -247,7 +247,7 @@ class Migrate_To_3_4(Migrator):
             lenNormalItems = len(meeting.getItems())
             for lateItem in lateItems:
                 lateItem.setListType('late')
-                lateItem.setItemNumber(lateItem.getItemNumber() + lenNormalItems)
+                lateItem.setItemNumber(lateItem.itemNumber + lenNormalItems)
             # now join lateItems to Meeting.items
             meeting.setItems(meeting.getItems(ordered=True) + lateItems)
             meeting.deleteReferences('MeetingLateItems')
