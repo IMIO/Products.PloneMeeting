@@ -1,0 +1,26 @@
+<tal:reference condition="python: 'item_reference' in view.visibleColumns">
+    <p class="discreet"
+       tal:define="itemReference context/getItemReference"
+       tal:condition="itemReference"
+       tal:content="itemReference" />
+</tal:reference>
+<tal:budget condition="python: 'budget_infos' in view.visibleColumns and context.adapted().isPrivacyViewable() and context.getBudgetRelated() and not context.fieldIsEmpty('budgetInfos')">
+  <span tal:define="field python: context.getField('budgetInfos');
+                    mode string:view;">
+    <span metal:use-macro="context/widgets/field/macros/view" />
+  </span>
+</tal:budget>
+<div name="pmDescription"
+      i18n:domain="PloneMeeting"
+      class="pmMoreInfo"
+      tal:condition="view/showMoreInfos"
+      tal:define="mode string:view;">
+    <tal:loop repeat="visibleField view/getItemsListVisibleFields">
+        <span tal:define="visibleFieldName python: visibleField.split('.')[1];
+                          field python: context.getField(visibleFieldName);"
+              tal:condition="python: not context.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
+                             context.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False) and not visibleFieldName in view.visibleColumns">
+            <span metal:use-macro="context/widgets/field/macros/view" />
+        </span>
+    </tal:loop>
+</div>

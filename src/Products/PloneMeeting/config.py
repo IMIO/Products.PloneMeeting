@@ -174,21 +174,12 @@ MEETING_CONFIG = "meeting_config"
 TOOL_ID = "portal_plonemeeting"
 TOOL_FOLDER_CATEGORIES = 'categories'
 TOOL_FOLDER_CLASSIFIERS = 'classifiers'
+TOOL_FOLDER_SEARCHES = 'searches'
 TOOL_FOLDER_RECURRING_ITEMS = "recurringitems"
 TOOL_FOLDER_ITEM_TEMPLATES = "itemtemplates"
 TOOL_FOLDER_FILE_TYPES = 'meetingfiletypes'
 TOOL_FOLDER_POD_TEMPLATES = 'podtemplates'
 TOOL_FOLDER_MEETING_USERS = 'meetingusers'
-
-# Name of properties used on topics
-TOPIC_TYPE = 'meeting_topic_type'
-TOPIC_SEARCH_SCRIPT = 'topic_search_script'
-TOPIC_SEARCH_FILTERS = 'topic_search_filters'
-TOPIC_TAL_EXPRESSION = 'topic_tal_expression'
-
-# If, for a topic, a specific script is used for the search, and if this topic
-# does not define an "itemCount", we use this default value.
-DEFAULT_TOPIC_ITEM_COUNT = 20
 
 ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 
@@ -208,6 +199,7 @@ ITEM_ICON_COLORS = ("azur", "black", "green", "grey", "orange", "pink", "purple"
 # There are various ways to insert items into meetings
 ITEM_INSERT_METHODS = (  # Items are inserted:
     'at_the_end',  # at the end of meetings;
+    'on_list_type',  # depending on the item's listType, by default 'normal' or 'late';
     'on_categories',  # according to category order;
     'on_proposing_groups',  # according to proposing group order;
     'on_all_groups',  # according to all groups (among proposing group AND

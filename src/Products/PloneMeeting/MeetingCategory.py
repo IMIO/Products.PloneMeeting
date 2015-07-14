@@ -203,14 +203,13 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         state = wfTool.getInfoFor(cat, 'review_state')
         isUsing = True
         usingGroups = cat.getUsingGroups()
-        # If we have an item, do one additional check
+        # If we have usingGroups make sure userId is creator for one of it
         if usingGroups and not tool.isManager(cat, realManagers=True):
-            # listProposingGroups takes isDefinedInTool into account
             proposingGroupIds = tool.getSelectableGroups(userId=userId)
             keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
             # Check intersection between self.usingGroups and groups for wich
             # the current user is creator
-            isUsing = set(usingGroups).intersection(keys) != set()
+            isUsing = bool(set(usingGroups).intersection(keys))
         return isUsing and state == 'active'
 
     security.declarePublic('listUsingGroups')

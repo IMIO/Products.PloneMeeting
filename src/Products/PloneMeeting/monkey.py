@@ -33,8 +33,9 @@ def DefinedInToolAwareCatalog():
             if 'livesearch_reply' in path_translated or \
                '@@search' in path_translated or \
                'updated_search' in path_translated or \
-               'plonemeeting_topic_view' in path_translated or \
-               'search_form' in path_translated:
+               'search_form' in path_translated or \
+               'facetednavigation_view' in path_translated or \
+               '@@faceted_query' in path_translated:
                 kw['isDefinedInTool'] = False
             # if show_inactive is True, it means that we are using a layout
             # like folder_listing or folder_contents, check if we are in the configuration
@@ -42,13 +43,12 @@ def DefinedInToolAwareCatalog():
                 # only query elements of the config if we are in the config...
                 kw['isDefinedInTool'] = False
                 if hasattr(self.REQUEST, 'PUBLISHED'):
-                    context = hasattr(self.REQUEST['PUBLISHED'], 'context') and self.REQUEST['PUBLISHED'].context or self.REQUEST['PUBLISHED']
-                    if 'portal_plonemeeting' in context.absolute_url() or 'portal_plonemeeting' in repr(context):
+                    context = hasattr(self.REQUEST['PUBLISHED'], 'context') and \
+                        self.REQUEST['PUBLISHED'].context or \
+                        self.REQUEST['PUBLISHED']
+                    context_url = context.absolute_url()
+                    if ('portal_plonemeeting' in context_url or 'portal_plonemeeting' in repr(context)):
                         kw['isDefinedInTool'] = True
-            elif 'portal_plonemeeting' in repr(self) and 'topics' in repr(self):
-                # if we are executing a topic of a MeetingConfig, we do not want items of the tool
-                kw['isDefinedInTool'] = False
-
         # for other cases, the 'isDefinedInTool' index is not in the
         # query so elements defined in the tool and not defined in the tool are taken into account
         return self.__pm_old_searchResults(REQUEST, **kw)

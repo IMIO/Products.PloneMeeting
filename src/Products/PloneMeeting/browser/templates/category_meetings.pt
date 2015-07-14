@@ -1,0 +1,20 @@
+<tal:defines define="category view/category;
+                     tool python: view.tool;
+                     cfg python: view.cfg;
+                     userIsAmongCreators python: tool.userIsAmong('creators');
+                     meetingFolder python: cfg.getPloneMeetingFolder(cfg.getId());
+                     portal_url python: tool.getParentNode().absolute_url();
+                     templateItems view/templateItems;
+                     member view/member;"
+             i18n:domain="PloneMeeting">
+    <div class="portlet_add_icons">
+        <a id="newMeetingCreation" href="#"
+           style="display: inline;"
+           tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', meetingFolder)"
+           tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=Meeting${cfg/getShortName};">
+            <img tal:attributes="src string: $portal_url/new.png"
+              title="create_meeting" i18n:attributes="title" />
+        </a>
+    </div>
+    <div class="title" tal:content="python: view.category[1]" tal:omit-tag="python: not category[1]">Category title</div>
+</tal:defines>

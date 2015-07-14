@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<object name="searches" meta_type="ATFolder">
+ <criteria>
+
+  <!-- default widgets -->
+  <criterion name="c0">
+   <property name="widget">sorting</property>
+   <property name="title">Sort on</property>
+   <property name="position">bottom</property>
+   <property name="section">default</property>
+   <property name="hidden">1</property>
+   <property name="vocabulary"></property>
+   <property name="default"></property>
+  </criterion>
+
+  <criterion name="c1">
+   <property name="widget">collection-link</property>
+   <property name="title">Base collections</property>
+   <property name="position">bottom</property>
+   <property name="section">default</property>
+   <property name="hidden">1</property>
+   <property name="count">0</property>
+   <property name="sortcountable">0</property>
+   <property name="hidezerocount">0</property>
+   <property
+      name="vocabulary">Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary</property>
+   <property name="hidealloption">1</property>
+   <property name="maxitems">0</property>
+   <property name="sortreversed">0</property>
+   <property name="default"></property>
+  </criterion>
+
+ </criteria>
+</object>

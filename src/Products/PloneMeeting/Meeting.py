@@ -32,19 +32,21 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
+from plone.app.querystring.querybuilder import queryparser
 from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
-from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions, IMeetingWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
+from Products.PloneMeeting.interfaces import IFacetedSearchesItemsMarker
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
     fieldIsEmpty, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
     getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields, \
-    ItemDuplicatedFromConfigEvent, cleanRamCacheFor
+    ItemDuplicatedFromConfigEvent, cleanRamCacheFor, toHTMLStrikedContent
 from Products.PloneMeeting import PMMessageFactory as _
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -77,14 +79,14 @@ class MeetingWorkflowConditions:
 
     def _decisionsAreArchivable(self):
         '''Returns True all the decisions may be archived.'''
-        for item in self.context.getAllItems(ordered=True):
+        for item in self.context.getItems():
             if item.queryState() not in self.archivableStates:
                 return False
         return True
 
     def _decisionsWereConfirmed(self):
         '''Returns True if at least one decision was taken on an item'''
-        for item in self.context.getAllItems(ordered=True):
+        for item in self.context.getItems():
             if item.queryState() == 'confirmed':
                 return True
 
@@ -126,7 +128,7 @@ class MeetingWorkflowConditions:
             # Check that all items are OK.
             res = True
             msgs = []
-            for item in self.context.getAllItems(ordered=True):
+            for item in self.context.getItems():
                 if item.queryState() == 'itemfrozen':
                     mayDecide = item.wfConditions().mayDecide()
                     if not mayDecide:
@@ -269,11 +271,9 @@ class MeetingWorkflowActions:
         for item in self.context.getItems():
             if item.queryState() == 'itemfrozen':
                 wfTool.doActionFor(item, 'backToItemPublished')
-        for item in self.context.getLateItems():
-            if item.queryState() == 'itemfrozen':
-                wfTool.doActionFor(item, 'backToItemPublished')
-                wfTool.doActionFor(item, 'backToPresented')
-                # This way we "hide" again all late items.
+                if item.isLate():
+                    wfTool.doActionFor(item, 'backToPresented')
+                    # This way we "hide" again all late items.
 
     security.declarePrivate('doBackToDecisionsPublished')
     def doBackToDecisionsPublished(self, stateChange):
@@ -289,7 +289,7 @@ class MeetingWorkflowActions:
         # Every item must go back to its previous state: confirmed, delayed or
         # refused.
         wfTool = self.context.portal_workflow
-        for item in self.context.getAllItems(ordered=True):
+        for item in self.context.getItems():
             itemHistory = item.workflow_history['meetingitem_workflow']
             previousState = itemHistory[-2]['review_state']
             previousState = previousState[0].upper() + previousState[1:]
@@ -548,18 +548,6 @@ schema = Schema((
         multiValued=True,
         relationship="MeetingItems",
     ),
-    ReferenceField(
-        name='lateItems',
-        widget=ReferenceBrowserWidget(
-            visible=False,
-            label='Lateitems',
-            label_msgid='PloneMeeting_label_lateItems',
-            i18n_domain='PloneMeeting',
-        ),
-        allowed_types="('MeetingItem',)",
-        multiValued=True,
-        relationship="MeetingLateItems",
-    ),
     IntegerField(
         name='meetingNumber',
         default=-1,
@@ -642,10 +630,92 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     # Manually created methods
 
+    security.declarePublic('getRawQuery')
+    def getRawQuery(self):
+        """ """
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        # available items?
+
+        if self._displayingAvailableItems():
+            res = self._availableItemsQuery()
+        else:
+            res = [{'i': 'portal_type',
+                    'o': 'plone.app.querystring.operation.selection.is',
+                    'v': cfg.getItemTypeName()},
+                   {'i': 'linkedMeetingUID',
+                    'o': 'plone.app.querystring.operation.selection.is',
+                    'v': self.UID()},]
+        return res
+
+    def _displayingAvailableItems(self):
+        """Is the meeting view displaying available items?"""
+        return bool("@@meeting_available_items_view" in self.REQUEST['HTTP_REFERER'] or \
+                    "@@meeting_available_items_view" in self.REQUEST['URL'])
+
+    def _availableItemsQuery(self):
+        '''Check docstring in IMeeting.'''
+        meeting = self.getSelf()
+        if meeting.queryState() not in MEETING_STATES_ACCEPTING_ITEMS:
+            # make sure the query returns nothing, add a dummy parameter
+            return [{'i': 'getPreferredMeeting',
+                     'o': 'plone.app.querystring.operation.selection.is',
+                     'v': 'dummy_unexisting_uid'}]
+        tool = getToolByName(meeting, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        res = [{'i': 'portal_type',
+                'o': 'plone.app.querystring.operation.selection.is',
+                'v': cfg.getItemTypeName()},
+               {'i': 'review_state',
+                'o': 'plone.app.querystring.operation.selection.is',
+                'v': 'validated'},
+               ]
+        # First, get meetings accepting items for which the date is lower or
+        # equal to the date of this meeting (self)
+        meetings = meeting.portal_catalog(
+            portal_type=cfg.getMeetingTypeName(),
+            getDate={'query': meeting.getDate(), 'range': 'max'}, )
+        meetingUids = [b.getObject().UID() for b in meetings]
+        meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
+
+        if not meeting.queryState() in MEETING_NOT_CLOSED_STATES:
+            res.append({'i': 'getPreferredMeeting',
+                        'o': 'plone.app.querystring.operation.selection.is',
+                        'v': meetingUids})
+        else:
+            res.append({'i': 'getPreferredMeeting',
+                        'o': 'plone.app.querystring.operation.selection.is',
+                        'v': meeting.UID()})
+        return res
+
+    security.declarePublic('getSort_on')
+    def getSort_on(self):
+        """ """
+        return 'getItemNumber'
+
+    security.declarePublic('getCustomViewFields')
+    def getCustomViewFields(self):
+        """ """
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        # some columns are displayed in the 'Prupose' column
+        itemsListVisibleColumns = [col for col in cfg.getItemsListVisibleColumns() if
+                                   not col in ('budget_infos', 'item_reference')]
+        if self._displayingAvailableItems():
+            itemsListVisibleColumns.insert(0, u'pretty_link')
+            itemsListVisibleColumns.append(u'check_box_item')
+        else:
+            itemsListVisibleColumns.insert(0, u'pretty_link')
+            itemsListVisibleColumns.insert(0, u'getItemNumber')
+            itemsListVisibleColumns.insert(0, u'listType')
+            itemsListVisibleColumns.append(u'check_box_item')
+        return itemsListVisibleColumns
+
     security.declarePrivate('validate_date')
     def validate_date(self, value):
         '''There can't be several meetings with the same date and hour.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         # add GMT+x value
         localizedValue0 = value + ' ' + _findLocalTimeZoneName(0)
         localizedValue1 = value + ' ' + _findLocalTimeZoneName(1)
@@ -760,7 +830,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            of the same name (fields meeting.departures/entrances are not taken
            into account).'''
         res = {}
-        for item in self.getAllItems(ordered=True):
+        for item in self.getItems():
             for userId in item.getItemAbsents():
                 if userId in res:
                     res[userId].append(item)
@@ -880,6 +950,26 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                               meetingForRepls=meetingForRepls)
         return res
 
+    security.declareProtected('Modify portal content', 'setDate')
+    def setDate(self, value, **kwargs):
+        '''Overrides the field 'date' mutator so we reindex every linked
+           items if date value changed.'''
+        current_date = self.getField('date').get(self, **kwargs)
+        if not value == current_date:
+            catalog = getToolByName(self, 'portal_catalog')
+            tool = getToolByName(self, 'portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            # items linked to the meeting
+            brains = catalog(portal_type=cfg.getItemTypeName(),
+                             linkedMeetingUID=self.UID())
+            # items having the meeting as the preferredMeeting
+            brains = brains + catalog(portal_type=cfg.getItemTypeName(),
+                                      getPreferredMeeting=self.UID())
+            for brain in brains:
+                item = brain.getObject()
+                item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
+        self.getField('date').set(self, value, **kwargs)
+
     security.declarePublic('showObs')
     def showObs(self, name):
         '''When must field named p_name be shown? p_name can be "observations"
@@ -905,111 +995,65 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             label = 'pre_date_after_meeting_date'
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
-    security.declarePublic('getAllItems')
-    def getAllItems(self, uids=[], ordered=False):
-        '''Gets all items presented to this meeting ("normal" and "late" items)
-           If p_uids is not empty, only items whose uids are in it are returned
-           (it will work only when returning an ordered list).'''
-        if not ordered:
-            res = self.getItems() + self.getLateItems()
-        else:
-            res = self.getItemsInOrder(uids=uids) + self.getItemsInOrder(late=True, uids=uids)
-        return res
+    def getItems_cachekey(method, self, uids=[], listType=None, ordered=False, useCatalog=False, **kwargs):
+        '''cachekey method for self.getItems.'''
+        return (self, str(self.REQUEST._debug), uids, listType, ordered, useCatalog, kwargs, self.modified())
 
-    security.declarePublic('getItemsInOrder')
-    def getItemsInOrder(self, late=False, uids=[], batchSize=None,
-                        startNumber=1, deadline=None):
-        '''Get items in order. If p_late is True, gets the "late" items, and
-           not the "normal" items. If p_uids is not empty, only items whose
-           uids are in it are returned. If p_batchSize is not None, this method
-           will return maximum p_batchSize items, starting at number
-           p_startNumber. If p_deadline is not None, it can be:
-           - "before": in this case, only items that have respected the deadline
-                       are in the result;
-           - "after": in this case, only items that have not respected the
-                      deadline are in the result.
-           The deadline is considered to be respected if the item has been
-           validated before the deadline. The deadline is:
-           - meeting.deadlinePublish if we return "normal" items (p_late=False);
-           - meeting.deadlineFreeze if we return "late" items (p_late=True).
+    security.declarePublic('getItems')
+    @ram.cache(getItems_cachekey)
+    def getItems(self, uids=[], listType=None, ordered=False, useCatalog=False, **kwargs):
+        '''Overrides the Meeting.items accessor.
+           Items can be filtered depending on :
+           - list of given p_uids;
+           - given p_listType;
+           - returned ordered (by getItemNumber) if p_ordered is True.
         '''
-        # Get the required items list (late or normal), unsorted.
-        itemsGetter = self.getItems
-        if late:
-            itemsGetter = self.getLateItems
-        res = itemsGetter()
-        # Keep only some of those items if required by method parameters.
-        if uids or deadline:
-            user = self.portal_membership.getAuthenticatedMember()
-            keptItems = []
-            for item in res:
-                # Compute the condition determining if this item must be kept.
-                condition = True
-                if uids:
-                    # Keep only items whose uid is in p_uids, and ensure the
-                    # current user has the right to view them (uids filtering
-                    # is used within POD templates).
-                    condition = condition and (item.UID() in uids) and user.has_permission(View, item)
-                if deadline:
-                    # Determine the deadline to use
-                    if late:
-                        usedDeadline = self.getDeadlineFreeze()
-                    else:
-                        usedDeadline = self.getDeadlinePublish()
-                    if deadline == 'before':
-                        condition = condition and item.lastValidatedBefore(usedDeadline)
-                    elif deadline == 'after':
-                        condition = condition and not item.lastValidatedBefore(usedDeadline)
-                if condition:
-                    keptItems.append(item)
-            res = keptItems
-        # Sort items according to item number
-        res.sort(key=lambda x: x.getItemNumber())
-        # Keep only a subset of items if a batchsize is specified.
-        if batchSize and (len(res) > batchSize):
-            if startNumber > len(res):
-                startNumber = 1
-            endNumber = startNumber + batchSize - 1
-            keptItems = []
-            for item in res:
-                itemNb = item.getItemNumber()
-                if (itemNb >= startNumber) and (itemNb <= endNumber):
-                    keptItems.append(item)
-            res = keptItems
-        return res
-
-    security.declarePublic('getJsItemUids')
-    def getJsItemUids(self):
-        '''Returns Javascript code for initializing a Javascript variable with
-           all item UIDs.'''
-        res = ''
-        for uid in self.getRawItems():
-            res += 'itemUids["%s"] = true;\n' % uid
-        for uid in self.getRawLateItems():
-            res += 'itemUids["%s"] = true;\n' % uid
+        if useCatalog:
+            # execute the query using the portal_catalog
+            catalog = getToolByName(self, 'portal_catalog')
+            catalog_query = self.getRawQuery()
+            if listType:
+                catalog_query.append({'i': 'listType',
+                                      'o': 'plone.app.querystring.operation.selection.is',
+                                      'v': listType},)
+            if uids:
+                catalog_query.append({'i': 'UID',
+                                      'o': 'plone.app.querystring.operation.selection.is',
+                                      'v': uids},)
+            if ordered:
+                query = queryparser.parseFormquery(self, catalog_query, sort_on=self.getSort_on())
+            else:
+                query = queryparser.parseFormquery(self, catalog_query)
+            res = catalog(**query)
+        else:
+            res = self.getField('items').get(self, **kwargs)
+            if uids:
+                member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
+                keptItems = []
+                for item in res:
+                    if item.UID() in uids and member.has_permission(View, item):
+                        keptItems.append(item)
+                res = keptItems
+            if listType:
+                res = [item for item in res if item.getListType() == listType]
+            if ordered:
+                # Sort items according to item number
+                res.sort(key=lambda x: x.getItemNumber())
         return res
 
     security.declarePublic('getItemByNumber')
     def getItemByNumber(self, number):
         '''Gets the item thas has number p_number.'''
-        # It is a "normal" or "late" item ?
-        itemsGetter = self.getItems
-        itemNumber = number
-        if number > len(self.getRawItems()):
-            itemsGetter = self.getLateItems
-            itemNumber -= len(self.getRawItems())
-        # Find the item.
+        items = self.getItems(ordered=True)
         res = None
-        for item in itemsGetter():
-            if item.getItemNumber() == itemNumber:
-                res = item
-                break
+        if number <= len(items):
+            return items[number-1]
         return res
 
     def getBeforeFrozenStates_cachekey(method, self):
         '''cachekey method for self.getBeforeFrozenStates.'''
         # do only recompute once by REQUEST
-        return (self, str(self.REQUEST.debug))
+        return (self, str(self.REQUEST._debug))
 
     @ram.cache(getBeforeFrozenStates_cachekey)
     def getBeforeFrozenStates(self):
@@ -1036,23 +1080,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     new_state = meetingWF.states[new_state_id]
         return res
 
-    security.declarePublic('getBeforeFrozenState')
-    def getBeforeFrozenState(self):
-        '''Predecessor of state "frozen" in a meeting can be "published" or
-           "created", depending on workflow adaptations.
-           So get the workflow state and check where is leading
-           the 'backToXXX' leaving transition.'''
-        wfTool = getToolByName(self, 'portal_workflow')
-        meetingWF = wfTool.getWorkflowsFor(self)[0]
-        # get the 'frozen' state
-        if not 'frozen' in meetingWF.states:
-            return ''
-        frozenState = meetingWF.states['frozen']
-        for transition in frozenState.transitions:
-            if transition.startswith('backTo'):
-                return meetingWF.transitions[transition].new_state_id
-        return ''
-
     security.declareProtected("Modify portal content", 'insertItem')
     def insertItem(self, item, forceNormal=False):
         '''Inserts p_item into my list of "normal" items or my list of "late"
@@ -1066,13 +1093,11 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         isLate = item.wfConditions().isLateFor(self)
         if isLate and not forceNormal:
-            items = self.getItemsInOrder(late=True)
-            itemsSetter = self.setLateItems
+            item.setListType('late')
             toDiscussValue = cfg.getToDiscussLateDefault()
         else:
-            items = self.getItemsInOrder(late=False)
-            itemsSetter = self.setItems
             toDiscussValue = cfg.getToDiscussDefault()
+        items = self.getItems(ordered=True)
         # Set the correct value for the 'toDiscuss' field if required
         if cfg.getToDiscussSetOnItemInsert():
             item.setToDiscuss(toDiscussValue)
@@ -1097,10 +1122,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     # continue to visit the items in order to increment their
                     # number.
                     anItem.setItemNumber(anItem.getItemNumber()+1)
+                    anItem.reindexObject(idxs=['getItemNumber', ])
                 elif anItem.adapted().getInsertOrder(insertMethods) > itemOrder:
                     higherItemFound = True
                     insertIndex = anItem.getItemNumber()-1
                     anItem.setItemNumber(anItem.getItemNumber()+1)
+                    anItem.reindexObject(idxs=['getItemNumber', ])
             if higherItemFound:
                 items.insert(insertIndex, item)
                 item.setItemNumber(insertIndex+1)
@@ -1110,9 +1137,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             # Add the item at the end of the items list
             items.append(item)
             item.setItemNumber(len(items))
-        itemsSetter(items)
+
+        self.setItems(items)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
+        # reindex getItemNumber when item is in the meeting or getItemNumber returns None
+        item.reindexObject(idxs=['getItemNumber', 'listType'])
         # meeting is considered modified
         self.notifyModified()
 
@@ -1122,65 +1152,27 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # Remember the item number now; once the item will not be in the meeting
         # anymore, it will loose its number.
         itemNumber = item.getItemNumber()
-        itemsGetter = self.getItems
-        itemsSetter = self.setItems
-        items = itemsGetter()
-        if item not in items:
-            itemsGetter = self.getLateItems
-            itemsSetter = self.setLateItems
-            items = itemsGetter()
+        items = self.getItems()
         try:
             items.remove(item)
+            # set listType back to 'normal'
+            item.setListType('normal')
+            item.reindexObject(idxs=['listType', ])
         except ValueError:
             # in case this is called by onItemRemoved, the item
             # does not exist anymore and is no more in the items list
             # so we pass
             pass
-        itemsSetter(items)
+        self.setItems(items)
         # Update item numbers
-        for anItem in itemsGetter():
+        for anItem in items:
             if anItem.getItemNumber() > itemNumber:
                 anItem.setItemNumber(anItem.getItemNumber()-1)
+                anItem.reindexObject(idxs=['getItemNumber', ])
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # meeting is considered modified
         self.notifyModified()
-
-    security.declarePublic('getAvailableItems')
-    def getAvailableItems(self):
-        '''Check docstring in IMeeting.'''
-        meeting = self.getSelf()
-        if meeting.queryState() not in MEETING_STATES_ACCEPTING_ITEMS:
-            return []
-        tool = getToolByName(meeting, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(meeting)
-        # First, get meetings accepting items for which the date is lower or
-        # equal to the date of this meeting (self)
-        meetings = meeting.portal_catalog(
-            portal_type=cfg.getMeetingTypeName(),
-            getDate={'query': meeting.getDate(), 'range': 'max'}, )
-        meetingUids = [b.getObject().UID() for b in meetings]
-        meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
-        # Then, get the items whose preferred meeting is None or is among
-        # those meetings.
-        brains = meeting.portal_catalog(
-            portal_type=cfg.getItemTypeName(),
-            review_state='validated',
-            getPreferredMeeting=meetingUids,
-            sort_on="modified")
-        if meeting.queryState() in MEETING_NOT_CLOSED_STATES:
-            # Oups. I can only take items which are "late" items.
-            res = []
-            meetingUID = meeting.UID()
-            for brain in brains:
-                # first bypass brains for which preferredMeeting is not current meeting
-                if not brain.getPreferredMeeting == meetingUID:
-                    continue
-                if brain.getObject().wfConditions().isLateFor(meeting):
-                    res.append(brain)
-        else:
-            res = brains
-        return res
 
     security.declarePrivate('getDefaultAssembly')
     def getDefaultAssembly(self):
@@ -1201,8 +1193,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         meeting = self.getSelf()
         # either we use free textarea to define assembly...
         if meeting.getAssembly():
-            tool = getToolByName(meeting, 'portal_plonemeeting')
-            return tool.toHTMLStrikedContent(meeting.getAssembly())
+            return toHTMLStrikedContent(meeting.getAssembly())
         # ... or we use MeetingUsers
         elif meeting.getAttendees():
             res = []
@@ -1316,11 +1307,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             if not delta.strip() in ('', '0',):
                 self.setPreMeetingDate(getDateFromDelta(meetingDate, '-' + delta))
 
-    security.declarePublic('getItemsCount')
-    def getItemsCount(self):
-        '''Returns the amount of MeetingItems in a Meeting'''
-        return len(self.getRawItems()) + len(self.getRawLateItems())
-
     security.declarePublic('getUserReplacements')
     def getUserReplacements(self):
         '''Gets the dict storing user replacements.'''
@@ -1418,6 +1404,10 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
         # is selected as viewable by 'powerobservers'
         self.updatePowerObserversLocalRoles()
+        # activate the faceted navigation
+        tool = getToolByName(self, 'portal_plonemeeting')
+        tool._enableFacetedFor(self, IFacetedSearchesItemsMarker)
+        self.setLayout('meeting_view')
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1608,45 +1598,10 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         '''Is field named p_name empty ?'''
         return fieldIsEmpty(name, self)
 
-    security.declarePublic('mustShowLateItems')
-    def mustShowLateItems(self, itemStart, maxShownItems):
-        '''When consulting a meeting, we need to display the late items if we
-           are on the last page of the normal items and if there are late
-           items. p_itemStart is the number of the first normal item currently
-           displayed; p_maxShownItems is the maximum number of normal items
-           shown at once.'''
-        onLastPage = (itemStart + maxShownItems) > len(self.getRawItems())
-        if onLastPage and (len(self.getRawLateItems()) > 0):
-            return True
-        else:
-            return False
-
     security.declarePublic('numberOfItems')
-    def numberOfItems(self, late=False):
+    def numberOfItems(self):
         '''How much items in this meeting ?'''
-        if late:
-            return len(self.getRawLateItems())
-        else:
-            return len(self.getRawItems())
-
-    security.declarePublic('getBatchStartNumber')
-    def getBatchStartNumber(self, late=False):
-        '''When displaying meeting_view, I need to now the start number of the
-           normal and late items lists. If they are in the request, I take it
-           from there, excepted if they are wrong (ie an item has been deleted
-           or removed from a list and as a consequence the page I must show
-           does not exist anymore.'''
-        res = 1
-        rq = self.REQUEST
-        if late:
-            reqKey = 'lStartNumber'
-            nbOfItems = len(self.getRawLateItems())
-        else:
-            reqKey = 'iStartNumber'
-            nbOfItems = len(self.getRawItems())
-        if reqKey in rq and (int(rq[reqKey]) <= nbOfItems):
-            res = int(rq[reqKey])
-        return res
+        return len(self.getRawItems())
 
     security.declarePrivate('manage_beforeDelete')
     def manage_beforeDelete(self, item, container):
@@ -1663,8 +1618,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         if item.meta_type == 'Meeting':
             membershipTool = getToolByName(item, 'portal_membership')
             member = membershipTool.getAuthenticatedMember()
-            if 'wholeMeeting' in item.REQUEST and member.has_role('Manager'):
-                item.REQUEST.set('items_to_remove', item.getItems() + item.getLateItems())
+            if member.has_role('Manager'):
+                item.REQUEST.set('items_to_remove', item.getItems())
         BaseContent.manage_beforeDelete(self, item, container)
 
     security.declarePublic('showVotes')
@@ -1753,56 +1708,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             self._v_previousData = rememberPreviousData(self)
         return BaseContent.processForm(self, *args, **kwargs)
 
-    security.declarePublic('decideSeveralItems')
-    def decideSeveralItems(self, uids=None, transition=None):
-        '''On meeting, we can decided severals items at once.
-           p_uids is A STRING representing items separated by commas.
-           This string ENDS WITH a final comma so is like :
-           'itemuid1,itemuid2,itemuid3,itemuid4,'
-           p_transition is the transition to trigger on given items.'''
-        if transition is None:
-            return self.portal_plonemeeting.gotoReferer()
-
-        if not uids:
-            msg = self.translate('no_selected_items', domain='PloneMeeting')
-            self.plone_utils.addPortalMessage(msg)
-            return self.portal_plonemeeting.gotoReferer()
-
-        uid_catalog = getToolByName(self, 'uid_catalog')
-        wf_tool = getToolByName(self, 'portal_workflow')
-        for uid in uids.split(','):
-            if not uid:
-                continue
-            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
-            try:
-                wf_tool.doActionFor(obj, transition)
-            except WorkflowException:
-                continue
-        msg = self.translate('decide_several_items_done', domain='PloneMeeting')
-        self.plone_utils.addPortalMessage(msg)
-        return self.portal_plonemeeting.gotoReferer()
-
-    security.declarePublic('presentSeveralItems')
-    def presentSeveralItems(self, uids=None):
-        '''On meeting, we can present severals items at once.
-           p_uids is A STRING representing items separated by commas.
-           This string ENDS WITH a final comma so is like :
-           'itemuid1,itemuid2,itemuid3,itemuid4,'.'''
-        if not uids:
-            msg = self.translate('no_selected_items', domain='PloneMeeting')
-            self.plone_utils.addPortalMessage(msg)
-            return self.portal_plonemeeting.gotoReferer()
-
-        uid_catalog = getToolByName(self, 'uid_catalog')
-        wfTool = getToolByName(self, 'portal_workflow')
-        for uid in uids.split(','):
-            if not uid:
-                continue
-            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
-            wfTool.doActionFor(obj, 'present')
-
-        return self.portal_plonemeeting.gotoReferer()
-
     security.declarePublic('showRemoveSelectedItemsAction')
     def showRemoveSelectedItemsAction(self):
         '''See doc in interfaces.py.'''
@@ -1810,40 +1715,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         member = getToolByName(meeting, 'portal_membership').getAuthenticatedMember()
         return bool(member.has_permission(ModifyPortalContent, meeting) and
                     not meeting.queryState() in meeting.meetingClosedStates)
-
-    security.declarePublic('removeSeveralItems')
-    def removeSeveralItems(self, uids=None):
-        '''On meeting, we can remove severals items at once.
-           p_uids is A STRING representing items separated by commas.
-           This string ENDS WITH a final comma so is like :
-           'itemuid1,itemuid2,itemuid3,itemuid4,'.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        if not uids:
-            msg = self.translate('no_selected_items', domain='PloneMeeting')
-            plone_utils = getToolByName(self, 'plone_utils')
-            plone_utils.addPortalMessage(msg)
-            return tool.gotoReferer()
-
-        uid_catalog = getToolByName(self, 'uid_catalog')
-        wfTool = getToolByName(self, 'portal_workflow')
-        for uid in uids.split(','):
-            if not uid:
-                continue
-            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
-            # execute every 'back' transitions until item is in state 'validated'
-            changedState = True
-            while not obj.queryState() == 'validated':
-                availableTransitions = wfTool.getTransitionsFor(obj)
-                if not availableTransitions or not changedState:
-                    break
-                changedState = False
-                for tr in availableTransitions:
-                    if tr['id'].startswith('back'):
-                        wfTool.doActionFor(obj, tr['id'])
-                        changedState = True
-                        break
-
-        return tool.gotoReferer()
 
     security.declarePublic('getLabelAssembly')
     def getLabelAssembly(self):

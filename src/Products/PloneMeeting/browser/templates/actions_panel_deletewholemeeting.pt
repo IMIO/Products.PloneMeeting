@@ -1,17 +1,18 @@
-<td i18n:domain="plone" class="noPadding">
-  <form name="deleteWholeMeetingForm" action="delete_givenuid"
-        tal:define="dummy view/saveHasActions;">
-      <input type="hidden" name="object_uid" tal:attributes="value context/UID" />
-      <input type="hidden" name="wholeMeeting" value="True"/>
+<tal:defines define="objectUID context/UID;
+                     useIcons view/useIcons;">
+
+    <tal:comment replace="nothing">Delete icon/button</tal:comment>
+    <td class="noPadding" i18n:domain="plone" tal:define="dummy view/saveHasActions;">
       <tal:comment replace="nothing">Icon</tal:comment>
-      <img tal:condition="view/useIcons" style="cursor:pointer"
-           title="delete_meeting_with_items" i18n:attributes="title"
-           tal:attributes="src string: ${view/portal_url}/delete_many.gif"
-           onClick="javascript:confirmDeleteObject(this, 'plonemeeting_delete_meeting_confirm_message')"/>
+      <img tal:condition="useIcons" i18n:attributes="title" title="Delete meeting including items"
+           tal:attributes="src string: ${view/portal_url}/delete_many.gif;
+                           onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${objectUID}', this);;"
+           onClick="#" style="cursor:pointer"/>
 
       <tal:comment replace="nothing">Button</tal:comment>
-      <input tal:condition="not: view/useIcons" type="button" i18n:attributes="value"
-             value="delete_meeting_with_items"
-             onClick="javascript:confirmDeleteObject(this, 'plonemeeting_delete_meeting_confirm_message');" class="apButton apButtonAction apButtonAction_deleteWholeMeeting"/>
-  </form>
-</td>
+      <input tal:condition="not: useIcons" type="button" i18n:attributes="value" value="Delete meeting including items"
+             tal:attributes="onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${objectUID}', this);;"
+             class="apButton apButtonAction apButtonAction_deleteWholeMeeting"/>
+    </td>
+
+</tal:defines>

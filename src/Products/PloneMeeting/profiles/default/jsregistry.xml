@@ -34,6 +34,8 @@
              expression=""
              id="plonemeetingnasties.js"
              inline="False"/>
+ <javascript id="plonemeeting_javascript_variables.js" />
+
  <!-- ##/code-section jsregistry.xml -->
 
 </object>

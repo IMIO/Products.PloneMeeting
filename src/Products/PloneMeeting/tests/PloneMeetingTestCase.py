@@ -80,20 +80,24 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
 
     def setUp(self):
         # Define some useful attributes
+        self.app = self.layer['app']
         self.portal = self.layer['portal']
         self.request = self.layer['request']
+        # configure default workflows so Folder has a workflow
+        # make sure we have a default workflow
+        self.portal.portal_workflow.setDefaultChain('simple_publication_workflow')
         # setup manually the correct browserlayer, see:
         # https://dev.plone.org/ticket/11673
         notify(BeforeTraverseEvent(self.portal, self.request))
         self.tool = self.portal.portal_plonemeeting
         self.wfTool = self.portal.portal_workflow
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
-        # Create admin user
-        self.createUser('admin', ('Member', 'Manager', ))
+        # Create siteadmin user
+        self.createUser('siteadmin', ('Member', 'Manager', ))
         # Import the test profile
-        login(self.portal, 'admin')
+        self.changeUser('admin')
         # Create some member areas
-        for userId in ('pmManager', 'pmCreator1', 'pmCreator2', 'admin', ):
+        for userId in ('pmManager', 'pmCreator1', 'pmCreator2', 'siteadmin'):
             _createHomeFolder(self.portal, userId)
         # Disable notifications mechanism. This way, the test suite may be
         # executed even on production sites that contain many real users.
@@ -163,7 +167,10 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isPowerObserverForCfg')
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isManager')
-        login(self.portal, loginName)
+        if loginName == 'admin':
+            login(self.app, loginName)
+        else:
+            login(self.portal, loginName)
         membershipTool = getToolByName(self.portal, 'portal_membership')
         self.member = membershipTool.getAuthenticatedMember()
         self.portal.REQUEST['AUTHENTICATED_USER'] = self.member

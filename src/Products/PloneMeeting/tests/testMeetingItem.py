@@ -117,156 +117,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
 
-    def test_pm_UsedColorSystemShowColors(self):
-        '''The showColors is initialized by the showColorsForUser method that
-           depends on the value selected in portal_plonemeeting.usedColorSystem
-           and portal_plonemeeting.colorSystemDisabledFor.'''
-        #check with an empty list of colorSystemDisabledFor users
-        self.tool.setColorSystemDisabledFor(None)
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-        #check with state_color
-        self.tool.setUsedColorSystem('state_color')
-        self.assertEquals(self.tool.showColorsForUser(), True)
-        #check with modification_color
-        self.tool.setUsedColorSystem('modification_color')
-        self.assertEquals(self.tool.showColorsForUser(), True)
-
-        #check with an list of user the current user is not in
-        self.tool.setColorSystemDisabledFor("user1\nuser2\nuser3")
-        #login as a user that is not in the list here above
-        self.changeUser('pmCreator1')
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-        #check with state_color
-        self.tool.setUsedColorSystem('state_color')
-        self.assertEquals(self.tool.showColorsForUser(), True)
-        #check with modification_color
-        self.tool.setUsedColorSystem('modification_color')
-        self.assertEquals(self.tool.showColorsForUser(), True)
-
-        #check with an list of user the current user is in
-        self.changeUser('admin')
-        self.tool.setColorSystemDisabledFor("user1\nuser2\nuser3\npmCreator1")
-        #login as a user that is not in the list here above
-        self.changeUser('pmCreator1')
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-        #check with state_color
-        self.tool.setUsedColorSystem('state_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-        #check with modification_color
-        self.tool.setUsedColorSystem('modification_color')
-        self.assertEquals(self.tool.showColorsForUser(), False)
-
-    def test_pm_UsedColorSystemGetColoredLink(self):
-        '''The colorization of the item depends on the usedColorSystem value of
-           the tool.'''
-        #colorization modes are applied on MeetingItem, MeetingFile and Meeting
-        #1. first check with a MeetingItem
-        #1.1 check when the user is not in colorSystemDisabledFor
-        self.tool.setColorSystemDisabledFor(None)
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        #create an item for test
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setTitle('item_title')
-        #here, the resulting item should not be colored
-        showColors = self.tool.showColorsForUser()
-        title = item.Title()
-        url = item.absolute_url()
-        content = item.Title()
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' % (url, title, content))
-        self.changeUser('admin')
-        #use colors depdending on item workflow state
-        self.tool.setUsedColorSystem('state_color')
-        self.changeUser('pmCreator1')
-        showColors = self.tool.showColorsForUser()
-        wf_class = "state-" + item.queryState()
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" class="%s">%s</a>' % (url, title, wf_class, content))
-        self.changeUser('admin')
-        #use colors depdending on item modification
-        self.tool.setUsedColorSystem('modification_color')
-        self.changeUser('pmCreator1')
-        # Now that we are in modification_color mode, we have to remember the
-        # access.
-        self.tool.rememberAccess(uid=item.UID(), commitNeeded=False)
-        showColors = self.tool.showColorsForUser()
-        wf_class = self.portal.portal_workflow.getInfoFor(item, 'review_state')
-        #the item should not be colored as the creator already saw it
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s"%s>%s</a>' %
-                          (url, title, " id=\"pmNoNewContent\"", content))
-        #change the item and check if the color appear for pmCreator1
-        self.changeUser('admin')
-        #use process_form
-        self.portal.REQUEST.set('title', 'my_new_title')
-        self.portal.REQUEST.set('description', 'description')
-        item.processForm()
-        item.at_post_edit_script()
-        self.changeUser('pmCreator1')
-        showColors = self.tool.showColorsForUser()
-        #as 'admin' changed the content, it must be colored to 'pmCreator1'
-        self.failIf('pmNoNewContent' in self.tool.getColoredLink(item, showColors),
-                    '<a href="%s" title="%s"%s>%s</a>' % (url, title, "", content))
-        #1.2 check when the user is in colorSystemDisabledFor
-        #in this case, colors are never shown...
-        self.tool.setColorSystemDisabledFor("user1\nuser2\npmCreator1")
-        #check with no colorization
-        self.tool.setUsedColorSystem('no_color')
-        #create an item for test
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setTitle('item_title')
-        #here, the resulting item should not be colored
-        showColors = self.tool.showColorsForUser()
-        title = item.Title()
-        url = item.absolute_url()
-        content = item.Title()
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, content))
-        self.changeUser('admin')
-        #use colors depdending on item workflow state
-        self.tool.setUsedColorSystem('state_color')
-        self.changeUser('pmCreator1')
-        showColors = self.tool.showColorsForUser()
-        wf_class = "state-" + item.queryState()
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, content))
-        self.changeUser('admin')
-        #use colors depdending on item modification
-        self.tool.setUsedColorSystem('modification_color')
-        self.changeUser('pmCreator1')
-        # Now that we are in modification_color mode, we have to remember the
-        # access
-        self.tool.rememberAccess(uid=item.UID(), commitNeeded=False)
-        showColors = self.tool.showColorsForUser()
-        wf_class = self.portal.portal_workflow.getInfoFor(item, 'review_state')
-        #the item should not be colored as the creator already saw it
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, content))
-        #change the item and check if the color appear for pmCreator1
-        self.changeUser('admin')
-        item.at_post_edit_script()
-        self.changeUser('pmCreator1')
-        self.assertEquals(self.tool.getColoredLink(item, showColors),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, content))
-        #check the maxLength attribute, "item_title" becomes "it..."
-        self.assertEquals(self.tool.getColoredLink(item, showColors, maxLength=2),
-                          '<a href="%s" title="%s" id="pmNoNewContent">%s</a>' %
-                          (url, title, "it..."))
-        #2. check with a Meeting
-        #3. check with a MeetingFile
+        # if useGroupsAsCategories is on, getCategories will return proposingGroups
+        self.cleanMemoize()
+        cfg.setUseGroupsAsCategories(True)
+        self.failUnless([gr.getId() for gr in cfg.getCategories()] == ['developers', 'vendors'])
 
     def test_pm_ListProposingGroups(self):
         '''Check that the user is creator for the proposing groups.'''
@@ -288,6 +142,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # a 'Manager' will be able to select any proposing group
         # no matter he is a creator or not
         self.changeUser('admin')
+        self.assertTrue(item.listProposingGroups().sortedByKey().keys() == ['developers', 'vendors', ])
+        # if 'developers' was selected on the item, it will be available to 'pmReviewer1'
+        item.setProposingGroup('developers')
+        self.changeUser('pmReviewer1')
         self.assertTrue(item.listProposingGroups().sortedByKey().keys() == ['developers', 'vendors', ])
 
     def test_pm_SendItemToOtherMC(self):
@@ -564,7 +422,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(len(IAnnexable(newItem).getAnnexes(relatedTo='item')) == 2)
         self.failUnless(len(IAnnexable(newItem).getAnnexes(relatedTo='item_decision')) == 2)
         # As annexes are references from the item, check that these are not
-        self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues()))
+        self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues('MeetingItem')))
         # Especially test that references are ok about the MeetingFileTypes
         existingMeetingFileTypeIds = [ft['id'] for ft in self.meetingConfig.getFileTypes(relatedTo='item')]
         existingMeetingFileTypeDecisionIds = [ft['id'] for ft in
@@ -627,7 +485,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                     domain='PloneMeeting',
                                     context=self.request)
         # 2 messages, the expected and the message 'item successfully sent to other mc'
-        self.assertTrue(messages[0].message == expectedMessage)
+        self.assertTrue(messages[-2].message == expectedMessage)
 
         # now test when cloning locally, just disable every available mft
         self.changeUser('admin')
@@ -646,7 +504,7 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedMessage = translate("annexes_not_kept_because_no_available_mft_warning",
                                     mapping={'cfg': self.meetingConfig.Title()},
                                     domain='PloneMeeting',
-                                    context=self.request)
+                                        context=self.request)
         self.assertTrue(messages[0].message == expectedMessage)
 
     def test_pm_SendItemToOtherMCWithAdvices(self):
@@ -1249,19 +1107,22 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setCategory('development')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         # MeetingMember can not setItemIsSigned
-        self.assertEquals(item.maySignItem(self.member), False)
+        self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
+        # Manager maySignItem when necessary
+        self.changeUser('siteadmin')
+        self.assertTrue(item.maySignItem())
         # MeetingManagers neither, the item must be decided...
         self.changeUser('pmManager')
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         meetingDate = DateTime('2008/06/12 08:00:00')
         meeting = self.create('Meeting', date=meetingDate)
         self.presentItem(item)
-        self.assertEquals(item.maySignItem(self.member), False)
+        self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.freezeMeeting(meeting)
-        self.assertEquals(item.maySignItem(self.member), False)
+        self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.decideMeeting(meeting)
@@ -1269,10 +1130,10 @@ class testMeetingItem(PloneMeetingTestCase):
         if not item.queryState() == 'accepted':
             self.do(item, 'accept')
         # now that the item is accepted, MeetingManagers can sign it
-        self.assertEquals(item.maySignItem(self.member), True)
+        self.assertEquals(item.maySignItem(), True)
         item.setItemIsSigned(True)
         # a signed item can still be unsigned until the meeting is closed
-        self.assertEquals(item.maySignItem(self.member), True)
+        self.assertEquals(item.maySignItem(), True)
         # call to @@toggle_item_is_signed will set it back to False (toggle)
         item.restrictedTraverse('@@toggle_item_is_signed')(item.UID())
         self.assertEquals(item.getItemIsSigned(), False)
@@ -1283,10 +1144,10 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setItemIsSigned(False)
         self.closeMeeting(meeting)
         # still able to sign an unsigned item in a closed meeting
-        self.assertEquals(item.maySignItem(self.member), True)
+        self.assertEquals(item.maySignItem(), True)
         # once signed in a closed meeting, no more able to unsign the item
         item.setItemIsSigned(True)
-        self.assertEquals(item.maySignItem(self.member), False)
+        self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, False)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
 
@@ -1437,6 +1298,8 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime())
         # define an assembly on the meeting
         meeting.setAssembly('Meeting assembly')
+        meeting.setAssemblyAbsents('Meeting assembly absents')
+        meeting.setAssemblyExcused('Meeting assembly excused')
         meeting.setSignatures('Meeting signatures')
         self.presentItem(item)
         # make the form item_assembly_default works
@@ -1450,9 +1313,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, formSignatures.update)
         # so use this field
         self.meetingConfig.setUsedItemAttributes(self.meetingConfig.getUsedItemAttributes() +
-                                                 ('itemAssembly', 'itemSignatures', ))
+                                                 ('itemAssembly', 'itemAssemblyAbsents',
+                                                  'itemAssemblyExcused', 'itemSignatures', ))
         self.meetingConfig.setUsedMeetingAttributes(self.meetingConfig.getUsedMeetingAttributes() +
-                                                    ('assembly', 'signatures', ))
+                                                    ('assembly', 'assemblyAbsents',
+                                                     'assemblyExcused', 'signatures', ))
         # MeetingItem.attributeIsUsed is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         # current user must be at least MeetingManager to use this
@@ -1464,13 +1329,23 @@ class testMeetingItem(PloneMeetingTestCase):
         formSignatures.update()
         # by default, item assembly/signatures is the one defined on the meeting
         self.assertEquals(item.getItemAssembly(), meeting.getAssembly())
+        self.assertEquals(item.getItemAssemblyAbsents(), meeting.getAssemblyAbsents())
+        self.assertEquals(item.getItemAssemblyExcused(), meeting.getAssemblyExcused())
         self.assertEquals(item.getItemSignatures(), meeting.getSignatures())
+        # except if we ask real value
+        self.assertFalse(item.getItemAssembly(real=True))
+        self.assertFalse(item.getItemAssemblyAbsents(real=True))
+        self.assertFalse(item.getItemAssemblyExcused(real=True))
         # now use the form to change the item assembly/signatures
         self.request.form['form.widgets.item_assembly'] = u'Item assembly'
+        self.request.form['form.widgets.item_absents'] = u'Item assembly absents'
+        self.request.form['form.widgets.item_excused'] = u'Item assembly excused'
         self.request.form['form.widgets.item_signatures'] = u'Item signatures'
         formAssembly.handleApplyItemAssembly(formAssembly, None)
         formSignatures.handleApplyItemSignatures(formSignatures, None)
         self.assertNotEquals(item.getItemAssembly(), meeting.getAssembly())
+        self.assertNotEquals(item.getItemAssemblyAbsents(), meeting.getAssemblyAbsents())
+        self.assertNotEquals(item.getItemAssemblyExcused(), meeting.getAssemblyExcused())
         self.assertNotEquals(item.getItemSignatures(), meeting.getSignatures())
         self.assertEquals(item.getItemAssembly(), '<p>Item assembly</p>')
         self.assertEquals(item.getItemSignatures(), 'Item signatures')
@@ -1601,7 +1476,6 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setDecision('<p>A decision</p>')
         # until the item is not in a meeting, the call to
         # getItemNumber will return None
-        self.assertIsNone(item.getItemNumber(relativeTo='itemsList'))
         self.assertIsNone(item.getItemNumber(relativeTo='meeting'))
         self.assertIsNone(item.getItemNumber(relativeTo='meetingConfig'))
         # so insert the item in a meeting
@@ -1610,8 +1484,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.presentItem(item)
         # the item is inserted in 5th position so stored itemNumber is 5
         self.assertTrue(item.getField('itemNumber').get(item) == 5)
-        # it is the same than calling with relativeTo='itemsList' and relativeTo='meeting'
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
         # as no other meeting exist, it is the same result also for relativeTo='meetingConfig'
         self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 5)
@@ -1621,63 +1493,44 @@ class testMeetingItem(PloneMeetingTestCase):
         lateItem.setDecision('<p>A decision</p>')
         lateItem.setPreferredMeeting(meeting.UID())
         self.presentItem(lateItem)
-        # it is presented as late item
+        # it is presented as late item, it will be just inserted at the end
         self.assertTrue(lateItem.isLate())
-        # it is the first late item so his number in the late items list is 1
-        self.assertTrue(lateItem.getField('itemNumber').get(lateItem) == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        # but regarding the whole meeting, his number his len of normal items + his stored number
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        # only existing meeting, so relativeTo='meetingConfig' is the same as relativeTo='meeting'
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == len(meeting.getItems()) + 1)
+        self.assertTrue(lateItem.getField('itemNumber').get(lateItem) == 6)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 6)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 6)
 
         # now create a meeting BEFORE meeting so meeting will not be considered as only meeting
         # in the meetingConfig and relativeTo='meeting' behaves normally
         meeting2 = self._createMeetingWithItems(meetingDate=DateTime('2012/05/05 12:00'))
         # we have 7 items in meeting2 and firstItemNumber is not set
-        self.assertTrue(meeting2.getItemsCount() == 7)
+        self.assertTrue(meeting2.numberOfItems() == 7)
         self.assertTrue(meeting2.getFirstItemNumber() == -1)
-        self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        self.assertTrue(meeting2.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # itemNumber relativeTo itemsList/meeting does not change but relativeTo meetingConfig changed
         # for the normal item
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
-        self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
-        self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
-        # for the late item
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
         # make sure it is the same result for non MeetingManagers as previous
         # meeting2 is not viewable by common users by default as in state 'created'
-        self.changeUser('pmCreator1')
-        # the user can see item and lateItem
-        self.assertTrue(self.hasPermission('View', (item, lateItem, )))
-        # and getItemNumber returns the same result than for the MeetingManagers
-        # for item
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
-        self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
-        # a cleanMemoize is done when calling changeUser
-        self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
-        # for lateItem
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        for memberId in ('pmManager', 'pmCreator1'):
+            self.changeUser(memberId)
+            self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
+            self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
+            # for the late item
+            self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 6)
+            self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (6+7))
         # now set firstItemNumber for meeting2
         self.changeUser('pmManager')
         self.closeMeeting(meeting2)
         self.cleanMemoize()
         self.assertTrue(meeting2.queryState(), 'closed')
         self.assertTrue(meeting2.getFirstItemNumber() == 1)
-        self.assertTrue(meeting2.getItemsInOrder()[-1].getItemNumber(relativeTo='meetingConfig') == 7)
+        self.assertTrue(meeting2.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig') == 7)
         # getItemNumber is still behaving the same
         # for item
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
         # for lateItem
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 6)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (6+7))
         # and set firstItemNumber for meeting
         self.assertTrue(meeting.getFirstItemNumber() == -1)
         self.closeMeeting(meeting)
@@ -1686,32 +1539,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(meeting.getFirstItemNumber() == 8)
         # getItemNumber is still behaving the same
         # for item
-        self.assertTrue(item.getItemNumber(relativeTo='itemsList') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meeting') == 5)
         self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 12)
         # for lateItem
-        self.assertTrue(lateItem.getItemNumber(relativeTo='itemsList') == 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == len(meeting.getItems()) + 1)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == 16)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 6)
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (6+7))
         # if we remove one item, other items number is correct
         # remove normal item number 3 and check others
         self.changeUser('admin')
         # we have 8 items, if we remove item number 5, others are correct
-        self.assertTrue(len(meeting.getItemsInOrder()) == 8)
-        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem
-                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7, 8])
-        # 1 late item
-        self.assertTrue(len(meeting.getItemsInOrder(late=True)) == 1)
-        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem
-                         in meeting.getItemsInOrder(late=True)] == [9, ])
+        self.assertTrue(len(meeting.getItems(ordered=True)) == 9)
+        self.assertTrue([anItem.getItemNumber(relativeTo='meeting') for anItem
+                         in meeting.getItems(ordered=True)] == [1, 2, 3, 4, 5, 6, 7, 8, 9])
+        # relative to meetingConfig
+        self.assertTrue([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
+                         in meeting.getItems(ordered=True)] == [8, 9, 10, 11, 12, 13, 14, 15, 16])
         # item is 5th of normal items
-        self.assertTrue(item.UID() == meeting.getItemsInOrder()[4].UID())
+        self.assertTrue(item.UID() == meeting.getItems(ordered=True)[4].UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
-        self.assertTrue([normalItem.getItemNumber(relativeTo='meeting') for normalItem
-                         in meeting.getItemsInOrder()] == [1, 2, 3, 4, 5, 6, 7])
-        # and late items are correct too
-        self.assertTrue([oneLateItem.getItemNumber(relativeTo='meeting') for oneLateItem
-                         in meeting.getItemsInOrder(late=True)] == [8, ])
+        self.assertTrue([anItem.getItemNumber(relativeTo='meeting') for anItem
+                         in meeting.getItems(ordered=True)] == [1, 2, 3, 4, 5, 6, 7, 8])
+        # relative to meetingConfig
+        self.assertTrue([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
+                         in meeting.getItems(ordered=True)] == [8, 9, 10, 11, 12, 13, 14, 15])
 
     def test_pm_ListMeetingsAcceptingItems(self):
         '''
@@ -2164,7 +2014,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item4.getDecision(keepWithNext=False) == '<p>My decision that will not be touched.</p>')
         # a portal_message is displayed to the user that triggered the transition
         messages = IStatusMessage(self.request).show()
-        self.assertTrue(messages[0].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % ('decision',
+        self.assertTrue(messages[-1].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % ('decision',
                                                                                          "'some_wrong_tal_expression'"))
 
     def test_pm_TakenOverBy(self):
@@ -2202,9 +2052,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # if actual taker does not correspond to takenOverByFrom, it fails
         # and return a portal message to the user
         messages = IStatusMessage(self.request).show()
-        self.assertTrue(not messages)
+        # for now, just one message '
+        self.assertTrue(len(messages) == 1)
+        self.assertTrue(messages[0].message == u'Faceted navigation enabled')
         view.toggle(takenOverByFrom='')
-        # now we have a message
+        # now we have the takenOverBy message
         messages = IStatusMessage(self.request).show()
         self.assertTrue(len(messages) == 1)
         expectedMessage = translate("The item you tried to take over was already taken over in between by "
@@ -2233,13 +2085,14 @@ class testMeetingItem(PloneMeetingTestCase):
            user that took over item first time.  So if a user take over an item in state1, it is saved.
            If item goes to state2, taken over by is set to '', if item comes back to state1, original user
            that took item over is automatically set again.'''
+        cfg = self.meetingConfig
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertTrue(not item.takenOverByInfos)
         # take item over
         item.setTakenOverBy('pmCreator1')
-        item_created_key = "%s__wfstate__%s" % (self.meetingConfig.getItemWorkflow(), item.queryState())
+        item_created_key = "%s__wfstate__%s" % (cfg.getItemWorkflow(), item.queryState())
         self.assertTrue(item.takenOverByInfos[item_created_key] == 'pmCreator1')
         # if takenOverBy is removed, takenOverByInfos is cleaned too
         item.setTakenOverBy('')
@@ -2270,6 +2123,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         self.assertTrue(not item.getTakenOverBy())
         self.assertTrue(not item_created_key in item.takenOverByInfos)
+
+        # we can set an arbitrary key in the takenOverByInfos
+        # instead of current item state if directly passed
+        arbitraryKey = "%s__wfstate__%s" % (cfg.getItemWorkflow(), 'validated')
+        self.assertTrue(not arbitraryKey in item.takenOverByInfos)
+        item.setTakenOverBy('pmReviewer1', **{'wf_state': arbitraryKey})
+        self.assertTrue(arbitraryKey in item.takenOverByInfos)
 
     def test_pm_ItemActionsPanelCaching(self):
         '''For performance, actions panel is cached,
@@ -2688,7 +2548,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
                          'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
                          'itemKeywords', 'itemNumber', 'itemSignatories',
-                         'itemSignatures', 'itemTags', 'manuallyLinkedItems',
+                         'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
                          'meetingTransitionInsertingMe', 'observations',
                          'predecessor', 'preferredMeeting', 'proposingGroup',
                          'questioners', 'takenOverBy', 'templateUsingGroups',
@@ -2925,6 +2785,134 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(i3.getRawManuallyLinkedItems() == [i1UID, i2UID, i4UID, i5UID])
         self.assertTrue(i4.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i5UID])
         self.assertTrue(i5.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i4UID])
+
+    def test_pm_Completeness(self):
+        '''Test the item-completeness view and relevant methods in MeetingItem.'''
+        # completeness widget is disabled for items of the config
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        recurringItem = cfg.getItems(recurring=True)[0]
+        templateItem = cfg.getItems(recurring=False)[0]
+        self.assertFalse(recurringItem.adapted().mayEvaluateCompleteness())
+        self.assertFalse(templateItem.adapted().mayEvaluateCompleteness())
+        self.assertFalse(recurringItem.adapted().mayAskCompletenessEvalAgain())
+        self.assertFalse(templateItem.adapted().mayAskCompletenessEvalAgain())
+
+        # by default, a MeetingMember can not evaluate completeness
+        # user must have role ITEM_COMPLETENESS_EVALUATORS, like MeetingManager
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.getCompleteness() == 'completeness_not_yet_evaluated')
+        # item completeness history is empty
+        self.assertTrue(not item.completeness_changes_history)
+        itemCompletenessView = item.restrictedTraverse('item-completeness')
+        changeCompletenessView = item.restrictedTraverse('change-item-completeness')
+        self.assertFalse(item.adapted().mayEvaluateCompleteness())
+        self.assertFalse(itemCompletenessView.listSelectableCompleteness())
+
+        # a MeetingReviewer may evaluate completeness if he is able the edit the item
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.adapted().mayEvaluateCompleteness())
+        selectableCompleness = itemCompletenessView.listSelectableCompleteness()
+        self.assertTrue(selectableCompleness)
+        # can not 'ask evaluation again' as not in 'completeness_incomplete'
+        self.assertFalse(item.adapted().mayAskCompletenessEvalAgain())
+
+        # may not evaluate if may not edit
+        self.validateItem(item)
+        self.assertFalse(item.adapted().mayEvaluateCompleteness())
+        self.assertFalse(itemCompletenessView.listSelectableCompleteness())
+
+        # as pmManager, may ask evaluation again if it is 'completeness_incomplete'
+        self.changeUser('pmManager')
+        self.assertTrue(item.adapted().mayEvaluateCompleteness())
+        self.assertFalse(item.adapted().mayAskCompletenessEvalAgain())
+        self.request['new_completeness_value'] = 'completeness_incomplete'
+        self.request.form['form.submitted'] = True
+        changeCompletenessView()
+        self.assertTrue(item.getCompleteness() == 'completeness_incomplete')
+        self.assertTrue(item.adapted().mayEvaluateCompleteness())
+        self.assertTrue(item.adapted().mayAskCompletenessEvalAgain())
+        self.assertTrue(item.completeness_changes_history and
+                        item.completeness_changes_history[0]['action'] == 'completeness_incomplete')
+
+        # ask evaluation again
+        self.backToState(item, 'itemcreated')
+        self.changeUser('pmCreator1')
+        self.request['new_completeness_value'] = 'completeness_evaluation_asked_again'
+        changeCompletenessView()
+        self.assertTrue(item.getCompleteness() == 'completeness_evaluation_asked_again')
+        # trying to change completeness if he can not will raise Unauthorized
+        self.assertFalse(item.adapted().mayEvaluateCompleteness())
+        self.request['new_completeness_value'] = 'completeness_complete'
+        self.assertRaises(Unauthorized, changeCompletenessView)
+
+    def test_pm_Emergency(self):
+        '''Test the item-emergency view and relevant methods in MeetingItem.'''
+        # emergency widget is disabled for items of the config
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        recurringItem = cfg.getItems(recurring=True)[0]
+        templateItem = cfg.getItems(recurring=False)[0]
+        self.assertFalse(recurringItem.adapted().mayAskEmergency())
+        self.assertFalse(templateItem.adapted().mayAskEmergency())
+        # by default, every user able to edit the item may ask emergency
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.getEmergency() == 'no_emergency')
+        self.assertTrue(item.adapted().mayAskEmergency())
+        # only MeetingManager may accept/refuse emergency
+        self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
+        # item emergency history is empty
+        self.assertTrue(not item.emergency_changes_history)
+        itemEmergencyView = item.restrictedTraverse('item-emergency')
+        changeEmergencyView = item.restrictedTraverse('change-item-emergency')
+        # ask emergency
+        self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['emergency_asked'])
+        self.request['new_emergency_value'] = 'emergency_asked'
+        self.request.form['form.submitted'] = True
+        changeEmergencyView()
+        self.assertTrue(item.getEmergency() == 'emergency_asked')
+        # history was updated
+        self.assertTrue(item.emergency_changes_history and
+                        item.emergency_changes_history[0]['action'] == 'emergency_asked')
+        # when asked, asker can do nothing else but back to 'no_emergency'
+        self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['no_emergency'])
+        self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
+        self.validateItem(item)
+        # no more editable, can do nothing
+        self.assertFalse(itemEmergencyView.listSelectableEmergencies().keys())
+
+        # MeetingManager may accept/refuse emergency
+        self.changeUser('pmManager')
+        self.assertTrue(item.adapted().mayAskEmergency())
+        self.assertTrue(item.adapted().mayAcceptOrRefuseEmergency())
+        # accept emergency
+        self.request['new_emergency_value'] = 'emergency_accepted'
+        changeEmergencyView()
+        self.assertTrue(item.getEmergency() == 'emergency_accepted')
+        # history was updated
+        self.assertTrue(item.emergency_changes_history and
+                        item.emergency_changes_history[1]['action'] == 'emergency_accepted')
+
+        # trying to change emergency if can not will raise Unauthorized
+        self.changeUser('pmCreator1')
+        self.assertFalse(item.adapted().mayAskEmergency())
+        self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
+        self.request['new_emergency_value'] = 'no_emergency'
+        self.assertRaises(Unauthorized, changeEmergencyView)
+
+    def test_pm_ItemStrikedAssembly(self):
+        """Test use of utils.toHTMLStrikedContent for itemAssembly."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setItemAssembly('Simple assembly')
+        self.assertEquals(item.getStrikedItemAssembly(),
+                          '<p class="mltAssembly">Simple assembly</p>')
+        item.setItemAssembly('Assembly with [[striked]] part')
+        self.assertEquals(item.getStrikedItemAssembly(),
+                          '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
 
 
 def test_suite():

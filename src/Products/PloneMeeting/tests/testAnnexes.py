@@ -23,6 +23,7 @@
 #
 
 from AccessControl import Unauthorized
+from Products.PloneMeeting.MeetingFile import MeetingFile
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.interfaces import IAnnexable
 
@@ -76,6 +77,18 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(annexesByType[2][0]['meetingFileTypeObjectUID'] == mft3.UID())
         self.assertTrue(annexesByType[2][1]['meetingFileTypeObjectUID'] == mft3.UID())
         self.assertTrue(len(annexesByType[2]) == 2)
+
+        # we can also get realAnnexes
+        realAnnexesByType = IAnnexable(item).getAnnexesByType('item', realAnnexes=True)
+        self.assertTrue(len(realAnnexesByType) == len(annexesByType))
+        self.assertTrue(len(realAnnexesByType[0]) == len(annexesByType[0]))
+        self.assertTrue(len(realAnnexesByType[1]) == len(annexesByType[1]))
+        self.assertTrue(len(realAnnexesByType[2]) == len(annexesByType[2]))
+        self.assertTrue(isinstance(realAnnexesByType[0][0], MeetingFile))
+
+        # item without annexes
+        item2 = self.create('MeetingItem')
+        self.assertFalse(IAnnexable(item2).getAnnexesByType('item'))
 
     def test_pm_GetAnnexesByTypeAnnexConfidentiality(self):
         '''Test the getAnnexesByType method when annex confidentiality is enabled.

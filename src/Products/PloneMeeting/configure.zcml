@@ -6,26 +6,26 @@
 
   <!-- ##code-section configure.zcml.header -->
   <include package="Products.PasswordStrength" />
-  <include file="events.zcml" />
-  <include file="profiling.zcml" />
-  <include package=".browser" />
-  <include package=".content" />
-  <include package="Products.CMFPlacefulWorkflow"/>
-  <include package="collective.iconifieddocumentactions"/>
-  <include package="imio.pm.locales"/>
-  <include package="imio.actionspanel"/>
-  <include package="imio.history"/>
+  <include package="collective.ckeditor"/>
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
+  <include package="collective.iconifieddocumentactions"/>
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="communesplone.layout"/>
+  <include package="imio.pm.locales"/>
+  <include package="imio.dashboard"/>
   <include package="plone.app.dexterity" />
   <include package="plone.directives.form" file="meta.zcml" />
   <include package="plone.directives.form" />
   <include package="plonetheme.imioapps"/>
-  <include package="Products.DataGridField" />
+  <include package="Products.CMFPlacefulWorkflow"/>
   <include package="Products.cron4plone" />
+  <include package="Products.DataGridField" />
+  <include package=".browser" />
+  <include package=".content" />
+  <include file="events.zcml" />
+  <include file="profiling.zcml" />
 
   <permission id="PloneMeeting.AddAdvice"
               title="PloneMeeting: Add advice"/>
@@ -47,13 +47,70 @@
            provides=".interfaces.IAnnexable" />
   <adapter for="Products.PloneMeeting.interfaces.IMeeting"
            factory=".adapters.PMHistoryAdapter"
-           provides="imio.history.interfaces.IImioHistory" />
+           name="workflow"
+           provides="imio.history.interfaces.IImioWfHistory" />
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
            factory=".adapters.PMHistoryAdapter"
-           provides="imio.history.interfaces.IImioHistory" />
+           name="workflow"
+           provides="imio.history.interfaces.IImioWfHistory" />
   <adapter for="Products.PloneMeeting.content.advice.IMeetingAdvice"
            factory=".adapters.PMHistoryAdapter"
-           provides="imio.history.interfaces.IImioHistory" />
+           name="workflow"
+           provides="imio.history.interfaces.IImioWfHistory" />
+
+  <!-- searches useable as compoundcriterion -->
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsOfMyGroupsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-of-my-groups" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.MyItemsTakenOverAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="my-items-taken-over" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsInCopyAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-in-copy" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToValidateOfHighestHierarchicLevelAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-validate-of-highest-hierarchic-level" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-validate-of-every-reviewer-levels-and-lower-levels" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToValidateOfMyReviewerGroupsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-validate-of-my-reviewer-groups" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToAdviceAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-advice" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToAdviceWithoutDelayAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-advice-without-delay" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToAdviceWithDelayAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-advice-with-delay" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToAdviceWithExceededDelayAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-advice-with-exceeded-delay" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.AdvisedItemsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="advised-items" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.AdvisedItemsWithDelayAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="advised-items-with-delay" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.DecidedItemsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="decided-items" />
 
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="Products.PloneMeeting.Meeting.Meeting"
@@ -69,24 +126,67 @@
   <!-- Indexes -->
   <adapter name="Description" factory=".indexes.Description" />
   <adapter name="getDeliberation" factory=".indexes.getDeliberation" />
+  <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
+  <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
+  <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
+  <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
   <adapter name="isDefinedInTool" factory=".indexes.isDefinedInTool" />
   <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
   <adapter name="title_or_id" factory=".indexes.title_or_id" />
   <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
-
+  <adapter name="sortable_title" factory=".indexes.sortable_title" />
+  <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
 
   <!-- add the blob field to MeetingFile -->
-  <adapter
-    name="plone.app.blob.subtypes.file"
-    for="Products.PloneMeeting.interfaces.IMeetingFile"
-    factory="plone.app.blob.subtypes.file.SchemaExtender" />
+  <adapter name="plone.app.blob.subtypes.file"
+           for="Products.PloneMeeting.interfaces.IMeetingFile"
+           factory="plone.app.blob.subtypes.file.SchemaExtender" />
 
   <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
   <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
     <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />
   </class>
+
+  <!-- IPrettyLink for MeetingItem -->
+  <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
+           factory=".adapters.PMPrettyLinkAdapter"
+           provides="imio.prettylink.interfaces.IPrettyLink" />
+
+  <!-- Vocabularies -->
+  <utility component=".vocabularies.ItemCategoriesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.categoriesvocabulary" />
+  <utility component=".vocabularies.ItemProposingGroupsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" />
+  <utility component=".vocabularies.ItemProposingGroupAcronymsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" />
+  <utility component=".vocabularies.ItemReviewStatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary" />
+  <utility component=".vocabularies.MeetingReviewStatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.meetingreviewstatesvocabulary" />
+  <utility component=".vocabularies.CreatorsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.creatorsvocabulary" />
+  <utility component=".vocabularies.MeetingDatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.meetingdatesvocabulary" />
+  <utility component=".vocabularies.AskedAdvicesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.askedadvicesvocabulary" />
+  <utility component=".vocabularies.SentToInfosVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
+  <utility component=".vocabularies.SendToAuthorityVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary" />
+  <utility component=".vocabularies.DownOrUpWorkflowAgainVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
+
+  <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
+  <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary" />
+
+  <configure package="imio.dashboard">
+    <adapter for="plone.app.collection.collection.Collection"
+             factory="Products.PloneMeeting.adapters.PMCustomViewFieldsVocabularyAdapter"
+             provides=".interfaces.ICustomViewFieldsVocabulary" />
+  </configure>
 
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
@@ -97,7 +197,6 @@
   <five:deprecatedManageAddDelete class=".MeetingConfig.MeetingConfig" />
   <five:deprecatedManageAddDelete class=".MeetingUser.MeetingUser" />
   <five:deprecatedManageAddDelete class=".PodTemplate.PodTemplate" />
-  <five:deprecatedManageAddDelete class=".Searcher.Searcher" />
   <five:deprecatedManageAddDelete class=".ToolPloneMeeting.ToolPloneMeeting" />
 
   <!-- ##/code-section configure.zcml.header -->
@@ -115,6 +214,14 @@
   <class class="Products.PloneMeeting.MeetingConfig.MeetingConfig">
     <implements interface="plone.portlets.interfaces.ILocalPortletAssignable" />
   </class>
+  <!-- Make Meeting behave like a Collection to be faceted navigable -->
+  <class class="Products.PloneMeeting.Meeting.Meeting">
+    <implements interface="plone.app.collection.interfaces.ICollection" />
+  </class>
+  <class class="Products.PloneMeeting.Meeting.Meeting">
+    <implements interface="eea.facetednavigation.interfaces.IPossibleFacetedNavigable" />
+  </class>
+
   <!-- ##/code-section configure.zcml.core -->
 
 </configure>

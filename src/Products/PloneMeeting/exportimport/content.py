@@ -31,6 +31,7 @@ from zExceptions import BadRequest
 from Products.PloneMeeting.config import registerClasses, PROJECTNAME
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.ToolPloneMeeting import PloneMeetingError, MEETING_CONFIG_ERROR
+from Products.PloneMeeting.utils import updateCollectionCriterion
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -96,7 +97,8 @@ class ToolInitializer:
             savedMeetingConfigsToCloneTo[mConfig.id] = mConfig.meetingConfigsToCloneTo
             mConfig.meetingConfigsToCloneTo = []
             try:
-                self.tool.createMeetingConfig(mConfig, source=self.profilePath)
+                cfg = self.tool.createMeetingConfig(mConfig, source=self.profilePath)
+                self.finishConfigFor(cfg, data=mConfig)
             except BadRequest, e:
                 # If we raise a BadRequest, it is that the id is already in use or that the id is reserved.
                 logger.error(MEETINGCONFIG_BADREQUEST_ERROR % (mConfig.id, str(e)))
@@ -118,6 +120,47 @@ class ToolInitializer:
         # they could have to be added in groups created by the MeetingConfig
         self.tool.addUsersOutsideGroups(d.usersOutsideGroups)
         return self.successMessage
+
+    def finishConfigFor(self, cfg, data):
+        """When the MeetingConfig has been created, some parameters still need to be applied
+           because they need the MeetingConfig to exist."""
+        # apply the meetingTopicStates to the 'searchallmeetings' DashboardCollection
+        updateCollectionCriterion(cfg.searches.searches_meetings.searchallmeetings,
+                                  'review_state',
+                                  data.meetingTopicStates)
+        # apply the maxDaysDecisions to the 'searchlastdecisions' DashboardCollection
+        updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
+                                  'getDate',
+                                  data.maxDaysDecisions)
+        # apply the decisionTopicStates to the 'searchlastdecisions'
+        # and 'searchalldecision' DashboardCollections
+        updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
+                                  'review_state',
+                                  data.decisionTopicStates)
+        updateCollectionCriterion(cfg.searches.searches_decisions.searchalldecisions,
+                                  'review_state',
+                                  data.decisionTopicStates)
+        # select correct default view
+        meetingAppDefaultView = data.meetingAppDefaultView
+        if meetingAppDefaultView in cfg.searches.searches_items.objectIds():
+            default_uid = getattr(cfg.searches.searches_items,
+                                  meetingAppDefaultView).UID()
+            # update the criterion default value in searches and searches_items folders
+            cfg._updateDefaultCollectionFor(cfg.searches, default_uid)
+            cfg._updateDefaultCollectionFor(cfg.searches.searches_items, default_uid)
+        else:
+            error = 'meetingAppDefaultView : No DashboardCollection with id %s' % meetingAppDefaultView
+            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
+
+        # now we can set values for dashboard...Filters fields as the 'searches' folder has been created
+        for fieldName in ('dashboardItemsListingsFilters',
+                          'dashboardMeetingAvailableItemsFilters',
+                          'dashboardMeetingLinkedItemsFilters'):
+            field = cfg.getField(fieldName)
+            # we want to validate the vocabulay, as if enforceVocabulary was True
+            error = field.validate_vocabulary(cfg, cfg.getField(field.getName()).get(cfg), {})
+            if error:
+                raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
 
 
 def isTestOrArchiveProfile(context):

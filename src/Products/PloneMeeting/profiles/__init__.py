@@ -237,6 +237,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates', 'decisionTopicStates',
                          'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues', 'insertingMethodsOnAddItem'
                          )
+    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
@@ -395,9 +396,11 @@ class MeetingConfigDescriptor(Descriptor):
         # When the system displays the list of all meetings (the "all meetings"
         # topic), only meetings having one of the stated listed in
         # meetingTopicStates will be shown.
+        # this will be applied on the 'searchallmeetings' Collection
         self.meetingTopicStates = ('created', 'published', 'frozen')
         # In the "decisions" portlet, the "all decisions" portlet will only show
         # meetings having one of the states listed in decisionTopicStates.
+        # this will be applied on the 'searchalldecisions' Collection
         self.decisionTopicStates = ('decided', 'closed', 'archived')
         # Maximum number of meetings or decisions shown in the meeting and
         # decision portlets. If overflow, a combo box is shown instead of a
@@ -406,30 +409,29 @@ class MeetingConfigDescriptor(Descriptor):
         # If a decision if maxDaysDecisions old (or older), it is not shown
         # anymore in the "decisions" portlet. This decision may still be
         # consulted by clicking on "all decisions" in the same portlet.
+        # this will be applied on the 'searchalldecisions' Collection
         self.maxDaysDecisions = 60
         # Which view do you want to select when entering a PloneMeeting folder ?
-        self.meetingAppDefaultView = 'topic_searchallmeetings'
-        # In the meetingitems_list.pt, you can choose which columns are shown
-        self.itemsListVisibleColumns = ['state', 'categoryOrProposingGroup',
-                                        'annexes', 'annexesDecision', 'actions']
+        self.meetingAppDefaultView = 'searchallitems'
+        # Columns shown on the meeting view.  Order is important!
+        self.itemsListVisibleColumns = ['Creator', 'CreationDate', 'review_state',
+                                        'getProposingGroup', 'actions']
         # what fields of the item will be displayed in the items listings
         # while clicking on the show more infos action (glasses icon)
         self.itemsListVisibleFields = ['MeetingItem.description', 'MeetingItem.decision']
-        # In item-related topic results, what columns are shown?
-        self.itemColumns = ['creationDate', 'creator', 'state', 'annexes',
-                            'annexesDecision', 'advices', 'actions', 'meeting']
-        # In meeting-related topic results, what columns are shown?
-        self.meetingColumns = ['creationDate', 'creator', 'state', 'actions']
-        # Lists of available, meeting and late-items are paginated. What are
-        # the maximum number of items to show at once?
-        self.maxShownAvailableItems = 50
-        self.maxShownMeetingItems = 50
-        self.maxShownLateItems = 50
-        # When showing paginated lists of items, two functions may be visible:
-        # go to the page where a given item lies, and go to the meetingitem_view
-        # of a given item.
-        self.enableGotoPage = False
-        self.enableGotoItem = True
+        # columns shown on items listings.  Order is important!
+        self.itemColumns = ['Creator', 'CreationDate', 'review_state',
+                            'getProposingGroup', 'linkedMeetingDate', 'actions']
+        # columns shown on meetings listings.  Order is important!
+        self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
+        # advanced filters shown
+        self.dashboardItemsListingsFilters = ('c4', 'c6', 'c7', 'c8', 'c9', 'c10', 'c11', 'c12', 'c13', 'c14', 'c15')
+        self.dashboardMeetingAvailableItemsFilters = ('c4', 'c10', 'c15')
+        self.dashboardMeetingLinkedItemsFilters = ('c4', 'c6', 'c7', 'c12', 'c13', 'c14', 'c15')
+        # default batching value, this must be a multiple of "20"
+        self.maxShownListings = "20"
+        self.maxShownAvailableItems = "20"
+        self.maxShownMeetingItems = "40"
         # When opening annexes, some users want to get them in separate windows.
         self.openAnnexesInSeparateWindows = False
 
@@ -511,8 +513,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.openOfficePort = 2002
         self.functionalAdminEmail = ''
         self.functionalAdminName = ''
-        self.usedColorSystem = 'no_color'
-        self.colorSystemDisabledFor = ''
         self.restrictUsers = False
         self.unrestrictedUsers = ''
         self.dateFormat = '%d %mt %Y'
@@ -520,16 +520,8 @@ class PloneMeetingConfiguration(Descriptor):
         self.availableOcrLanguages = ('eng',)
         self.defaultOcrLanguage = 'eng'
         self.modelAdaptations = []
-        self.publicUrl = ''
-        self.deferredNotificationsHandling = False
         self.enableUserPreferences = False
         self.enableAnnexPreview = False
-        # number of elements displayed in dashboards
-        self.maxShownFound = 20
-        # If True, the following param will, on the search screen, display
-        # radio buttons allowing to choose if item keywords encompass index
-        # Title, Description, getDeliberation or SearchableText.
-        self.showItemKeywordsTargets = True
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [{'date': '2015/01/01', },
                          {'date': '2015/04/06', },

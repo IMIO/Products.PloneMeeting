@@ -2,7 +2,8 @@ from zope.component import getMultiAdapter
 from zope.interface import implements
 from zope.formlib import form
 
-from DateTime import DateTime
+from eea.facetednavigation.interfaces import IFacetedNavigable
+from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 
 from plone.memoize.instance import memoize
 from plone.app.portlets.portlets import base
@@ -10,6 +11,7 @@ from plone.portlets.interfaces import IPortletDataProvider
 
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.interfaces import IMeeting
 
 from zope.i18nmessageid import MessageFactory
 _ = MessageFactory('PloneMeeting')
@@ -32,7 +34,7 @@ class Assignment(base.Assignment):
         return _(u"PloneMeeting")
 
 
-class Renderer(base.Renderer):
+class Renderer(base.Renderer, FacetedRenderer):
 
     _template = ViewPageTemplateFile('templates/portlet_plonemeeting.pt')
 
@@ -40,39 +42,37 @@ class Renderer(base.Renderer):
         base.Renderer.__init__(self, *args)
         portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
         self.portal = portal_state.portal()
+        self.tool = getToolByName(self.portal, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     @property
     def available(self):
         '''Defines if the portlet is available in the context.'''
-        tool = self.getPloneMeetingTool()
-        return tool.isInPloneMeeting(self.context, inTool=False) and tool.isPloneMeetingUser()
+        available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
+        return available and self.tool.isPloneMeetingUser()
+
+    @property
+    def _criteriaHolder(self):
+        '''Override method coming from FacetedRenderer as we know that criteria are stored on the meetingFolder.'''
+        pmFolder = self.getPloneMeetingFolder()
+        # if we are on a Meeting, it provides IFacetedNavigable but we want to display user pmFolder facetednav
+        if not self.context.absolute_url().startswith(pmFolder.absolute_url()) or \
+           IMeeting.providedBy(self.context):
+            return pmFolder
+        # we are on a subFolder of the pmFolder (searches_meetingitems for example)
+        if IFacetedNavigable.providedBy(self.context):
+            return self.context
+        else:
+            return pmFolder
 
     def render(self):
         return self._template()
 
     @memoize
-    def getPloneMeetingTool(self):
-        '''Returns the tool.'''
-        return getToolByName(self.portal, 'portal_plonemeeting')
-
-    @memoize
-    def getCurrentMeetingConfig(self):
-        '''Returns the current meetingConfig.'''
-        tool = self.getPloneMeetingTool()
-        res = tool.getMeetingConfig(self.context)
-        return res
-
-    @memoize
     def getPloneMeetingFolder(self):
         '''Returns the current PM folder.'''
-        cfg = self.getCurrentMeetingConfig()
-        if cfg:
-            return self.getPloneMeetingTool().getPloneMeetingFolder(cfg.getId())
-
-    @memoize
-    def getCurrentDateTime(self):
-        '''Returns now.'''
-        return DateTime()
+        if self.cfg:
+            return self.tool.getPloneMeetingFolder(self.cfg.getId())
 
     @memoize
     def templateItems(self):

@@ -18,7 +18,6 @@
                    mode string:view;">
 
     <tal:hideToNonManagers condition="python: isRealManager or context.isManager(context)">
-    <script language="javascript" tal:content="context/getJavascriptMessages"></script>
     <p i18n:translate="plonemeeting_descr"></p>
 
       <tal:comment replace="nothing">Meeting configurations</tal:comment>
@@ -37,7 +36,7 @@
           <thead>
           <tr>
             <th class="nosort" i18n:translate="listingheader_title"></th>
-            <th class="nosort" width="50px" i18n:translate="config_is_active"></th>
+            <th class="nosort" width="50px" i18n:translate="heading_is_active"></th>
             <th class="nosort" width="140px" i18n:translate="heading_actions"></th>
           </tr>
           </thead>
@@ -86,7 +85,7 @@
           <tr>
             <th class="nosort" i18n:translate="listingheader_title"></th>
             <th class="nosort" width="10%" i18n:translate="PloneMeeting_label_acronym"></th>
-            <th class="nosort" width="50px" i18n:translate="group_is_active"></th>
+            <th class="nosort" width="50px" i18n:translate="heading_is_active"></th>
             <th class="nosort" width="140px" i18n:translate="heading_actions"></th>
           </tr>
           <tr tal:condition="python: not context.objectValues('MeetingGroup')">
@@ -141,22 +140,6 @@
         </table>
       </fieldset>
 
-      <!-- Advanced search -->
-      <a name="advancedSearch"></a>
-      <fieldset>
-        <legend><span i18n:translate="label_schema_pm_search"></span></legend>
-        <table width="100%">
-          <tr valign="top">
-            <td tal:define="field python:here.getField('maxShownFound')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
-            <td tal:define="field python:here.getField('showItemKeywordsTargets')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-
       <!-- Misc -->
       <fieldset>
         <legend>
@@ -173,21 +156,6 @@
             <td tal:define="field python:here.getField('functionalAdminName')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-          </tr>
-          <tr valign="top">
-            <td tal:define="field python:here.getField('usedColorSystem')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-              <!-- Form for purging user access info -->
-              <form tal:condition="python: context.getUsedColorSystem() == 'modification_color'"
-                    method="post" action="purge_user_access_info">
-                <input class="context" type="submit" id="purgeSubmit" value="purge_user_access_info"
-                       i18n:attributes="value"/>
-              </form>
-            </td>
-            <td tal:define="field python:here.getField('colorSystemDisabledFor')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
-            <td></td>
           </tr>
           <tr valign="top">
             <td tal:define="field python:here.getField('restrictUsers')">
@@ -209,14 +177,9 @@
               <span metal:use-macro="here/widgets/field/macros/view" /></td>
           </tr>
           <tr valign="top">
-            <td tal:define="field python:here.getField('publicUrl')">
-              <span metal:use-macro="here/widgets/field/macros/view" /></td>
-            <td tal:define="field python:here.getField('deferredNotificationsHandling')">
-              <span metal:use-macro="here/widgets/field/macros/view" /></td>
             <td tal:define="field python:here.getField('enableUserPreferences')">
-              <span metal:use-macro="here/widgets/field/macros/view" /></td>
-          </tr>
-          <tr valign="top">
+              <span metal:use-macro="here/widgets/field/macros/view" />
+            </td>
             <td tal:define="field python:here.getField('enableAnnexPreview')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>

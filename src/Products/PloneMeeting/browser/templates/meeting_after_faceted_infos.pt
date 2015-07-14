@@ -1,0 +1,44 @@
+<tal:defines define="cfg python: view.cfg;
+                     portal_url python: view.portal_url;
+                     usedAttrs cfg/getUsedMeetingAttributes;
+                     member context/@@plone_portal_state/member;
+                     bilingual python: 'secondLanguage' in view.tool.getModelAdaptations();"
+             i18n:domain="PloneMeeting">
+
+  <tal:comment replace="nothing">Action on selected items</tal:comment>
+  <div tal:condition="python: view.tool.isManager(context) and context.adapted().isDecided() and not context.queryState() in context.meetingClosedStates" id="showItemsDecidedTransitions" >
+    <div metal:use-macro="here/@@pm-macros/showItemsDecidedTransitions"></div>
+  </div>
+  <div class="visualClear"></div>
+
+  <tal:comment replace="nothing">Observations</tal:comment>
+  <tal:field define="fieldName python: 'observations'; ajaxEdit python:True"
+             condition="python: context.showObs('observations')">
+    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+  </tal:field>
+
+  <tal:comment replace="nothing">Pre-observations</tal:comment>
+  <tal:field define="fieldName python: 'preObservations'; ajaxEdit python:True"
+             condition="python: context.showObs('preObservations')">
+    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+  </tal:field>
+
+  <tal:comment replace="nothing">For the admin only</tal:comment>
+  <fieldset tal:condition="python: view.tool.isManager(context, realManagers=True)">
+    <legend i18n:translate="for_admin_only" i18n:domain="PloneMeeting"></legend>
+    <table cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top" tal:define="mode python:'view';">
+        <td width="33%" tal:define="field python:here.getField('meetingNumber')">
+          <span metal:use-macro="here/widgets/field/macros/view" />
+        </td>
+        <td width="34%" tal:define="field python:here.getField('firstItemNumber')">
+          <span metal:use-macro="here/widgets/field/macros/view" />
+        </td>
+        <td width="33%" tal:define="field python:here.getField('meetingConfigVersion')">
+          <span metal:use-macro="here/widgets/field/macros/view" />
+        </td>
+      </tr>
+    </table>
+  </fieldset>
+
+</tal:defines>

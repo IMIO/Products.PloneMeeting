@@ -14,6 +14,42 @@
   </roles>
   <permissions>
 <!-- ##code-section permissions -->
+    <permission name="eea.facetednavigation: Configure faceted"
+                acquire="False">
+      <role name="Manager"/>
+      <role name="Site Administrator"/>
+    </permission>
+    <permission name="CMFEditions: Save new version"
+                acquire="False">
+      <role name="Manager"/>
+      <role name="Member"/>
+    </permission>
+    <permission name="CMFEditions: Revert to previous versions"
+                acquire="False">
+      <role name="Manager"/>
+      <role name="Member"/>
+    </permission>
+    <permission name="Modify view template"
+                acquire="False">
+      <role name="Manager"/>
+    </permission>
+    <permission name="eea.facetednavigation: Configure faceted"
+                acquire="False">
+      <role name="Manager"/>
+    </permission>
+    <permission name="WebDAV access"
+                acquire="False">
+      <role name="MeetingArchiveObserver"/>
+      <role name="MeetingObserverGlobal"/>
+      <role name="Manager"/>
+    </permission>
+    <permission name="Add portal member"
+                acquire="False">
+      <role name="Manager"/>
+    </permission>
+
+
+
 <!-- ##/code-section permissions -->
   </permissions>
 </rolemap>

@@ -202,22 +202,13 @@ function toggleMenu(menuId){
 }
 
 var wrongTextInput = '#ff934a none';
-function gotoItem(inputWidget, totalNbOfItems, meetingUid) {
-  // Go to meetingitem_view for the item whose number is in p_inputWidget
-  try {
-    var itemNumber = parseInt(inputWidget.value);
-    if (!isNaN(itemNumber)) {
-      if ((itemNumber>=1) && (itemNumber<=totalNbOfItems)) {
-        var theForm = document.forms["formGotoItem"];
-        theForm.objectId.value = itemNumber;
-        theForm.meetingUid.value = meetingUid;
-        theForm.submit();
-      }
-      else inputWidget.style.background = wrongTextInput;
+function gotoItem(tag, totalNbOfItems) {
+  tag = tag[0];
+  itemNumber = tag.value;
+  if(Math.floor(itemNumber) == itemNumber && $.isNumeric(itemNumber) && (parseInt(itemNumber)>=1) && (parseInt(itemNumber)<=totalNbOfItems))  {
+      document.location.href = document.baseURI + '@@object_goto?itemNumber:int=' + itemNumber;
     }
-    else inputWidget.style.background = wrongTextInput;
-  }
-  catch (err) { inputWidget.style.background = wrongTextInput; }
+  else tag.style.background = wrongTextInput;
 }
 
 function computeStartNumberFrom(itemNumber, totalNbOfItems, batchSize) {
@@ -237,8 +228,12 @@ function computeStartNumberFrom(itemNumber, totalNbOfItems, batchSize) {
 
 // Function that toggles the descriptions visibility
 function toggleMeetingDescriptions() {
-  if (readCookie('pmShowDescriptions')=='true') setDescriptionsVisiblity(false);
-  else setDescriptionsVisiblity(true);
+  if (readCookie('pmShowDescriptions')=='true') {
+      setDescriptionsVisiblity(false);
+  }
+  else {
+      setDescriptionsVisiblity(true);
+  }
 };
 
 // Function that, depending on p_mustShow, shows or hides the descriptions.
@@ -247,6 +242,10 @@ function setDescriptionsVisiblity(mustShow) {
   // hide or show every pmMoreInfo element
   var $pmMoreInfos = $('.pmMoreInfo');
 
+  if (!$pmMoreInfos.length) {
+      // reload the faceted
+      Faceted.URLHandler.hash_changed();
+  }
 
   // show/hide the infos and update the cookie
   if (mustShow) {
@@ -631,25 +630,199 @@ function getRichTextContent(rq, params) {
   return params
 }
 
-function decideSelectedItems(transition){
-    // Called when the user wants to decided several items at once in a meeting.
-    var itemsCheckboxes = document.getElementsByName('itemCbToDump');
-    var itemsUids = '';
-    var atLeastOneSelected = false;
-    for (var i=0; i < itemsCheckboxes.length; i++) {
-        if (itemsCheckboxes[i].checked) {
-            atLeastOneSelected = true;
-            itemsUids += itemsCheckboxes[i].value + ',';
+// Function that allows to present several items in a meeting
+function presentSelectedItems(baseUrl) {
+    var uids = selectedCheckBoxes('select_item');
+    if (!uids.length) {
+      alert(no_selected_items);
+    }
+    else {
+        // Ask confirmation
+        var msg = window.eval('sure_to_present_selected_items');
+        if (confirm(msg)) {
+          // avoid Arrays to be passed as uids[]
+          params = $.param({uids: uids}, traditional=true)
+          $.ajax({
+            url: baseUrl + "/@@present-several-items",
+            dataType: 'html',
+            data: params,
+            cache: false,
+            async: false,
+            success: function(data) {
+                // update number of items
+                updateNumberOfItems();
+                // reload the faceted page
+                Faceted.URLHandler.hash_changed();
+                // and the presented items (parent)
+                if (window != parent) {
+                    parent.Faceted.URLHandler.hash_changed();
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              /*console.log(textStatus);*/
+              window.location.href = window.location.href;
+              }
+            });
         }
     }
-    if (! atLeastOneSelected) alert(no_selected_items);
-    else {
-        // Update the form and submit it.
-        var selectForm = document.forms['decideItemsForm'];
-        selectForm.uids.value = itemsUids;
-        selectForm.iStartNumber.value = iStartNumber;
-        selectForm.lStartNumber.value = lStartNumber;
-        selectForm.transition.value = transition;
-        selectForm.submit();
+}
+
+// Function that allows to remove several items from a meeting
+function removeSelectedItems(baseUrl) {
+    var uids = selectedCheckBoxes('select_item');
+    if (!uids.length) {
+      alert(no_selected_items);
     }
+    else {
+        // Ask confirmation
+        var msg = window.eval('sure_to_remove_selected_items');
+        if (confirm(msg)) {
+          // avoid Arrays to be passed as uids[]
+          params = $.param({uids: uids}, traditional=true)
+          $.ajax({
+            url: baseUrl + "/@@remove-several-items",
+            dataType: 'html',
+            data: params,
+            cache: false,
+            async: false,
+            success: function(data) {
+                // update number of items
+                updateNumberOfItems();
+                // reload the faceted page
+                Faceted.URLHandler.hash_changed();
+                // and the available items iframe
+                if ((window.frames[0]) && (window.frames[0] != window)) {
+                    window.frames[0].Faceted.URLHandler.hash_changed();
+                    }
+                },
+            error: function(jqXHR, textStatus, errorThrown) {
+              /*console.log(textStatus);*/
+              window.location.href = window.location.href;
+              }
+            });
+        }
+    }
+}
+
+// Function that allows to decide several items at once in a meeting
+function decideSelectedItems(baseUrl,tag){
+    var uids = selectedCheckBoxes('select_item');
+    if (!uids.length) {
+      alert(no_selected_items);
+    }
+    else {
+          // avoid Arrays to be passed as uids[]
+          params = $.param({uids: uids, transition: tag.name}, traditional=true)
+          $.ajax({
+            url: baseUrl + "/@@decide-several-items",
+            dataType: 'html',
+            data: params,
+            cache: false,
+            async: false,
+            success: function(data) {
+                // reload the faceted page
+                Faceted.URLHandler.hash_changed();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              /*console.log(textStatus);*/
+              window.location.href = window.location.href;
+              }
+            });
+        }
+}
+
+// show/hide "move item to position" action icon button
+function onImageButtonFocus(itemNumber) {
+  var imageButtons = document.getElementsByName('moveImageButton');
+  for (var i=0; i<imageButtons.length; i++) {
+      if (imageButtons[i].id != 'moveAction_' + itemNumber) {
+          imageButtons[i].style.visibility = 'hidden';
+      }
+      else {
+          imageButtons[i].style.visibility = 'visible';
+          imageButtons[i].style.cursor = 'pointer';
+          document.getElementById('value_moveAction_' + itemNumber).select();
+      }
+  }
+}
+
+// ajax call managing the @@change-item-order view
+function moveItem(baseUrl, moveType, tag) {
+  // if moveType is 'number', get the number from the input tag
+  moveNumber = '';
+  if (moveType === 'number') {
+    moveNumber = tag.attr('value');
+  }
+  $.ajax({
+    url: baseUrl + "/@@change-item-order",
+    dataType: 'html',
+    data: {'moveType': moveType,
+           'moveNumber': moveNumber},
+    cache: false,
+    async: false,
+    success: function(data) {
+        // reload the faceted page
+        Faceted.URLHandler.hash_changed();
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      /*console.log(textStatus);*/
+      window.location.href = window.location.href;
+      }
+    });
+}
+
+// ajax call managing a call to a given p_view_name and reload taking faceted into account
+function callViewAndReload(baseUrl, view_name, tag) {
+  redirect = '0';
+  if (!$('#faceted-form').has(tag).length) {
+    redirect = '1';
+  }
+  $.ajax({
+    url: baseUrl + "/" + view_name,
+    dataType: 'html',
+    cache: false,
+    async: false,
+    success: function(data) {
+        // reload the faceted page if we are on it, refresh current if not
+        if ((redirect === '0') && !(data)) {
+            Faceted.URLHandler.hash_changed();
+        }
+        else {
+            window.location.href = data;
+        }
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      /*console.log(textStatus);*/
+      window.location.href = window.location.href;
+      }
+    });
+}
+
+// event subscriber when a transition is triggered
+$(document).on('ap_transition_triggered', synchronizeMeetingFaceteds);
+// synchronize faceted displayed on the meeting_view, available items and presented items
+function synchronizeMeetingFaceteds(infos) {
+    // refresh iframe 'available items' while removing an item
+    if ((infos.transition === 'backToValidated') && ((window.frames[0]) && (window.frames[0] != window))) {
+      window.frames[0].Faceted.URLHandler.hash_changed();
+      updateNumberOfItems();
+    }
+    // refresh main frame while presenting an item
+    if ((infos.transition === 'present') && (window != parent)) {
+      parent.Faceted.URLHandler.hash_changed();
+      updateNumberOfItems();
+    }
+}
+
+// update the number of items displayed on the meeting_view when items have been presented/removed of the meeting
+function updateNumberOfItems(infos) {
+  // get numberOfItems using an ajax call
+  response = $.ajax({
+    url: document.baseURI + '/numberOfItems',
+    dataType: 'html',
+    cache: false,
+    async: false});
+  parent.$('.meeting_number_of_items').each(function() {
+      this.innerHTML = response.responseText;
+    });
 }

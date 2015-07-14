@@ -31,36 +31,40 @@ from Products.CMFCore.utils import UniqueObject
 
 
 ##code-section module-header #fill in your manual code here
+import json
 import os
 import os.path
 import re
 import string
-import time
-import transaction
 import OFS.Moniker
 from appy.gen import No
 from datetime import datetime
 from AccessControl import Unauthorized
 from AccessControl import getSecurityManager
 from Acquisition import aq_base
-from BTrees.OOBTree import OOBTree
 from DateTime import DateTime
 from OFS import CopySupport
 from zExceptions import NotFound
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getMultiAdapter
+from zope.interface import alsoProvides
+from zope.interface import noLongerProvides
 from zope.i18n import translate
+from eea.facetednavigation.interfaces import IFacetedLayout
+from eea.facetednavigation.interfaces import IFacetedNavigable
+from eea.facetednavigation.interfaces import IHidePloneLeftColumn
 from plone.memoize import ram
+from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import View
-from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.PloneBatch import Batch
 from Products.DCWorkflow.Transitions import TRIGGER_USER_ACTION
 from Products.DCWorkflow.Expression import StateChangeInfo, createExprContext
 from Products.ATContentTypes import permission as ATCTPermissions
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
-from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.interfaces import IAnnexable, IMeetingFile
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
@@ -71,6 +75,7 @@ logger = logging.getLogger('PloneMeeting')
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.security import is_develop_environment
 from imio.helpers.security import generate_password
+from imio.prettylink.interfaces import IPrettyLink
 
 # Some constants ---------------------------------------------------------------
 MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
@@ -144,33 +149,6 @@ schema = Schema((
             label_msgid='PloneMeeting_label_functionalAdminName',
             i18n_domain='PloneMeeting',
         ),
-    ),
-    StringField(
-        name='usedColorSystem',
-        default=defValues.usedColorSystem,
-        widget=SelectionWidget(
-            description="UsedColorSystem",
-            description_msgid="used_color_system_descr",
-            format="select",
-            label='Usedcolorsystem',
-            label_msgid='PloneMeeting_label_usedColorSystem',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=True,
-        vocabulary='listAvailableColorSystems',
-    ),
-    TextField(
-        name='colorSystemDisabledFor',
-        default=defValues.colorSystemDisabledFor,
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
-            description="ColorSystemDisabledFor",
-            description_msgid="color_system_disabled_for_descr",
-            label='Colorsystemdisabledfor',
-            label_msgid='PloneMeeting_label_colorSystemDisabledFor',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type='text/plain',
     ),
     BooleanField(
         name='restrictUsers',
@@ -259,29 +237,6 @@ schema = Schema((
         multiValued=1,
         vocabulary='listModelAdaptations',
     ),
-    StringField(
-        name='publicUrl',
-        default=defValues.publicUrl,
-        widget=StringField._properties['widget'](
-            size=60,
-            description="ToolPublicUrl",
-            description_msgid="tool_public_url_descr",
-            label='Publicurl',
-            label_msgid='PloneMeeting_label_publicUrl',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
-    BooleanField(
-        name='deferredNotificationsHandling',
-        default=defValues.deferredNotificationsHandling,
-        widget=BooleanField._properties['widget'](
-            description="DeferredNotificationsHandling",
-            description_msgid="deferred_notifs_handling_descr",
-            label='Deferrednotificationshandling',
-            label_msgid='PloneMeeting_label_deferredNotificationsHandling',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
     BooleanField(
         name='enableUserPreferences',
         default=defValues.enableUserPreferences,
@@ -303,30 +258,6 @@ schema = Schema((
             label_msgid='PloneMeeting_label_enableAnnexPreview',
             i18n_domain='PloneMeeting',
         ),
-    ),
-    IntegerField(
-        name='maxShownFound',
-        default=defValues.maxShownFound,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownFound",
-            description_msgid="max_shown_found_descr",
-            label='Maxshownfound',
-            label_msgid='PloneMeeting_label_maxShownFound',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="pm_search",
-    ),
-    BooleanField(
-        name='showItemKeywordsTargets',
-        default=defValues.showItemKeywordsTargets,
-        widget=BooleanField._properties['widget'](
-            description="ShowItemKeywordsTargets",
-            description_msgid="show_item_keywords_targets_descr",
-            label='Showitemkeywordstargets',
-            label_msgid='PloneMeeting_label_showItemKeywordsTargets',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="pm_search",
     ),
     LinesField(
         name='workingDays',
@@ -591,7 +522,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffix=None, zope=False, omittedSuffixes=[]):
         '''cachekey method for self.getGroupsForUser.'''
         # we only recompute if param or REQUEST changed
-        return (str(self.REQUEST.debug), userId, active, suffix, zope, omittedSuffixes)
+        return (str(self.REQUEST._debug), userId, active, suffix, zope, omittedSuffixes)
 
     security.declarePublic('getGroupsForUser')
     @ram.cache(getGroupsForUser_cachekey)
@@ -629,23 +560,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getSelectableGroups')
-    def getSelectableGroups(self, isDefinedInTool=False, existingGroupId=None, userId=None):
+    def getSelectableGroups(self, onlySelectable=True, userId=None):
         """
           Returns the selectable groups for given p_userId or currently connected user.
+          If p_onlySelectable is True, we will only return groups for which current user is creator.
+          If p_userId is given, it will get groups for which p_userId is creator.
         """
         res = []
-        if not isDefinedInTool:
+        if onlySelectable:
             userMeetingGroups = self.getGroupsForUser(userId=userId, suffix="creators")
             for group in userMeetingGroups:
                 res.append((group.id, group.getName()))
-            if existingGroupId:
-                # Try to get the corresponding meeting group
-                group = getattr(self, existingGroupId, None)
-                if group:
-                    if group not in userMeetingGroups:
-                        res.append((existingGroupId, group.getName()))
-                else:
-                    res.append((existingGroupId, existingGroupId))
         else:
             for group in self.getMeetingGroups():
                 res.append((group.id, group.getName()))
@@ -767,7 +692,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder = getattr(root_folder, meetingConfigId)
         # We add the MEETING_CONFIG property to the folder
         mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
-        mc_folder.setLayout('meetingfolder_redirect_view')
+
+        # manage faceted nav
+        self._enableFacetedFor(mc_folder)
+        cfg._synchSearches(mc_folder)
+
+        # constrain types
         mc_folder.setConstrainTypesMode(1)
         allowedTypes = [cfg.getItemTypeName(),
                         cfg.getMeetingTypeName()] + ['File', 'Folder', 'MeetingFile']
@@ -795,6 +725,29 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
         # Give MeetingManager localrole to relevant _meetingmanagers group
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
+
+    def _enableFacetedFor(self, obj, marker_interface=None):
+        '''Configure the faceted view for given p_obj.
+           We mark the obj with given p_marker_interface if given
+           so the right widget config xml is used.'''
+        if marker_interface:
+            alsoProvides(obj, marker_interface)
+        subtyper = getMultiAdapter((obj, self.REQUEST),
+                                   name=u'faceted_subtyper')
+        response_location = self.REQUEST.RESPONSE.getHeader('location')
+        subtyper.enable()
+        # cancel redirect
+        self.REQUEST.RESPONSE.status = 200
+        self.REQUEST.RESPONSE.setHeader('location', response_location)
+
+        # use correct layout in the faceted
+        IFacetedLayout(obj).update_layout('faceted-table-items')
+        # show the left portlets
+        if IHidePloneLeftColumn.providedBy(obj):
+            noLongerProvides(obj, IHidePloneLeftColumn)
+        if marker_interface:
+            noLongerProvides(obj, marker_interface)
+        obj.reindexObject()
 
     security.declarePublic('getMeetingConfig')
     def getMeetingConfig(self, context, caching=True):
@@ -898,7 +851,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
         # we only recompute if REQUEST changed
-        return (str(self.REQUEST.debug), context, realManagers)
+        return (str(self.REQUEST._debug), context, realManagers)
 
     security.declarePublic('isManager')
     @ram.cache(isManager_cachekey)
@@ -914,7 +867,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def isPowerObserverForCfg_cachekey(method, self, cfg, isRestricted=False):
         '''cachekey method for self.isPowerObserverForCfg.'''
         # we only recompute if REQUEST changed
-        return (str(self.REQUEST.debug), cfg, isRestricted)
+        return (str(self.REQUEST._debug), cfg, isRestricted)
 
     security.declarePublic('isPowerObserverForCfg')
     @ram.cache(isPowerObserverForCfg_cachekey)
@@ -992,49 +945,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res.encode('utf-8')
         return res
 
-    security.declarePublic('rememberAccess')
-    def rememberAccess(self, uid, commitNeeded=True):
-        '''Remember the fact that the currently logged user just accessed
-           object with p_uid.'''
-        if self.getUsedColorSystem() == "modification_color":
-            member = self.portal_membership.getAuthenticatedMember()
-            memberId = member.getId()
-            if not memberId in self.accessInfo:
-                self.accessInfo[memberId] = OOBTree()
-            self.accessInfo[memberId][uid] = DateTime()  # Now
-            if commitNeeded:
-                transaction.commit()
-
-    security.declarePublic('lastModifsConsultedOn')
-    def lastModifsConsultedOn(self, uid, objModifDate):
-        '''Did the user already consult last modifications made on obj with uid
-           p_uid and that was last modified on p_objModifDate ?'''
-        res = True
-        neverConsulted = False
-        member = self.portal_membership.getAuthenticatedMember()
-        memberId = member.getId()
-        if memberId in self.accessInfo:
-            accessInfo = self.accessInfo[memberId]
-            if uid in accessInfo:
-                res = accessInfo[uid] > objModifDate
-            else:
-                res = False
-                neverConsulted = True
-        else:
-            res = False
-            neverConsulted = True
-        return (res, neverConsulted)
-
-    security.declarePublic('lastModifsConsultedOnAnnexes')
-    def lastModifsConsultedOnAnnexes(self, annexes):
-        '''Did the user already consult last modifications made on all annexes
-           in p_annexes ?'''
-        res = True
-        for annex in annexes:
-            res = res and self.lastModifsConsultedOn(
-                annex['UID'], annex['modification_date'])[0]
-        return res
-
     security.declarePublic('highlight')
     def highlight(self, text):
         '''This method highlights parts of p_text corresponding to keywords if
@@ -1062,9 +972,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return ' '.join(res)
 
     security.declarePublic('getColoredLink')
-    def getColoredLink(self, obj, showColors, showIcon=False, contentValue=None,
-                       target='', maxLength=0, highlight=False, inMeeting=True,
-                       meeting=None, appendToUrl='', additionalCSSClasses='', tag_title=None):
+    def getColoredLink(self, obj, showColors=True, showIcon=False, contentValue='',
+                       target='_self', maxLength=0, inMeeting=True,
+                       meeting=None, appendToUrl='', additionalCSSClasses='',
+                       tag_title=None, annexInfo=False):
         '''Produces the link to an item or annex with the right color (if the
            colors must be shown depending on p_showColors). p_target optionally
            specifies the 'target' attribute of the 'a' tag. p_maxLength
@@ -1086,176 +997,50 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             If p_tag_title is given, it will be translated and used as return link
             title tag.
         '''
-        isPrivacyViewable = True
-        objClassName = obj.__class__.__name__
-        portal_url = self.portal_url.getPortalObject().absolute_url()
-        # if we received a tag_title, try to translate it!
+        # we may receive a brain
+        if isinstance(obj, AbstractCatalogBrain):
+            # we get the object unrestrictedly as we test for isViewable here under
+            obj = obj._unrestrictedGetObject()
+
+        adapted = IPrettyLink(obj)
+        adapted.showColors = showColors
+        adapted.showContentIcon = showIcon
+        adapted.contentValue = contentValue
+        adapted.target = target
+        adapted.maxLength = maxLength
+        adapted.appendToUrl = appendToUrl
+        adapted.additionalClasses = additionalCSSClasses
         if tag_title:
             tag_title = translate(tag_title, domain='PloneMeeting', context=self.REQUEST, ).encode('utf-8')
-        if objClassName in self.ploneMeetingTypes:
-            isFromAnnexIndex = False
-            uid = obj.UID()
-            modifDate = obj.pm_modification_date
-            url = obj.absolute_url() + appendToUrl
-            content = contentValue or obj.getName()
-            title = tag_title or content
-            if maxLength:
-                content = self.truncate(content, maxLength)
-            if highlight:
-                content = self.highlight(content)
-            # Display trailing icons if it is a MeetingItem
-            if objClassName == "MeetingItem":
-                icons = obj.adapted().getIcons(inMeeting, meeting)
-                icons.reverse()
-                if isinstance(content, unicode):
-                    content = content.encode('utf-8')
-                for iconname, msgid in icons:
-                    mapping = {}
-                    # we can receive a msgid as a string or as a list.
-                    # if it is a list, the second element is a mapping
-                    if not isinstance(msgid, basestring):
-                        mappings = msgid[1]
-                        for mapping in mappings:
-                            # avoid problems with translate here under
-                            if not isinstance(mappings[mapping], unicode):
-                                mappings[mapping] = unicode(mappings[mapping], 'utf-8')
-                        msgid, mapping = msgid[0], mappings
-                    content = '<img src="%s/%s" title="%s" />&nbsp;' % \
-                        (portal_url, iconname,
-                         translate(msgid, domain="PloneMeeting", mapping=mapping,
-                                   context=self.REQUEST).encode('utf-8')) + content
-            # Is this a not-privacy-viewable item?
-            if (objClassName == 'MeetingItem') and not obj.adapted().isPrivacyViewable():
-                isPrivacyViewable = False
-        else:
-            # It is an annex entry in an annexIndex
-            isFromAnnexIndex = True
-            uid = obj['UID']
-            modifDate = obj['modification_date']
-            portal_url = self.portal_url.getPortalObject().absolute_url()
-            url = portal_url + '/' + obj['absolute_url'] + appendToUrl
-            content = contentValue or obj['Title']
-            title = tag_title or content
-            if showIcon:
-                content = '<img src="%s"/><b>1</b>' % (portal_url + '/' + obj['iconUrl'])
-            else:
-                if maxLength:
-                    content = self.truncate(content, maxLength)
-                if highlight:
-                    content = self.highlight(content)
-                # add a warning regarding file size if necessary
-                if obj['warnSize']:
-                    content = content + "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
-                        translate("annex_size_warning",
-                                  domain="PloneMeeting",
-                                  context=self.REQUEST,
-                                  default="Annex size is huge, it could be difficult to be downloaded!").encode('utf-8'),
-                        obj['friendlySize'])
-        tg = target
-        if target:
-            tg = ' target="%s"' % target
-        if not showColors:
-            # We do not want to colorize the link, we just return a classical
-            # link. We apply the 'pmNoNewContent" id so the link is not colored.
-            if isPrivacyViewable:
-                css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
-                return '<a href="%s" title="%s" id="pmNoNewContent"%s%s>%s</a>' %\
-                       (url, title, tg, css_classes, content)
-            else:
-                msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
-                return '<div title="%s"><i>%s</i></div>' % \
-                       (msg.encode('utf-8'), content)
+            adapted.tag_title = tag_title
+        # Is this a not-privacy-viewable item?
+        if obj.meta_type == 'MeetingItem' and \
+           (not _checkPermission(View, obj) or
+           not obj.adapted().isPrivacyViewable()):
+            adapted.isViewable = False
+        elif obj.meta_type == 'Meeting' and not _checkPermission(View, obj):
+            adapted.isViewable = False
 
-        # If we are here, we need to colorize the link, but how?
-        if self.getUsedColorSystem() == "state_color":
-            # We just colorize the link depending on the workflow state of
-            # the item
-            try:
-                if isFromAnnexIndex:
-                    obj_state = obj['review_state']
-                else:
-                    obj_state = obj.queryState()
-                wf_class = "state-%s" % obj_state
-                if isPrivacyViewable:
-                    css_classes = wf_class + (additionalCSSClasses and (' ' + additionalCSSClasses) or '')
-                    res = '<a href="%s" title="%s" class="%s"%s>%s</a>' % \
-                          (url, title, css_classes, tg, content)
-                else:
-                    msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
-                    res = '<div title="%s"><i>%s</i></div>' % \
-                          (msg.encode('utf-8'), content)
-            except (KeyError, WorkflowException):
-                # If there is no workflow associated with the type
-                # catch the exception or error and return a not colored link
-                # this is the case for annexes that does not have an
-                # associated workflow.
-                if isPrivacyViewable:
-                    css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
-                    res = '<a href="%s" title="%s" id="pmNoNewContent"%s%s>%s' \
-                          '</a>' % (url, title, tg, css_classes, content)
-                else:
-                    msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
-                    res = '<div title="%s"><i>%s</i></div>' % \
-                          (msg.encode('utf-8'), content)
-        else:
-            # We colorize the link depending on the last modification of the
-            # item.
-            # Did the user already consult last modifs on the object?
-            modifsConsulted, neverConsulted = self.lastModifsConsultedOn(
-                uid, modifDate)
-            # Compute href
-            href = url
-            # If the user did not consult last modification on this object,
-            # we need to append a given suffix to the href. This way, the
-            # link will not appear as visited and the user will know that he
-            # needs to consult the item again because a change occurred on
-            # it.
-            if (not neverConsulted) and (not modifsConsulted):
-                href += '?time=%f' % time.time()
-            # Compute id
-            linkId = None
-            if modifsConsulted:
-                linkId = 'pmNoNewContent'
-            idPart = ''
-            if linkId:
-                idPart = ' id="%s"' % linkId
-            if isPrivacyViewable:
-                css_classes = additionalCSSClasses and ' class="%s"' % additionalCSSClasses or ''
-                res = '<a href="%s" title="%s"%s%s%s>%s</a>' % \
-                      (href, title, idPart, tg, css_classes, content)
-            else:
-                msg = translate('ip_secret', domain='PloneMeeting', context=self.REQUEST)
-                res = '<div title="%s"><i>%s</i></div>' % \
-                      (msg.encode('utf-8'), content)
-        return res
+        # if we received annexInfo, the adapted element is the meetingItem but we want actually
+        # to display a link to an annex and for performance reason, we received the annexIndex
+        if annexInfo:
+            # do not display colors
+            adapted.showColors = False
+            # do not showIcons or icons of the item are shown...
+            adapted.showIcons = False
+            # annexInfo is either an annexInfo or a MeetingFile instance...
+            if IMeetingFile.providedBy(annexInfo):
+                annexInfo = annexInfo.getAnnexInfo()
+            adapted.contentValue = annexInfo['Title']
+            if annexInfo['warnSize']:
+                adapted.contentValue += "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
+                    translate("annex_size_warning",
+                              domain="PloneMeeting",
+                              context=self.REQUEST,
+                              default="Annex size is huge, it could be difficult to be downloaded!").encode('utf-8'),
+                    annexInfo['friendlySize'])
 
-    security.declarePublic('showColorsForUser')
-    def showColorsForUser(self):
-        '''Must I show the colors from the color system for the current user?'''
-        res = False
-        # If we choosed to use a coloration model, we check if we have to show
-        # colors to the current user.
-        if self.getUsedColorSystem() != 'no_color':
-            res = True
-            member = self.portal_membership.getAuthenticatedMember()
-            memberId = member.getId()
-            usersToExclude = [u.strip() for u in self.getColorSystemDisabledFor().split('\n')]
-            if usersToExclude and (memberId in usersToExclude):
-                res = False
-        return res
-
-    security.declareProtected('Manage portal', 'purgeAccessInfo')
-    def purgeAccessInfo(self):
-        '''Removes all entries in self.accessInfo that are related to users that
-           do not exist anymore.'''
-        toDelete = []
-        for memberId in self.accessInfo.iterkeys():
-            member = self.portal_membership.getMemberById(memberId)
-            if not member:
-                toDelete.append(memberId)
-        for userId in toDelete:
-            del self.accessInfo[userId]
-        return toDelete
+        return adapted.getLink()
 
     security.declarePublic('generateDocument')
     def generateDocument(self):
@@ -1267,12 +1052,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         itemUids = self.REQUEST.get('itemUids', None)
         objectUid = self.REQUEST.get('objectUid')
         mailingList = self.REQUEST.get('mailingList', None)
+        facetedQuery = self.REQUEST.get('facetedQuery', None)
         brains = self.uid_catalog(UID=objectUid)
         if not brains:
             # The object for which the document must be generated has been
             # deleted. Return a 404.
             raise NotFound()
         obj = brains[0].getObject()
+        # if we did not receive itemUids, maybe we have a facetedQuery?
+        if facetedQuery and not itemUids and IFacetedNavigable.providedBy(obj):
+            faceted_query = obj.restrictedTraverse('@@faceted_query')
+            # put the facetedQuery criteria into the REQUEST.form
+            for k, v in json.JSONDecoder().decode(facetedQuery).items():
+                # we receive list of elements, if we have only one elements, remove it from the list
+                if len(v) == 1:
+                    v = v[0]
+                self.REQUEST.form[k] = v
+            query = faceted_query.query(batch=False)
+            itemUids = [queryBrain.UID for queryBrain in query]
+        else:
+            itemUids = itemUids.split(',')
+
         meetingConfig = self.getMeetingConfig(obj)
         templatesFolder = getattr(meetingConfig, TOOL_FOLDER_POD_TEMPLATES)
         podTemplate = getattr(templatesFolder, templateId)
@@ -1442,43 +1242,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for meetingGroup in self.getMeetingGroups(onlyActive=False):
             res.append([meetingGroup.getId(), meetingGroup.Title()])
         return DisplayList(res).sortedByValue()
-
-    security.declarePublic('getItemsList')
-    def getItemsList(self, meeting, whichItems, startNumber=1):
-        '''On meeting_view, we need to display various lists of items: items,
-           late items or available items. This method returns a 5-tuple with:
-           (1) the needed list, (2) the total number of items, (3) the batch
-           size, (4) the first number of the whole list (which is not 1
-           for the list of late items) and (5) the number of the first item
-           in the result.'''
-        meetingConfig = self.getMeetingConfig(meeting)
-        firstNumber = 1
-        firstBatchNumber = 1
-        if whichItems == 'availableItems':
-            batchSize = meetingConfig.getMaxShownAvailableItems()
-            res = [b.getObject() for b in meeting.adapted().getAvailableItems()]
-            totalNbOfItems = len(res)
-            if batchSize and (totalNbOfItems > batchSize):
-                if startNumber > totalNbOfItems:
-                    startNumber = 1
-            endNumber = min(startNumber + batchSize - 1, totalNbOfItems)
-            res = res[startNumber - 1:endNumber]
-        elif whichItems == 'meetingItems':
-            batchSize = meetingConfig.getMaxShownMeetingItems()
-            res = meeting.getItemsInOrder(batchSize=batchSize,
-                                          startNumber=startNumber)
-            totalNbOfItems = len(meeting.getRawItems())
-            if res:
-                firstBatchNumber = res[0].getItemNumber()
-        elif whichItems == 'lateItems':
-            batchSize = meetingConfig.getMaxShownLateItems()
-            res = meeting.getItemsInOrder(batchSize=batchSize,
-                                          startNumber=startNumber, late=True)
-            totalNbOfItems = len(meeting.getRawLateItems())
-            firstNumber = len(meeting.getRawItems()) + 1
-            if res:
-                firstBatchNumber = res[0].getItemNumber(relativeTo='meeting')
-        return res, totalNbOfItems, batchSize, firstNumber, firstBatchNumber
 
     security.declarePublic('gotoReferer')
     def gotoReferer(self):
@@ -1927,7 +1690,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            - If p_prefix is True, the translated prefix "Meeting of" is
              prepended to the result.'''
         # Received meeting could be a brain or an object
-        if meeting.__class__.__name__ == 'mybrains':
+        if meeting.__class__.__name__ in ['mybrains', 'CatalogContentListingObject']:
             # It is a meeting brain, take the 'getDate' metadata
             date = meeting.getDate
         else:
@@ -2087,20 +1850,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return not rq['ACTUAL_URL'].endswith('edit')
         # If we are displaying search results (excepted for lists of meetings),
         # return True
-        topicId = rq.get('search', None)
-        if topicId:
-            topic = getattr(self.getMeetingConfig(context).topics,
-                            topicId, None)
-            if topic and (topic.getProperty('meeting_topic_type') == 'MeetingItem'):
-                return True
-        elif rq['ACTUAL_URL'].endswith('/search_results'):
-            if 'search_types' in rq.form:
-                sTypes = rq.form['search_types']
-            else:
-                sTypes = ()
-            if (isinstance(sTypes, basestring) and (sTypes == 'search_type_items')) or \
-               ('search_type_items' in sTypes):
-                return True
+        if str(rq).endswith('@@faceted_query'):
+            pass
 
     security.declarePublic('showTogglePersons')
     def showTogglePersons(self, context):
@@ -2117,20 +1868,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if context.meta_type == 'MeetingItem':
                 return res and context.hasMeeting()
             return res
-
-    security.declarePublic('getJavascriptMessages')
-    def getJavascriptMessages(self):
-        '''Produces the Javascript code that will initialize some translated
-           messages for all pages.'''
-        args = {'domain': 'PloneMeeting', 'context': self.REQUEST}
-        res = ''
-        for msg in ('plonemeeting_delete_meeting_confirm_message',
-                    'no_selected_items',
-                    'sure_to_remove_selected_items',
-                    'are_you_sure'):
-            res += 'var %s = "%s";\n' % (msg, translate(msg, **args))
-        # escape_for_js from portal_skins/plone_scripts/translate.py does the .replace() here above
-        return res.replace("'", "\\'")
 
     security.declarePublic('getUserLanguage')
     def getUserLanguage(self):
@@ -2348,26 +2085,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 elif role_to_remove in localRoles:
                     toRemove.append(principalId)
         obj.manage_delLocalRoles(toRemove)
-
-    security.declarePublic('toHTMLStrikedContent')
-    def toHTMLStrikedContent(self, content):
-        """
-          p_content is HTML having elements to strike between [[]].
-          We will replace these [[]] by <strike> tags.  Moreover, we will append the 'mltAssembly'
-          class to the <p> that surrounds the given p_content HTML.
-        """
-        return content.replace('[[', '<strike>').replace(']]', '</strike>'). \
-            replace('<p>', '<p class="mltAssembly">')
-
-    security.declarePublic('storeSearchParams')
-    def storeSearchParams(self, form):
-        '''Stores, in the session, advanced-search-related parameters from the given p_form.'''
-        # In some specific cases (ie, when switching language), p_form is empty
-        # (or does only contain a single key) and must not be saved: we suppose
-        # a form was previously saved in the session.
-        if len(form) <= 1:
-            return
-        self.REQUEST.SESSION['searchParams'] = form.copy()
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

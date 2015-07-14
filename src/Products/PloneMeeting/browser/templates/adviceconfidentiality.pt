@@ -1,0 +1,26 @@
+<tal:isConfidential i18n:domain="PloneMeeting"
+                    tal:define="mayEdit python: context.adapted().mayEditAdviceConfidentiality();
+                                advice python: view.advice;
+                                portal_url view/portal_url;
+                                isConfidential advice/isConfidential;">
+  <acronym tal:condition="mayEdit"
+        tal:define="UID context/UID;
+                    baseUrl context/absolute_url;"
+        id="marker_toggle_advice_isconfidential_UID__adviceId#"
+        class="adviceIsConfidentialEditable"
+        tal:attributes="id string:marker_toggle_advice_isconfidential_${UID}__${advice/id};">
+    <img tal:condition="isConfidential" name="isConfidentialNo"
+         title="advice_is_confidential_yes_edit" i18n:attributes="title"
+         tal:attributes="src string:$portal_url/isConfidentialYes.png;
+                         onClick python: 'asyncToggleIcon(\''+UID + '__' + advice['id'] +'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_advice_is_confidential\', baseSelector=\'#marker_toggle_advice_isconfidential_\')'"/>
+    <img tal:condition="not: isConfidential" name="isConfidentialYes"
+         title="advice_is_confidential_no_edit" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/isConfidentialNo.png;
+                         onClick python: 'asyncToggleIcon(\''+UID + '__' + advice['id'] +'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_advice_is_confidential\', baseSelector=\'#marker_toggle_advice_isconfidential_\')'"/></acronym>
+  <tal:notMayEdit condition="not: mayEdit">
+    <img tal:condition="isConfidential" title="advice_is_confidential_yes" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/isConfidentialYes.png"/>
+    <img tal:condition="not: isConfidential" title="advice_is_confidential_no" i18n:attributes="title"
+         tal:attributes="src string: $portal_url/isConfidentialNo.png"/>
+  </tal:notMayEdit>
+</tal:isConfidential>

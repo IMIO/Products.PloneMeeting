@@ -3,10 +3,15 @@
 '''This module allows to perform some standard sets of adaptations in the
    PloneMeeting data structures and workflows.'''
 
-from Products.Archetypes.atapi import *
+from Products.Archetypes.atapi import StringField
+from Products.Archetypes.atapi import TextField
+from Products.Archetypes.atapi import StringWidget
+from Products.Archetypes.atapi import RichWidget
+from Products.Archetypes.atapi import TextAreaWidget
+
 from Products.CMFCore.permissions import DeleteObjects
 from Products.PloneMeeting.config import ReadDecision, WriteDecision
-
+from Products.PloneMeeting.utils import updateCollectionCriterion
 
 # Stuff for performing workflow adaptations ------------------------------------
 noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',
@@ -556,14 +561,13 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 toConfirm = list(toConfirm)
                 toConfirm.append('Meeting.backToDecisionsPublished')
                 meetingConfig.setTransitionsToConfirm(toConfirm)
-            # State "decisions_published" must be selected in DecisionTopicStates (queries)
-            queryStates = meetingConfig.getDecisionTopicStates()
-            if 'decisions_published' not in queryStates:
-                queryStates = list(queryStates)
-                queryStates.append('decisions_published')
-                meetingConfig.setDecisionTopicStates(queryStates)
-                # Update the topics definitions for taking this into account.
-                meetingConfig.updateTopics()
+            # State "decisions_published" must be selected in decisions DashboardCollections
+            for collection in meetingConfig.searches.searches_decisions.objectValues('DashboardCollection'):
+                for criterion in collection.query:
+                    if criterion['i'] == 'review_state' and \
+                       not 'decisions_published' in criterion['v']:
+                        updateCollectionCriterion(collection, criterion['i'],
+                                                  tuple(criterion['v']) + ('decisions_published', ))
         logger.info(WF_APPLIED % ("hide_decisions_when_under_writing", meetingConfig.getId()))
 
 
@@ -613,8 +617,8 @@ def companionField(name, type='simple', label=None, searchable=False,
 cf = companionField
 
 additions = {
-  # Additional fields for MeetingItem
-  "MeetingItem":
+    # Additional fields for MeetingItem
+    "MeetingItem":
     (cf('title', searchable=True),
      cf('description', type='rich', searchable=True),
      cf('detailedDescription', type='rich'),
@@ -627,22 +631,22 @@ additions = {
         readPermission="PloneMeeting: Read item observations",
         writePermission="PloneMeeting: Write item observations")),
 
-  # Additional fields for Meeting
-  "Meeting": (cf('observations', type='rich',
-                 condition="python: here.showObs('observations')",
-                 label='PloneMeeting_meetingObservations'),
-              cf('preObservations', type='rich',
-                 condition="python: here.showObs('preObservations')",)),
+    # Additional fields for Meeting
+    "Meeting": (cf('observations', type='rich',
+                condition="python: here.showObs('observations')",
+                label='PloneMeeting_meetingObservations'),
+                cf('preObservations', type='rich',
+                condition="python: here.showObs('preObservations')",)),
 
-  # Additional fields for other types
-  "MeetingCategory":     (cf('title'), cf('description', type='text')),
-  "MeetingFileType":     (cf('title'), cf('predefinedTitle')),
-  "PodTemplate":         (cf('title'), cf('description', type='text')),
-  "MeetingGroup":        (cf('title'), cf('description', type='text')),
-  "MeetingConfig":       (cf('title'),),
-  "MeetingUser":
+    # Additional fields for other types
+    "MeetingCategory":     (cf('title'), cf('description', type='text')),
+    "MeetingFileType":     (cf('title'), cf('predefinedTitle')),
+    "PodTemplate":         (cf('title'), cf('description', type='text')),
+    "MeetingGroup":        (cf('title'), cf('description', type='text')),
+    "MeetingConfig":       (cf('title'),),
+    "MeetingUser":
     (cf('duty', condition="python: here.isManager(here)"),
-     cf('replacementDuty', condition="python: here.isManager(here)")),
+    cf('replacementDuty', condition="python: here.isManager(here)")),
 }
 
 
@@ -650,6 +654,8 @@ def patchSchema(typeName):
     '''This function updates, if required, the schema of content tyne named
        p_typeName with additional fields from a model adaptation.'''
     global additions
+    # pyflakes
+    cType = ''
     exec 'from Products.PloneMeeting.%s import %s as cType' % (typeName, typeName)
     toAdd = additions[typeName]
     # Update the schema only if it hasn't been already done.

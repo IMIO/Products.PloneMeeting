@@ -1,17 +1,49 @@
 # -*- coding: utf-8 -*-
-#
-# File: interfaces.py
-#
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
 
 from zope.interface import Interface
 
 ##code-section HEAD
 from zope.component.interfaces import IObjectEvent
 from zope.publisher.interfaces.browser import IBrowserRequest
+from eea.facetednavigation.subtypes.interfaces import IFacetedNavigable
+
+class IFacetedSearchesMeetingItemsMarker(Interface):
+    """ """
+class IFacetedSearchesDecisionsMarker(Interface):
+    """ """
+
+
+class IFacetedSearchesMarker(Interface):
+    """
+      Marker interface applied to the 'searches'
+      folder added to each MeetingConfig.
+    """
+
+
+class IFacetedSearchesItemsMarker(Interface):
+    """
+      Marker interface applied to the 'searches/searches_items'
+      folder added to each MeetingConfig.
+    """
+
+
+class IFacetedSearchesMeetingsMarker(Interface):
+    """
+      Marker interface applied to the 'searches/searches_meetings'
+      and 'searches/searches_meetings' folders added to each MeetingConfig.
+    """
+
+
+class IMeetingFacetedNavigable(IFacetedNavigable):
+    """
+      Interface to register IFacetedNavigable elements for IMeeting.
+    """
+
+
+class IFolderFacetedNavigable(IFacetedNavigable):
+    """
+      Interface to register IFacetedNavigable elements for IATFolder.
+    """
 
 
 class IAdvicesUpdatedEvent(IObjectEvent):
@@ -30,6 +62,16 @@ class IItemDuplicatedFromConfigEvent(IObjectEvent):
 
 
 class IItemAfterTransitionEvent(IObjectEvent):
+    """
+    """
+
+
+class IAdviceAfterAddEvent(IObjectEvent):
+    """
+    """
+
+
+class IAdviceAfterModifyEvent(IObjectEvent):
     """
     """
 
@@ -129,51 +171,41 @@ class IAnnexable(Interface):
         """
 ##/code-section HEAD
 
-
 class IMeetingItem(Interface):
     """Marker interface for .MeetingItem.MeetingItem
     """
-
 
 class IMeeting(Interface):
     """Marker interface for .Meeting.Meeting
     """
 
-
 class IToolPloneMeeting(Interface):
     """Marker interface for .ToolPloneMeeting.ToolPloneMeeting
     """
-
 
 class IMeetingCategory(Interface):
     """Marker interface for .MeetingCategory.MeetingCategory
     """
 
-
 class IMeetingConfig(Interface):
     """Marker interface for .MeetingConfig.MeetingConfig
     """
-
 
 class IMeetingFileType(Interface):
     """Marker interface for .MeetingFileType.MeetingFileType
     """
 
-
 class IMeetingFile(Interface):
     """Marker interface for .MeetingFile.MeetingFile
     """
-
 
 class IMeetingGroup(Interface):
     """Marker interface for .MeetingGroup.MeetingGroup
     """
 
-
 class IPodTemplate(Interface):
     """Marker interface for .PodTemplate.PodTemplate
     """
-
 
 class IMeetingUser(Interface):
     """Marker interface for .MeetingUser.MeetingUser
@@ -266,16 +298,7 @@ class IMeetingItemDocumentation:
            given in p_fieldName). The method must return the adapted version of
            p_richContent, which contains the XHTML content of the "richtext"
            field (a string). The default PloneMeeting behaviour for this method
-           is to return p_richContent untouched.
-
-           A current limitation of this mechanism: if you apply some
-           transformation on the field named "description", you will get
-           a conflict with the PloneMeeting "color system": this system will
-           always detect that some change occurred if this method updates the
-           field, and the pm_modification_date of the corresponding item will
-           be updated. With the field named "decision" this problem does not
-           occur because it is not taken into account by the PloneMeeting color
-           system.'''
+           is to return p_richContent untouched.'''
     def onEdit(isCreated):
         '''This method is called every time an item is created or updated.
            p_isCreated is True if the object was just created. It is called
@@ -543,13 +566,11 @@ class IMeetingWorkflowActions(Interface):
     def doDecide(stateChange):
         '''Executes when all items contained in me are "decided". In the default
            PloneMeeting implementation, Meeting.doDecide calls Item.doAccept
-           for every "frozen" item contained in the meeting. It does so on the
-           sorted list of items because we use getItemsInOrder.'''
+           for every "frozen" item contained in the meeting.'''
     def doClose(stateChange):
         '''Executes when all decisions are finalized. In the default
            PloneMeeting implementation, Meeting.doClose calls Item.doConfirm
-           for every "accepted" item contained in the meeting. It does so on the
-           sorted list of items because we use getItemsInOrder.'''
+           for every "accepted" item contained in the meeting.'''
     def doArchive(stateChange):
         '''Executes when the meeting is archived.'''
     def doRepublish(stateChange):

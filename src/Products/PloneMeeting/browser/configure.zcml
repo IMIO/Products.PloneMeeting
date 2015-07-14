@@ -43,23 +43,79 @@
 
     <!-- Override imio.actionspanel viewlet, hide it in viewlets.xml and display our own on Meeting and MeetingItem -->
     <configure package="imio.actionspanel">
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
-        template="browser/actions_panel_viewlet.pt"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
-        template="browser/actions_panel_viewlet.pt"
-        permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="Products.PloneMeeting.interfaces.IMeeting"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
     </configure>
+
+    <!-- The ajax view -->
+    <browser:page
+        name="ajax"
+        for="*"
+        class=".views.PloneMeetingAjaxView"
+        template="templates/ajax.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="meeting_view"
+      template="templates/meeting_view.pt"
+      class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+      permission="zope2.View"
+      />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="meeting_available_items_view"
+      template="templates/meeting_available_items_view.pt"
+      class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+      permission="zope2.View"
+      />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="meeting-before-faceted-infos"
+      template="templates/meeting_before_faceted_infos.pt"
+      class="Products.PloneMeeting.browser.views.MeetingBeforeFacetedInfosView"
+      permission="zope2.View"
+      />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="meeting-after-faceted-infos"
+      template="templates/meeting_after_faceted_infos.pt"
+      class="Products.PloneMeeting.browser.views.MeetingAfterFacetedInfosView"
+      permission="zope2.View"
+      />
+    <browser:view
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="present-several-items"
+      class="Products.PloneMeeting.browser.views.PresentSeveralItemsView"
+      permission="zope2.View"
+      />
+    <browser:view
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="remove-several-items"
+      class="Products.PloneMeeting.browser.views.RemoveSeveralItemsView"
+      permission="zope2.View"
+      />
+    <browser:view
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="decide-several-items"
+      class="Products.PloneMeeting.browser.views.DecideSeveralItemsView"
+      permission="zope2.View"
+      />
 
     <!-- a view that will make some utils available -->
     <browser:page
@@ -103,6 +159,7 @@
         class=".async.Discuss"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         attribute="asynchToggle"
+        allowed_attributes="isAsynchToggleEnabled"
         permission="zope2.View"/>
     <browser:page
         name="synchronous_toggle_to_discuss"
@@ -160,51 +217,12 @@
         for="Products.PloneMeeting.interfaces.IMeeting"
         permission="zope2.View" />
 
-    <!-- The ajax view -->
-    <browser:page
-        name="ajax"
-        for="*"
-        class=".ajax.PloneMeetingAjaxView"
-        template="templates/ajax.pt"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-
-    <!-- the plonemeeting_topic_view used to display list of items (my items, all items, ...) -->
-    <browser:page
-        name="plonemeeting_topic_view"
-        for="Products.ATContentTypes.interfaces.folder.IATFolder"
-        class=".views.PloneMeetingTopicView"
-        template="templates/plonemeeting_topic_view.pt"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-    <browser:page
-        name="plonemeeting_topic_view"
-        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
-        class=".views.PloneMeetingTopicView"
-        template="templates/plonemeeting_topic_view.pt"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-
     <!-- the plonemeeting_redirect_to_app_view.pt that redirect the connected user to the default meetingConfig just after connection -->
     <browser:page
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
         name="plonemeeting_redirect_to_app_view"
         class=".views.PloneMeetingRedirectToAppView"
         template="templates/plonemeeting_redirect_to_app_view.pt"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-
-    <!-- the meetingfolder_redirect_view.pt that manage the home page of the user while entering a meetingConfig -->
-    <browser:view
-        for="Products.ATContentTypes.interfaces.folder.IATFolder"
-        name="meetingfolder_redirect_view"
-        class=".views.PloneMeetingFolderView"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-    <browser:view
-        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
-        name="meetingfolder_redirect_view"
-        class=".views.PloneMeetingFolderView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
@@ -215,6 +233,31 @@
         class=".views.UpdateDelayAwareAdvicesView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
+
+    <!-- the view that toggle the advice aksed again/back to formerly given advice -->
+    <browser:view
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        name="change-advice-asked-again"
+        class=".advices.ChangeAdviceAskedAgainView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that toggle the advice hidden during redaction -->
+    <browser:view
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        name="change-advice-hidden-during-redaction"
+        class=".advices.ChangeAdviceHiddenDuringRedactionView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that shows advice confidentiality infos -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="advice-confidentiality"
+        class=".advices.AdviceConfidentialityView"
+        template="templates/adviceconfidentiality.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
 
     <!-- the view that show available delays for an advice on the advices list -->
     <browser:page
@@ -297,6 +340,51 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that display moreInfos about item in the PrettyLink column -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-more-infos"
+        class=".views.ItemMoreInfosView"
+        template="templates/itemmoreinfos.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that display the item navigation widget -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-navigation-widget"
+        class=".views.ItemNavigationWidgetView"
+        template="templates/item_navigation_widget.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that display itemIsSigned widget -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-is-signed"
+        class=".views.ItemIsSignedView"
+        template="templates/itemissigned.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that display itemNumber widget -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-number"
+        class=".views.ItemNumberView"
+        template="templates/itemnumber.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that display toDiscuss widget -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-to-discuss"
+        class=".views.ItemToDiscussView"
+        template="templates/itemtodiscuss.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- this view will contains some methods doing unrestricted things.  It replaces Manager Proxy roled python Scripts -->
     <browser:page
         for="*"
@@ -311,7 +399,7 @@
     <browser:page
         for="*"
         name="delete_history_event"
-        class=".views.DeleteHistoryEvent"
+        class=".views.DeleteHistoryEventView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
 
@@ -321,23 +409,13 @@
         class=".views.ObjectGoToView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
+
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        name="object_goto"
-        class=".views.ObjectGoToView"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
-    <browser:page
-        name="change_item_order"
+        name="change-item-order"
         class=".views.ChangeItemOrderView"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         permission="zope2.View" />
-    <browser:page
-        name="toggle_to_discuss_on_item"
-        class=".async.Discuss"
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        permission="zope2.View"
-        allowed_attributes="isAsynchToggleEnabled"/>
+
     <!-- Macros -->
     <browser:page
         name="pm-macros"
@@ -347,28 +425,10 @@
         permission="zope2.View"
         allowed_attributes="callMacro"/>
     <browser:page
-        name="meetingitemslist-macros"
+        name="advices-icons"
         for="*"
-        class=".macros.MeetingItemsListMacros"
-        template="templates/meetingitems_list.pt"
-        permission="zope2.View"/>
-    <browser:page
-        name="plonemeeting-topic-result-macros"
-        for="*"
-        class=".macros.PloneMeetingTopicResultMacros"
-        template="templates/plonemeeting_topic_result.pt"
-        permission="zope2.View"/>
-    <browser:page
-        name="advices-macros"
-        for="*"
-        class=".macros.AdvicesMacros"
-        template="templates/advices_macros.pt"
-        permission="zope2.View"/>
-    <browser:page
-        name="navigate-macros"
-        for="*"
-        class=".macros.NavigateMacros"
-        template="templates/navigate_macros.pt"
+        class=".advices.AdvicesIcons"
+        template="templates/advices_icons.pt"
         permission="zope2.View"/>
     <!-- Annexes -->
     <browser:page
@@ -377,6 +437,12 @@
         class=".annexes.AnnexesMacros"
         template="templates/annexes_macros.pt"
         permission="zope2.View"/>
+    <browser:page
+        name="annexes-icons"
+        for="*"
+        class=".annexes.AnnexesIcons"
+        template="templates/annexes_icons.pt"
+        permission="zope2.View"/>
     <browser:view
         name="annexes"
         class=".annexes.AnnexesView"
@@ -384,6 +450,18 @@
         permission="zope.Public"
         allowed_attributes="addAnnex
                             isValidAnnexId"/>
+    <browser:page
+        name="annex-to-print"
+        class=".annexes.AnnexToPrintView"
+        for="Products.PloneMeeting.interfaces.IMeetingFile"
+        template="templates/annextoprint.pt"
+        permission="zope.Public"/>
+    <browser:page
+        name="annex-title"
+        class=".annexes.AnnexTitleView"
+        for="*"
+        template="templates/annextitle.pt"
+        permission="zope.Public"/>
     <browser:view
         name="pm-notify-event"
         class=".notify.NotifyEvent"
@@ -442,5 +520,31 @@
        renderer=".portlet_plonemeeting.Renderer"
        addview=".portlet_plonemeeting.AddForm"
        editview=".portlet_plonemeeting.EditForm"/>
+
+    <!-- Faceted configuration for collection widget -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IFacetedSearchesMarker"
+        name="default_widgets.xml"
+        template="default_dashboard_widgets.xml"
+        permission="eea.faceted.configure"
+        />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IFacetedSearchesItemsMarker"
+        name="default_widgets.xml"
+        template="default_dashboard_items_widgets.xml"
+        permission="eea.faceted.configure"
+        />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IFacetedSearchesMeetingsMarker"
+        name="default_widgets.xml"
+        template="default_dashboard_meetings_widgets.xml"
+        permission="eea.faceted.configure"
+        />
+
+    <browser:page
+        for="*"
+        name="plonemeeting_javascript_variables.js"
+        class=".jsvariables.JSVariables"
+        permission="zope.Public" />
 
 </configure>

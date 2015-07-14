@@ -31,6 +31,8 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
+from Products.PloneMeeting.utils import AdviceAfterAddEvent
+from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
@@ -111,7 +113,8 @@ def onItemTransition(item, event):
     # after the onItemTransition event
     notify(ItemAfterTransitionEvent(item))
     # update relevant indexes
-    item.reindexObject(idxs=['previous_review_state', 'reviewProcessInfo', 'getTakenOverBy', ])
+    item.reindexObject(idxs=['previous_review_state', 'reviewProcessInfo',
+                             'getTakenOverBy', 'linkedMeetingUID', 'linkedMeetingDate'])
 
 
 def onMeetingTransition(meeting, event):
@@ -215,14 +218,19 @@ def onAdviceAdded(advice, event):
     # make the entire _advisers group able to edit the meetingadvice
     advice.manage_addLocalRoles('%s_advisers' % advice.advice_group, ('Editor', ))
 
+    # notify our own PM event so we are sure that this event is called
+    # after the onAviceAdded event
+    notify(AdviceAfterAddEvent(advice))
+
+    # redirect to referer after add if it is not the edit form
+    http_referer = item.REQUEST['HTTP_REFERER']
+    if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
+        advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
+
     # log
     userId = advice.portal_membership.getAuthenticatedMember().getId()
     logger.info('Advice at %s created by "%s".' %
                 (advice.absolute_url_path(), userId))
-    # redirect to referer after add if it is not the edit form
-    http_referer = item.REQUEST['HTTP_REFERER']
-    if not http_referer.endswith('/edit'):
-        advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
 
 def onAdviceModified(advice, event):
@@ -232,21 +240,23 @@ def onAdviceModified(advice, event):
 
     item = advice.getParentNode()
     item.updateAdvices()
+
+    # notify our own PM event so we are sure that this event is called
+    # after the onAviceModified event
+    notify(AdviceAfterModifyEvent(advice))
+
     # log
     userId = advice.portal_membership.getAuthenticatedMember().getId()
-    logger = logging.getLogger('PloneMeeting')
     logger.info('Advice at %s edited by "%s".' %
                 (advice.absolute_url_path(), userId))
 
 
 def onAdviceEditFinished(advice, event):
     '''Called when a meetingadvice is edited and we are at the end of the editing process.'''
-    # redirect to referer after edit if it is not the edit form
-    # this can not be done on zope.lifecycleevent.IObjectModifiedEvent because
-    # it is too early and the redirect is not done, but in the plone.dexterity.events.EditFinishedEvent
-    # it works as expected ;-)
     item = advice.getParentNode()
     item.updateAdvices()
+
+    # redirect to referer after edit if it is not the edit form
     http_referer = item.REQUEST['HTTP_REFERER']
     if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
         advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
@@ -259,13 +269,16 @@ def onAdviceRemoved(advice, event):
         return
 
     item = advice.getParentNode()
+    # do not call this if an advice is removed because the item is removed
+    if not item in item.aq_inner.aq_parent.objectValues():
+        return
+
     try:
         item.updateAdvices()
     except TypeError:
         # while removing an advice, if it was not anymore in the advice index
         # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
         # the newItem has an empty adviceIndex but can contains advices that will be removed
-        logger = logging.getLogger('PloneMeeting')
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 
 
@@ -273,7 +286,7 @@ def onAnnexAdded(annex, event):
     '''When an annex is added, we need to update item modification date.'''
     item = annex.getParent()
     item.setModificationDate(DateTime())
-    event.object.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
+    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
 
 
 def onAnnexRemoved(annex, event):
@@ -283,6 +296,10 @@ def onAnnexRemoved(annex, event):
         return
 
     item = annex.getParent()
+    # do not call this if an annex is removed because the item is removed
+    if not item in item.aq_inner.aq_parent.objectValues():
+        return
+
     IAnnexable(item).updateAnnexIndex(annex, removeAnnex=True)
     item.updateHistory('delete',
                        annex,
@@ -292,7 +309,7 @@ def onAnnexRemoved(annex, event):
 
     # update item modification date
     item.setModificationDate(DateTime())
-    event.object.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
+    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
 
 
 def onItemDuplicated(item, event):
@@ -343,15 +360,17 @@ def onItemEditBegun(item, event):
 
 def onMeetingRemoved(meeting, event):
     '''When a meeting is removed, check if we need to remove every linked items,
-       this is the case if we have a 'wholeMeeting' value in the REQUEST.
+       this is the case if the current user is a Manager.
        Moreover, check that meeting is no more selected as preferred meeting for existing items.'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
-    if 'wholeMeeting' in meeting.REQUEST and 'items_to_remove' in meeting.REQUEST:
+    if 'items_to_remove' in meeting.REQUEST:
         logger.info('Removing %d item(s) linked to meeting at %s...' % (len(meeting.REQUEST.get('items_to_remove')),
                                                                         meeting.absolute_url()))
-        for item in meeting.REQUEST.get('items_to_remove'):
+        # use an intermediate list to avoid changing value in REQUEST
+        items_to_remove = [item for item in meeting.REQUEST.get('items_to_remove')]
+        for item in items_to_remove:
             unrestrictedRemoveGivenObject(item)
         meeting.REQUEST.set('items_to_remove', ())
 

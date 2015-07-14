@@ -266,7 +266,7 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
         return normalizeString(res)
 
     security.declarePublic('generateDocument')
-    def generateDocument(self, obj, itemUids=None, forBrowser=True):
+    def generateDocument(self, obj, itemUids=[], forBrowser=True):
         '''Generates a document from this template, for object p_obj. If p_obj
            is a meeting, p_itemUids contains the UIDs of the items to dump
            into the document (which is a subset of all items linked to this
@@ -277,8 +277,6 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
            document content.'''
         tool = self.portal_plonemeeting
         meetingConfig = tool.getMeetingConfig(obj)
-        if itemUids:
-            itemUids = itemUids.split(',')
         # Temporary file where to generate the result
         tempFileName = '%s/%s_%f.%s' % (
             tempfile.gettempdir(), obj.UID(), time.time(), self.getPodFormat())

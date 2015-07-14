@@ -233,7 +233,7 @@ class ManageItemAssemblyForm(form.Form):
                 return [self.context, ]
             else:
                 meeting = self.context.getMeeting()
-                return meeting.getAllItems(ordered=True)[currentItemNumber-1:self.apply_until_item_number]
+                return meeting.getItems(ordered=True)[currentItemNumber-1:self.apply_until_item_number]
 
         for itemToUpdate in _itemsToUpdate():
             itemToUpdate.setItemAssembly(self.item_assembly)

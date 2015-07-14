@@ -25,11 +25,8 @@
 from DateTime import DateTime
 from AccessControl import Unauthorized
 
-from plone.app.testing import login
-
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
-from Products.PloneMeeting.tests.PloneMeetingTestCase import \
-    PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testVotes(PloneMeetingTestCase):
@@ -41,7 +38,7 @@ class testVotes(PloneMeetingTestCase):
         # call parent setUp
         PloneMeetingTestCase.setUp(self)
         # avoid recurring items
-        login(self.portal, 'admin')
+        self.changeUser('admin')
         self.meetingConfig.recurringitems.manage_delObjects(
             [self.meetingConfig.recurringitems.objectValues()[0].getId(), ])
 

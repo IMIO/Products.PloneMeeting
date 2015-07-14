@@ -103,11 +103,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item1.setTitle('My title')
         item1.setBudgetRelated(True)
         item1.setBudgetInfos('My budget')
-        item1.setPreferredMeeting('samplemeeting')
         workingFolder = item1.getParentNode()
         clonedItem = item1.clone()
         self.assertEquals(
-            set([item1, clonedItem]), set(workingFolder.objectValues()))
+            set([item1, clonedItem]), set(workingFolder.objectValues('MeetingItem')))
         # Test that some fields are kept...
         self.failUnless(clonedItem.Title() == item1.Title())
         self.failUnless(clonedItem.getCategory() == item1.getCategory())
@@ -123,7 +122,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         clonedItem = item1.clone()
         # The item is cloned in the pmCreator1 personnal folder.
         self.assertEquals(
-            set([clonedItem]), set(clonedItem.getParentNode().objectValues()))
+            set([clonedItem]), set(clonedItem.getParentNode().objectValues('MeetingItem')))
         # during the cloning process, the 'Manager' role is given on the new item
         # so every things that need to be done on it are done, make sure at the end
         # the role is no more given...
@@ -142,7 +141,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         workingFolder = item1.getParentNode()
         clonedItem = item1.clone()
         self.assertEquals(
-            set([item1, clonedItem]), set(workingFolder.objectValues()))
+            set([item1, clonedItem]), set(workingFolder.objectValues('MeetingItem')))
         # Check that the annexes have been cloned, too.
         self.assertEquals(len(IAnnexable(clonedItem).getAnnexes()), 1)
         newAnnex = clonedItem.objectValues('MeetingFile')[0]
@@ -161,7 +160,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         clonedItem = item1.clone(copyAnnexes=False)
         self.assertEquals(set([clonedItem]),
-                          set(clonedItem.getParentNode().objectValues()))
+                          set(clonedItem.getParentNode().objectValues('MeetingItem')))
         self.assertEquals(len(IAnnexable(clonedItem).getAnnexes()), 0)
 
     def test_pm_CloneItemWithContentNotRemovableByPermission(self):
@@ -256,7 +255,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         res1 = self.tool.pasteItems(destFolder, copiedData1, copyAnnexes=True)[0]
         res2 = self.tool.pasteItems(destFolder, copiedData2)[0]
         self.assertEquals(set([item1, item2, res1, res2]),
-                          set(destFolder.objectValues()))
+                          set(destFolder.objectValues('MeetingItem')))
         # By default, the history is kept by the copy/paste so we should have 2
         # values relative to the 'itemcreated' action
         # But here, the workflow_history is cleaned by ToolPloneMeeting.pasteItems

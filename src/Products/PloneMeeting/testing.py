@@ -38,7 +38,8 @@ class PloneMeetingLayer(PloneWithPackageLayer):
 PM_TESTING_PROFILE = PloneMeetingLayer(
     zcml_filename="testing.zcml",
     zcml_package=Products.PloneMeeting,
-    additional_z2_products=('Products.PloneMeeting',
+    additional_z2_products=('imio.dashboard',
+                            'Products.PloneMeeting',
                             'Products.CMFPlacefulWorkflow',
                             'Products.PasswordStrength'),
     gs_profile_id='Products.PloneMeeting:testing',

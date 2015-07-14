@@ -1,0 +1,99 @@
+<tal:left define="hidden python:request.set('disable_plone.leftcolumn', view.hide_left_column)" />
+<tal:right define="hidden python:request.set('disable_plone.rightcolumn', view.hide_right_column)" />
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US"
+  lang="en-US"
+  metal:use-macro="here/main_template/macros/master"
+  i18n:domain="PloneMeeting">
+
+<metal:jsslot fill-slot="javascript_head_slot">
+  <script type="text/javascript"
+    tal:content="string:jQuery(document).ready(function(evt){
+        Faceted.Load(evt, '${context/absolute_url}/');
+    });"></script>
+  <script type="text/javascript"
+    tal:content="string:jQuery(window).unload(function(){
+        Faceted.Unload();
+    });"></script>
+</metal:jsslot>
+
+<body>
+  <metal:title fill-slot="content-title">
+  <tal:comment replace="nothing">Title, with number of items</tal:comment>
+  <h1 class="documentFirstHeading">
+    <span tal:content="python: context.portal_plonemeeting.formatMeetingDate(context, prefixed=True)"
+          tal:omit-tag="">Meeting title</span>&nbsp;-
+    <span tal:condition="python:not here.adapted().isDecided()"
+          i18n:translate="agenda">Agenda</span>
+    <span tal:condition="python:here.adapted().isDecided()"
+          i18n:translate="decisions">Decisions</span>
+    <tal:comment replace="nothing">Display number of items in the meeting</tal:comment>
+    <span class="discreet">(<span class="meeting_number_of_items" tal:content="context/numberOfItems"></span>
+      <span i18n:translate="">items_count</span>)
+    </span>
+  </h1>
+  </metal:title>
+  <metal:description fill-slot="content-description">
+   <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>
+  </metal:description>
+
+<div metal:fill-slot="content-core"
+     tal:define="tool python: context.portal_plonemeeting;
+                 member context/@@plone_portal_state/member;
+                 showPage tool/showMeetingView;
+                 showAvailableItems python:member.has_permission('Modify portal content', context) and context.wfConditions().mayAcceptItems();">
+
+<tal:showPage condition="showPage">
+  <script language="javascript"
+    tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
+  </script>
+
+  <tal:comment replace="nothing">XXX changed for PM, infos displayed before the faceted table.</tal:comment>
+  <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-before-faceted-infos" />
+  <tal:comment replace="nothing">Show items that may be presented into the current meeting</tal:comment>
+  <fieldset tal:condition="showAvailableItems">
+    <legend> <span i18n:translate='available_items'>Available items</span></legend>
+        <iframe src="@@meeting_available_items_view"
+                tal:attributes="src string:${context/absolute_url}/@@meeting_available_items_view?ajax_load=0&ajax_include_head=1"
+                class="auto-height" style="width: 100%;"><span>trlal</span>
+        </iframe>
+  </fieldset>
+  <script>
+      $('iframe.auto-height').iFrameResize({log:true})
+  </script>
+
+  <tal:comment replace="nothing">Show items that are presented into the current meeting</tal:comment>
+  <fieldset>
+    <legend><span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)</legend>
+
+  <!-- Folder contents -->
+  <div class="faceted-form" metal:define-macro="widgets" id="faceted-form"
+    tal:define="mode view/mode | string:view" tal:attributes="data-mode mode"
+    i18n:domain="eea">
+
+    <!-- Basic/Extended search -->
+    <div class="faceted-sections-buttons">
+      <a href="#" class="faceted-sections-buttons-more" i18n:translate="">More filters</a>
+      <a href="#" class="faceted-sections-buttons-less" i18n:translate="">Less filters</a>
+    </div>
+
+    <metal:widgets use-macro="here/@@faceted_widgets/macros/widgets" />
+
+    <!-- Faceted version -->
+    <div style="display: none" id="faceted-version"
+      tal:content="here/@@faceted_version|string:" />
+  </div>
+  </fieldset>
+
+  <tal:comment replace="nothing">XXX changed for PM, infos displayed after the faceted table.</tal:comment>
+  <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-after-faceted-infos" />
+
+</tal:showPage>
+
+<tal:notShowPage condition="not: showPage">
+  <p i18n:translate="hide_meeting_view_page">This page is currently not accessible. Meeting managers will soon allow you to access it again. Sorry for the inconvenience.</p>
+</tal:notShowPage>
+
+</div>
+</body>
+</html>

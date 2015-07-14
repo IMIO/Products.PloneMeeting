@@ -121,6 +121,10 @@ class MeetingAdvice(Container):
                          default='Advice given on item "%s"' % self.getParentNode().Title(),
                          context=self.REQUEST)
 
+    def title_or_id(self):
+        """ """
+        return self.Title()
+
     def queryState(self):
         '''In what state am I ?'''
         wfTool = getToolByName(self, 'portal_workflow')
@@ -210,14 +214,18 @@ class AdviceTypeVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-        """"""
+        """ """
         terms = []
         cfg = context.portal_plonemeeting.getMeetingConfig(context)
-        usedAdviceTypes = cfg.getUsedAdviceTypes()
+        usedAdviceTypes = list(cfg.getUsedAdviceTypes())
+        # remove the 'asked_again' value, it can only be used if it is the current context.advice_type
+        # and it will be added here under if necessary
+        if 'asked_again' in usedAdviceTypes:
+            usedAdviceTypes.remove('asked_again', )
         # make sure if an adviceType was used for context and it is no more available, it
         # appears in the vocabulary and is so useable...
         if context.portal_type == 'meetingadvice' and not context.advice_type in usedAdviceTypes:
-            usedAdviceTypes = usedAdviceTypes + (context.advice_type, )
+            usedAdviceTypes.append(context.advice_type)
         for advice_id, advice_title in cfg.listAdviceTypes().items():
             if advice_id in usedAdviceTypes:
                 terms.append(SimpleTerm(advice_id, advice_id, advice_title))

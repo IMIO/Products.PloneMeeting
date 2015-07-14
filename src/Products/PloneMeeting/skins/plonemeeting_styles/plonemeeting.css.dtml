@@ -6,8 +6,46 @@ fieldset {line-height: 1em; margin: 0.5em 0; }
 p {
     line-height: 1em;
 }
-.even {
-    background-color: #f5f5f5;
+
+table.listing tbody tr.even.meeting_item_privacy_secret td {
+    background-color: #ffcc33;
+}
+table.listing tbody tr.odd.meeting_item_privacy_secret td {
+    background-color: #ffff99;
+}
+
+table.listing tr.odd td.meeting_item_listType_late,
+table.listing tr.even td.meeting_item_listType_late,
+table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_late,
+table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_late {
+    background-color: #ed0000;
+}
+table.listing tr.odd td.meeting_item_listType_late,
+table.listing tr.even td.meeting_item_listType_late,
+table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_late,
+table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_late,
+table.listing tr.odd td.meeting_item_listType_normal,
+table.listing tr.even td.meeting_item_listType_normal,
+table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_normal,
+table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_normal {
+    padding: 0em;
+    border-right: 0px;
+    height: 100%;
+}
+
+/* hide div of the ColorColumn for normal items */
+.meeting_item_listType_normal > div {
+    display: none;
+}
+/* show div of the ColorColumn for late items */
+.meeting_item_listType_late > div {
+    height: 100%;
+    width: 100%;
+    cursor: help;
+}
+
+table.listing tbody tr {
+    height: 100%;
 }
 
 .ploneMeetingRef{
@@ -99,8 +137,11 @@ p {
 }
 
 /* make sure table borders in pmMoreInfo (when using glasses icon) are displayed */
-#content span.pmMoreInfo td {
+#content div.pmMoreInfo td {
     border: 1px solid black;
+}
+#content div.pmMoreInfo {
+    padding-top: 0.5em;
 }
 
 /* used for extra infos displayed on items listings or on the meeting view when using 'glasses icon action' */
@@ -153,19 +194,25 @@ div.pm_search_no_result_info {
 /* Colors on states */
 .state-active, .label-state-inactive {color: green !important;}
 .state-inactive, .state-inactive a, .label-state-inactive {color: red !important; }
-.state-created, .state-itemcreated, .label-state-itemcreated, .state-advice_under_edit, .label-state-advice_under_edit { color: red !important; }
+.state-created, .label-state-created,
+.state-itemcreated, .label-state-itemcreated,
+.state-advice_under_edit, .label-state-advice_under_edit { color: red !important; }
 .state-proposed, .label-state-proposed { color: DarkOrange !important; }
 .state-validated, .label-state-validated { color: blue !important; }
 .state-presented, .label-state-presented { color: brown !important; }
 .state-itemfrozen, .label-state-itemfrozen,
 .state-frozen, .label-state-frozen { color: cornflowerBlue !important; }
 .state-returned_to_proposing_group, .label-state-returned_to_proposing_group, .state-advice_given, .label-state-advice_given { color: grey !important; }
-.state-itempublished, .label-state-itempublished, .state-published, .label-state-published { color: darkgoldenrod !important; }
-.state-accepted, .label-state-accepted { color: #64c168 !important; }
+.state-itempublished, .label-state-itempublished,
+.state-published, .label-state-published { color: darkgoldenrod !important; }
+.state-decided, .label-state-decided,
+.state-decisions_published, .label-state-decisions_published { color: black !important; }
+.state-accepted, .label-state-accepted,
 .state-confirmed, .label-state-confirmed { color: green !important; }
 .state-delayed, .label-state-delayed { color: grey !important; }
 .state-refused, .label-state-refused { color: violet !important; }
-.state-closed, .label-state-closed { color: black !important; }
+.state-closed, .label-state-closed { color: grey !important; }
+
 /* Colors on transitions, used in the item wf history */
 /* this correspond to the element creation */
 .transition-none { color: red !important; }
@@ -273,6 +320,7 @@ div.pm_search_no_result_info {
     list-style: none;
     box-shadow: 5px 5px 5px grey;
     border-radius: 5px;
+    min-width: 250px;
 }
 /* add some padding at the bottom of the advice menuAx panel */
 #content .actionMenuContentAX.actionMenuContentAdvice > ul {
@@ -289,43 +337,41 @@ div.pm_search_no_result_info {
 .actionMenuAX.activated .actionMenuContentAX { z-index: 20; display: block !important; }
 .actionMenuAX.deactivated .actionMenuContentAX { display: none !important; }
 
-.actionMenuAX .actionMenuContentAX li {
+#content .actionMenuAX .actionMenuContentAX li {
     float: none;
     padding: 0;
     margin: 0;
     border: 0;
+    line-height: 1.5em;
 }
 
-.actionMenuAX .actionMenuContentAX li a {
+#content .actionMenuAX .actionMenuContentAX li a {
+    display: block;
+    padding: 0 0.5em;
+    margin: 0.0em 0;
+}
+
+#content .actionMenuAX .actionMenuContentAX .selected {
     display: block;
     white-space: nowrap;
     padding: 0 0.5em;
     margin: 0.0em 0;
 }
 
-.actionMenuAX .actionMenuContentAX .selected {
-    display: block;
-    white-space: nowrap;
-    padding: 0 0.5em;
-    margin: 0.0em 0;
-}
-
-.actionMenuAX .actionMenuContentAX li a:hover { color: #436976; }
-
-.actionMenuAX .actionMenuContentAX .actionSeparator {
+#content .actionMenuAX .actionMenuContentAX .actionSeparator {
     margin-top: 0.1em;
     padding-top: 0.1em;
     border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
 }
 
-.actionMenuAX .actionMenuContentAX .actionSeparator div.currentDefaultPage {
+#content .actionMenuAX .actionMenuContentAX .actionSeparator div.currentDefaultPage {
     margin-top: 0.2em;
     padding: 0.2em 0.5em 0em 0.5em;
     white-space: nowrap;
     border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
 }
 
-.actionMenuAX .actionMenuContentAX .actionSeparator div.actionLabel {
+#content .actionMenuAX .actionMenuContentAX .actionSeparator div.actionLabel {
     margin-top: 0.2em;
     padding: 0.2em 0.5em 0em 0.5em;
     white-space: nowrap;
@@ -343,7 +389,6 @@ body.template-meetingitem_view td.itemAnnexesCell dd.actionMenuContentAX {
 }
 
 /* collective.documentviewer : hide some elements... */
-
 .close-fullscreen, .DV-navigation {
     display: none;
 }
@@ -358,6 +403,10 @@ td.pmLinks a {
 li.pmLinks div.annexTitle {
     padding-right: 30px;
     display: block;
+}
+/* annexes displayed in the annexes_form */
+td.pmLinks div.annexTitle {
+    display: inline;
 }
 .annexTitleNotPrintable {
     cursor: help;
@@ -592,6 +641,9 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
     padding-top: 0.2em;
     padding-bottom: 0.2em;
 }
+#portal-columns dl.portletTodo a {
+    display: inline;
+}
 .portletPloneMeetingHeaderIcons {
     float:right;
     display: inline;
@@ -627,6 +679,11 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
     cursor: not-allowed !important;
 }
 
+.adviceHiddenDuringRedactionEditable,
+.askAdviceAgainEditable {
+    cursor: pointer;
+}
+
 .adviceInfo,
 .budgetRelatedEditable,
 .toDiscussEditable,
@@ -638,8 +695,8 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 .itemAssemblyEditable i,
 .itemSignaturesEditable i {
     border-bottom: 1px dotted;
-    padding-bottom: 2px;
     cursor: pointer;
+    padding-bottom: 2px;
 }
 #content span.budgetRelated {
     color: green;
@@ -696,39 +753,40 @@ TD acronym {
 
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
-.pm_listing_th_actions, .pm_listing_th_toDiscuss, .pm_listing_th_itemIsSigned,
-.pm_meeting_listing_th_actions, .pm_meeting_listing_th_toDiscuss, .pm_meeting_listing_th_itemIsSigned,
-.pm_meeting_listing_th_checkBoxes, .pm_listing_th_advices, .pm_meeting_listing_th_advices {
+table.listing th.th_header_actions,
+table.listing th.th_header_advices,
+table.listing th.th_header_itemIsSigned,
+table.listing th.th_header_toDiscuss,
+table.listing th.th_header_getItemIsSigned,
+.pm_meeting_listing_th_checkBoxes {
     width: 1%;
 }
-.pm_listing_th_proposingGroup,
-.pm_listing_th_proposingGroupAcronym,
-.pm_listing_th_categoryOrProposingGroup,
-.pm_meeting_listing_th_proposingGroup,
-.pm_meeting_listing_th_proposingGroupAcronym,
-.pm_meeting_listing_th_categoryOrProposingGroup,
-.pm_listing_th_creationDate,
-.pm_listing_th_modificationDate {
+table.listing th.th_header_listType {
+    width: 10px;
+    padding: 0em;
+    border-right: 0px;
+}
+
+table.listing th.th_header_Creator,
+table.listing th.th_header_getProposingGroup,
+table.listing th.th_header_proposing_group_acronym {
     width: 100px;
 }
-.pm_listing_th_relatedMeeting,
-.pm_listing_th_preferredMeeting {
+table.listing th.th_header_review_state,
+table.listing th.th_header_linkedMeetingDate,
+table.listing th.th_header_getPreferredMeetingDate,
+table.listing th.th_header_getCategory,
+table.listing th.th_header_ModificationDate,
+table.listing th.th_header_CreationDate {
     width: 90px;
 }
-.pm_listing_th_creator, .pm_meeting_listing_th_creator {
-    width: 100px;
-}
-.pm_listing_th_state, .pm_meeting_listing_th_state, .pm_listing_th_privacy, .pm_meeting_listing_th_privacy {
+table.listing th.th_header_privacy {
     width: 60px;
 }
 
-/* TH of the table listing on the meeting view are stylable th by th */
-/* using 1% limit the width as much as possible... */
-.pm_meeting_listing_th_toDiscuss {
-    width: 1%;
-}
-
-.pm_meeting_listing_th_itemsNumbering {
+/* hide border between listType and itemNumber */
+table.listing th.th_header_getItemNumber {
+    border-left: 0px;
     width: 25px;
 }
 
@@ -1063,6 +1121,79 @@ div.highlightBlankRow:before {
 /* on the meetingconfig view, move itemIconColor value to let place for the icon */
 span[id^="parent-fieldname-itemIconColor"] {
     padding-left: 20px;
+}
+
+dl.portletWidgetCollection div.portlet_add_icons {
+    float: right;
+    margin-right: 0.5em;
+}
+dl.portletWidgetCollection div.portlet_add_icons a {
+    margin-left: 0em;
+}
+dl.portletWidgetCollection div.manyMeetings {
+    margin-bottom: 0.5em;
+}
+dl.portletWidgetCollection div.noMeetings,
+dl.portletWidgetCollection div.fewMeetings,
+dl.portletWidgetCollection div.manyMeetings {
+    margin-left: 0.5em;
+}
+dl.portlet.portletWidgetCollection div.widget-portlet li a {
+    text-transform: lowercase;
+}
+
+/* align annexes icons displayed in the pretty_link column to the right */
+td.pretty_link table.contentActionsAX {
+    float: right;
+}
+
+/* skin element that will trigger the show/hide item details */
+#content th span.showHideDetails,
+#content th a.showHideDetails:link,
+#content th a.showHideDetails:hover,
+#content th a.showHideDetails:visited {
+    cursor: pointer;
+    margin-left: 3em;
+    color: &dtml-discreetColor; !important;
+}
+
+/* button for removing several items from a meeting */
+button.remove_several,
+button.present_several {
+    margin-left: 0.5em;
+}
+button.remove_several img,
+button.present_several img {
+    position: relative;
+    top: 2px;
+}
+
+table.meetingConfigActions td {
+    padding: 1em;
+}
+
+div.advice_popup_label {
+    display: inline-block;
+    vertical-align: middle;
+    max-width: 385px;
+}
+div.advice_popup_actions {
+    float: right;
+    max-width: 100px;
+}
+
+/* hide some elements on the versions_history_form */
+body.template-versions_history_form.portaltype-meetingadvice table[summary="Content history"],
+body.template-versions_history_form.portaltype-meetingadvice form[action$="saveasnewversion"],
+body.template-versions_history_form.portaltype-meetingadvice #content-core div.documentByLine,
+body.template-versions_history_form.portaltype-meetingadvice #content-core fieldset#folder-listing {
+    display: none;
+}
+body.template-versions_history_form.portaltype-meetingadvice #content-core > div:first-of-type {
+    border: 0px solid transparent !important;
+}
+body.template-versions_history_form.portaltype-meetingadvice #content-core {
+    margin-top: 1em;
 }
 
 /* </dtml-with> */

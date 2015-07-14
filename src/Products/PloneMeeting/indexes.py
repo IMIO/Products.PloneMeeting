@@ -10,9 +10,19 @@
 from OFS.interfaces import IItem
 
 from plone.indexer import indexer
-
+from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+
+
+@indexer(IMeeting)
+def sortable_title(obj):
+    """
+      Indexes the sortable_title of meeting based on meeting.date
+    """
+    return obj.getDate().strftime('%Y%m%d%H%M')
 
 
 @indexer(IMeetingItem)
@@ -68,10 +78,83 @@ def reviewProcessInfo(obj):
     return '%s__reviewprocess__%s' % (obj.getProposingGroup(), obj.queryState())
 
 
+@indexer(IMeetingItem)
+def linkedMeetingUID(obj):
+    """
+      Store the linked meeting UID.
+    """
+    res = ''
+    meeting = obj.getMeeting()
+    if meeting:
+        res = meeting.UID()
+    return res
+
+
+@indexer(IMeetingItem)
+def linkedMeetingDate(obj):
+    """
+      Store the linked meeting date.
+    """
+    res = ''
+    meeting = obj.getMeeting()
+    if meeting:
+        res = meeting.getDate()
+    return res
+
+
+@indexer(IMeetingItem)
+def getPreferredMeetingDate(obj):
+    """
+      Store the preferredMeeting date.
+    """
+    res = ''
+    preferredMeetingUID = obj.getPreferredMeeting()
+    if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
+        # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
+        # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
+        uid_catalog = getToolByName(obj, 'uid_catalog')
+        res = uid_catalog(UID=preferredMeetingUID)[0].getObject().getDate()
+    return res
+
+
+@indexer(IItem)
+def sentToInfos(obj):
+    """
+      Index other meetingConfigs the item will be/has been cloned to.
+      We append :
+      - __clonable_to to a meetingConfig id the item is clonable to;
+      - __cloned_to to a meetingConfig id the item is cloned to.
+      An item that does not have to be send to another meetingConfig
+      will receive the 'not_to_be_cloned_to' value so we can filter it out.
+    """
+    res = []
+    clonableTo = obj.getOtherMeetingConfigsClonableTo()
+    clonedTo = obj._getOtherMeetingConfigsImAmClonedIn()
+    for cfgId in clonableTo:
+        if not cfgId in clonedTo:
+            res.append(cfgId + '__clonable_to')
+    for cfgId in clonedTo:
+        res.append(cfgId + '__cloned_to')
+    if not clonableTo and not clonedTo:
+        res.append('not_to_be_cloned_to')
+    return res
+
+
+@indexer(IMeetingItem)
+def sendToAuthority(obj):
+    """
+      Index the MeetingItem.sendToAuthority to be searchable in a faceted navigation.
+    """
+    if obj.getSendToAuthority():
+        return '1'
+    else:
+        return '0'
+
+
 @indexer(IItem)
 def isDefinedInTool(obj):
     """
-      Do elements defined in the tool visible by catalog searches only
+      Do items defined in the tool visible by catalog searches only
       when an admin is in the tool...
     """
     return ('portal_plonemeeting' in obj.absolute_url())
@@ -106,7 +189,7 @@ def indexAdvisers(obj):
       Non delay-aware advice is like "developers_advice_not_given".
       In both cases (delay-aware or not), we have a suffix :
         - '_advice_not_giveable' for advice not given and not giveable;
-        - '_advice_not_given' for advice not given but giveable;
+        - '_advice_not_given' for advice not given/asked again but giveable;
         - '_advice_delay_exceeded' for delay-aware advice not given but
            no more giveable because of delay exceeded;
     """
@@ -117,8 +200,8 @@ def indexAdvisers(obj):
         '''
           Compute the suffix that will be appended depending on advice state.
         '''
-        # still not given but still giveable?  Not giveable?  Delay exceeded?
-        if advice['type'] == NOT_GIVEN_ADVICE_VALUE:
+        # still not given but still giveable?  Not giveable?  Delay exceeded? Asked again?
+        if advice['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again'):
             delayIsExceeded = isDelayAware and \
                 obj.getDelayInfosForAdvice(groupId)['delay_status'] == 'timed_out'
             if delayIsExceeded:
@@ -128,6 +211,9 @@ def indexAdvisers(obj):
                 # does the relevant group may add the advice in current item state?
                 if advice['advice_addable']:
                     return '_advice_not_given'
+                elif advice['advice_editable']:
+                    # case when 'asked_again'
+                    return '_advice_asked_again'
                 else:
                     return '_advice_not_giveable'
         else:
@@ -144,8 +230,13 @@ def indexAdvisers(obj):
         # compute suffix
         suffix = _computeSuffixFor(groupId, advice)
 
+        # we also index the groupId so we can query who we asked
+        # advice to, without passing the advice state
+        res.append('real_group_id_' + groupId)
+
         if isDelayAware:
             res.append('delay__' + groupId + suffix)
         else:
             res.append(groupId + suffix)
+    res.sort()
     return res

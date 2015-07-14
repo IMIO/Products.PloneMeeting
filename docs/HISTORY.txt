@@ -10,7 +10,13 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 3.4 (unreleased)
 ----------------
 - Rely on beautifulsoup4, Products.CPUtils
+- Moved dashboards and meeting view to imio.dashboard (see imio.dashboard package regarding required changes)
+- Moved MeetingConfig.searchXXX searches to collective.compoundcriterion compatible search adapter
+- Removed Meeting.getAllItems and Meeting.getItemsInOrder, we now only use Meeting.getItems with relevant parameters
+- Indexed the meetingUID and meetingDate on items so we are able to add a sortable 'meeting' column
 - Moved 'history' functionnalities (highlight, displayed as table, ...) to imio.history and rely on it
+- Moved the item title colorization and leading icons to imio.prettylink and rely on it.
+  It is also used to colorize the meeting title displayed in columns 'meeting' and 'preferred meeting'
 - Moved the 'getMeetingsAcceptingItems' from MeetingItem to MeetingConfig so it can be called
   when no item exist.  This is used in imio.pm.ws 'meetingsAcceptingItems' SOAP call
 - Use MeetingItem.clone method to add recurring items to a meeting so it use same functionnality
@@ -47,6 +53,24 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - In MeetingItem.sendAdviceToGiveMailIfRelevant, added an adaptable call to a method _sendAdviceToGiveToGroup
   that make it possible to check if the mail must be sent to a given groupId or not.  This makes it possible
   to bypass some groups when sending the 'advice to give' notification
+- Added possibility to ask an advice several times and historize previously given one, we rely now on
+  plone.app.versioningbehavior to display a historized version
+- Adapted the 'move item to position number' on the meeting view to move an item to an exact position and no
+  more the 'position before the entered number'
+- Added possibility to display the item reference in the item dashboards
+- Added MeetingItem.listType attribute that defines the fact that the item is 'normal' or 'late'.  Also added
+  a 'on_list_type' item insertion method into a meeting
+- Updated the navigation widget on items to move to be able to move to the next viewable item even if it is not
+  the very next item of the meeting
+- Added possibility to print a meeting showing filtered items, like for example only "accepted" items
+- Moved ToolPloneMeeting.getJavascriptMessages to a view generating 'plonemeeting_javascript_variables.js'
+- Added icon action shortcut on an advice to hide/show it when under redaction
+- Removed some fields from ToolPloneMeeting : 'usedColorSystem', 'colorSystemDisabledFor', 'publicUrl',
+  'deferredNotificationsHandling' and 'showItemKeywordsTargets'. Moved 'maxShownFound' to the MeetingConfig
+- Removed colorization mechanism 'on modification', now the only color system is 'on workflow state' and is always on
+- Removed utils.spanifyLink
+- Added events AdviceAfterAddEvent and AdviceAfterAddEvent so other package can register subscriber for
+  it and be sure it is called after the PloneMeeting AdviceAdded and AdviceModified events
 
 3.3 (2015-02-27)
 ----------------

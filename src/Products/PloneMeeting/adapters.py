@@ -11,18 +11,34 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 from AccessControl import Unauthorized
 
+from persistent.list import PersistentList
 from zope.annotation import IAnnotations
+from zope.i18n import translate
 
 from plone.memoize import ram
 
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting import PMMessageFactory as _
-from Products.PloneMeeting.utils import checkPermission
+from Products.MimetypesRegistry.common import MimeTypeException
+from Products.CMFPlone.utils import safe_unicode
 
-from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
-from imio.history.adapters import ImioHistoryAdapter
 from collective.documentviewer.settings import GlobalSettings
+from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
+from eea.facetednavigation.interfaces import IFacetedNavigable
+from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
+from imio.dashboard.adapters import CustomViewFieldsVocabularyAdapter
+from imio.history.adapters import ImioWfHistoryAdapter
+from imio.prettylink.adapters import PrettyLinkAdapter
+from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.utils import checkPermission
+from Products.PloneMeeting.utils import getCurrentMeetingObject
+
+CONTENT_TYPE_NOT_FOUND = 'The content_type for MeetingFile at %s was not found in mimetypes_registry!'
+FILE_EXTENSION_NOT_FOUND = 'The extension used by MeetingFile at %s does not correspond to ' \
+    'an extension available in the mimetype %s found in mimetypes_registry!'
 
 
 class AnnexableAdapter(object):
@@ -233,8 +249,6 @@ class AnnexableAdapter(object):
                          typesIds=[], realAnnexes=False):
         '''See docstring in interfaces.py'''
         res = []
-        if not hasattr(self.context, 'annexIndex'):
-            self.updateAnnexIndex()
         # bypass if no annex for current context
         if not self.context.annexIndex:
             return res
@@ -273,6 +287,98 @@ class AnnexableAdapter(object):
                     res += annexes
         return res
 
+    def isConvertable(self):
+        """
+          Check if the annex is convertable (hopefully).  If the annex mimetype is one taken into
+          account by collective.documentviewer CONVERTABLE_TYPES, then it should be convertable...
+        """
+        mr = getToolByName(self.context, 'mimetypes_registry')
+        try:
+            content_type = mr.lookup(self.context.content_type)
+        except MimeTypeException:
+            content_type = None
+        if not content_type:
+            logger.warning(CONTENT_TYPE_NOT_FOUND % self.context.absolute_url_path())
+            return False
+        # get printable extensions from collective.documentviewer
+        printableExtensions = self._documentViewerPrintableExtensions()
+
+        # mr.lookup returns a list
+        extensions = content_type[0].extensions
+        # now that we have the extensions, find the one we are using
+        currentExtension = ''
+        # in case we have myimage.JPG, make sure extension is lowercase as
+        # extentions on mimetypes_registry are lowercase...
+        try:
+            filename = self.context.getFilename()
+        except AttributeError:
+            filename = self.context.getFile().filename
+        file_extension = filename.split('.')[-1].lower()
+        for extension in extensions:
+            if file_extension == extension:
+                currentExtension = extension
+                break
+
+        # if we found the exact extension we are using, we can see if it is in the list
+        # of printable extensions provided by collective.documentviewer
+        # most of times, this is True...
+        if currentExtension in printableExtensions:
+            return True
+        if not currentExtension:
+            logger.warning(FILE_EXTENSION_NOT_FOUND % (self.context.absolute_url_path(),
+                                                       content_type[0]))
+
+        # if we did not find the currentExtension in the mimetype's extensions,
+        # for example an uploaded element without extension, check nevertheless
+        # if the mimetype seems to be managed by collective.documentviewer
+        if set(extensions).intersection(set(printableExtensions)):
+            return True
+
+        return False
+
+    def conversionFailed(self):
+        """
+          Check if conversion failed
+        """
+        annotations = IAnnotations(self.context)
+        if 'collective.documentviewer' in annotations and \
+           'successfully_converted' in annotations['collective.documentviewer'] and \
+           annotations['collective.documentviewer']['successfully_converted'] is False:
+            return True
+        return False
+
+    def _documentViewerPrintableExtensions(self):
+        """
+          Compute file extensions that will be considered as printable.
+        """
+        from collective.documentviewer.config import CONVERTABLE_TYPES
+        printableExtensions = []
+        for convertable_type in CONVERTABLE_TYPES.iteritems():
+            printableExtensions.extend(convertable_type[1].extensions)
+        return printableExtensions
+
+    def conversionStatus(self):
+        """
+          Returns the conversion status of current MeetingFile.
+          Status can be :
+          - not_convertable : the MeetingFile is not convertable by collective.documentviewer
+          - under_conversion : or awaiting conversion, the MeetingFile is convertable but is not yet converted
+          - conversion_error : there was an error during MeetingFile conversion.  Manager have access in the UI to more infos
+          - successfully_converted : the MeetingFile is converted correctly
+        """
+        annotations = IAnnotations(self.context)
+        # not_convertable or awaiting conversion?
+        if not 'collective.documentviewer' in annotations.keys() or not self.isConvertable():
+            return 'not_convertable'
+        # under conversion?
+        if not 'successfully_converted' in annotations['collective.documentviewer']:
+            return 'under_conversion'
+
+        if not annotations['collective.documentviewer']['successfully_converted'] is True:
+            return 'conversion_error'
+
+        return 'successfully_converted'
+
 
 class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
     """
@@ -292,8 +398,8 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
     """
       Manage the mayDelete for Meeting.
       - must have 'Delete objects' on the meeting;
-      - must be 'Manager' to remove 'wholeMeeting';
-      - meeting must be empty to be removed.
+      - if user is Manager, this will remove the meeting including items;
+      - if user is MeetingManager, the meeting must be empty to be removed.
     """
     def __init__(self, context):
         self.context = context
@@ -303,15 +409,12 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         if not super(MeetingContentDeletableAdapter, self).mayDelete():
             return False
 
-        if 'wholeMeeting' in self.context.REQUEST:
-            member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
-            # if we try to remove a 'Meeting' using the 'wholeMeeting' option
-            # we need to check that current user is a 'Manager'
-            if member.has_role('Manager'):
-                return True
-        else:
-            if not self.context.getRawItems():
-                return True
+        if not self.context.getRawItems():
+            return True
+
+        member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+        if member.has_role('Manager'):
+            return True
 
 
 class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
@@ -330,7 +433,161 @@ class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
         return False
 
 
-class PMHistoryAdapter(ImioHistoryAdapter):
+class PMPrettyLinkAdapter(PrettyLinkAdapter):
+    """
+      Override to take into account PloneMeeting use cases...
+    """
+
+    def _leadingIcons(self):
+        """
+          Manage icons to display before the icons managed by PrettyLink._icons.
+        """
+        res = []
+        if not self.context.meta_type == 'MeetingItem':
+            return res
+
+        meeting = getCurrentMeetingObject(self.context)
+        inAvailableItems = False
+        if meeting:
+            inAvailableItems = meeting._displayingAvailableItems()
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        usedItemAttributes = cfg.getUsedItemAttributes()
+
+        if inAvailableItems:
+            # Item is in the list of available items, check if we
+            # must show a deadline- or late-related icon.
+            if self.context.wfConditions().isLateFor(meeting):
+                # A late item, or worse: a late item not respecting the freeze
+                # deadline.
+                if meeting.attributeIsUsed('deadlineFreeze') and \
+                   not self.context.lastValidatedBefore(meeting.getDeadlineFreeze()):
+                    res.append(('deadlineKo.png', translate('icon_help_publish_freeze_ko',
+                                                            domain="PloneMeeting",
+                                                            context=self.request)))
+                else:
+                    res.append(('late.png', translate('icon_help_late',
+                                                      domain="PloneMeeting",
+                                                      context=self.request)))
+            elif (meeting.queryState() == 'created') and \
+                    meeting.attributeIsUsed('deadlinePublish') and \
+                    not self.context.lastValidatedBefore(meeting.getDeadlinePublish()):
+                res.append(('deadlineKo.png', translate('icon_help_publish_deadline_ko',
+                                                        domain="PloneMeeting",
+                                                        context=self.request)))
+
+        itemState = self.context.queryState()
+        if itemState == 'delayed':
+            res.append(('delayed.png', translate('icon_help_delayed',
+                                                 domain="PloneMeeting",
+                                                 context=self.request)))
+        elif itemState == 'refused':
+            res.append(('refused.png', translate('icon_help_refused',
+                                                 domain="PloneMeeting",
+                                                 context=self.request)))
+        elif itemState == 'returned_to_proposing_group':
+            res.append(('return_to_proposing_group.png', translate('icon_help_returned_to_proposing_group',
+                                                                   domain="PloneMeeting",
+                                                                   context=self.request)))
+        elif itemState == 'prevalidated':
+            res.append(('prevalidate.png', translate('icon_help_prevalidated',
+                                                     domain="PloneMeeting",
+                                                     context=self.request)))
+        elif itemState == 'accepted_but_modified':
+            res.append(('accepted_but_modified.png', translate('icon_help_accepted_but_modified',
+                                                               domain="PloneMeeting",
+                                                               context=self.request)))
+        elif itemState == 'pre_accepted':
+            res.append(('pre_accepted.png', translate('icon_help_pre_accepted',
+                                                      domain="PloneMeeting",
+                                                      context=self.request)))
+
+        # Display icons about sent/cloned to other meetingConfigs
+        clonedToOtherMCIds = self.context._getOtherMeetingConfigsImAmClonedIn()
+        for clonedToOtherMCId in clonedToOtherMCIds:
+            # Append a tuple with name of the icon and a list containing
+            # the msgid and the mapping as a dict
+            res.append(("%s.png" %
+                        cfg._getCloneToOtherMCActionId(clonedToOtherMCId, cfg.getId()),
+                        translate('sentto_othermeetingconfig',
+                                  mapping={
+                                  'meetingConfigTitle': getattr(tool,
+                                                                clonedToOtherMCId).Title()},
+                                  domain="PloneMeeting",
+                                  context=self.request)))
+        # if not already cloned to another mc, maybe it will be?
+        if not clonedToOtherMCIds:
+            otherMeetingConfigsClonableTo = self.context.getOtherMeetingConfigsClonableTo()
+            for otherMeetingConfigClonableTo in otherMeetingConfigsClonableTo:
+                # Append a tuple with name of the icon and a list containing
+                # the msgid and the mapping as a dict
+                res.append(("will_be_%s.png" %
+                            cfg._getCloneToOtherMCActionId(otherMeetingConfigClonableTo, cfg.getId()),
+                            translate('will_be_sentto_othermeetingconfig',
+                                      mapping={
+                                      'meetingConfigTitle': getattr(tool,
+                                                                    otherMeetingConfigClonableTo).Title()},
+                                      domain="PloneMeeting",
+                                      context=self.request)))
+
+        # display icons if element is down the workflow or up for at least second time...
+        # display it only for items before state 'validated'
+        downOrUpWorkflowAgain = self.context.downOrUpWorkflowAgain()
+        if downOrUpWorkflowAgain == "down":
+            res.append(('wf_down.png', translate('icon_help_wf_down',
+                                                 domain="PloneMeeting",
+                                                 context=self.request)))
+        elif downOrUpWorkflowAgain == "up":
+            res.append(('wf_up.png', translate('icon_help_wf_up',
+                                               domain="PloneMeeting",
+                                               context=self.request)))
+
+        # In some cases, it does not matter if an item is inMeeting or not.
+        if 'oralQuestion' in usedItemAttributes:
+            if self.context.getOralQuestion():
+                res.append(('oralQuestion.png', translate('this_item_is_an_oral_question',
+                                                          domain="PloneMeeting",
+                                                          context=self.request)))
+        if 'emergency' in usedItemAttributes:
+            # display an icon if emergency asked/accepted/refused
+            itemEmergency = self.context.getEmergency()
+            if itemEmergency == 'emergency_asked':
+                res.append(('emergency_asked.png', translate('emergency_asked',
+                                                             domain="PloneMeeting",
+                                                             context=self.request)))
+            elif itemEmergency == 'emergency_accepted':
+                res.append(('emergency_accepted.png', translate('emergency_accepted',
+                                                                domain="PloneMeeting",
+                                                                context=self.request)))
+            elif itemEmergency == 'emergency_refused':
+                res.append(('emergency_refused.png', translate('emergency_refused',
+                                                               domain="PloneMeeting",
+                                                               context=self.request)))
+        if 'takenOverBy' in usedItemAttributes:
+            takenOverBy = self.context.getTakenOverBy()
+            if takenOverBy:
+                # if taken over, display a different icon if taken over by current user or not
+                takenOverByCurrentUser = self.request['AUTHENTICATED_USER'].getId() == takenOverBy and True or False
+                iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
+                res.append((iconName, translate(u'Taken over by ${fullname}',
+                                                domain="PloneMeeting",
+                                                mapping={'fullname': safe_unicode(tool.getUserName(takenOverBy))},
+                                                context=self.request)))
+        return res
+
+
+class PMCustomViewFieldsVocabularyAdapter(CustomViewFieldsVocabularyAdapter):
+    """Add some additional fields."""
+
+    def additionalViewFields(self):
+        """See docstring in interfaces.py."""
+        additionalFields = super(PMCustomViewFieldsVocabularyAdapter, self).additionalViewFields()
+        additionalFields.add('proposing_group_acronym', 'Proposing group acronym')
+        additionalFields.add('advices', 'Advices')
+        return additionalFields
+
+
+class PMHistoryAdapter(ImioWfHistoryAdapter):
     """
       Override the imio.history ImioHistoryAdapter.
     """
@@ -362,3 +619,343 @@ class PMHistoryAdapter(ImioHistoryAdapter):
     def getHistory(self, checkMayView=True):
         """Override getHistory because it manages data changes."""
         return self.context.getHistory(checkMayView=checkMayView)
+
+
+class Criteria(eeaCriteria):
+    """
+      Override method that gets criteria to be able to manage various use cases :
+      - for meetings : get the criteria from the MeetingConfig (searches_items) and filter
+        out elements not in MeetingConfig.getDashboardAvailableItemsFilters and not in
+        MeetingConfig.getDashboardPresentedItemsFilters;
+      - for listing of items : filter out criteria no in MeetingConfig.getDashboardItemsFilters;
+      - for listing of meetings : filter out criteria no in MeetingConfig.getDashboardMeetingsFilters.
+    """
+
+    def __init__(self, context):
+        """ """
+        super(Criteria, self).__init__(context)
+        if 'portal_plonemeeting' in context.absolute_url():
+            return
+        tool = getToolByName(context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        if not cfg:
+            return
+        # meeting view
+        kept_filters = []
+        resultsperpagedefault = "20"
+        if IMeeting.providedBy(context):
+            self.context = cfg.searches.searches_items
+            if context._displayingAvailableItems():
+                kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
+                resultsperpagedefault = cfg.getMaxShownAvailableItems()
+            else:
+                kept_filters = cfg.getDashboardMeetingLinkedItemsFilters()
+                resultsperpagedefault = cfg.getMaxShownMeetingItems()
+        else:
+            # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
+            self.context = context
+            resultsperpagedefault = cfg.getMaxShownListings()
+            if IFacetedNavigable.providedBy(context):
+                # listings of items has some configuration but not listings of meetings
+                if context.getId() == 'searches_items':
+                    kept_filters = cfg.getDashboardItemsListingsFilters()
+                else:
+                    return
+        self.criteria = self._criteria()
+
+        res = PersistentList()
+        for criterion in self.criteria:
+            if criterion.section != u'advanced' or \
+               criterion.__name__ in kept_filters:
+                res.append(criterion)
+            # manage default value for the 'resultsperpage' criterion
+            if criterion.widget == ResultsPerPageWidget.widget_type:
+                criterion.default = resultsperpagedefault
+
+        self.criteria = res
+
+
+class CompoundCriterionBaseAdapter(object):
+
+    def __init__(self, context):
+        self.context = context
+        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+    @property
+    def query(self):
+        ''' '''
+        return {}
+
+
+class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items of groups of the current user, no matter wich suffix
+           of the group the user is in.'''
+        userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser()]
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'getProposingGroup': userGroupIds}
+
+
+class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items that current user take over.'''
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'getTakenOverBy': member.getId()}
+
+
+class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user is in copyGroups.'''
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        groupsTool = getToolByName(self.context, 'portal_groups')
+        member = membershipTool.getAuthenticatedMember()
+        userGroups = groupsTool.getGroupsForPrincipal(member)
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'getCopyGroups' use 'OR' by default
+                'getCopyGroups': userGroups}
+
+
+class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Return a list of items that the user can validate regarding his highest hierarchic level.
+           So if a user is 'prereviewer' and 'reviewier', the search will only return items
+           in state corresponding to his 'reviewer' role.'''
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        groupsTool = getToolByName(self.context, 'portal_groups')
+        groupIds = groupsTool.getGroupsForPrincipal(member)
+        res = []
+        highestReviewerLevel = self.cfg._highestReviewerLevel(groupIds)
+        if not highestReviewerLevel:
+            # in this case, we do not want to display a result
+            # we return an unknown review_state
+            return {'review_state': ['unknown_review_state', ]}
+        for groupId in groupIds:
+            if groupId.endswith('_%s' % highestReviewerLevel):
+                # append group name without suffix
+                res.append(groupId[:-len('_%s' % highestReviewerLevel)])
+        review_state = MEETINGREVIEWERS[highestReviewerLevel]
+        # specific management for workflows using the 'pre_validation' wfAdaptation
+        if highestReviewerLevel == 'reviewers' and \
+           ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+           'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+            review_state = 'prevalidated'
+
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'getProposingGroup': res,
+                'review_state': review_state}
+
+
+class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''This will check for user highest reviewer level of each of his groups and return these items and
+           items of lower reviewer levels.
+           This search works if the workflow manage reviewer levels where higher reviewer level
+           can validate lower reviewer levels EVEN IF THE USER IS NOT IN THE CORRESPONDING PLONE SUBGROUP.
+           For example with a 3 levels reviewer workflow, called review1 (lowest level), review2 and review3 (highest level) :
+           - reviewer1 may validate items in reviewer1;
+           - reviewer2 may validate items in reviewer1 and reviewer2;
+           - reviewer3 may validate items in reviewer1, reviewer2 and reviewer3.
+           So get highest hierarchic level of each group of the user and take into account lowest levels too.'''
+        # search every highest reviewer level for each group of the user
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        groupsTool = getToolByName(self.context, 'portal_groups')
+        userMeetingGroups = self.tool.getGroupsForUser()
+        member = membershipTool.getAuthenticatedMember()
+        groupIds = groupsTool.getGroupsForPrincipal(member)
+        reviewProcessInfos = []
+        for mGroup in userMeetingGroups:
+            ploneGroups = []
+            # find Plone groups of the mGroup the user is in
+            mGroupId = mGroup.getId()
+            for groupId in groupIds:
+                if groupId.startswith('%s_' % mGroupId):
+                    ploneGroups.append(groupId)
+            # now that we have Plone groups of the mGroup
+            # we can get highest hierarchic level and find sub levels
+            highestReviewerLevel = self.cfg._highestReviewerLevel(ploneGroups)
+            if not highestReviewerLevel:
+                continue
+            foundLevel = False
+            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
+                if not foundLevel and not reviewer_suffix == highestReviewerLevel:
+                    continue
+                foundLevel = True
+                # specific management for workflows using the 'pre_validation'/'pre_validation_keep_reviewer_permissions' wfAdaptation
+                if reviewer_suffix == 'reviewers' and \
+                   ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+                   'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+                    review_state = 'prevalidated'
+                reviewProcessInfos.append('%s__reviewprocess__%s' % (mGroupId,
+                                                                     review_state))
+        if not reviewProcessInfos:
+            # in this case, we do not want to display a result
+            # we return an unknown review_state
+            return {'review_state': ['unknown_review_state', ]}
+
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'reviewProcessInfo': reviewProcessInfos}
+
+
+class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Return a list of items that the user could validate.  So it returns every items the current
+           user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
+           and 'reviewer' for a group, the search will return items in both states.'''
+        membershipTool = getToolByName(self.context, 'portal_membership')
+        groupsTool = getToolByName(self.context, 'portal_groups')
+        member = membershipTool.getAuthenticatedMember()
+        groupIds = groupsTool.getGroupsForPrincipal(member)
+        reviewProcessInfos = []
+        for groupId in groupIds:
+            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
+                # current user may be able to validate at at least
+                # one level of the entire validation process, we take it into account
+                if groupId.endswith('_%s' % reviewer_suffix):
+                    # specific management for workflows using the 'pre_validation' wfAdaptation
+                    if reviewer_suffix == 'reviewers' and \
+                       ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+                       'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+                        review_state = 'prevalidated'
+                    reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
+                                                                         review_state))
+        if not reviewProcessInfos:
+            # in this case, we do not want to display a result
+            # we return an unknown review_state
+            return {'review_state': ['unknown_review_state', ]}
+
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'reviewProcessInfo': reviewProcessInfos}
+
+
+class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user must give an advice.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
+        # this search will return 'not delay-aware' and 'delay-aware' advices
+        groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
+                   ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
+                   [g.getId() + '_advice_asked_again' for g in groups] + \
+                   ['delay__' + g.getId() + '_advice_asked_again' for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user must give an advice without delay.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
+        # this search will only return 'not delay-aware' advices
+        groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
+                   [g.getId() + '_advice_asked_again' for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user must give an advice with delay.'''
+
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
+        # this search will only return 'delay-aware' advices
+        groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
+                   ['delay__' + g.getId() + '_advice_asked_again' for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items for which the current user must give an advice with exceeded delay.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
+        # this search will only return 'delay-aware' advices for wich delay is exceeded
+        groupIds = ['delay__' + g.getId() + '_advice_delay_exceeded' for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries items for which an advice has been given.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # advised items are items that has an advice in a particular review_state
+        # just append every available meetingadvice state: we want "given" advices.
+        # this search will return every advices
+        wfTool = getToolByName(self.context, 'portal_workflow')
+        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
+        adviceStates = adviceWF.states.keys()
+        groupIds = []
+        for adviceState in adviceStates:
+            groupIds += [g.getId() + '_%s' % adviceState for g in groups]
+            groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries items for which an advice has been given with delay.'''
+        groups = self.tool.getGroupsForUser(suffix='advisers')
+        # advised items are items that has an advice in a particular review_state
+        # just append every available meetingadvice state: we want "given" advices.
+        # this search will only return 'delay-aware' advices
+        wfTool = getToolByName(self.context, 'portal_workflow')
+        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
+        adviceStates = adviceWF.states.keys()
+        groupIds = []
+        for adviceState in adviceStates:
+            groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
+        # Create query parameters
+        return {'portal_type': self.cfg.getItemTypeName(),
+                # KeywordIndex 'indexAdvisers' use 'OR' by default
+                'indexAdvisers': groupIds}
+
+
+class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries decided items.'''
+        return {'portal_type': self.cfg.getItemTypeName(),
+                'review_state': self.cfg.getItemDecidedStates()}

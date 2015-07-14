@@ -42,7 +42,7 @@ class testWorkflows(PloneMeetingTestCase):
        to do so (getSecurityManager().checkPermission).'''
 
     def test_pm_CreateItem(self):
-        '''Creates an item (in "created" state) and checks that only
+        '''Creates an item (in "itemcreated" state) and checks that only
            allowed persons may see this item.'''
         # Create an item as creator
         self.changeUser('pmCreator2')
@@ -52,13 +52,18 @@ class testWorkflows(PloneMeetingTestCase):
         # May the creator see his item ?
         self.failUnless(self.hasPermission('View', item))
         self.failUnless(self.hasPermission('Access contents information', item))
-        myItems = self.meetingConfig.topics.searchmyitems.queryCatalog()
-        self.failIf(len(myItems) != 1)
+        pmFolder = self.tool.getPloneMeetingFolder(self.meetingConfig.getId())
+        myItems = pmFolder.searches_items.searchmyitems.getQuery()
+        self.assertEquals(len(myItems), 1)
         self.changeUser('pmManager')
         # The manager may not see the item yet except if item is already 'validated'
         # this could be the case if item initial_state is 'validated' or when using
         # wfAdaptation 'items_come_validated'
-        allItems = self.meetingConfig.topics.searchallitems.queryCatalog()
+        pmFolder = self.tool.getPloneMeetingFolder(self.meetingConfig.getId())
+        collection = pmFolder.searches_items.searchallitems
+        self.request['PATH_TRANSLATED'] = "{0}/{1}".format(pmFolder.searches_items.absolute_url(),
+                                                           pmFolder.searches_items.getLayout())
+        allItems = collection.getQuery()
         numberOfFoundItems = 0
         if item.queryState() == 'validated':
             numberOfFoundItems = 1
@@ -72,10 +77,10 @@ class testWorkflows(PloneMeetingTestCase):
         parentFolder = item.getParentNode()
         # test that we can remove an empty item...
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
-        self.failIf(len(parentFolder.objectValues()) != 0)
+        self.failIf(len(parentFolder.objectValues('MeetingItem')) != 0)
         # test removal of an item with annexes
         item = self.create('MeetingItem')
-        annex1 = self.addAnnex(item)
+        self.addAnnex(item)
         self.changeUser('pmCreator1b')
         annex2 = self.addAnnex(item)
         self.failIf(len(item.objectValues()) != 2)
@@ -90,9 +95,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), item.UID())
         # but a super user could
         self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(annex1.UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
-        self.failIf(len(parentFolder.objectValues()) != 0)
+        self.failIf(len(parentFolder.objectValues('MeetingItem')) != 0)
 
     def test_pm_RemoveContainer(self):
         '''We avoid a strange behaviour of Plone.  Removal of a container
@@ -112,36 +116,41 @@ class testWorkflows(PloneMeetingTestCase):
                           pmManagerFolder)
         # check that @@delete_givenuid add relevant portalMessage
         statusMessages = IStatusMessage(self.portal.REQUEST)
-        # for now we have no message
-        self.assertEquals(len(statusMessages.show()), 0)
+        # for now we have one message saying that faceted navigation was enabled...
+        messages = statusMessages.show()
+        self.assertEquals(len(messages), 1)
+        self.assertTrue(messages[0].message == u'Faceted navigation enabled')
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
         # @@delete_givenuid added one statusMessage about BeforeDeleteException
-        self.assertEquals(len(statusMessages.show()), 1)
-        self.assertEquals(statusMessages.show()[0].message, u'can_not_delete_meetingitem_container')
+        messages = statusMessages.show()
+        self.assertEquals(len(messages), 1)
+        self.assertEquals(messages[0].message, u'can_not_delete_meetingitem_container')
         # The folder should not have been deleted...
         self.failUnless(hasattr(pmManagerFolder, item.getId()))
         # Try with a meeting in it now
-        meetingDate = DateTime('2008/06/12 08:00:00')
-        meeting = self.create('Meeting', date=meetingDate)
+        meeting = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
         self.assertRaises(BeforeDeleteException,
                           unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         self.failUnless(hasattr(pmManagerFolder, item.getId()))
         self.failUnless(hasattr(pmManagerFolder, meeting.getId()))
-        self.assertEquals(len(pmManagerFolder.objectValues()), 2)
+        self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 1)
+        self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 1)
         # Now, remove things in the good order. Remove the item and check
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.changeUser('admin')
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.changeUser('pmManager')
-        self.assertEquals(len(pmManagerFolder.objectValues()), 1)
+        self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 0)
+        self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 1)
         # Try to remove the folder again but with a contained meeting only
         self.assertRaises(BeforeDeleteException,
                           unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         # Remove the meeting
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
-        self.assertEquals(len(pmManagerFolder.objectValues()), 0)
+        self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 0)
+        self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 0)
         # Check that now that the pmManagerFolder is empty, we can remove it.
         pmManagerFolderParent = pmManagerFolder.getParentNode()
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
@@ -211,7 +220,6 @@ class testWorkflows(PloneMeetingTestCase):
         # So now I should have 5 normal items (do not forget the autoadded
         # recurring item) and no late item
         self.failIf(len(meeting.getItems()) != 5)
-        self.failIf(len(meeting.getLateItems()) != 0)
         # pmReviewer1 now adds an annex to item1
         self.changeUser('pmReviewer1')
         self.addAnnex(item1)
@@ -368,6 +376,8 @@ class testWorkflows(PloneMeetingTestCase):
 
     def test_pm_RecurringItems(self):
         '''Tests the recurring items system.'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                                          'reverse': '0'}, ))
         self._setupRecurringItems()
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
@@ -376,36 +386,32 @@ class testWorkflows(PloneMeetingTestCase):
             self.assertEquals(item.getOwner().getId(), 'pmManager')
         # 1 recurring item is inserted at meeting creation
         self.failIf(len(meeting.getItems()) != 3)
-        self.failIf(len(meeting.getLateItems()) != 0)
         # meeting has not already been frozen, so when publishing, the added recurring
         # item is considered as a normal item
         self.publishMeeting(meeting)
         self.failIf(len(meeting.getItems()) != 4)
-        self.failIf(len(meeting.getLateItems()) != 0)
+        self.assertFalse(meeting.getItems(ordered=True)[-1].isLate())
         # now freeze the meeting, future added items will be considered as late
         self.freezeMeeting(meeting)
-        self.failIf(len(meeting.getItems()) != 4)
-        self.failIf(len(meeting.getLateItems()) != 1)
+        self.failIf(len(meeting.getItems()) != 5)
+        self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
         # Back to created: rec item 2 is not inserted.
-        # We can not 'backToCreated' a meeting if some late items are into it...
-        self.portal.restrictedTraverse('@@delete_givenuid')(meeting.getLateItems()[0].UID())
         self.backToState(meeting, 'created')
-        self.failIf(len(meeting.getItems()) != 4)
-        self.failIf(len(meeting.getLateItems()) != 0)
+        self.failIf(len(meeting.getItems()) != 5)
         # a recurring item can be added several times...
         self.freezeMeeting(meeting)
         # one normal recurring item is added when meeting is published, and so meeting still not frozen
-        self.failIf(len(meeting.getItems()) != 5)
         # and one recurring item is added when meeting is frozen, so item considered as late
-        self.failIf(len(meeting.getLateItems()) != 1)
+        self.failIf(len(meeting.getItems()) != 7)
+        self.assertFalse(meeting.getItems(ordered=True)[-2].isLate())
+        self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
         # an item need a decisionText to be decided...
-        for item in (meeting.getItems() + meeting.getLateItems()):
+        for item in (meeting.getItems()):
             item.setDecision(self.decisionText)
         self.decideMeeting(meeting)
         # a recurring item is added during the 'decide' transition
-        self.failIf(len(meeting.getItems()) != 5)
-        # one additional recurring item is added when meeting is decided
-        self.failIf(len(meeting.getLateItems()) != 2)
+        self.failIf(len(meeting.getItems()) != 8)
+        self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
 
     def test_pm_NoDefinedRecurringItems(self):
         '''When no recurring items exist in the meetingConfig, we can add a meeting,
@@ -414,7 +420,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._removeConfigObjectsFor(self.meetingConfig)
         meetingWithoutRecurringItems = self.create('Meeting', date='2008/12/11 09:00:00')
-        self.assertTrue(meetingWithoutRecurringItems.getAllItems() == [])
+        self.assertTrue(meetingWithoutRecurringItems.getItems() == [])
 
     def test_pm_RecurringItemsBypassSecutiry(self):
         '''Tests that recurring items are addable by a MeetingManager even if by default,
@@ -444,8 +450,8 @@ class testWorkflows(PloneMeetingTestCase):
             self.assertTrue(len(availableTransitions) == 1 and availableTransitions[0]['id'].startswith('back'))
         # now, create a meeting, the item is correctly added no matter MeetingManager could not validate it
         meeting = self.create('Meeting', date=DateTime('2013/01/01'))
-        self.assertTrue(len(meeting.getAllItems()) == 1)
-        self.assertTrue(meeting.getAllItems()[0].getProposingGroup() == 'developers')
+        self.assertTrue(len(meeting.getItems()) == 1)
+        self.assertTrue(meeting.getItems()[0].getProposingGroup() == 'developers')
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted
@@ -466,7 +472,7 @@ class testWorkflows(PloneMeetingTestCase):
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
         # after every recurring items have been inserted, the last is the 'secret' one
         self.assertTrue(len(meeting.getItems()) == 3)
-        self.assertTrue(meeting.getItemsInOrder()[-1].getPrivacy() == 'secret')
+        self.assertTrue(meeting.getItems(ordered=True)[-1].getPrivacy() == 'secret')
 
     def test_pm_RecurringItemsWithWrongTransitionsForPresentingAnItem(self):
         '''Tests the recurring items system when using a wrong MeetingConfig.transitionsForPresentingAnItem.'''

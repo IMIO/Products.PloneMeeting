@@ -8,21 +8,49 @@
 #
 
 from zope.annotation import IAnnotations
+from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
+from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
+from collective.eeafaceted.collectionwidget.browser.views import RenderTermView
+from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
+from collective.eeafaceted.z3ctable.columns import ColorColumn
+from collective.eeafaceted.z3ctable.columns import I18nColumn
+from collective.eeafaceted.z3ctable.columns import VocabularyColumn
+from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.actionspanel.browser.views import ActionsPanelView
-from imio.actionspanel.browser.views import DeleteGivenUidView
+from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.history.browser.views import IHDocumentBylineViewlet
 
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CPUtils.Extensions.utils import check_zope_admin
+from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
+from Products.PloneMeeting.columns import ItemNumberColumn
+from Products.PloneMeeting.columns import MeetingCheckBoxColumn
+from Products.PloneMeeting.columns import PMPrettyLinkColumn
+from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+
+
+class PMFolderContentsView(FolderContentsView):
+    """
+      Overrides the FolderContentsView __init__ to not mark
+      the request with the IContentsPage interface supposed to hide
+      the actions menu on the folder_contents view because as we have folder_contents
+      in the available view methods on Folder, __init__ is called in getAvailableLayouts
+      and the 'action' menu is always hidden...
+    """
+
+    def __init__(self, context, request):
+        super(FolderContentsView, self).__init__(context, request)
+        #alsoProvides(request, IContentsPage)
 
 
 class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
@@ -79,8 +107,6 @@ class PloneMeetingDocumentBylineViewlet(IHDocumentBylineViewlet):
       Overrides the IHDocumentBylineViewlet to hide it for some layouts.
     '''
 
-    index = ViewPageTemplateFile("templates/document_byline.pt")
-
     def show(self):
         oldShow = super(PloneMeetingDocumentBylineViewlet, self).show()
         if not oldShow:
@@ -89,7 +115,7 @@ class PloneMeetingDocumentBylineViewlet(IHDocumentBylineViewlet):
             # add our own conditions
             # the documentByLine should be hidden on some layouts
             currentLayout = self.context.getLayout()
-            if currentLayout in ['meetingfolder_redirect_view', ]:
+            if currentLayout in ['facetednavigation_view', ]:
                 return False
         return True
 
@@ -120,6 +146,149 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         return versions
 
 
+class PMFacetedContainerView(FacetedContainerView):
+    '''
+      Override to disable border on the meetingFolder view and to redirect to correct pmFolder
+      in case a user is sent to the pmFolder of another user.
+    '''
+
+    def __init__(self, context, request):
+        """Hide the green bar on the faceted if not in the configuration."""
+        super(PMFacetedContainerView, self).__init__(context, request)
+        if not 'portal_plonemeeting' in self.context.absolute_url() and \
+           not IMeeting.providedBy(self.context):
+            self.request.set('disable_border', 1)
+
+    def __call__(self):
+        """Make sure a user, even a Manager that is not the Zope Manager is redirected
+           to it's own pmFolder if it is on the pmFolder of another user."""
+        if not check_zope_admin():
+            if self.context.getProperty('meeting_config') and \
+               not self.context.getOwner().getId() == getToolByName(self.context, 'portal_membership').getAuthenticatedMember():
+                tool = getToolByName(self.context, 'portal_plonemeeting')
+                userPMFolder = tool.getPloneMeetingFolder(self.context.getProperty('meeting_config'))
+                self.request.RESPONSE.redirect(userPMFolder.absolute_url())
+        return super(PMFacetedContainerView, self).__call__()
+
+
+class PMRenderTermView(RenderTermView):
+
+    def __call__(self, term, category, widget):
+        self.term = term
+        self.category = category
+        self.widget = widget
+        catalog = getToolByName(self.context, 'portal_catalog')
+        self.collection = catalog(UID=term[0])[0].getObject()
+        # display the searchallmeetings as a selection list
+        collectionId = self.collection.getId()
+        if collectionId in ['searchallmeetings', 'searchlastdecisions']:
+            self.tool = getToolByName(self, 'portal_plonemeeting')
+            self.cfg = self.tool.getMeetingConfig(self.context)
+            self.brains = self.collection.getQuery()
+            return ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
+        return self.index()
+
+
+class PMRenderCategoryView(RenderCategoryView):
+    '''
+      Override the way a category is rendered in the portlet based on the
+      faceted collection widget so we can manage some usecases where icons
+      are displayed to add items or meetings.
+    '''
+
+    def __call__(self, category, widget):
+        self.category = category
+        self.widget = widget
+        self.tool = getToolByName(self, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+        if category[0] == 'searches_items':
+            return ViewPageTemplateFile("templates/category_meetingitems.pt")(self)
+        if category[0] == 'searches_meetings':
+            self.member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+            return ViewPageTemplateFile("templates/category_meetings.pt")(self)
+        else:
+            return self.index()
+
+    def templateItems(self):
+        '''Check if there are item templates defined or not.'''
+        return self.tool.getPloneMeetingFolder(self.cfg.getId()).restrictedTraverse('createitemfromtemplate').getItemTemplates()
+
+
+class FolderFacetedTableView(IDFacetedTableView):
+
+    def _manualColumnFor(self, colName):
+        """Manage our own columns."""
+        # we use our own column to manage the 'pretty_link'
+        if colName == u'pretty_link':
+            column = PMPrettyLinkColumn(self.context, self.request, self)
+        elif colName == u'getCategory':
+            column = VocabularyColumn(self.context, self.request, self)
+            column.vocabulary = u'Products.PloneMeeting.vocabularies.categoriesvocabulary'
+        elif colName == u'getProposingGroup':
+            column = VocabularyColumn(self.context, self.request, self)
+            column.vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+        elif colName == u'proposing_group_acronym':
+            column = VocabularyColumn(self.context, self.request, self)
+            column.attrName = 'getProposingGroup'
+            column.vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
+        elif colName == u'advices':
+            column = BrowserViewCallColumn(self.context, self.request, self)
+            column.view_name = 'advices-icons'
+        elif colName == u'privacy':
+            column = I18nColumn(self.context, self.request, self)
+            column.i18n_domain = 'PloneMeeting'
+        elif colName == u'toDiscuss':
+            column = BrowserViewCallColumn(self.context, self.request, self)
+            column.view_name = 'item-to-discuss'
+            column.header_image = 'toDiscussYes.png'
+        elif colName == u'getItemIsSigned':
+            column = BrowserViewCallColumn(self.context, self.request, self)
+            column.view_name = 'item-is-signed'
+            column.header_image = 'itemIsSignedYes.png'
+        elif colName == u'linkedMeetingDate':
+            column = ItemLinkedMeetingColumn(self.context, self.request, self)
+        elif colName == u'getPreferredMeetingDate':
+            column = ItemLinkedMeetingColumn(self.context, self.request, self)
+            column.meeting_uid_attr = 'getPreferredMeeting'
+        else:
+            column = super(FolderFacetedTableView, self)._manualColumnFor(colName)
+
+        return column
+
+
+class MeetingFacetedTableView(FolderFacetedTableView):
+
+    def _manualColumnFor(self, colName):
+        """Manage our own columns displayed on Meeting."""
+        if colName == u'pretty_link':
+            column = PMPrettyLinkColumn(self.context, self.request, self)
+        elif colName == u'getItemNumber':
+            column = ItemNumberColumn(self.context, self.request, self)
+            column.view_name = 'item-number'
+        elif colName == u'listType':
+            column = ColorColumn(self.context, self.request, self)
+            column.cssClassPrefix = 'meeting_item'
+        elif colName == u'check_box_item':
+            column = MeetingCheckBoxColumn(self.context, self.request, self)
+        else:
+            column = super(MeetingFacetedTableView, self)._manualColumnFor(colName)
+
+        # change parameters for actions, we want to showArrows
+        if colName == u'actions' and not self.context._displayingAvailableItems():
+            column.params['showArrows'] = True
+            column.params['totalNbOfItems'] = self.context.numberOfItems()
+
+        return column
+
+    def _getColumnFor(self, colName):
+        """Disable sorting for every columns."""
+        column = super(MeetingFacetedTableView, self)._getColumnFor(colName)
+        column.sort_index = -1
+        self.cssClasses['table'] = self.cssClasses['table'] + ' meeting_view'
+        return column
+
+
 class BaseActionsPanelView(ActionsPanelView):
     """
       Base mechanism for managing displayed actions.
@@ -129,7 +298,9 @@ class BaseActionsPanelView(ActionsPanelView):
     """
     def __init__(self, context, request):
         super(BaseActionsPanelView, self).__init__(context, request)
-        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste')
+        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste',
+                                  'faceted.disable', 'faceted.enable',
+                                  'faceted.search.disable', 'faceted.search.enable')
 
     def mayEdit(self):
         """
@@ -152,29 +323,6 @@ class BaseActionsPanelView(ActionsPanelView):
         if cfg:
             toConfirm = cfg.getTransitionsToConfirm()
         return toConfirm
-
-    def _redirectToViewableUrl(self):
-        """
-          Return the url the user must be redirected to.
-          This is relevant for Meeting and MeetingItem.
-        """
-        http_referer = self.request['HTTP_REFERER']
-        if http_referer.startswith(self.context.absolute_url()):
-            # we were on the item, redirect to user home page
-            mc = self.context.portal_plonemeeting.getMeetingConfig(self.context)
-            app = self.context.portal_plonemeeting.getPloneMeetingFolder(mc.id)
-            redirectToUrl = app.restrictedTraverse('@@meetingfolder_redirect_view').getFolderRedirectUrl()
-        else:
-            redirectToUrl = http_referer
-        return redirectToUrl
-
-    @memoize_contextless
-    def _goToReferer(self):
-        """
-          Override _goToReferer to take some specific PloneMeeting case into account.
-        """
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-        return tool.goToReferer()
 
 
 class MeetingItemActionsPanelView(BaseActionsPanelView):
@@ -210,6 +358,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
            - different item or user;
            - user groups changed;
            - if item query_state is 'validated', check also if it is presentable;
+           - we receive some kwargs when we want to 'showArrows';
            - finally, invalidate if annotations changed.'''
         meetingModified = ''
         meeting = self.context.getMeeting()
@@ -313,7 +462,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
            - meeting is modified (modified is also triggered when review_state changed);
-           - getRawItems or getRawLateItems changed;
+           - getRawItems changed;
            - different item or user;
            - user groups changed.'''
         user = self.request['AUTHENTICATED_USER']
@@ -323,7 +472,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
             invalidate_meeting_actions_panel_cache = True
             delattr(self.context, 'invalidate_meeting_actions_panel_cache')
-        return (self.context, self.context.modified(), self.context.getRawItems(), self.context.getRawLateItems(),
+        return (self.context, self.context.modified(), self.context.getRawItems(),
                 user.getId(), userGroups, userRoles, invalidate_meeting_actions_panel_cache,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
@@ -364,6 +513,15 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         if self.member.has_role('Manager'):
             return ViewPageTemplateFile("templates/actions_panel_deletewholemeeting.pt")(self)
 
+    def renderOwnDelete(self):
+        """
+          If user is Manager, this action is not available, he will use the 'delete whole meeting'.
+        """
+        if self.member.has_role('Manager'):
+            return ''
+        else:
+            return super(MeetingActionsPanelView, self).renderOwnDelete()
+
 
 class ConfigActionsPanelView(ActionsPanelView):
     """
@@ -391,6 +549,9 @@ class ConfigActionsPanelView(ActionsPanelView):
         folderId = self.folder.getId()
         if folderId == 'topics':
             return "../?pageName=gui#topics"
+        # searches
+        if folderId in ['meetingitems', 'meetings', 'decisions']:
+            return "../../?pageName=gui#searches"
         if folderId == 'podtemplates':
             return "../?pageName=doc#podtemplates"
         if folderId == 'meetingusers':
@@ -442,21 +603,3 @@ class ConfigActionsPanelView(ActionsPanelView):
           Is current element first id of folder container?
         """
         return bool(self.context.getId() == self.objectIds[0])
-
-
-class PMDeleteGivenUidView(DeleteGivenUidView):
-    '''Redefine the _findViewablePlace.'''
-
-    def _findViewablePlace(self, obj):
-        '''When removing an item/meeting from his view (not from a listing),
-           we need to compute exact back url because as the parent has a view that does
-           a redirection also, we loose portal_messages...  So here, we compute the
-           url the view of the parent would redirect to...
-        '''
-        tool = getToolByName(obj, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(obj)
-        # if we are outside PloneMeeting, then use default DeleteGivenUidView behaviour
-        if not cfg:
-            return super(PMDeleteGivenUidView, self)._findViewablePlace(obj)
-        app = tool.getPloneMeetingFolder(cfg.getId())
-        return app.restrictedTraverse('@@meetingfolder_redirect_view').getFolderRedirectUrl()

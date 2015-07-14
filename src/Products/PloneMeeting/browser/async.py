@@ -19,7 +19,7 @@ class Discuss(BrowserView):
     def isAsynchToggleEnabled(self):
         """
           Return True if the asynchronous call is enabled.
-          Indeed, in some case, it can be necessary to deactivate to asynchronous call
+          Indeed, in some case, it can be necessary to deactivate the asynchronous call
           so the page is reloaded entirely if some other area are updated after
           having toggled the toDiscuss value.
         """
@@ -102,8 +102,7 @@ class AnnexToPrint(BrowserView):
         self.portal = self.portal_state.portal()
 
     def toggle(self):
-        member = self.portal_state.member()
-        if not member.has_permission('Modify portal content', self.context):
+        if not self.context.adapted().mayChangeToPrint():
             raise Unauthorized
 
         try:
@@ -114,7 +113,7 @@ class AnnexToPrint(BrowserView):
             # check that this annex is printable
             # in case last conversion failed, we should not let the user
             # specify that the annex is toPrint
-            if self.context.conversionFailed():
+            if IAnnexable(self.context).conversionFailed():
                 raise Exception('This annex can not be printed because the conversion to a printable format failed!')
 
             if annexToPrint:
@@ -238,10 +237,7 @@ class AnnexIsConfidential(BrowserView):
         self.portal = self.portal_state.portal()
 
     def toggle(self):
-        member = self.portal_state.member()
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-        if not member.has_permission('Modify portal content', self.context) or \
-           not tool.isManager(self.context):
+        if not self.context.adapted().mayChangeConfidentiality():
             raise Unauthorized
 
         isConfidential = self.context.getIsConfidential()
@@ -274,7 +270,7 @@ class AdviceIsConfidential(BrowserView):
     """
       View that switch an advice 'isConfidential' attribute using an ajax call.
     """
-    IMG_TEMPLATE = u'<img class="adviceIsConfidentialEditable" src="%s" title="%s" name="%s" />'
+    IMG_TEMPLATE = u'<img src="%s" title="%s" name="%s" />'
 
     def __init__(self, context, request):
         self.context = context

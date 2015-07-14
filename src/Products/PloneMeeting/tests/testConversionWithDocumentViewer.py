@@ -57,11 +57,11 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         # default's file is a .txt
         annex1 = self.addAnnex(item)
         # first ensure that the annex is convertable
-        self.failUnless(annex1.isConvertable())
+        self.failUnless(IAnnexable(annex1).isConvertable())
         # now load a not convertable format
         self.annexFile = 'tests/file_unconvertableFormat.eml'
         annex2 = self.addAnnex(item)
-        self.failIf(annex2.isConvertable())
+        self.failIf(IAnnexable(annex2).isConvertable())
 
     def test_pm_IsConvertedAtCreation(self):
         '''An annex is converted at creation if it is specified in the configuration...'''
@@ -71,12 +71,12 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)
         # the annex is converted
-        self.assertTrue(annex1.conversionStatus() == 'successfully_converted')
+        self.assertTrue(IAnnexable(annex1).conversionStatus() == 'successfully_converted')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
         # disable annex preview, the annex will not be converted upon creation
         self.tool.setEnableAnnexPreview(False)
         annex2 = self.addAnnex(item)
-        self.assertFalse(annex2.conversionStatus() == 'successfully_converted')
+        self.assertFalse(IAnnexable(annex2).conversionStatus() == 'successfully_converted')
         self.assertFalse(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
 
     def test_pm_Convert(self):
@@ -90,27 +90,26 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)
         # the annex is converted
-        self.assertFalse(annex1.conversionFailed())
-        self.assertTrue(annex1.conversionStatus() == 'successfully_converted')
+        self.assertFalse(IAnnexable(annex1).conversionFailed())
+        self.assertTrue(IAnnexable(annex1).conversionStatus() == 'successfully_converted')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
         # while adding a not convertable format, nothing is converted
         self.annexFile = 'tests/file_unconvertableFormat.eml'
         annex2 = self.addAnnex(item)
-        self.assertFalse(annex2.conversionFailed())
-        self.assertTrue(annex2.conversionStatus() == 'not_convertable')
+        self.assertFalse(IAnnexable(annex2).conversionFailed())
+        self.assertTrue(IAnnexable(annex2).conversionStatus() == 'not_convertable')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'not_convertable')
         # a convertable format but an error during conversion, it adds a portal_message
         messages = IStatusMessage(self.request)
-        self.assertEquals(len(messages.show()), 0)
         self.annexFile = 'tests/file_errorDuringConversion.pdf'
         annex3 = self.addAnnex(item)
         # the element is convertable
-        self.failUnless(annex3.isConvertable())
+        self.failUnless(IAnnexable(annex3).isConvertable())
         # but there was an error during conversion
-        self.assertTrue(annex3.conversionStatus() == 'conversion_error')
+        self.assertTrue(IAnnexable(annex3).conversionStatus() == 'conversion_error')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'conversion_error')
         self.assertTrue(messages.show()[-1].message == CONVERSION_ERROR)
-        self.assertTrue(annex3.conversionFailed())
+        self.assertTrue(IAnnexable(annex3).conversionFailed())
 
     def test_pm_ForceConversion(self):
         '''
@@ -128,11 +127,11 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)
         # this is not converted
-        self.assertFalse(annex1.conversionStatus() == 'successfully_converted')
+        self.assertFalse(IAnnexable(annex1).conversionStatus() == 'successfully_converted')
         self.assertFalse(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
         # if we specify that this annex needs to be printed, it will be converted
         annex1.setToPrint(True)
-        self.assertTrue(annex1.conversionStatus() == 'successfully_converted')
+        self.assertTrue(IAnnexable(annex1).conversionStatus() == 'successfully_converted')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
         self.changeUser('admin')
         # specify that annexes are toPrint by default
@@ -140,7 +139,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         self.changeUser('pmManager')
         annex2 = self.addAnnex(item)
         # this is actually converted
-        self.assertTrue(annex2.conversionStatus() == 'successfully_converted')
+        self.assertTrue(IAnnexable(annex2).conversionStatus() == 'successfully_converted')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
 
     def test_pm_AnnexesOfClonedItemAreConverted(self):
@@ -152,11 +151,11 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         # annex1 has been converted successfully
-        self.failUnless(annex.conversionStatus() is 'successfully_converted')
+        self.failUnless(IAnnexable(annex).conversionStatus() is 'successfully_converted')
         # now duplicate the item and check annexes
         clonedItem = item.clone()
         clonedAnnex = clonedItem.objectValues('MeetingFile')[0]
-        self.failUnless(clonedAnnex.conversionStatus() is 'successfully_converted')
+        self.failUnless(IAnnexable(clonedAnnex).conversionStatus() is 'successfully_converted')
         # make sure also it has really been converted, aka the last_updated
         # value in c.documentviewer annotations is differents from original annex one
         annexAnnotations = IAnnotations(annex)['collective.documentviewer']

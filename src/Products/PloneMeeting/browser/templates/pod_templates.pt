@@ -1,4 +1,4 @@
-<div i18n:domain="PloneMeeting" align="right" style="margin-bottom: 0.4em"
+<div i18n:domain="PloneMeeting" align="right"
      tal:define="tool view/getPloneMeetingTool;
                  meetingConfig view/getCurrentMeetingConfig;
                  portal_url view/getPortalUrl;
@@ -18,22 +18,26 @@
         theForm.submit();
       }
       else {
-        var uidList = '';
-        var atLeastOneSelected = false;
-        for (var uid in itemUids) {
-
-          if ((typeof itemUids[uid] == 'boolean') && itemUids[uid]) {
-              atLeastOneSelected = true;
-              uidList += uid + ',';
-          }
-        }
-        if (! atLeastOneSelected) {
+        var uids = selectedCheckBoxes('select_item');
+        if (!uids.length) {
           alert(no_selected_items);
         }
         else {
           // Update the form and submit it.
           theForm.templateId.value = templateId;
-          theForm.itemUids.value = uidList;
+          // if we unselected some checkboxes, we passs uids
+          // else, we pass nothing, it is as if we did selected everything
+          if ($('input[name="select_item"]').length === uids.length) {
+            uids = [];
+          }
+          // pass the facetedquery if we used it, aka not only the 2 default criteria 'b_start' and 'resultsPerPage'
+          if (Object.keys(Faceted.Query).length > 2) {
+            theForm.facetedQuery.value = JSON.stringify(Faceted.Query);
+          }
+          else {
+            theForm.facetedQuery.value = "";
+          }
+          theForm.itemUids.value = uids;
           theForm.submit();
         }
       }
@@ -49,6 +53,7 @@
     <input type="hidden" name="templateId"/>
     <input type="hidden" name="itemUids" value=""/>
     <input type="hidden" name="mailingList" value=""/>
+    <input type="hidden" name="facetedQuery" value=""/>
   </form>
   <span class="discreet" style="position: relative;"
         tal:attributes="title python: podTemplate.Description(mimetype='text/plain');"

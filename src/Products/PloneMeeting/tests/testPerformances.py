@@ -96,13 +96,13 @@ class testPerformances(PloneMeetingTestCase):
                 if itemInMeeting.queryState() == 'itemfrozen':
                     break
                 self.do(itemInMeeting, 'backToItemFrozen')
-        # call a submethod that has the relevant profiling decorator
-        return meeting, ','.join(uids)
+        return meeting, uids
 
     @timecall
     def _delaySeveralItems(self, meeting, uids):
         '''Helper method that actually delays the items.'''
-        meeting.decideSeveralItems(uids=uids, transition='delay')
+        decideView = meeting.restrictedTraverse('@@decide-several-items')
+        decideView(uids=uids, transition='delay')
 
     def test_pm_ComputeItemNumberWithSeveralNotClosedMeetings(self):
         '''Check performances while looking for the current item number using
@@ -147,7 +147,7 @@ class testPerformances(PloneMeetingTestCase):
     @timecall
     def _computeItemNumbersForMeeting(self, meeting):
         '''Helper method that actually compute item number for every items of the given p_meeting.'''
-        for item in meeting.getAllItems():
+        for item in meeting.getItems():
             item.getItemNumber(relativeTo='meetingConfig')
 
     def _setupForMeetingGroups(self, number_of_groups):

@@ -22,7 +22,6 @@
 
 import os
 import os.path
-import re
 import urlparse
 import socket
 from appy.shared.diff import HtmlDiff
@@ -35,6 +34,7 @@ from DateTime import DateTime
 from AccessControl import getSecurityManager
 from zope.annotation import IAnnotations
 from zope.i18n import translate
+from zope.component import getAdapter
 from zope.component import getUtility
 from zope.component.interfaces import ObjectEvent
 from zope.event import notify
@@ -57,7 +57,7 @@ from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
     IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, IPodTemplateCustom, \
     IToolPloneMeetingCustom, IMeetingUserCustom, IAnnexable, IAdvicesUpdatedEvent, IItemDuplicatedEvent, \
-    IItemDuplicatedFromConfigEvent, IItemAfterTransitionEvent
+    IItemDuplicatedFromConfigEvent, IItemAfterTransitionEvent, IAdviceAfterAddEvent, IAdviceAfterModifyEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -152,6 +152,8 @@ def getCurrentMeetingObject(context):
     '''What is the object currently published by Plone ?'''
     obj = context.REQUEST.get('PUBLISHED')
     className = obj.__class__.__name__
+    if className == 'present-several-items':
+        return obj.context
     if not (className in ('Meeting', 'MeetingItem')):
         # check if we are on a Script or so or calling a BrowserView
         if className in methodTypes or 'SimpleViewClass' in className:
@@ -160,6 +162,7 @@ def getCurrentMeetingObject(context):
             refererUrl = context.REQUEST.get('HTTP_REFERER')
             referer = urlparse.urlparse(refererUrl)[2]
             if referer.endswith('/view') or \
+               referer.endswith('/@@meeting_available_items_view') or \
                referer.endswith('/edit') or \
                referer.endswith('/search_form') or \
                referer.endswith('/plonemeeting_topic_view'):
@@ -186,6 +189,7 @@ def getCurrentMeetingObject(context):
             else:
                 # It can be a method with attribute im_class
                 obj = None
+
     toReturn = None
     if obj and hasattr(obj, 'meta_type') and obj.meta_type == 'Meeting':
         toReturn = obj
@@ -321,9 +325,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     # Create the message parts
     d = 'PloneMeeting'
     portal = obj.portal_url.getPortalObject()
-    portalUrl = tool.getPublicUrl().strip()
-    if not portalUrl:
-        portalUrl = portal.absolute_url()
+    portalUrl = portal.absolute_url()
     if mapping:
         # we need every mappings to be unicode
         for elt in mapping:
@@ -838,7 +840,12 @@ def getLastEvent(obj, transition=None, notBefore='transfer'):
        everything that occurrred before the last "transfer" transition.
        If p_transition is None, the very last event is returned'''
     wfTool = getToolByName(obj, 'portal_workflow')
-    history = obj.workflow_history[wfTool.getWorkflowsFor(obj)[0].getId()]
+
+    try:
+        history = obj.workflow_history[wfTool.getWorkflowsFor(obj)[0].getId()]
+    except KeyError:
+        # if relevant workflow is not found in the history, return None
+        return None
     if not transition:
         return history[-1]
     i = len(history)-1
@@ -986,9 +993,9 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
         if i > stopIndex:
             break
         event = history[i]
+        # We take a copy, because we will modify it.
+        event = history[i].copy()
         if event['action'] == '_datachange_':
-            # We take a copy, because we will modify it.
-            event = history[i].copy()
             event['changes'] = {}
             for name, oldValue in history[i]['changes'].iteritems():
                 widgetName = obj.getField(name).widget.getName()
@@ -1022,13 +1029,14 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
                     event['changes'][name] = val
                 else:
                     event['changes'][name] = oldValue
-        elif checkMayView:
-            # workflow history event
-            # hide comment if user may not access it
-            if not IImioHistory(obj).mayViewComment(event):
-                # We take a copy, because we will modify it.
-                event = history[i].copy()
-                event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
+        else:
+            event['type'] = 'workflow'
+            if checkMayView:
+                # workflow history event
+                # hide comment if user may not access it
+                adapter = getAdapter(obj, IImioHistory, 'workflow')
+                if not adapter.mayViewComment(event):
+                    event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
         res.append(event)
     return res
 
@@ -1102,15 +1110,6 @@ def signatureNotAlone(xhtmlContent):
 
 
 # ------------------------------------------------------------------------------
-def spanifyLink(htmltag):
-    '''Given p_htmltag is a string like <a ...</a> that will be converted to
-       a <span>...</span>'''
-    htmltag = re.sub('<a href="[^"]+"', '<span', htmltag)
-    htmltag = re.sub('</a>', '</span>', htmltag)
-    return htmltag
-
-
-# ------------------------------------------------------------------------------
 def forceHTMLContentTypeForEmptyRichFields(obj):
     '''
       Will saving a empty Rich field ('text/html'), the contentType is set back to 'text/plain'...
@@ -1169,7 +1168,7 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
     for config in cfg.getOnMeetingTransitionItemTransitionToTrigger():
         if config['meeting_transition'] == transitionId:
             # execute corresponding transition on every items
-            for item in meeting.getAllItems():
+            for item in meeting.getItems():
                 # do not fail if a transition could not be triggered, just add an
                 # info message to the log so configuration can be adapted to avoid this
                 try:
@@ -1227,6 +1226,29 @@ def prepareSearchValue(value):
             word = word + '*'
         res.append(word)
     return ' '.join(res)
+
+
+def updateCollectionCriterion(collection, i, v):
+    """Update a collection criterion."""
+    for criterion in collection.query:
+        if criterion['i'] == i:
+            if isinstance(criterion, dict):
+                criterion['v'] = v
+            else:
+                criterion.v = v
+            # make saved value persistent
+            collection.query = collection.query
+            break
+
+
+def toHTMLStrikedContent(content):
+    """
+      p_content is HTML having elements to strike between [[]].
+      We will replace these [[]] by <strike> tags.  Moreover, we will append the 'mltAssembly'
+      class to the <p> that surrounds the given p_content HTML.
+    """
+    return content.replace('[[', '<strike>').replace(']]', '</strike>'). \
+        replace('<p>', '<p class="mltAssembly">')
 
 
 # ------------------------------------------------------------------------------
@@ -1364,9 +1386,33 @@ class ItemAfterTransitionEvent(ObjectEvent):
     '''
       Event triggered at the end of the onItemTransition,
       so we are sure that subplugins registering to this event
-      will be called after onItemTransition.
+      will be called after.
     '''
     implements(IItemAfterTransitionEvent)
+
+    def __init__(self, object):
+        self.object = object
+
+
+class AdviceAfterAddEvent(ObjectEvent):
+    '''
+      Event triggered at the end of the onAdviceAdded,
+      so we are sure that subplugins registering to this event
+      will be called after.
+    '''
+    implements(IAdviceAfterAddEvent)
+
+    def __init__(self, object):
+        self.object = object
+
+
+class AdviceAfterModifyEvent(ObjectEvent):
+    '''
+      Event triggered at the end of the onAdviceModified,
+      so we are sure that subplugins registering to this event
+      will be called after onItemTransition.
+    '''
+    implements(IAdviceAfterModifyEvent)
 
     def __init__(self, object):
         self.object = object

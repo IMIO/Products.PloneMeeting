@@ -28,9 +28,11 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import mimetypes
+from AccessControl import Unauthorized
 from DateTime import DateTime
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
+from persistent.list import PersistentList
 from zope.annotation import IAnnotations
 from zope.component import getGlobalSiteManager
 from zope.component import getUtility
@@ -43,18 +45,20 @@ from plone.app.portlets.portlets import navigation
 from plone.portlets.interfaces import IPortletManager
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from Products.CMFCore.ActionInformation import Action
-from Products.CMFCore.Expression import Expression, createExprContext
+from Products.CMFCore.Expression import Expression
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
+from eea.facetednavigation.interfaces import ICriteria
+from eea.facetednavigation.widgets.storage import Criterion
+from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
-    getCustomSchemaFields, getFieldContent, prepareSearchValue, \
-    forceHTMLContentTypeForEmptyRichFields, computeCertifiedSignatures
+    getCustomSchemaFields, getFieldContent, forceHTMLContentTypeForEmptyRichFields, \
+    computeCertifiedSignatures
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.Searcher import Searcher
 defValues = MeetingConfigDescriptor.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
@@ -244,7 +248,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemIconColor',
             i18n_domain='PloneMeeting',
         ),
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
         vocabulary='listItemIconColors',
     ),
@@ -358,7 +362,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listUsedItemAttributes',
         default=defValues.usedItemAttributes,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -375,7 +379,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemAttributes',
         default=defValues.historizedItemAttributes,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -391,7 +395,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.recordItemHistoryStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -408,7 +412,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listUsedMeetingAttributes',
         default=defValues.usedMeetingAttributes,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -425,7 +429,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingAttributes',
         default=defValues.historizedMeetingAttributes,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -441,7 +445,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingStates',
         default=defValues.recordMeetingHistoryStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -774,7 +778,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemDecidedStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -790,7 +794,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listWorkflowAdaptations',
         default=defValues.workflowAdaptations,
-        enforceVocabulary= True,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -806,7 +810,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listAllTransitions',
         default=defValues.transitionsToConfirm,
-        enforceVocabulary= False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -873,38 +877,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    LinesField(
-        name='meetingTopicStates',
-        widget=MultiSelectionWidget(
-            description="MeetingTopicStates",
-            description_msgid="meeting_topic_states_descr",
-            label='Meetingtopicstates',
-            label_msgid='PloneMeeting_label_meetingTopicStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listMeetingStates',
-        default=defValues.meetingTopicStates,
-        enforceVocabulary= False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='decisionTopicStates',
-        widget=MultiSelectionWidget(
-            description="DecisionTopicStates",
-            description_msgid="decision_topic_states_descr",
-            label='Decisiontopicstates',
-            label_msgid='PloneMeeting_label_decisionTopicStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listMeetingStates',
-        default=defValues.decisionTopicStates,
-        enforceVocabulary= False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
     IntegerField(
         name='maxShownMeetings',
         default=defValues.maxShownMeetings,
@@ -916,148 +888,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         required=True,
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    IntegerField(
-        name='maxDaysDecisions',
-        default=defValues.maxDaysDecisions,
-        widget=IntegerField._properties['widget'](
-            description="MaxDaysDecision",
-            description_msgid="max_days_decisions_descr",
-            label='Maxdaysdecisions',
-            label_msgid='PloneMeeting_label_maxDaysDecisions',
-            i18n_domain='PloneMeeting',
-        ),
-        required=True,
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='meetingAppDefaultView',
-        widget=SelectionWidget(
-            description="MeetingAppDefaultView",
-            description_msgid="meeting_app_default_view_descr",
-            label='Meetingappdefaultview',
-            label_msgid='PloneMeeting_label_meetingAppDefaultView',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        vocabulary='listMeetingAppAvailableViews',
-        default=defValues.meetingAppDefaultView,
-        enforceVocabulary=False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='itemsListVisibleColumns',
-        widget=MultiSelectionWidget(
-            description="ItemsListVisibleColumns",
-            description_msgid="items_list_visible_columns_descr",
-            label='Itemslistvisiblecolumns',
-            label_msgid='PloneMeeting_label_itemsListVisibleColumns',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listItemsListVisibleColumns',
-        default=defValues.itemsListVisibleColumns,
-        enforceVocabulary=False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='itemColumns',
-        widget=MultiSelectionWidget(
-            description="ItemColumns",
-            description_msgid="item_columns_descr",
-            label='Itemcolumns',
-            label_msgid='PloneMeeting_label_itemColumns',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listItemColumns',
-        default=defValues.itemColumns,
-        enforceVocabulary=False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='meetingColumns',
-        widget=MultiSelectionWidget(
-            description="MeetingColumns",
-            description_msgid="meeting_columns_descr",
-            label='Meetingcolumns',
-            label_msgid='PloneMeeting_label_meetingColumns',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listMeetingColumns',
-        default=defValues.meetingColumns,
-        enforceVocabulary=False,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    IntegerField(
-        name='maxShownAvailableItems',
-        default=defValues.maxShownAvailableItems,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownAvailableItems",
-            description_msgid="max_shown_available_items_descr",
-            label='Maxshownavailableitems',
-            label_msgid='PloneMeeting_label_maxShownAvailableItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    IntegerField(
-        name='maxShownMeetingItems',
-        default=defValues.maxShownMeetingItems,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownMeetingitems",
-            description_msgid="max_shown_meeting_items_descr",
-            label='Maxshownmeetingitems',
-            label_msgid='PloneMeeting_label_maxShownMeetingItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    IntegerField(
-        name='maxShownLateItems',
-        default=defValues.maxShownLateItems,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownLateItems",
-            description_msgid="max_shown_late_items_descr",
-            label='Maxshownlateitems',
-            label_msgid='PloneMeeting_label_maxShownLateItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='enableGotoPage',
-        default=defValues.enableGotoPage,
-        widget=BooleanField._properties['widget'](
-            description="EnableGotoPage",
-            description_msgid="enable_goto_page_descr",
-            label='Enablegotopage',
-            label_msgid='PloneMeeting_label_enableGotoPage',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='enableGotoItem',
-        default=defValues.enableGotoItem,
-        widget=BooleanField._properties['widget'](
-            description="EnableGotoItem",
-            description_msgid="enable_goto_item_descr",
-            label='Enablegotoitem',
-            label_msgid='PloneMeeting_label_enableGotoItem',
-            i18n_domain='PloneMeeting',
-        ),
         schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -1075,6 +905,54 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='itemColumns',
+        widget=MultiSelectionWidget(
+            description="ItemColumns",
+            description_msgid="item_columns_descr",
+            label='Itemcolumns',
+            label_msgid='PloneMeeting_label_itemColumns',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listItemColumns',
+        default=defValues.itemColumns,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='meetingColumns',
+        widget=MultiSelectionWidget(
+            description="MeetingColumns",
+            description_msgid="meeting_columns_descr",
+            label='Meetingcolumns',
+            label_msgid='PloneMeeting_label_meetingColumns',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listMeetingColumns',
+        default=defValues.meetingColumns,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemsListVisibleColumns',
+        widget=MultiSelectionWidget(
+            description="ItemsListVisibleColumns",
+            description_msgid="items_list_visible_columns_descr",
+            label='Itemslistvisiblecolumns',
+            label_msgid='PloneMeeting_label_itemsListVisibleColumns',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listItemsListVisibleColumns',
+        default=defValues.itemsListVisibleColumns,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemsListVisibleFields',
         widget=MultiSelectionWidget(
             description="ItemsListVisibleFields",
@@ -1087,28 +965,123 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemsListVisibleFields',
         default=defValues.itemsListVisibleFields,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     ReferenceField(
-        name='toDoListTopics',
+        name='toDoListSearches',
         widget=ReferenceBrowserWidget(
             allow_search=False,
             allow_browse=False,
-            description="ToDoListTopics",
-            description_msgid="to_do_list_topics",
-            startup_directory="topics",
+            description="ToDoListSearches",
+            description_msgid="to_do_list_searches",
+            startup_directory="searches/searches_items",
             show_results_without_query=True,
             restrict_browsing_to_startup_directory=True,
-            base_query={'isDefinedInTool': True},
-            label='Todolisttopics',
-            label_msgid='PloneMeeting_label_toDoListTopics',
+            label='Todolistsearches',
+            label_msgid='PloneMeeting_label_toDoListSearches',
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
         multiValued=True,
-        relationship="ToDoTopics",
-        allowed_types=('Topic',),
+        relationship="ToDoSearches",
+        allowed_types=('DashboardCollection',),
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='dashboardItemsListingsFilters',
+        widget=MultiSelectionWidget(
+            description="DashboardItemsListingsFilters",
+            description_msgid="dashboard_items_listings_filters_descr",
+            format="checkbox",
+            label='Dashboarditemslistingsfilters',
+            label_msgid='PloneMeeting_label_dashboardItemsListingsFilters',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDashboardItemsListingsFilters',
+        default=defValues.dashboardItemsListingsFilters,
+        enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='dashboardMeetingAvailableItemsFilters',
+        widget=MultiSelectionWidget(
+            description="DashboardMeetingAvailableItemsFilters",
+            description_msgid="dashboard_meeting_available_items_filters_descr",
+            format="checkbox",
+            label='Dashboardmeetingavailableitemsfilters',
+            label_msgid='PloneMeeting_label_dashboardMeetingAvailableItemsFilters',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDashboardItemsListingsFilters',
+        default=defValues.dashboardMeetingAvailableItemsFilters,
+        enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='dashboardMeetingLinkedItemsFilters',
+        widget=MultiSelectionWidget(
+            description="DashboardMeetingLinkedItemsFilters",
+            description_msgid="dashboard_meeting_linked_items_filters_descr",
+            format="checkbox",
+            label='Dashboardmeetinglinkeditemsfilters',
+            label_msgid='PloneMeeting_label_dashboardMeetingLinkedItemsFilters',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDashboardItemsListingsFilters',
+        default=defValues.dashboardMeetingLinkedItemsFilters,
+        enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='maxShownListings',
+        widget=SelectionWidget(
+            description="MaxShownListings",
+            description_msgid="max_shown_listings_descr",
+            label='Maxshownlistings',
+            label_msgid='PloneMeeting_label_maxShownListings',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        vocabulary='listResultsPerPage',
+        default=defValues.maxShownListings,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='maxShownAvailableItems',
+        widget=SelectionWidget(
+            description="MaxShownAvailableItems",
+            description_msgid="max_shown_available_items_descr",
+            label='Maxshownavailableitems',
+            label_msgid='PloneMeeting_label_maxShownAvailableItems',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        vocabulary='listResultsPerPage',
+        default=defValues.maxShownAvailableItems,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='maxShownMeetingItems',
+        widget=SelectionWidget(
+            description="MaxShownMeetingItems",
+            description_msgid="max_shown_meeting_items_descr",
+            label='Maxshownmeetingitems',
+            label_msgid='PloneMeeting_label_maxShownMeetingItems',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        vocabulary='listResultsPerPage',
+        default=defValues.maxShownMeetingItems,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -1199,7 +1172,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemAdviceStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1215,7 +1188,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemAdviceEditStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1231,7 +1204,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemAdviceViewStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1306,7 +1279,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemAdviceInvalidateStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -1382,7 +1355,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemPowerObserversStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1398,7 +1371,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingStates',
         default=defValues.meetingPowerObserversStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1414,7 +1387,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemRestrictedPowerObserversStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1430,7 +1403,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingStates',
         default=defValues.meetingRestrictedPowerObserversStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1446,7 +1419,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemBudgetInfosStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1507,7 +1480,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemCopyGroupsStates,
-        enforceVocabulary=False,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -1719,195 +1692,49 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     ##code-section class-header #fill in your manual code here
     # Information about each sub-folder that will be created within a meeting
     # config.
+
     subFoldersInfo = {
-        TOOL_FOLDER_CATEGORIES: ('Categories', ('MeetingCategory', ), 'categories',
-                                 'CategoryDescriptor'),
-        TOOL_FOLDER_CLASSIFIERS: ('Classifiers', ('MeetingCategory', ),
-                                  'classifiers', 'CategoryDescriptor'),
-        TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems', ('itemType', ), None, ''),
-        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates', ('Folder', 'itemType'), None, ''),
-        'topics': ('Topics', ('Topic', ), None, ''),
-        TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes', ('MeetingFileType', ),
-                                 'meetingFileTypes', 'MeetingFileTypeDescriptor'),
-        TOOL_FOLDER_POD_TEMPLATES: ('Document templates', ('PodTemplate', ),
-                                    'podTemplates', 'PodTemplateDescriptor'),
-        TOOL_FOLDER_MEETING_USERS: ('Meeting users', ('MeetingUser', ),
-                                    'meetingUsers', 'MeetingUserDescriptor')
+        TOOL_FOLDER_CATEGORIES: ('Categories',
+                                 ('MeetingCategory', ),
+                                 ()
+                                 ),
+        TOOL_FOLDER_CLASSIFIERS: ('Classifiers',
+                                  ('MeetingCategory', ),
+                                  ()
+                                  ),
+        TOOL_FOLDER_SEARCHES: ('Searches',
+                               ('Folder', 'DashboardCollection', ),
+                               # 'items' is a reserved word
+                               (('searches_items', 'Meeting items'),
+                                ('searches_meetings', 'Meetings'),
+                                ('searches_decisions', 'Decisions'))
+                               ),
+        TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems',
+                                      ('itemType', ),
+                                      ()
+                                      ),
+        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates',
+                                     ('Folder', 'itemType'),
+                                     ()
+                                     ),
+        TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes',
+                                 ('MeetingFileType', ),
+                                 ()
+                                 ),
+        TOOL_FOLDER_POD_TEMPLATES: ('Document templates',
+                                    ('PodTemplate', ),
+                                    ()
+                                    ),
+        TOOL_FOLDER_MEETING_USERS: ('Meeting users',
+                                    ('MeetingUser', ),
+                                    ()
+                                    )
     }
 
     metaTypes = ('MeetingItem', 'Meeting')
     metaNames = ('Item', 'Meeting')
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
-    # Format is :
-    # - topicId
-    # - a list of topic criteria
-    # - a sort_on attribute
-    # - a topicScriptId used to manage complex searches
-    topicsInfo = (
-        # My items
-        ('searchmyitems',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ('Creator', 'ATCurrentAuthorCriterion', None),),
-         'created',
-         '',
-         "python: here.portal_plonemeeting.userIsAmong('creators')",
-         ),
-        # Items of my groups, items of the groups I am in
-        ('searchitemsofmygroups',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsOfMyGroups',
-         "python: here.portal_plonemeeting.getGroupsForUser()",
-         ),
-        # Items I take over
-        ('searchmyitemstakenover',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchMyItemsTakenOver',
-         "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
-         "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or here.portal_plonemeeting.isManager(here))",
-         ),
-        # All (visible) items
-        ('searchallitems',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         '',
-         '',
-         ),
-        # Items in copy : need a script to do this search
-        ('searchallitemsincopy',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsInCopy',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
-         ),
-        # Items to prevalidate : search items in state 'proposed' if wfAdaptation 'pre_validation' is active
-        ('searchitemstoprevalidate',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ('review_state', 'ATListCriterion', ('prevalidated',)),
-         ),
-         'created',
-         '',
-         "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
-         "'pre_validation' in here.getWorkflowAdaptations()",
-         ),
-        # Items to validate : need a script to do this search
-        ('searchitemstovalidate',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToValidateOfHighestHierarchicLevel',
-         "python: here.userIsAReviewer()",
-         ),
-        # Items to advice : need a script to do this search
-        ('searchallitemstoadvice',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToAdvice',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Items to advice without delay : need a script to do this search
-        ('searchitemstoadvicewithoutdelay',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToAdviceWithoutDelay',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Items to advice with delay : need a script to do this search
-        ('searchitemstoadvicewithdelay',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToAdviceWithDelay',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Items to advice with exceeded delay : need a script to do this search
-        ('searchitemstoadvicewithdexceededelay',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchItemsToAdviceWithExceededDelay',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Advised items : need a script to do this search
-        ('searchalladviseditems',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchAdvisedItems',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Advised items with delay : need a script to do this search
-        ('searchalladviseditemswithdelay',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ),
-         'created',
-         'searchAdvisedItemsWithDelay',
-         "python: here.portal_plonemeeting.getMeetingConfig(here)."
-         "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
-         ),
-        # Items to correct : search items in state 'returned_to_proposing_group'
-        ('searchitemstocorrect',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ('review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
-         ),
-         'created',
-         '',
-         "python: here.portal_plonemeeting.userIsAmong('creators') and "
-         "'return_to_proposing_group' in here.getWorkflowAdaptations()",
-         ),
-        # Corrected items : search items for wich previous_review_state was 'returned_to_proposing_group'
-        ('searchcorrecteditems',
-        (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-         ('previous_review_state', 'ATListCriterion', ('returned_to_proposing_group',)),
-         ),
-         'created',
-         '',
-         "python: here.portal_plonemeeting.isManager(here) and "
-         "'return_to_proposing_group' in here.getWorkflowAdaptations()",
-         ),
-        # All 'decided' items
-        ('searchdecideditems',
-         (('portal_type', 'ATPortalTypeCriterion', ('MeetingItem',)),
-          ),
-         'created',
-         'searchDecidedItems',
-         '',
-         ),
-        # All not-yet-decided meetings
-        ('searchallmeetings',
-        (('portal_type', 'ATPortalTypeCriterion', ('Meeting',)),
-         ),
-         'getDate',
-         '',
-         '',
-         ),
-        # All decided meetings
-        ('searchalldecisions',
-        (('portal_type', 'ATPortalTypeCriterion', ('Meeting',)),
-         ),
-         'getDate',
-         '',
-         '',
-         ),
-    )
-
-    # List of topics related to Meetings that take care
-    # of the states defined in a meetingConfig
-    meetingTopicsUsingMeetingConfigStates = ('searchallmeetings', 'searchalldecisions', )
     # Names of workflow adaptations.
     wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
                      'only_creator_may_delete', 'pre_validation',  'pre_validation_keep_reviewer_permissions',
@@ -1918,6 +1745,289 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Methods
 
     # Manually created methods
+
+    def _searchesInfo(self):
+        """Informations used to create DashboardCollections in the searches."""
+        itemType = self.getItemTypeName()
+        meetingType = self.getMeetingTypeName()
+        infos = OrderedDict(
+            [
+                # My items
+                ('searchmyitems',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                        {'i': 'Creator', 'o': 'plone.app.querystring.operation.string.currentUser'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators')",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items of my groups
+                ('searchitemsofmygroups',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-of-my-groups'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getGroupsForUser()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items I take over
+                ('searchmyitemstakenover',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'my-items-taken-over'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
+                                     "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or "
+                                     "here.portal_plonemeeting.isManager(here))",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # All (visible) items
+                ('searchallitems',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items in copy
+                ('searchallitemsincopy',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-in-copy'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to prevalidate
+                ('searchitemstoprevalidate',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['proposed']}
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
+                                     "'pre_validation' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to validate
+                ('searchitemstovalidate',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-validate-of-highest-hierarchic-level'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here).userIsAReviewer()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to advice
+                ('searchallitemstoadvice',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to advice without delay
+                ('searchitemstoadvicewithoutdelay',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-without-delay'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to advice with delay
+                ('searchitemstoadvicewithdelay',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-delay'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to advice with exceeded delay
+                ('searchitemstoadvicewithexceededdelay',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-exceeded-delay'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Every advised items
+                ('searchalladviseditems',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Advised items with delay
+                ('searchalladviseditemswithdelay',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items-with-delay'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
+                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to correct
+                ('searchitemstocorrect',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['returned_to_proposing_group']}
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators') and "
+                                     "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Corrected items
+                ('searchcorrecteditems',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
+                        {'i': 'previous_review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['returned_to_proposing_group']}
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.isManager(here) and "
+                                     "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Decided items
+                ('searchdecideditems',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'decided-items'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # All not-yet-decided meetings
+                ('searchallmeetings',
+                {
+                    'subFolderId': 'searches_meetings',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['created', 'frozen', 'published']},
+                    ],
+                    'sort_on': u'getDate',
+                    'sort_reversed': True,
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Last decided meetings
+                ('searchlastdecisions',
+                {
+                    'subFolderId': 'searches_decisions',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['decided', 'closed']},
+                        {'i': 'getDate', 'o': 'plone.app.querystring.operation.date.largerThanRelativeDate', 'v': '60'},
+                    ],
+                    'sort_on': u'getDate',
+                    'sort_reversed': True,
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # All decided meetings
+                ('searchalldecisions',
+                {
+                    'subFolderId': 'searches_decisions',
+                    'query':
+                    [
+                        {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
+                        {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['decided', 'closed']},
+                    ],
+                    'sort_on': u'getDate',
+                    'sort_reversed': True,
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+            ]
+        )
+        # manage extra searches defined in a subplugin
+        infos = self.adapted()._extraSearchesInfo(infos)
+        return infos
+
+    def _extraSearchesInfo(self, infos):
+        '''This is made to be overrided by a subplugin, to insert it's own searches.'''
+        return infos
 
     security.declarePublic('getName')
     def getName(self, force=None):
@@ -1983,6 +2093,31 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listMeetingAttributes')
     def listMeetingAttributes(self):
         return self.listAttributes(Meeting.schema)
+
+    security.declarePrivate('listDashboardItemsListingsFilters')
+    def listDashboardItemsListingsFilters(self):
+        """Vocabulary for 'dashboardItemsListingsFilters',
+           'dashboardMeetingAvailableItemsFilters'
+            and 'dashboardMeetingLinkedItemsFilters' fields."""
+        criteria = ICriteria(self.searches.searches_items).criteria
+        res = []
+        for criterion in criteria:
+            if criterion.section == u'advanced':
+                res.append((criterion.__name__,
+                            translate(criterion.title,
+                                      domain="eea",
+                                      context=self.REQUEST)))
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listResultsPerPage')
+    def listResultsPerPage(self):
+        """Vocabulary for 'maxShownListings',
+           'maxShownAvailableItems'
+            and 'maxShownMeetingItems' fields."""
+        res = []
+        for number in range(20, 1001, 20):
+            res.append((str(number), str(number)))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('validate_shortName')
     def validate_shortName(self, value):
@@ -2576,37 +2711,43 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemRelatedColumns(self):
         '''Lists all the attributes that can be used as columns for displaying
            information about an item.'''
-        d = 'PloneMeeting'
+        d = 'collective.eeafaceted.z3ctable'
         res = [
-            ("creator", translate('pm_creator', domain=d, context=self.REQUEST)),
-            ("creationDate", translate('pm_creation_date', domain=d, context=self.REQUEST)),
-            ("modificationDate", translate('pm_modification_date', domain=d, context=self.REQUEST)),
-            ("state", translate('item_state', domain=d, context=self.REQUEST)),
-            ("categoryOrProposingGroup",
-                translate("category_or_proposing_group", domain=d, context=self.REQUEST)),
-            ("proposingGroup", translate("PloneMeeting_label_proposingGroup",
-                                         domain=d,
-                                         context=self.REQUEST)),
-            ("proposingGroupAcronym", translate("proposing_group_acronym", domain=d, context=self.REQUEST)),
-            ("toDiscuss", translate('PloneMeeting_label_toDiscuss', domain=d, context=self.REQUEST)),
-            ("associatedGroups",
-                translate("PloneMeeting_label_associatedGroups", domain=d, context=self.REQUEST)),
-            ("associatedGroupsAcronyms",
-                translate("associated_groups_acronyms", domain=d, context=self.REQUEST)),
-            ("annexes", translate("annexes", domain=d, context=self.REQUEST)),
-            ("annexesDecision", translate("AnnexesDecision", domain=d, context=self.REQUEST)),
-            ("advices", translate("PloneMeeting_label_advices", domain=d, context=self.REQUEST)),
-            ("privacy", translate("PloneMeeting_label_privacy", domain=d, context=self.REQUEST)),
-            ("budgetInfos", translate("PloneMeeting_label_budgetInfos", domain=d, context=self.REQUEST)),
-            ("itemIsSigned", translate('PloneMeeting_label_itemIsSigned', domain=d, context=self.REQUEST)),
-            ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
+            ("item_reference",
+                translate("item_reference_column", domain=d, context=self.REQUEST)),
+            ("budget_infos",
+                translate("budget_infos_column", domain=d, context=self.REQUEST)),
+            ("Creator",
+                translate('header_Creator', domain=d, context=self.REQUEST)),
+            ("CreationDate",
+                translate('header_CreationDate', domain=d, context=self.REQUEST)),
+            ("ModificationDate",
+                translate('header_ModificationDate', domain=d, context=self.REQUEST)),
+            ("review_state",
+                translate('header_review_state', domain=d, context=self.REQUEST)),
+            ("getCategory",
+                translate("header_getCategory", domain=d, context=self.REQUEST)),
+            ("getProposingGroup",
+                translate("header_getProposingGroup", domain=d, context=self.REQUEST)),
+            ("proposing_group_acronym",
+                translate("header_proposing_group_acronym", domain=d, context=self.REQUEST)),
+            ("advices",
+                translate("header_advices", domain=d, context=self.REQUEST)),
+            ("toDiscuss",
+                translate('header_toDiscuss', domain=d, context=self.REQUEST)),
+            ("getItemIsSigned",
+                translate('header_getItemIsSigned', domain=d, context=self.REQUEST)),
+            ("privacy",
+                translate("header_privacy", domain=d, context=self.REQUEST)),
+            ("actions",
+                translate("header_actions", domain=d, context=self.REQUEST)),
         ]
         return res
 
     security.declarePrivate('listItemsListVisibleColumns')
     def listItemsListVisibleColumns(self):
         res = self.listItemRelatedColumns()
-        return DisplayList(tuple(res)).sortedByValue()
+        return DisplayList(tuple(res))
 
     def listItemsListVisibleFields(self):
         '''Vocabulary for the 'itemsListVisibleFields' field.
@@ -2617,22 +2758,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemColumns')
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.append(('meeting', translate('presented_in_meeting',
-                                         domain='PloneMeeting',
-                                         context=self.REQUEST)))
-        res.append(('preferredMeeting', translate('PloneMeeting_label_preferredMeeting',
-                                                  domain='PloneMeeting',
-                                                  context=self.REQUEST)))
-        return DisplayList(tuple(res)).sortedByValue()
+        res.insert(-1, ('linkedMeetingDate', translate('header_linkedMeetingDate',
+                                                       domain='collective.eeafaceted.z3ctable',
+                                                       context=self.REQUEST)))
+        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
+                                                             domain='collective.eeafaceted.z3ctable',
+                                                             context=self.REQUEST)))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingColumns')
     def listMeetingColumns(self):
-        d = 'PloneMeeting'
+        d = 'collective.eeafaceted.z3ctable'
         res = [
-            ("creator", translate('pm_creator', domain=d, context=self.REQUEST)),
-            ("creationDate", translate('pm_creation_date', domain=d, context=self.REQUEST)),
-            ("state", translate('item_state', domain=d, context=self.REQUEST)),
-            ("actions", translate("heading_actions", domain=d, context=self.REQUEST)),
+            ("Creator", translate('header_Creator', domain=d, context=self.REQUEST)),
+            ("CreationDate", translate('header_CreationDate', domain=d, context=self.REQUEST)),
+            ("review_state", translate('header_review_state', domain=d, context=self.REQUEST)),
+            ("actions", translate("header_actions", domain=d, context=self.REQUEST)),
         ]
         return DisplayList(tuple(res))
 
@@ -2649,6 +2790,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAdviceTypes(self):
         d = "PloneMeeting"
         res = DisplayList((
+            ("asked_again", translate('asked_again', domain=d, context=self.REQUEST)),
             ("positive", translate('positive', domain=d, context=self.REQUEST)),
             ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),
             ("negative", translate('negative', domain=d, context=self.REQUEST)),
@@ -2821,6 +2963,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             iconName = "MeetingItem{0}.png".format(self.getItemIconColor().capitalize())
         return iconName
 
+    security.declarePrivate('updateCollectionColumns')
+    def updateCollectionColumns(self):
+        '''Update customViewFields defined on DashboardCollection
+           from what is defined in self.itemColumns and self.meetingColumns:
+           - column 'pretty_link' will be always dispalyed;
+           - some columns could be defined in itemColumns or meetingColumns
+             but not in the customViewFields of the Collection (it is the case
+             for budgetInfos for example), in this case we pass;
+           - no matter the values were changed for a Collection,
+             for now every collections of a type (item, meeting)
+             will use same columns.'''
+        # update item related collections
+        itemColumns = (u'pretty_link', ) + self.getItemColumns()
+        for collection in self.searches.searches_items.objectValues('DashboardCollection'):
+            # available customViewFieldIds, as done in an adapter, we compute it for each collection
+            customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
+            # set elements existing in both lists, we do not use set() because it is not ordered
+            collection.setCustomViewFields(tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds]))
+        # update meeting related collections
+        meetingColumns = (u'pretty_link', ) + self.getMeetingColumns()
+        for collection in (self.searches.searches_meetings.objectValues('DashboardCollection') +
+                           self.searches.searches_decisions.objectValues('DashboardCollection')):
+            # available customViewFieldIds, as done in an adapter, we compute it for each collection
+            customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
+            # set elements existing in both lists, we do not use set() because it is not ordered
+            collection.setCustomViewFields(tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds]))
+
     security.declarePrivate('updatePortalTypes')
     def updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
@@ -2917,43 +3086,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.portal_factory.manage_setPortalFactoryTypes(
             listOfTypeIds=factoryTypesToRegister+registeredFactoryTypes)
 
-    security.declarePrivate('createTopics')
-    def createTopics(self, topicsInfo):
-        '''Adds a bunch of topics within the 'topics' sub-folder.'''
-        for topicId, topicCriteria, sortCriterion, searchScriptId, topic_tal_expr in topicsInfo:
-            if topicId in self.topics.objectIds():
-                logger.info("Trying to add an already existing topic with id '%s', skipping..." % topicId)
+    security.declarePrivate('createSearches')
+    def createSearches(self, searchesInfo):
+        '''Adds a bunch of collections in the 'searches' sub-folder.'''
+        for collectionId, collectionData in searchesInfo.items():
+            container = getattr(self, TOOL_FOLDER_SEARCHES)
+            subFolderId = collectionData['subFolderId']
+            if subFolderId:
+                container = getattr(container, subFolderId)
+            if collectionId in container.objectIds():
+                logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
                 continue
-            self.topics.invokeFactory('Topic', topicId)
-            topic = getattr(self.topics, topicId)
-            topic.setExcludeFromNav(True)
-            topic.setTitle(topicId)
-            for criterionName, criterionType, criterionValue in topicCriteria:
-                criterion = topic.addCriterion(field=criterionName,
-                                               criterion_type=criterionType)
-                if criterionValue is not None:
-                    if criterionType == 'ATPortalTypeCriterion':
-                        concernedType = criterionValue[0]
-                        topic.manage_addProperty(
-                            TOPIC_TYPE, concernedType, 'string')
-                        # This is necessary to add a script doing the search
-                        # when the it is too complicated for a topic.
-                        topic.manage_addProperty(
-                            TOPIC_SEARCH_SCRIPT, searchScriptId, 'string')
-                        # Add a tal expression property
-                        topic.manage_addProperty(
-                            TOPIC_TAL_EXPRESSION, topic_tal_expr, 'string')
-                        criterionValue = '%s%s' % \
-                            (concernedType, self.getShortName())
-                    criterion.setValue(criterionValue)
-            topic.setLimitNumber(True)
-            topic.setItemCount(20)
-            topic.setSortCriterion(sortCriterion, True)
-            topic.setCustomView(True)
-            topic.setCustomViewFields(['Title', 'CreationDate', 'Creator',
-                                       'review_state'])
-            # call processForm passing dummy values so existing values are not touched
-            topic.processForm(values={'dummy': None})
+            container.invokeFactory('DashboardCollection', collectionId, **collectionData)
+            collection = getattr(container, collectionId)
+            # update query so it is stored correctly because we pass a dict
+            # but it is actually stored as instances of ZPublisher.HTTPRequest.record
+            collection.setQuery(collection.query)
+            collection.setTitle(translate(collectionId,
+                                          domain="PloneMeeting",
+                                          context=self.REQUEST,
+                                          default=collectionId))
+            collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
+            collection.reindexObject()
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId):
         '''Returns the name of the action used for the cloneToOtherMC
@@ -2992,76 +3146,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        permission=('View',),
                                        visible=True)
 
-    security.declarePrivate('updateTopics')
-    def updateTopics(self):
-        '''Topic definitions may need to be updated if the some config-related
-           params have changed (like lists if states used in Meetings related topics).'''
-        # Update each Meeting related topic using the states defined in MeetingConfig.meetingTopicStates
-        for topicId in self.meetingTopicsUsingMeetingConfigStates:
-            # Delete the state-related criterion (normally it exists)
-            try:
-                topic = getattr(self.topics, topicId)
-            except AttributeError:
-                continue
-            try:
-                topic.deleteCriterion('crit__review_state_ATListCriterion')
-            except AttributeError:
-                pass
-            # Recreate it with the possibly updated list of states
-            stateCriterion = topic.addCriterion(
-                field='review_state', criterion_type='ATListCriterion')
-            # Which method must I use for getting states ?
-            if topicId == 'searchalldecisions':
-                getStatesMethod = self.getDecisionTopicStates
-            else:
-                getStatesMethod = self.getMeetingTopicStates
-            stateCriterion.setValue(getStatesMethod())
-
-    security.declarePublic('getTopics')
-    def getTopics(self, topicType, fromPortletTodo=False):
-        '''
-          Gets topics related to type p_topicType ("MeetingItem",
-           "Meeting").
-          If p_fromPortletTodo is True, it means that we are evaluating topics to display in the portlet_todo.
-          In this case, a variable 'fromPortletTodo' set to True will be passed to the
-          TOPIC_TAL_EXPRESSION so it is possible to use this variable to discriminate topics to display in portlet_plonemeeting
-          and/or in portel_todo.
-          This is called to much times on the same page, we add some caching here...
-        '''
-        key = "meeting-config-gettopics-%s-%s-%s" % (self.getId(),
-                                                     topicType.lower(),
-                                                     str(fromPortletTodo))
-        cache = IAnnotations(self.REQUEST)
-        data = cache.get(key, None)
-        if data is None:
-            data = []
-            for topic in self.topics.objectValues('ATTopic'):
-                # Get the 2 properties : TOPIC_TYPE and TOPIC_SEARCH_SCRIPT
-                topicTypeProp = topic.getProperty(TOPIC_TYPE)
-                if topicTypeProp != topicType:
-                    continue
-                # We append the topic and the scriptId if it is not deactivated.
-                # We filter on the review_state; else, the Manager will see
-                # every topic in the portlets, which would be confusing.
-                wfTool = self.portal_workflow
-                if wfTool.getInfoFor(topic, 'review_state') != 'active':
-                    continue
-                tal_expr = topic.getProperty(TOPIC_TAL_EXPRESSION)
-                tal_res = True
-                if tal_expr:
-                    ctx = createExprContext(self.topics,
-                                            self.portal_url.getPortalObject(),
-                                            topic)
-                    ctx.setGlobal('fromPortletTodo', fromPortletTodo)
-                    try:
-                        tal_res = Expression(tal_expr)(ctx)
-                    except Exception:
-                        tal_res = False
-                if tal_res:
-                    data.append(topic)
-            cache[key] = data
-        return data
-
     security.declarePrivate('updateIsDefaultFields')
     def updateIsDefaultFields(self):
         '''If this config becomes the default one, all the others must not be
@@ -3097,7 +3181,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return
         # The action corresponding to the tab does not exist. Create it.
         urlExpr = 'python:portal.portal_plonemeeting.getPloneMeetingFolder(' \
-                  '"%s").absolute_url()' % configId
+                  '"%s").absolute_url() + "/searches_items"' % configId
         availExpr = 'python:portal.portal_plonemeeting.showPloneMeetingTab(' \
                     '"%s")' % configId
         configTab = Action(configId, title=self.Title().decode('utf-8'),
@@ -3174,10 +3258,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self._createSubFolders()
         # Set a property allowing to know in which MeetingConfig we are
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
-        # Create the topics related to this meeting config
-        self.createTopics(self.topicsInfo)
+        # Create the collections related to this meeting config
+        self.createSearches(self._searchesInfo())
         # Create the action (tab) that corresponds to this meeting config
         self.createTab()
+        # Update customViewFields defined on DashboardCollections
+        self.updateCollectionColumns()
         # Sort the item tags if needed
         self.setAllItemTagsField()
         self.updateIsDefaultFields()
@@ -3195,8 +3281,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
 
     def at_post_edit_script(self):
-        '''Updates the workflows for items and meetings, and the
-           item/meeting/decisionTopicStates.'''
+        ''' '''
         s = self.portal_workflow.setChainForPortalTypes
         # Update meeting item workflow
         s([self.getItemTypeName()], self.getItemWorkflow())
@@ -3204,8 +3289,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         s([self.getMeetingTypeName()], self.getMeetingWorkflow())
         # Update portal types
         self.updatePortalTypes()
-        # Update topics
-        self.updateTopics()
+        # Update customViewFields defined on DashboardCollections
+        self.updateCollectionColumns()
         # Update item tags order if I must sort them
         self.setAllItemTagsField()
         self.updateIsDefaultFields()
@@ -3220,6 +3305,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
           Create necessary subfolders for the MeetingConfig.
         '''
+        tool = getToolByName(self, 'portal_plonemeeting')
         for folderId, folderInfo in self.subFoldersInfo.iteritems():
             # if a folder already exists, we continue
             # this is done because this method is used as helper
@@ -3228,9 +3314,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             self.invokeFactory('Folder', folderId)
             folder = getattr(self, folderId)
-            # special case for folder 'itemtemplates' for wich we want
+
+            # special case for folder 'searches' that we mark with the IFacetedSearchesMarker
+            # and for which we enable the faceted navigation if not already done
+            if folderId == TOOL_FOLDER_SEARCHES:
+                tool._enableFacetedFor(folder, IFacetedSearchesMarker)
+
+            # special case for folder 'itemtemplates' for which we want
             # to display the 'navigation' portlet and use the 'folder_contents' layout
-            if folderId == 'itemtemplates':
+            if folderId == TOOL_FOLDER_ITEM_TEMPLATES:
                 # add navigation portlet
                 manager = getUtility(IPortletManager, name=u"plone.leftcolumn")
                 portletAssignmentMapping = getMultiAdapter((folder, manager), IPortletAssignmentMapping, context=folder)
@@ -3243,6 +3335,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portletAssignmentMapping[name] = navPortlet
                 # use folder_contents layout
                 folder.setLayout('folder_contents')
+
             folder.setTitle(translate(folderInfo[0],
                                       domain="PloneMeeting",
                                       context=self.REQUEST,
@@ -3256,6 +3349,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             folder.setImmediatelyAddableTypes(allowedTypes)
             # call processForm passing dummy values so existing values are not touched
             folder.processForm(values={'dummy': None})
+            for subFolderId, subFolderTitle in folderInfo[2]:
+                folder.invokeFactory('Folder', subFolderId)
+                subFolder = getattr(folder, subFolderId)
+                if subFolderId == 'searches_items':
+                    tool._enableFacetedFor(subFolder, IFacetedSearchesItemsMarker)
+                elif subFolderId == 'searches_meetings':
+                    tool._enableFacetedFor(subFolder, IFacetedSearchesMeetingsMarker)
+                elif subFolderId == 'searches_decisions':
+                    tool._enableFacetedFor(subFolder, IFacetedSearchesMeetingsMarker)
+                subFolder.setTitle(translate(subFolderTitle,
+                                             domain="PloneMeeting",
+                                             context=self.REQUEST,
+                                             default=subFolderTitle))
+                subFolder.processForm(values={'dummy': None})
 
     def _manageEnableAnnexToPrint(self):
         '''
@@ -3297,483 +3404,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if "_%s'" % reviewSuffix in strGroupIds:
                 return reviewSuffix
 
-    security.declarePublic('searchItemsToValidateOfHighestHierarchicLevel')
-    def searchItemsToValidateOfHighestHierarchicLevel(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Return a list of items that the user can validate regarding his highest hierarchic level.
-           So if a user is 'prereviewer' and 'reviewier', the search will only return items
-           in state corresponding to his 'reviewer' role.'''
-        member = self.portal_membership.getAuthenticatedMember()
-        groupIds = self.portal_groups.getGroupsForPrincipal(member)
-        res = []
-        highestReviewerLevel = self._highestReviewerLevel(groupIds)
-        if not highestReviewerLevel:
-            return res
-        for groupId in groupIds:
-            if groupId.endswith('_%s' % highestReviewerLevel):
-                # append group name without suffix
-                res.append(groupId[:-len('_%s' % highestReviewerLevel)])
-        review_state = MEETINGREVIEWERS[highestReviewerLevel]
-        # specific management for workflows using the 'pre_validation' wfAdaptation
-        if highestReviewerLevel == 'reviewers' and \
-           ('pre_validation' in self.getWorkflowAdaptations() or
-           'pre_validation_keep_reviewer_permissions' in self.getWorkflowAdaptations()):
-            review_state = 'prevalidated'
-
-        params = {'portal_type': self.getItemTypeName(),
-                  'getProposingGroup': res,
-                  'review_state': review_state,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToValidateOfMyReviewerGroups')
-    def searchItemsToValidateOfMyReviewerGroups(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Return a list of items that the user could validate.  So it returns every items the current
-           user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
-           and 'reviewer' for a group, the search will return items in both states.'''
-        member = self.portal_membership.getAuthenticatedMember()
-        groupIds = self.portal_groups.getGroupsForPrincipal(member)
-        reviewProcessInfos = []
-        for groupId in groupIds:
-            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
-                # current user may be able to validate at at least
-                # one level of the entire validation process, we take it into account
-                if groupId.endswith('_%s' % reviewer_suffix):
-                    # specific management for workflows using the 'pre_validation' wfAdaptation
-                    if reviewer_suffix == 'reviewers' and \
-                       ('pre_validation' in self.getWorkflowAdaptations() or
-                       'pre_validation_keep_reviewer_permissions' in self.getWorkflowAdaptations()):
-                        review_state = 'prevalidated'
-                    reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
-                                                                         review_state))
-        if not reviewProcessInfos:
-            return []
-
-        params = {'portal_type': self.getItemTypeName(),
-                  'reviewProcessInfo': reviewProcessInfos,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels')
-    def searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''This will check for user highest reviewer level of each of his groups and return these items and
-           items of lower reviewer levels.
-           This search works if the workflow manage reviewer levels where higher reviewer level
-           can validate lower reviewer levels EVEN IF THE USER IS NOT IN THE CORRESPONDING PLONE SUBGROUP.
-           For example with a 3 levels reviewer workflow, called review1 (lowest level), review2 and review3 (highest level) :
-           - reviewer1 may validate items in reviewer1;
-           - reviewer2 may validate items in reviewer1 and reviewer2;
-           - reviewer3 may validate items in reviewer1, reviewer2 and reviewer3.
-           So get highest hierarchic level of each group of the user and take into account lowest levels too.'''
-        # search every highest reviewer level for each group of the user
-        tool = getToolByName(self, 'portal_plonemeeting')
-        membershipTool = getToolByName(self, 'portal_membership')
-        groupsTool = getToolByName(self, 'portal_groups')
-        userMeetingGroups = tool.getGroupsForUser()
-        member = membershipTool.getAuthenticatedMember()
-        groupIds = groupsTool.getGroupsForPrincipal(member)
-        reviewProcessInfos = []
-        for mGroup in userMeetingGroups:
-            ploneGroups = []
-            # find Plone groups of the mGroup the user is in
-            mGroupId = mGroup.getId()
-            for groupId in groupIds:
-                if groupId.startswith('%s_' % mGroupId):
-                    ploneGroups.append(groupId)
-            # now that we have Plone groups of the mGroup
-            # we can get highest hierarchic level and find sub levels
-            highestReviewerLevel = self._highestReviewerLevel(ploneGroups)
-            if not highestReviewerLevel:
-                continue
-            foundLevel = False
-            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
-                if not foundLevel and not reviewer_suffix == highestReviewerLevel:
-                    continue
-                foundLevel = True
-                # specific management for workflows using the 'pre_validation'/'pre_validation_keep_reviewer_permissions' wfAdaptation
-                if reviewer_suffix == 'reviewers' and \
-                   ('pre_validation' in self.getWorkflowAdaptations() or
-                   'pre_validation_keep_reviewer_permissions' in self.getWorkflowAdaptations()):
-                    review_state = 'prevalidated'
-                reviewProcessInfos.append('%s__reviewprocess__%s' % (mGroupId,
-                                                                     review_state))
-
-        params = {'portal_type': self.getItemTypeName(),
-                  'reviewProcessInfo': reviewProcessInfos,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToAdvice')
-    def searchItemsToAdvice(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items for which the current user must give an advice.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
-        # this search will return 'not delay-aware' and 'delay-aware' advices
-        groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
-                   ['delay__' + g.getId() + '_advice_not_given' for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToAdviceWithoutDelay')
-    def searchItemsToAdviceWithoutDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries items for which the current user must give a delay-aware advice.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
-        # this search will only return 'not delay-aware' advices
-        groupIds = [g.getId() + '_advice_not_given' for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToAdviceWithDelay')
-    def searchItemsToAdviceWithDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries items for which the current user must give a delay-aware advice.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
-        # this search will only return 'delay-aware' advices
-        groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsToAdviceWithExceededDelay')
-    def searchItemsToAdviceWithExceededDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries items for which the current user had to give a
-           delay-aware advice for but did not give it in the deadline.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
-        # this search will only return 'delay-aware' advices for wich delay is exceeded
-        groupIds = ['delay__' + g.getId() + '_advice_delay_exceeded' for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder,
-                  }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchAdvisedItems')
-    def searchAdvisedItems(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items for which the current user has given an advice.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # advised items are items that has an advice in a particular review_state
-        # just append every available meetingadvice state: we want "given" advices.
-        # this search will return every advices
-        wfTool = getToolByName(self, 'portal_workflow')
-        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
-        adviceStates = adviceWF.states.keys()
-        groupIds = []
-        for adviceState in adviceStates:
-            groupIds += [g.getId() + '_%s' % adviceState for g in groups]
-            groupIds += groupIds + ['delay__' + groupId for groupId in groupIds]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchAdvisedItemsWithDelay')
-    def searchAdvisedItemsWithDelay(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items for which the current user has given an advice that was delay-aware.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        groups = tool.getGroupsForUser(suffix='advisers')
-        # advised items are items that has an advice in a particular review_state
-        # just append every available meetingadvice state: we want "given" advices.
-        # this search will only return 'delay-aware' advices
-        wfTool = getToolByName(self, 'portal_workflow')
-        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
-        adviceStates = adviceWF.states.keys()
-        groupIds = []
-        for adviceState in adviceStates:
-            groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
-        # Create query parameters
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'indexAdvisers' use 'OR' by default
-                  'indexAdvisers': groupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsInCopy')
-    def searchItemsInCopy(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items for which the current user is in copyGroups.'''
-        membershipTool = getToolByName(self, 'portal_membership')
-        groupsTool = getToolByName(self, 'portal_groups')
-        member = membershipTool.getAuthenticatedMember()
-        userGroups = groupsTool.getGroupsForPrincipal(member)
-        params = {'portal_type': self.getItemTypeName(),
-                  # KeywordIndex 'getCopyGroups' use 'OR' by default
-                  'getCopyGroups': userGroups,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsOfMyGroups')
-    def searchItemsOfMyGroups(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items of groups of the current user, no matter wich suffix
-           of the group the user is in.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        userGroupIds = [mGroup.getId() for mGroup in tool.getGroupsForUser()]
-        params = {'portal_type': self.getItemTypeName(),
-                  'getProposingGroup': userGroupIds,
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchMyItemsTakenOver')
-    def searchMyItemsTakenOver(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items that current user take over.'''
-        membershipTool = getToolByName(self, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
-        params = {'portal_type': self.getItemTypeName(),
-                  'getTakenOverBy': member.getId(),
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchDecidedItems')
-    def searchDecidedItems(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Queries all items that are decided, depending on MeetingConfig.itemDecidedStates.'''
-        params = {'portal_type': self.getItemTypeName(),
-                  'review_state': self.getItemDecidedStates(),
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder, }
-        # Manage filter
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # Perform the query in portal_catalog
-        return self.portal_catalog(**params)
-
-    security.declarePublic('searchItemsWithFilters')
-    def searchItemsWithFilters(self, sortKey, sortOrder, filterKey, filterValue, **kwargs):
-        '''Returns a list of items.  Do the search regarding parameters defined in the
-           'topic_search_filters' property defined on the topic.  This contains 2 particular values :
-           - 'query' that does a first query filtering as much as possible (first filter);
-           - 'filters' that will apply on brains returned by 'query'.
-           kwargs[TOPIC_SEARCH_FILTERS] is like :
-           {'query': {'review_state': ('itemcreated', 'validated', ),
-                      'getProposingGroup': ('group_id_1', 'group_id_2'), },
-            'filters': ({'getProposingGroup': ('group_id_1', ), 'review_state': ('itemcreated', )},
-                        {'getProposingGroup': ('group_id_2', ), 'review_state': ('validated', )},),
-            }
-        '''
-        params = {'portal_type': self.getItemTypeName(),
-                  'sort_on': sortKey,
-                  'sort_order': sortOrder
-                  }
-        # search filters are passed in kwargs
-        searchFilters = kwargs.pop(TOPIC_SEARCH_FILTERS)
-        # Manage additional ui filters
-        if filterKey:
-            params[filterKey] = prepareSearchValue(filterValue)
-        # update params with kwargs
-        params.update(kwargs)
-        # update params with 'query' given in searchFilters
-        params.update(searchFilters['query'])
-        # Perform the first filtering query in portal_catalog
-        brains = self.portal_catalog(**params)
-        # now apply filters
-        res = []
-        for brain in brains:
-            # now apply every searchFilter, if one is correct, then we keep the brain
-            # searchFilters are applied with a 'OR' behaviour, so if one is ok, we keep the brain
-            for searchFilter in searchFilters['filters']:
-                # now compare every searchFilter to the current brain, if a complete searchFilter
-                # is ok, then we keep the brain, either, we do not append it to 'res'
-                for key in searchFilter:
-                    filterIsRight = True
-                    if not getattr(brain, key) in searchFilter[key]:
-                        filterIsRight = False
-                        break
-                # if we found a sub_filter that works, then we keep the brain
-                if filterIsRight:
-                    break
-            if filterIsRight:
-                res.append(brain)
-        return res
-
-    security.declarePublic('getTopicResults')
-    def getTopicResults(self, topic, isFake):
-        '''This method computes results of p_topic. If p_topic is a fake one
-           (p_isFake is True), it means that some information in the request
-           will allow to perform a direct query in portal_catalog (the user
-           triggered an advanced search).'''
-        rq = self.REQUEST
-        # How must we sort the result?
-        sortKey = rq.get('sortKey', None)
-        sortOrder = 'reverse'
-        if sortKey and (rq.get('sortOrder', 'asc') == 'asc'):
-            sortOrder = None
-        # Is there a filter defined?
-        filterKey = rq.get('filterKey', '')
-        filterValue = rq.get('filterValue', '').decode('utf-8')
-
-        if not isFake:
-            tool = getToolByName(self, 'portal_plonemeeting')
-            # Execute the query corresponding to the topic.
-            if not sortKey:
-                sortCriterion = topic.getSortCriterion()
-                if sortCriterion:
-                    sortKey = sortCriterion.Field()
-                    sortOrder = sortCriterion.reversed and 'reverse' or None
-                else:
-                    sortKey = 'created'
-            methodId = topic.getProperty(TOPIC_SEARCH_SCRIPT, None)
-            # if search is made by portlet_todo, we have a 'MaxShownFound' in the REQUEST
-            batchSize = self.REQUEST.get('MaxShownFound') or tool.getMaxShownFound()
-            if methodId:
-                # Topic params are not sufficient, use a specific method.
-                # keep topics defined paramaters
-                kwargs = {}
-                kwargs['isDefinedInTool'] = False
-                for criterion in topic.listSearchCriteria():
-                    # Only take criterion with a defined value into account
-                    criterionValue = criterion.value
-                    if criterionValue:
-                        kwargs[str(criterion.field)] = criterionValue
-                # if the topic has a TOPIC_SEARCH_FILTERS, we add it to kwargs
-                # also because it is the called search script that will use it
-                searchFilters = topic.getProperty(TOPIC_SEARCH_FILTERS, None)
-                if searchFilters:
-                    # the search filters are stored in a text property but are
-                    # in reality dicts, so use eval() so it is considered correctly
-                    kwargs[TOPIC_SEARCH_FILTERS] = eval(searchFilters)
-                brains = getattr(self, methodId)(sortKey, sortOrder,
-                                                 filterKey, filterValue, **kwargs)
-            else:
-                # Execute the topic, but decide ourselves for sorting and filtering
-                params = topic.buildQuery()
-                params['sort_on'] = sortKey
-                params['sort_order'] = sortOrder
-                params['isDefinedInTool'] = False
-                if filterKey:
-                    params[filterKey] = prepareSearchValue(filterValue)
-                brains = self.portal_catalog(**params)
-            res = tool.batchAdvancedSearch(
-                brains, topic, rq, batch_size=batchSize)
-        else:
-            # This is an advanced search. Use the Searcher.
-            searchedType = topic.getProperty('meeting_topic_type', 'MeetingFile')
-            return Searcher(self, searchedType, sortKey, sortOrder,
-                            filterKey, filterValue).run()
-        return res
-
-    security.declarePublic('getQueryColumns')
-    def getQueryColumns(self, metaType):
-        '''What columns must we show when displaying results of a query for
-           objects of p_metaType ?'''
-        res = ('title',)
-        if metaType == 'MeetingItem':
-            res += tuple(self.getUserParam('itemColumns', self.REQUEST))
-        elif metaType == 'Meeting':
-            res += tuple(self.getUserParam('meetingColumns', self.REQUEST))
-        else:
-            res += ('creator', 'creationDate')
-        return res
-
     security.declarePublic('listWorkflows')
     def listWorkflows(self):
         '''Lists the workflows registered in portal_workflow.'''
@@ -3782,7 +3412,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((workflowName, workflowName))
         return DisplayList(tuple(res)).sortedByValue()
 
+    def listStates_cachekey(method, self, objectType, excepted=None):
+        '''cachekey method for self.listStates.'''
+        return (self.modified(), objectType, excepted)
+
     security.declarePublic('listStates')
+    @ram.cache(listStates_cachekey)
     def listStates(self, objectType, excepted=None):
         '''Lists the possible states for the p_objectType ("Item" or "Meeting")
            used in this meeting config. State name specified in p_excepted will
@@ -4084,41 +3719,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 cache[key] = data
         return data
 
-    security.declarePublic('listMeetingAppAvailableViews')
-    def listMeetingAppAvailableViews(self):
-        '''Returns a list of views available when a user clicks on a particular
-           tab choosing a kind of meeting. This gives the admin a way to choose
-           between the folder available views (from portal_type) or a
-           PloneMeeting-managed view based on PloneMeeting topics.
-
-           We add a 'folder_' or a 'topic_' suffix to precise the kind of view.
-        '''
-        res = []
-        # Add the topic-based views
-        if not hasattr(self.aq_base, 'topics'):
-            # This can be the case if we are creating this meeting config.
-            return DisplayList(tuple(res))
-        for topic in self.topics.objectValues():
-            topicData = ('topic_' + topic.id, translate(unicode(topic.Title(), 'utf-8'),
-                                                        domain="Plone",
-                                                        context=self.REQUEST))
-            if topic.id == 'searchallitemsincopy':
-                if self.getUseCopies():
-                    res.append(topicData)
-            elif topic.id in ('searchalladviseditems', 'searchallitemstoadvice'):
-                if self.getUseAdvices():
-                    res.append(topicData)
-            else:
-                res.append(topicData)
-        return DisplayList(tuple(res))
-
-    security.declarePublic('listRoles')
-    def listRoles(self):
-        res = []
-        for role in self.acl_users.portal_role_manager.listRoleIds():
-            res.append((role, role))
-        return DisplayList(tuple(res))
-
     security.declarePublic('getAvailablePodTemplates')
     def getAvailablePodTemplates(self, obj):
         '''Returns the list of POD templates that the currently logged in user
@@ -4193,6 +3793,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             membershipTool = getToolByName(self, 'portal_membership')
             members = membershipTool.getMembersFolder()
             meetingFolderId = self.getId()
+            searches_folder_ids = [info[0] for info in self.subFoldersInfo[TOOL_FOLDER_SEARCHES][2]]
             for member in members.objectValues():
                 # Get the right meetingConfigFolder
                 if hasattr(member, ROOT_FOLDER):
@@ -4200,7 +3801,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     if hasattr(root_folder, meetingFolderId):
                         # We found the right folder, check if it is empty
                         configFolder = getattr(root_folder, meetingFolderId)
-                        if configFolder.objectValues():
+                        objectIds = configFolder.objectIds()
+                        if set(objectIds).difference(searches_folder_ids):
                             raise BeforeDeleteException("can_not_delete_meetingconfig_meetingfolder")
             # If everything is OK, we can remove every meetingFolder
             for member in members.objectValues():
@@ -4336,8 +3938,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if not userTitle:
             userTitle = mud.id
         data = mud.getData(title=userTitle)
-        folder.invokeFactory('MeetingUser', **data)
-        meetingUser = getattr(folder, mud.id)
+        newId = folder.invokeFactory('MeetingUser', **data)
+        meetingUser = getattr(folder, newId)
         if mud.signatureImage:
             if isinstance(source, basestring):
                 # The image must be retrieved on disk from a profile
@@ -4431,7 +4033,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getUserName_cachekey(method, self, param, request, userId=None, caching=True):
         '''cachekey method for self.getUserParam.'''
-        return (param, str(request.debug), userId)
+        return (param, str(request._debug), userId)
 
     security.declarePublic('getUserParam')
     @ram.cache(getUserName_cachekey)
@@ -4522,6 +4124,145 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
+    security.declarePublic('synchSearches')
+    def synchSearches(self, folder=None):
+        """Action that launch self._synchSearches."""
+        if not self.isManager(self, realManagers=True):
+            raise Unauthorized
+
+        self._synchSearches()
+        self.plone_utils.addPortalMessage('Done.')
+        self.gotoReferer()
+
+    def _synchSearches(self, folder=None):
+        """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
+           every user folder for this MeetingConfig will be synchronized.
+           We will :
+           - remove every relevant folders from the given p_folder (folders searches_items, ...);
+           - we will copy the searches_* folders from the configuration to the p_folder, keeping same UID
+             than before in the user p_folder because this UID appears in the search URL and user may have
+             saved this URL, otherwise it would lead to broken searches called by this URL;
+           - delete inactive collections that have been copy/pasted;
+           - we will copy the facetednav annotation from the MeetingConfig.searches and
+             MeetingConfig.searches_* folders to the corresponding folders in p_folder;
+           - we will update the default for the collection widget."""
+
+        # use uid_catalog to be sure to find the element
+        uid_catalog = getToolByName(self, 'uid_catalog')
+        catalog = getToolByName(self, 'portal_catalog')
+
+        folders = []
+        # synchronize only one folder
+        if folder:
+            folders = [folder, ]
+        else:
+            # synchronize every user folders
+            portal = getToolByName(self, 'portal_url').getPortalObject()
+            for userFolder in portal.Members.objectValues():
+                mymeetings = getattr(userFolder, 'mymeetings', None)
+                if not mymeetings:
+                    continue
+                meetingFolder = getattr(mymeetings, self.getId(), None)
+                if not meetingFolder:
+                    continue
+                folders.append(meetingFolder)
+
+        # check for inactiveCollections that we will remove after copy/paste
+        inactiveCollections = catalog(meta_type='DashboardCollection',
+                                      path={'query': '/'.join(self.getPhysicalPath()) + '/searches'},
+                                      review_state='inactive',
+                                      isDefinedInTool=True)
+        inactiveColEndURLs = []
+        for inactiveCol in inactiveCollections:
+            # find relevant collection in user folder
+            inactiveColEndURLs.append(tuple(inactiveCol.getURL().split('/')[-2:]))
+
+        for folder in folders:
+            logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
+            # remove searches_* folders from the given p_folder
+            subFolderIds = [folderId for folderId in self.searches.objectIds() if folderId.startswith('searches_')]
+            toDelete = []
+            oldUIDs = {}
+            for folderId in subFolderIds:
+                if folderId in folder.objectIds():
+                    for collection in getattr(folder, folderId).objectValues('DashboardCollection'):
+                        oldUIDs['{0}__{1}'.format(folderId, collection.getId())] = collection.UID()
+                    toDelete.append(folderId)
+            folder.manage_delObjects(toDelete)
+
+            # copy searches_* folder from the MeetingConfig to the p_folder
+            copiedData = self.searches.manage_copyObjects(ids=subFolderIds)
+            folder.manage_pasteObjects(copiedData)
+
+            # update pasted collection UIDs and remove copied collections that were actually 'inactive'
+            for folderId in subFolderIds:
+                for collection in getattr(folder, folderId).objectValues('DashboardCollection'):
+                    key = '{0}__{1}'.format(folderId, collection.getId())
+                    if key in oldUIDs:
+                        collection._setUID(oldUIDs[key])
+                        collection.reindexObject(idxs=['UID', ])
+
+            # remove inactiveCollections
+            if inactiveCollections:
+                paths = ['/'.join(folder.getPhysicalPath() + inactiveColEndURL) for inactiveColEndURL in inactiveColEndURLs]
+                brainsToDelete = catalog(meta_type='DashboardCollection',
+                                         path={'query': paths})
+                for brain in brainsToDelete:
+                    colToDelete = brain.getObject()
+                    colToDelete.getParentNode().manage_delObjects([colToDelete.getId(), ])
+
+            # copy facetednav ann from config to p_folder and sub_folders
+            def _copyFacetedCriteriaFor(sourceFolder, destFolder):
+                """ """
+                config_faceted_ann = list(IAnnotations(sourceFolder)['FacetedCriteria'])
+                # make new criteria out of existing one because copying annotation would
+                # create references to these criteria and not not ones
+                folder_faceted_ann = []
+                for criterion in config_faceted_ann:
+                    folder_faceted_ann.append(Criterion(**criterion.__dict__))
+                if 'FacetedCriteria' in IAnnotations(destFolder):
+                    del IAnnotations(destFolder)['FacetedCriteria']
+                IAnnotations(destFolder)['FacetedCriteria'] = PersistentList(folder_faceted_ann)
+            _copyFacetedCriteriaFor(self.searches, folder)
+            for subFolderId in subFolderIds:
+                subFolderConfig = getattr(self.searches, subFolderId)
+                subFolderUser = getattr(folder, subFolderId)
+                _copyFacetedCriteriaFor(subFolderConfig, subFolderUser)
+
+            # update the default collection
+            current_default_id = u''
+            criteria = ICriteria(self.searches).criteria
+            # find the id of the default collection
+            for criterion in criteria:
+                if criterion.widget == CollectionWidget.widget_type:
+                    brains = uid_catalog(UID=criterion.default)
+                    if brains:
+                        collection = brains[0].getObject()
+                        current_default_id = collection.getId()
+            new_default_uid = ''
+            if current_default_id:
+                new_default_uid = getattr(folder.searches_items, current_default_id).UID()
+            # update folder and folder.searches_items
+            self._updateDefaultCollectionFor(folder, new_default_uid)
+            self._updateDefaultCollectionFor(folder.searches_items, new_default_uid)
+            # for other subFolders, make sure there is no default
+            for subFolderId in subFolderIds:
+                if subFolderId == 'searches_items':
+                    continue
+                self._updateDefaultCollectionFor(getattr(folder, subFolderId), '')
+
+    def _updateDefaultCollectionFor(self, folderObj, default_uid):
+        """Use p_default_uid as the default collection selected
+           for the CollectionWidget used on p_folderObj."""
+        # make sure the folder is a facetednav, it should always be the case but...
+        if not folderObj.getLayout() == 'facetednavigation_view':
+            tool = getToolByName(self, 'portal_plonemeeting')
+            tool._enableFacetedFor(folderObj)
+        criteria = ICriteria(folderObj).criteria
+        for criterion in criteria:
+            if criterion.widget == CollectionWidget.widget_type:
+                criterion.default = default_uid
+
     def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
         '''This returns meetings that are still accepting items.'''
         cfg = self.getSelf()
@@ -4552,4 +4293,3 @@ from zope import interface
 from Products.Archetypes.interfaces import IMultiPageSchema
 interface.classImplements(MeetingConfig, IMultiPageSchema)
 ##/code-section module-footer
-

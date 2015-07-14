@@ -35,7 +35,7 @@
         name="imio.history.documentbyline"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class=".browser.overrides.PloneMeetingDocumentBylineViewlet"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        layer="imio.history.interfaces.IImioHistoryLayer"
         permission="zope2.View"
         />
 
@@ -46,13 +46,15 @@
         permission="plone.app.controlpanel.Overview"
         />
 
-    <!-- Override the delete_givenuid view of imio.actionspanel -->
-    <browser:page
-        for="*"
-        name="delete_givenuid"
-        class=".browser.overrides.PMDeleteGivenUidView"
-        layer="imio.actionspanel.interfaces.IActionsPanelLayer"
-        permission="zope2.View" />
+    <!-- Folder contents -->
+    <configure package="plone.app.content">
+        <browser:page
+            for="*"
+            class="Products.PloneMeeting.browser.overrides.PMFolderContentsView"
+            name="folder_contents"
+            template="browser/folder_contents.pt"
+            permission="cmf.ListFolderContents" />
+    </configure>
 
     <configure package="imio.actionspanel">
         <browser:page
@@ -132,6 +134,68 @@
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
+        <browser:page
+            for="plone.app.collection.interfaces.ICollection"
+            name="config_actions_panel"
+            class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+    </configure>
+
+    <configure package="collective.eeafaceted.collectionwidget">
+        <browser:page
+            for="*"
+            name="render_collection_widget_category"
+            class="Products.PloneMeeting.browser.overrides.PMRenderCategoryView"
+            template="browser/templates/category.pt"
+            permission="zope2.View"
+            />
+        <browser:page
+            for="*"
+            name="render_collection_widget_term"
+            class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
+            template="browser/templates/term.pt"
+            permission="zope2.View"
+            />
+    </configure>
+
+    <configure package="imio.dashboard">
+        <browser:page
+            for="*"
+            name="render_collection_widget_term_portlet"
+            class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
+            template="browser/templates/term.pt"
+            permission="zope2.View"
+            />
+    </configure>
+
+    <configure package="collective.eeafaceted.z3ctable">
+        <browser:view
+            for="Products.ATContentTypes.interfaces.folder.IATFolder"
+            name="faceted-table-view"
+            class="Products.PloneMeeting.browser.overrides.FolderFacetedTableView"
+            permission="zope2.View"
+        />
+        <browser:view
+            for="plone.app.collection.interfaces.ICollection"
+            name="faceted-table-view"
+            class="Products.PloneMeeting.browser.overrides.MeetingFacetedTableView"
+            permission="zope2.View"
+        />
+    </configure>
+
+    <configure package="eea.facetednavigation">
+        <browser:page
+            for=".interfaces.IFacetedNavigable"
+            name="facetednavigation_view"
+            template="browser/template/view.pt"
+            class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+            permission="zope2.View"
+        />
+    <adapter for="eea.facetednavigation.interfaces.IFacetedNavigable"
+             provides="eea.facetednavigation.interfaces.ICriteria"
+             factory="Products.PloneMeeting.adapters.Criteria" />
     </configure>
 
 </configure>

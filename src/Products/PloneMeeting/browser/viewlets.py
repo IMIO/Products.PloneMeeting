@@ -43,10 +43,4 @@ class WorkflowState(ViewletBase):
         wfTool = getToolByName(self.context, 'portal_workflow')
         return wfTool.getInfoFor(self.context, 'review_state')
 
-    def getElementClass(self, state):
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-        if tool.getUsedColorSystem() == 'state_color':
-            return 'label-state-'+state
-        return ''
-
     index = ViewPageTemplateFile("templates/workflowstate.pt")
