@@ -1,10 +1,8 @@
 <tal:defines define="category view/category;
                      tool python: view.tool;
                      cfg python: view.cfg;
-                     userIsAmongCreators python: tool.userIsAmong('creators');
                      meetingFolder python: cfg.getPloneMeetingFolder(cfg.getId());
                      portal_url python: tool.getParentNode().absolute_url();
-                     templateItems view/templateItems;
                      member view/member;"
              i18n:domain="PloneMeeting">
     <div class="portlet_add_icons">

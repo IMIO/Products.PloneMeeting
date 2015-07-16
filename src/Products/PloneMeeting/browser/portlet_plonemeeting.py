@@ -74,11 +74,6 @@ class Renderer(base.Renderer, FacetedRenderer):
         if self.cfg:
             return self.tool.getPloneMeetingFolder(self.cfg.getId())
 
-    @memoize
-    def templateItems(self):
-        '''Check if there are item templates defined or not.'''
-        return self.getPloneMeetingFolder().restrictedTraverse('createitemfromtemplate').getItemTemplates()
-
 
 class AddForm(base.AddForm):
     form_fields = form.Fields(IPloneMeetingPortlet)

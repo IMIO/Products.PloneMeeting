@@ -3985,8 +3985,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return getattr(self.meetingusers.aq_base, userId, None)
 
     security.declarePublic('getItems')
-    def getItems(self, recurring=True):
-        '''Gets the items defined in the configuration, for some p_usage(s).'''
+    def getItems(self, recurring=True, as_brains=False):
+        '''Gets the items defined in the configuration, for some p_usage(s).
+           If p_as_brains is True, return brains if possible.'''
         res = []
         if recurring:
             itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
@@ -3999,8 +4000,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             brains = catalogTool(meta_type='MeetingItem',
                                  path={'query': '/'.join(self.getPhysicalPath()) + '/itemtemplates'},
                                  isDefinedInTool=True)
-            for brain in brains:
-                res.append(brain.getObject())
+            if as_brains:
+                res = brains
+            else:
+                for brain in brains:
+                    res.append(brain.getObject())
         return res
 
     security.declarePrivate('createUser')

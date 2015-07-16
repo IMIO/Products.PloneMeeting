@@ -212,7 +212,7 @@ class PMRenderCategoryView(RenderCategoryView):
 
     def templateItems(self):
         '''Check if there are item templates defined or not.'''
-        return self.tool.getPloneMeetingFolder(self.cfg.getId()).restrictedTraverse('createitemfromtemplate').getItemTemplates()
+        return bool(self.cfg.getItems(recurring=False, as_brains=True))
 
 
 class FolderFacetedTableView(IDFacetedTableView):
