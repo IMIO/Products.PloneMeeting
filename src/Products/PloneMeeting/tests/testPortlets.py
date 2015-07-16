@@ -22,39 +22,11 @@
 # 02110-1301, USA.
 #
 
-from zope.component import getUtility, getMultiAdapter
-from plone.portlets.interfaces import IPortletManager, IPortletRenderer
-from Products.PloneMeeting.browser import portlet_plonemeeting as pm
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testPortlets(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
-
-    def test_pm_PortletPMAvailableTemplates(self):
-        '''Test the portlet_plonemeeting.getTemplateItems method
-           returning available item templates for current user.
-           template1 is available to everyone but template2 is restricted to group 'vendors'.'''
-        # pmCreator1 is member of 'developers'
-        self.changeUser('pmCreator1')
-        self.getMeetingFolder()
-        context = getattr(self.portal.Members.pmCreator1.mymeetings, self.meetingConfig.getId())
-        request = self.portal.REQUEST
-        view = self.portal.restrictedTraverse('@@plone')
-        manager = getUtility(IPortletManager, name='plone.leftcolumn', context=self.portal)
-        assignment = pm.Assignment()
-        renderer = getMultiAdapter((context, request, view, manager, assignment), IPortletRenderer)
-        self.assertEquals(['template1', ], [template.getId() for template in renderer.templateItems()])
-        # pmCreator2 is member of 'vendors' and can so access template2 that is restricted to 'vendors'
-        self.changeUser('pmCreator2')
-        self.getMeetingFolder()
-        context = getattr(self.portal.Members.pmCreator2.mymeetings, self.meetingConfig.getId())
-        request = self.portal.REQUEST
-        view = self.portal.restrictedTraverse('@@plone')
-        manager = getUtility(IPortletManager, name='plone.leftcolumn', context=self.portal)
-        assignment = pm.Assignment()
-        renderer = getMultiAdapter((context, request, view, manager, assignment), IPortletRenderer)
-        self.assertEquals(['template1', 'template2', ], [template.getId() for template in renderer.templateItems()])
 
     def test_pm_CreateItemFromTemplate(self):
         '''
