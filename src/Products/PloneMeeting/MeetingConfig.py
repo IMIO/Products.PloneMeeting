@@ -1842,7 +1842,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'query':
                     [
-                        {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-validate-of-highest-hierarchic-level'},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-validate-of-highest-hierarchic-level'},
+                    ],
+                    'sort_on': u'created',
+                    'sort_reversed': True,
+                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here).userIsAReviewer()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Validable items
+                ('searchvalidableitems',
+                {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-validate-of-every-reviewer-levels-and-lower-levels'},
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
