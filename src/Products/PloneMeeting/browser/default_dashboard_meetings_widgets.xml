@@ -45,7 +45,7 @@
 
   <criterion name="c3" i18n:attributes="title">
    <property name="widget">resultsperpage</property>
-   <property name="title">Batching</property>
+   <property name="title">Per page</property>
    <property name="position">center</property>
    <property name="section">default</property>
    <property name="hidden">0</property>
