@@ -592,14 +592,14 @@ function initRichTextField(rq, hook) {
     // Javascripts inside this zone will not be executed. So find them
     // and trigger their execution here.
     var scripts = $('script', hook);
-    var fieldName = rq.hook.split('_')[1];
+    var fieldName = rq.hook.substring(5);
     for (var i=0; i<scripts.length; i++) {
       var scriptContent = scripts[i].innerHTML;
       if (scriptContent.search('addEventHandler') != -1) {
         // This is a kupu field that will register an event onLoad on
         // window but this event will never be triggered. So do it by
         // hand.
-        currentFieldName = hook.id.split('_')[1];
+        currentFieldName = hook.id.substring(5);
       }
       else { eval(scriptContent); }
     }
@@ -610,7 +610,7 @@ function initRichTextField(rq, hook) {
 function getRichTextContent(rq, params) {
   /* Gets the content of a rich text field before sending it through an Ajax
      request. */
-  var fieldName = rq.hook.split('_')[1];
+  var fieldName = rq.hook.substring(5);
   var formId = 'ajax_edit_' + fieldName;
   var theForm = document.getElementById(formId);
   var theWidget = theForm[fieldName];
