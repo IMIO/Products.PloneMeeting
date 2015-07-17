@@ -35,7 +35,7 @@ from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
 
 folderViews = ('folder_contents', )
-noSearchTypes = ('Folder',)
+noSearchTypes = ('Folder', 'DashboardCollection', )
 # Indexes used by PloneMeeting
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''

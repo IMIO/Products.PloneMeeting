@@ -3011,12 +3011,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
         typesTool = getToolByName(self, 'portal_types')
+        props = getToolByName(self, 'portal_properties').site_properties
         for metaTypeName in self.metaTypes:
             portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
             portalType = getattr(typesTool, portalTypeName)
             basePortalType = getattr(typesTool, metaTypeName)
             portalType.i18n_domain = basePortalType.i18n_domain
-            if metaTypeName == "MeetingItem":
+            # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
+            portalType.global_allow = True
+            if metaTypeName.startswith("MeetingItem"):
+                portal_type = metaTypeName == "MeetingItem" and \
+                    self.getItemTypeName() or \
+                    self.getItemTypeName(configType=metaTypeName)
                 # change MeetingItem icon_expr only if necessary as we need to update
                 # the 'getIcon' metadata in this case...
                 iconName = self.getItemIconColorName()
@@ -3027,11 +3033,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     portalType.icon_expr = icon_expr
                     portalType.icon_expr_object = Expression(portalType.icon_expr)
                     catalog = getToolByName(self, 'portal_catalog')
-                    brains = catalog(portal_type=self.getItemTypeName(), isDefinedInTool=True) + \
-                        catalog(portal_type=self.getItemTypeName(), isDefinedInTool=False)
+                    brains = catalog(portal_type=portal_type)
                     for brain in brains:
                         item = brain.getObject()
                         item.reindexObject(idxs=['getIcon', ])
+                # do not search item templates and recurring items
+                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
+                    nsTypes = props.getProperty('types_not_searched')
+                    if not portal_type in nsTypes:
+                        if not nsTypes:
+                            nsTypes = []
+                        else:
+                            nsTypes = list(nsTypes)
+                        nsTypes.append(portal_type)
+                        props.manage_changeProperties(types_not_searched=tuple(nsTypes))
             else:
                 portalType.icon_expr = basePortalType.icon_expr
                 portalType.icon_expr_object = Expression(portalType.icon_expr)
@@ -3077,6 +3092,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Set the human readable title explicitly
                 portalType = getattr(self.portal_types, portalTypeName)
                 portalType.title = portalTypeName
+                # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
+                portalType.global_allow = True
                 # Associate a workflow for this new portal type.
                 exec 'workflowName = self.get%sWorkflow()' % self.metaNames[i]
                 # because of reinstallation problems, we MUST trust given workflow name and use

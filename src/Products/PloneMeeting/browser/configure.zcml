@@ -141,7 +141,6 @@
         class=".itemtemplates.ItemTemplateView"
         permission="zope2.View"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        allowed_attributes="getItemTemplates"
         template="templates/itemtemplates.pt"
       />
     <browser:page
