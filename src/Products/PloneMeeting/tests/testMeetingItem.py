@@ -1882,7 +1882,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item.validate_category(aCategoryId))
 
         # if item isDefinedInTool, the category is not required
-        itemInTool = self.meetingConfig2.getItems(recurring=False)[0]
+        itemInTool = self.meetingConfig2.getItemTemplates(as_brains=False)[0]
         self.failIf(itemInTool.validate_category(''))
 
     def test_pm_Validate_proposingGroup(self):
@@ -1897,11 +1897,11 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # if item isDefinedInTool, the proposing group is not required if it is an item template
         # required for a recurring item
-        recurringItem = self.meetingConfig.getItems(recurring=True)[0]
+        recurringItem = self.meetingConfig.getRecurringItems()[0]
         self.assertTrue(recurringItem.validate_proposingGroup('') == proposing_group_required_msg)
         self.failIf(recurringItem.validate_proposingGroup('developers'))
         # not required for an item template
-        itemTemplate = self.meetingConfig.getItems(recurring=False)[0]
+        itemTemplate = self.meetingConfig.getItemTemplates(as_brains=False)[0]
         self.failIf(itemTemplate.validate_proposingGroup(''))
         self.failIf(itemTemplate.validate_proposingGroup('developers'))
 
@@ -2507,13 +2507,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # but it is still possible to add items in the configuration
         self.changeUser('admin')
         # an item template
-        itemTemplate = self.create('TemplateMeetingItem')
+        itemTemplate = self.create('MeetingItemTemplate')
         itemTemplate._at_creation_flag = True
         self.assertTrue(itemTemplate._at_creation_flag)
         # using the edit form will not raise Unauthorized
         self.assertIsNone(itemTemplate.restrictedTraverse('@@at_lifecycle_view').begin_edit())
         # an recurring item
-        itemTemplate = self.create('RecurringMeetingItem')
+        itemTemplate = self.create('MeetingItemRecurring')
         itemTemplate._at_creation_flag = True
         self.assertTrue(itemTemplate._at_creation_flag)
         # using the edit form will not raise Unauthorized
@@ -2791,8 +2791,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # completeness widget is disabled for items of the config
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
-        recurringItem = cfg.getItems(recurring=True)[0]
-        templateItem = cfg.getItems(recurring=False)[0]
+        recurringItem = cfg.getRecurringItems()[0]
+        templateItem = cfg.getItemTemplates(as_brains=False)[0]
         self.assertFalse(recurringItem.adapted().mayEvaluateCompleteness())
         self.assertFalse(templateItem.adapted().mayEvaluateCompleteness())
         self.assertFalse(recurringItem.adapted().mayAskCompletenessEvalAgain())
@@ -2853,8 +2853,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # emergency widget is disabled for items of the config
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
-        recurringItem = cfg.getItems(recurring=True)[0]
-        templateItem = cfg.getItems(recurring=False)[0]
+        recurringItem = cfg.getRecurringItems()[0]
+        templateItem = cfg.getItemTemplates(as_brains=False)[0]
         self.assertFalse(recurringItem.adapted().mayAskEmergency())
         self.assertFalse(templateItem.adapted().mayAskEmergency())
         # by default, every user able to edit the item may ask emergency

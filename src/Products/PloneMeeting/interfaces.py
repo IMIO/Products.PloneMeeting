@@ -7,11 +7,6 @@ from zope.component.interfaces import IObjectEvent
 from zope.publisher.interfaces.browser import IBrowserRequest
 from eea.facetednavigation.subtypes.interfaces import IFacetedNavigable
 
-class IFacetedSearchesMeetingItemsMarker(Interface):
-    """ """
-class IFacetedSearchesDecisionsMarker(Interface):
-    """ """
-
 
 class IFacetedSearchesMarker(Interface):
     """

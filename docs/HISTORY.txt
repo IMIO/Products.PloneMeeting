@@ -71,6 +71,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed utils.spanifyLink
 - Added events AdviceAfterAddEvent and AdviceAfterAddEvent so other package can register subscriber for
   it and be sure it is called after the PloneMeeting AdviceAdded and AdviceModified events
+- Added new portal_types for recurring items (MeetingItemRecurring) and item templates (MeetingItemTemplate),
+  this way we may remove the monkey patch about CatalogTool.searchResults and the 'isDefinedInTool' catalog index
 
 3.3 (2015-02-27)
 ----------------

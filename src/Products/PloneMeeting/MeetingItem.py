@@ -307,6 +307,16 @@ class MeetingItemWorkflowActions:
     def __init__(self, item):
         self.context = item
 
+    security.declarePrivate('doActivate')
+    def doActivate(self, stateChange):
+        """Used for items in config."""
+        pass
+
+    security.declarePrivate('doDeactivate')
+    def doDeactivate(self, stateChange):
+        """Used for items in config."""
+        pass
+
     security.declarePrivate('doPropose')
     def doPropose(self, stateChange):
         pass
@@ -4448,7 +4458,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Was current item already in same review_state before?
            And if so, is it up or down the workflow?"""
         res = None
-        if not self.hasMeeting() and not self.queryState() == 'validated':
+        if not self.hasMeeting() and \
+           not self.queryState() == 'validated' and \
+           not self.isDefinedInTool():
             # down the workflow, the last transition was a backTo... transition
             lastEvent = getLastEvent(self)
             if lastEvent['action']:

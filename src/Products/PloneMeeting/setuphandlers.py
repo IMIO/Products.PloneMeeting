@@ -59,7 +59,6 @@ indexInfos = {
     'sentToInfos': ('KeywordIndex', {}),
     'sendToAuthority': ('FieldIndex', {}),
     'downOrUpWorkflowAgain': ('FieldIndex', {}),
-    'isDefinedInTool': ('BooleanIndex', {}),
     'templateUsingGroups': ('KeywordIndex', {}),
     'getCompleteness': ('KeywordIndex', {}),
     'getTakenOverBy': ('FieldIndex', {}),

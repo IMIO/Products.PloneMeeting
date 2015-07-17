@@ -4,6 +4,7 @@ logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
+from imio.helpers.catalog import removeIndexes
 
 from Products.PloneMeeting.interfaces import IFacetedSearchesItemsMarker
 from Products.PloneMeeting.migrations import Migrator
@@ -272,6 +273,45 @@ class Migrate_To_3_4(Migrator):
             delattr(aq_base(self.tool), 'accessInfo')
         logger.info('Done.')
 
+    def _moveToItemTemplateRecurringOwnPortalTypes(self):
+        """We now have own portal_types for item templates and recurring items, so :
+           - remove the isDefinedInTool portal_catalog index;
+           - clean the PM workflow policy;
+           - update portal_type of item templates and recurring items;
+           - update constrain types for folders 'itemtemplates' and 'recurringitems'."""
+        logger.info('Moving to own portal_types for item templates and recurring items...')
+        # remove the isDefinedInTool index from portal_catalog
+        removeIndexes(self.portal, indexes=('isDefinedInTool', ))
+        # clean PM tool placeful workflow policy in the loop on MeetingConfigs
+        policy = self.portal.portal_placeful_workflow.getWorkflowPolicyById('portal_plonemeeting_policy')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            itemType = cfg.getItemTypeName()
+            # remove from policy
+            if policy.getChainFor(itemType):
+                policy.delChain(itemType)
+            # update item templates portal_type
+            brainTemplates = self.portal.portal_catalog(meta_type='MeetingItem',
+                                                        path={'query': '/'.join(cfg.getPhysicalPath()) + '/itemtemplates'})
+            itemTemplateType = cfg.getItemTypeName(configType='MeetingItemTemplate')
+            for brainTemplate in brainTemplates:
+                itemTemplate = brainTemplate.getObject()
+                if itemTemplate.portal_type == itemType:
+                    itemTemplate.portal_type = itemTemplateType
+                    itemTemplate.reindexObject(idxs=['portal_type', 'Type', ])
+            # update recurring items portal_type
+            recItemType = cfg.getItemTypeName(configType='MeetingItemRecurring')
+            recItems = cfg.getRecurringItems()
+            for recItem in recItems:
+                if recItem.portal_type == itemType:
+                    recItem.portal_type = recItemType
+                    recItem.getObject().reindexObject(idxs=['portal_type', 'Type', ])
+            # update constraintypes for folders itemtemplates and recurringitems
+            cfg.itemtemplates.setLocallyAllowedTypes(['Folder', itemTemplateType])
+            cfg.itemtemplates.setImmediatelyAddableTypes(['Folder', itemTemplateType])
+            cfg.recurringitems.setLocallyAllowedTypes([recItemType])
+            cfg.recurringitems.setImmediatelyAddableTypes([recItemType])
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -282,10 +322,12 @@ class Migrate_To_3_4(Migrator):
         self._migrateLateItems()
         self._adaptAppForImioDashboard()
         self._cleanPMModificationDateOnItemsAndAnnexes()
-        # update portal_catalog as index "isDefinedInTool" changed
+        self._moveToItemTemplateRecurringOwnPortalTypes()
+        # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
-        self.refreshDatabase(workflows=False, catalogsToRebuild=['portal_catalog', 'reference_catalog'])
+        self.refreshDatabase(catalogsToRebuild=['portal_catalog', 'reference_catalog'],
+                             workflows=True)
         self.finish()
 
 
@@ -293,10 +335,14 @@ class Migrate_To_3_4(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Update MeetingConfig.itemsListVisibleFields stored values;
-       2) Add DashboardCollections;
-       3) Refresh catalogs;
-       4) Reinstall PloneMeeting.
+       1) Reinstall PloneMeeting;
+       2) Clean registries;
+       3) Update MeetingConfig.itemsListVisibleFields stored values;
+       4) Migrate late items;
+       5) Move to imio.dashboard;
+       6) Clean pm_modification_date on items and annexes;
+       7) Move item templates and recurring items to their own portal_type;
+       8) Refresh catalogs.
     '''
     Migrate_To_3_4(context).run()
 # ------------------------------------------------------------------------------

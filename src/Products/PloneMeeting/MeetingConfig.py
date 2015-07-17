@@ -1710,11 +1710,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 ('searches_decisions', 'Decisions'))
                                ),
         TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems',
-                                      ('itemType', ),
+                                      ('itemTypeRecurring', ),
                                       ()
                                       ),
         TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates',
-                                     ('Folder', 'itemType'),
+                                     ('Folder', 'itemTypeTemplate'),
                                      ()
                                      ),
         TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes',
@@ -1731,8 +1731,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                     )
     }
 
-    metaTypes = ('MeetingItem', 'Meeting')
-    metaNames = ('Item', 'Meeting')
+    metaTypes = ('MeetingItem', 'MeetingItemTemplate', 'MeetingItemRecurring', 'Meeting')
+    metaNames = ('Item', 'ItemTemplate', 'ItemRecurring', 'Meeting')
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
     # Names of workflow adaptations.
@@ -3070,8 +3070,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not hasattr(self.portal_types, portalTypeName):
                 typeInfoName = "PloneMeeting: %s (%s)" % (metaTypeName,
                                                           metaTypeName)
+                realMetaType = metaTypeName.startswith('MeetingItem') and 'MeetingItem' or metaTypeName
                 self.portal_types.manage_addTypeInformation(
-                    getattr(self.portal_types, metaTypeName).meta_type,
+                    getattr(self.portal_types, realMetaType).meta_type,
                     id=portalTypeName, typeinfo_name=typeInfoName)
                 # Set the human readable title explicitly
                 portalType = getattr(self.portal_types, portalTypeName)
@@ -3083,14 +3084,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # could not exist at this time but we need to set it nevertheless
                 self.portal_workflow.setChainForPortalTypes([portalTypeName],
                                                             workflowName)
-                # If type is MeetingItem-based, associate him with a different
-                # workflow in workflow policy portal_plonemeeting_policy
-                # moreover, we add the extra portal_types/actions
-                if metaTypeName == 'MeetingItem':
-                    ppw = self.portal_placeful_workflow
-                    toolPolicy = ppw.portal_plonemeeting_policy
-                    toolPolicy.setChain(portalTypeName,
-                                        ('plonemeeting_activity_managers_workflow',))
+                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
                     # Update the typesUseViewActionInListings property of site_properties
                     # so MeetingItem types are in it, this is usefull when managing item templates
                     # in the MeetingConfig because folders there have the 'folder_contents' layout
@@ -3362,6 +3356,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if 'itemType' in allowedTypes:
                 allowedTypes.remove('itemType')
                 allowedTypes.append(self.getItemTypeName())
+            elif 'itemTypeTemplate' in allowedTypes:
+                allowedTypes.remove('itemTypeTemplate')
+                allowedTypes.append(self.getItemTypeName(configType='MeetingItemTemplate'))
+            elif 'itemTypeRecurring' in allowedTypes:
+                allowedTypes.remove('itemTypeRecurring')
+                allowedTypes.append(self.getItemTypeName(configType='MeetingItemRecurring'))
             folder.setLocallyAllowedTypes(allowedTypes)
             folder.setImmediatelyAddableTypes(allowedTypes)
             # call processForm passing dummy values so existing values are not touched
@@ -3392,10 +3392,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.setAnnexDecisionToPrintDefault(False)
 
     security.declarePublic('getItemTypeName')
-    def getItemTypeName(self):
+    def getItemTypeName(self, configType=None):
         '''Gets the name of the portal_type of the meeting item for this
            config.'''
-        return 'MeetingItem%s' % self.getShortName()
+        if not configType:
+            return 'MeetingItem%s' % self.getShortName()
+        else:
+            return '{0}{1}'.format(configType, self.getShortName())
+
+    def getItemTemplateWorkflow(self):
+        """Return the WF to use for MeetingItemTemplate generated portal_type.
+           Used in self.registerPortalTypes."""
+        return 'plonemeeting_activity_managers_workflow'
+
+    def getItemRecurringWorkflow(self):
+        """Return the WF to use for MeetingItemRecurring generated portal_type.
+           Used in self.registerPortalTypes."""
+        return 'plonemeeting_activity_managers_workflow'
 
     security.declarePublic('getMeetingTypeName')
     def getMeetingTypeName(self):
@@ -3894,7 +3907,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             folder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES)
         data = descr.__dict__
-        folder.invokeFactory(self.getItemTypeName(), **data)
+        itemType = isRecurring and \
+            self.getItemTypeName(configType='MeetingItemRecurring') or \
+            self.getItemTypeName(configType='MeetingItemTemplate')
+        folder.invokeFactory(itemType, **data)
         item = getattr(folder, descr.id)
         # call processForm passing dummy values so existing values are not touched
         item.processForm(values={'dummy': None})
@@ -3984,22 +4000,50 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the Meeting user that corresponds to p_userId.'''
         return getattr(self.meetingusers.aq_base, userId, None)
 
-    security.declarePublic('getItems')
-    def getItems(self, recurring=True, as_brains=False):
-        '''Gets the items defined in the configuration, for some p_usage(s).
-           If p_as_brains is True, return brains if possible.'''
+    security.declarePublic('getRecurringItems')
+    def getRecurringItems(self, onlyActive=True):
+        '''Gets the recurring items defined in the configuration.
+           If p_onlyActive is True, only returns 'active' items.'''
         res = []
-        if recurring:
-            itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
-            for item in itemsFolder.objectValues('MeetingItem'):
-                res.append(item)
+        itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
+        if not onlyActive:
+            res = itemsFolder.objectValues('MeetingItem')
         else:
-            itemsFolder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES)
-            catalogTool = getToolByName(self, 'portal_catalog')
-            # those elements are in the configuration, we have to set isDefinedInTool to True
-            brains = catalogTool(meta_type='MeetingItem',
-                                 path={'query': '/'.join(self.getPhysicalPath()) + '/itemtemplates'},
-                                 isDefinedInTool=True)
+            res = []
+            for item in itemsFolder.objectValues('MeetingItem'):
+                if item.queryState() == 'active':
+                    res.append(item)
+        return res
+
+    def _itemTemplatesQuery(self, onlyActive=True, filtered=False):
+        """Returns the catalog query to get item templates."""
+        query = {'portal_type': self.getItemTypeName(configType='MeetingItemTemplate')}
+        if onlyActive:
+            query['review_state'] = 'active'
+        if filtered:
+            tool = getToolByName(self, 'portal_plonemeeting')
+            membershipTool = getToolByName(self, 'portal_membership')
+            member = membershipTool.getAuthenticatedMember()
+            memberGroups = [group.getId() for group in
+                            tool.getGroupsForUser(member.getId(), suffix="creators")]
+            query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + tuple(memberGroups)
+        return query
+
+    security.declarePublic('getItemTemplates')
+    def getItemTemplates(self, as_brains=True, onlyActive=True, filtered=False):
+        '''Gets the item templates defined in the configuration.
+           If p_as_brains is True, return brains.
+           If p_onlyActive is True, return active elements.
+           If p_filtered is True, filter out items regarinf the templateUsingGroups attribute.'''
+        res = []
+
+        catalog = getToolByName(self, 'portal_catalog')
+        query = self._itemTemplatesQuery(onlyActive, filtered)
+        brains = catalog(**query)
+
+        if as_brains:
+            res = brains
+        else:
             if as_brains:
                 res = brains
             else:
@@ -4191,8 +4235,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # check for inactiveCollections that we will remove after copy/paste
         inactiveCollections = catalog(meta_type='DashboardCollection',
                                       path={'query': '/'.join(self.getPhysicalPath()) + '/searches'},
-                                      review_state='inactive',
-                                      isDefinedInTool=True)
+                                      review_state='inactive')
         inactiveColEndURLs = []
         for inactiveCol in inactiveCollections:
             # find relevant collection in user folder

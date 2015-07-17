@@ -152,15 +152,6 @@ def sendToAuthority(obj):
 
 
 @indexer(IItem)
-def isDefinedInTool(obj):
-    """
-      Do items defined in the tool visible by catalog searches only
-      when an admin is in the tool...
-    """
-    return ('portal_plonemeeting' in obj.absolute_url())
-
-
-@indexer(IItem)
 def templateUsingGroups(obj):
     """
       Index used to build the item templates tree.

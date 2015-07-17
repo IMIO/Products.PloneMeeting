@@ -26,6 +26,7 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -317,13 +318,11 @@ def onItemDuplicated(item, event):
        another, we will add a line in the original item history specifying that
        it was sent to another meetingConfig.  The 'new item' already have
        a line added to his workflow_history.'''
-    # if item and event.newItem portal_types are not the same
-    # it means that item was sent to another meetingConfig
     newItem = event.newItem
-    if item.portal_type == newItem.portal_type:
+    tool = getToolByName(item, 'portal_plonemeeting')
+    if tool.getMeetingConfig(item) == tool.getMeetingConfig(newItem):
         return
     # add a line to the original item history
-    tool = getToolByName(item, 'portal_plonemeeting')
     membershipTool = getToolByName(item, 'portal_membership')
     memberId = membershipTool.getAuthenticatedMember().getId()
     wfTool = getToolByName(item, 'portal_workflow')
@@ -333,7 +332,7 @@ def onItemDuplicated(item, event):
     label = translate('sentto_othermeetingconfig',
                       domain="PloneMeeting",
                       context=item.REQUEST,
-                      mapping={'meetingConfigTitle': newItemConfig.Title()})
+                      mapping={'meetingConfigTitle': safe_unicode(newItemConfig.Title())})
     action = translate(newItemConfig._getCloneToOtherMCActionTitle(newItemConfig.getId(), itemConfig.getId()),
                        domain="plone",
                        context=item.REQUEST)

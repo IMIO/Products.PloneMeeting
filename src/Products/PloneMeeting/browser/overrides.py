@@ -212,7 +212,7 @@ class PMRenderCategoryView(RenderCategoryView):
 
     def templateItems(self):
         '''Check if there are item templates defined or not.'''
-        return bool(self.cfg.getItems(recurring=False, as_brains=True))
+        return bool(self.cfg.getItemTemplates(as_brains=True, onlyActive=True))
 
 
 class FolderFacetedTableView(IDFacetedTableView):

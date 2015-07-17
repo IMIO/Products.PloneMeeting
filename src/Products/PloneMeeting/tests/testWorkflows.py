@@ -350,27 +350,27 @@ class testWorkflows(PloneMeetingTestCase):
         # clean existing so we are sure of what we have got
         self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', ])
         # add 3 recurring items added on '_init_'
-        self.create('RecurringMeetingItem', title='Rec item 1a',
+        self.create('MeetingItemRecurring', title='Rec item 1a',
                     proposingGroup='vendors',
                     meetingTransitionInsertingMe='_init_')
-        self.create('RecurringMeetingItem', title='Rec item 1b',
+        self.create('MeetingItemRecurring', title='Rec item 1b',
                     proposingGroup='vendors',
                     meetingTransitionInsertingMe='_init_')
-        self.create('RecurringMeetingItem', title='Rec item 1c',
+        self.create('MeetingItemRecurring', title='Rec item 1c',
                     proposingGroup='vendors',
                     meetingTransitionInsertingMe='_init_')
         # this one produce an error as backTo* transitions can not
         # be selected for recurring items
-        self.create('RecurringMeetingItem', title='Rec item 2',
+        self.create('MeetingItemRecurring', title='Rec item 2',
                     proposingGroup='developers',
                     meetingTransitionInsertingMe='backToCreated')
-        self.create('RecurringMeetingItem', title='Rec item 3',
+        self.create('MeetingItemRecurring', title='Rec item 3',
                     proposingGroup='developers',
                     meetingTransitionInsertingMe='publish')
-        self.create('RecurringMeetingItem', title='Rec item 4',
+        self.create('MeetingItemRecurring', title='Rec item 4',
                     proposingGroup='developers',
                     meetingTransitionInsertingMe='freeze')
-        self.create('RecurringMeetingItem', title='Rec item 5',
+        self.create('MeetingItemRecurring', title='Rec item 5',
                     proposingGroup='developers',
                     meetingTransitionInsertingMe='decide')
 
@@ -422,6 +422,25 @@ class testWorkflows(PloneMeetingTestCase):
         meetingWithoutRecurringItems = self.create('Meeting', date='2008/12/11 09:00:00')
         self.assertTrue(meetingWithoutRecurringItems.getItems() == [])
 
+    def test_pm_InactiveRecurringItemsAreNotInserted(self):
+        '''Only active recurring items are presented to the meeting.'''
+        cfg = self.meetingConfig
+        self._setupRecurringItems()
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date='2007/12/11 09:00:00')
+        # contains 3 recurring items
+        self.assertTrue(len(meeting.getItems()) == 3)
+        # disable a recurring item
+        self.changeUser('siteadmin')
+        recItem1 = cfg.getRecurringItems()[0]
+        self.assertTrue(recItem1.getMeetingTransitionInsertingMe() == u'_init_')
+        self.do(recItem1, 'deactivate')
+        # create a new meeting
+        self.changeUser('pmManager')
+        meeting2 = self.create('Meeting', date='2008/12/11 09:00:00')
+        # contains 2 recurring items
+        self.assertTrue(len(meeting2.getItems()) == 2)
+
     def test_pm_RecurringItemsBypassSecutiry(self):
         '''Tests that recurring items are addable by a MeetingManager even if by default,
            one of the transition to trigger for the item to be presented should not be triggerable
@@ -432,7 +451,7 @@ class testWorkflows(PloneMeetingTestCase):
         self._removeConfigObjectsFor(self.meetingConfig)
         # just one recurring item added for 'developers'
         self.changeUser('admin')
-        self.create('RecurringMeetingItem', title='Rec item developers',
+        self.create('MeetingItemRecurring', title='Rec item developers',
                     proposingGroup='developers',
                     meetingTransitionInsertingMe='_init_')
         self.createUser('pmManagerRestricted', ('MeetingManager', ))
@@ -456,16 +475,17 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted
            in the meeting are respecting the 'privacy' attribute.'''
+        cfg = self.meetingConfig
         self._setupRecurringItems()
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
-                                                          'reverse': '0'},
-                                                         {'insertingMethod': 'on_proposing_groups',
-                                                          'reverse': '0'}, ))
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
+                                           'reverse': '0'},
+                                          {'insertingMethod': 'on_proposing_groups',
+                                           'reverse': '0'}, ))
         # set the first recurring item that will be inserted as 'secret'
         # when every recurring items are inserted, this will be at the very end
         # of the meeting presented items
         # the first recurring item of the config is inserted on '_init_'
-        firstRecurringItem = self.meetingConfig.getItems(recurring=True)[0]
+        firstRecurringItem = cfg.getRecurringItems()[0]
         self.assertTrue(firstRecurringItem.getMeetingTransitionInsertingMe() == '_init_')
         firstRecurringItem.setPrivacy('secret')
         self.changeUser('pmManager')

@@ -1073,7 +1073,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         itemType = self.portal.portal_types[cfg.getItemTypeName()]
         self.assertTrue(itemType.icon_expr.endswith('MeetingItem.png'))
         # get one item of the config to check that these items are updated too
-        itemInConfig = cfg.getItems()[0]
+        itemInConfig = cfg.getRecurringItems()[0]
         item = self.create('MeetingItem')
         # the item's getIcon metadata is correct
         itemBrain = self.portal.portal_catalog(UID=item.UID())[0]
@@ -1108,7 +1108,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # fails if items left in the meetingConfig
         # we have recurring items
         self.changeUser('admin')
-        self.assertTrue(cfg.getItems())
+        self.assertTrue(cfg.getRecurringItems())
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         self.assertEquals(cm.exception.message, 'can_not_delete_meetingitem_container')
@@ -1217,6 +1217,24 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg._synchSearches()
         self.assertTrue('searchtest' in pmFolder.searches_items.objectIds())
         self.assertTrue('searchtest' in pmCreator1Folder.searches_items.objectIds())
+
+    def test_pm_GetRecurringItems(self):
+        """Test the MeetingConfig.getRecurringItems method."""
+        self.changeUser('admin')
+        cfg = self.meetingConfig
+        # by default, returns active recurring items
+        self.assertTrue([item.getId() for item in cfg.getRecurringItems()] ==
+                        cfg.recurringitems.objectIds('MeetingItem'))
+        # disbable first recurring item
+        recItem1 = cfg.getRecurringItems()[0]
+        self.do(recItem1, 'deactivate')
+        self.assertTrue(recItem1.queryState() == 'inactive')
+        activeRecItems = cfg.recurringitems.objectIds('MeetingItem')
+        activeRecItems.remove(recItem1.getId())
+        self.assertTrue([item.getId() for item in cfg.getRecurringItems()] == activeRecItems)
+        # but we may nevertheless get also inactive items
+        self.assertTrue([item.getId() for item in cfg.getRecurringItems(onlyActive=False)] ==
+                        cfg.recurringitems.objectIds('MeetingItem'))
 
 
 def test_suite():

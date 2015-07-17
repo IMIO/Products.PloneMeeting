@@ -203,11 +203,11 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         shortName = cfg.getShortName()
         # Some special behaviour occurs if the item to create is
         # a recurring item or an item template
-        if objectType == 'RecurringMeetingItem':
-            contentType = 'MeetingItem%s' % shortName
+        if objectType == 'MeetingItemRecurring':
+            contentType = '%s%s' % (objectType, shortName)
             folder = cfg.recurringitems
-        elif objectType == 'TemplateMeetingItem':
-            contentType = 'MeetingItem%s' % shortName
+        elif objectType == 'MeetingItemTemplate':
+            contentType = '%s%s' % (objectType, shortName)
             folder = cfg.itemtemplates
         elif objectType in ('MeetingGroup', 'MeetingConfig'):
             contentType = objectType

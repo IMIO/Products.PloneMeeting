@@ -1581,10 +1581,13 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            config) to the folder containing this meeting.'''
         destFolder = self.getParentNode()
         newItems = []
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         for recurringItem in recurringItems:
             newItems.append(recurringItem.clone(cloneEventAction='Add recurring item',
                                                 destFolder=destFolder,
-                                                keepProposingGroup=True))
+                                                keepProposingGroup=True,
+                                                newPortalType=cfg.getItemTypeName()))
         for newItem in newItems:
             # Put the new item in the correct state
             adap = newItem.adapted()

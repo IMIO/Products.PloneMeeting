@@ -459,7 +459,7 @@
         <legend>
          <span i18n:translate="RecurringItems"></span>
          <input type="image" style="cursor:pointer" class="imageInput"
-                tal:define="itemType python: 'MeetingItem' + context.getShortName()"
+                tal:define="itemType python: context.getItemTypeName(configType='MeetingItemRecurring')"
                 tal:attributes="onClick python: 'href: window.location=\'%s/recurringitems/createObject?type_name=%s\'' % (context.absolute_url(), itemType);
                                 src string: $portal_url/plus.png"
                 title="add_object" i18n:attributes="title"
@@ -477,7 +477,7 @@
           <tr tal:condition="python: not rFolder.objectValues('MeetingItem')">
             <td colspan="5" align="center" i18n:translate="">no_recurring_item</td>
           </tr>
-          <tal:loop repeat="obj python:rFolder.objectValues('MeetingItem')">
+          <tal:loop repeat="obj python: context.getRecurringItems(onlyActive=False)">
           <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                           oddrow repeat/obj/odd;
                           classOddEven python: oddrow and 'even' or 'odd';" valign="top"
