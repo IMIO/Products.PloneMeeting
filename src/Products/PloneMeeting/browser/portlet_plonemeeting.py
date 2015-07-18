@@ -51,6 +51,14 @@ class Renderer(base.Renderer, FacetedRenderer):
         available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
         return available and self.tool.isPloneMeetingUser()
 
+    def _isPortletOutsideFaceted(self, context, criteriaHolder):
+        """Are we outside the faceted?"""
+        pmFolder = self.getPloneMeetingFolder()
+        if context == pmFolder:
+            self.context.REQUEST.RESPONSE.redirect(pmFolder.absolute_url() + '/searches_items')
+            return True
+        return not context.absolute_url().split('/')[-1] == criteriaHolder.absolute_url().split('/')[-1]
+
     @property
     def _criteriaHolder(self):
         '''Override method coming from FacetedRenderer as we know that criteria are stored on the meetingFolder.'''
@@ -58,12 +66,20 @@ class Renderer(base.Renderer, FacetedRenderer):
         # if we are on a Meeting, it provides IFacetedNavigable but we want to display user pmFolder facetednav
         if not self.context.absolute_url().startswith(pmFolder.absolute_url()) or \
            IMeeting.providedBy(self.context):
-            return pmFolder
+            return self.cfg.searches
         # we are on a subFolder of the pmFolder (searches_meetingitems for example)
         if IFacetedNavigable.providedBy(self.context):
-            return self.context
+            # return corresponding folder in the configuration
+            if self.context.getId().endswith('searches_items'):
+                return self.cfg.searches.searches_items
+            elif self.context.getId().endswith('searches_meetings'):
+                return self.cfg.searches.searches_meetings
+            elif self.context.getId().endswith('searches_decisions'):
+                return self.cfg.searches.searches_decisions
+            else:
+                return self.cfg.searches
         else:
-            return pmFolder
+            return self.cfg.searches
 
     def render(self):
         return self._template()

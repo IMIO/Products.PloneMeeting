@@ -53,14 +53,14 @@ class testWorkflows(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('View', item))
         self.failUnless(self.hasPermission('Access contents information', item))
         pmFolder = self.tool.getPloneMeetingFolder(self.meetingConfig.getId())
-        myItems = pmFolder.searches_items.searchmyitems.getQuery()
+        myItems = self.meetingConfig.searches.searches_items.searchmyitems.getQuery()
         self.assertEquals(len(myItems), 1)
         self.changeUser('pmManager')
         # The manager may not see the item yet except if item is already 'validated'
         # this could be the case if item initial_state is 'validated' or when using
         # wfAdaptation 'items_come_validated'
         pmFolder = self.tool.getPloneMeetingFolder(self.meetingConfig.getId())
-        collection = pmFolder.searches_items.searchallitems
+        collection = self.meetingConfig.searches.searches_items.searchallitems
         self.request['PATH_TRANSLATED'] = "{0}/{1}".format(pmFolder.searches_items.absolute_url(),
                                                            pmFolder.searches_items.getLayout())
         allItems = collection.getQuery()

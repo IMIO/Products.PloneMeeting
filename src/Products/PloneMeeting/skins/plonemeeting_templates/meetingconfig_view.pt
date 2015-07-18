@@ -132,7 +132,7 @@
       </p>
       <table class="meetingConfigActions">
         <tr valign="top">
-          <td width=33%>
+          <td width=50%>
             <form name="updateAnnexConfidentialityForm" action="updateAnnexConfidentiality">
             <input class="context"
                    type="submit" name="updateAnnexConfidentiality"
@@ -144,7 +144,7 @@
                 Warning: the action 'Initialize existing annexes confidentiality' will initialize every existing annex confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
             </p>
           </td>
-          <td width=33%>
+          <td width=50%>
             <form name="updateAdviceConfidentialityForm" action="updateAdviceConfidentiality">
             <input class="context"
                    type="submit"
@@ -155,19 +155,6 @@
             </form>
             <p class="discreet" style="color: red;" i18n:translate="pm_update_advice_confidentiality_warning">
                 Warning: the action 'Initialize existing advices confidentiality' will initialize every existing advice confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
-            </p>
-          </td>
-          <td width=33%>
-            <form name="synchSearchesForm" action="synchSearches">
-            <input class="context"
-                   type="submit"
-                   name="synchSearches"
-                   value="pm_synch_searches"
-                   onclick="javascript:event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {document.forms['synchSearchesForm'].submit();}"
-                   i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_synch_searches_warning">
-                Warning: this will update the dashboards of every users regarding what is defined in the 'searches' folder including DashboardCollections and faceted navigation criteria. Launch this if you changed a Collection or the faceted criteria. This will take about 1 second by user folder to update.
             </p>
           </td>
         </tr>

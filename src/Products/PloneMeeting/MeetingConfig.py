@@ -32,7 +32,6 @@ from AccessControl import Unauthorized
 from DateTime import DateTime
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
-from persistent.list import PersistentList
 from zope.annotation import IAnnotations
 from zope.component import getGlobalSiteManager
 from zope.component import getUtility
@@ -49,7 +48,6 @@ from Products.CMFCore.Expression import Expression
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
 from eea.facetednavigation.interfaces import ICriteria
-from eea.facetednavigation.widgets.storage import Criterion
 from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
@@ -4206,16 +4204,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
-    security.declarePublic('synchSearches')
-    def synchSearches(self, folder=None):
-        """Action that launch self._synchSearches."""
-        if not self.isManager(self, realManagers=True):
-            raise Unauthorized
-
-        self._synchSearches()
-        self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
-
     def _synchSearches(self, folder=None):
         """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
            every user folder for this MeetingConfig will be synchronized.
@@ -4229,9 +4217,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              MeetingConfig.searches_* folders to the corresponding folders in p_folder;
            - we will update the default for the collection widget."""
 
-        # use uid_catalog to be sure to find the element
-        uid_catalog = getToolByName(self, 'uid_catalog')
-        catalog = getToolByName(self, 'portal_catalog')
+        tool = getToolByName(self, 'portal_plonemeeting')
 
         folders = []
         # synchronize only one folder
@@ -4249,88 +4235,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 folders.append(meetingFolder)
 
-        # check for inactiveCollections that we will remove after copy/paste
-        inactiveCollections = catalog(meta_type='DashboardCollection',
-                                      path={'query': '/'.join(self.getPhysicalPath()) + '/searches'},
-                                      review_state='inactive')
-        inactiveColEndURLs = []
-        for inactiveCol in inactiveCollections:
-            # find relevant collection in user folder
-            inactiveColEndURLs.append(tuple(inactiveCol.getURL().split('/')[-2:]))
-
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
-            # remove searches_* folders from the given p_folder
+            # subFolders to create
             subFolderIds = [folderId for folderId in self.searches.objectIds() if folderId.startswith('searches_')]
-            toDelete = []
-            oldUIDs = {}
-            for folderId in subFolderIds:
-                if folderId in folder.objectIds():
-                    for collection in getattr(folder, folderId).objectValues('DashboardCollection'):
-                        oldUIDs['{0}__{1}'.format(folderId, collection.getId())] = collection.UID()
-                    toDelete.append(folderId)
+            # remove searches_* folders from the given p_folder
+            toDelete = [folderId for folderId in folder.objectIds() if folderId.startswith('searches_')]
             folder.manage_delObjects(toDelete)
 
-            # copy searches_* folder from the MeetingConfig to the p_folder
-            copiedData = self.searches.manage_copyObjects(ids=subFolderIds)
-            folder.manage_pasteObjects(copiedData)
-
-            # update pasted collection UIDs and remove copied collections that were actually 'inactive'
-            for folderId in subFolderIds:
-                for collection in getattr(folder, folderId).objectValues('DashboardCollection'):
-                    key = '{0}__{1}'.format(folderId, collection.getId())
-                    if key in oldUIDs:
-                        collection._setUID(oldUIDs[key])
-                        collection.reindexObject(idxs=['UID', ])
-
-            # remove inactiveCollections
-            if inactiveCollections:
-                paths = ['/'.join(folder.getPhysicalPath() + inactiveColEndURL) for inactiveColEndURL in inactiveColEndURLs]
-                brainsToDelete = catalog(meta_type='DashboardCollection',
-                                         path={'query': paths})
-                for brain in brainsToDelete:
-                    colToDelete = brain.getObject()
-                    colToDelete.getParentNode().manage_delObjects([colToDelete.getId(), ])
-
-            # copy facetednav ann from config to p_folder and sub_folders
-            def _copyFacetedCriteriaFor(sourceFolder, destFolder):
-                """ """
-                config_faceted_ann = list(IAnnotations(sourceFolder)['FacetedCriteria'])
-                # make new criteria out of existing one because copying annotation would
-                # create references to these criteria and not not ones
-                folder_faceted_ann = []
-                for criterion in config_faceted_ann:
-                    folder_faceted_ann.append(Criterion(**criterion.__dict__))
-                if 'FacetedCriteria' in IAnnotations(destFolder):
-                    del IAnnotations(destFolder)['FacetedCriteria']
-                IAnnotations(destFolder)['FacetedCriteria'] = PersistentList(folder_faceted_ann)
-            _copyFacetedCriteriaFor(self.searches, folder)
+            # create relevant folders and activate faceted on it
             for subFolderId in subFolderIds:
-                subFolderConfig = getattr(self.searches, subFolderId)
-                subFolderUser = getattr(folder, subFolderId)
-                _copyFacetedCriteriaFor(subFolderConfig, subFolderUser)
-
-            # update the default collection
-            current_default_id = u''
-            criteria = ICriteria(self.searches).criteria
-            # find the id of the default collection
-            for criterion in criteria:
-                if criterion.widget == CollectionWidget.widget_type:
-                    brains = uid_catalog(UID=criterion.default)
-                    if brains:
-                        collection = brains[0].getObject()
-                        current_default_id = collection.getId()
-            new_default_uid = ''
-            if current_default_id:
-                new_default_uid = getattr(folder.searches_items, current_default_id).UID()
-            # update folder and folder.searches_items
-            self._updateDefaultCollectionFor(folder, new_default_uid)
-            self._updateDefaultCollectionFor(folder.searches_items, new_default_uid)
-            # for other subFolders, make sure there is no default
-            for subFolderId in subFolderIds:
-                if subFolderId == 'searches_items':
-                    continue
-                self._updateDefaultCollectionFor(getattr(folder, subFolderId), '')
+                folder.invokeFactory('Folder', id=subFolderId, **{'title': subFolderId})
+                subFolderObj = getattr(folder, subFolderId)
+                tool._enableFacetedFor(subFolderObj)
 
     def _updateDefaultCollectionFor(self, folderObj, default_uid):
         """Use p_default_uid as the default collection selected

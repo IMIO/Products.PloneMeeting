@@ -1156,67 +1156,6 @@ class testMeetingConfig(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         for createdFolder in createdFolders:
             self.assertTrue(createdFolder in pmFolder.objectIds('ATFolder'))
-            # collections are there
-            self.assertTrue(getattr(cfg.searches, createdFolder).objectIds('DashboardCollection')
-                            == getattr(pmFolder, createdFolder).objectIds('DashboardCollection'))
-
-        # while synchronizing searches, despite copy/paste that create new collections,
-        # original collection UIDs of collections of the user folder are kept
-        # so if a user saved a search URL, it still works
-        searchmyitemsCreated = pmFolder.searches_items.searchmyitems.created()
-        searchmyitemsUID = pmFolder.searches_items.searchmyitems.UID()
-        searchallitemsCreated = pmFolder.searches_items.searchallitems.created()
-        searchallitemsUID = pmFolder.searches_items.searchallitems.UID()
-        # synchronize again
-        # show here also that user must be Manager to synch
-        self.assertRaises(Unauthorized, cfg.synchSearches)
-        self.changeUser('siteadmin')
-        cfg._synchSearches(pmFolder)
-        self.assertTrue(not pmFolder.searches_items.searchmyitems.created() == searchmyitemsCreated)
-        self.assertTrue(pmFolder.searches_items.searchmyitems.UID() == searchmyitemsUID)
-        self.assertTrue(not pmFolder.searches_items.searchallitems.created() == searchallitemsCreated)
-        self.assertTrue(pmFolder.searches_items.searchallitems.UID() == searchallitemsUID)
-
-        # the defaut collection is kept
-        criteria = ICriteria(pmFolder.searches_items).criteria
-        userCollectionWidget = criteria[1]
-        self.assertTrue(userCollectionWidget.widget == CollectionWidget.widget_type)
-        self.assertTrue(userCollectionWidget.default == searchallitemsUID)
-
-        # if a collection is disabled in the configuration, it is not kept in the pmFolder
-        self.do(cfg.searches.searches_items.searchmyitems, 'deactivate')
-        cfg._synchSearches(pmFolder)
-        self.assertTrue(not 'searchmyitems' in pmFolder.searches_items.objectIds())
-        self.assertTrue(len(pmFolder.searches_items.objectIds()) ==
-                        len(cfg.searches.searches_items.objectIds()) - 1)
-
-        # if the default is changed in the configuration, it works too
-        criteria = ICriteria(pmFolder.searches_items).criteria
-        criteria[1].default = cfg.searches.searches_items.searchitemstovalidate.UID()
-        ICriteria(cfg.searches)._update(criteria)
-        cfg._synchSearches(pmFolder)
-        criteria = ICriteria(pmFolder.searches_items).criteria
-        userCollectionWidget = criteria[1]
-        self.assertTrue(userCollectionWidget.widget == CollectionWidget.widget_type)
-        self.assertTrue(userCollectionWidget.default == pmFolder.searches_items.searchitemstovalidate.UID())
-
-        # a folder is zynchronized when created, test for pmCreator1
-        # for now, no meetingFolder
-        self.assertTrue(not 'mymeetings' in self.portal.Members.pmCreator1.objectIds())
-        self.changeUser('pmCreator1')
-        pmCreator1Folder = self.getMeetingFolder()
-        self.assertTrue('mymeetings' in self.portal.Members.pmCreator1.objectIds())
-        self.assertTrue('searches_items' in pmCreator1Folder.objectIds())
-
-        # we may also call _synchSearch without param, in this case,
-        # every user folder will be synchronized
-        # get the pmFolder of creator1 so it's folder is syncrhonized
-        # add a new collection, it will be added to every pmFolders
-        self.changeUser('siteadmin')
-        cfg.searches.searches_items.invokeFactory('DashboardCollection', id='searchtest')
-        cfg._synchSearches()
-        self.assertTrue('searchtest' in pmFolder.searches_items.objectIds())
-        self.assertTrue('searchtest' in pmCreator1Folder.searches_items.objectIds())
 
     def test_pm_GetRecurringItems(self):
         """Test the MeetingConfig.getRecurringItems method."""
