@@ -56,12 +56,12 @@ class testFaceted(PloneMeetingTestCase):
         siteadminPMFolder = self.tool.getPloneMeetingFolder(cfgId)
         siteadminPMFolderUrl = siteadminPMFolder.absolute_url()
         creatorPMFolder.restrictedTraverse('@@facetednavigation_view')()
-        self.assertTrue(self.request.RESPONSE.getHeader('location') == siteadminPMFolderUrl)
+        self.assertTrue(self.request.RESPONSE.getHeader('location') == siteadminPMFolderUrl + '/searches_items')
 
-        # a Zope admin will stay on another user's pmFolder
-        self.changeUser('admin')
+        # if a user is using folder_contents, then he is not redirected
         self.request.RESPONSE.setHeader('location', '')
-        creatorPMFolder.restrictedTraverse('@@facetednavigation_view')()
+        self.request.RESPONSE.setStatus(200)
+        creatorPMFolder.restrictedTraverse('folder_contents')()
         # user is not redirected
         self.assertFalse(self.request.RESPONSE.getHeader('location'))
         self.assertTrue(self.request.RESPONSE.getStatus() == 200)

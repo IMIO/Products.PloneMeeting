@@ -53,11 +53,23 @@ class Renderer(base.Renderer, FacetedRenderer):
 
     def _isPortletOutsideFaceted(self, context, criteriaHolder):
         """Are we outside the faceted?"""
-        pmFolder = self.getPloneMeetingFolder()
-        if context == pmFolder:
-            self.context.REQUEST.RESPONSE.redirect(pmFolder.absolute_url() + '/searches_items')
-            return True
-        return not context.absolute_url().split('/')[-1] == criteriaHolder.absolute_url().split('/')[-1]
+        criteriaHolderUrl = criteriaHolder.absolute_url()
+        contextUrl = context.absolute_url()
+        # if we are on a pmFolder, we want to redirect to the 'searches_items' subfolder
+        if context.getProperty('meeting_config') and not self.request['URL'].endswith('folder_contents'):
+            return False
+        return not contextUrl.split('/')[-1] == criteriaHolderUrl.split('/')[-1]
+
+    @property
+    def widget_render(self):
+        """Override to redirect to right folder when redirected to default collection
+           because as we use collections of the MeetingConfig, user would be redirected
+           in the portal_plonemeeting..."""
+        rendered_widgets = super(Renderer, self).widget_render
+        # manipulate redirect to default config except if we are actually in the MeetingConfig/searches folder
+        if self.request.RESPONSE.status == 302 and not self.context == self._criteriaHolder:
+            self.request.RESPONSE.setHeader('location', self.getPloneMeetingFolder().absolute_url() + '/searches_items')
+        return rendered_widgets
 
     @property
     def _criteriaHolder(self):
