@@ -62,9 +62,10 @@ class testMeetingFileType(PloneMeetingTestCase):
                           'isActive': '1', }, ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        annex = self.addAnnex(item, )
-        # modify annex fileType to use the defined subType
-        annex.setMeetingFileType('%s__subtype__unique_row_id_123' % mft.UID())
+        annex = self.addAnnex(item)
+        annexSubTypeUID = '%s__subtype__unique_row_id_123' % mft.UID()
+        annex.setMeetingFileType(annexSubTypeUID)
+        IAnnexable(item).updateAnnexIndex()
         self.changeUser('admin')
         # if we try to remove this meetingFileType, it raises an Exception
         # because one of it's subTypes is in use

@@ -87,11 +87,13 @@ class AnnexableAdapter(object):
                 # Ok idCandidate is good!
                 idMayBeUsed = True
 
-        newAnnexId = self.context.invokeFactory('MeetingFile', id=idCandidate)
+        data = {'title': annex_title,
+                'meetingFileType': meetingFileTypeUID}
+        newAnnexId = self.context.invokeFactory('MeetingFile',
+                                                id=idCandidate,
+                                                **data)
         newAnnex = getattr(self.context, newAnnexId)
         newAnnex.setFile(annex_file, **kwargs)
-        newAnnex.setTitle(annex_title)
-        newAnnex.setMeetingFileType(meetingFileTypeUID)
 
         # do some specific stuffs if we are adding an annex on an item, not on an advice
         if self.context.meta_type == 'MeetingItem':
@@ -278,7 +280,7 @@ class AnnexableAdapter(object):
                         annexes.append(annexInfo)
                     else:
                         # Retrieve the real annex
-                        annex = self.context.portal_catalog(UID=annexInfo['UID'])[0].getObject()
+                        annex = getattr(self.context, annexInfo['id'])
                         annexes.append(annex)
             if annexes:
                 if makeSubLists:

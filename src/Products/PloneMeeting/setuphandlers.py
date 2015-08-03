@@ -127,6 +127,8 @@ def setupCatalogMultiplex(context):
     catalogmap['MeetingCategory']['white'] = ['portal_catalog']
     catalogmap['MeetingConfig'] = {}
     catalogmap['MeetingConfig']['black'] = ['portal_catalog']
+    catalogmap['MeetingFile'] = {}
+    catalogmap['MeetingFile']['black'] = ['portal_catalog']
     catalogmap['MeetingFileType'] = {}
     catalogmap['MeetingFileType']['black'] = ['portal_catalog']
     catalogmap['MeetingGroup'] = {}

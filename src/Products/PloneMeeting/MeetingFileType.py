@@ -201,22 +201,36 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
             return
 
         # we can not change a relatedTo if a MeetingFile is already using this MeetingFileType
+        tool = getToolByName(self, 'portal_plonemeeting')
+        catalog = getToolByName(self, 'portal_catalog')
+        cfg = tool.getMeetingConfig(self)
         foundAnnex = False
         catalog = getToolByName(self, 'portal_catalog')
-        brains = catalog(portal_type='MeetingFile')
+        brains = catalog(portal_type=cfg.getItemTypeName())
         mftUID = self.UID()
-        for brain in brains:
-            annex = brain.getObject()
-            if annex.getMeetingFileType() == mftUID:
-                # we found an annex using this mft
-                foundAnnex = True
-                break
+
+        class Found(Exception):
+            """Used for multiple loop break here under."""
+            pass
+
+        try:
+            for brain in brains:
+                item = brain.getObject()
+                # check item.annexIndex and every advices annexIndex too
+                toCheck = [item, ] + item.getAdvices()
+                # check annexIndex
+                for itemOrAdvice in toCheck:
+                    for annexInfo in itemOrAdvice.annexIndex:
+                        if annexInfo['meetingFileTypeObjectUID'] == mftUID:
+                            # we found an annex using this mft
+                            raise Found
+        except Found:
+            foundAnnex = True
 
         if foundAnnex:
             if self.getRelatedTo() == 'advice':
                 # display msg specifying that an advice annex is using this mft
                 # and add a link to the item the advice is given on
-                item = annex.getParentNode().getParentNode()
                 return translate('cannot_change_inuse_advice_relatedto',
                                  domain='PloneMeeting',
                                  mapping={'item_url': item.absolute_url()},
@@ -224,7 +238,6 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
             else:
                 # display msg specifying that an item annex is using this mft
                 # and add a link to the item the annex is added in
-                item = annex.getParentNode()
                 return translate('cannot_change_inuse_item_relatedto',
                                  domain='PloneMeeting',
                                  mapping={'item_url': item.absolute_url()},
@@ -363,19 +376,24 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         # If we are trying to remove the whole Plone Site, bypass this hook.
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
+            tool = getToolByName(self, 'portal_plonemeeting')
             catalog = getToolByName(self, 'portal_catalog')
-            brains = catalog(portal_type='MeetingFile')
+            cfg = tool.getMeetingConfig(self)
+            brains = catalog(portal_type=cfg.getItemTypeName())
             # build mftUIDs made of mft UID and subTypes fake UIDs
             UID = self.UID()
             mftUIDs = [UID, ]
             for subType in self.getSubTypes():
                 mftUIDs.append("%s__subtype__%s" % (UID, subType['row_id']))
             for brain in brains:
-                annex = brain.getObject()
-                if annex.getMeetingFileType() in mftUIDs:
-                    raise BeforeDeleteException("can_not_delete_meetingfiletype_meetingfile")
+                item = brain.getObject()
+                # check item.annexIndex and every advices annexIndex too
+                toCheck = [item, ] + item.getAdvices()
+                for itemOrAdvice in toCheck:
+                    for annexInfo in itemOrAdvice.annexIndex:
+                        if annexInfo['meetingFileTypeObjectUID'] in mftUIDs:
+                            raise BeforeDeleteException("can_not_delete_meetingfiletype_meetingfile")
         BaseContent.manage_beforeDelete(self, item, container)
-
 
 
 registerType(MeetingFileType, PROJECTNAME)

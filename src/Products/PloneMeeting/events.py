@@ -284,10 +284,10 @@ def onAdviceRemoved(advice, event):
 
 
 def onAnnexAdded(annex, event):
-    '''When an annex is added, we need to update item modification date.'''
+    '''When an annex is added, we need to update item modification date and SearchableText.'''
     item = annex.getParent()
     item.setModificationDate(DateTime())
-    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
+    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', 'SearchableText'])
 
 
 def onAnnexRemoved(annex, event):
@@ -308,9 +308,9 @@ def onAnnexRemoved(annex, event):
     if item.willInvalidateAdvices():
         item.updateAdvices(invalidate=True)
 
-    # update item modification date
+    # update item modification date and SearchableText
     item.setModificationDate(DateTime())
-    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
+    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', 'SearchableText'])
 
 
 def onItemDuplicated(item, event):

@@ -11,6 +11,7 @@ from OFS.interfaces import IItem
 
 from plone.indexer import indexer
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -138,6 +139,19 @@ def sentToInfos(obj):
     if not clonableTo and not clonedTo:
         res.append('not_to_be_cloned_to')
     return res
+
+
+@indexer(IMeetingItem)
+def SearchableText(obj):
+    """
+      Contained annex title is indexed in the item's SearachableText.
+    """
+    data = []
+    data.append(obj.SearchableText())
+    for annex in IAnnexable(obj).getAnnexes():
+        data.append(annex.SearchableText())
+    data = ' '.join(data)
+    return data
 
 
 @indexer(IMeetingItem)

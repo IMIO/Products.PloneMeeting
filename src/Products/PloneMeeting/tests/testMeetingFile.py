@@ -64,6 +64,26 @@ class testMeetingFile(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(annex.adapted().mayChangeConfidentiality())
 
+    def test_pm_MeetingFileFoundInItemSearchableText(self, ):
+        '''MeetingFiles are not indexed but can be found while using SearchableText
+           because the annex title is indexed in the item SearchableText.'''
+        ANNEX_TITLE = "SpecialAnnexTitle"
+        ITEM_TITLE = "SpecialItemTitle"
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title=ITEM_TITLE)
+        catalog = self.portal.portal_catalog
+        self.assertTrue(catalog(SearchableText=ITEM_TITLE))
+        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+        annex = self.addAnnex(item, annexTitle=ANNEX_TITLE)
+        # now querying for ANNEX_TITLE will return the relevant item
+        self.assertTrue(catalog(SearchableText=ITEM_TITLE))
+        self.assertTrue(catalog(SearchableText=ANNEX_TITLE))
+        # if we remove the annex, the item is not found anymore when querying
+        # on removed annex's title
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
+        self.assertTrue(catalog(SearchableText=ITEM_TITLE))
+        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -137,6 +137,7 @@
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
   <adapter name="sortable_title" factory=".indexes.sortable_title" />
   <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
+  <adapter name="SearchableText" factory=".indexes.SearchableText" />
 
   <!-- add the blob field to MeetingFile -->
   <adapter name="plone.app.blob.subtypes.file"
