@@ -968,6 +968,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             for brain in brains:
                 item = brain.getObject()
                 item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
+            # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+            tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
         self.getField('date').set(self, value, **kwargs)
 
     security.declarePublic('showObs')
@@ -1432,6 +1434,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # notify modified
         notify(ObjectEditedEvent(self))
         self.reindexObject()
+        # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+        tool = getToolByName(self, 'portal_plonemeeting')
+        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Meeting at %s edited by "%s".' % (self.absolute_url_path(), userId))
 

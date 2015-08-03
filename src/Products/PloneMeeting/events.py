@@ -185,18 +185,6 @@ def onItemModified(item, event):
         meeting.invalidate_meeting_actions_panel_cache = True
 
 
-def onMeetingAdded(meeting, event):
-    '''This method is called every time a Meeting is created, even in
-       portal_factory. Local roles defined on a meeting define who may view
-       or edit it. But at the time the meeting is created in portal_factory,
-       local roles are not defined yet. This can be a problem when some
-       workflow adaptations are enabled. So here
-       we grant role 'Owner' to the currently logged user that allows him,
-       in every case, to create the meeting.'''
-    user = meeting.portal_membership.getAuthenticatedMember()
-    meeting.manage_addLocalRoles(user.getId(), ('Owner',))
-
-
 def onAdviceAdded(advice, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
     # update advice_row_id if it was not already done before
@@ -357,6 +345,21 @@ def onItemEditBegun(item, event):
             raise Unauthorized
 
 
+def onMeetingAdded(meeting, event):
+    '''This method is called every time a Meeting is created, even in
+       portal_factory. Local roles defined on a meeting define who may view
+       or edit it. But at the time the meeting is created in portal_factory,
+       local roles are not defined yet. This can be a problem when some
+       workflow adaptations are enabled. So here
+       we grant role 'Owner' to the currently logged user that allows him,
+       in every case, to create the meeting.'''
+    user = meeting.portal_membership.getAuthenticatedMember()
+    meeting.manage_addLocalRoles(user.getId(), ('Owner',))
+    # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+    tool = getToolByName(meeting, 'portal_plonemeeting')
+    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+
+
 def onMeetingRemoved(meeting, event):
     '''When a meeting is removed, check if we need to remove every linked items,
        this is the case if the current user is a Manager.
@@ -380,3 +383,13 @@ def onMeetingRemoved(meeting, event):
         item = brain.getObject()
         item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
         item.reindexObject('getPreferredMeeting')
+    # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+    tool = getToolByName(meeting, 'portal_plonemeeting')
+    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+
+
+def onCategoryRemoved(category, event):
+    '''Called when a MeetingCategory is removed.'''
+    # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
+    tool = getToolByName(category, 'portal_plonemeeting')
+    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")

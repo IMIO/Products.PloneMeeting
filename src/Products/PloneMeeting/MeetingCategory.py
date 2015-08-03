@@ -147,10 +147,16 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
 
     security.declarePrivate('at_post_create_script')
     def at_post_create_script(self):
+        # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
+        tool = getToolByName(self, 'portal_plonemeeting')
+        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")
         self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
+        # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
+        tool = getToolByName(self, 'portal_plonemeeting')
+        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('manage_beforeDelete')

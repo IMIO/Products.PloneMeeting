@@ -22,8 +22,14 @@
 # 02110-1301, USA.
 #
 
+from DateTime import DateTime
 from AccessControl import Unauthorized
+from zope.component import queryUtility
+from zope.schema.interfaces import IVocabularyFactory
+from plone.memoize.instance import Memojito
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+
+memPropName = Memojito.propname
 
 
 class testFaceted(PloneMeetingTestCase):
@@ -65,6 +71,75 @@ class testFaceted(PloneMeetingTestCase):
         # user is not redirected
         self.assertFalse(self.request.RESPONSE.getHeader('location'))
         self.assertTrue(self.request.RESPONSE.getStatus() == 200)
+
+    def test_pm_ItemCategoriesVocabulary(self):
+        '''Test the "Products.PloneMeeting.vocabularies.categoriesvocabulary"
+           vocabulary, especially because it is cached.'''
+        self.changeUser('siteadmin')
+        pmFolder = self.getMeetingFolder()
+        cfg = self.meetingConfig
+        cfg.useGroupsAsCategories = False
+        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        self.assertFalse(getattr(vocab, memPropName, {}))
+        # once get, it is cached
+        vocab(pmFolder)
+        self.assertTrue(getattr(vocab, memPropName))
+
+        # if we add/remove/edit a category, then the cache is cleaned
+        # add a category
+        newCatId = cfg.categories.invokeFactory('MeetingCategory', id='new-category', title='New category')
+        newCat = getattr(cfg.categories, newCatId)
+        newCat.at_post_create_script()
+        # cache was cleaned
+        self.assertFalse(getattr(vocab, memPropName, {}))
+        vocab(pmFolder)
+        self.assertTrue(getattr(vocab, memPropName))
+
+        # edit a category
+        newCat.at_post_edit_script()
+        # cache was cleaned
+        self.assertFalse(getattr(vocab, memPropName, {}))
+        vocab(pmFolder)
+        self.assertTrue(getattr(vocab, memPropName))
+
+        # remove a category
+        self.portal.restrictedTraverse('@@delete_givenuid')(newCat.UID())
+        # cache was cleaned
+        self.assertFalse(getattr(vocab, memPropName, {}))
+
+    def test_pm_MeetingDatesVocabulary(self):
+        '''Test the "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+           vocabulary, especially because it is cached.'''
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('pmManager')
+        pmFolder = self.getMeetingFolder()
+        # create a meeting
+        self.create('Meeting', date=DateTime('2015/05/05'))
+        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+        self.assertFalse(getattr(vocab, memPropName, {}))
+        # once get, it is cached
+        vocab(pmFolder)
+        self.assertTrue(getattr(vocab, memPropName))
+
+        # if we add/remove/edit a meeting, then the cache is cleaned
+        # add a meeting
+        meeting = self.create('Meeting', date=DateTime('2015/06/06'))
+        # cache was cleaned
+        self.assertFalse(getattr(vocab, memPropName, {}))
+        vocab(pmFolder)
+        self.assertTrue(getattr(vocab, memPropName))
+
+        # edit a meeting
+        meeting.at_post_edit_script()
+        # cache was cleaned
+        self.assertFalse(getattr(vocab, memPropName, {}))
+        vocab(pmFolder)
+        self.assertTrue(getattr(vocab, memPropName))
+
+        # remove a meeting
+        self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
+        # cache was cleaned
+        self.assertFalse(getattr(vocab, memPropName, {}))
 
 
 def test_suite():

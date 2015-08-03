@@ -49,6 +49,10 @@
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onMeetingGroupTransition"/>
 
+  <subscriber for=".interfaces.IMeetingCategory
+                   zope.container.interfaces.IObjectRemovedEvent"
+              handler=".events.onCategoryRemoved"/>
+
   <!-- meetingadvice events -->
   <subscriber for=".content.advice.IMeetingAdvice
                    zope.lifecycleevent.IObjectModifiedEvent"

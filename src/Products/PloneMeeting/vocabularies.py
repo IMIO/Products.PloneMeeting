@@ -11,6 +11,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 
 from plone import api
+from plone.memoize.instance import memoize
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
 
@@ -54,6 +55,7 @@ PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabula
 class ItemCategoriesVocabulary(object):
     implements(IVocabularyFactory)
 
+    @memoize
     def __call__(self, context):
         """ """
         tool = getToolByName(context, 'portal_plonemeeting')
@@ -172,6 +174,7 @@ CreatorsVocabularyFactory = CreatorsVocabulary()
 class MeetingDatesVocabulary(object):
     implements(IVocabularyFactory)
 
+    @memoize
     def __call__(self, context):
         """ """
         catalog = getToolByName(context, 'portal_catalog')
@@ -264,7 +267,6 @@ class SendToAuthorityVocabulary(object):
                                                      domain='PloneMeeting',
                                                      context=context.REQUEST)))
                    )
-
         return SimpleVocabulary(res)
 
 SendToAuthorityVocabularyFactory = SendToAuthorityVocabulary()
