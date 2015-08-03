@@ -155,6 +155,7 @@ ItemReviewStatesVocabularyFactory = ItemReviewStatesVocabulary()
 class CreatorsVocabulary(object):
     implements(IVocabularyFactory)
 
+    @memoize
     def __call__(self, context):
         """ """
         catalog = getToolByName(context, 'portal_catalog')

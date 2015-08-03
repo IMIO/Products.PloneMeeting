@@ -186,6 +186,26 @@ class testFaceted(PloneMeetingTestCase):
         self.assertFalse(getattr(vocab1, memPropName, {}))
         self.assertFalse(getattr(vocab2, memPropName, {}))
 
+    def test_pm_CreatorsVocabulary(self):
+        '''Test the "Products.PloneMeeting.vocabularies.creatorsvocabulary"
+           vocabulary, especially because it is cached.'''
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.creatorsvocabulary")
+        self.assertFalse(getattr(vocab, memPropName, {}))
+        # once get, it is cached
+        vocab(pmFolder)
+        self.assertTrue(getattr(vocab, memPropName))
+
+        # if a new pmFolder is created, then the cache is cleaned
+        # get pmFolder for user 'pmManager'
+        self.changeUser('pmManager')
+        pmFolder = self.getMeetingFolder()
+        # cache was cleaned
+        self.assertFalse(getattr(vocab, memPropName, {}))
+        vocab(pmFolder)
+        self.assertTrue(getattr(vocab, memPropName))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

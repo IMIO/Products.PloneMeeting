@@ -729,6 +729,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
         # Give MeetingManager localrole to relevant _meetingmanagers group
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
+        # clean cache for "Products.PloneMeeting.vocabularies.creatorsvocabulary"
+        self.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.creatorsvocabulary")
 
     def _enableFacetedFor(self, obj, marker_interface=None):
         '''Configure the faceted view for given p_obj.
