@@ -141,6 +141,51 @@ class testFaceted(PloneMeetingTestCase):
         # cache was cleaned
         self.assertFalse(getattr(vocab, memPropName, {}))
 
+    def test_pm_ProposingGroupsVocabularies(self):
+        '''Test the "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary"
+           and "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary"
+           vocabularies, especially because it is cached.'''
+        self.changeUser('siteadmin')
+        pmFolder = self.getMeetingFolder()
+        vocab1 = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        vocab2 = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        self.assertFalse(getattr(vocab1, memPropName, {}))
+        self.assertFalse(getattr(vocab2, memPropName, {}))
+        # once get, it is cached
+        vocab1(pmFolder)
+        vocab2(pmFolder)
+        self.assertTrue(getattr(vocab1, memPropName))
+        self.assertTrue(getattr(vocab2, memPropName))
+
+        # if we add/remove/edit a group, then the cache is cleaned
+        # add a group
+        newGroupId = self.tool.invokeFactory('MeetingGroup', id='new-group', title='New group')
+        newGroup = getattr(self.tool, newGroupId)
+        newGroup.at_post_create_script()
+        # cache was cleaned
+        self.assertFalse(getattr(vocab1, memPropName, {}))
+        self.assertFalse(getattr(vocab2, memPropName, {}))
+        vocab1(pmFolder)
+        vocab2(pmFolder)
+        self.assertTrue(getattr(vocab1, memPropName))
+        self.assertTrue(getattr(vocab2, memPropName))
+
+        # edit a group
+        newGroup.at_post_edit_script()
+        # cache was cleaned
+        self.assertFalse(getattr(vocab1, memPropName, {}))
+        self.assertFalse(getattr(vocab2, memPropName, {}))
+        vocab1(pmFolder)
+        vocab2(pmFolder)
+        self.assertTrue(getattr(vocab1, memPropName))
+        self.assertTrue(getattr(vocab2, memPropName))
+
+        # remove a group
+        self.portal.restrictedTraverse('@@delete_givenuid')(newGroup.UID())
+        # cache was cleaned
+        self.assertFalse(getattr(vocab1, memPropName, {}))
+        self.assertFalse(getattr(vocab2, memPropName, {}))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

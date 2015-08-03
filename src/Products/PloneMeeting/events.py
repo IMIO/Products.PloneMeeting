@@ -127,7 +127,7 @@ def onMeetingTransition(meeting, event):
     do(action, event)
 
 
-def onMeetingGroupTransition(mGroup, event):
+def onGroupTransition(mGroup, event):
     '''Called whenever a transition has been fired on a MeetingGroup.'''
     if not event.transition or (mGroup != event.object):
         return
@@ -144,6 +144,15 @@ def onMeetingGroupTransition(mGroup, event):
         # add a portal_message explaining what has been done to the user
         plone_utils = getToolByName(mGroup, 'plone_utils')
         plone_utils.addPortalMessage(_('meetinggroup_removed_from_meetingconfigs_selectablecopygroups'), 'info')
+
+
+def onGroupRemoved(group, event):
+    '''Called when a MeetingGroup is removed.'''
+    # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
+    # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
+    tool = getToolByName(group, 'portal_plonemeeting')
+    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
 
 
 def onItemMoved(item, event):

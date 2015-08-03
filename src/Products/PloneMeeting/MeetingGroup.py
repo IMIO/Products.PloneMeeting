@@ -289,12 +289,22 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                                         "'%s' already exists." % groupId)
         for groupSuffix in MEETING_GROUP_SUFFIXES:
             self._createOrUpdatePloneGroup(groupSuffix)
+        # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
+        # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
+        tool = getToolByName(self, 'portal_plonemeeting')
+        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
         self.adapted().onEdit(isCreated=True)  # Call product-specific code
 
     security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
         for groupSuffix in MEETING_GROUP_SUFFIXES:
             self._createOrUpdatePloneGroup(groupSuffix, update=True)
+        # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
+        # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
+        tool = getToolByName(self, 'portal_plonemeeting')
+        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('manage_beforeDelete')

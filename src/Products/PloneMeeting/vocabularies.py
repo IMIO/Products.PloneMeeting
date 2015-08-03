@@ -77,6 +77,7 @@ ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
 class ItemProposingGroupsVocabulary(object):
     implements(IVocabularyFactory)
 
+    @memoize
     def __call__(self, context):
         """ """
         tool = getToolByName(context, 'portal_plonemeeting')
@@ -97,6 +98,7 @@ ItemProposingGroupsVocabularyFactory = ItemProposingGroupsVocabulary()
 class ItemProposingGroupAcronymsVocabulary(object):
     implements(IVocabularyFactory)
 
+    @memoize
     def __call__(self, context):
         """ """
         tool = getToolByName(context, 'portal_plonemeeting')

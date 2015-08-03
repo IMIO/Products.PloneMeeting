@@ -43,11 +43,11 @@
 
   <subscriber for=".interfaces.IMeetingGroup
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onMeetingGroupTransition"/>
+              handler=".events.onGroupTransition"/>
 
   <subscriber for=".interfaces.IMeetingGroup
-                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onMeetingGroupTransition"/>
+                   zope.container.interfaces.IObjectRemovedEvent"
+              handler=".events.onGroupRemoved"/>
 
   <subscriber for=".interfaces.IMeetingCategory
                    zope.container.interfaces.IObjectRemovedEvent"
