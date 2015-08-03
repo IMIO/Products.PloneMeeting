@@ -87,11 +87,18 @@ class AnnexableAdapter(object):
                 # Ok idCandidate is good!
                 idMayBeUsed = True
 
+        # as we heritate 'Modify portal content' from item
+        # make sure current user creating the annex has this permission
+        # here or it is not possible to set title and meetingFileType
+        # it cas be the case when adding an annex on an item the user can not edit
         data = {'title': annex_title,
                 'meetingFileType': meetingFileTypeUID}
+        saved_modify_perm = self.context._Modify_portal_content_Permission
+        self.context._Modify_portal_content_Permission = ['Member', ]
         newAnnexId = self.context.invokeFactory('MeetingFile',
                                                 id=idCandidate,
                                                 **data)
+        self.context._Modify_portal_content_Permission = saved_modify_perm
         newAnnex = getattr(self.context, newAnnexId)
         newAnnex.setFile(annex_file, **kwargs)
 
