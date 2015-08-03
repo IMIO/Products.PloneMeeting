@@ -74,7 +74,9 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
     decisionText = '<p>Some decision.</p>'
     schemas = {'MeetingItem': MeetingItem_schema,
                'Meeting': Meeting_schema}
-    subproductIgnoredTestFiles = ['testPerformances.py', 'testConversionWithDocumentViewer.py']
+    subproductIgnoredTestFiles = ['testPerformances.py',
+                                  'testConversionWithDocumentViewer.py',
+                                  'test_robot.py']
 
     layer = PM_TESTING_PROFILE_FUNCTIONAL
 
@@ -380,7 +382,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
                 methods[name] = 0
         return methods
 
-    def test_testcasesubproduct_VerifyTestFiles(self):
+    def test_subproduct_VerifyTestFiles(self):
         """
           This test is called by the base TestCase file of the subproduct.
           We check that every test files in Products.PloneMeeting are also in this sub-product.
@@ -399,6 +401,8 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             subproduct_name = subproduct_name.replace('.', '/')
             subproduct_files_generator = find_test_files(options)
             subproduct_files = [f[0] for f in subproduct_files_generator if subproduct_name in f[0]]
+        subproduct_testfiles = [f.split('/')[-1] for f in subproduct_files if not
+                                f.split('/')[-1].startswith('testCustom')]
         # get test files for PloneMeeting
         # find PloneMeeting package path
         import os
@@ -409,15 +413,14 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
                 break
         if not pm_path:
             raise Exception('Products.PloneMeeting path not found!')
-        # change test_path to set it to Products.PloneMeeting
-        saved_test_path = options.test_path
-        options.test_path = [(pm_path, '')]
+
+        # find every Products.PloneMeeting test file
+        saved_package = options.package
+        options.package = ['Products.PloneMeeting', ]
         pm_files_generator = find_test_files(options)
         pm_files = [f[0] for f in pm_files_generator if 'Products.PloneMeeting' in f[0]]
-        options.test_path = saved_test_path
+        options.package = saved_package
         # now check that every PloneMeeting files are managed by subproduct
-        subproduct_testfiles = [f.split('/')[-1] for f in subproduct_files if not
-                                f.split('/')[-1].startswith('testCustom')]
         pm_testfiles = [f.split('/')[-1] for f in pm_files]
         # there should not be a file in PloneMeeting that is not in this subproduct...
         # a subproduct can ignore some PloneMeeting test files in self.subproductIgnoredTestFiles
