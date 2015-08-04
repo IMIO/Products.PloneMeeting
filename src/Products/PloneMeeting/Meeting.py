@@ -1043,6 +1043,15 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 res.sort(key=lambda x: x.getItemNumber())
         return res
 
+    security.declarePublic('getItemsInOrder')
+    def getItemsInOrder(self, late=False, uids=[]):
+        """Deprecated, use Meeting.getItems instead."""
+        logger.warn('Meeting.getItemsInOrder is deprecated, use Meeting.getItems(ordered=True) instead.')
+        listType = late and 'late' or 'normal'
+        if '' in uids:
+            uids.remove('')
+        return self.getItems(uids=uids, listType=listType, ordered=True)
+
     security.declarePublic('getItemByNumber')
     def getItemByNumber(self, number):
         '''Gets the item thas has number p_number.'''
