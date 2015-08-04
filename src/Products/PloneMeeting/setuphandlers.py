@@ -215,16 +215,6 @@ def postInstall(context):
 
     site.portal_plonemeeting.at_post_create_script()
 
-    # Add docstrings to some Zope methods, Zope bug?
-    from Products.GenericSetup.tool import SetupTool
-    setattr(SetupTool.manage_deleteImportSteps.im_func, '__doc__', 'Do.')
-    setattr(SetupTool.manage_deleteExportSteps.im_func, '__doc__', 'Do.')
-
-    # Add to the tool the dict allowing to remember user accesses to items and
-    # annexes
-    if not hasattr(site.portal_plonemeeting.aq_base, 'accessInfo'):
-        site.portal_plonemeeting.accessInfo = OOBTree()
-
     # Do not generate an action (tab) for each root folder
     site.portal_properties.site_properties.manage_changeProperties(
         disable_folder_sections=True)
