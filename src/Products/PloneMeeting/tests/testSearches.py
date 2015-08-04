@@ -149,9 +149,15 @@ class testSearches(PloneMeetingTestCase):
                            'portal_type': itemTypeName})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
+        adviceWF = self.wfTool.getWorkflowsFor('meetingadvice')[0]
+        adviceStates = adviceWF.states.keys()
+        groupIds = []
+        for adviceState in adviceStates:
+            groupIds.append('developers_%s' % adviceState)
+            groupIds.append('delay__developers_%s' % adviceState)
+        import ipdb; ipdb.set_trace()
         self.assertEquals(adapter.query,
-                          {'indexAdvisers': ['developers_advice_given', 'delay__developers_advice_given',
-                                             'developers_advice_under_edit', 'delay__developers_advice_under_edit'],
+                          {'indexAdvisers': groupIds,
                            'portal_type': itemTypeName})
 
         # now do the query
