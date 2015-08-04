@@ -1064,15 +1064,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # deleted. Return a 404.
             raise NotFound()
         obj = brains[0].getObject()
-        # if we did not receive itemUids, maybe we have a facetedQuery?
-        if facetedQuery and not itemUids and IFacetedNavigable.providedBy(obj):
+        # if we did not receive itemUids, generate it, it is necessary for printing methods
+        if not itemUids and IFacetedNavigable.providedBy(obj):
             faceted_query = obj.restrictedTraverse('@@faceted_query')
-            # put the facetedQuery criteria into the REQUEST.form
-            for k, v in json.JSONDecoder().decode(facetedQuery).items():
-                # we receive list of elements, if we have only one elements, remove it from the list
-                if len(v) == 1:
-                    v = v[0]
-                self.REQUEST.form[k] = v
+            # maybe we have a facetedQuery? aka the meeting view was filtered and we want to print this result
+            if facetedQuery:
+                # put the facetedQuery criteria into the REQUEST.form
+                for k, v in json.JSONDecoder().decode(facetedQuery).items():
+                    # we receive list of elements, if we have only one elements, remove it from the list
+                    if len(v) == 1:
+                        v = v[0]
+                    self.REQUEST.form[k] = v
             query = faceted_query.query(batch=False)
             itemUids = [queryBrain.UID for queryBrain in query]
         else:
