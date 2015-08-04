@@ -312,6 +312,21 @@ class Migrate_To_3_4(Migrator):
             cfg.recurringitems.setImmediatelyAddableTypes([recItemType])
         logger.info('Done.')
 
+    def _cleanMeetingFolderLayout(self):
+        """We used a layout for MeetingFolders, like 'meetingfolder_redirect_view',
+           make sure it is no more used."""
+        logger.info('Cleaning MeetingFolders layout...')
+        for userFolder in self.portal.Members.objectValues():
+            mymeetings = getattr(userFolder, 'mymeetings', None)
+            if not mymeetings:
+                continue
+            for cfg in self.tool.objectValues('MeetingConfig'):
+                meetingFolder = getattr(mymeetings, cfg.getId(), None)
+                if not meetingFolder:
+                    continue
+                if meetingFolder.getProperty('layout'):
+                    meetingFolder.manage_delProperties(['layout'])
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -323,6 +338,7 @@ class Migrate_To_3_4(Migrator):
         self._adaptAppForImioDashboard()
         self._cleanPMModificationDateOnItemsAndAnnexes()
         self._moveToItemTemplateRecurringOwnPortalTypes()
+        self._cleanMeetingFolderLayout()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
@@ -342,7 +358,8 @@ def migrate(context):
        5) Move to imio.dashboard;
        6) Clean pm_modification_date on items and annexes;
        7) Move item templates and recurring items to their own portal_type;
-       8) Refresh catalogs.
+       8) Make sure no layout is defined on users MeetingFolders;
+       9) Refresh catalogs.
     '''
     Migrate_To_3_4(context).run()
 # ------------------------------------------------------------------------------
