@@ -4239,14 +4239,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
             tool._enableFacetedFor(folder)
             # subFolders to create
-            subFolderIds = [folderId for folderId in self.searches.objectIds() if folderId.startswith('searches_')]
+            subFolderInfos = [(folder.getId(), folder.Title()) for folder in
+                              self.searches.objectValues() if folder.getId().startswith('searches_')]
             # remove searches_* folders from the given p_folder
             toDelete = [folderId for folderId in folder.objectIds() if folderId.startswith('searches_')]
             folder.manage_delObjects(toDelete)
 
             # create relevant folders and activate faceted on it
-            for subFolderId in subFolderIds:
-                folder.invokeFactory('Folder', id=subFolderId, **{'title': subFolderId})
+            for subFolderId, subFolderTitle in subFolderInfos:
+                folder.invokeFactory('Folder',
+                                     id=subFolderId,
+                                     **{'title': subFolderTitle})
                 subFolderObj = getattr(folder, subFolderId)
                 tool._enableFacetedFor(subFolderObj)
 
