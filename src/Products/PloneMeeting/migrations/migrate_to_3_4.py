@@ -300,7 +300,7 @@ class Migrate_To_3_4(Migrator):
                     itemTemplate.reindexObject(idxs=['portal_type', 'Type', ])
             # update recurring items portal_type
             recItemType = cfg.getItemTypeName(configType='MeetingItemRecurring')
-            recItems = cfg.getRecurringItems()
+            recItems = cfg.getRecurringItems(onlyActive=False)
             for recItem in recItems:
                 if recItem.portal_type == itemType:
                     recItem.portal_type = recItemType
