@@ -183,7 +183,7 @@ class Migrate_To_3_4(Migrator):
             tabId = '%s_action' % cfg.getId()
             action = getattr(portal_tabs, tabId, None)
             if action and not action.url_expr.endswith(' + "/searches_items"'):
-                action._setPropValue('url_expr', action.url_expr + ' + "/searches_items"')
+                action.url_expr = action.url_expr + ' + "/searches_items"'
 
             logger.info('Moving to imio.dashboard : adding "on list type" as first value of "insertingMethodsOnAddItem"...')
             insertingMethodsOnAddItem = list(cfg.getInsertingMethodsOnAddItem())
