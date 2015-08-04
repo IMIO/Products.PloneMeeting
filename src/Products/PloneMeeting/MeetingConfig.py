@@ -4237,6 +4237,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
+            tool._enableFacetedFor(folder)
             # subFolders to create
             subFolderIds = [folderId for folderId in self.searches.objectIds() if folderId.startswith('searches_')]
             # remove searches_* folders from the given p_folder

@@ -698,7 +698,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
 
         # manage faceted nav
-        self._enableFacetedFor(mc_folder)
         cfg._synchSearches(mc_folder)
 
         # constrain types
