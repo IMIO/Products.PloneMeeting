@@ -51,10 +51,9 @@
       <div tal:condition="not:tree" class="discreet" i18n:translate="no_item_templates">No item template.</div>
     </div>
 
-    <br />
     <form id="itemTemplatesForm" method="post"
           tal:attributes="action python:context.absolute_url() + '/@@createitemfromtemplate'">
-        <div align="center">
+        <div class="popupbuttons">
           <input type="hidden" name="form.HTTP_REFERER" value="#" tal:attributes="value context/REQUEST/HTTP_REFERER" />
           <input type="submit" name="form.buttons.cancel" class="context" value="Close" i18n:attributes="value" i18n:domain="plone" />
         </div>
