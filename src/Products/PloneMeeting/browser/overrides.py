@@ -551,7 +551,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         if folderId == 'topics':
             return "../?pageName=gui#topics"
         # searches
-        if folderId in ['meetingitems', 'meetings', 'decisions']:
+        if folderId in ['searches_items', 'searches_meetings', 'searches_decisions']:
             return "../../?pageName=gui#searches"
         if folderId == 'podtemplates':
             return "../?pageName=doc#podtemplates"
