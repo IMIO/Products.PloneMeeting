@@ -268,6 +268,7 @@ class MeetingFacetedTableView(FolderFacetedTableView):
             column.view_name = 'item-number'
         elif colName == u'listType':
             column = ColorColumn(self.context, self.request, self)
+            column.i18n_domain = "PloneMeeting"
             column.cssClassPrefix = 'meeting_item'
         elif colName == u'check_box_item':
             column = MeetingCheckBoxColumn(self.context, self.request, self)

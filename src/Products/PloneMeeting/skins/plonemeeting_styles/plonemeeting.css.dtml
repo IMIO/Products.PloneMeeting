@@ -610,6 +610,15 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 .item_privacy_secret {
     color: #FF934A;
 }
+/* CSS for MeetingItem.listType */
+/* While displayed as a single item (meetingitem_view) */
+.item_listType_normal {
+    color: green;
+}
+.item_listType_late {
+    color: red;
+}
+
 /* While displayed in a Meeting */
 .meeting_item_privacy_secret {
     background-color: #E8E8E8;
