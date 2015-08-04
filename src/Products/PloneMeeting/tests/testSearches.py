@@ -442,6 +442,7 @@ class testSearches(PloneMeetingTestCase):
            This should return a list of items a user could validate at any level,
            so not only his highest hierarchic level.  This will return finally every items
            corresponding to Plone reviewer groups the user is in.'''
+        cfg = self.meetingConfig
         self.changeUser('admin')
         logger = logging.getLogger('PloneMeeting: testing')
         # activate the 'pre_validation' wfAdaptation if it exists in current profile...
@@ -449,15 +450,15 @@ class testSearches(PloneMeetingTestCase):
         if not len(MEETINGREVIEWERS) > 1:
             logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' because "
                         "we need at least 2 levels of item validation.")
-        if 'pre_validation' in self.meetingConfig.listWorkflowAdaptations():
-            self.meetingConfig.setWorkflowAdaptations('pre_validation')
+        if 'pre_validation' in cfg.listWorkflowAdaptations():
+            cfg.setWorkflowAdaptations('pre_validation')
             logger = logging.getLogger('PloneMeeting: testing')
-            performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+            performWorkflowAdaptations(self.portal, cfg, logger)
 
-        itemTypeName = self.meetingConfig.getItemTypeName()
+        itemTypeName = cfg.getItemTypeName()
 
         # first test the generated query
-        adapter = getAdapter(self.meetingConfig,
+        adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='items-to-validate-of-my-reviewer-groups')
         # if user si not a reviewer, we want the search to return
@@ -466,14 +467,23 @@ class testSearches(PloneMeetingTestCase):
                           {'review_state': ['unknown_review_state']})
         # for a reviewer, query is correct
         self.changeUser('pmManager')
+        # keep relevant reviewer states
+        res = []
+        for grp in self.member.getGroups():
+            for reviewer_suffix, reviewer_state in MEETINGREVIEWERS.items():
+                if grp.endswith('_' + reviewer_suffix):
+                    if reviewer_suffix == 'reviewers' and 'pre_validation' in cfg.listWorkflowAdaptations():
+                        res.append('prevalidated')
+                    else:
+                        res.append(reviewer_state)
         self.assertEquals(adapter.query,
                           {'portal_type': itemTypeName,
-                           'reviewProcessInfo': ['developers__reviewprocess__prevalidated']})
+                           'reviewProcessInfo': ['developers__reviewprocess__%s' % st for st in res]})
 
         # now do the query
         # this adapter is not used by default, but is intended to be used with
         # the "searchitemstovalidate" collection so use it with it
-        collection = self.meetingConfig.searches.searches_items.searchitemstovalidate
+        collection = cfg.searches.searches_items.searchitemstovalidate
         patchedQuery = list(collection.query)
         patchedQuery[0]['v'] = 'items-to-validate-of-my-reviewer-groups'
         collection.query = patchedQuery
