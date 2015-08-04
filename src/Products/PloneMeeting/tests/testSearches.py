@@ -518,6 +518,7 @@ class testSearches(PloneMeetingTestCase):
         '''Test the searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels method.
            This will return items to validate of his highest hierarchic level and every levels
            under, even if user is not in the corresponding Plone reviewer groups.'''
+        cfg = self.meetingConfig
         logger = logging.getLogger('PloneMeeting: testing')
         # by default we use the 'pre_validation_keep_reviewer_permissions' to check
         # this, but if a subplugin has the right workflow behaviour, this can works also
@@ -527,18 +528,18 @@ class testSearches(PloneMeetingTestCase):
            self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest():
             logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels'"
                         "because we need a correctly configured workflow.")
-        if 'pre_validation_keep_reviewer_permissions' in self.meetingConfig.listWorkflowAdaptations():
-            self.meetingConfig.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
+        if 'pre_validation_keep_reviewer_permissions' in cfg.listWorkflowAdaptations():
+            cfg.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
             logger = logging.getLogger('PloneMeeting: testing')
-            performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
-        itemTypeName = self.meetingConfig.getItemTypeName()
+            performWorkflowAdaptations(self.portal, cfg, logger)
+        itemTypeName = cfg.getItemTypeName()
         # create 2 items
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
         self.do(item1, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
         self.do(item2, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
-        adapter = getAdapter(self.meetingConfig,
+        adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='items-to-validate-of-every-reviewer-levels-and-lower-levels')
         self.assertEquals(adapter.query,
@@ -546,16 +547,18 @@ class testSearches(PloneMeetingTestCase):
         # now do the query
         # this adapter is not used by default, but is intended to be used with
         # the "searchitemstovalidate" collection so use it with it
-        collection = self.meetingConfig.searches.searches_items.searchitemstovalidate
+        collection = cfg.searches.searches_items.searchitemstovalidate
         patchedQuery = list(collection.query)
         patchedQuery[0]['v'] = 'items-to-validate-of-every-reviewer-levels-and-lower-levels'
         collection.query = patchedQuery
         self.failIf(collection.getQuery())
         # as first level user, he will see items
         self.changeUser('pmReviewerLevel1')
+        # find state to use for current reviewer
+        reviewer_state = MEETINGREVIEWERS[cfg._highestReviewerLevel(self.member.getGroups())]
         self.assertEquals(adapter.query,
                           {'portal_type': itemTypeName,
-                           'reviewProcessInfo': ['developers__reviewprocess__proposed']})
+                           'reviewProcessInfo': ['developers__reviewprocess__%s' % reviewer_state]})
 
         self.failUnless(len(collection.getQuery()) == 2)
         # as second level user, he will also see items because items are from lower reviewer levels
