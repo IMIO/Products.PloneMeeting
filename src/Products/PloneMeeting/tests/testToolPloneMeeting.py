@@ -23,12 +23,12 @@
 #
 
 from DateTime import DateTime
-
-from plone.app.textfield.value import RichTextValue
-from plone.dexterity.utils import createContentInContainer
+from AccessControl import Unauthorized
 
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.utils import getToolByName
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -633,6 +633,33 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in item1.__ac_local_roles__)
         self.assertFalse('%s_restrictedpowerobservers' % cfg.getId() in item2.__ac_local_roles__)
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
+
+    def test_pm_UpdateAllAdvicesAction(self):
+        """Test the updateAllAdvicesAction (calling _updateAllAdvices method) action that update every advices.
+           It is also used to update every delay aware advice every night."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        # only available to 'Managers'
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, self.tool.updateAllAdvicesAction)
+        # create items and ask advice
+        item1 = self.create('MeetingItem')
+        item1.setOptionalAdvisers(('developers', ))
+        item1.at_post_edit_script()
+        item2 = self.create('MeetingItem')
+        item2.setOptionalAdvisers(('developers', ))
+        self.proposeItem(item2)
+        self.assertTrue('developers_advisers' in item1.__ac_local_roles__)
+        self.assertFalse('developers_advisers' in item2.__ac_local_roles__)
+
+        # change configuration, updateAllAdvicesAction then check again
+        self.changeUser('siteadmin')
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.tool.updateAllAdvicesAction()
+        self.assertFalse('developers_advisers' in item1.__ac_local_roles__)
+        self.assertTrue('developers_advisers' in item2.__ac_local_roles__)
 
 
 def test_suite():
