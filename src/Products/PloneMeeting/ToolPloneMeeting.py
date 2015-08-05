@@ -1848,18 +1848,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     res.append(tInfo)
         return res
 
-    security.declarePublic('showToggleDescriptions')
-    def showToggleDescriptions(self, context):
-        '''Under what circumstances must action 'toggle descrs' be shown?'''
-        # If we are on a meeting, return True
-        rq = context.REQUEST
-        if context.getLayout() == 'meeting_view':
-            return not rq['ACTUAL_URL'].endswith('edit')
-        # If we are displaying search results (excepted for lists of meetings),
-        # return True
-        if str(rq).endswith('@@faceted_query'):
-            pass
-
     security.declarePublic('showTogglePersons')
     def showTogglePersons(self, context):
         '''Under what circumstances must action 'toggle persons' be shown?'''
