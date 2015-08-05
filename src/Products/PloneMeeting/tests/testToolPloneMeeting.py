@@ -661,6 +661,26 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertFalse('developers_advisers' in item1.__ac_local_roles__)
         self.assertTrue('developers_advisers' in item2.__ac_local_roles__)
 
+    def test_pm_ReindexAnnexes(self):
+        """Test the reindexAnnexes that will reindex every annexes on items.
+           This is usefull especially if a user change a MeetingFileType title."""
+        # only available to 'Managers'
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, self.tool.reindexAnnexes)
+        # create item with annex
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        currentIndexedAnnexTitle = item.annexIndex[0]['Title']
+        NEW_ANNEX_TITLE = 'New annex title'
+        annex.setTitle(NEW_ANNEX_TITLE)
+        # annexIndex was not changed
+        self.assertEquals(item.annexIndex[0]['Title'], currentIndexedAnnexTitle)
+
+        # reindexAnnexes then check again
+        self.changeUser('siteadmin')
+        self.tool.reindexAnnexes()
+        self.assertEquals(item.annexIndex[0]['Title'], NEW_ANNEX_TITLE)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
