@@ -681,6 +681,31 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.tool.reindexAnnexes()
         self.assertEquals(item.annexIndex[0]['Title'], NEW_ANNEX_TITLE)
 
+    def test_pm_FormatMeetingDate(self):
+        """Test the formatMeetingDate method."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        self.assertEquals(self.tool.formatMeetingDate(meeting),
+                          u'05 may 2015')
+        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True),
+                          u'05/05/2015')
+        # hours are not shown if actually 0h00
+        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
+                          u'05/05/2015')
+        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
+                          u'Meeting of 05/05/2015')
+
+        # add hours to the meeting date
+        meeting.setDate('2015/05/05 14:30')
+        self.assertEquals(self.tool.formatMeetingDate(meeting),
+                          u'05 may 2015')
+        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True),
+                          u'05/05/2015')
+        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
+                          u'05/05/2015 (14:30)')
+        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
+                          u'Meeting of 05/05/2015 (14:30)')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
