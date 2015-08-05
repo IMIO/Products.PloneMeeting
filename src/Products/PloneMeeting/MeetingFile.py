@@ -337,7 +337,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'mftId': fileTypeData['id'],
                'id': self.getId(),
                'iconUrl': self.getIcon(),
-               'modification_date': self.modified(),
                'relatedTo': self.findRelatedTo(),
                'conversionStatus': IAnnexable(self).conversionStatus(),
                'isConfidential': self.getIsConfidential(),

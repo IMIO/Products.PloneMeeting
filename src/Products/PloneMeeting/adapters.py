@@ -211,12 +211,11 @@ class AnnexableAdapter(object):
                 self.context.annexIndex.append(annex.getAnnexInfo())
         else:
             del self.context.annexIndex[:]
-            sortableList = []
-            for annex in self.getAnnexes():
-                sortableList.append(annex.getAnnexInfo())
-            sortableList.sort(key=lambda x: x['modification_date'])
-            for a in sortableList:
-                self.context.annexIndex.append(a)
+            annexes = self.getAnnexes()
+            # sort annexes by modification date
+            annexes.sort(key=lambda x: x.modified())
+            for annex in annexes:
+                self.context.annexIndex.append(annex.getAnnexInfo())
 
     def getAnnexes(self, relatedTo=None):
         '''See docstring in interfaces.py'''
