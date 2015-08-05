@@ -1895,25 +1895,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res[:res.find('-')]
         return res
 
-    security.declarePublic('getPloneUsers')
-    def getPloneUsers(self):
-        '''Returns the list of Plone users (with their encrypted passwords).
-           Only available to role "MeetingArchiveObserver".'''
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('MeetingArchiveObserver'):
-            raise 'Unauthorized'
-        class FakeUser:
-            pass
-        usersDb = self.acl_users.source_users
-        res = []
-        for userId in usersDb.getUserIds():
-            fakeUser = FakeUser()
-            fakeUser.id = userId
-            fakeUser.name = usersDb.getUserById(userId).getProperty('fullname')
-            fakeUser.password = usersDb._user_passwords[userId]
-            res.append(fakeUser)
-        return res
-
     security.declarePublic('reindexAnnexes')
     def reindexAnnexes(self):
         '''Reindexes all annexes.'''
