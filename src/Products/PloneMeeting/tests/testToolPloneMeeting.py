@@ -559,7 +559,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
         self.meetingConfig.setUseCopies(True)
         self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
+        # only available to 'Managers'
         self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, self.tool.updateCopyGroups)
         item1 = self.create('MeetingItem')
         item1.setCopyGroups(('vendors_reviewers',))
         item1.at_post_edit_script()
@@ -582,7 +584,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            First set budget impact editors may edit in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
         cfg.setItemBudgetInfosStates(('itemcreated', ))
+        # only available to 'Managers'
         self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, self.tool.updateBudgetImpactEditors)
         item1 = self.create('MeetingItem')
         item1.at_post_edit_script()
         item2 = self.create('MeetingItem')
@@ -606,7 +610,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.setMeetingPowerObserversStates(('created', ))
         cfg.setItemRestrictedPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         cfg.setMeetingRestrictedPowerObserversStates(('closed', ))
+        # only available to 'Managers'
         self.changeUser('pmManager')
+        self.assertRaises(Unauthorized, self.tool.updatePowerObservers)
         item1 = self.create('MeetingItem')
         item1.at_post_edit_script()
         item2 = self.create('MeetingItem')
