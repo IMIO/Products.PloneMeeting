@@ -2036,10 +2036,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
-    security.declarePublic('getSiteUrl')
-    def getSiteUrl(self):
-        return self.portal_url.getPortalObject().absolute_url()
-
     security.declarePublic('deleteHistoryEvent')
     def deleteHistoryEvent(self, obj, eventToDelete):
         '''Deletes an p_event in p_obj's history.'''

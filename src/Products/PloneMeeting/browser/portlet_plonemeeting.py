@@ -1,4 +1,3 @@
-from zope.component import getMultiAdapter
 from zope.interface import implements
 from zope.formlib import form
 
@@ -40,9 +39,9 @@ class Renderer(base.Renderer, FacetedRenderer):
 
     def __init__(self, *args):
         base.Renderer.__init__(self, *args)
-        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = portal_state.portal()
-        self.tool = getToolByName(self.portal, 'portal_plonemeeting')
+        portal = getToolByName(self.context, 'portal_url').getPortalObject()
+        self.portal_url = portal.absolute_url()
+        self.tool = getToolByName(portal, 'portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     @property

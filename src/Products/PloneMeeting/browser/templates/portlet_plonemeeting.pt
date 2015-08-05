@@ -8,7 +8,7 @@
     tal:define="tool python: view.tool;
                 cfg python: view.cfg;
                 meetingFolder view/getPloneMeetingFolder;
-                portal_url tool/getSiteUrl;">
+                portal_url view/portal_url;">
 
     <dt class="portletHeader">
         <span i18n:translate="portlet_pm_header_label">Manage</span>
