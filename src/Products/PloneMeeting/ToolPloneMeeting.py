@@ -1237,15 +1237,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     res = False
         return res
 
-    security.declarePublic('listMeetingGroupsForSearch')
-    def listMeetingGroupsForSearch(self):
-        '''This method is used as vocabulary for fields 'proposingGroup'
-           and 'associatedGroups' in the search_form.'''
-        res = []
-        for meetingGroup in self.getMeetingGroups(onlyActive=False):
-            res.append([meetingGroup.getId(), meetingGroup.Title()])
-        return DisplayList(res).sortedByValue()
-
     security.declarePublic('getBackUrl')
     def getBackUrl(self, context):
         '''Computes the URL for "back" links in the tool or in a config.'''
