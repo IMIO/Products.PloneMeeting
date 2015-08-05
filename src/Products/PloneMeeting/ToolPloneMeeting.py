@@ -946,32 +946,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res.encode('utf-8')
         return res
 
-    security.declarePublic('highlight')
-    def highlight(self, text):
-        '''This method highlights parts of p_text corresponding to keywords if
-           keywords are found in search params in the REQUEST.form.'''
-        searchParams = self.REQUEST.SESSION.get('searchParams', None)
-        if not searchParams:
-            return text
-        keywords = searchParams.get('keywords', None)
-        if not keywords:
-            return text
-        # build variants
-        variants = []
-        for word in keywords.strip().split():
-            sWord = word.strip(' *').lower()
-            for variant in (sWord, sWord.capitalize(), sWord.upper()):
-                variants.append(variant)
-        # now that we have every variants, we will walk the text and replace necessary words
-        res = []
-        for word in text.strip().split():
-            sWord = word.strip(' ' + string.punctuation).lower()
-            if sWord in variants:
-                res.append('<span class="highlight">{0}</span>'.format(word))
-            else:
-                res.append(word)
-        return ' '.join(res)
-
     security.declarePublic('getColoredLink')
     def getColoredLink(self, obj, showColors=True, showIcon=False, contentValue='',
                        target='_self', maxLength=0, inMeeting=True,
@@ -981,9 +955,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            colors must be shown depending on p_showColors). p_target optionally
            specifies the 'target' attribute of the 'a' tag. p_maxLength
            defines the number of characters to display if the content of the
-           link is too long. If p_highlight is True, and search params are in
-           the REQUEST.form and contain keywords, we highlight keywords found in
-           the title.
+           link is too long.
 
            p_inMeeting and p_meeting will be passed to the used item.getIcons
            method here above.
@@ -1117,14 +1089,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 return res
 
-    security.declarePublic('listAvailableColorSystems')
-    def listAvailableColorSystems(self):
-        '''Return a list of available color system'''
-        res = []
-        for cs in colorSystems:
-            res.append((cs, translate(cs, domain='PloneMeeting', context=self.REQUEST)))
-        return DisplayList(tuple(res))
-
     security.declarePublic('listOcrLanguages')
     def listOcrLanguages(self):
         '''Return the list of OCR languages supported by Tesseract.'''
@@ -1156,15 +1120,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             ('secondLanguageCfg', translate('ma_second_language_cfg', domain=d, context=self.REQUEST)),
         )
         return DisplayList(res)
-
-    security.declarePublic('listItemStates')
-    def listItemStates(self):
-        res = DisplayList()
-        for activeConfig in self.getActiveConfigs():
-            for itemState in activeConfig.listItemStates().items():
-                if not itemState[0] in res:
-                    res.add(itemState[0], itemState[1])
-        return res.sortedByValue()
 
     security.declarePublic('listWeekDays')
     def listWeekDays(self):

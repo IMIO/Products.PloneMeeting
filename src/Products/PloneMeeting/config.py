@@ -210,14 +210,7 @@ ITEM_INSERT_METHODS = (  # Items are inserted:
     'on_to_discuss',  # according to the item toDiscuss;
     'on_other_mc_to_clone_to',  # according to items that need to be sent to another meeting config;
 )
-# List of color system options : the way the item titles and annexes are colored
-colorSystems = (
-    'no_color',  # nothing is colored
-    'state_color',  # the color follows the item state
-    'modification_color'  # the color depends on the fact that the current user
-                          # has already viewed or not last modifications done on
-                          # a given element (item/annex/advice...)
-)
+
 NOT_ENCODED_VOTE_VALUE = 'not_yet'
 NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
 NOT_GIVEN_ADVICE_VALUE = 'not_given'
