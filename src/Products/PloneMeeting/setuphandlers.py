@@ -22,14 +22,13 @@ import os
 from Products.CMFCore.utils import getToolByName
 import transaction
 ##code-section HEAD
-from BTrees.OOBTree import OOBTree
 from zope.component import queryUtility
 from zope.i18n import translate
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.PloneMeeting import PMMessageFactory as _
-from Products.PloneMeeting.config import *
+from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
