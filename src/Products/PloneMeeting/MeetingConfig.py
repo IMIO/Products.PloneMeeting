@@ -4178,7 +4178,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # update annexIndex as isConfidential is into it
             IAnnexable(item).updateAnnexIndex()
         self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateAdviceConfidentiality')
     def updateAdviceConfidentiality(self):
@@ -4202,7 +4202,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for advice in item.adviceIndex.itervalues():
                 advice['isConfidential'] = adviceConfidentialityDefault
         self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     def _synchSearches(self, folder=None):
         """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,

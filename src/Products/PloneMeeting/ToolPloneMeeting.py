@@ -37,7 +37,6 @@ import os.path
 import re
 import string
 import OFS.Moniker
-from appy.gen import No
 from datetime import datetime
 from AccessControl import Unauthorized
 from AccessControl import getSecurityManager
@@ -62,9 +61,6 @@ from plone.memoize.instance import Memojito
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import View
-from Products.CMFPlone.PloneBatch import Batch
-from Products.DCWorkflow.Transitions import TRIGGER_USER_ACTION
-from Products.DCWorkflow.Expression import StateChangeInfo, createExprContext
 from Products.ATContentTypes import permission as ATCTPermissions
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
@@ -1250,22 +1246,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res.append([meetingGroup.getId(), meetingGroup.Title()])
         return DisplayList(res).sortedByValue()
 
-    security.declarePublic('gotoReferer')
-    def gotoReferer(self):
-        '''This method allows to go back to the referer URL after a script has
-           been executed. There are some special cases to manage in the referer
-           URL (like managing parameters *StartNumber when we must come back to
-           meeting_view which includes paginated lists).'''
-        rq = self.REQUEST
-        urlBack = rq['HTTP_REFERER']
-        if rq.get('iStartNumber', None):
-            # We must come back to the meeting_view and pay attention to
-            # pagination.
-            if urlBack.find('?') != -1:
-                urlBack = urlBack[:urlBack.index('?')]
-            urlBack += '?iStartNumber=%s&lStartNumber=%s' % (rq['iStartNumber'], rq['lStartNumber'])
-        return rq.RESPONSE.redirect(urlBack)
-
     security.declarePublic('getBackUrl')
     def getBackUrl(self, context):
         '''Computes the URL for "back" links in the tool or in a config.'''
@@ -1280,23 +1260,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             url = context.getParentNode().absolute_url()
             url += '#%s' % context.meta_type
             return url
-
-    security.declarePublic('batchAdvancedSearch')
-    def batchAdvancedSearch(self, brains, topic, REQUEST, batch_size=0):
-        '''Returns a Batch object given a list of p_brains.'''
-        b_start = REQUEST.get('b_start', 0)
-        # if batch_size is different than 0, use it
-        # batch_size is used by portlet_todo for example
-        # either, if we defined a limit number in the topic, use it
-        # or set it to config.py/DEFAULT_TOPIC_ITEM_COUNT
-        if batch_size:
-            b_size = batch_size
-        elif topic.getLimitNumber():
-            b_size = topic.getItemCount() or DEFAULT_TOPIC_ITEM_COUNT
-        else:
-            b_size = DEFAULT_TOPIC_ITEM_COUNT
-        batch = Batch(brains, b_size, int(b_start), orphan=0)
-        return batch
 
     security.declarePrivate('pasteItems')
     def pasteItems(self, destFolder, copiedData, copyAnnexes=False,
@@ -1799,7 +1762,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                                                    brain.getPath()))
             i = i + 1
         self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('convertAnnexes')
     def convertAnnexes(self):
@@ -1822,7 +1785,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 for annex in annexes:
                     convertToImages(annex, None, force=True)
             self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateAllAdvicesAction')
     def updateAllAdvicesAction(self):
@@ -1831,7 +1794,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         self._updateAllAdvices()
         self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     def _updateAllAdvices(self, query={}):
         '''Update adviceIndex for every items.
@@ -1875,7 +1838,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Update security
             itemOrMeeting.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateBudgetImpactEditors')
     def updateBudgetImpactEditors(self):
@@ -1886,7 +1849,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             obj = b.getObject()
             obj.updateBudgetImpactEditorsLocalRoles()
         self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateCopyGroups')
     def updateCopyGroups(self):
@@ -1899,7 +1862,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Update security
             obj.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
-        self.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('deleteHistoryEvent')
     def deleteHistoryEvent(self, obj, eventToDelete):

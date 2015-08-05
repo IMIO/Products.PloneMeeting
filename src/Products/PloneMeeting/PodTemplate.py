@@ -371,7 +371,7 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
         # Return to the referer page.
         msg = self.translate('pt_mailing_sent', domain='PloneMeeting')
         obj.plone_utils.addPortalMessage(msg)
-        obj.portal_plonemeeting.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePrivate('listFreezeEvents')
     def listFreezeEvents(self):

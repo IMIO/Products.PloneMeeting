@@ -84,9 +84,8 @@ class Discuss(BrowserView):
             toDiscuss = not item.getToDiscuss()
             item.setToDiscuss(toDiscuss)
             item.adapted().onDiscussChanged(toDiscuss)
-        tool = getToolByName(self.portal, 'portal_plonemeeting')
         self.context.at_post_edit_script()
-        return tool.gotoReferer()
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
 
 class AnnexToPrint(BrowserView):
