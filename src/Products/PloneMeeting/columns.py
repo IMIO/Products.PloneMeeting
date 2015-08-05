@@ -45,7 +45,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
             # display annexes if item and item isPrivacyViewable
             annexes = ''
             if obj.adapted().isPrivacyViewable():
-                annexes = obj.restrictedTraverse('@@annexes-icons')(relatedTo='item')
+                annexes = obj.restrictedTraverse('@@annexes-icons')(relatedTo='item_decision') + \
+                    obj.restrictedTraverse('@@annexes-icons')(relatedTo='item')
                 # display moreInfos about item
                 # visible columns are one define for items listings or when the meeting is displayed
                 # so check where we are
