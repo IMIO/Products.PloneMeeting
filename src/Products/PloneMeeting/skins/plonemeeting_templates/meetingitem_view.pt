@@ -266,6 +266,13 @@
               <span tal:condition="python: not meeting">-</span>
             </div>
 
+            <tal:comment replace="nothing">List type</tal:comment>
+            <div class="discreet" tal:condition="python: meeting">
+              <span tal:attributes="class string:item_attribute_label item_listType_${context/getListType}"
+                    tal:content="context/getListType"
+                    i18n:translate="" />
+            </div>
+
             <tal:comment replace="nothing">Send to authority?</tal:comment>
             <div class="discreet" tal:condition="python: 'sendToAuthority' in usedAttrs">
                 <span class="item_attribute_label"
@@ -283,13 +290,6 @@
                     <span metal:use-macro="python: here.widget('otherMeetingConfigsClonableTo', mode='view')" />
                 </tal:displayOtherMeetingConfigsClonableTo>
                 <span tal:condition="not: otherMCs">-</span>
-            </div>
-
-            <tal:comment replace="nothing">List type</tal:comment>
-            <div class="discreet">
-              <span tal:attributes="class string:item_attribute_label item_listType_${context/getListType}"
-                    tal:content="context/getListType"
-                    i18n:translate="" />
             </div>
 
             <tal:comment replace="nothing">Privacy</tal:comment>
