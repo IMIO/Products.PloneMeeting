@@ -327,6 +327,13 @@ class Migrate_To_3_4(Migrator):
                 if meetingFolder.getProperty('layout'):
                     meetingFolder.manage_delProperties(['layout'])
 
+    def _updateAnnexIndex(self):
+        '''The annexIndex changed (removed key 'modification_date'),
+           we need to update it on every items and advices.'''
+        logger.info('Updating annexIndex...')
+        self.tool.reindexAnnexes()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -339,6 +346,7 @@ class Migrate_To_3_4(Migrator):
         self._cleanPMModificationDateOnItemsAndAnnexes()
         self._moveToItemTemplateRecurringOwnPortalTypes()
         self._cleanMeetingFolderLayout()
+        self._updateAnnexIndex()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
@@ -359,7 +367,8 @@ def migrate(context):
        6) Clean pm_modification_date on items and annexes;
        7) Move item templates and recurring items to their own portal_type;
        8) Make sure no layout is defined on users MeetingFolders;
-       9) Refresh catalogs.
+       9) Reindex annexIndex;
+       10) Refresh catalogs.
     '''
     Migrate_To_3_4(context).run()
 # ------------------------------------------------------------------------------
