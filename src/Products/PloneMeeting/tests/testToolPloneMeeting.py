@@ -553,6 +553,30 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(set([group.getId() for group in self.tool.getGroupsForUser(zope=True)]) ==
                         set([group for group in pmManagerGroups if group not in globalGroups]))
 
+    def test_pm_UpdateCopyGroups(self):
+        """Test the updateCopyGroups method that update every items when configuration changed.
+           First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
+        self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
+        self.meetingConfig.setUseCopies(True)
+        self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item1.setCopyGroups(('vendors_reviewers',))
+        item1.at_post_edit_script()
+        item2 = self.create('MeetingItem')
+        item2.setCopyGroups(('vendors_reviewers',))
+        self.proposeItem(item2)
+        # copyGroups roles are set for item1, not for item2
+        self.assertTrue('vendors_reviewers' in item1.__ac_local_roles__)
+        self.assertFalse('vendors_reviewers' in item2.__ac_local_roles__)
+
+        # change configuration, updateCopyGroups then check again
+        self.changeUser('siteadmin')
+        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.tool.updateCopyGroups()
+        self.assertFalse('vendors_reviewers' in item1.__ac_local_roles__)
+        self.assertTrue('vendors_reviewers' in item2.__ac_local_roles__)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
