@@ -598,6 +598,42 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
 
+    def test_pm_UpdatePowerObservers(self):
+        """Test the updatePowerObservers method that update every items when configuration changed.
+           First set (restricted) power observers may view in state 'itemcreated' then change to 'proposed'."""
+        cfg = self.meetingConfig
+        cfg.setItemPowerObserversStates(('itemcreated', ))
+        cfg.setMeetingPowerObserversStates(('created', ))
+        cfg.setItemRestrictedPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setMeetingRestrictedPowerObserversStates(('closed', ))
+        self.changeUser('pmManager')
+        item1 = self.create('MeetingItem')
+        item1.at_post_edit_script()
+        item2 = self.create('MeetingItem')
+        self.proposeItem(item2)
+        meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        # powerObservers roles are correctly set
+        self.assertTrue('%s_powerobservers' % cfg.getId() in item1.__ac_local_roles__)
+        self.assertFalse('%s_powerobservers' % cfg.getId() in item2.__ac_local_roles__)
+        self.assertTrue('%s_powerobservers' % cfg.getId() in meeting.__ac_local_roles__)
+        self.assertFalse('%s_restrictedpowerobservers' % cfg.getId() in item1.__ac_local_roles__)
+        self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in item2.__ac_local_roles__)
+        self.assertFalse('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
+
+        # change configuration, updatePowerObservers then check again
+        self.changeUser('siteadmin')
+        cfg.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setMeetingPowerObserversStates(('closed', ))
+        cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
+        cfg.setMeetingRestrictedPowerObserversStates(('created', ))
+        self.tool.updatePowerObservers()
+        self.assertFalse('%s_powerobservers' % cfg.getId() in item1.__ac_local_roles__)
+        self.assertTrue('%s_powerobservers' % cfg.getId() in item2.__ac_local_roles__)
+        self.assertFalse('%s_powerobservers' % cfg.getId() in meeting.__ac_local_roles__)
+        self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in item1.__ac_local_roles__)
+        self.assertFalse('%s_restrictedpowerobservers' % cfg.getId() in item2.__ac_local_roles__)
+        self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
