@@ -2036,15 +2036,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage('Done.')
         self.gotoReferer()
 
-    security.declarePublic('truncate')
-    def truncate(self, line, size=30):
-        '''Truncates a p_line of text at max p_size.'''
-        if isinstance(line, str):
-            line = line.decode('utf-8')
-        if len(line) > size:
-            return line[:size] + '...'
-        return line
-
     security.declarePublic('getSiteUrl')
     def getSiteUrl(self):
         return self.portal_url.getPortalObject().absolute_url()
