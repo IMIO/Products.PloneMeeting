@@ -78,6 +78,52 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(len(pmFolder.objectValues('MeetingItem')) == 1)
         self.assertTrue(pmFolder.objectValues('MeetingItem')[0].getId() == itemTemplate.getId)
 
+    def test_pm_ItemTemplatesWithSubFolders(self):
+        '''Test when we have subFolders containing item templates in the configuration.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        view()
+        # one element, and it is an item
+        self.assertTrue(len(view.templatesTree['children']) == 1)
+        self.assertTrue(view.templatesTree['children'][0]['item'].meta_type == 'MeetingItem')
+        self.assertFalse(view.displayShowHideAllLinks())
+
+        # add an itemTemplate in a subFolder
+        self.changeUser('siteadmin')
+        cfg.itemtemplates.invokeFactory('Folder', id='subfolder', title="Sub folder")
+        subFolder = cfg.itemtemplates.subfolder
+        self.create('MeetingItemTemplate', folder=subFolder)
+
+        # we have the subfolder and item under it
+        self.changeUser('pmCreator1')
+        view()
+        self.assertTrue(len(view.templatesTree['children']) == 2)
+        self.assertTrue(view.templatesTree['children'][0]['item'].meta_type == 'MeetingItem')
+        self.assertTrue(view.templatesTree['children'][1]['item'].meta_type == 'ATFolder')
+        self.assertTrue(view.templatesTree['children'][1]['children'][0]['item'].meta_type == 'MeetingItem')
+        self.assertTrue(view.displayShowHideAllLinks())
+
+        # an empty folder is not shown
+        self.changeUser('siteadmin')
+        cfg.itemtemplates.invokeFactory('Folder', id='subfolder1', title="Sub folder 1")
+        subFolder1 = cfg.itemtemplates.subfolder1
+        newItemTemplate = self.create('MeetingItemTemplate', folder=subFolder1)
+        # hide it to pmCreator1
+        newItemTemplate.setTemplateUsingGroups(('vendors', ))
+        newItemTemplate.reindexObject()
+        self.changeUser('pmCreator1')
+        view()
+        self.assertTrue(len(view.templatesTree['children']) == 2)
+        # but available to 'pmCreator2'
+        self.changeUser('pmCreator2')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        view()
+        self.assertTrue(len(view.templatesTree['children']) == 4)
+        self.assertTrue(view.templatesTree['children'][3]['item'].id == 'subfolder1')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

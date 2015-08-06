@@ -210,7 +210,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
             folder = cfg.recurringitems
         elif objectType == 'MeetingItemTemplate':
             contentType = '%s%s' % (objectType, shortName)
-            folder = cfg.itemtemplates
+            folder = folder or cfg.itemtemplates
         elif objectType in ('MeetingGroup', 'MeetingConfig'):
             contentType = objectType
             folder = self.tool
