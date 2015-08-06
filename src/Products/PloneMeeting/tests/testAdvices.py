@@ -508,9 +508,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         # now change the value of the created meetingadvice.advice_group
-        item.meetingadvice.advice_group = self.portal.portal_plonemeeting.vendors.getId()
+        advice.advice_group = self.portal.portal_plonemeeting.vendors.getId()
         # notify modified
-        notify(ObjectModifiedEvent(item.meetingadvice))
+        notify(ObjectModifiedEvent(advice))
         self.assertEquals(set(indexAdvisers.callable(item)), set(['real_group_id_vendors',
                                                                   'delay__vendors_advice_under_edit',
                                                                   'real_group_id_developers',
@@ -543,7 +543,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # delete the advice
         self.changeUser('pmAdviser1')
-        item.restrictedTraverse('@@delete_givenuid')(item.meetingadvice.UID())
+        item.restrictedTraverse('@@delete_givenuid')(advice.UID())
         self.assertEquals(set(indexAdvisers.callable(item)), set(['real_group_id_vendors',
                                                                   'delay__vendors_advice_not_given',
                                                                   'real_group_id_developers',
