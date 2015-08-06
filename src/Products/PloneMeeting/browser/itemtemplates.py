@@ -29,10 +29,7 @@ class ItemTemplateView(BrowserView):
         cancelled = form.get('form.buttons.cancel', False)
         if templateUID:
             newItem = self.createItemFromTemplate(templateUID)
-            if not newItem:
-                self.request.RESPONSE.redirect(self.context.absolute_url())
-            else:
-                self.request.RESPONSE.redirect(newItem.absolute_url() + '/edit')
+            self.request.RESPONSE.redirect(newItem.absolute_url() + '/edit')
         elif cancelled:
             # the only way to enter here is the popup overlay not to be shown
             # because while using the popup overlay, the jQ function take care of hidding it
