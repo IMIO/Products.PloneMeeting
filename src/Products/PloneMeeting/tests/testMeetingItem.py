@@ -2894,6 +2894,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['new_emergency_value'] = 'emergency_accepted'
         changeEmergencyView()
         self.assertTrue(item.getEmergency() == 'emergency_accepted')
+        # 'emergency_accepted' no more selectable
+        self.assertTrue(not 'emergency_accepted' in itemEmergencyView.listSelectableEmergencies())
         # history was updated
         self.assertTrue(item.emergency_changes_history and
                         item.emergency_changes_history[1]['action'] == 'emergency_accepted')

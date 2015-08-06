@@ -29,10 +29,8 @@ class ItemEmergencyView(BrowserView):
             emergencyKeys.remove('emergency_accepted')
             emergencyKeys.remove('emergency_refused')
         elif not currentEmergency == 'emergency_asked':
-            if not currentEmergency == 'emergency_accepted':
-                emergencyKeys.remove('emergency_refused')
-            elif not currentEmergency == 'emergency_refused':
-                emergencyKeys.remove('emergency_accepted')
+            if currentEmergency in emergencyKeys:
+                emergencyKeys.remove(currentEmergency)
         # now if currentEmergency is still in emergencies, we remove it
         if currentEmergency in emergencyKeys:
             emergencyKeys.remove(currentEmergency)
