@@ -46,6 +46,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import cleanRamCacheFor
 
 
 class testAdvices(PloneMeetingTestCase):
@@ -1188,6 +1189,7 @@ class testAdvices(PloneMeetingTestCase):
                                                     self.WF_STATE_NAME_MAPPINGS['validated']))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        # no other linked delay
         customAdvisers = [{'row_id': 'unique_id_123',
                            'group': 'vendors',
                            'gives_auto_advice_on': '',
@@ -1196,25 +1198,7 @@ class testAdvices(PloneMeetingTestCase):
                            'delay': '5',
                            'delay_label': '',
                            'available_on': '',
-                           'is_linked_to_previous_row': '0'},
-                          {'row_id': 'unique_id_456',
-                           'group': 'vendors',
-                           'gives_auto_advice_on': '',
-                           'for_item_created_from': '2012/01/01',
-                           'for_item_created_until': '',
-                           'delay': '10',
-                           'delay_label': '',
-                           'available_on': '',
-                           'is_linked_to_previous_row': '1'},
-                          {'row_id': 'unique_id_789',
-                           'group': 'vendors',
-                           'gives_auto_advice_on': '',
-                           'for_item_created_from': '2012/01/01',
-                           'for_item_created_until': '',
-                           'delay': '20',
-                           'delay_label': '',
-                           'available_on': '',
-                           'is_linked_to_previous_row': '1'}, ]
+                           'is_linked_to_previous_row': '0'}, ]
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         # select delay of 5 days
         item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
@@ -1223,19 +1207,42 @@ class testAdvices(PloneMeetingTestCase):
         # some values are defined in the __init__ of the view
         availableDelaysView.advice = item.adviceIndex['vendors']
         availableDelaysView.cfg = self.meetingConfig
+        self.assertFalse(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']))
+        # now add delays to change to
+        customAdvisers += [{'row_id': 'unique_id_456',
+                            'group': 'vendors',
+                            'gives_auto_advice_on': '',
+                            'for_item_created_from': '2012/01/01',
+                            'for_item_created_until': '',
+                            'delay': '10',
+                            'delay_label': '',
+                            'available_on': '',
+                            'is_linked_to_previous_row': '1'},
+                           {'row_id': 'unique_id_789',
+                            'group': 'vendors',
+                            'gives_auto_advice_on': '',
+                            'for_item_created_from': '2012/01/01',
+                            'for_item_created_until': '',
+                            'delay': '20',
+                            'delay_label': '',
+                            'available_on': '',
+                            'is_linked_to_previous_row': '1'}, ]
+        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        # we need to cleanRamCacheFor _findLinkedRowsFor used by listSelectableDelays
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         # the delay may still be edited when the user can edit the item
         # except if it is an automatic advice for wich only MeetingManagers may change delay
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
-                        [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+        self.assertEquals(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                          [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # the creator may only edit the delays if it has the 'PloneMeeting: Write optional advisers' permission
         # if pmCreator1 propose the item, it can no more edit it so it can not change delays
         # now propose the item, selectable delays should be empty
         self.proposeItem(item)
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
+        self.assertFalse(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']))
         # the pmReviewer1 can change delay as he can write optional advisers
         self.changeUser('pmReviewer1')
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
-                        [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+        self.assertEquals(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                          [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
 
         # makes it an automatic advice
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
