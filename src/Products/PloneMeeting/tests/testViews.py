@@ -124,6 +124,13 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(len(view.templatesTree['children']) == 4)
         self.assertTrue(view.templatesTree['children'][3]['item'].id == 'subfolder1')
 
+    def test_pm_JSVariables(self):
+        """Test the view producing plonemeeting_javascript_variables.js."""
+        self.changeUser('pmCreator1')
+        view = self.portal.restrictedTraverse('plonemeeting_javascript_variables.js')
+        # calling the view will produce a unicode string containing javascript...
+        self.assertTrue(isinstance(view(), unicode))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
