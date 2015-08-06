@@ -33,6 +33,7 @@ from z3c.form.contentprovider import ContentProviders
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 
@@ -45,9 +46,7 @@ def item_assembly_default():
     """
     context = getSite().REQUEST['PUBLISHED'].context
     itemAssembly = context.getRawItemAssembly(content_type='text/plain')
-    if not isinstance(itemAssembly, unicode):
-        itemAssembly = unicode(itemAssembly, 'utf-8')
-    return itemAssembly
+    return safe_unicode(itemAssembly)
 
 
 def item_excused_default():
@@ -58,9 +57,7 @@ def item_excused_default():
     """
     context = getSite().REQUEST['PUBLISHED'].context
     itemAssemblyExcused = context.getRawItemAssemblyExcused(content_type='text/plain')
-    if not isinstance(itemAssemblyExcused, unicode):
-        itemAssemblyExcused = unicode(itemAssemblyExcused, 'utf-8')
-    return itemAssemblyExcused
+    return safe_unicode(itemAssemblyExcused)
 
 
 def item_absents_default():
@@ -71,9 +68,7 @@ def item_absents_default():
     """
     context = getSite().REQUEST['PUBLISHED'].context
     itemAssemblyAbsents = context.getRawItemAssemblyAbsents(content_type='text/plain')
-    if not isinstance(itemAssemblyAbsents, unicode):
-        itemAssemblyAbsents = unicode(itemAssemblyAbsents, 'utf-8')
-    return itemAssemblyAbsents
+    return safe_unicode(itemAssemblyAbsents)
 
 
 class IManageItemAssembly(interface.Interface):
@@ -125,7 +120,7 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
         cfg = tool.getMeetingConfig(self.context)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
         if 'assemblyExcused' in usedMeetingAttributes or \
-           'assemblyExcused' in usedMeetingAttributes:
+           'assemblyAbsents' in usedMeetingAttributes:
             return 'display_meeting_attendees_legend'
         else:
             return 'display_meeting_assembly_legend'

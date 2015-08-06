@@ -1323,7 +1323,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # current user must be at least MeetingManager to use this
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, formAssembly.update)
+        self.assertRaises(Unauthorized, formAssembly._doApplyItemAssembly)
         self.assertRaises(Unauthorized, formSignatures.update)
+        self.assertRaises(Unauthorized, formSignatures._doApplyItemSignatures)
         self.changeUser('pmManager')
         formAssembly.update()
         formSignatures.update()
