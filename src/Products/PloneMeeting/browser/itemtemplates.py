@@ -74,8 +74,10 @@ class ItemTemplateView(BrowserView):
         # and this method will not consider any other folders
         for itemTemplate in itemTemplates:
             folderPath = '/'.join(itemTemplate.getPath().split('/')[0:-1])
-            if not folderPath in folderPathsToKeep:
+            # keep every folders of folderPath in case the itemtemplate is in a sub/sub/sub/...folder
+            while not folderPath in folderPathsToKeep:
                 folderPathsToKeep.append(folderPath)
+                folderPath = '/'.join(folderPath.split('/')[0:-1])
         query = self.cfg._itemTemplatesQuery(onlyActive=True, filtered=True)
         # we want to query every Folders too
         query['portal_type'] = (query['portal_type'], 'Folder')

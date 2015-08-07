@@ -124,6 +124,37 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(len(view.templatesTree['children']) == 4)
         self.assertTrue(view.templatesTree['children'][3]['item'].id == 'subfolder1')
 
+    def test_pm_ItemTemplatesWithSubFoldersContainedInEmptyFolders(self):
+        """This test that if a template is in a sub/subFolder and no other template in parent folders,
+           it works, so we have something like :
+           - itemtemplates/subfolder/subsubfolder/a-template;
+           And subfolder Folder does not contains itemtemplate..."""
+        cfg = self.meetingConfig
+        # add an itemTemplate in a subSubFolder
+        self.changeUser('siteadmin')
+        cfg.itemtemplates.invokeFactory('Folder', id='subfolder', title="Sub folder")
+        subFolder = cfg.itemtemplates.subfolder
+        subFolder.invokeFactory('Folder', id='subsubfolder', title="Sub sub folder")
+        subSubFolder = subFolder.subsubfolder
+
+        self.create('MeetingItemTemplate', folder=subSubFolder)
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        view()
+        # we have one isolated itemtemplate and complete path the itemtemplate in subsubfolder
+        self.assertEquals(len(view.templatesTree['children']),
+                          2)
+        self.assertEquals(view.templatesTree['children'][0]['item'].id,
+                          'template1')
+        self.assertEquals(view.templatesTree['children'][1]['item'].id,
+                          'subfolder')
+        self.assertEquals(view.templatesTree['children'][1]['children'][0]['item'].id,
+                          'subsubfolder')
+        self.assertEquals(view.templatesTree['children'][1]['children'][0]['children'][0]['item'].id,
+                          'o1')
+        self.assertTrue(view.displayShowHideAllLinks())
+
     def test_pm_JSVariables(self):
         """Test the view producing plonemeeting_javascript_variables.js."""
         self.changeUser('pmCreator1')
