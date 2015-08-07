@@ -1433,6 +1433,62 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
         return True
 
+    security.declarePublic('mayAskAdviceAgain')
+    def mayAskAdviceAgain(self, advice):
+        '''Returns True if current user may ask given p_advice advice again.
+           For this :
+           - advice must not be 'asked_again'...;
+           - advice is no more editable (except for MeetingManagers);
+           - item is editable by current user (including MeetingManagers).'''
+
+        if advice.advice_type == 'asked_again':
+            return False
+
+        tool = getToolByName(self, 'portal_plonemeeting')
+        # 'asked_again' must be activated in the configuration
+        cfg = tool.getMeetingConfig(self)
+        if not 'asked_again' in cfg.getUsedAdviceTypes():
+            return False
+
+        # apart MeetingManagers, the advice can not be asked again
+        # if editable by the adviser
+        if self.adviceIndex[advice.advice_group]['advice_editable'] and \
+           not tool.isManager(self):
+            return False
+
+        membershipTool = getToolByName(self, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        if member.has_permission(ModifyPortalContent, self):
+            return True
+        return False
+
+    security.declarePublic('mayAskAdviceAgain')
+    def mayBackToPreviousAdvice(self, advice):
+        '''Returns True if current user may go back to previous given advice.
+           It could be the case if someone asked advice again erroneously
+           or for any other reason.
+           For this :
+           - advice must be 'asked_again'...;
+           - advice is no more editable (except for MeetingManagers);
+           - item is editable by current user (including MeetingManagers).'''
+
+        if not advice.advice_type == 'asked_again':
+            return False
+
+        tool = getToolByName(self, 'portal_plonemeeting')
+
+        # apart MeetingManagers, the advice can not be set back to previous
+        # if editable by the adviser
+        if self.adviceIndex[advice.advice_group]['advice_editable'] and \
+           not tool.isManager(self):
+            return False
+
+        membershipTool = getToolByName(self, 'portal_membership')
+        member = membershipTool.getAuthenticatedMember()
+        if member.has_permission(ModifyPortalContent, self):
+            return True
+        return False
+
     security.declareProtected('Modify portal content', 'setItemIsSigned')
     def setItemIsSigned(self, value, **kwargs):
         '''Overrides the field 'itemIsSigned' mutator to check if the field is

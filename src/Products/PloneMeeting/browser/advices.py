@@ -53,7 +53,7 @@ class ChangeAdviceHiddenDuringRedactionView(BrowserView):
 
     def __call__(self):
         # user must be able to edit the advice
-        if not _checkPermission('Modify portal content', self.context):
+        if not _checkPermission(ModifyPortalContent, self.context):
             raise Unauthorized
         else:
             # toggle the value
@@ -72,9 +72,10 @@ class ChangeAdviceAskedAgainView(BrowserView):
     def __call__(self):
         """ """
         pr = getToolByName(self.context, 'portal_repository')
+        parent = self.context.getParentNode()
         if not self.context.advice_type == 'asked_again':
             # we are about to set advice to 'asked_again'
-            if not self.mayAskAdviceAgain():
+            if not parent.mayAskAdviceAgain(self.context):
                 raise Unauthorized
             # historize the given advice
             changeNote = translate('advice_asked_again_and_historized',
@@ -85,7 +86,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
             self.context.advice_type = 'asked_again'
         else:
             # we are about to set the advice back to original value
-            if not self.mayBackToPreviousAdvice():
+            if not parent.mayBackToPreviousAdvice(self.context):
                 raise Unauthorized
             # get last version_id and fall back to it
             last_version_id = pr.getHistoryMetadata(self.context)._available[-1]
@@ -94,62 +95,6 @@ class ChangeAdviceAskedAgainView(BrowserView):
             self.request.RESPONSE.status = 200
 
         notify(ObjectModifiedEvent(self.context))
-
-    def mayAskAdviceAgain(self):
-        '''Returns True if current user may ask given p_advice_id advice again.
-           For this :
-           - advice must not be 'asked_again'...;
-           - advice is no more editable (except for MeetingManagers);
-           - item is editable by current user (including MeetingManagers).'''
-
-        if self.context.advice_type == 'asked_again':
-            return False
-
-        tool = getToolByName(self, 'portal_plonemeeting')
-        # 'asked_again' must be activated in the configuration
-        cfg = tool.getMeetingConfig(self.context)
-        if not 'asked_again' in cfg.getUsedAdviceTypes():
-            return False
-
-        # apart MeetingManagers, the advice can not be asked again
-        # if editable by the adviser
-        parent = self.context.getParentNode()
-        if parent.adviceIndex[self.context.advice_group]['advice_editable'] and \
-           not tool.isManager(self.context):
-            return False
-
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
-        if member.has_permission(ModifyPortalContent, parent):
-            return True
-        return False
-
-    def mayBackToPreviousAdvice(self):
-        '''Returns True if current user may go back to previous given advice.
-           It could be the case if someone asked advice again erroneously
-           or for any other reason.
-           For this :
-           - advice must be 'asked_again'...;
-           - advice is no more editable (except for MeetingManagers);
-           - item is editable by current user (including MeetingManagers).'''
-
-        if not self.context.advice_type == 'asked_again':
-            return False
-
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-
-        # apart MeetingManagers, the advice can not be set back to previous
-        # if editable by the adviser
-        parent = self.context.getParentNode()
-        if parent.adviceIndex[self.context.advice_group]['advice_editable'] and \
-           not tool.isManager(self.context):
-            return False
-
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
-        if member.has_permission(ModifyPortalContent, parent):
-            return True
-        return False
 
 
 class AdviceConfidentialityView(BrowserView):

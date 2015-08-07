@@ -29,6 +29,11 @@
       <role name="Manager"/>
       <role name="Member"/>
     </permission>
+    <permission name="CMFEditions: Access previous versions"
+                acquire="False">
+      <role name="Manager"/>
+      <role name="Member"/>
+    </permission>
     <permission name="Modify view template"
                 acquire="False">
       <role name="Manager"/>
