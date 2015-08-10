@@ -2912,12 +2912,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.adapted().mayAskCompletenessEvalAgain())
         self.request['new_completeness_value'] = 'completeness_incomplete'
         self.request.form['form.submitted'] = True
+        self.assertEquals(self.request.RESPONSE.status, 200)
         changeCompletenessView()
         self.assertTrue(item.getCompleteness() == 'completeness_incomplete')
         self.assertTrue(item.adapted().mayEvaluateCompleteness())
         self.assertTrue(item.adapted().mayAskCompletenessEvalAgain())
         self.assertTrue(item.completeness_changes_history and
                         item.completeness_changes_history[0]['action'] == 'completeness_incomplete')
+        # user was redirected to the item view
+        self.assertEquals(self.request.RESPONSE.status, 302)
+        self.assertEquals(self.request.RESPONSE.getHeader('location'),
+                          item.absolute_url())
 
         # ask evaluation again
         self.backToState(item, 'itemcreated')

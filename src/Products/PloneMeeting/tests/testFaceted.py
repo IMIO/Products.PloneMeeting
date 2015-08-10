@@ -206,6 +206,32 @@ class testFaceted(PloneMeetingTestCase):
         vocab(pmFolder)
         self.assertTrue(getattr(vocab, memPropName))
 
+    def test_pm_RedirectedToDefaultSearchPMFolderOnlyIfNecessary(self):
+        """This test portlet_plonemeeting.widget_render where we manipulate the redirection,
+           returned by the collection widget to the default collection as collections are in the configuration
+           and we want the user to be redirected in his meeting folder."""
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        item = self.create('MeetingItem')
+        self.assertEquals(self.request.RESPONSE.status, 200)
+        item()
+
+        # not redirected
+        self.assertEquals(self.request.RESPONSE.status, 200)
+        # if we were redirected to the item view, it is still the case
+        self.request.RESPONSE.redirect(item.absolute_url())
+        self.assertEquals(self.request.RESPONSE.status, 302)
+        self.assertEquals(self.request.RESPONSE.getHeader('location'),
+                          item.absolute_url())
+
+        # when user is redirected to the default collection in the configuration
+        # in place, user is redirected to his pmFolder searches_items folder
+        self.request.RESPONSE.redirect(self.meetingConfig.searches.searches_items.absolute_url())
+        item()
+        self.assertEquals(self.request.RESPONSE.status, 302)
+        self.assertEquals(self.request.RESPONSE.getHeader('location'),
+                          pmFolder.absolute_url() + '/searches_items')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

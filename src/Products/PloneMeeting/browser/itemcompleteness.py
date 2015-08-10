@@ -56,7 +56,7 @@ class ChangeItemCompletenessView(BrowserView):
             # the only way to enter here is the popup overlay not to be shown
             # because while using the popup overlay, the jQ function take care of hidding it
             # while the Cancel button is hit
-            return self.request.response.redirect(self.context.absolute_url())
+            return self.request.RESPONSE.redirect(self.context.absolute_url())
         elif submitted:
             # change completeness value, it will also check that given 'new_completeness_value'
             # is available in the field vocabulary if not available, and selectable by current user
@@ -64,7 +64,7 @@ class ChangeItemCompletenessView(BrowserView):
                                      comment=self.request.get('comment', ''))
             # update item
             self.context.at_post_edit_script()
-            self.request.response.redirect(self.context.absolute_url())
+            return self.request.RESPONSE.redirect(self.context.absolute_url())
         return self.index()
 
     def _changeCompleteness(self, new_completeness_value, bypassSecurityCheck=False, comment=''):

@@ -66,7 +66,9 @@ class Renderer(base.Renderer, FacetedRenderer):
            in the portal_plonemeeting..."""
         rendered_widgets = super(Renderer, self).widget_render
         # manipulate redirect to default config except if we are actually in the MeetingConfig/searches folder
-        if self.request.RESPONSE.status == 302 and not self.context == self._criteriaHolder:
+        if self.request.RESPONSE.status == 302 and \
+           not self.context == self._criteriaHolder and \
+           self.request.RESPONSE.getHeader('location').startswith(self.cfg.searches.absolute_url()):
             self.request.RESPONSE.setHeader('location', self.getPloneMeetingFolder().absolute_url() + '/searches_items')
         return rendered_widgets
 

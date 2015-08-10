@@ -29,12 +29,12 @@ class ItemTemplateView(BrowserView):
         cancelled = form.get('form.buttons.cancel', False)
         if templateUID:
             newItem = self.createItemFromTemplate(templateUID)
-            self.request.RESPONSE.redirect(newItem.absolute_url() + '/edit')
+            return self.request.RESPONSE.redirect(newItem.absolute_url() + '/edit')
         elif cancelled:
             # the only way to enter here is the popup overlay not to be shown
             # because while using the popup overlay, the jQ function take care of hidding it
             # while the Cancel button is hit
-            self.request.response.redirect(form.get('form.HTTP_REFERER'))
+            return self.request.RESPONSE.redirect(form.get('form.HTTP_REFERER'))
         else:
             # compute and store templates tree so it can be used in several places
             # this is not done in the __init__ because the user is "Anonymous" in the __init__
