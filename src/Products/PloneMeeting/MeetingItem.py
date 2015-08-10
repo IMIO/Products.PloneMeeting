@@ -4149,7 +4149,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         sourceFolder = self.getParentNode()
         copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
         # if we are cloning to the same mc, keep some more fields
-        cloned_to_same_mc = bool(not newPortalType)
+        same_mc_types = (None,
+                         cfg.getItemTypeName(),
+                         cfg.getItemTypeName('MeetingItemTemplate'),
+                         cfg.getItemTypeName('MeetingItemRecurring'))
+        cloned_to_same_mc = newPortalType in same_mc_types
         if cloned_to_same_mc:
             copyFields = copyFields + EXTRA_COPIED_FIELDS_SAME_MC
 
@@ -4157,7 +4161,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc)
         newItem = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
                                   newOwnerId=newOwnerId, copyFields=copyFields,
-                                  newPortalType=newPortalType, keepProposingGroup=keepProposingGroup)[0]
+                                  newPortalType=newPortalType,
+                                  keepProposingGroup=keepProposingGroup)[0]
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
             # because it was cleaned by ToolPloneMeeting.pasteItems.

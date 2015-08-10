@@ -2557,12 +2557,91 @@ class testMeetingItem(PloneMeetingTestCase):
                          'toDiscuss', 'votesAreSecret']
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
-        self.assertTrue(set(neutralFields +
-                            DEFAULT_COPIED_FIELDS +
-                            EXTRA_COPIED_FIELDS_SAME_MC +
-                            item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=True) +
-                            item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=False))
-                        == set(itemFields))
+        copiedFields = set(neutralFields +
+                           DEFAULT_COPIED_FIELDS +
+                           EXTRA_COPIED_FIELDS_SAME_MC +
+                           item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=True) +
+                           item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=False))
+        self.assertEquals(copiedFields, set(itemFields))
+
+    def test_pm_CopiedFieldsWhenDuplicatedAsItemTemplate(self):
+        '''Test that relevant fields are kept when an item is created from an itemTemplate.
+           DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC are kept.'''
+        # configure the itemTemplate
+        self.changeUser('siteadmin')
+        self.meetingConfig.setUseCopies(True)
+        itemTemplate = self.meetingConfig.getItemTemplates(as_brains=False)[0]
+        # check that 'title' and 'copyGroups' field are kept
+        # title is in DEFAULT_COPIED_FIELDS and copyGroups in EXTRA_COPIED_FIELDS_SAME_MC
+        self.assertTrue('title' in DEFAULT_COPIED_FIELDS)
+        self.assertTrue('copyGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
+        itemTemplate.setCopyGroups(('developers_reviewers',))
+
+        # create an item from an item template
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        itemFromTemplate = view.createItemFromTemplate(itemTemplate.UID())
+        self.assertEquals(itemTemplate.Title(),
+                          itemFromTemplate.Title())
+        self.assertEquals(itemTemplate.getCopyGroups(),
+                          itemFromTemplate.getCopyGroups())
+
+    def test_pm_CopiedFieldsWhenDuplicatedAsRecurringItem(self):
+        '''Test that relevant fields are kept when an item is created as a recurring item.
+           DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC are kept.'''
+        # configure the recItem
+        self.changeUser('siteadmin')
+        self.meetingConfig.setUseCopies(True)
+        # just keep one recurring item
+        recurringItems = self.meetingConfig.getRecurringItems()
+        toDelete = [item.getId() for item in recurringItems[1:]]
+        self.meetingConfig.recurringitems.manage_delObjects(ids=toDelete)
+        recItem = recurringItems[0]
+        recItem.setTitle('Rec item title')
+        recItem.setCopyGroups(('developers_reviewers',))
+        recItem.setMeetingTransitionInsertingMe('_init_')
+        # check that 'title' and 'copyGroups' field are kept
+        # title is in DEFAULT_COPIED_FIELDS and copyGroups in EXTRA_COPIED_FIELDS_SAME_MC
+        self.assertTrue('title' in DEFAULT_COPIED_FIELDS)
+        self.assertTrue('copyGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
+
+        # create a meeting, this will add recItem
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        self.assertEquals(len(meeting.getItems()),
+                          1)
+        itemFromRecItems = meeting.getItems()[0]
+        self.assertEquals(recItem.Title(),
+                          itemFromRecItems.Title())
+        self.assertEquals(recItem.getCopyGroups(),
+                          itemFromRecItems.getCopyGroups())
+
+    def test_pm_CopiedFieldsWhenSentToOtherMC(self):
+        '''Test that relevant fields are kept when an item is sent to another mc.
+           DEFAULT_COPIED_FIELDS are kept but not EXTRA_COPIED_FIELDS_SAME_MC.'''
+        self.changeUser('siteadmin')
+        self.meetingConfig.setUseCopies(True)
+        self.meetingConfig2.setUseCopies(True)
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setTitle('Item to be cloned title')
+        item.setCopyGroups(('developers_reviewers',))
+        meeting = self.create('Meeting', date='2015/01/01')
+        item.setDecision('<p>My decision</p>', mimetype='text/html')
+        cfg2Id = self.meetingConfig2.getId()
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'accept')
+        clonedItem = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertEquals(clonedItem.Title(),
+                          item.Title())
+        self.assertNotEquals(clonedItem.getCopyGroups(),
+                             item.getCopyGroups())
+        # actually, no copyGroups
+        self.assertFalse(clonedItem.getCopyGroups())
 
     def test_pm_ToDiscussFieldBehaviourWhenCloned(self):
         '''When cloning an item to the same MeetingConfig, the field 'toDiscuss' is managed manually :
@@ -2579,6 +2658,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setToDiscuss(True)
         clonedItem = item.clone()
+
         self.assertTrue(clonedItem.getToDiscuss())
         item.setToDiscuss(False)
         clonedItem = item.clone()
