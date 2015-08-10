@@ -51,6 +51,9 @@
 
     </tal:withPreview>
     <tal:withoutPreview condition="not: previewEnabled">
-       <span tal:replace="structure python: tool.getColoredLink(context, target=target, annexInfo=annexInfo)"/>
+       <span tal:replace="structure python: tool.getColoredLink(context,
+                                                                appendToUrl='/%s' % annexInfo['id'],
+                                                                target=target,
+                                                                annexInfo=annexInfo)"/>
     </tal:withoutPreview>
 </tal:defines>
