@@ -23,6 +23,7 @@
 #
 
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.PloneMeeting.indexes import SearchableText
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -69,15 +70,35 @@ class testMeetingFile(PloneMeetingTestCase):
            because the annex title is indexed in the item SearchableText.'''
         ANNEX_TITLE = "SpecialAnnexTitle"
         ITEM_TITLE = "SpecialItemTitle"
+        ITEM_DESCRIPTION = "Item description"
+        ITEM_DECISION = "Item decision"
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title=ITEM_TITLE)
+        item.setDescription(ITEM_DESCRIPTION)
+        item.setDecision(ITEM_DECISION)
+        item.reindexObject(idxs=['SearchableText', ])
         catalog = self.portal.portal_catalog
+        index = catalog.Indexes['SearchableText']
         self.assertTrue(catalog(SearchableText=ITEM_TITLE))
+        self.assertTrue(catalog(SearchableText=ITEM_DESCRIPTION))
+        self.assertTrue(catalog(SearchableText=ITEM_DECISION))
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+        self.assertEquals(SearchableText(item)(),
+                          'SpecialItemTitle  <p>Item description</p>  <p>Item decision</p> ')
+        self.assertEquals(index.getEntryForObject(catalog(SearchableText=ITEM_TITLE)[0].getRID()),
+                          ['specialitemtitle', 'p', 'item', 'description', 'p',
+                           'p', 'item', 'decision', 'p'])
         annex = self.addAnnex(item, annexTitle=ANNEX_TITLE)
         # now querying for ANNEX_TITLE will return the relevant item
         self.assertTrue(catalog(SearchableText=ITEM_TITLE))
+        self.assertTrue(catalog(SearchableText=ITEM_DESCRIPTION))
+        self.assertTrue(catalog(SearchableText=ITEM_DECISION))
         self.assertTrue(catalog(SearchableText=ANNEX_TITLE))
+        self.assertEquals(SearchableText(item)(),
+                          'SpecialItemTitle  <p>Item description</p>  <p>Item decision</p>  SpecialAnnexTitle ')
+        self.assertEquals(index.getEntryForObject(catalog(SearchableText=ANNEX_TITLE)[0].getRID()),
+                          ['specialitemtitle', 'p', 'item', 'description', 'p',
+                           'p', 'item', 'decision', 'p', 'specialannextitle'])
         # if we remove the annex, the item is not found anymore when querying
         # on removed annex's title
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())

@@ -504,7 +504,7 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedMessage = translate("annexes_not_kept_because_no_available_mft_warning",
                                     mapping={'cfg': self.meetingConfig.Title()},
                                     domain='PloneMeeting',
-                                        context=self.request)
+                                    context=self.request)
         self.assertTrue(messages[0].message == expectedMessage)
 
     def test_pm_SendItemToOtherMCWithAdvices(self):

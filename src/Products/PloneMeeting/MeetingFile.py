@@ -30,7 +30,6 @@ import os.path
 from AccessControl import Unauthorized
 from zope.annotation import IAnnotations
 from zope.i18n import translate
-from plone.memoize.instance import memoize
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.CatalogTool import getObjSize
@@ -114,6 +113,8 @@ MeetingFile_schema = ATBlobSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
+# do not index the id in the SearchableText
+MeetingFile_schema['id'].searchable = False
 ##/code-section after-schema
 
 class MeetingFile(ATBlob, BrowserDefaultMixin):
@@ -477,6 +478,11 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             convertToImages(self, None, force=True)
         # finally set the given value
         self.getField('toPrint').set(self, value)
+
+    security.declarePrivate('getIndexValue')
+    def getIndexValue(self, mimetype='text/plain'):
+        """Override to make sure the 'file' is not indexed."""
+        return ''
 
 
 registerType(MeetingFile, PROJECTNAME)
