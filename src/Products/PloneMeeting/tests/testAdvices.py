@@ -1545,6 +1545,8 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
         cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
         cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        # set that default value of field 'advice_hide_during_redaction' will be True
+        cfg.setDefaultAdviceHiddenDuringRedaction(True)
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -1584,6 +1586,8 @@ class testAdvices(PloneMeetingTestCase):
         self.backToState(item, 'itemcreated')
         self.assertTrue(item.mayAskAdviceAgain(advice))
         self.assertFalse(item.mayBackToPreviousAdvice(advice))
+        # for now 'advice_hide_during_redaction' is False
+        self.assertFalse(advice.advice_hide_during_redaction)
         # right, ask advice again
         changeView()
         # advice is asked_again and previous advice was historized
@@ -1594,8 +1598,14 @@ class testAdvices(PloneMeetingTestCase):
         # we may also revert to previous version
         self.assertFalse(item.mayAskAdviceAgain(advice))
         self.assertTrue(item.mayBackToPreviousAdvice(advice))
+        # when an advice is 'asked_again', the field hidden_during_redaction
+        # is set to the default defined in the MeetingConfig
+        self.assertTrue(cfg.getDefaultAdviceHiddenDuringRedaction())
+        self.assertTrue(advice.advice_hide_during_redaction)
         changeView()
         self.assertTrue(advice.advice_type == 'negative')
+        # advice was automatically shown
+        self.assertFalse(advice.advice_hide_during_redaction)
         # ok, ask_again and send it again to 'pmReviewer2', he will be able to edit it
         changeView()
         self.assertTrue(advice.advice_type == 'asked_again')

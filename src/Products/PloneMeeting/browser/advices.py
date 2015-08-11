@@ -84,6 +84,11 @@ class ChangeAdviceAskedAgainView(BrowserView):
             pr.save(obj=self.context, comment=changeNote)
             # now we may change advice_type to 'asked_again'
             self.context.advice_type = 'asked_again'
+            # and we may also set 'advice_hide_during_redaction' to the default
+            # value defined in the MeetingConfig
+            tool = getToolByName(self.context, 'portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            self.context.advice_hide_during_redaction = cfg.getDefaultAdviceHiddenDuringRedaction()
         else:
             # we are about to set the advice back to original value
             if not parent.mayBackToPreviousAdvice(self.context):
@@ -91,7 +96,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
             # get last version_id and fall back to it
             last_version_id = pr.getHistoryMetadata(self.context)._available[-1]
             self.context.revertversion(version_id=last_version_id)
-            # revertversion would redirect to somewhere, broke this
+            # revertversion would redirect to somewhere, break this
             self.request.RESPONSE.status = 200
 
         notify(ObjectModifiedEvent(self.context))

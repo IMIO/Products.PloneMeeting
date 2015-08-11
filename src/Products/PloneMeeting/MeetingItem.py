@@ -3060,7 +3060,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
 
             # if the advice is 'hidden_during_redaction', we create a specific advice type
-            if not advice['hidden_during_redaction']:
+            if not advice['hidden_during_redaction'] or advice['type'] == 'asked_again':
                 adviceType = advice['type']
             else:
                 # check if advice still giveable/editable
