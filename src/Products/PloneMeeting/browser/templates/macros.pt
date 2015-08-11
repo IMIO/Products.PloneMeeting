@@ -428,6 +428,16 @@ document.location.reload(true);
     </tal:back>
 </div>
 
+
+<tal:comment replace="nothing">
+  This macro displays a link back to the item from an child (advice or annex for example).
+</tal:comment>
+<p metal:define-macro="backToItem" i18n:domain="PloneMeeting">
+  <a href='../#adviceAndAnnexes'>
+    <img src="back_to.gif" tal:attributes="src string:${portal_url}/back_to.gif" />&nbsp;<span i18n:translate="">Back to the item</span></a>
+</p>
+
+
 <div id="meeting_users_"
      metal:define-macro="itemPeople" i18n:domain="PloneMeeting"
      onmouseover="javascript:initializePMOverlays()"

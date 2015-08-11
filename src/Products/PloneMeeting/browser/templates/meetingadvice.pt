@@ -17,25 +17,22 @@
     </div>
 
     <div tal:condition="python: not 'ajax_load' in context.REQUEST">
-        <p>
-            <a href='../#adviceAndAnnexes'>
-                <img src="back_to.gif" tal:attributes="src string:${portal_url}/back_to.gif" />&nbsp;<span i18n:translate="">Back to the item</span></a>
-        </p>
-        <table class="no-style-table" width="100%">
-            <tal:loop repeat="widget view/widgets/values">
-            <tr tal:condition="python: widget.mode != 'hidden'">
-                <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
-                <td class="table_widget_value">
-                    <tal:adviceType condition="python: widget.name == 'form.widgets.advice_type'">
-                        <img src="#"
-                             tal:define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).getAdviceStyle()"
-                             tal:attributes="src string:$portal_url/advice_${adviceStyle}_${context/advice_type}.png" />
-                    </tal:adviceType>
-                    <tal:render tal:content="structure widget/render">Value</tal:render>
-                </td>
-            </tr>
-            </tal:loop>
-        </table>
+      <metal:backToItem use-macro='here/@@pm-macros/backToItem' />
+      <table class="no-style-table" width="100%">
+          <tal:loop repeat="widget view/widgets/values">
+          <tr tal:condition="python: widget.mode != 'hidden'">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                  <tal:adviceType condition="python: widget.name == 'form.widgets.advice_type'">
+                      <img src="#"
+                           tal:define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).getAdviceStyle()"
+                           tal:attributes="src string:$portal_url/advice_${adviceStyle}_${context/advice_type}.png" />
+                  </tal:adviceType>
+                  <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+          </tr>
+          </tal:loop>
+      </table>
     </div>
 
     <div tal:condition="python: 'ajax_load' in context.REQUEST">
