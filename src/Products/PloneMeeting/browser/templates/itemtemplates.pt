@@ -55,7 +55,7 @@
           tal:attributes="action python:context.absolute_url() + '/@@createitemfromtemplate'">
         <div class="popupbuttons">
           <input type="hidden" name="form.HTTP_REFERER" value="#" tal:attributes="value context/REQUEST/HTTP_REFERER" />
-          <input type="submit" name="form.buttons.cancel" class="context" value="Close" i18n:attributes="value" i18n:domain="plone" />
+          <input type="submit" name="form.buttons.cancel" class="apButton" value="Close" i18n:attributes="value" i18n:domain="plone" />
         </div>
     </form>
 
