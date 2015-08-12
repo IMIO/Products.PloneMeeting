@@ -67,7 +67,7 @@
                               </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
                          </div>
                          <div class="advice_popup_actions">
-                         <acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)">&nbsp;?&nbsp;</acronym>
+                         &nbsp;&nbsp;<acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)"><img tal:attributes="src string:$portal_url/help.png;"/></acronym>
                          <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
                          <acronym tal:condition="python: obj and context.mayAskAdviceAgain(obj)">
                             <img tal:condition="python: not advice['type'] == 'asked_again'"
@@ -158,7 +158,7 @@
                              onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                     </td>
                   </tr>
-                  <tr tal:condition="python: (adviceType != 'not_given')">
+                  <tr tal:condition="python: adviceType not in ('not_given', 'asked_again') or (obj and obj.mayViewAdviceAskedAgainInfos())">
                     <td colspan="4"
                         tal:define="needToCrop python: advice['comment'] and len(advice['comment']) > 400;
                                     comment python: needToCrop and pm_utils.cropHTML(advice['comment'], 400) or advice['comment']">
@@ -166,6 +166,16 @@
                                              title string:${advice/type};"
                              i18n:attributes="title" title=""/>
                         <span tal:content="string:${advice/type}" i18n:translate="">Advice type</span>
+                        <tal:comment replace="nothing">Display previous advice value if advice asked again.</tal:comment>
+                        <tal:previousAdviceType condition="python: adviceType == 'asked_again'">
+                          <tal:defines define="previous python: context.portal_repository.retrieve(obj, (context.portal_repository.getHistoryMetadata(obj).nextVersionId -1)).object">
+                            (<img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${previous/advice_type}.png;
+                                             title string:${previous/advice_type};"
+                             i18n:attributes="title" title=""/>
+                             <span tal:content="string:${previous/advice_type}" i18n:translate="">Previous advice type</span>)
+                          </tal:defines>
+                        </tal:previousAdviceType>
+
                         <i tal:condition="comment"
                            tal:content="structure comment"></i>
                         <p class="discreet"
@@ -176,7 +186,7 @@
                            i18n:translate="">This is an extract of the comment, access full comment if necessary...</p>
                     </td>
                   </tr>
-                  <tr tal:condition="python: 'advice_id' in advice">
+                  <tr tal:condition="python: adviceType not in ('not_given', 'asked_again') or (adviceType == 'asked_again' and (memberIsAdviserForGroup or mayEdit))">
                     <td>
                         <a href="#"
                            class="link-overlay-pm"

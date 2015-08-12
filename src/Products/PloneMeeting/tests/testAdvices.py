@@ -1552,7 +1552,7 @@ class testAdvices(PloneMeetingTestCase):
         data = {
             'title': 'Item to advice',
             'category': 'maintenance',
-            'optionalAdvisers': ('vendors',)
+            'optionalAdvisers': ('vendors', 'developers', )
         }
         item = self.create('MeetingItem', **data)
         self.proposeItem(item)
@@ -1612,6 +1612,17 @@ class testAdvices(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
+
+        # user may view the advice asked_again infos
+        self.assertTrue(advice.mayViewAdviceAskedAgainInfos())
+        # and may access the advice view
+        self.assertTrue(advice())
+        # but another adviser from another group may not access the infos
+        self.changeUser('pmAdviser1')
+        self.assertEquals(item.getAdvicesGroupsInfosForUser(), ([('developers', u'Developers')], []))
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertFalse(advice.mayViewAdviceAskedAgainInfos())
+        self.assertRaises(Unauthorized, advice)
 
 
 def test_suite():

@@ -29,6 +29,9 @@
                            tal:attributes="src string:$portal_url/advice_${adviceStyle}_${context/advice_type}.png" />
                   </tal:adviceType>
                   <tal:render tal:content="structure widget/render">Value</tal:render>
+                  <tal:previousAdviceType condition="python: widget.name == 'form.widgets.advice_type' and context.advice_type == 'asked_again'">
+                    <metal:previousAdviceType use-macro="context/@@pm-macros/previousAdviceType" />
+                  </tal:previousAdviceType>
               </td>
           </tr>
           </tal:loop>
@@ -50,6 +53,9 @@
                                      tal:attributes="src string:$portal_url/advice_${adviceStyle}_${context/advice_type}.png" />
                             </tal:adviceType>
                             <tal:render tal:content="structure widget/render">Value</tal:render>
+                            <tal:previousAdviceType condition="python: widget.name == 'form.widgets.advice_type' and context.advice_type == 'asked_again'">
+                              <metal:previousAdviceType use-macro="context/@@pm-macros/previousAdviceType" />
+                            </tal:previousAdviceType>
                         </td>
                     </tr>
                     </tal:loop>
