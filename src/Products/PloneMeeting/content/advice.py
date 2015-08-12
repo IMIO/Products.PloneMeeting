@@ -115,9 +115,6 @@ class MeetingAdvice(Container):
                                                           isRestrictedPowerObserver,
                                                           parent.adviceIndex[self.advice_group]):
                 raise Unauthorized
-        # check that if advice is 'asked_again', only relevant users may access the avice view
-        if self.advice_type == 'asked_again' and not self.mayViewAdviceAskedAgainInfos():
-            raise Unauthorized
 
         # we can not return a translated msg using _ so translate it
         return translate("Advice given on item ${item_title}",
@@ -125,19 +122,6 @@ class MeetingAdvice(Container):
                          domain="PloneMeeting",
                          default='Advice given on item "%s"' % self.getParentNode().Title(),
                          context=self.REQUEST)
-
-    def mayViewAdviceAskedAgainInfos(self):
-        """Condition for being able to see the infos displayed on a avice that is 'asked_again'.
-           Use may view 'asked_again' advice infos if :
-           - is adviser for group the advice is asked to;
-           - mayEdit the parent (item);
-           - is real Manager."""
-        tool = getToolByName(self, 'portal_plonemeeting')
-        memberIsAdviserForGroup = self.advice_group in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')]
-        mayEditParent = _checkPermission(ModifyPortalContent, self.getParentNode())
-        if memberIsAdviserForGroup or mayEditParent or tool.isManager(self, realManagers=True):
-            return True
-        return False
 
     def title_or_id(self):
         """ """

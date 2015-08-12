@@ -158,7 +158,7 @@
                              onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                     </td>
                   </tr>
-                  <tr tal:condition="python: adviceType not in ('not_given', 'asked_again') or (obj and obj.mayViewAdviceAskedAgainInfos())">
+                  <tr tal:condition="python: adviceType != 'not_given'">
                     <td colspan="4"
                         tal:define="needToCrop python: advice['comment'] and len(advice['comment']) > 400;
                                     comment python: needToCrop and pm_utils.cropHTML(advice['comment'], 400) or advice['comment']">
@@ -186,7 +186,7 @@
                            i18n:translate="">This is an extract of the comment, access full comment if necessary...</p>
                     </td>
                   </tr>
-                  <tr tal:condition="python: adviceType not in ('not_given', 'asked_again') or (adviceType == 'asked_again' and (memberIsAdviserForGroup or mayEdit))">
+                  <tr tal:condition="python: adviceType != 'not_given'">
                     <td>
                         <a href="#"
                            class="link-overlay-pm"

@@ -1613,17 +1613,6 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
 
-        # user may view the advice asked_again infos
-        self.assertTrue(advice.mayViewAdviceAskedAgainInfos())
-        # and may access the advice view
-        self.assertTrue(advice())
-        # but another adviser from another group may not access the infos
-        self.changeUser('pmAdviser1')
-        self.assertEquals(item.getAdvicesGroupsInfosForUser(), ([('developers', u'Developers')], []))
-        self.assertTrue(self.hasPermission(View, advice))
-        self.assertFalse(advice.mayViewAdviceAskedAgainInfos())
-        self.assertRaises(Unauthorized, advice)
-
 
 def test_suite():
     from unittest import TestSuite, makeSuite
