@@ -75,7 +75,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
         parent = self.context.getParentNode()
         if not self.context.advice_type == 'asked_again':
             # we are about to set advice to 'asked_again'
-            if not parent.mayAskAdviceAgain(self.context):
+            if not parent.adapted().mayAskAdviceAgain(self.context):
                 raise Unauthorized
             # historize the given advice
             changeNote = translate('advice_asked_again_and_historized',
@@ -91,7 +91,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
             self.context.advice_hide_during_redaction = cfg.getDefaultAdviceHiddenDuringRedaction()
         else:
             # we are about to set the advice back to original value
-            if not parent.mayBackToPreviousAdvice(self.context):
+            if not parent.adapted().mayBackToPreviousAdvice(self.context):
                 raise Unauthorized
             # get last version_id and fall back to it
             last_version_id = pr.getHistoryMetadata(self.context)._available[-1]

@@ -1441,28 +1441,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - advice is no more editable (except for MeetingManagers);
            - item is editable by current user (including MeetingManagers).'''
 
+        item = self.getSelf()
+
         if advice.advice_type == 'asked_again':
             return False
 
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = getToolByName(item, 'portal_plonemeeting')
         # 'asked_again' must be activated in the configuration
-        cfg = tool.getMeetingConfig(self)
+        cfg = tool.getMeetingConfig(item)
         if not 'asked_again' in cfg.getUsedAdviceTypes():
             return False
 
         # apart MeetingManagers, the advice can not be asked again
         # if editable by the adviser
-        if self.adviceIndex[advice.advice_group]['advice_editable'] and \
-           not tool.isManager(self):
+        if item.adviceIndex[advice.advice_group]['advice_editable'] and \
+           not tool.isManager(item):
             return False
 
-        membershipTool = getToolByName(self, 'portal_membership')
+        membershipTool = getToolByName(item, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
-        if member.has_permission(ModifyPortalContent, self):
+        if member.has_permission(ModifyPortalContent, item):
             return True
         return False
 
-    security.declarePublic('mayAskAdviceAgain')
+    security.declarePublic('mayBackToPreviousAdvice')
     def mayBackToPreviousAdvice(self, advice):
         '''Returns True if current user may go back to previous given advice.
            It could be the case if someone asked advice again erroneously
@@ -1472,20 +1474,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - advice is no more editable (except for MeetingManagers);
            - item is editable by current user (including MeetingManagers).'''
 
+        item = self.getSelf()
+
         if not advice.advice_type == 'asked_again':
             return False
 
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = getToolByName(item, 'portal_plonemeeting')
 
         # apart MeetingManagers, the advice can not be set back to previous
         # if editable by the adviser
-        if self.adviceIndex[advice.advice_group]['advice_editable'] and \
-           not tool.isManager(self):
+        if item.adviceIndex[advice.advice_group]['advice_editable'] and \
+           not tool.isManager(item):
             return False
 
-        membershipTool = getToolByName(self, 'portal_membership')
+        membershipTool = getToolByName(item, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
-        if member.has_permission(ModifyPortalContent, self):
+        if member.has_permission(ModifyPortalContent, item):
             return True
         return False
 

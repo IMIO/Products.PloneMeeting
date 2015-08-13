@@ -1568,24 +1568,24 @@ class testAdvices(PloneMeetingTestCase):
         # 'asked_again' must be in usedAdviceTypes so the functionnality is activated
         self.assertTrue(not 'asked_again' in cfg.getUsedAdviceTypes())
         self.changeUser('pmManager')
-        self.assertFalse(item.mayAskAdviceAgain(advice))
+        self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
         cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
-        self.assertTrue(item.mayAskAdviceAgain(advice))
+        self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
 
         # advice can not be asked_again if current user may not edit the item
         self.changeUser('pmCreator1')
-        self.assertFalse(item.mayAskAdviceAgain(advice))
-        self.assertFalse(item.mayBackToPreviousAdvice(advice))
+        self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
+        self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
         self.assertRaises(Unauthorized, changeView)
         # except for MeetingManagers
         self.changeUser('pmManager')
-        self.assertTrue(item.mayAskAdviceAgain(advice))
-        self.assertFalse(item.mayBackToPreviousAdvice(advice))
+        self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
+        self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
         # send advice back to creator so advice may be asked_again
         self.changeUser('pmCreator1')
         self.backToState(item, 'itemcreated')
-        self.assertTrue(item.mayAskAdviceAgain(advice))
-        self.assertFalse(item.mayBackToPreviousAdvice(advice))
+        self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
+        self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
         # for now 'advice_hide_during_redaction' is False
         self.assertFalse(advice.advice_hide_during_redaction)
         # right, ask advice again
@@ -1596,8 +1596,8 @@ class testAdvices(PloneMeetingTestCase):
         # version 0 was saved
         self.assertTrue(pr.getHistoryMetadata(advice)._available == [0])
         # we may also revert to previous version
-        self.assertFalse(item.mayAskAdviceAgain(advice))
-        self.assertTrue(item.mayBackToPreviousAdvice(advice))
+        self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
+        self.assertTrue(item.adapted().mayBackToPreviousAdvice(advice))
         # when an advice is 'asked_again', the field hidden_during_redaction
         # is set to the default defined in the MeetingConfig
         self.assertTrue(cfg.getDefaultAdviceHiddenDuringRedaction())
