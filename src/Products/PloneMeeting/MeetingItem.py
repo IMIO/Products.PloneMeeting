@@ -2025,13 +2025,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            the PloneMeeting code (with p_theObject=True), it returns
            the true Category object (or Group object if groups are used
            as categories).'''
-        tool = self.portal_plonemeeting
+        tool = getToolByName(self, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         try:
-            if tool.getMeetingConfig(self).getUseGroupsAsCategories():
-                res = getattr(tool, self.getProposingGroup())
+            if cfg.getUseGroupsAsCategories():
+                res = self.getProposingGroup(theObject=True)
             else:
                 categoryId = self.getField('category').get(self, **kwargs)
-                res = getattr(tool.getMeetingConfig(self).categories,
+                res = getattr(cfg.categories,
                               categoryId)
             if not theObject:
                 res = res.id
@@ -2043,9 +2044,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getProposingGroup(self, theObject=False, **kwargs):
         '''This redefined accessor may return the proposing group id or the real
            group if p_theObject is True.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
         res = self.getField('proposingGroup').get(self, **kwargs)  # = group id
         if res and theObject:
-            res = getattr(self.portal_plonemeeting, res)
+            res = getattr(tool, res)
         return res
 
     security.declarePublic('fieldIsEmpty')
