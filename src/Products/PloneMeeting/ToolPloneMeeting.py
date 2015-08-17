@@ -35,7 +35,6 @@ import json
 import os
 import os.path
 import re
-import string
 import OFS.Moniker
 from datetime import datetime
 from AccessControl import Unauthorized
@@ -62,6 +61,7 @@ from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import View
 from Products.ATContentTypes import permission as ATCTPermissions
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable, IMeetingFile
@@ -1314,7 +1314,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 noMeetingFileTypes = True
                 plone_utils = getToolByName(self, 'plone_utils')
                 msg = translate('annexes_not_kept_because_no_available_mft_warning',
-                                mapping={'cfg': destMeetingConfig.Title()},
+                                mapping={'cfg': safe_unicode(destMeetingConfig.Title())},
                                 domain='PloneMeeting',
                                 context=self.REQUEST)
                 plone_utils.addPortalMessage(msg, 'warning')
