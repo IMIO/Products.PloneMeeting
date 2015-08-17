@@ -27,7 +27,6 @@ __docformat__ = 'plaintext'
    profiles/default for more information.'''
 
 # ------------------------------------------------------------------------------
-from zExceptions import BadRequest
 from Products.PloneMeeting.config import registerClasses, PROJECTNAME
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.ToolPloneMeeting import PloneMeetingError, MEETING_CONFIG_ERROR
@@ -96,12 +95,8 @@ class ToolInitializer:
             # so save defined values, removed them from mConfig and manage that after
             savedMeetingConfigsToCloneTo[mConfig.id] = mConfig.meetingConfigsToCloneTo
             mConfig.meetingConfigsToCloneTo = []
-            try:
-                cfg = self.tool.createMeetingConfig(mConfig, source=self.profilePath)
-                self.finishConfigFor(cfg, data=mConfig)
-            except BadRequest, e:
-                # If we raise a BadRequest, it is that the id is already in use or that the id is reserved.
-                logger.error(MEETINGCONFIG_BADREQUEST_ERROR % (mConfig.id, str(e)))
+            cfg = self.tool.createMeetingConfig(mConfig, source=self.profilePath)
+            self.finishConfigFor(cfg, data=mConfig)
         # now that every meetingConfigs have been created, we can manage the meetingConfigsToCloneTo
         for mConfigId in savedMeetingConfigsToCloneTo:
             if not savedMeetingConfigsToCloneTo[mConfigId]:
