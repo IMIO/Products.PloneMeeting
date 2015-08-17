@@ -1310,7 +1310,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # we will remove annexes if copyAnnexes is False or if we could not find
             # defined meetingFileTypes in the destMeetingConfig
             noMeetingFileTypes = False
-            if not destMeetingConfig.getFileTypes():
+            if copyAnnexes and \
+               IAnnexable(newItem).getAnnexes() and \
+               not destMeetingConfig.getFileTypes():
                 noMeetingFileTypes = True
                 plone_utils = getToolByName(self, 'plone_utils')
                 msg = translate('annexes_not_kept_because_no_available_mft_warning',
@@ -1320,7 +1322,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 plone_utils.addPortalMessage(msg, 'warning')
             if not copyAnnexes or noMeetingFileTypes:
                 # Delete the annexes that have been copied.
-                for annex in newItem.objectValues('MeetingFile'):
+                for annex in IAnnexable(newItem).getAnnexes():
                     unrestrictedRemoveGivenObject(annex)
             else:
                 # Recreate the references to annexes: the references can NOT be kept
