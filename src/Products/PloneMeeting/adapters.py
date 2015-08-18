@@ -644,7 +644,11 @@ class Criteria(eeaCriteria):
         super(Criteria, self).__init__(context)
         if 'portal_plonemeeting' in context.absolute_url():
             return
-        tool = getToolByName(context, 'portal_plonemeeting')
+        try:
+            tool = getToolByName(context, 'portal_plonemeeting')
+        except AttributeError:
+            # in case 'portal_plonemeeting' is not available, keep classing criteria behaviour
+            return
         cfg = tool.getMeetingConfig(context)
         if not cfg:
             return
