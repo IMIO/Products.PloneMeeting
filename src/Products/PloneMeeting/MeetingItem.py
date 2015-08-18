@@ -1269,10 +1269,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showItemIsSigned(self):
         '''Condition for showing the 'itemIsSigned' field on views.
            The attribute must be used and the item must be decided.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
         return self.attributeIsUsed('itemIsSigned') and \
-            self.queryState() in cfg.getItemDecidedStates()
+            self.queryState() in self.adapted()._itemIsSignedStates()
+
+    def _itemIsSignedStates(self):
+        """In which states must we show the itemIsSigned widget?
+           By default, when the item is decided, but this is made to be overrided."""
+        item = self.getSelf()
+        tool = getToolByName(item, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        return cfg.getItemDecidedStates()
 
     security.declarePublic('maySignItem')
     def maySignItem(self):

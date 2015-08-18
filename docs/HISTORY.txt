@@ -78,6 +78,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   this way we may remove the monkey patch about CatalogTool.searchResults and the 'isDefinedInTool' catalog index
 - Mark base portal_types Meeting, MeetingItem, MeetingItemTemplate and MeetingItemRecurring global_allow=False
 - Make sure item templates and recurring items are not searchable using the live search
+- Added adaptable method MeetingItem._itemIsSignedStates that makes it possible to define in which states
+  the MeetingItem.itemIsSigned field can be changed, by default it is when the item is decided
 
 3.3 (2015-02-27)
 ----------------
