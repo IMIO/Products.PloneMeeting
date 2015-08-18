@@ -3468,7 +3468,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # This is the case if some delay-aware auto advice are linked together using the
                 # 'is_linked_to_previous_row' on the MeetingConfig.customAdvisers
                 if groupId in saved_stored_data:
-                    d['delay_for_automatic_adviser_changed_manually'] = saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually']
+                    d['delay_for_automatic_adviser_changed_manually'] = \
+                        saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually']
                     d['delay_changes_history'] = saved_stored_data[groupId]['delay_changes_history']
                     d['isConfidential'] = saved_stored_data[groupId]['isConfidential']
                 else:
