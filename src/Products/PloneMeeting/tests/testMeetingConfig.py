@@ -34,9 +34,6 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
 
-from eea.facetednavigation.interfaces import ICriteria
-from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
-
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
