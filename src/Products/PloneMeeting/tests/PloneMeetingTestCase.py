@@ -263,8 +263,8 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
            uploaded (see self.annexFile). If no p_annexType is provided,
            self.annexFileType is used. If no p_annexTitle is specified, the
            predefined title of the annex type is used.'''
-        #copy the default annexFile because ZODB.blob removes (os.remove) a FileUpload
-        #after having used it...
+        # copy the default annexFile because ZODB.blob removes (os.remove) a FileUpload
+        # after having used it...
         from shutil import copyfile
         originalAnnexPath = os.path.join(self.pmFolder, self.annexFile)
         newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.%s' % originalAnnexPath[-3:]
