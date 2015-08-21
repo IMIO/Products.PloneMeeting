@@ -1,7 +1,8 @@
 <tal:defines define="showItemIsSigned context/showItemIsSigned;
                      mayEdit python: context.adapted().maySignItem();
                      itemIsSigned context/getItemIsSigned;
-                     portal_url python: view.portal_url">
+                     portal_url python: view.portal_url"
+             i18n:domain="PloneMeeting">
   <span id="marker_toggle_itemissigned_UID#"
         tal:attributes="id string:marker_toggle_itemissigned_$UID;"
         tal:define="UID context/UID;
