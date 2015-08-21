@@ -23,6 +23,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
+import os
 from appy.gen import No
 from collections import OrderedDict
 from App.class_init import InitializeClass
@@ -42,7 +43,6 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.interfaces import IFacetedSearchesItemsMarker
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
     fieldIsEmpty, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
     getMeetingUsers, getFieldVersion, getDateFromDelta, \
@@ -1419,7 +1419,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.updatePowerObserversLocalRoles()
         # activate the faceted navigation
         tool = getToolByName(self, 'portal_plonemeeting')
-        tool._enableFacetedFor(self, IFacetedSearchesItemsMarker)
+        tool._enableFacetedDashboardFor(self,
+                                        xmlpath=os.path.dirname(__file__) +
+                                        '/faceted_conf/default_dashboard_widgets.xml')
         self.setLayout('meeting_view')
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)

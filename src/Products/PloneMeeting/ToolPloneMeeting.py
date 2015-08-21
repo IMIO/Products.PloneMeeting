@@ -45,19 +45,15 @@ from OFS import CopySupport
 from zExceptions import NotFound
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getMultiAdapter
-from zope.interface import alsoProvides
-from zope.interface import noLongerProvides
 from zope.i18n import translate
-from eea.facetednavigation.interfaces import IFacetedLayout
 from eea.facetednavigation.interfaces import IFacetedNavigable
-from eea.facetednavigation.interfaces import IHidePloneLeftColumn
 from plone.memoize import ram
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.ATContentTypes import permission as ATCTPermissions
+from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
@@ -723,29 +719,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
         # clean cache for "Products.PloneMeeting.vocabularies.creatorsvocabulary"
         cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.creatorsvocabulary")
-
-    def _enableFacetedFor(self, obj, marker_interface=None):
-        '''Configure the faceted view for given p_obj.
-           We mark the obj with given p_marker_interface if given
-           so the right widget config xml is used.'''
-        if marker_interface:
-            alsoProvides(obj, marker_interface)
-        subtyper = getMultiAdapter((obj, self.REQUEST),
-                                   name=u'faceted_subtyper')
-        response_location = self.REQUEST.RESPONSE.getHeader('location')
-        subtyper.enable()
-        # cancel redirect
-        self.REQUEST.RESPONSE.status = 200
-        self.REQUEST.RESPONSE.setHeader('location', response_location)
-
-        # use correct layout in the faceted
-        IFacetedLayout(obj).update_layout('faceted-table-items')
-        # show the left portlets
-        if IHidePloneLeftColumn.providedBy(obj):
-            noLongerProvides(obj, IHidePloneLeftColumn)
-        if marker_interface:
-            noLongerProvides(obj, marker_interface)
-        obj.reindexObject()
 
     security.declarePublic('getMeetingConfig')
     def getMeetingConfig(self, context, caching=True):
@@ -1852,6 +1825,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 elif role_to_remove in localRoles:
                     toRemove.append(principalId)
         obj.manage_delLocalRoles(toRemove)
+
+    def _enableFacetedDashboardFor(self, obj, xmlpath=None):
+        """ """
+        self.REQUEST.set('enablingFacetedDashboard', True)
+        enableFacetedDashboardFor(obj, xmlpath)
+        self.REQUEST.set('enablingFacetedDashboard', False)
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

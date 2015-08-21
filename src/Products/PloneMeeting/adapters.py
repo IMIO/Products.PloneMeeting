@@ -642,7 +642,9 @@ class Criteria(eeaCriteria):
     def __init__(self, context):
         """ """
         super(Criteria, self).__init__(context)
-        if 'portal_plonemeeting' in context.absolute_url():
+        # return really stored widgets when necessary
+        if 'portal_plonemeeting' in context.absolute_url() or \
+           context.REQUEST.get('enablingFacetedDashboard', False):
             return
         try:
             tool = getToolByName(context, 'portal_plonemeeting')

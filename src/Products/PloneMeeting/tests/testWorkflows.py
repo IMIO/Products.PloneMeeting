@@ -116,12 +116,13 @@ class testWorkflows(PloneMeetingTestCase):
                           pmManagerFolder)
         # check that @@delete_givenuid add relevant portalMessage
         statusMessages = IStatusMessage(self.portal.REQUEST)
-        # for now we have one message saying that faceted navigation was enabled...
+        # for now, just the faceted related messages
         messages = statusMessages.show()
-        self.assertEquals(len(messages), 1)
+        self.assertTrue(len(messages) == 2)
         self.assertTrue(messages[0].message == u'Faceted navigation enabled')
-        self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
+        self.assertTrue(messages[1].message == u'Configuration imported')
         # @@delete_givenuid added one statusMessage about BeforeDeleteException
+        self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
         messages = statusMessages.show()
         self.assertEquals(len(messages), 1)
         self.assertEquals(messages[0].message, u'can_not_delete_meetingitem_container')

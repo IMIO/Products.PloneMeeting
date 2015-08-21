@@ -28,6 +28,7 @@ from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import mimetypes
+import os
 from AccessControl import Unauthorized
 from DateTime import DateTime
 from OFS.Image import File
@@ -3341,10 +3342,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.invokeFactory('Folder', folderId)
             folder = getattr(self, folderId)
 
-            # special case for folder 'searches' that we mark with the IFacetedSearchesMarker
-            # and for which we enable the faceted navigation if not already done
             if folderId == TOOL_FOLDER_SEARCHES:
-                tool._enableFacetedFor(folder, IFacetedSearchesMarker)
+                tool._enableFacetedDashboardFor(folder,
+                                                xmlpath=os.path.dirname(__file__) +
+                                                '/faceted_conf/default_dashboard_widgets.xml')
 
             # special case for folder 'itemtemplates' for which we want
             # to display the 'navigation' portlet and use the 'folder_contents' layout
@@ -3385,11 +3386,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 folder.invokeFactory('Folder', subFolderId)
                 subFolder = getattr(folder, subFolderId)
                 if subFolderId == 'searches_items':
-                    tool._enableFacetedFor(subFolder, IFacetedSearchesItemsMarker)
+                    tool._enableFacetedDashboardFor(subFolder,
+                                                    xmlpath=os.path.dirname(__file__) +
+                                                    '/faceted_conf/default_dashboard_items_widgets.xml')
                 elif subFolderId == 'searches_meetings':
-                    tool._enableFacetedFor(subFolder, IFacetedSearchesMeetingsMarker)
+                    tool._enableFacetedDashboardFor(subFolder,
+                                                    xmlpath=os.path.dirname(__file__) +
+                                                    '/faceted_conf/default_dashboard_meetings_widgets.xml')
                 elif subFolderId == 'searches_decisions':
-                    tool._enableFacetedFor(subFolder, IFacetedSearchesMeetingsMarker)
+                    tool._enableFacetedDashboardFor(subFolder,
+                                                    xmlpath=os.path.dirname(__file__) +
+                                                    '/faceted_conf/default_dashboard_meetings_widgets.xml')
                 subFolder.setTitle(translate(subFolderTitle,
                                              domain="PloneMeeting",
                                              context=self.REQUEST,
@@ -4216,9 +4223,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - we will copy the facetednav annotation from the MeetingConfig.searches and
              MeetingConfig.searches_* folders to the corresponding folders in p_folder;
            - we will update the default for the collection widget."""
-
         tool = getToolByName(self, 'portal_plonemeeting')
-
         folders = []
         # synchronize only one folder
         if folder:
@@ -4237,7 +4242,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
-            tool._enableFacetedFor(folder)
+            tool._enableFacetedDashboardFor(folder,
+                                            xmlpath=os.path.dirname(__file__) +
+                                            '/faceted_conf/default_dashboard_widgets.xml')
+
             # subFolders to create
             subFolderInfos = [(cfgFolder.getId(), cfgFolder.Title()) for cfgFolder in
                               self.searches.objectValues() if cfgFolder.getId().startswith('searches_')]
@@ -4251,15 +4259,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      id=subFolderId,
                                      **{'title': subFolderTitle})
                 subFolderObj = getattr(folder, subFolderId)
-                tool._enableFacetedFor(subFolderObj)
+                tool._enableFacetedDashboardFor(subFolderObj,
+                                                xmlpath=os.path.dirname(__file__) +
+                                                '/faceted_conf/default_dashboard_widgets.xml')
 
     def _updateDefaultCollectionFor(self, folderObj, default_uid):
         """Use p_default_uid as the default collection selected
            for the CollectionWidget used on p_folderObj."""
         # make sure the folder is a facetednav, it should always be the case but...
         if not folderObj.getLayout() == 'facetednavigation_view':
-            tool = getToolByName(self, 'portal_plonemeeting')
-            tool._enableFacetedFor(folderObj)
+            tool._enableFacetedDashboardFor(folderObj,
+                                            xmlpath=os.path.dirname(__file__) +
+                                            '/faceted_conf/default_dashboard_widgets.xml')
         criteria = ICriteria(folderObj).criteria
         for criterion in criteria:
             if criterion.widget == CollectionWidget.widget_type:

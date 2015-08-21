@@ -2055,9 +2055,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # if actual taker does not correspond to takenOverByFrom, it fails
         # and return a portal message to the user
         messages = IStatusMessage(self.request).show()
-        # for now, just one message '
-        self.assertTrue(len(messages) == 1)
+        # for now, just the faceted related messages
+        self.assertTrue(len(messages) == 2)
         self.assertTrue(messages[0].message == u'Faceted navigation enabled')
+        self.assertTrue(messages[1].message == u'Configuration imported')
         view.toggle(takenOverByFrom='')
         # now we have the takenOverBy message
         messages = IStatusMessage(self.request).show()

@@ -5,40 +5,6 @@ from zope.interface import Interface
 ##code-section HEAD
 from zope.component.interfaces import IObjectEvent
 from zope.publisher.interfaces.browser import IBrowserRequest
-from eea.facetednavigation.subtypes.interfaces import IFacetedNavigable
-
-
-class IFacetedSearchesMarker(Interface):
-    """
-      Marker interface applied to the 'searches'
-      folder added to each MeetingConfig.
-    """
-
-
-class IFacetedSearchesItemsMarker(Interface):
-    """
-      Marker interface applied to the 'searches/searches_items'
-      folder added to each MeetingConfig.
-    """
-
-
-class IFacetedSearchesMeetingsMarker(Interface):
-    """
-      Marker interface applied to the 'searches/searches_meetings'
-      and 'searches/searches_meetings' folders added to each MeetingConfig.
-    """
-
-
-class IMeetingFacetedNavigable(IFacetedNavigable):
-    """
-      Interface to register IFacetedNavigable elements for IMeeting.
-    """
-
-
-class IFolderFacetedNavigable(IFacetedNavigable):
-    """
-      Interface to register IFacetedNavigable elements for IATFolder.
-    """
 
 
 class IAdvicesUpdatedEvent(IObjectEvent):

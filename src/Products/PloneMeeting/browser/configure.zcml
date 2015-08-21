@@ -520,26 +520,6 @@
        addview=".portlet_plonemeeting.AddForm"
        editview=".portlet_plonemeeting.EditForm"/>
 
-    <!-- Faceted configuration for collection widget -->
-    <browser:page
-        for="Products.PloneMeeting.interfaces.IFacetedSearchesMarker"
-        name="default_widgets.xml"
-        template="default_dashboard_widgets.xml"
-        permission="eea.faceted.configure"
-        />
-    <browser:page
-        for="Products.PloneMeeting.interfaces.IFacetedSearchesItemsMarker"
-        name="default_widgets.xml"
-        template="default_dashboard_items_widgets.xml"
-        permission="eea.faceted.configure"
-        />
-    <browser:page
-        for="Products.PloneMeeting.interfaces.IFacetedSearchesMeetingsMarker"
-        name="default_widgets.xml"
-        template="default_dashboard_meetings_widgets.xml"
-        permission="eea.faceted.configure"
-        />
-
     <browser:page
         for="*"
         name="plonemeeting_javascript_variables.js"

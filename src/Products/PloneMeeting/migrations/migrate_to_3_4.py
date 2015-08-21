@@ -1,12 +1,13 @@
 # ------------------------------------------------------------------------------
+import os
 import logging
 logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
+from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.catalog import removeIndexes
 
-from Products.PloneMeeting.interfaces import IFacetedSearchesItemsMarker
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
@@ -228,7 +229,9 @@ class Migrate_To_3_4(Migrator):
         brains = self.portal.portal_catalog(meta_type='Meeting')
         for brain in brains:
             meeting = brain.getObject()
-            self.tool._enableFacetedFor(meeting, IFacetedSearchesItemsMarker)
+            self.tool._enableFacetedDashboardFor(meeting,
+                                                 xmlpath=os.path.dirname(__file__) +
+                                                 '/faceted_conf/default_dashboard_widgets.xml')
             meeting.setLayout('meeting_view')
 
         logger.info('Done.')
