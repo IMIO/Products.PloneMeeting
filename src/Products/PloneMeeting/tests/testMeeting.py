@@ -35,12 +35,13 @@ from plone.app.textfield.value import RichTextValue
 from plone.app.querystring.querybuilder import queryparser
 from plone.dexterity.utils import createContentInContainer
 
+from imio.helpers.cache import cleanRamCacheFor
+
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.utils import cleanRamCacheFor
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 

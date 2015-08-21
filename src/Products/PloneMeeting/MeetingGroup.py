@@ -32,6 +32,7 @@ logger = logging.getLogger('PloneMeeting')
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
+from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
@@ -291,9 +292,8 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             self._createOrUpdatePloneGroup(groupSuffix)
         # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
         # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
-        tool = getToolByName(self, 'portal_plonemeeting')
-        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
         self.adapted().onEdit(isCreated=True)  # Call product-specific code
 
     security.declarePrivate('at_post_edit_script')
@@ -302,9 +302,8 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             self._createOrUpdatePloneGroup(groupSuffix, update=True)
         # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
         # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
-        tool = getToolByName(self, 'portal_plonemeeting')
-        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('manage_beforeDelete')

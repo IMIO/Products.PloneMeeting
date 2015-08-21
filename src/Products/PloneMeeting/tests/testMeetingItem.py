@@ -36,6 +36,8 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.statusmessages.interfaces import IStatusMessage
 
+from imio.helpers.cache import cleanRamCacheFor
+
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
@@ -46,7 +48,6 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.utils import cleanRamCacheFor
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 

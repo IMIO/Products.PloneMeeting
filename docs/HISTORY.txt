@@ -80,6 +80,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Make sure item templates and recurring items are not searchable using the live search
 - Added adaptable method MeetingItem._itemIsSignedStates that makes it possible to define in which states
   the MeetingItem.itemIsSigned field can be changed, by default it is when the item is decided
+- Moved 'cleanRamCacheFor' and 'cleanVocabularyCacheFor' from ToolPloneMeeting to imio.helpers
 
 3.3 (2015-02-27)
 ----------------

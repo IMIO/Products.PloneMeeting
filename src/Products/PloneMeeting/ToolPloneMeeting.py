@@ -46,22 +46,19 @@ from zExceptions import NotFound
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
-from zope.component import getAllUtilitiesRegisteredFor
-from zope.component import queryUtility
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
 from zope.i18n import translate
-from zope.schema.interfaces import IVocabularyFactory
 from eea.facetednavigation.interfaces import IFacetedLayout
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.interfaces import IHidePloneLeftColumn
 from plone.memoize import ram
-from plone.memoize.instance import Memojito
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import View
-from Products.ATContentTypes import permission as ATCTPermissions
 from Products.CMFPlone.utils import safe_unicode
+from Products.ATContentTypes import permission as ATCTPermissions
+from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable, IMeetingFile
@@ -725,7 +722,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Give MeetingManager localrole to relevant _meetingmanagers group
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
         # clean cache for "Products.PloneMeeting.vocabularies.creatorsvocabulary"
-        self.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.creatorsvocabulary")
+        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.creatorsvocabulary")
 
     def _enableFacetedFor(self, obj, marker_interface=None):
         '''Configure the faceted view for given p_obj.
@@ -1855,20 +1852,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 elif role_to_remove in localRoles:
                     toRemove.append(principalId)
         obj.manage_delLocalRoles(toRemove)
-
-    def cleanVocabularyCacheFor(self, vocabulary=None):
-        """Clean _memojito_ attribute for given p_vocabulary name.
-           If p_vocabulary is None, it will clean every vocabulary _memojito_ attribute."""
-        # we received a vocabulary name, just clean this one
-        if vocabulary:
-            vocabularies = (queryUtility(IVocabularyFactory, vocabulary), )
-        else:
-            # clean every vocabularies having a _memojito_ attribute
-            vocabularies = getAllUtilitiesRegisteredFor(IVocabularyFactory)
-
-        for vocab in vocabularies:
-            if hasattr(vocab, Memojito.propname):
-                getattr(vocab, Memojito.propname).clear()
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

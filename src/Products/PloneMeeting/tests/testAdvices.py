@@ -35,6 +35,8 @@ from zope.schema.interfaces import IVocabularyFactory
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
+from imio.helpers.cache import cleanRamCacheFor
+
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -46,7 +48,6 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.utils import cleanRamCacheFor
 
 
 class testAdvices(PloneMeetingTestCase):

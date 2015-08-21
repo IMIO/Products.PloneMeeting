@@ -35,6 +35,7 @@ from plone.app.testing import login, logout
 from Products.CMFCore.utils import getToolByName
 from Products.PloneTestCase.setup import _createHomeFolder
 
+from imio.helpers.cache import cleanRamCacheFor
 import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
 #from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -44,7 +45,6 @@ from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
-from Products.PloneMeeting.utils import cleanRamCacheFor
 from Products.PloneMeeting.utils import cleanMemoize
 
 # Force application logging level to DEBUG so we can use logger in tests

@@ -34,6 +34,8 @@ from zope.event import notify
 from zope.i18n import translate
 from plone.app.querystring.querybuilder import queryparser
 from plone.memoize import ram
+from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
@@ -46,7 +48,7 @@ from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
     getMeetingUsers, getFieldVersion, getDateFromDelta, \
     rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields, \
-    ItemDuplicatedFromConfigEvent, cleanRamCacheFor, toHTMLStrikedContent
+    ItemDuplicatedFromConfigEvent, toHTMLStrikedContent
 from Products.PloneMeeting import PMMessageFactory as _
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -969,7 +971,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 item = brain.getObject()
                 item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
             # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-            tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+            cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
         self.getField('date').set(self, value, **kwargs)
 
     security.declarePublic('showObs')
@@ -1444,8 +1446,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         notify(ObjectEditedEvent(self))
         self.reindexObject()
         # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-        tool = getToolByName(self, 'portal_plonemeeting')
-        tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
         userId = self.portal_membership.getAuthenticatedMember().getId()
         logger.info('Meeting at %s edited by "%s".' % (self.absolute_url_path(), userId))
 

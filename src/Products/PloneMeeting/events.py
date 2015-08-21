@@ -28,6 +28,7 @@ from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -150,9 +151,8 @@ def onGroupRemoved(group, event):
     '''Called when a MeetingGroup is removed.'''
     # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
     # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
-    tool = getToolByName(group, 'portal_plonemeeting')
-    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
 
 
 def onItemMoved(item, event):
@@ -365,8 +365,7 @@ def onMeetingAdded(meeting, event):
     user = meeting.portal_membership.getAuthenticatedMember()
     meeting.manage_addLocalRoles(user.getId(), ('Owner',))
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    tool = getToolByName(meeting, 'portal_plonemeeting')
-    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
 
 def onMeetingRemoved(meeting, event):
@@ -393,12 +392,10 @@ def onMeetingRemoved(meeting, event):
         item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
         item.reindexObject('getPreferredMeeting')
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    tool = getToolByName(meeting, 'portal_plonemeeting')
-    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
 
 def onCategoryRemoved(category, event):
     '''Called when a MeetingCategory is removed.'''
     # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
-    tool = getToolByName(category, 'portal_plonemeeting')
-    tool.cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")

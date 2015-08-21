@@ -35,11 +35,9 @@ from AccessControl import getSecurityManager
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 from zope.component import getAdapter
-from zope.component import getUtility
 from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.interface import implements
-from plone.memoize.interfaces import ICacheChooser
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
@@ -194,13 +192,6 @@ def getCurrentMeetingObject(context):
     if obj and hasattr(obj, 'meta_type') and obj.meta_type == 'Meeting':
         toReturn = obj
     return toReturn
-
-
-def cleanRamCacheFor(methodId, obj=None):
-    '''Clean ram.cache for given p_methodId.'''
-    cache_chooser = getUtility(ICacheChooser)
-    thecache = cache_chooser(methodId)
-    thecache.ramcache.invalidate(methodId)
 
 
 def cleanMemoize(portal, prefixes):
