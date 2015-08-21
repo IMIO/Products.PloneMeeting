@@ -4229,8 +4229,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                          mapping={'meetingConfigTitle': destMeetingConfig.Title()},
                                          domain="PloneMeeting", context=self.REQUEST),
                                          type='error')
-            backUrl = self.REQUEST['HTTP_REFERER'] or self.absolute_url()
-            return self.REQUEST.RESPONSE.redirect(backUrl)
+            return
         # The owner of the new item will be the same as the owner of the
         # original item.
         newOwnerId = self.Creator()
@@ -4333,8 +4332,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                domain="PloneMeeting",
                                                context=self.REQUEST),
                                      type='info')
-        backUrl = self.REQUEST['HTTP_REFERER'] or self.absolute_url()
-        return self.REQUEST.RESPONSE.redirect(backUrl)
 
     def _getSentToOtherMCAnnotationKey(self, destMeetingConfigId):
         '''Returns the annotation key where we store the UID of the item we
