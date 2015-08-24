@@ -62,7 +62,8 @@ class testFaceted(PloneMeetingTestCase):
         siteadminPMFolder = self.tool.getPloneMeetingFolder(cfgId)
         siteadminPMFolderUrl = siteadminPMFolder.absolute_url()
         creatorPMFolder.restrictedTraverse('@@facetednavigation_view')()
-        self.assertTrue(self.request.RESPONSE.getHeader('location') == siteadminPMFolderUrl + '/searches_items')
+        self.assertEquals(self.request.RESPONSE.getHeader('location'),
+                          siteadminPMFolderUrl + '/searches_items')
 
         # if a user is using folder_contents, then he is not redirected
         self.request.RESPONSE.setHeader('location', '')

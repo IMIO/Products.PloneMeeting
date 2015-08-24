@@ -79,7 +79,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         # if we are on a Meeting, it provides IFacetedNavigable but we want to display user pmFolder facetednav
         if not self.context.absolute_url().startswith(pmFolder.absolute_url()) or \
            IMeeting.providedBy(self.context):
-            return self.cfg.searches.searches_items
+            return self.cfg.searches
         # we are on a subFolder of the pmFolder (searches_meetingitems for example)
         if IFacetedNavigable.providedBy(self.context):
             # return corresponding folder in the configuration
