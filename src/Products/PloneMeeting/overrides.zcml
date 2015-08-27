@@ -168,20 +168,30 @@
             template="browser/templates/term.pt"
             permission="zope2.View"
             />
+        <adapter
+           for="zope.interface.Interface
+                zope.publisher.interfaces.browser.IBrowserRequest
+                collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+           factory="Products.PloneMeeting.columns.PMActionsColumn"
+           provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+           name="actions"
+        />
     </configure>
 
     <configure package="collective.eeafaceted.z3ctable">
-        <browser:view
-            for="Products.ATContentTypes.interfaces.folder.IATFolder"
-            name="faceted-table-view"
-            class="Products.PloneMeeting.browser.overrides.FolderFacetedTableView"
-            permission="zope2.View"
-        />
         <browser:view
             for="plone.app.collection.interfaces.ICollection"
             name="faceted-table-view"
             class="Products.PloneMeeting.browser.overrides.MeetingFacetedTableView"
             permission="zope2.View"
+        />
+        <adapter
+           for="zope.interface.Interface
+                zope.publisher.interfaces.browser.IBrowserRequest
+                collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+           factory="Products.PloneMeeting.columns.PMPrettyLinkColumn"
+           provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+           name="pretty_link"
         />
     </configure>
 

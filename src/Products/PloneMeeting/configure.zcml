@@ -24,6 +24,8 @@
   <include package="Products.DataGridField" />
   <include package=".browser" />
   <include package=".content" />
+
+  <include file="columns.zcml" />
   <include file="events.zcml" />
   <include file="profiling.zcml" />
 
