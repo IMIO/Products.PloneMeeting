@@ -82,7 +82,8 @@ def do(action, event):
 
     # update modification date upon state change
     event.object.setModificationDate(DateTime())
-    event.object.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
+    # just reindex the entire object
+    event.object.reindexObject()
 
 
 def onItemTransition(item, event):
@@ -114,9 +115,8 @@ def onItemTransition(item, event):
     # notify our own PM event so we are sure that this event is called
     # after the onItemTransition event
     notify(ItemAfterTransitionEvent(item))
-    # update relevant indexes
-    item.reindexObject(idxs=['previous_review_state', 'reviewProcessInfo',
-                             'getTakenOverBy', 'linkedMeetingUID', 'linkedMeetingDate'])
+    # just reindex the entire object
+    item.reindexObject()
 
 
 def onMeetingTransition(meeting, event):
@@ -284,7 +284,8 @@ def onAnnexAdded(annex, event):
     '''When an annex is added, we need to update item modification date and SearchableText.'''
     item = annex.getParent()
     item.setModificationDate(DateTime())
-    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', 'SearchableText'])
+    # just reindex the entire object
+    item.reindexObject()
 
 
 def onAnnexRemoved(annex, event):
@@ -307,7 +308,8 @@ def onAnnexRemoved(annex, event):
 
     # update item modification date and SearchableText
     item.setModificationDate(DateTime())
-    item.reindexObject(idxs=['modified', 'ModificationDate', 'Date', 'SearchableText'])
+    # just reindex the entire object
+    item.reindexObject()
 
 
 def onItemDuplicated(item, event):
