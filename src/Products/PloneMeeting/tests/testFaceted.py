@@ -233,6 +233,21 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEquals(self.request.RESPONSE.getHeader('location'),
                           pmFolder.absolute_url() + '/searches_items')
 
+    def test_pm_DisabledCollectionsAreIgnored(self):
+        """If a DashboardCollection is disabled in the MeetingConfig,
+           it is not displayed in the vocabulary."""
+        searches = self.meetingConfig.searches
+        searchAllItems = searches.searches_items.searchallitems
+        self.changeUser('pmCreator1')
+        vocab = queryUtility(IVocabularyFactory,
+                             "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary")
+        self.assertTrue(searchAllItems.UID() in vocab(searches))
+        # disable it then test again
+        self.changeUser('siteadmin')
+        self.do(searchAllItems, 'deactivate')
+        self.changeUser('pmCreator1')
+        self.assertFalse(searchAllItems.UID() in vocab(searches))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

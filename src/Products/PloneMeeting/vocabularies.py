@@ -28,6 +28,7 @@ class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
         brains = catalog(
             path=dict(query='/'.join(root.getPhysicalPath())),
             meta_type='DashboardCollection',
+            review_state='active',
             sort_on='getObjPositionInParent'
         )
         return brains
