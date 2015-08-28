@@ -144,7 +144,8 @@ def onGroupTransition(mGroup, event):
                 mc.setSelectableCopyGroups(selectableCopyGroups)
         # add a portal_message explaining what has been done to the user
         plone_utils = getToolByName(mGroup, 'plone_utils')
-        plone_utils.addPortalMessage(_('meetinggroup_removed_from_meetingconfigs_selectablecopygroups'), 'info')
+        plone_utils.addPortalMessage(_('meetinggroup_removed_from_meetingconfigs_selectablecopygroups'),
+                                     'info')
 
 
 def onGroupRemoved(group, event):
@@ -332,7 +333,8 @@ def onItemDuplicated(item, event):
                       domain="PloneMeeting",
                       context=item.REQUEST,
                       mapping={'meetingConfigTitle': safe_unicode(newItemConfig.Title())})
-    action = translate(newItemConfig._getCloneToOtherMCActionTitle(newItemConfig.getId(), itemConfig.getId()),
+    action = translate(newItemConfig._getCloneToOtherMCActionTitle(newItemConfig.getId(),
+                                                                   itemConfig.getId()),
                        domain="plone",
                        context=item.REQUEST)
     # copy last event and adapt it
@@ -378,8 +380,9 @@ def onMeetingRemoved(meeting, event):
     if event.object.meta_type == 'Plone Site':
         return
     if 'items_to_remove' in meeting.REQUEST:
-        logger.info('Removing %d item(s) linked to meeting at %s...' % (len(meeting.REQUEST.get('items_to_remove')),
-                                                                        meeting.absolute_url()))
+        logger.info('Removing %d item(s) linked to meeting at %s...' %
+                    (len(meeting.REQUEST.get('items_to_remove')),
+                     meeting.absolute_url()))
         # use an intermediate list to avoid changing value in REQUEST
         items_to_remove = [item for item in meeting.REQUEST.get('items_to_remove')]
         for item in items_to_remove:
