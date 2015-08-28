@@ -28,7 +28,6 @@
                    Products.Archetypes.interfaces.IEditBegunEvent"
               handler=".events.onItemEditBegun"/>
 
-
   <subscriber for=".interfaces.IMeeting
                    zope.container.interfaces.IObjectAddedEvent"
               handler=".events.onMeetingAdded"/>
@@ -92,5 +91,10 @@
   <subscriber for=".interfaces.IMeetingFile
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onAnnexRemoved"/>
+
+  <!-- DashboardCollection events -->
+  <subscriber for="imio.dashboard.interfaces.IDashboardCollection
+                   zope.container.interfaces.IObjectAddedEvent"
+              handler=".events.onDashboardCollectionAdded"/>
 
 </configure>

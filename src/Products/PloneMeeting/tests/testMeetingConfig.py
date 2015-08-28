@@ -38,6 +38,8 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
+from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
@@ -1171,6 +1173,28 @@ class testMeetingConfig(PloneMeetingTestCase):
         # but we may nevertheless get also inactive items
         self.assertTrue([item.getId() for item in cfg.getRecurringItems(onlyActive=False)] ==
                         cfg.recurringitems.objectIds('MeetingItem'))
+
+    def test_pm_NewDashboardCollectionColumns(self):
+        """When a new collection is added, on save the right columns are selected
+           from what is defined in the MeetingConfig.itemColumns or MeetingConfig.meetingColumns."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        searches = cfg.searches
+        # item related collection
+        newItemColId = searches.searches_items.invokeFactory('DashboardCollection', id='newItemCol')
+        newItemCol = getattr(searches.searches_items, newItemColId)
+        self.assertEquals(newItemCol.getCustomViewFields(),
+                          DEFAULT_ITEM_COLUMNS + cfg.getItemColumns())
+        # meeting related collection
+        newMeetingColId = searches.searches_meetings.invokeFactory('DashboardCollection', id='newMeetingCol')
+        newMeetingCol = getattr(searches.searches_meetings, newMeetingColId)
+        self.assertEquals(newMeetingCol.getCustomViewFields(),
+                          DEFAULT_MEETING_COLUMNS + cfg.getMeetingColumns())
+        # decision related collection
+        newDecisionColId = searches.searches_decisions.invokeFactory('DashboardCollection', id='newDecisionCol')
+        newDecisionCol = getattr(searches.searches_decisions, newDecisionColId)
+        self.assertEquals(newDecisionCol.getCustomViewFields(),
+                          DEFAULT_MEETING_COLUMNS + cfg.getMeetingColumns())
 
 
 def test_suite():

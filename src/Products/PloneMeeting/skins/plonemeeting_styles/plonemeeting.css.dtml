@@ -1205,6 +1205,12 @@ body.template-versions_history_form.portaltype-meetingadvice #content-core {
     margin-top: 1em;
 }
 
+/* hide the customViewFields on the DashboardCollection
+   added to a MeetingConfig as it is managed by the MeetingConfig */
+body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
+    display: none;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

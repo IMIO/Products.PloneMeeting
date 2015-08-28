@@ -248,6 +248,11 @@ MAX_FILE_SIZE_WARNING = 5000000
 # default user password used when sample users are added to a PloneMeeting during install
 DEFAULT_USER_PASSWORD = 'Meeting_12'
 
+# columns that will be automatically selected for item related DashboardCollections
+DEFAULT_ITEM_COLUMNS = (u'pretty_link', )
+# columns that will be automatically selected for meeting related DashboardCollections
+DEFAULT_MEETING_COLUMNS = (u'pretty_link', )
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

@@ -404,3 +404,12 @@ def onCategoryRemoved(category, event):
     '''Called when a MeetingCategory is removed.'''
     # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
     cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+
+
+def onDashboardCollectionAdded(collection, event):
+    '''Called when a DashboardCollection is created.'''
+    # we update customViewFields to fit the MeetingConfig
+    tool = getToolByName(collection, 'portal_plonemeeting')
+    cfg = tool.getMeetingConfig(collection)
+    if cfg:
+        cfg.updateCollectionColumns()
