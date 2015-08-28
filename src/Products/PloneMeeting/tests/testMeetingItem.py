@@ -34,6 +34,7 @@ from plone.dexterity.utils import createContentInContainer
 from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFCore.utils import getToolByName
 from Products.statusmessages.interfaces import IStatusMessage
 
 from imio.helpers.cache import cleanRamCacheFor
@@ -3004,6 +3005,35 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setItemAssembly('Assembly with [[striked]] part')
         self.assertEquals(item.getStrikedItemAssembly(),
                           '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
+
+    def test_pm_DownOrUpWorkflowAgain(self):
+        """Test the MeetingItem.downOrUpWorkflowAgain behavior."""
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        itemUID = item.UID()
+        catalog = getToolByName(self.portal, 'portal_catalog')
+        # downOrUpWorkflowAgain is catalogued
+        self.assertTrue(catalog(UID=itemUID))
+        self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
+        self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
+        self.assertFalse(item.downOrUpWorkflowAgain())
+        self.proposeItem(item)
+        self.assertFalse(item.downOrUpWorkflowAgain())
+        # it will be 'down' if sent back to 'itemcreated'
+        self.backToState(item, 'itemcreated')
+        self.assertEquals(item.downOrUpWorkflowAgain(), 'down')
+        self.assertEquals(catalog(downOrUpWorkflowAgain='down')[0].UID, itemUID)
+        self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
+        # it will be 'up' if proposed again
+        self.proposeItem(item)
+        self.assertEquals(item.downOrUpWorkflowAgain(), 'up')
+        self.assertEquals(catalog(downOrUpWorkflowAgain='up')[0].UID, itemUID)
+        self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
+        # no more when item is validated and +
+        self.validateItem(item)
+        self.assertFalse(item.downOrUpWorkflowAgain())
+        self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
+        self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
 
 
 def test_suite():
