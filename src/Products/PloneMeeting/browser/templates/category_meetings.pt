@@ -1,5 +1,4 @@
-<tal:defines define="category view/category;
-                     tool python: view.tool;
+<tal:defines define="tool python: view.tool;
                      cfg python: view.cfg;
                      meetingFolder python: cfg.getPloneMeetingFolder(cfg.getId());
                      portal_url python: tool.getParentNode().absolute_url();
@@ -14,5 +13,5 @@
               title="create_meeting" i18n:attributes="title" />
         </a>
     </div>
-    <div class="title" tal:content="python: view.category[1]" tal:omit-tag="python: not category[1]">Category title</div>
+    <div class="title" tal:content="context/Title">Category title</div>
 </tal:defines>

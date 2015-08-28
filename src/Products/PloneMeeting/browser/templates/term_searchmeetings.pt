@@ -2,7 +2,6 @@
                      tool python: view.tool;
                      cfg python: view.cfg;
                      term python: view.term;
-                     collection python: view.collection;
                      category python: view.category;
                      widget python: view.widget;
                      meetingFolder python: cfg.getPloneMeetingFolder(cfg.getId());
@@ -41,7 +40,7 @@
     </div>
 
     <tal:comment replace="nothing">No available meeting visible, show a help message</tal:comment>
-    <div class="noMeetings" tal:condition="python: collection.getId() == 'searchallmeetings' and nbOfMeetings==0">
+    <div class="noMeetings" tal:condition="python: context.getId() == 'searchallmeetings' and nbOfMeetings==0">
       <p class="discreet" i18n:translate="no_meeting"></p>
     </div>
 

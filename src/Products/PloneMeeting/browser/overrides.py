@@ -167,14 +167,11 @@ class PMRenderTermView(RenderTermPortletView):
 
     def __call__(self, term, category, widget):
         super(PMRenderTermView, self).__call__(term, category, widget)
-        catalog = getToolByName(self.context, 'portal_catalog')
-        self.collection = catalog(UID=term[0])[0].getObject()
         # display the searchallmeetings as a selection list
-        collectionId = self.collection.getId()
-        if collectionId in ['searchallmeetings', 'searchlastdecisions']:
+        if self.context.getId() in ['searchallmeetings', 'searchlastdecisions']:
             self.tool = getToolByName(self, 'portal_plonemeeting')
             self.cfg = self.tool.getMeetingConfig(self.context)
-            self.brains = self.collection.getQuery()
+            self.brains = self.context.getQuery()
             return ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return self.index()
 
@@ -186,15 +183,14 @@ class PMRenderCategoryView(RenderCategoryView):
       are displayed to add items or meetings.
     '''
 
-    def __call__(self, category, widget):
-        self.category = category
+    def __call__(self, widget):
         self.widget = widget
         self.tool = getToolByName(self, 'portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-        if category[0] == 'searches_items':
+        if self.context.getId() == 'searches_items':
             return ViewPageTemplateFile("templates/category_meetingitems.pt")(self)
-        if category[0] == 'searches_meetings':
+        if self.context.getId() == 'searches_meetings':
             self.member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
             return ViewPageTemplateFile("templates/category_meetings.pt")(self)
         else:

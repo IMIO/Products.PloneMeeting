@@ -241,12 +241,12 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         vocab = queryUtility(IVocabularyFactory,
                              "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary")
-        self.assertTrue(searchAllItems.UID() in vocab(searches))
+        self.assertTrue(searchAllItems in vocab(searches))
         # disable it then test again
         self.changeUser('siteadmin')
         self.do(searchAllItems, 'deactivate')
         self.changeUser('pmCreator1')
-        self.assertFalse(searchAllItems.UID() in vocab(searches))
+        self.assertFalse(searchAllItems in vocab(searches))
 
 
 def test_suite():
