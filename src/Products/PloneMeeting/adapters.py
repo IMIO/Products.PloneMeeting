@@ -720,8 +720,8 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items of groups of the current user, no matter wich suffix
            of the group the user is in.'''
         userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser()]
-        return {'portal_type': self.cfg.getItemTypeName(),
-                'getProposingGroup': userGroupIds}
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'getProposingGroup': {'query': userGroupIds}, }
 
 
 class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
@@ -731,8 +731,8 @@ class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items that current user take over.'''
         membershipTool = getToolByName(self.context, 'portal_membership')
         member = membershipTool.getAuthenticatedMember()
-        return {'portal_type': self.cfg.getItemTypeName(),
-                'getTakenOverBy': member.getId()}
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'getTakenOverBy': {'query': member.getId()}, }
 
 
 class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
@@ -744,9 +744,9 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
         groupsTool = getToolByName(self.context, 'portal_groups')
         member = membershipTool.getAuthenticatedMember()
         userGroups = groupsTool.getGroupsForPrincipal(member)
-        return {'portal_type': self.cfg.getItemTypeName(),
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'getCopyGroups' use 'OR' by default
-                'getCopyGroups': userGroups}
+                'getCopyGroups': {'query': userGroups}, }
 
 
 class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapter):
@@ -765,7 +765,7 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapte
         if not highestReviewerLevel:
             # in this case, we do not want to display a result
             # we return an unknown review_state
-            return {'review_state': ['unknown_review_state', ]}
+            return {'review_state': {'query': ['unknown_review_state', ]}, }
         for groupId in groupIds:
             if groupId.endswith('_%s' % highestReviewerLevel):
                 # append group name without suffix
@@ -777,9 +777,9 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapte
            'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
             review_state = 'prevalidated'
 
-        return {'portal_type': self.cfg.getItemTypeName(),
-                'getProposingGroup': res,
-                'review_state': review_state}
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'getProposingGroup': {'query': res},
+                'review_state': {'query': review_state}, }
 
 
 class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterionBaseAdapter):
@@ -829,10 +829,10 @@ class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterio
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
             # we return an unknown review_state
-            return {'review_state': ['unknown_review_state', ]}
+            return {'review_state': {'query': ['unknown_review_state', ]}, }
 
-        return {'portal_type': self.cfg.getItemTypeName(),
-                'reviewProcessInfo': reviewProcessInfos}
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
 
 class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
@@ -862,10 +862,10 @@ class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
             # we return an unknown review_state
-            return {'review_state': ['unknown_review_state', ]}
+            return {'review_state': {'query': ['unknown_review_state', ]}, }
 
-        return {'portal_type': self.cfg.getItemTypeName(),
-                'reviewProcessInfo': reviewProcessInfos}
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
 
 class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
@@ -881,9 +881,9 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
                    [g.getId() + '_advice_asked_again' for g in groups] + \
                    ['delay__' + g.getId() + '_advice_asked_again' for g in groups]
         # Create query parameters
-        return {'portal_type': self.cfg.getItemTypeName(),
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
-                'indexAdvisers': groupIds}
+                'indexAdvisers': {'query': groupIds}, }
 
 
 class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
@@ -897,9 +897,9 @@ class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
                    [g.getId() + '_advice_asked_again' for g in groups]
         # Create query parameters
-        return {'portal_type': self.cfg.getItemTypeName(),
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
-                'indexAdvisers': groupIds}
+                'indexAdvisers': {'query': groupIds}, }
 
 
 class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
@@ -914,9 +914,9 @@ class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
         groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
                    ['delay__' + g.getId() + '_advice_asked_again' for g in groups]
         # Create query parameters
-        return {'portal_type': self.cfg.getItemTypeName(),
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
-                'indexAdvisers': groupIds}
+                'indexAdvisers': {'query': groupIds}, }
 
 
 class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
@@ -929,9 +929,9 @@ class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
         # this search will only return 'delay-aware' advices for wich delay is exceeded
         groupIds = ['delay__' + g.getId() + '_advice_delay_exceeded' for g in groups]
         # Create query parameters
-        return {'portal_type': self.cfg.getItemTypeName(),
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
-                'indexAdvisers': groupIds}
+                'indexAdvisers': {'query': groupIds}, }
 
 
 class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
@@ -951,9 +951,9 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
             groupIds += [g.getId() + '_%s' % adviceState for g in groups]
             groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
         # Create query parameters
-        return {'portal_type': self.cfg.getItemTypeName(),
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
-                'indexAdvisers': groupIds}
+                'indexAdvisers': {'query': groupIds}, }
 
 
 class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
@@ -972,9 +972,9 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
         for adviceState in adviceStates:
             groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]
         # Create query parameters
-        return {'portal_type': self.cfg.getItemTypeName(),
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
-                'indexAdvisers': groupIds}
+                'indexAdvisers': {'query': groupIds}, }
 
 
 class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
@@ -982,5 +982,5 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
     @property
     def query(self):
         '''Queries decided items.'''
-        return {'portal_type': self.cfg.getItemTypeName(),
-                'review_state': self.cfg.getItemDecidedStates()}
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'review_state': {'query': self.cfg.getItemDecidedStates()}, }

@@ -67,16 +67,16 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-advice')
         # admin is not adviser
         self.assertEquals(adapter.query,
-                          {'indexAdvisers': [],
-                           'portal_type': itemTypeName})
+                          {'indexAdvisers':  {'query': []},
+                           'portal_type':  {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         self.assertEquals(adapter.query,
-                          {'indexAdvisers': ['developers_advice_not_given',
-                                             'delay__developers_advice_not_given',
-                                             'developers_advice_asked_again',
-                                             'delay__developers_advice_asked_again'],
-                           'portal_type': itemTypeName})
+                          {'indexAdvisers': {'query': ['developers_advice_not_given',
+                                                       'delay__developers_advice_not_given',
+                                                       'developers_advice_asked_again',
+                                                       'delay__developers_advice_asked_again']},
+                           'portal_type': {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchallitemstoadvice"
@@ -145,8 +145,8 @@ class testSearches(PloneMeetingTestCase):
                              name='advised-items')
         # admin is not adviser
         self.assertEquals(adapter.query,
-                          {'indexAdvisers': [],
-                           'portal_type': itemTypeName})
+                          {'indexAdvisers': {'query': []},
+                           'portal_type': {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         adviceWF = self.wfTool.getWorkflowsFor('meetingadvice')[0]
@@ -156,8 +156,8 @@ class testSearches(PloneMeetingTestCase):
             groupIds.append('developers_%s' % adviceState)
             groupIds.append('delay__developers_%s' % adviceState)
         self.assertEquals(adapter.query,
-                          {'indexAdvisers': groupIds,
-                           'portal_type': itemTypeName})
+                          {'indexAdvisers': {'query': groupIds},
+                           'portal_type': {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchalladviseditems"
@@ -226,15 +226,16 @@ class testSearches(PloneMeetingTestCase):
                              name='advised-items-with-delay')
         # admin is not adviser
         self.assertEquals(adapter.query,
-                          {'indexAdvisers': [],
-                           'portal_type': itemTypeName})
+                          {'indexAdvisers': {'query': []},
+                           'portal_type':  {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         adviceWF = self.wfTool.getWorkflowsFor('meetingadvice')[0]
         adviceStates = adviceWF.states.keys()
         self.assertEquals(adapter.query,
-                          {'indexAdvisers': ['delay__developers_%s' % adviceState for adviceState in adviceStates],
-                           'portal_type': itemTypeName})
+                          {'indexAdvisers':  {'query':
+                           ['delay__developers_%s' % adviceState for adviceState in adviceStates]},
+                           'portal_type':  {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchalladviseditemswithdelay"
@@ -302,13 +303,13 @@ class testSearches(PloneMeetingTestCase):
                              name='items-in-copy')
         # admin is just member of 'AuthenticatedUsers'
         self.assertEquals(adapter.query,
-                          {'getCopyGroups': ['AuthenticatedUsers'],
-                           'portal_type': itemTypeName})
+                          {'getCopyGroups': {'query': ['AuthenticatedUsers']},
+                           'portal_type':  {'query': itemTypeName}})
         # as creator, query is correct
         self.changeUser('pmCreator1')
         self.assertEquals(adapter.query,
-                          {'getCopyGroups': ['AuthenticatedUsers', 'developers_creators'],
-                           'portal_type': itemTypeName})
+                          {'getCopyGroups':  {'query': ['AuthenticatedUsers', 'developers_creators']},
+                           'portal_type':  {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchallitemsincopy"
@@ -344,8 +345,8 @@ class testSearches(PloneMeetingTestCase):
         # query is correct
         self.changeUser('pmManager')
         self.assertEquals(adapter.query,
-                          {'portal_type': itemTypeName,
-                           'getTakenOverBy': 'pmManager'})
+                          {'portal_type': {'query': itemTypeName},
+                           'getTakenOverBy': {'query': 'pmManager'}})
 
         # now do the query
         # this adapter is used by the "searchmyitemstakenover"
@@ -380,13 +381,13 @@ class testSearches(PloneMeetingTestCase):
         # if user si not a reviewer, we want the search to return
         # nothing so the query uses an unknown review_state
         self.assertEquals(adapter.query,
-                          {'review_state': ['unknown_review_state']})
+                          {'review_state': {'query': ['unknown_review_state']}})
         # for a reviewer, query is correct
         self.changeUser('pmManager')
         self.assertEquals(adapter.query,
-                          {'getProposingGroup': ['developers'],
-                           'portal_type': itemTypeName,
-                           'review_state': self.WF_STATE_NAME_MAPPINGS['proposed']})
+                          {'getProposingGroup': {'query': ['developers']},
+                           'portal_type': {'query': itemTypeName},
+                           'review_state': {'query': self.WF_STATE_NAME_MAPPINGS['proposed']}})
 
         # activate 'prevalidation' if necessary
         if 'prereviewers' in MEETINGREVIEWERS:
@@ -464,7 +465,7 @@ class testSearches(PloneMeetingTestCase):
         # if user si not a reviewer, we want the search to return
         # nothing so the query uses an unknown review_state
         self.assertEquals(adapter.query,
-                          {'review_state': ['unknown_review_state']})
+                          {'review_state': {'query': ['unknown_review_state']}})
         # for a reviewer, query is correct
         self.changeUser('pmManager')
         # keep relevant reviewer states
@@ -477,8 +478,8 @@ class testSearches(PloneMeetingTestCase):
                     else:
                         res.append(reviewer_state)
         self.assertEquals(adapter.query,
-                          {'portal_type': itemTypeName,
-                           'reviewProcessInfo': ['developers__reviewprocess__%s' % st for st in res]})
+                          {'portal_type': {'query': itemTypeName},
+                           'reviewProcessInfo': {'query': ['developers__reviewprocess__%s' % st for st in res]}})
 
         # now do the query
         # this adapter is not used by default, but is intended to be used with
@@ -553,7 +554,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-validate-of-every-reviewer-levels-and-lower-levels')
         self.assertEquals(adapter.query,
-                          {'review_state': ['unknown_review_state']})
+                          {'review_state': {'query': ['unknown_review_state']}})
         # now do the query
         # this adapter is not used by default, but is intended to be used with
         # the "searchitemstovalidate" collection so use it with it
@@ -567,8 +568,8 @@ class testSearches(PloneMeetingTestCase):
         # find state to use for current reviewer
         reviewer_state = MEETINGREVIEWERS[cfg._highestReviewerLevel(self.member.getGroups())]
         self.assertEquals(adapter.query,
-                          {'portal_type': itemTypeName,
-                           'reviewProcessInfo': ['developers__reviewprocess__%s' % reviewer_state]})
+                          {'portal_type': {'query': itemTypeName},
+                           'reviewProcessInfo': {'query': ['developers__reviewprocess__%s' % reviewer_state]}})
 
         self.failUnless(len(collection.getQuery()) == 2)
         # as second level user, he will also see items because items are from lower reviewer levels
