@@ -77,7 +77,9 @@ class Renderer(base.Renderer, FacetedRenderer):
         '''Override method coming from FacetedRenderer as we know that criteria are stored on the meetingFolder.'''
         pmFolder = self.getPloneMeetingFolder()
         # if we are on a Meeting, it provides IFacetedNavigable but we want to display user pmFolder facetednav
-        if not self.context.absolute_url().startswith(pmFolder.absolute_url()) or \
+        contextURL = self.context.absolute_url()
+        if (not 'portal_plonemeeting' in contextURL and
+            not contextURL.startswith(pmFolder.absolute_url())) or \
            IMeeting.providedBy(self.context):
             return self.cfg.searches
         # we are on a subFolder of the pmFolder (searches_meetingitems for example)
