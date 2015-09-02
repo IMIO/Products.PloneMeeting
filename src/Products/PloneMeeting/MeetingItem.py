@@ -1300,7 +1300,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # If the meeting is in a closed state, the item can only be signed but
         # not "unsigned".  This way, a final state 'signed' exists for the item
-        if item.getMeeting().queryState() in Meeting.meetingClosedStates and \
+        meeting = item.getMeeting()
+        if meeting and \
+           meeting.queryState() in Meeting.meetingClosedStates and \
            item.getItemIsSigned():
             return False
         return True
