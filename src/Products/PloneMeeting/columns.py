@@ -63,13 +63,16 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
             # change header title to "Purpose"
             self.header = "header_purpose"
             # activate necessary javascripts
-            header = u'<script type="text/javascript">jQuery(document).ready(initializeMenusAXStartingAt($("#content")));initializePMOverlays()</script>{0}'
+            if not self.header_js:
+                # avoid problems while concataining None and unicode
+                self.header_js = u''
+            self.header_js += u'<script type="text/javascript">jQuery(document).ready(initializeMenusAXStartingAt($("#content")));initializePMOverlays()</script>'
             showHideMsg = translate("show_or_hide_details",
                                     domain="PloneMeeting",
                                     context=self.request,
                                     default="Show/hide details")
-            header += u'<span class="showHideDetails" onclick="javascript:toggleMeetingDescriptions()">({0})</span>'.format(showHideMsg)
-            return header.format(super(PMPrettyLinkColumn, self).renderHeadCell())
+            header = u'<span class="showHideDetails" onclick="javascript:toggleMeetingDescriptions()">({0})</span>'.format(showHideMsg)
+            return super(PMPrettyLinkColumn, self).renderHeadCell() + header
         return super(PMPrettyLinkColumn, self).renderHeadCell()
 
     def renderCell(self, item):
