@@ -8,7 +8,7 @@
   <criterion name="c0" i18n:attributes="title">
    <property name="widget">sorting</property>
    <property name="title">Sort on</property>
-   <property name="position">bottom</property>
+   <property name="position">top</property>
    <property name="section">default</property>
    <property name="hidden">1</property>
    <property name="vocabulary"></property>
@@ -18,7 +18,7 @@
   <criterion name="c1" i18n:attributes="title">
    <property name="widget">collection-link</property>
    <property name="title">Base collections</property>
-   <property name="position">bottom</property>
+   <property name="position">top</property>
    <property name="section">default</property>
    <property name="hidden">1</property>
    <property name="count">0</property>
