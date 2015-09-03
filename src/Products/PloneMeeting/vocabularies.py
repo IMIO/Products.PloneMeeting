@@ -35,20 +35,13 @@ class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
 
     def _compute_redirect_to(self, collection, criterion):
         """ """
-        redirect_to = "{0}#{1}={2}"
-        # add a 'no_default=1' for links of collections of the root
-        collection_container = collection.aq_inner.aq_parent
-        if not IFacetedNavigable.providedBy(collection_container.aq_inner.aq_parent):
-            redirect_to = "{0}?no_default=1#{1}={2}"
+        redirect_to = super(PMConditionAwareCollectionVocabulary, self)._compute_redirect_to(collection, criterion)
         # XXX begin change by PloneMeeting, do redirect to the folder in the user pmFolder
         tool = getToolByName(self.context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(collection)
-        url = collection_container.absolute_url()
-        url = url.replace(cfg.searches.absolute_url(), tool.getPloneMeetingFolder(cfg.getId()).absolute_url())
+        redirect_to = redirect_to.replace(cfg.searches.absolute_url(), tool.getPloneMeetingFolder(cfg.getId()).absolute_url())
+        return redirect_to
         # XXX end change
-        return redirect_to.format(url,
-                                  criterion.__name__,
-                                  collection.UID())
 
 PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
 
