@@ -197,6 +197,10 @@ def onItemModified(item, event):
 
 def onAdviceAdded(advice, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
+    # if advice is added because we are pasting, pass as we will remove the advices...
+    if advice.REQUEST.get('currentlyPastingItems', False):
+        return
+
     # update advice_row_id if it was not already done before
     # for example in a onAdviceTransition event handler that is called
     # before the onAdviceAdded...
@@ -277,7 +281,7 @@ def onAdviceRemoved(advice, event):
     except TypeError:
         # while removing an advice, if it was not anymore in the advice index
         # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
-        # the newItem has an empty adviceIndex but can contains advices that will be removed
+        # the newItem has an empty adviceIndex but can contain advices that will be removed
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 
 
