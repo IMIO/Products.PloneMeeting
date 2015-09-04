@@ -5,7 +5,6 @@ logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
-from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.catalog import removeIndexes
 
 from Products.PloneMeeting.migrations import Migrator
