@@ -49,7 +49,6 @@ from Products.CMFCore.Expression import Expression
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
 from eea.facetednavigation.interfaces import ICriteria
-from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
@@ -4262,19 +4261,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 tool._enableFacetedDashboardFor(subFolderObj,
                                                 xmlpath=os.path.dirname(__file__) +
                                                 '/faceted_conf/default_dashboard_widgets.xml')
-
-    def _updateDefaultCollectionFor(self, folderObj, default_uid):
-        """Use p_default_uid as the default collection selected
-           for the CollectionWidget used on p_folderObj."""
-        # make sure the folder is a facetednav, it should always be the case but...
-        if not folderObj.getLayout() == 'facetednavigation_view':
-            tool._enableFacetedDashboardFor(folderObj,
-                                            xmlpath=os.path.dirname(__file__) +
-                                            '/faceted_conf/default_dashboard_widgets.xml')
-        criteria = ICriteria(folderObj).criteria
-        for criterion in criteria:
-            if criterion.widget == CollectionWidget.widget_type:
-                criterion.default = default_uid
 
     def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
         '''This returns meetings that are still accepting items.'''

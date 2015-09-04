@@ -27,6 +27,7 @@ __docformat__ = 'plaintext'
    profiles/default for more information.'''
 
 # ------------------------------------------------------------------------------
+from imio.dashboard.utils import _updateDefaultCollectionFor
 from Products.PloneMeeting.config import registerClasses, PROJECTNAME
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.ToolPloneMeeting import PloneMeetingError, MEETING_CONFIG_ERROR
@@ -141,8 +142,8 @@ class ToolInitializer:
             default_uid = getattr(cfg.searches.searches_items,
                                   meetingAppDefaultView).UID()
             # update the criterion default value in searches and searches_items folders
-            cfg._updateDefaultCollectionFor(cfg.searches, default_uid)
-            cfg._updateDefaultCollectionFor(cfg.searches.searches_items, default_uid)
+            _updateDefaultCollectionFor(cfg.searches, default_uid)
+            _updateDefaultCollectionFor(cfg.searches.searches_items, default_uid)
         else:
             error = 'meetingAppDefaultView : No DashboardCollection with id %s' % meetingAppDefaultView
             raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))

@@ -5,6 +5,7 @@ logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
+from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.catalog import removeIndexes
 
 from Products.PloneMeeting.migrations import Migrator
@@ -77,8 +78,8 @@ class Migrate_To_3_4(Migrator):
                 # update the criterion default value
                 default_uid = getattr(cfg.searches.searches_items, default_view).UID()
                 # update the criterion default value in searches and searches_items folders
-                cfg._updateDefaultCollectionFor(cfg.searches, default_uid)
-                cfg._updateDefaultCollectionFor(cfg.searches.searches_items, default_uid)
+                _updateDefaultCollectionFor(cfg.searches, default_uid)
+                _updateDefaultCollectionFor(cfg.searches.searches_items, default_uid)
                 delattr(cfg, 'meetingAppDefaultView')
             # no more used as lateItems are displayed together with normal items now
             if hasattr(cfg, 'maxShownLateItems'):
