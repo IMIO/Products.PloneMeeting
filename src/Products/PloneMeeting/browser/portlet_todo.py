@@ -12,9 +12,8 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from collective.behavior.talcondition.interfaces import ITALConditionable
 from collective.behavior.talcondition.utils import evaluateExpressionFor
-from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
-from eea.facetednavigation.interfaces import ICriteria
 from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
+from imio.dashboard.utils import getCollectionLinkCriterion
 
 from zope.i18nmessageid import MessageFactory
 _ = MessageFactory('PloneMeeting')
@@ -134,11 +133,9 @@ class Renderer(base.Renderer, FacetedRenderer):
 
     def getCollectionWidgetId(self):
         """Returns the collection widget id to be used in the URL generated on the collection link."""
-        criteriaHolder = self._criteriaHolder
-        criteria = ICriteria(criteriaHolder)
-        for criterion in criteria.values():
-            if criterion.widget == CollectionWidget.widget_type:
-                return criterion.getId()
+        criterion = getCollectionLinkCriterion(self._criteriaHolder)
+        if criterion:
+            return criterion.getId()
         return ''
 
 
