@@ -43,8 +43,9 @@ class testSearches(PloneMeetingTestCase):
         '''Test that the 'meetingAppDefaultView' defined in the MeetingConfig data
            is correctly applied to the collection-link widget on the facetednavigation view.'''
         # selected meetingAppDefaultView is 'searchallitems'
-        searchallitems = self.meetingConfig.searches.searches_items.searchallitems
-        for criterion in ICriteria(self.meetingConfig.searches).values():
+        cfg = self.meetingConfig
+        searchallitems = cfg.searches.searches_items.searchallitems
+        for criterion in ICriteria(cfg.searches).values():
             if criterion.widget == CollectionWidget.widget_type:
                 collectionCriterion = criterion
                 break
@@ -54,15 +55,16 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'search-items-to-advice' adapter that should return a list of items
            a user has to give an advice for.'''
         self.changeUser('admin')
-        self.meetingConfig.setUsedAdviceTypes(self.meetingConfig.getUsedAdviceTypes() + ('asked_again', ))
-        self.meetingConfig.setCustomAdvisers(
+        cfg = self.meetingConfig
+        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
               'delay': '5', }, ])
-        itemTypeName = self.meetingConfig.getItemTypeName()
+        itemTypeName = cfg.getItemTypeName()
 
         # first test the generated query
-        adapter = getAdapter(self.meetingConfig,
+        adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='items-to-advice')
         # admin is not adviser
@@ -80,11 +82,11 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchallitemstoadvice"
-        collection = self.meetingConfig.searches.searches_items.searchallitemstoadvice
+        collection = cfg.searches.searches_items.searchallitemstoadvice
         # by default, no item to advice...
         self.failIf(collection.getQuery())
         # an advice can be given when an item is 'proposed'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
+        self.assertEquals(cfg.getItemAdviceStates(),
                           (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # create an item to advice
         self.changeUser('pmCreator1')
@@ -136,11 +138,12 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'search-advised-items' adapter.  This should return a list of items
            a user has already give an advice for.'''
         self.changeUser('admin')
-        itemTypeName = self.meetingConfig.getItemTypeName()
-        self.meetingConfig.setUsedAdviceTypes(self.meetingConfig.getUsedAdviceTypes() + ('asked_again', ))
+        cfg = self.meetingConfig
+        itemTypeName = cfg.getItemTypeName()
+        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
 
         # first test the generated query
-        adapter = getAdapter(self.meetingConfig,
+        adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='advised-items')
         # admin is not adviser
@@ -161,12 +164,12 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchalladviseditems"
-        collection = self.meetingConfig.searches.searches_items.searchalladviseditems
+        collection = cfg.searches.searches_items.searchalladviseditems
         # by default, no advised item...
         self.changeUser('pmAdviser1')
         self.failIf(collection.getQuery())
         # an advice can be given when an item is 'proposed'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
+        self.assertEquals(cfg.getItemAdviceStates(),
                           (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # create an item to advice
         self.changeUser('pmCreator1')
@@ -218,10 +221,11 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'search-advised-items-with-delay' adapter.  This should return a list
            of items a user has already give a delay-aware advice for.'''
         self.changeUser('admin')
-        itemTypeName = self.meetingConfig.getItemTypeName()
+        cfg = self.meetingConfig
+        itemTypeName = cfg.getItemTypeName()
 
         # first test the generated query
-        adapter = getAdapter(self.meetingConfig,
+        adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='advised-items-with-delay')
         # admin is not adviser
@@ -239,12 +243,12 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchalladviseditemswithdelay"
-        collection = self.meetingConfig.searches.searches_items.searchalladviseditemswithdelay
+        collection = cfg.searches.searches_items.searchalladviseditemswithdelay
         # by default, no advised item...
         self.changeUser('pmAdviser1')
         self.failIf(collection.getQuery())
         # an advice can be given when an item is 'proposed'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
+        self.assertEquals(cfg.getItemAdviceStates(),
                           (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # create an item to advice
         self.changeUser('pmCreator1')
@@ -271,7 +275,7 @@ class testSearches(PloneMeetingTestCase):
                                   'delay': '10',
                                   'delay_left_alert': '',
                                   'delay_label': 'Delay label', }
-        self.meetingConfig.setCustomAdvisers([originalCustomAdvisers, ])
+        cfg.setCustomAdvisers([originalCustomAdvisers, ])
         self.changeUser('pmCreator1')
         item2 = self.create('MeetingItem')
         item2.setOptionalAdvisers(('developers__rowid__unique_id_123',))
@@ -292,13 +296,14 @@ class testSearches(PloneMeetingTestCase):
            a user is in copy of.'''
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
 
-        itemTypeName = self.meetingConfig.getItemTypeName()
+        itemTypeName = cfg.getItemTypeName()
 
         # first test the generated query
-        adapter = getAdapter(self.meetingConfig,
+        adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='items-in-copy')
         # admin is just member of 'AuthenticatedUsers'
@@ -313,7 +318,7 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchallitemsincopy"
-        collection = self.meetingConfig.searches.searches_items.searchallitemsincopy
+        collection = cfg.searches.searches_items.searchallitemsincopy
         # create an item and set another proposing group in copy of
         item = self.create('MeetingItem')
         # give a view access to members of vendors, like pmReviewer2
@@ -333,13 +338,14 @@ class testSearches(PloneMeetingTestCase):
            a list of items a user has taken over.'''
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
 
-        itemTypeName = self.meetingConfig.getItemTypeName()
+        itemTypeName = cfg.getItemTypeName()
 
         # first test the generated query
-        adapter = getAdapter(self.meetingConfig,
+        adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='my-items-taken-over')
         # query is correct
@@ -350,7 +356,7 @@ class testSearches(PloneMeetingTestCase):
 
         # now do the query
         # this adapter is used by the "searchmyitemstakenover"
-        collection = self.meetingConfig.searches.searches_items.searchmyitemstakenover
+        collection = cfg.searches.searches_items.searchmyitemstakenover
         item = self.create('MeetingItem')
         # by default nothing is returned
         self.failIf(collection.getQuery())
@@ -372,10 +378,11 @@ class testSearches(PloneMeetingTestCase):
            So a reviewer level 1 and level 2 will only see items in level 2, a reviewer in level
            1 (only) will only see items in level 1.'''
         self.changeUser('admin')
-        itemTypeName = self.meetingConfig.getItemTypeName()
+        cfg = self.meetingConfig
+        itemTypeName = cfg.getItemTypeName()
 
         # first test the generated query
-        adapter = getAdapter(self.meetingConfig,
+        adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='items-to-validate-of-highest-hierarchic-level')
         # if user si not a reviewer, we want the search to return
@@ -391,12 +398,12 @@ class testSearches(PloneMeetingTestCase):
 
         # activate 'prevalidation' if necessary
         if 'prereviewers' in MEETINGREVIEWERS:
-            self.meetingConfig.setWorkflowAdaptations('pre_validation')
+            cfg.setWorkflowAdaptations('pre_validation')
             logger = logging.getLogger('PloneMeeting: testing')
-            performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
+            performWorkflowAdaptations(self.portal, cfg, logger)
         # now do the query
         # this adapter is used by the "searchitemstovalidate"
-        collection = self.meetingConfig.searches.searches_items.searchitemstovalidate
+        collection = cfg.searches.searches_items.searchitemstovalidate
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -420,11 +427,11 @@ class testSearches(PloneMeetingTestCase):
         # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
-        self.meetingConfig.setUseCopies(True)
+        cfg.setUseCopies(True)
         review_states = MEETINGREVIEWERS[MEETINGREVIEWERS.keys()[0]]
         if 'prereviewers' in MEETINGREVIEWERS:
             review_states = ('prevalidated',)
-        self.meetingConfig.setItemCopyGroupsStates(review_states)
+        cfg.setItemCopyGroupsStates(review_states)
         item.setCopyGroups(('vendors_reviewers',))
         item.at_post_edit_script()
         self.changeUser('pmReviewer2')
