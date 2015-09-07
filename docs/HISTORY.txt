@@ -9,6 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.4 (unreleased)
 ----------------
+- Moved to Plone 4.3.6
 - Rely on beautifulsoup4, Products.CPUtils
 - Moved dashboards and meeting view to imio.dashboard (see imio.dashboard package regarding required changes)
 - Do not index MeetingFiles anymore to avoid too much elements in the catalog.  MeetingFiles title is now indexed in items's
@@ -81,6 +82,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added adaptable method MeetingItem._itemIsSignedStates that makes it possible to define in which states
   the MeetingItem.itemIsSigned field can be changed, by default it is when the item is decided
 - Moved 'cleanRamCacheFor' and 'cleanVocabularyCacheFor' from ToolPloneMeeting to imio.helpers
+- Removed overrides of DataGridField CheckBoxColumn and MultiSelectColumn now that we use newer
+  versions of relevant package where this has been integrated
+
 
 3.3 (2015-02-27)
 ----------------
