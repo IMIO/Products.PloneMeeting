@@ -12,10 +12,14 @@
 
     <tal:comment replace="nothing">Force show of plone.belowcontenttitle viewlet while
     the advice is displayed in an overlay because every vielwets are hidden in overlays...</tal:comment>
-    <div tal:condition="python: 'ajax_load' in context.REQUEST" id="viewlet-below-content-title">
-        <div tal:replace="structure provider:plone.belowcontenttitle" />
-    </div>
-
+    <tal:overlayViewlets condition="python: 'ajax_load' in context.REQUEST">
+        <div id="viewlet-below-content-title">
+            <div tal:replace="structure provider:plone.belowcontenttitle" />
+        </div>
+        <div id="viewlet-above-content-body">
+            <div tal:replace="structure provider:plone.abovecontentbody" />
+        </div>
+    </tal:overlayViewlets>
     <div tal:condition="python: not 'ajax_load' in context.REQUEST">
       <metal:backToItem use-macro='here/@@pm-macros/backToItem' />
       <table class="no-style-table" width="100%">

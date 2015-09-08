@@ -16,6 +16,12 @@
         manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
         class=".viewlets.PodTemplatesViewlet"
         permission="zope2.View"/>
+    <browser:viewlet
+        name="plonemeeting.podtemplates"
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
+        class=".viewlets.PodTemplatesViewlet"
+        permission="zope2.View"/>
 
     <!-- Overriden Plone viewlets -->
     <browser:viewlet

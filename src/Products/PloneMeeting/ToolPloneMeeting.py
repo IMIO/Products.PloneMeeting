@@ -996,7 +996,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         objectUid = self.REQUEST.get('objectUid')
         mailingList = self.REQUEST.get('mailingList', None)
         facetedQuery = self.REQUEST.get('facetedQuery', None)
-        brains = self.uid_catalog(UID=objectUid)
+        catalog = getToolByName(self, 'portal_catalog')
+        brains = catalog(UID=objectUid)
         if not brains:
             # The object for which the document must be generated has been
             # deleted. Return a 404.
