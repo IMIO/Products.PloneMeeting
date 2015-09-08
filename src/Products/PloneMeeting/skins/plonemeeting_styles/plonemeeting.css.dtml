@@ -1211,6 +1211,14 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
     display: none;
 }
 
+/* versioned advice preview displayed in the history popup */
+#content-history p.historized_advice-advice_comment,
+#content-history p.historized_advice-advice_observations {
+    color: &dtml-discreetColor;;
+    font-style: italic;
+    text-decoration: underline;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

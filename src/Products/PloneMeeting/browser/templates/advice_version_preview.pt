@@ -1,0 +1,15 @@
+<div i18n:domain="PloneMeeting">
+  <p id='historized_advice-advice_type'>
+    <img src='#'
+         tal:define="advice_type_icon string:advice_${view/adviceStyle}_${view/versioned_object/advice_type}.png"
+         tal:attributes="src string:${view/portal_url}/${advice_type_icon}" />
+    <span tal:content="view/versioned_object/advice_type" i18n:translate=""></span>
+  </p>
+  <p class='historized_advice-advice_comment'><span i18n:translate="advice_comment">Comment</span> :</p>
+  <span tal:define="advice_comment view/versioned_object/advice_comment"
+        tal:replace="structure python: advice_comment and advice_comment.output or '-'" />
+  <p class='historized_advice-advice_observations'><span i18n:translate="advice_observations">Observations</span> :</p>
+  <span tal:define="advice_observations view/versioned_object/advice_observations"
+        tal:replace="structure python: advice_observations and advice_observations.output or '-'" />
+
+</div>

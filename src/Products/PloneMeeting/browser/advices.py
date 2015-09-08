@@ -24,12 +24,12 @@
 
 from AccessControl import Unauthorized
 from zope.event import notify
-from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
+from imio.history.browser.views import IHVersionPreviewView
 
 
 class AdvicesIcons(BrowserView):
@@ -78,10 +78,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
             if not parent.adapted().mayAskAdviceAgain(self.context):
                 raise Unauthorized
             # historize the given advice
-            changeNote = translate('advice_asked_again_and_historized',
-                                   domain='PloneMeeting',
-                                   context=self.request)
-            pr.save(obj=self.context, comment=changeNote)
+            pr.save(obj=self.context, comment='advice_asked_again_and_historized_comments')
             # now we may change advice_type to 'asked_again'
             self.context.advice_type = 'asked_again'
             # and we may also set 'advice_hide_during_redaction' to the default
@@ -113,3 +110,13 @@ class AdviceConfidentialityView(BrowserView):
     def __call__(self, advice):
         self.advice = advice
         return super(AdviceConfidentialityView, self).__call__()
+
+
+class AdviceVersionPreviewView(IHVersionPreviewView):
+    """ """
+    def __init__(self, context, request):
+        """ """
+        super(AdviceVersionPreviewView, self).__init__(context, request)
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        self.adviceStyle = cfg.getAdviceStyle()

@@ -67,6 +67,16 @@
             permission="zope2.View"/>
     </configure>
 
+    <!-- Define a imio.history version preview for IMeetingAdvice -->
+    <browser:page
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        name="history-version-preview"
+        class="Products.PloneMeeting.browser.advices.AdviceVersionPreviewView"
+        layer="imio.history.interfaces.IImioHistoryLayer"
+        template="templates/advice_version_preview.pt"
+        permission="zope2.View"
+        />
+
     <!-- The ajax view -->
     <browser:page
         name="ajax"
