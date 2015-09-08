@@ -85,6 +85,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Moved 'cleanRamCacheFor' and 'cleanVocabularyCacheFor' from ToolPloneMeeting to imio.helpers
 - Removed overrides of DataGridField CheckBoxColumn and MultiSelectColumn now that we use newer
   versions of relevant package where this has been integrated
+- Added possibility to generate a PodTemplate on an advice
 
 3.3 (2015-02-27)
 ----------------
