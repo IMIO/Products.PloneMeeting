@@ -82,7 +82,7 @@ class Renderer(base.Renderer, FacetedRenderer):
             not contextURL.startswith(pmFolder.absolute_url())) or \
            IMeeting.providedBy(self.context):
             return self.cfg.searches
-        # we are on a subFolder of the pmFolder (searches_meetingitems for example)
+        # we are on a subFolder of the pmFolder (searches_items for example)
         if IFacetedNavigable.providedBy(self.context):
             # return corresponding folder in the configuration
             if self.context.getId().endswith('searches_items'):
