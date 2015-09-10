@@ -249,6 +249,11 @@ class IMeetingItemDocumentation:
     def mayWriteCompleteness():
         '''This manage the condition that check if MeetingItem.complentess
            may be edited by the current user.'''
+    def setHistorizedTakenOverBy(wf_state):
+        '''Set 'takenOverBy' taking into account last user that was taking
+           the item over.  So if an item come back a second time (or more), to
+           the same p_wf_state, we automatically set the same user than before
+           if still available.  If not, we set that to ''.'''
     def mayTakeOver():
         '''This manage the condition that check if MeetingItem.takenOverBy
            may be edited by the current user.'''

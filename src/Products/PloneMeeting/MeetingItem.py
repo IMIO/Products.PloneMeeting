@@ -1309,8 +1309,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('mayTakeOver')
     def mayTakeOver(self):
-        '''Condition for editing 'takenOverBy' field.
-           A member may take an item over if he is able to change the review_state.'''
+        '''Check doc in interfaces.py.'''
         item = self.getSelf()
         wfTool = getToolByName(item, 'portal_workflow')
         return bool(wfTool.getTransitionsFor(item))
@@ -1341,13 +1340,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('setHistorizedTakenOverBy')
     def setHistorizedTakenOverBy(self, wf_state):
-        '''Set 'takenOverBy' taking into account last user that was taking
-           the item over.  So if an item come back a second time (or more), to
-           the same p_wf_state, we automatically set the same user than before
-           if still available.  If not, we set that to ''.'''
-        if wf_state in self.takenOverByInfos:
-            previousUserId = self.takenOverByInfos[wf_state]
-            membershipTool = getToolByName(self, 'portal_membership')
+        '''Check doc in interfaces.py.'''
+        item = self.getSelf()
+        if wf_state in item.takenOverByInfos:
+            previousUserId = item.takenOverByInfos[wf_state]
+            membershipTool = getToolByName(item, 'portal_membership')
             previousUser = membershipTool.getMemberById(previousUserId)
             mayTakeOver = False
             if previousUser:
@@ -1356,17 +1353,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # login as an omnipotent user
                 newSecurityManager(None, previousUser)
                 try:
-                    mayTakeOver = self.adapted().mayTakeOver()
+                    mayTakeOver = item.adapted().mayTakeOver()
                 except:
                     logger.warning("An error occured in 'setHistorizedTakenOverBy' while evaluating 'mayTakeOver'")
                 finally:
                     setSecurityManager(oldsm)
             if not mayTakeOver:
-                self.setTakenOverBy('')
+                item.setTakenOverBy('')
             else:
-                self.setTakenOverBy(previousUserId)
+                item.setTakenOverBy(previousUserId)
         else:
-            self.setTakenOverBy('')
+            item.setTakenOverBy('')
 
     security.declarePublic('mayAskEmergency')
     def mayAskEmergency(self):
