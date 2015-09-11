@@ -515,6 +515,7 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
 
         # Display icons about sent/cloned to other meetingConfigs
         clonedToOtherMCIds = self.context._getOtherMeetingConfigsImAmClonedIn()
+        toLocalizedTime = None
         for clonedToOtherMCId in clonedToOtherMCIds:
             # Append a tuple with name of the icon and a list containing
             # the msgid and the mapping as a dict
@@ -527,8 +528,9 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                             context=self.request)
 
             clonedBrain = self.context.getItemClonedToOtherMC(clonedToOtherMCId, theObject=False)
-            toLocalizedTime = self.context.restrictedTraverse('@@plone').toLocalizedTime
             if clonedBrain.linkedMeetingDate:
+                # avoid instantiating toLocalizedTime more than once
+                toLocalizedTime = toLocalizedTime or self.context.restrictedTraverse('@@plone').toLocalizedTime
                 long_format = clonedBrain.linkedMeetingDate.hour() and True or False
                 msg = msg + u' ({0})'.format(toLocalizedTime(clonedBrain.linkedMeetingDate, long_format=long_format))
             res.append(("%s.png" %

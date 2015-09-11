@@ -208,7 +208,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   but let reviewers prereview nevertheless
 - Added an icon displayed before item title in listings that shows that an item will
   be sent to another meeting configuration so we can see items that will be send and
-  items that have already been sent to another meeting configuration
+  items that have already been sent to another meeting configuration. Moreover, if item is actually
+  sent and item sent to the other config is in a meeting, we display this meeting date in the icon's tooltip
 - Added an icon displayed before item title in listings that shows that item was sent back in the
   workflow or that the item is at the same workflow step again (was already in that step before).
   This let's user see that an item was just corrected and sent back or that an item is proposed again
