@@ -3157,8 +3157,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for mctct in self.getMeetingConfigsToCloneTo():
             configId = mctct['meeting_config']
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
-            urlExpr = 'string:${object/absolute_url}/cloneToOtherMeeting' \
-                      'Config?destMeetingConfigId=%s' % configId
+            urlExpr = 'string:${object/absolute_url}/doCloneToOtherMeetingConfig?' \
+                      'destMeetingConfigId=%s' % configId
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
                         'object.adapted().mayCloneToOtherMeetingConfig("%s")' \
                         % configId

@@ -4203,7 +4203,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                      self.absolute_url_path()))
         return newItem
 
-    security.declarePublic('cloneToOtherMeetingConfig')
+    security.declarePublic('doCloneToOtherMeetingConfig')
+    def doCloneToOtherMeetingConfig(self, destMeetingConfigId):
+        '''Action used by the 'clone to other config' button.'''
+        self.cloneToOtherMeetingConfig(destMeetingConfigId)
+        return self.REQUEST.RESPONSE.redirect(self.absolute_url())
+
+    security.declarePrivate('cloneToOtherMeetingConfig')
     def cloneToOtherMeetingConfig(self, destMeetingConfigId):
         '''Sends this meetingItem to another meetingConfig whose id is
            p_destMeetingConfigId. The cloned item is set in its initial state,
