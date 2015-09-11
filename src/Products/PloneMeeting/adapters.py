@@ -522,8 +522,8 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                         cfg._getCloneToOtherMCActionId(clonedToOtherMCId, cfg.getId()),
                         translate('sentto_othermeetingconfig',
                                   mapping={
-                                  'meetingConfigTitle': getattr(tool,
-                                                                clonedToOtherMCId).Title()},
+                                  'meetingConfigTitle': safe_unicode(getattr(tool,
+                                                                     clonedToOtherMCId).Title())},
                                   domain="PloneMeeting",
                                   context=self.request)))
         # if not already cloned to another mc, maybe it will be?
@@ -536,8 +536,8 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                             cfg._getCloneToOtherMCActionId(otherMeetingConfigClonableTo, cfg.getId()),
                             translate('will_be_sentto_othermeetingconfig',
                                       mapping={
-                                      'meetingConfigTitle': getattr(tool,
-                                                                    otherMeetingConfigClonableTo).Title()},
+                                      'meetingConfigTitle': safe_unicode(getattr(tool,
+                                                                         otherMeetingConfigClonableTo).Title())},
                                       domain="PloneMeeting",
                                       context=self.request)))
 
