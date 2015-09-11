@@ -731,8 +731,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # in wich MeetingConfig it is, we can not do caching...
         if caching and context.meta_type in ('Meeting', 'MeetingItem', ):
             key = "tool-getmeetingconfig-%s" % context.portal_type
-            cache = IAnnotations(self.REQUEST)
-            data = cache.get(key, None)
+            # async does not have a REQUEST
+            if hasattr(self, 'REQUEST'):
+                cache = IAnnotations(self.REQUEST)
+                data = cache.get(key, None)
+            else:
+                caching = False
         else:
             caching = False
         if data is None:

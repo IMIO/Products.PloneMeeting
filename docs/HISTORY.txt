@@ -10,6 +10,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 3.4 (unreleased)
 ----------------
 - Moved to Plone 4.3.6
+- Moved to collective.documentviewer 3.0.3
 - Rely on beautifulsoup4, Products.CPUtils
 - Moved dashboards and meeting view to imio.dashboard (see imio.dashboard package regarding required changes)
 - Do not index MeetingFiles anymore to avoid too much elements in the catalog.  MeetingFiles title is now indexed in items's

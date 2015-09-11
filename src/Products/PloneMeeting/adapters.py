@@ -48,7 +48,10 @@ class AnnexableAdapter(object):
 
     def __init__(self, context):
         self.context = context
-        self.request = self.context.REQUEST
+        # check for REQUEST when using async
+        self.request = None
+        if hasattr(self.context, 'REQUEST'):
+            self.request = self.context.REQUEST
 
     def addAnnex(self, idCandidate, annex_title, annex_file,
                  relatedTo, meetingFileTypeUID, **kwargs):
