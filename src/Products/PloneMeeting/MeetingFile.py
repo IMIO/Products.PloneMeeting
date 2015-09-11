@@ -113,8 +113,9 @@ MeetingFile_schema = ATBlobSchema.copy() + \
     schema.copy()
 
 ##code-section after-schema #fill in your manual code here
-# do not index the id in the SearchableText
+# do not index the id and the file in the SearchableText
 MeetingFile_schema['id'].searchable = False
+MeetingFile_schema['file'].searchable = False
 ##/code-section after-schema
 
 class MeetingFile(ATBlob, BrowserDefaultMixin):
