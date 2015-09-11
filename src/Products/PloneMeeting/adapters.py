@@ -518,14 +518,22 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
         for clonedToOtherMCId in clonedToOtherMCIds:
             # Append a tuple with name of the icon and a list containing
             # the msgid and the mapping as a dict
+            # if item sent to the other mc is inserted into a meeting,
+            # we display the meeting date
+            msg = translate('sentto_othermeetingconfig',
+                            mapping={'meetingConfigTitle': safe_unicode(getattr(tool,
+                                                                        clonedToOtherMCId).Title())},
+                            domain="PloneMeeting",
+                            context=self.request)
+
+            clonedBrain = self.context.getItemClonedToOtherMC(clonedToOtherMCId, theObject=False)
+            toLocalizedTime = self.context.restrictedTraverse('@@plone').toLocalizedTime
+            if clonedBrain.linkedMeetingDate:
+                long_format = clonedBrain.linkedMeetingDate.hour() and True or False
+                msg = msg + u' ({0})'.format(toLocalizedTime(clonedBrain.linkedMeetingDate, long_format=long_format))
             res.append(("%s.png" %
                         cfg._getCloneToOtherMCActionId(clonedToOtherMCId, cfg.getId()),
-                        translate('sentto_othermeetingconfig',
-                                  mapping={
-                                  'meetingConfigTitle': safe_unicode(getattr(tool,
-                                                                     clonedToOtherMCId).Title())},
-                                  domain="PloneMeeting",
-                                  context=self.request)))
+                        msg))
         # if not already cloned to another mc, maybe it will be?
         if not clonedToOtherMCIds:
             otherMeetingConfigsClonableTo = self.context.getOtherMeetingConfigsClonableTo()

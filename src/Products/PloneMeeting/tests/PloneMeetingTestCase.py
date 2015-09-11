@@ -293,7 +293,8 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         annexUid = IAnnexable(item).getAnnexesByType(relatedTo,
                                                      makeSubLists=False,
                                                      typesIds=[annexType])[-1]['UID']
-        theAnnex = item.uid_catalog(UID=annexUid)[0].getObject()
+        uid_catalog = self.portal.uid_catalog
+        theAnnex = uid_catalog(UID=annexUid)[0].getObject()
         self.assertNotEquals(theAnnex.size(), 0)
         return theAnnex
 

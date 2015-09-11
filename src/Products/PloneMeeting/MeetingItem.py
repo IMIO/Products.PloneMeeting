@@ -1055,7 +1055,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting = self.getMeeting()
             if meeting:
                 tool = getToolByName(self, 'portal_plonemeeting')
-                return "{0} ({1})".format(title, tool.formatMeetingDate(meeting).encode('utf-8'))
+                return "{0} ({1})".format(title, tool.formatMeetingDate(meeting, withHour=True).encode('utf-8'))
         return title
 
     security.declarePublic('getName')
@@ -4380,8 +4380,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
-    def getItemClonedToOtherMC(self, destMeetingConfigId):
-        '''Returns the item cloned to the destMeetingConfigId if any.'''
+    def getItemClonedToOtherMC(self, destMeetingConfigId, theObject=True):
+        '''Returns the item cloned to the destMeetingConfigId if any.
+           If p_theObject is True, the real object is returned, if not, we return the brain.'''
         annotation_key = self._getSentToOtherMCAnnotationKey(destMeetingConfigId)
         ann = IAnnotations(self)
         itemUID = ann.get(annotation_key, None)
@@ -4389,7 +4390,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             catalog = getToolByName(self, 'portal_catalog')
             brains = catalog(UID=itemUID)
             if brains:
-                return brains[0].getObject()
+                if theObject:
+                    return brains[0].getObject()
+                else:
+                    return brains[0]
         return None
 
     security.declarePublic('onDuplicate')

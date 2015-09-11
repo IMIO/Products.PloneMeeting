@@ -958,6 +958,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            items if date value changed.'''
         current_date = self.getField('date').get(self, **kwargs)
         if not value == current_date:
+            # store new date before updating items so items get
+            # right date when calling meeting.getDate
+            self.getField('date').set(self, value, **kwargs)
             catalog = getToolByName(self, 'portal_catalog')
             tool = getToolByName(self, 'portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
@@ -972,7 +975,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
             # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
             cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
-        self.getField('date').set(self, value, **kwargs)
 
     security.declarePublic('showObs')
     def showObs(self, name):

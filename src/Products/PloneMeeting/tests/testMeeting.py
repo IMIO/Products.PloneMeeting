@@ -1329,6 +1329,26 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals(meeting.getStrikedAssembly(),
                           '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
 
+    def test_pm_ChaningMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
+        """When the date of a meeting is changed, the linked items are reindexed,
+           regarding the preferredMeetingDate and linkedMeetingDate."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        item = self.create('MeetingItem')
+        item.setPreferredMeeting(meeting.UID())
+        self.presentItem(item)
+        catalog = self.portal.portal_catalog
+        itemBrain = catalog(UID=item.UID())[0]
+        self.assertEquals(itemBrain.linkedMeetingDate, meeting.getDate())
+        self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
+
+        # right, change meeting's date and check again
+        newDate = DateTime('2015/05/05')
+        meeting.setDate(newDate)
+        itemBrain = catalog(UID=item.UID())[0]
+        self.assertEquals(itemBrain.linkedMeetingDate, meeting.getDate())
+        self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
