@@ -4388,7 +4388,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         itemUID = ann.get(annotation_key, None)
         if itemUID:
             catalog = getToolByName(self, 'portal_catalog')
-            brains = catalog(UID=itemUID)
+            # we search unrestricted because current user could not have access
+            # to the other item, but we need to get some metadata about it...
+            if not theObject:
+                brains = catalog.unrestrictedSearchResults(UID=itemUID)
+            else:
+                brains = catalog(UID=itemUID)
             if brains:
                 if theObject:
                     return brains[0].getObject()
