@@ -49,15 +49,15 @@
            factory=".adapters.AnnexableAdapter"
            provides=".interfaces.IAnnexable" />
   <adapter for="Products.PloneMeeting.interfaces.IMeeting"
-           factory=".adapters.PMHistoryAdapter"
+           factory=".adapters.PMWfHistoryAdapter"
            name="workflow"
            provides="imio.history.interfaces.IImioWfHistory" />
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
-           factory=".adapters.PMHistoryAdapter"
+           factory=".adapters.PMWfHistoryAdapter"
            name="workflow"
            provides="imio.history.interfaces.IImioWfHistory" />
   <adapter for="Products.PloneMeeting.content.advice.IMeetingAdvice"
-           factory=".adapters.PMHistoryAdapter"
+           factory=".adapters.PMWfHistoryAdapter"
            name="workflow"
            provides="imio.history.interfaces.IImioWfHistory" />
 

@@ -608,13 +608,13 @@ class PMCustomViewFieldsVocabularyAdapter(CustomViewFieldsVocabularyAdapter):
         return additionalFields
 
 
-class PMHistoryAdapter(ImioWfHistoryAdapter):
+class PMWfHistoryAdapter(ImioWfHistoryAdapter):
     """
       Override the imio.history ImioHistoryAdapter.
     """
     def ignorableHistoryComments(self):
         """Add some more ignorable history comments."""
-        ignorable_history_comment = super(PMHistoryAdapter, self).ignorableHistoryComments()
+        ignorable_history_comment = super(PMWfHistoryAdapter, self).ignorableHistoryComments()
         ignorable_history_comment += ('create_meeting_item_from_template_comments',
                                       'create_from_predecessor_comments',
                                       'Duplicate and keep link_comments',
