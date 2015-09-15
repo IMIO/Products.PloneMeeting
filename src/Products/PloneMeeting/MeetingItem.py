@@ -228,7 +228,7 @@ class MeetingItemWorkflowConditions:
         if meetingState in RETURN_TO_PROPOSING_GROUP_MAPPINGS['NO_MORE_RETURNABLE_STATES']:
             # avoid to display No(...) message for each transition having the 'mayBackToMeeting'
             # guard expr, just return the No(...) msg for the first transitionName checking this...
-            if not 'may_not_back_to_meeting_warned_by' in self.context.REQUEST:
+            if 'may_not_back_to_meeting_warned_by' not in self.context.REQUEST:
                 self.context.REQUEST.set('may_not_back_to_meeting_warned_by', transitionName)
             if self.context.REQUEST.get('may_not_back_to_meeting_warned_by') == transitionName:
                 return No(translate('can_not_return_to_meeting_because_of_meeting_state',
@@ -1454,7 +1454,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(item, 'portal_plonemeeting')
         # 'asked_again' must be activated in the configuration
         cfg = tool.getMeetingConfig(item)
-        if not 'asked_again' in cfg.getUsedAdviceTypes():
+        if 'asked_again' not in cfg.getUsedAdviceTypes():
             return False
 
         # apart MeetingManagers, the advice can not be asked again
@@ -1559,7 +1559,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # add every manually linked items of this newUid...
                 newItem = unrestrictedSearch(UID=newUid)[0]._unrestrictedGetObject()
                 for mLinkedItemUid in newItem.getRawManuallyLinkedItems():
-                    if not mLinkedItemUid in newLinkedUids and not mLinkedItemUid in '':
+                    if mLinkedItemUid and not mLinkedItemUid in newLinkedUids:
                         newLinkedUids.append(mLinkedItemUid)
             # do not forget newUids
             newLinkedUids = newLinkedUids + newUids
@@ -1800,7 +1800,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         preferredMeetingUID = self.getPreferredMeeting()
         # add it if we actually have a preferredMeetingUID stored
         # and if it is not yet in the vocabulary!
-        if preferredMeetingUID and not preferredMeetingUID in [meetingInfo[0] for meetingInfo in res]:
+        if preferredMeetingUID and preferredMeetingUID not in [meetingInfo[0] for meetingInfo in res]:
             # check that stored preferredMeeting still exists, if it
             # is the case, add it the the vocabulary
             catalog = getToolByName(self, 'portal_catalog')
@@ -1842,7 +1842,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if otherMeetingConfigsClonableTo:
             otherMeetingConfigsClonableToInVocab = [term[0] for term in res]
             for meetingConfigId in otherMeetingConfigsClonableTo:
-                if not meetingConfigId in otherMeetingConfigsClonableToInVocab:
+                if meetingConfigId not in otherMeetingConfigsClonableToInVocab:
                     res.append((meetingConfigId, getattr(tool, meetingConfigId).Title()))
         return DisplayList(tuple(res))
 
@@ -1888,7 +1888,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if associatedGroups:
             associatedGroupsInVocab = [group[0] for group in res]
             for groupId in associatedGroups:
-                if not groupId in associatedGroupsInVocab:
+                if groupId not in associatedGroupsInVocab:
                     mGroup = getattr(tool, groupId, None)
                     if mGroup:
                         res.append((groupId, getattr(tool, groupId).getName()))
@@ -2322,7 +2322,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # if we group by duty, create an OrderedDict where the key is the duty
                 # and the value is a list of meetingUsers having this duty
                 if groupByDuty:
-                    if not userDuty in groupedByDuty:
+                    if userDuty not in groupedByDuty:
                         groupedByDuty[userDuty] = []
                     if userId in attendeeIds:
                         groupedByDuty[userDuty].append(mUser.Title())
@@ -2549,7 +2549,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             order = item._findOrderFor(insertMethod['insertingMethod'])
             # check if we need to reverse order
             if insertMethod['reverse'] == '1':
-                halfOneLevel = levels[insertMethods.index(insertMethod)]/2
+                halfOneLevel = levels[insertMethods.index(insertMethod)] / 2
                 halfOneLevelDiff = halfOneLevel - order
                 order = int(halfOneLevel + halfOneLevelDiff)
             res = res + levels[insertMethods.index(insertMethod)] * order
@@ -2763,8 +2763,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # check if the found automatic adviser is not already in the self.adviceIndex
                 # but with a manually changed delay, aka 'delay_for_automatic_adviser_changed_manually' is True
                 storedCustomAdviser = self.adviceIndex.get(customAdviser['group'], {})
-                delay_for_automatic_adviser_changed_manually = 'delay_for_automatic_adviser_changed_manually' in storedCustomAdviser and \
-                                                               storedCustomAdviser['delay_for_automatic_adviser_changed_manually'] or False
+                delay_for_automatic_adviser_changed_manually = \
+                    'delay_for_automatic_adviser_changed_manually' in storedCustomAdviser and \
+                    storedCustomAdviser['delay_for_automatic_adviser_changed_manually'] or False
                 if storedCustomAdviser and \
                    not storedCustomAdviser['row_id'] == customAdviser['row_id'] and \
                    delay_for_automatic_adviser_changed_manually and \
@@ -2777,7 +2778,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             # the found advice was actually linked, we keep it
                             # adapt last added dict to res to keep storedCustomAdviser value
                             res[-1]['row_id'] = storedCustomAdviser['row_id']
-                            res[-1]['gives_auto_advice_on_help_message'] = storedCustomAdviser['gives_auto_advice_on_help_message']
+                            res[-1]['gives_auto_advice_on_help_message'] = \
+                                storedCustomAdviser['gives_auto_advice_on_help_message']
                             res[-1]['delay'] = storedCustomAdviser['delay']
                             res[-1]['delay_left_alert'] = storedCustomAdviser['delay_left_alert']
                             res[-1]['delay_label'] = storedCustomAdviser['delay_label']
@@ -2919,7 +2921,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             optionalAdvisersInVocab = [group[0] for group in resNonDelayAwareAdvisers] + \
                                       [group[0] for group in resDelayAwareAdvisers]
             for groupId in optionalAdvisers:
-                if not groupId in optionalAdvisersInVocab:
+                if groupId not in optionalAdvisersInVocab:
                     if '__rowid__' in groupId:
                         meetingGroupId, row_id = self._decodeDelayAwareId(groupId)
                         delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
@@ -2950,8 +2952,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
                                                                   domain='PloneMeeting',
                                                                   context=self.REQUEST)
-                resNonDelayAwareAdvisers = DisplayList([('not_selectable_value_non_delay_aware_optional_advisers',
-                                                         non_delay_aware_optional_advisers_msg)]) + resNonDelayAwareAdvisers
+                resNonDelayAwareAdvisers = \
+                    DisplayList([('not_selectable_value_non_delay_aware_optional_advisers',
+                                  non_delay_aware_optional_advisers_msg)]) + resNonDelayAwareAdvisers
 
         return resDelayAwareAdvisers + resNonDelayAwareAdvisers
 
@@ -3115,7 +3118,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'advice_id': advice.getId(),
                                         'advice_uid': advice.UID(),
                                         'comment': advice.advice_comment and advice.advice_comment.output,
-                                        'observations': advice.advice_observations and advice.advice_observations.output,
+                                        'observations':
+                                        advice.advice_observations and advice.advice_observations.output,
                                         'reference': advice.advice_reference,
                                         'row_id': advice.advice_row_id,
                                         'gives_auto_advice_on_help_message': gives_auto_advice_on_help_message,
@@ -3123,7 +3127,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'delay_left_alert': delay_left_alert,
                                         'delay_label': delay_label,
                                         'advice_given_on': advice.get_advice_given_on(),
-                                        'advice_given_on_localized': self.toLocalizedTime(advice.get_advice_given_on()),
+                                        'advice_given_on_localized':
+                                        self.toLocalizedTime(advice.get_advice_given_on()),
                                         'hidden_during_redaction': advice.advice_hide_during_redaction,
                                         }
         return res
@@ -3301,7 +3306,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           If p_obj is None, w
         """
         roles = rolesForPermissionOn(permission, obj)
-        if not role_to_give in roles:
+        if role_to_give not in roles:
             # cleanup roles as the permission is also returned with a leading '_'
             roles = [role for role in roles if not role.startswith('_')]
             roles = roles + [role_to_give, ]
@@ -3493,7 +3498,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             #   is not True anymore (item/getBudgetRelated for example) but the advice was given in between
             #   However, in this case we have a 'row_id' stored in the given advice
             # - in case we have a not asked advice given by a PowerAdviser, in thus case, we have no 'row_id'
-            if not groupId in self.adviceIndex:
+            if groupId not in self.adviceIndex:
                 self.adviceIndex[groupId] = PersistentMapping()
                 if not adviceInfo['row_id']:
                     # this is a given advice that was not asked (given by a PowerAdviser)
@@ -3653,7 +3658,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # when the advice can not be given anymore due to a workflow transition
             # we only do that if not already done (a stopped date is already defined)
             # and if we are not on the transition that reinitialize delays
-            if not itemState in itemAdviceStates and \
+            if itemState not in itemAdviceStates and \
                self.adviceIndex[groupId]['delay'] and not \
                isTransitionReinitializingDelays and not \
                bool(groupId in saved_stored_data and
@@ -3968,7 +3973,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                       notForGroups=adviserGroups)
         # check if copyGroups should have access to this item for current review state
         itemState = self.queryState()
-        if not itemState in cfg.getItemCopyGroupsStates():
+        if itemState not in cfg.getItemCopyGroupsStates():
             return
         # Add the local roles corresponding to the selected copyGroups.
         # We give the 'power observer' role to the selected groups.
@@ -4009,7 +4014,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Then, add local roles for bugetimpacteditors.
         itemState = self.queryState()
         cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        if not itemState in cfg.getItemBudgetInfosStates():
+        if itemState not in cfg.getItemBudgetInfosStates():
             return
         budgetImpactEditorsGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
         self.manage_addLocalRoles(budgetImpactEditorsGroupId, ('MeetingBudgetImpactEditor',))
@@ -4245,7 +4250,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # do not keep optional fields that are not used in the destMeetingConfig
         optionalFields = cfg.listUsedItemAttributes().keys()
         for field in fieldsToCopy:
-            if field in optionalFields and not field in destUsedItemAttributes:
+            if field in optionalFields and field not in destUsedItemAttributes:
                 fieldsToCopy.remove(field)
                 # special case for 'budgetRelated' that works together with 'budgetInfos'
                 if field == 'budgetInfos':
@@ -4302,12 +4307,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             inTheFuture=True)
                         # we only keep meetings that are in the
                         if not meetingsAcceptingItems:
-                            plone_utils.addPortalMessage(_('could_not_present_item_no_meeting_accepting_items',
-                                                           mapping={'destMeetingConfigTitle': destMeetingConfig.Title(),
-                                                                    'initial_state': translate(initial_state,
-                                                                                               domain="plone",
-                                                                                               context=self.REQUEST)}),
-                                                         'warning')
+                            plone_utils.addPortalMessage(
+                                _('could_not_present_item_no_meeting_accepting_items',
+                                  mapping={'destMeetingConfigTitle': destMeetingConfig.Title(),
+                                           'initial_state': translate(initial_state,
+                                                                      domain="plone",
+                                                                      context=self.REQUEST)}),
+                                'warning')
                             break
                         meeting = meetingsAcceptingItems[0]
                         newItem.REQUEST['PUBLISHED'] = meeting.getObject()
@@ -4356,15 +4362,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Check that the item is in the correct state and that it has not
         # already be cloned to this other meetingConfig.
         item = self.getSelf()
-        if not item.queryState() in item.adapted().itemPositiveDecidedStates() or not \
-           destMeetingConfigId in item.getOtherMeetingConfigsClonableTo() or \
+        if not item.queryState() in item.adapted().itemPositiveDecidedStates() or \
+           destMeetingConfigId not in item.getOtherMeetingConfigsClonableTo() or \
            item._checkAlreadyClonedToOtherMC(destMeetingConfigId):
             return False
         # Can not clone an item to the same meetingConfig as the original item,
         # or if the given destMeetingConfigId is not clonable to.
         cfg = item.portal_plonemeeting.getMeetingConfig(item)
         if (cfg.getId() == destMeetingConfigId) or \
-           not destMeetingConfigId in [mctct['meeting_config'] for mctct in cfg.getMeetingConfigsToCloneTo()]:
+           destMeetingConfigId not in [mctct['meeting_config'] for mctct in cfg.getMeetingConfigsToCloneTo()]:
             return False
         # The member must have necessary roles
         if not item.portal_plonemeeting.isManager(item):
@@ -4431,7 +4437,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # If we are here, everything has already been checked before.
         # Just check that the item is myself or a Plone Site.
         # We can remove an item directly, not "through" his container.
-        if not item.meta_type in ['Plone Site', 'MeetingItem', ]:
+        if item.meta_type not in ['Plone Site', 'MeetingItem', ]:
             user = self.portal_membership.getAuthenticatedMember()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException("can_not_delete_meetingitem_container")
@@ -4683,7 +4689,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for key in rq.keys():
             if key.startswith('vote_value_') and not secret:
                 voterId = key[11:]
-                if not voterId in voterIds:
+                if voterId not in voterIds:
                     raise KeyError("Trying to set vote for unexisting voter!")
                 requestVotes[voterId] = allYes and 'yes' or rq[key]
                 secret = False
@@ -4789,7 +4795,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('setFieldFromAjax')
     def setFieldFromAjax(self, fieldName, fieldValue):
         '''See doc in utils.py.'''
-            # invalidate advices if needed
+        # invalidate advices if needed
         if self.willInvalidateAdvices():
             self.updateAdvices(invalidate=True)
         return setFieldFromAjax(self, fieldName, fieldValue)
@@ -4852,7 +4858,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 if not hasattr(meeting.aq_base, 'departures'):
                     meeting.departures = PersistentMapping()
-                meeting.departures[userId] = self.getItemNumber(relativeTo='meeting')+1
+                meeting.departures[userId] = self.getItemNumber(relativeTo='meeting') + 1
         else:
             # Case 2)
             absents = list(self.getItemAbsents())

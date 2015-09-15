@@ -891,7 +891,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            is active.'''
         # self.getActiveConfigs also check for 'View' access of current member to it
         activeConfigs = self.getActiveConfigs()
-        if not meetingConfigId in [activeConfig.getId() for activeConfig in activeConfigs]:
+        if meetingConfigId not in [activeConfig.getId() for activeConfig in activeConfigs]:
             return False
         return True
 
@@ -958,12 +958,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         adapted.appendToUrl = appendToUrl
         adapted.additionalClasses = additionalCSSClasses
         if tag_title:
-            tag_title = translate(tag_title, domain='PloneMeeting', context=self.REQUEST, ).encode('utf-8')
+            tag_title = translate(tag_title,
+                                  domain='PloneMeeting',
+                                  context=self.REQUEST).encode('utf-8')
             adapted.tag_title = tag_title
         # Is this a not-privacy-viewable item?
         if obj.meta_type == 'MeetingItem' and \
-           (not _checkPermission(View, obj) or
-           not obj.adapted().isPrivacyViewable()):
+           (not _checkPermission(View, obj) or not obj.adapted().isPrivacyViewable()):
             adapted.isViewable = False
         elif obj.meta_type == 'Meeting' and not _checkPermission(View, obj):
             adapted.isViewable = False
@@ -980,7 +981,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 annexInfo = annexInfo.getAnnexInfo()
             adapted.contentValue = annexInfo['Title']
             if annexInfo['warnSize']:
-                adapted.contentValue += "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
+                adapted.contentValue += \
+                    "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
                     translate("annex_size_warning",
                               domain="PloneMeeting",
                               context=self.REQUEST,
@@ -1120,7 +1122,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getNonWorkingDayNumbers(self):
         '''Return non working days, aka weekends.'''
         workingDays = self.getWorkingDays()
-        not_working_days = [day for day in PY_DATETIME_WEEKDAYS if not day in workingDays]
+        not_working_days = [day for day in PY_DATETIME_WEEKDAYS if day not in workingDays]
         return [PY_DATETIME_WEEKDAYS.index(not_working_day) for not_working_day in not_working_days]
 
     def getHolidaysAs_datetime_cachekey(method, self):
@@ -1266,7 +1268,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             newItem._removeEveryContainedAdvices()
 
             # Set fields not in the copyFields list to their default value
-            #'id' and  'proposingGroup' will be kept in anyway
+            # 'id' and  'proposingGroup' will be kept in anyway
             fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
             for field in newItem.Schema().filterFields(isMetadata=False):
                 if not field.getName() in fieldsToKeep:
@@ -1724,7 +1726,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            If a p_query is given, it will be used by the portal_catalog query
            we do to restrict update of advices to some subsets of items...'''
         catalog = getToolByName(self, 'portal_catalog')
-        if not 'meta_type' in query:
+        if 'meta_type' not in query:
             query['meta_type'] = 'MeetingItem'
         brains = catalog(**query)
         numberOfBrains = len(brains)
@@ -1820,7 +1822,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         break
             else:
                 considerSuffix = True
-            if considerSuffix and not principalId in notForGroups:
+            if considerSuffix and principalId not in notForGroups:
                 # Only remove 'role_to_remove' as the groups could
                 # have other local roles given by other functionnalities
                 if len(localRoles) > 1 and role_to_remove in localRoles:

@@ -311,7 +311,7 @@ def postInstall(context):
     # make sure meetingadvice is in site_properties.types_not_searched
     site_properties = site.portal_properties.site_properties
     blacklisted = list(site_properties.getProperty('types_not_searched'))
-    if not 'meetingadvice' in blacklisted:
+    if 'meetingadvice' not in blacklisted:
         blacklisted.append('meetingadvice')
         site_properties.manage_changeProperties(types_not_searched=blacklisted)
 
@@ -350,7 +350,7 @@ def _configureCKeditor(site):
 def _congfigureSafeHtml(site):
     '''Add some values to safe_html.'''
     logger.info('Adding \'colgroup\' to the list of nasty_tags in safe_html...')
-    if not u'colgroup' in site.portal_transforms.safe_html._config['nasty_tags']:
+    if u'colgroup' not in site.portal_transforms.safe_html._config['nasty_tags']:
         site.portal_transforms.safe_html._config['nasty_tags'][u'colgroup'] = '1'
     # make sure 'colgroup' and 'col' are not in 'valid_tags'...
     if 'colgroup' in site.portal_transforms.safe_html._config['valid_tags']:
@@ -358,9 +358,9 @@ def _congfigureSafeHtml(site):
     if 'col' in site.portal_transforms.safe_html._config['valid_tags']:
         del site.portal_transforms.safe_html._config['valid_tags']['col']
     logger.info('Adding \'strike\' and \'s\' to the list of valid_tags in safe_html...')
-    if not u'strike' in site.portal_transforms.safe_html._config['valid_tags']:
+    if u'strike' not in site.portal_transforms.safe_html._config['valid_tags']:
         site.portal_transforms.safe_html._config['valid_tags'][u'strike'] = '1'
-    if not u's' in site.portal_transforms.safe_html._config['valid_tags']:
+    if u's' not in site.portal_transforms.safe_html._config['valid_tags']:
         site.portal_transforms.safe_html._config['valid_tags'][u's'] = '1'
     # make sure it was not in 'nasty_tags'...
     if 'strike' in site.portal_transforms.safe_html._config['nasty_tags']:

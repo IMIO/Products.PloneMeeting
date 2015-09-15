@@ -186,7 +186,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         # if we receive a 'dict' instead, we use v.get()
         for v in value:
             # don't process hidden template row as input data
-            if v.get('orderindex_', None) == "template_row_marker" or not 'row_id' in v:
+            if v.get('orderindex_', None) == "template_row_marker" or 'row_id' not in v:
                 continue
             if not v.get('row_id', None):
                 v['row_id'] = self.generateUniqueId()

@@ -337,7 +337,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 groupMembers = self.acl_users.source_groups.listAssignedPrincipals(ploneGroupId)
                 # groupMembers is something like :
                 # [('a_removed_user', '<a_removed_user: not found>'), ('pmCreator1', 'pmCreator1'), ]
-                groupsMembersWithoutNotFound = [member for member in groupMembers if not 'not found' in member[1]]
+                groupsMembersWithoutNotFound = [member for member in groupMembers if 'not found' not in member[1]]
                 if groupsMembersWithoutNotFound:
                     raise BeforeDeleteException("can_not_delete_meetinggroup_plonegroup")
             # And finally, check that meetingGroup is not linked to an existing

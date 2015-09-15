@@ -57,13 +57,12 @@ class AnnexableAdapter(object):
                  relatedTo, meetingFileTypeUID, **kwargs):
         '''See docstring in interfaces.py'''
         # first of all, check if we can actually add the annex
-        if relatedTo == 'item_decision':
-            if not checkPermission("PloneMeeting: Write decision annex", self.context):
-                raise Unauthorized
-        else:
+        if relatedTo == 'item_decision' and \
+           not checkPermission("PloneMeeting: Write decision annex", self.context):
+            raise Unauthorized
+        elif not checkPermission("PloneMeeting: Add annex", self.context):
             # we use the "PloneMeeting: Add annex" permission for item normal annexes and advice annexes
-            if not checkPermission("PloneMeeting: Add annex", self.context):
-                raise Unauthorized
+            raise Unauthorized
 
         # if we can, proceed
         if not idCandidate:
@@ -379,10 +378,10 @@ class AnnexableAdapter(object):
         """
         annotations = IAnnotations(self.context)
         # not_convertable or awaiting conversion?
-        if not 'collective.documentviewer' in annotations.keys() or not self.isConvertable():
+        if 'collective.documentviewer' not in annotations.keys() or not self.isConvertable():
             return 'not_convertable'
         # under conversion?
-        if not 'successfully_converted' in annotations['collective.documentviewer']:
+        if 'successfully_converted' not in annotations['collective.documentviewer']:
             return 'under_conversion'
 
         if not annotations['collective.documentviewer']['successfully_converted'] is True:
@@ -536,6 +535,7 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
             res.append(("%s.png" %
                         cfg._getCloneToOtherMCActionId(clonedToOtherMCId, cfg.getId()),
                         msg))
+
         # if not already cloned to another mc, maybe it will be?
         if not clonedToOtherMCIds:
             otherMeetingConfigsClonableTo = self.context.getOtherMeetingConfigsClonableTo()
@@ -546,8 +546,9 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                             cfg._getCloneToOtherMCActionId(otherMeetingConfigClonableTo, cfg.getId()),
                             translate('will_be_sentto_othermeetingconfig',
                                       mapping={
-                                      'meetingConfigTitle': safe_unicode(getattr(tool,
-                                                                         otherMeetingConfigClonableTo).Title())},
+                                          'meetingConfigTitle': safe_unicode(
+                                          getattr(tool, otherMeetingConfigClonableTo).Title())
+                                      },
                                       domain="PloneMeeting",
                                       context=self.request)))
 
@@ -786,8 +787,8 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapte
         review_state = MEETINGREVIEWERS[highestReviewerLevel]
         # specific management for workflows using the 'pre_validation' wfAdaptation
         if highestReviewerLevel == 'reviewers' and \
-           ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-           'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+            ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+             'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
             review_state = 'prevalidated'
 
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
@@ -803,11 +804,13 @@ class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterio
            items of lower reviewer levels.
            This search works if the workflow manage reviewer levels where higher reviewer level
            can validate lower reviewer levels EVEN IF THE USER IS NOT IN THE CORRESPONDING PLONE SUBGROUP.
-           For example with a 3 levels reviewer workflow, called review1 (lowest level), review2 and review3 (highest level) :
+           For example with a 3 levels reviewer workflow, called review1 (lowest level),
+           review2 and review3 (highest level) :
            - reviewer1 may validate items in reviewer1;
            - reviewer2 may validate items in reviewer1 and reviewer2;
            - reviewer3 may validate items in reviewer1, reviewer2 and reviewer3.
-           So get highest hierarchic level of each group of the user and take into account lowest levels too.'''
+           So get highest hierarchic level of each group of the user and
+           take into account lowest levels too.'''
         # search every highest reviewer level for each group of the user
         membershipTool = getToolByName(self.context, 'portal_membership')
         groupsTool = getToolByName(self.context, 'portal_groups')
@@ -832,10 +835,11 @@ class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterio
                 if not foundLevel and not reviewer_suffix == highestReviewerLevel:
                     continue
                 foundLevel = True
-                # specific management for workflows using the 'pre_validation'/'pre_validation_keep_reviewer_permissions' wfAdaptation
+                # specific management for workflows using the 'pre_validation' or
+                # 'pre_validation_keep_reviewer_permissions' wfAdaptation
                 if reviewer_suffix == 'reviewers' and \
-                   ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-                   'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+                    ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+                     'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
                     review_state = 'prevalidated'
                 reviewProcessInfos.append('%s__reviewprocess__%s' % (mGroupId,
                                                                      review_state))
@@ -867,8 +871,8 @@ class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
                 if groupId.endswith('_%s' % reviewer_suffix):
                     # specific management for workflows using the 'pre_validation' wfAdaptation
                     if reviewer_suffix == 'reviewers' and \
-                       ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-                       'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+                        ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+                         'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
                         review_state = 'prevalidated'
                     reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
                                                                          review_state))

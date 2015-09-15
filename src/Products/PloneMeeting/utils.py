@@ -68,9 +68,9 @@ ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR = 'There was an error during transform of
     'Please check TAL expression defined in the configuration.  Original exception: %s'
 
 # ------------------------------------------------------------------------------
-monthsIds = {1:  'month_jan', 2:  'month_feb', 3:  'month_mar', 4:  'month_apr',
-             5:  'month_may', 6:  'month_jun', 7:  'month_jul', 8:  'month_aug',
-             9:  'month_sep', 10: 'month_oct', 11: 'month_nov', 12: 'month_dec'}
+monthsIds = {1: 'month_jan', 2: 'month_feb', 3: 'month_mar', 4: 'month_apr',
+             5: 'month_may', 6: 'month_jun', 7: 'month_jul', 8: 'month_aug',
+             9: 'month_sep', 10: 'month_oct', 11: 'month_nov', 12: 'month_dec'}
 
 weekdaysIds = {0: 'weekday_sun', 1: 'weekday_mon', 2: 'weekday_tue',
                3: 'weekday_wed', 4: 'weekday_thu', 5: 'weekday_fri',
@@ -97,7 +97,7 @@ def getInterface(interfaceName):
     elems = interfaceName.split('.')
     if len(elems) < 2:
         raise PloneMeetingError(WRONG_INTERFACE_NAME % interfaceName)
-    interfaceName = elems[len(elems)-1]
+    interfaceName = elems[len(elems) - 1]
     packageName = ''
     for elem in elems[:-1]:
         if not packageName:
@@ -660,7 +660,9 @@ class FakeMeetingUser:
        * when we need to get replacement-related info concatenated from several
          MeetingUser instances.
     '''
+
     security = ClassSecurityInfo()
+
     def __init__(self, id, user=None, replacement=None):
         self.id = id
         if not user:
@@ -681,30 +683,34 @@ class FakeMeetingUser:
             self.originalDuty2 = user.getDuty2()
 
     security.declarePublic('getId')
+
     def getId(self):
         return self.id
 
     security.declarePublic('Title')
+
     def Title(self):
         return getattr(self, 'title', '')
 
     security.declarePublic('getDuty')
+
     def getDuty(self, original=False):
         if not original:
             return getattr(self, 'duty', '')
         return getattr(self, 'originalDuty', '')
 
     security.declarePublic('getBilingual')
+
     def getBilingual(self, name, force=1, sep='-'):
         '''Gets the bilingual content of field named p_name (mimics
            MeetingUser.getBilingual).'''
         if force == 1:
             return getattr(self, name, '')
         elif force == 2:
-            return getattr(self, name+'2', '')
+            return getattr(self, name + '2', '')
         elif force == 'all':
             return '%s%s%s' % (getattr(self, name, ''), sep,
-                               getattr(self, name+'2', ''))
+                               getattr(self, name + '2', ''))
 InitializeClass(FakeMeetingUser)
 
 
@@ -757,10 +763,10 @@ def getFieldContent(obj, name, force=None, sep='-', **kwargs):
         if force == 1:
             return obj.getField(name).get(obj, **kwargs)
         elif force == 2:
-            return obj.getField(name+'2').get(obj, **kwargs)
+            return obj.getField(name + '2').get(obj, **kwargs)
         elif force == 'all':
             return '%s%s%s' % (obj.getField(name).get(obj, **kwargs), sep,
-                               obj.getField(name+'2').get(obj, **kwargs))
+                               obj.getField(name + '2').get(obj, **kwargs))
     field = obj.getField(name)
     # Is content of this field bilingual?
     tool = obj.portal_plonemeeting
@@ -839,7 +845,7 @@ def getLastEvent(obj, transition=None, notBefore='transfer'):
         return None
     if not transition:
         return history[-1]
-    i = len(history)-1
+    i = len(history) - 1
     while i >= 0:
         event = history[i]
         if notBefore and (event['action'] == notBefore):
@@ -936,8 +942,8 @@ def findNewValue(obj, name, history, stopIndex):
     '''This function tries to find a more recent version of value of field
        p_name on p_obj. It first tries to find it in history[:stopIndex+1]. If
        it does not find it there, it returns the current value on p_obj.'''
-    i = stopIndex+1
-    while (i-1) >= 0:
+    i = stopIndex + 1
+    while (i - 1) >= 0:
         i -= 1
         if history[i]['action'] != '_datachange_':
             continue

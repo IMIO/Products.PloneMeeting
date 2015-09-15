@@ -2630,9 +2630,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # check that if we selected 'on_to_discuss', we actually use the field 'toDisucss'...
         if 'on_to_discuss' in res:
             if hasattr(self.REQUEST, 'usedItemAttributes'):
-                notUsingToDiscuss = not 'toDiscuss' in self.REQUEST.get('usedItemAttributes')
+                notUsingToDiscuss = 'toDiscuss' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingToDiscuss = not 'toDiscuss' in self.getUsedItemAttributes()
+                notUsingToDiscuss = 'toDiscuss' not in self.getUsedItemAttributes()
             if notUsingToDiscuss:
                 return translate('inserting_methods_not_using_to_discuss_error',
                                  domain='PloneMeeting',
@@ -2661,8 +2661,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # if the current row is not linked to previous row or the next row
         # is not linked the current row, return nothing
         if not currentRowData['is_linked_to_previous_row'] == '1' and \
-           (currentRowIndex == len(self.getCustomAdvisers())-1 or not
-           self.getCustomAdvisers()[currentRowIndex+1]['is_linked_to_previous_row'] == '1'):
+           (currentRowIndex == len(self.getCustomAdvisers()) - 1 or not
+           self.getCustomAdvisers()[currentRowIndex + 1]['is_linked_to_previous_row'] == '1'):
             return isAutomaticAdvice, res
         res.append(currentRowData)
 
@@ -2680,7 +2680,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 if previousRow['is_linked_to_previous_row'] == '0':
                     break
         i = currentRowIndex
-        while i < len(self.getCustomAdvisers())-1:
+        while i < len(self.getCustomAdvisers()) - 1:
             i = i + 1
             # loop until the last row is found, aka end of customAdvisers
             # or row after has 'is_linked_to_previous_row' == '0'
@@ -2872,7 +2872,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if storedPowerAdvisersGroups:
             groupsInVocab = [group[0] for group in res]
             for storedPowerAdvisersGroup in storedPowerAdvisersGroups:
-                if not storedPowerAdvisersGroup in groupsInVocab:
+                if storedPowerAdvisersGroup not in groupsInVocab:
                     mGroup = getattr(tool, storedPowerAdvisersGroup)
                     res.append((mGroup.getId(), mGroup.getName()))
         return DisplayList(res).sortedByValue()
@@ -2893,7 +2893,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if storedCustomAdviserGroups:
             groupsInVocab = [group[0] for group in res]
             for storedCustomAdviserGroup in storedCustomAdviserGroups:
-                if not storedCustomAdviserGroup in groupsInVocab:
+                if storedCustomAdviserGroup not in groupsInVocab:
                     mGroup = getattr(tool, storedCustomAdviserGroup)
                     res.append((mGroup.getId(), mGroup.getName()))
         return DisplayList(res).sortedByValue()
@@ -3038,7 +3038,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # do not search item templates and recurring items
                 if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
                     nsTypes = props.getProperty('types_not_searched')
-                    if not portal_type in nsTypes:
+                    if portal_type not in nsTypes:
                         if not nsTypes:
                             nsTypes = []
                         else:
@@ -3103,14 +3103,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # Update the typesUseViewActionInListings property of site_properties
                     # so MeetingItem types are in it, this is usefull when managing item templates
                     # in the MeetingConfig because folders there have the 'folder_contents' layout
-                    if not portalTypeName in site_properties.typesUseViewActionInListings:
-                        site_properties.typesUseViewActionInListings = site_properties.typesUseViewActionInListings + (portalTypeName, )
+                    if portalTypeName not in site_properties.typesUseViewActionInListings:
+                        site_properties.typesUseViewActionInListings = site_properties.typesUseViewActionInListings + \
+                            (portalTypeName, )
 
         # Copy actions from the base portal type
         self.updatePortalTypes()
         # Update the factory tool with the list of types to register
         self.portal_factory.manage_setPortalFactoryTypes(
-            listOfTypeIds=factoryTypesToRegister+registeredFactoryTypes)
+            listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
 
     security.declarePrivate('createSearches')
     def createSearches(self, searchesInfo):
@@ -3223,7 +3224,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            This will return groupId and True if group was added, False otherwise.'''
         groupId = "%s_%s" % (self.getId(), suffix)
         wasCreated = False
-        if not groupId in self.portal_groups.listGroupIds():
+        if groupId not in self.portal_groups.listGroupIds():
             wasCreated = True
             enc = self.portal_properties.site_properties.getProperty(
                 'default_charset')
@@ -3351,7 +3352,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if folderId == TOOL_FOLDER_ITEM_TEMPLATES:
                 # add navigation portlet
                 manager = getUtility(IPortletManager, name=u"plone.leftcolumn")
-                portletAssignmentMapping = getMultiAdapter((folder, manager), IPortletAssignmentMapping, context=folder)
+                portletAssignmentMapping = getMultiAdapter(
+                    (folder, manager),
+                    IPortletAssignmentMapping, context=folder)
                 navPortlet = navigation.Assignment(bottomLevel=0,
                                                    topLevel=0,
                                                    includeTop=True,
@@ -3716,18 +3719,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             isSelectable = True
             if onlySelectable:
                 isSelectable = bool(mft.isSelectable())
-            if isSelectable:
-                if not typesIds or (typesIds and (mft.id in typesIds)):
-                    data = mft._dataFor()
-                    res.append(data)
-                    # manage subTypes if necessary
-                    if includeSubTypes:
-                        for subType in mft.getSubTypes():
-                            if not mft.isSelectable(row_id=subType['row_id']):
-                                continue
-                            data = mft._dataFor(row_id=subType['row_id'])
-                            res.append(data)
-                    pass
+            if isSelectable and (not typesIds or (typesIds and (mft.id in typesIds))):
+                data = mft._dataFor()
+                res.append(data)
+                # manage subTypes if necessary
+                if includeSubTypes:
+                    for subType in mft.getSubTypes():
+                        if not mft.isSelectable(row_id=subType['row_id']):
+                            continue
+                        data = mft._dataFor(row_id=subType['row_id'])
+                        res.append(data)
+                pass
         return res
 
     security.declarePublic('getCategories')
@@ -4047,7 +4049,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             member = membershipTool.getAuthenticatedMember()
             memberGroups = [group.getId() for group in
                             tool.getGroupsForUser(member.getId(), suffix="creators")]
-            query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + tuple(memberGroups)
+            query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
+                tuple(memberGroups)
         return query
 
     security.declarePublic('getItemTemplates')
@@ -4109,12 +4112,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             context=self.REQUEST)
         if msg:
             self.plone_utils.addPortalMessage(msg)
-            rq.RESPONSE.redirect(self.absolute_url()+'?pageName=users')
+            rq.RESPONSE.redirect(self.absolute_url() + '?pageName=users')
         else:
             # Create the user with the right ID and redirect the logged user to
             # the edit_view.
             self.createUser(userId)
-            editUrl = getattr(self.meetingusers, userId).absolute_url()+'/edit'
+            editUrl = getattr(self.meetingusers, userId).absolute_url() + '/edit'
             rq.RESPONSE.redirect(editUrl)
 
     def getUserName_cachekey(method, self, param, request, userId=None, caching=True):
@@ -4281,7 +4284,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             query['getDate'] = {'query': DateTime(), 'range': 'min'}
 
         return catalog.unrestrictedSearchResults(**query)
-
 
 
 registerType(MeetingConfig, PROJECTNAME)

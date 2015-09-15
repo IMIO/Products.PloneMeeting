@@ -35,11 +35,13 @@ class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
 
     def _compute_redirect_to(self, collection, criterion):
         """ """
-        redirect_to = super(PMConditionAwareCollectionVocabulary, self)._compute_redirect_to(collection, criterion)
+        redirect_to = super(PMConditionAwareCollectionVocabulary, self)._compute_redirect_to(collection,
+                                                                                             criterion)
         # XXX begin change by PloneMeeting, do redirect to the folder in the user pmFolder
         tool = getToolByName(self.context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(collection)
-        redirect_to = redirect_to.replace(cfg.searches.absolute_url(), tool.getPloneMeetingFolder(cfg.getId()).absolute_url())
+        redirect_to = redirect_to.replace(cfg.searches.absolute_url(),
+                                          tool.getPloneMeetingFolder(cfg.getId()).absolute_url())
         return redirect_to
         # XXX end change
 

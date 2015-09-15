@@ -45,7 +45,7 @@ def previous_review_state(obj):
     # check that we have a history for current workflow and that
     # there is more than one action triggered, or we are in the initial state and
     # previous action is None...
-    if not wfName in wh or not len(wh[wfName]) > 1:
+    if wfName not in wh or not len(wh[wfName]) > 1:
         return ''
 
     # action [-1] is last triggered action, but we want the previous one...
@@ -132,7 +132,7 @@ def sentToInfos(obj):
     clonableTo = obj.getOtherMeetingConfigsClonableTo()
     clonedTo = obj._getOtherMeetingConfigsImAmClonedIn()
     for cfgId in clonableTo:
-        if not cfgId in clonedTo:
+        if cfgId not in clonedTo:
             res.append(cfgId + '__clonable_to')
     for cfgId in clonedTo:
         res.append(cfgId + '__cloned_to')

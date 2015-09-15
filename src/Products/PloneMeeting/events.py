@@ -273,7 +273,7 @@ def onAdviceRemoved(advice, event):
 
     item = advice.getParentNode()
     # do not call this if an advice is removed because the item is removed
-    if not item in item.aq_inner.aq_parent.objectValues():
+    if item not in item.aq_inner.aq_parent.objectValues():
         return
 
     try:
@@ -301,7 +301,7 @@ def onAnnexRemoved(annex, event):
 
     item = annex.getParent()
     # do not call this if an annex is removed because the item is removed
-    if not item in item.aq_inner.aq_parent.objectValues():
+    if item not in item.aq_inner.aq_parent.objectValues():
         return
 
     IAnnexable(item).updateAnnexIndex(annex, removeAnnex=True)

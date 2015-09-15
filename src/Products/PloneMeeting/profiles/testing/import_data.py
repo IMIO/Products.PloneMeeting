@@ -55,10 +55,11 @@ budgetAnalysis = MeetingFileTypeDescriptor(
     'budget-analysis', 'Budget analysis', 'budgetAnalysis.png', '')
 itemAnnex = MeetingFileTypeDescriptor(
     'item-annex', 'Other annex(es)', 'itemAnnex.png', '')
+# Could be used once we
+# will digitally sign decisions ? Indeed, once signed, we will need to
+# store them (together with the signature) as separate files.
 decision = MeetingFileTypeDescriptor(
-    'decision', 'Decision', 'decision.png', '', 'item_decision')  # Could be used once we
-    # will digitally sign decisions ? Indeed, once signed, we will need to
-    # store them (together with the signature) as separate files.
+    'decision', 'Decision', 'decision.png', '', 'item_decision')
 decisionAnnex = MeetingFileTypeDescriptor(
     'decision-annex', 'Decision annex(es)', 'decisionAnnex.png', '', 'item_decision')
 # A vintage file type
