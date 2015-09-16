@@ -12,6 +12,7 @@
   <include package="collective.iconifieddocumentactions"/>
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
+  <include package="collective.documentgenerator"/>
   <include package="collective.messagesviewlet"/>
   <include package="communesplone.layout"/>
   <include package="imio.pm.locales"/>

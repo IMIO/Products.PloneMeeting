@@ -42,6 +42,7 @@ from zope.i18n import translate
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
+from plone.namedfile.file import NamedBlobFile
 from plone.portlets.interfaces import IPortletManager
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from Products.CMFCore.ActionInformation import Action
@@ -1720,7 +1721,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  ()
                                  ),
         TOOL_FOLDER_POD_TEMPLATES: ('Document templates',
-                                    ('PodTemplate', ),
+                                    ('ConfigurablePODTemplate', ),
                                     ()
                                     ),
         TOOL_FOLDER_MEETING_USERS: ('Meeting users',
@@ -3964,22 +3965,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Adds a POD template from p_pt (a PodTemplateDescriptor instance).'''
         folder = getattr(self, TOOL_FOLDER_POD_TEMPLATES)
         # The template must be retrieved on disk from a profile
-        filePath = '%s/templates/%s' % (source, pt.podTemplate)
+        filePath = '%s/templates/%s' % (source, pt.odt_file)
         f = file(filePath, 'rb')
-        mimeType = mimetypes.guess_type(pt.podTemplate)[0]
-        fileObject = File('dummyId', pt.podTemplate, f.read(),
-                          content_type=mimeType)
-        # pt.podTemplate can be a relative path like "../../profile_id/templates/mytemplate.odt"
-        # so split on "/" and take last part...
-        fileObject.filename = pt.podTemplate.split('/')[-1]
-        fileObject.content_type = mimeType
+        odt_file = NamedBlobFile(
+            data=f.read(),
+            contentType='applications/odt',
+        )
         f.close()
-        data = pt.getData(podTemplate=fileObject)
-        folder.invokeFactory('PodTemplate', **data)
+        data = pt.getData(odt_file=odt_file)
+        folder.invokeFactory('ConfigurablePODTemplate', **data)
         podTemplate = getattr(folder, pt.id)
-        if not pt.active:
-            self.portal_workflow.doActionFor(podTemplate, 'deactivate')
-        # call processForm passing dummy values so existing values are not touched
         podTemplate.processForm(values={'dummy': None})
         return podTemplate
 

@@ -22,4 +22,11 @@
   <hidden manager="plone.portaltop" skinname="*">
     <viewlet name="plone.app.i18n.locales.languageselector" />
   </hidden>
+  <order manager="plone.belowcontenttitle" skinname="*">
+    <viewlet name="collective.quickupload.QuickUploadViewlet" />
+    <viewlet name="plone.belowcontenttitle.documentbyline" />
+    <viewlet name="imio.history.documentbyline" />
+    <viewlet name="plone.belowcontenttitle.workflowstate" />
+    <viewlet name="document-generation-link" />
+  </order>
 </object>

@@ -32,7 +32,6 @@ from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
-from Products.PloneMeeting.PodTemplate import freezePodDocumentsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
@@ -74,11 +73,6 @@ def do(action, event):
         sendMailIfRelevant(event.object, "meeting_state_changed_%s" % event.transition.id, 'View')
         # apply on transition field transform if any
         meetingTriggerTransitionOnLinkedItems(event.object, event.transition.id)
-
-    # Freeze POD documents if needed
-    podTransition = '%s_%s' % (podTransitionPrefixes[objectType],
-                               event.transition.id)
-    freezePodDocumentsIfRelevant(event.object, podTransition)
 
     # update modification date upon state change
     event.object.setModificationDate(DateTime())
