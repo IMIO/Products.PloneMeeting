@@ -703,14 +703,11 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # some columns are displayed in the 'Prupose' column
         itemsListVisibleColumns = [col for col in cfg.getItemsListVisibleColumns() if
                                    not col in ('budget_infos', 'item_reference')]
-        if self._displayingAvailableItems():
-            itemsListVisibleColumns.insert(0, u'pretty_link')
-            itemsListVisibleColumns.append(u'check_box_item')
-        else:
-            itemsListVisibleColumns.insert(0, u'pretty_link')
+        itemsListVisibleColumns.insert(0, u'pretty_link')
+        if not self._displayingAvailableItems():
             itemsListVisibleColumns.insert(0, u'getItemNumber')
             itemsListVisibleColumns.insert(0, u'listType')
-            itemsListVisibleColumns.append(u'check_box_item')
+        itemsListVisibleColumns.append(u'check_box_item')
         return itemsListVisibleColumns
 
     security.declarePrivate('validate_date')

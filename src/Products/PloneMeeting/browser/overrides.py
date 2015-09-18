@@ -15,11 +15,11 @@ from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
-from collective.documentgenerator.browser.generation_view import DocumentGenerationView
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
+from imio.dashboard.browser.overrides import IDDocumentGenerationView
 from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.history.browser.views import IHDocumentBylineViewlet
@@ -545,7 +545,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         return bool(self.context.getId() == self.objectIds[0])
 
 
-class PMDocumentGenerationView(DocumentGenerationView):
+class PMDocumentGenerationView(IDDocumentGenerationView):
     """Redefine the DocumentGenerationView to extend context available in the template."""
 
     def get_base_generation_context(self):
@@ -567,3 +567,9 @@ class PMDocumentGenerationView(DocumentGenerationView):
             'utils': pm_utils
         }
         return specific_context
+
+    def get_generation_context(self, helper_view):
+        """We backwardly use 'itemUids' instead of 'uids' for list of uids..."""
+        generation_context = super(PMDocumentGenerationView, self).get_generation_context(helper_view)
+        generation_context['itemUids'] = generation_context['uids']
+        return generation_context

@@ -107,7 +107,7 @@
      for="zope.interface.Interface
           zope.publisher.interfaces.browser.IBrowserRequest
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
-     factory=".columns.MeetingCheckBoxColumn"
+     factory=".columns.ItemCheckBoxColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
      name="check_box_item"
   />
