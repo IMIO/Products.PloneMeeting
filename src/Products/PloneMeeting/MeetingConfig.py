@@ -27,7 +27,6 @@ from Products.DataGridField.SelectColumn import SelectColumn
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-import mimetypes
 import os
 from AccessControl import Unauthorized
 from DateTime import DateTime
@@ -49,6 +48,7 @@ from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
+from Products.CMFPlone.utils import safe_unicode
 from eea.facetednavigation.interfaces import ICriteria
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
@@ -3773,19 +3773,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 cache[key] = data
         return data
 
-    security.declarePublic('getAvailablePodTemplates')
-    def getAvailablePodTemplates(self, obj):
-        '''Returns the list of POD templates that the currently logged in user
-           may use for generating documents related to item or meeting p_obj.'''
-        res = []
-        podTemplateFolder = getattr(self, TOOL_FOLDER_POD_TEMPLATES)
-        wfTool = getToolByName(self, 'portal_workflow')
-        for podTemplate in podTemplateFolder.objectValues():
-            if wfTool.getInfoFor(podTemplate, 'review_state') == 'active' and \
-               podTemplate.isApplicable(obj):
-                res.append(podTemplate)
-        return res
-
     security.declarePublic('listInsertingMethods')
     def listInsertingMethods(self):
         '''Return a list of available inserting methods when
@@ -3970,6 +3957,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         odt_file = NamedBlobFile(
             data=f.read(),
             contentType='applications/odt',
+            # pt.odt_file could be relative (../../other_profile/templates/sample.odt)
+            filename=safe_unicode(pt.odt_file.split('/')[-1]),
         )
         f.close()
         data = pt.getData(odt_file=odt_file)

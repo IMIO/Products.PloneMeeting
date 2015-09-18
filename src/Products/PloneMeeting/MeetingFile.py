@@ -34,6 +34,7 @@ from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.CatalogTool import getObjSize
 from collective.documentviewer.async import asyncInstalled
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import getCustomAdapter, sendMailIfRelevant
 
@@ -63,8 +64,8 @@ PDFTOTEXT_ERROR = 'An error occurred while converting a PDF file with ' \
 WVTEXT_COMMAND = 'wvText %s %s'
 WVTEXT_INFO_COMMAND = 'Launching wvText: %s'
 WVTEXT_ERROR = 'An error occurred while converting a Word document with wvText.'
-CONVERSION_ERROR = u'There was an error during annex conversion, please contact system administrator.'
-CONVERSION_ERROR_MANAGER = u'There was an error during annex conversion at %s.'
+CONVERSION_ERROR = _(u'There was an error during annex conversion, please contact system administrator.')
+CONVERSION_ERROR_MANAGER = _(u'There was an error during annex conversion at %s.')
 
 ##/code-section module-header
 

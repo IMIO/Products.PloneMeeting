@@ -973,33 +973,6 @@ class testMeetingConfig(PloneMeetingTestCase):
                    'trigger_workflow_transitions_until': '%s.present' % cfg2Id},)
         self.failIf(cfg.validate_meetingConfigsToCloneTo(values))
 
-    def test_pm_GetAvailablePodTemplates(self):
-        '''We can define a condition and a permission on a PodTemplate
-           influencing if it will be returned by MeetingConfig.getAvailablePodTemplates.'''
-        cfg = self.meetingConfig
-        # Create an item as creator
-        self.changeUser('pmManager')
-        item = self.create('MeetingItem')
-        podTemplates = cfg.getAvailablePodTemplates(item)
-        self.assertEquals(len(podTemplates), 1)
-        self.assertEquals(podTemplates[0].Title(), 'Meeting item')
-        self.validateItem(item)
-        meeting = self.create('Meeting', date='2008/06/23 15:39:00')
-        podTemplates = cfg.getAvailablePodTemplates(meeting)
-        self.assertEquals(len(podTemplates), 1)
-        self.assertEquals(podTemplates[0].Title(), 'Meeting agenda')
-        self.presentItem(item)
-        item.setDecision('Decision')
-        self.decideMeeting(meeting)
-        podTemplates = cfg.getAvailablePodTemplates(meeting)
-        self.assertEquals(len(podTemplates), 2)
-        self.assertEquals(podTemplates[1].Title(), 'Meeting decisions')
-        # now set a permission 'pmManager' does not have
-        # for second pod template available for meeting
-        podTemplate = podTemplates[0]
-        podTemplate.setPodPermission('Manage portal')
-        self.assertTrue(len(cfg.getAvailablePodTemplates(meeting)) == 1)
-
     def test_pm_AddingExistingSearchDoesNotBreak(self):
         '''
           Check that we can call MeetingConfig.createSearches and that if

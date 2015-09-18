@@ -27,6 +27,7 @@ import shutil
 from tempfile import mkdtemp
 
 from zope.annotation import IAnnotations
+from zope.i18n import translate
 
 from collective.documentviewer.settings import GlobalSettings
 
@@ -108,7 +109,7 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
         # but there was an error during conversion
         self.assertTrue(IAnnexable(annex3).conversionStatus() == 'conversion_error')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'conversion_error')
-        self.assertTrue(messages.show()[-1].message == CONVERSION_ERROR)
+        self.assertTrue(messages.show()[-1].message == translate(CONVERSION_ERROR, context=self.request))
         self.assertTrue(IAnnexable(annex3).conversionFailed())
 
     def test_pm_ForceConversion(self):

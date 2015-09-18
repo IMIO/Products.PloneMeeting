@@ -339,6 +339,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                 self.failIf(firstLevelElement.Title() == 'Site')
                 secondLevelElements = firstLevelElement.objectValues()
                 for secondLevelElement in secondLevelElements:
+                    # ConfigurablePODTemplate elements are DX and does not have a _at_creation_flag
+                    if secondLevelElement.portal_type == 'ConfigurablePODTemplate':
+                        continue
                     self.failIf(secondLevelElement._at_creation_flag)
                     self.failIf(secondLevelElement.Title() == 'Site')
 

@@ -132,41 +132,56 @@ class IAnnexable(Interface):
         """
 ##/code-section HEAD
 
+
+class IConfigElement(Interface):
+    """Base marker interface for every config related elements
+    """
+
+
 class IMeetingItem(Interface):
     """Marker interface for .MeetingItem.MeetingItem
     """
+
 
 class IMeeting(Interface):
     """Marker interface for .Meeting.Meeting
     """
 
-class IToolPloneMeeting(Interface):
+
+class IToolPloneMeeting(IConfigElement):
     """Marker interface for .ToolPloneMeeting.ToolPloneMeeting
     """
 
-class IMeetingCategory(Interface):
+
+class IMeetingCategory(IConfigElement):
     """Marker interface for .MeetingCategory.MeetingCategory
     """
 
-class IMeetingConfig(Interface):
+
+class IMeetingConfig(IConfigElement):
     """Marker interface for .MeetingConfig.MeetingConfig
     """
 
-class IMeetingFileType(Interface):
+
+class IMeetingFileType(IConfigElement):
     """Marker interface for .MeetingFileType.MeetingFileType
     """
+
 
 class IMeetingFile(Interface):
     """Marker interface for .MeetingFile.MeetingFile
     """
 
-class IMeetingGroup(Interface):
+
+class IMeetingGroup(IConfigElement):
     """Marker interface for .MeetingGroup.MeetingGroup
     """
+
 
 class IPodTemplate(Interface):
     """Marker interface for .PodTemplate.PodTemplate
     """
+
 
 class IMeetingUser(Interface):
     """Marker interface for .MeetingUser.MeetingUser
