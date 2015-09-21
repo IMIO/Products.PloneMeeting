@@ -1156,18 +1156,21 @@ class testMeetingConfig(PloneMeetingTestCase):
         # item related collection
         newItemColId = searches.searches_items.invokeFactory('DashboardCollection', id='newItemCol')
         newItemCol = getattr(searches.searches_items, newItemColId)
-        self.assertEquals(newItemCol.getCustomViewFields(),
-                          DEFAULT_ITEM_COLUMNS + cfg.getItemColumns())
+        itemColumns = list(cfg.getItemColumns())
+        for column in DEFAULT_ITEM_COLUMNS:
+            itemColumns.insert(column['position'], column['name'])
+        self.assertEquals(newItemCol.getCustomViewFields(), tuple(itemColumns))
         # meeting related collection
         newMeetingColId = searches.searches_meetings.invokeFactory('DashboardCollection', id='newMeetingCol')
         newMeetingCol = getattr(searches.searches_meetings, newMeetingColId)
-        self.assertEquals(newMeetingCol.getCustomViewFields(),
-                          DEFAULT_MEETING_COLUMNS + cfg.getMeetingColumns())
+        meetingColumns = list(cfg.getMeetingColumns())
+        for position, name in DEFAULT_MEETING_COLUMNS:
+            meetingColumns.insert(column['position'], column['name'])
+        self.assertEquals(newMeetingCol.getCustomViewFields(), tuple(meetingColumns))
         # decision related collection
         newDecisionColId = searches.searches_decisions.invokeFactory('DashboardCollection', id='newDecisionCol')
         newDecisionCol = getattr(searches.searches_decisions, newDecisionColId)
-        self.assertEquals(newDecisionCol.getCustomViewFields(),
-                          DEFAULT_MEETING_COLUMNS + cfg.getMeetingColumns())
+        self.assertEquals(newDecisionCol.getCustomViewFields(), tuple(meetingColumns))
 
 
 def test_suite():
