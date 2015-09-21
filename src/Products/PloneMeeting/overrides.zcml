@@ -43,7 +43,7 @@
     <browser:viewlet
         for="OFS.interfaces.IItem"
         name="document-generation-link"
-        manager="plone.app.layout.viewlets.interfaces.IAboveContentTitle"
+        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
         class="Products.PloneMeeting.browser.overrides.PMDocumentGeneratorLinksViewlet"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"

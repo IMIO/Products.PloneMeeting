@@ -10,6 +10,9 @@
   <hidden manager="plone.abovecontenttitle" skinname="*">
     <viewlet name="plone.abovecontenttitle.documentactions" />
   </hidden>
+  <hidden manager="plone.belowcontenttitle" skinname="*">
+    <viewlet name="document-generation-link" />
+  </hidden>
   <hidden manager="plone.belowcontentbody" skinname="*">
     <viewlet name="plone.belowcontentbody.contenthistory" />
   </hidden>
@@ -22,11 +25,4 @@
   <hidden manager="plone.portaltop" skinname="*">
     <viewlet name="plone.app.i18n.locales.languageselector" />
   </hidden>
-  <order manager="plone.belowcontenttitle" skinname="*">
-    <viewlet name="collective.quickupload.QuickUploadViewlet" />
-    <viewlet name="plone.belowcontenttitle.documentbyline" />
-    <viewlet name="imio.history.documentbyline" />
-    <viewlet name="plone.belowcontenttitle.workflowstate" />
-    <viewlet name="document-generation-link" />
-  </order>
 </object>
