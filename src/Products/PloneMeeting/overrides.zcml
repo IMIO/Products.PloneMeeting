@@ -39,6 +39,15 @@
         permission="zope2.View"
         />
 
+    <!-- Override imio.dashboard document-generation-link viewlet -->
+    <browser:viewlet
+        for="OFS.interfaces.IItem"
+        name="document-generation-link"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class="Products.PloneMeeting.browser.overrides.PMDocumentGeneratorLinksViewlet"
+        permission="zope2.View"
+        />
+
     <browser:page
         name="overview-controlpanel"
         for="Products.CMFPlone.interfaces.IPloneSiteRoot"

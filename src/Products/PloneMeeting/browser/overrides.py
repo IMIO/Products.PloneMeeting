@@ -15,12 +15,14 @@ from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
+from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDDocumentGenerationView
 from imio.dashboard.browser.overrides import IDFacetedTableView
+from imio.dashboard.browser.overrides import IDDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.history.browser.views import IHDocumentBylineViewlet
 
@@ -142,6 +144,22 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                                                   showEdit=False,
                                                                   showDelete=False,
                                                                   showActions=False)
+
+
+class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
+    """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
+
+    def get_all_pod_templates(self):
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if not cfg:
+            return []
+        catalog = getToolByName(self.context, 'portal_catalog')
+        brains = catalog.unrestrictedSearchResults(object_provides=IPODTemplate.__identifier__,
+                                                   path={'query': '/'.join(cfg.getPhysicalPath())})
+        pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
+
+        return pod_templates
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):
