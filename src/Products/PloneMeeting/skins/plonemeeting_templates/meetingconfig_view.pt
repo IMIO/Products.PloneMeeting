@@ -979,7 +979,7 @@
         <legend>
          <span i18n:translate="PodTemplates"></span>
          <input type="image" style="cursor:pointer" class="imageInput"
-                tal:attributes="onClick python: 'href: window.location=\'%s/podtemplates/createObject?type_name=PodTemplate\'' % context.absolute_url();
+                tal:attributes="onClick python: 'href: window.location=\'%s/podtemplates/++add++ConfigurablePODTemplate\'' % context.absolute_url();
                                 src string: $portal_url/plus.png"
                 title="add_object" i18n:attributes="title"
                 tal:condition="isRealManager"/>
@@ -995,29 +995,28 @@
             <th class="nosort" width="130px"  i18n:translate="heading_actions">Actions</th>
           </tr>
           <tal:comment replace="nothing">No template is defined.</tal:comment>
-          <tr tal:condition="python: not pFolder.objectValues('PodTemplate')">
+          <tr tal:condition="python: not pFolder.objectValues()">
             <td colspan="4" align="center" i18n:translate="">no_pod_folder</td>
           </tr>
-          <tal:loop repeat="obj python:pFolder.objectValues('PodTemplate')">
-          <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                          oddrow repeat/obj/odd;
+          <tal:loop repeat="obj python:pFolder.objectValues()">
+          <tr tal:define="oddrow repeat/obj/odd;
                           classOddEven python: oddrow and 'even' or 'odd';"
-             tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+             tal:attributes="class python: not obj.enabled and classOddEven+' state-inactive' or classOddEven"
              valign="top">
-            <td align="center"><img tal:define="fmt obj/getPodFormat"
-                                    tal:attributes="src string: $portal_url/$fmt.png"/></td>
+            <td align="center"><img tal:repeat="fmt obj/pod_formats"
+                                    tal:attributes="src string: $portal_url/++resource++collective.documentgenerator/$fmt.png"/></td>
             <td>
-                <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
+                <a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     define="context python: obj;
-                            excludedFields python: ('id', 'description', 'title', 'podTemplate', 'podFormat')">
+                            excludedFields python: ('odt_file', 'pod_formats', 'enabled', 'style_template', 'merge_templates')">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                 </tal:additionalInformations>
             </td>
             <td i18n:domain="plone">
-              <span tal:condition="isActive" i18n:translate="">Yes</span>
-              <span tal:condition="not: isActive" i18n:translate="">No</span>
+              <span tal:condition="obj/enabled" i18n:translate="">Yes</span>
+              <span tal:condition="not: obj/enabled" i18n:translate="">No</span>
             </td>
             <td align="right">
               <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
@@ -1031,9 +1030,6 @@
     <div metal:define-macro="folderlisting">
       <tal:comment replace="nothing">Hide the folder_listing</tal:comment>
     </div>
-
-    <br/>
-    <div metal:use-macro="here/@@pm-macros/showTransitions"></div>
 
     </tal:hideToNonManagers>
 

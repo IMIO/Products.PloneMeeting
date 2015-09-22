@@ -27,7 +27,6 @@ from Products.DataGridField.SelectColumn import SelectColumn
 from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
-import mimetypes
 import os
 from AccessControl import Unauthorized
 from DateTime import DateTime
@@ -42,12 +41,14 @@ from zope.i18n import translate
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
+from plone.namedfile.file import NamedBlobFile
 from plone.portlets.interfaces import IPortletManager
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
+from Products.CMFPlone.utils import safe_unicode
 from eea.facetednavigation.interfaces import ICriteria
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
@@ -1720,7 +1721,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  ()
                                  ),
         TOOL_FOLDER_POD_TEMPLATES: ('Document templates',
-                                    ('PodTemplate', ),
+                                    ('ConfigurablePODTemplate', ),
                                     ()
                                     ),
         TOOL_FOLDER_MEETING_USERS: ('Meeting users',
@@ -2990,14 +2991,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              for now every collections of a type (item, meeting)
              will use same columns.'''
         # update item related collections
-        itemColumns = DEFAULT_ITEM_COLUMNS + self.getItemColumns()
+        itemColumns = list(self.getItemColumns())
+        for column in DEFAULT_ITEM_COLUMNS:
+            itemColumns.insert(column['position'], column['name'])
         for collection in self.searches.searches_items.objectValues('DashboardCollection'):
             # available customViewFieldIds, as done in an adapter, we compute it for each collection
             customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
             # set elements existing in both lists, we do not use set() because it is not ordered
             collection.setCustomViewFields(tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds]))
         # update meeting related collections
-        meetingColumns = DEFAULT_MEETING_COLUMNS + self.getMeetingColumns()
+        meetingColumns = list(self.getMeetingColumns())
+        for position, name in DEFAULT_MEETING_COLUMNS:
+            meetingColumns.insert(column['position'], column['name'])
         for collection in (self.searches.searches_meetings.objectValues('DashboardCollection') +
                            self.searches.searches_decisions.objectValues('DashboardCollection')):
             # available customViewFieldIds, as done in an adapter, we compute it for each collection
@@ -3772,19 +3777,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 cache[key] = data
         return data
 
-    security.declarePublic('getAvailablePodTemplates')
-    def getAvailablePodTemplates(self, obj):
-        '''Returns the list of POD templates that the currently logged in user
-           may use for generating documents related to item or meeting p_obj.'''
-        res = []
-        podTemplateFolder = getattr(self, TOOL_FOLDER_POD_TEMPLATES)
-        wfTool = getToolByName(self, 'portal_workflow')
-        for podTemplate in podTemplateFolder.objectValues():
-            if wfTool.getInfoFor(podTemplate, 'review_state') == 'active' and \
-               podTemplate.isApplicable(obj):
-                res.append(podTemplate)
-        return res
-
     security.declarePublic('listInsertingMethods')
     def listInsertingMethods(self):
         '''Return a list of available inserting methods when
@@ -3964,22 +3956,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Adds a POD template from p_pt (a PodTemplateDescriptor instance).'''
         folder = getattr(self, TOOL_FOLDER_POD_TEMPLATES)
         # The template must be retrieved on disk from a profile
-        filePath = '%s/templates/%s' % (source, pt.podTemplate)
+        filePath = '%s/templates/%s' % (source, pt.odt_file)
         f = file(filePath, 'rb')
-        mimeType = mimetypes.guess_type(pt.podTemplate)[0]
-        fileObject = File('dummyId', pt.podTemplate, f.read(),
-                          content_type=mimeType)
-        # pt.podTemplate can be a relative path like "../../profile_id/templates/mytemplate.odt"
-        # so split on "/" and take last part...
-        fileObject.filename = pt.podTemplate.split('/')[-1]
-        fileObject.content_type = mimeType
+        odt_file = NamedBlobFile(
+            data=f.read(),
+            contentType='applications/odt',
+            # pt.odt_file could be relative (../../other_profile/templates/sample.odt)
+            filename=safe_unicode(pt.odt_file.split('/')[-1]),
+        )
         f.close()
-        data = pt.getData(podTemplate=fileObject)
-        folder.invokeFactory('PodTemplate', **data)
+        data = pt.getData(odt_file=odt_file)
+        folder.invokeFactory('ConfigurablePODTemplate', **data)
         podTemplate = getattr(folder, pt.id)
-        if not pt.active:
-            self.portal_workflow.doActionFor(podTemplate, 'deactivate')
-        # call processForm passing dummy values so existing values are not touched
         podTemplate.processForm(values={'dummy': None})
         return podTemplate
 

@@ -1172,17 +1172,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getBackUrl')
     def getBackUrl(self, context):
         '''Computes the URL for "back" links in the tool or in a config.'''
-        if context.getParentNode().meta_type == 'ATFolder':
+        url = ''
+        if context.meta_type == 'DashboardCollection':
+            url = context.getMeetingConfig(context).absolute_url()
+            url += '?pageName=%s#%s' % ('gui', 'searches')
+        elif context.getParentNode().meta_type == 'ATFolder':
             # p_context is a sub-object in a sub-folder within a config
             folderName = context.getParentNode().id
             url = context.getParentNode().getParentNode().absolute_url()
             url += '?pageName=%s#%s' % (self.backPages[folderName], folderName)
-            return url
         else:
             # We are in a subobject from the tool.
             url = context.getParentNode().absolute_url()
             url += '#%s' % context.meta_type
-            return url
+        return url
 
     security.declarePrivate('pasteItems')
     def pasteItems(self, destFolder, copiedData, copyAnnexes=False,

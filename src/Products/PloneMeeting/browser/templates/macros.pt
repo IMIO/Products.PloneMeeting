@@ -408,27 +408,6 @@ document.location.reload(true);
 
 
 <tal:comment replace="nothing">
-  This macro displays buttons for triggering available transitions for any other
-  content type than Item or Meeting.
-</tal:comment>
-<div metal:define-macro="showTransitions" i18n:domain="PloneMeeting">
-    <tal:actions replace="structure python: context.restrictedTraverse('@@actions_panel')(useIcons=False,
-                                                                                          showTransitions=True,
-                                                                                          appendTypeNameToTransitionLabel=True,
-                                                                                          showArrows=False,
-                                                                                          showEdit=False,
-                                                                                          showDelete=False,
-                                                                                          showActions=False,)" />
-    <tal:back define="parent context/getParentNode;
-                      parentIsTool python: parent.meta_type == 'ToolPloneMeeting'">
-      <div class="pm_back_to_tool_link" tal:condition="python: parentIsTool or (parent.getParentNode().meta_type == 'MeetingConfig')">
-        &nbsp;<a tal:attributes="href python: context.portal_plonemeeting.getBackUrl(context);"
-                 i18n:translate="back">Back to parent</a>
-      </div>
-    </tal:back>
-</div>
-
-<tal:comment replace="nothing">
   This macro displays the previous advice_type of an advice that is 'asked_again'.
 </tal:comment>
 <metal:previousAdviceType define-macro="previousAdviceType" i18n:domain="PloneMeeting">
@@ -839,7 +818,21 @@ The name is form.button.cancel because it correspond to the overlay close select
 
 <metal:additionalInformations define-macro="additionalInformations" i18n:domain="PloneMeeting">
 <tal:comment replace="nothing">Macro used to display additional informations coming from obj schema
-non metadata fields.  We receive 'obj' and 'excludedFields' that is a list of fields not to display information of.</tal:comment>
+non metadata fields.  We receive 'obj' and 'excludedFields' that is a list of fields not to display information of.
+This works for an AT and for a DX.</tal:comment>
+  <tal:dx condition="python: obj.meta_type.startswith('Dexterity')">
+    <tal:loop
+        define="view python: obj.restrictedTraverse('view');
+                dummy python: view.update();"
+        repeat="widget view/widgets/values">
+        <div class="discreet"
+              tal:condition="python: not widget.name.replace('form.widgets.', '') in excludedFields and widget.value">
+          <label tal:content="widget/label" />
+          <div tal:content="structure widget/render" />
+        </div>
+    </tal:loop>
+  </tal:dx>
+  <tal:at condition="python: not obj.meta_type.startswith('Dexterity')">
     <tal:loop
         repeat="field python: obj.Schema().filterFields(isMetadata=False)">
         <span class="discreet"
@@ -847,4 +840,5 @@ non metadata fields.  We receive 'obj' and 'excludedFields' that is a list of fi
           <metal:field use-macro="context/widgets/field/macros/view" />
         </span>
     </tal:loop>
+  </tal:at>
 </metal:additionalInformations>

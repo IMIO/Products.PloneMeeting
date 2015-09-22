@@ -3,26 +3,6 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone">
 
-    <!-- PloneMeeting-specific viewlets -->
-    <browser:viewlet
-        name="plonemeeting.podtemplates"
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
-        class=".viewlets.PodTemplatesViewlet"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.podtemplates"
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
-        class=".viewlets.PodTemplatesViewlet"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.podtemplates"
-        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
-        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
-        class=".viewlets.PodTemplatesViewlet"
-        permission="zope2.View"/>
-
     <!-- Overriden Plone viewlets -->
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
@@ -66,6 +46,32 @@
             template="browser/actions_panel_viewlet.pt"
             permission="zope2.View"/>
     </configure>
+
+    <!-- Use our own actionspanel viewlet for elements of the configuration -->
+    <browser:viewlet
+        name="plonemeeting.actionspanel"
+        for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
+        template="templates/actions_panel_config_viewlet.pt"
+        permission="zope2.View"/>
+    <browser:viewlet
+        name="plonemeeting.actionspanel"
+        for="plone.app.collection.interfaces.ICollection"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
+        template="templates/actions_panel_config_viewlet.pt"
+        permission="zope2.View"/>
+    <browser:viewlet
+        name="plonemeeting.actionspanel"
+        for="Products.PloneMeeting.interfaces.IConfigElement"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
+        template="templates/actions_panel_config_viewlet.pt"
+        permission="zope2.View"/>
 
     <!-- Define a imio.history version preview for IMeetingAdvice -->
     <browser:page
@@ -483,6 +489,26 @@
         for="*"
         permission="zope2.View"/>
 
+    <!-- document-generation view for items and meetings -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="document-generation"
+        class=".overrides.PMDocumentGenerationView"
+        permission="zope2.View"
+        />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        name="document-generation"
+        class=".overrides.PMDocumentGenerationView"
+        permission="zope2.View"
+        />
+    <browser:page
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        name="document-generation"
+        class=".overrides.PMDocumentGenerationView"
+        permission="zope2.View"
+        />
+
     <!-- Form that manage item assembly -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
@@ -491,6 +517,7 @@
         class=".itemassembly.ManageItemAssemblyFormWrapper"
         permission="zope2.View"
       />
+
     <!-- Form that manage item signtures -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

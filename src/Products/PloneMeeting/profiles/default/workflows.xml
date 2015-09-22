@@ -43,6 +43,9 @@
      <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>
 <!-- ##code-section workflowbindings -->
+  <type type_id="ConfigurablePODTemplate">
+   <bound-workflow workflow_id="" />
+  </type>
   <type type_id="MeetingFile">
    <bound-workflow workflow_id="" />
   </type>

@@ -10,6 +10,9 @@
   <hidden manager="plone.abovecontenttitle" skinname="*">
     <viewlet name="plone.abovecontenttitle.documentactions" />
   </hidden>
+  <hidden manager="plone.belowcontenttitle" skinname="*">
+    <viewlet name="document-generation-link" />
+  </hidden>
   <hidden manager="plone.belowcontentbody" skinname="*">
     <viewlet name="plone.belowcontentbody.contenthistory" />
   </hidden>

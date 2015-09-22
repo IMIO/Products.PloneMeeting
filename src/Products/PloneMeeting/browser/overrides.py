@@ -15,10 +15,14 @@ from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
+from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from eea.facetednavigation.browser.app.view import FacetedContainerView
+from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
+from imio.dashboard.browser.overrides import IDDocumentGenerationView
 from imio.dashboard.browser.overrides import IDFacetedTableView
+from imio.dashboard.browser.overrides import IDDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.history.browser.views import IHDocumentBylineViewlet
 
@@ -27,6 +31,8 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CPUtils.Extensions.utils import check_zope_admin
+from Products.PloneMeeting import utils as pm_utils
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
@@ -124,6 +130,36 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
            self.context.portal_type in ('meetingadvice', ):
             return ''
         return self.index()
+
+
+class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
+    """Render actionspanel viewlet differently for elements of the MeetingConfig."""
+
+    def renderViewlet(self):
+        """ """
+        return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
+                                                                  showTransitions=True,
+                                                                  appendTypeNameToTransitionLabel=True,
+                                                                  showArrows=False,
+                                                                  showEdit=False,
+                                                                  showDelete=False,
+                                                                  showActions=False)
+
+
+class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
+    """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
+
+    def get_all_pod_templates(self):
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if not cfg:
+            return []
+        catalog = getToolByName(self.context, 'portal_catalog')
+        brains = catalog.unrestrictedSearchResults(object_provides=IPODTemplate.__identifier__,
+                                                   path={'query': '/'.join(cfg.getPhysicalPath())})
+        pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
+
+        return pod_templates
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):
@@ -525,3 +561,33 @@ class ConfigActionsPanelView(ActionsPanelView):
           Is current element first id of folder container?
         """
         return bool(self.context.getId() == self.objectIds[0])
+
+
+class PMDocumentGenerationView(IDDocumentGenerationView):
+    """Redefine the DocumentGenerationView to extend context available in the template."""
+
+    def get_base_generation_context(self):
+        """ """
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        currentUser = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+        specific_context = {
+            'self': self.context,
+            'adap': self.context.adapted(),
+            'tool': tool,
+            'meetingConfig': cfg,
+            'itemUids': {},
+            'user': currentUser,
+            'podTemplate': self.pod_template,
+            # give ability to access annexes related methods
+            'IAnnexable': IAnnexable,
+            # make methods defined in utils available
+            'utils': pm_utils
+        }
+        return specific_context
+
+    def get_generation_context(self, helper_view):
+        """We backwardly use 'itemUids' instead of 'uids' for list of uids..."""
+        generation_context = super(PMDocumentGenerationView, self).get_generation_context(helper_view)
+        generation_context['itemUids'] = generation_context['uids']
+        return generation_context

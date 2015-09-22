@@ -129,19 +129,20 @@ class MeetingFileTypeDescriptor(Descriptor):
 
 
 class PodTemplateDescriptor(Descriptor):
-    def __init__(self, id, title, description='', active=True):
+    multiSelectFields = ('pod_formats', )
+
+    def __init__(self, id, title, description='', enabled=True):
         self.id = id
-        self.setBilingual('title', title)
-        self.setBilingual('description', description)
+        self.title = title
+        self.description = description
         # Filename of the POD template to use. This file must be present in the
         # "templates" folder of a profile.
-        self.podTemplate = None
-        self.podFormat = 'odt'
-        self.podCondition = 'python:True'
-        self.podPermission = 'View'
-        self.freezeEvent = ''
-        self.mailingLists = ''
-        self.active = active
+        self.odt_file = None
+        self.pod_formats = ['odt', ]
+        self.tal_condition = ''
+        #self.freezeEvent = ''
+        #self.mailingLists = ''
+        self.enabled = enabled
 
 
 class PloneGroupDescriptor(Descriptor):

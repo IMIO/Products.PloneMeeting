@@ -53,7 +53,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
-    IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, IPodTemplateCustom, \
+    IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, \
     IToolPloneMeetingCustom, IMeetingUserCustom, IAnnexable, IAdvicesUpdatedEvent, IItemDuplicatedEvent, \
     IItemDuplicatedFromConfigEvent, IItemAfterTransitionEvent, IAdviceAfterAddEvent, IAdviceAfterModifyEvent
 import logging
@@ -86,7 +86,6 @@ adaptables = {
     'MeetingFile': {'method': None, 'interface': IMeetingFileCustom},
     'MeetingFileType': {'method': None, 'interface': IMeetingFileTypeCustom},
     'MeetingGroup': {'method': None, 'interface': IMeetingGroupCustom},
-    'PodTemplate': {'method': None, 'interface': IPodTemplateCustom},
     'ToolPloneMeeting': {'method': None, 'interface': IToolPloneMeetingCustom},
     'MeetingUser': {'method': None, 'interface': IMeetingUserCustom},
 }

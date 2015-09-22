@@ -17,8 +17,6 @@
          meta_type="Factory-based Type Information with dynamic views"/>
  <object name="MeetingGroup"
          meta_type="Factory-based Type Information with dynamic views"/>
- <object name="PodTemplate"
-         meta_type="Factory-based Type Information with dynamic views"/>
  <object name="MeetingUser"
          meta_type="Factory-based Type Information with dynamic views"/>
  <!-- ##code-section TYPES -->

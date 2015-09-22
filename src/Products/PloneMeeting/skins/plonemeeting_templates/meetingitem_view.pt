@@ -434,7 +434,7 @@
         <span class="discreet item_attribute_label"
               i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe" />&nbsp:<br />
         <span metal:use-macro="python: here.widget('meetingTransitionInsertingMe', mode='view')" /><p>&nbsp;</p>
-        <a tal:attributes="href python: meetingConfig.absolute_url() + '?pageName=data#recItems'" i18n:translate="back"></a><br /><br />
+        <a tal:attributes="href python: meetingConfig.absolute_url() + '?pageName=data#recurringitems'" i18n:translate="back"></a><br /><br />
       </tal:transitionsForRecurring>
 
     </tal:itemInConfig>

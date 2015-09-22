@@ -39,6 +39,16 @@
         permission="zope2.View"
         />
 
+    <!-- Override imio.dashboard document-generation-link viewlet -->
+    <browser:viewlet
+        for="OFS.interfaces.IItem"
+        name="document-generation-link"
+        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
+        class="Products.PloneMeeting.browser.overrides.PMDocumentGeneratorLinksViewlet"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View"
+        />
+
     <browser:page
         name="overview-controlpanel"
         for="Products.CMFPlone.interfaces.IPloneSiteRoot"
@@ -100,7 +110,7 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
         <browser:page
-            for="Products.PloneMeeting.interfaces.IPodTemplate"
+            for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate"
             name="config_actions_panel"
             class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
             template="browser/actions_panel.pt"
@@ -149,6 +159,7 @@
             name="render_collection_widget_category"
             class="Products.PloneMeeting.browser.overrides.PMRenderCategoryView"
             template="browser/templates/category.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View"
             />
         <browser:page
@@ -156,6 +167,7 @@
             name="render_collection_widget_term"
             class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
             template="browser/templates/term.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View"
             />
     </configure>
@@ -166,6 +178,7 @@
             name="render_collection_widget_term_portlet"
             class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
             template="browser/templates/term.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View"
             />
         <adapter
