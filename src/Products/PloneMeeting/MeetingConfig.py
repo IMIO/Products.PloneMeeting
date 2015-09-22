@@ -350,6 +350,7 @@ schema = Schema((
     LinesField(
         name='usedItemAttributes',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="UsedItemAttributes",
             description_msgid="used_item_attributes_descr",
             size=10,
@@ -367,6 +368,7 @@ schema = Schema((
     LinesField(
         name='historizedItemAttributes',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="HistorizedItemAttributes",
             description_msgid="historized_item_attrs_descr",
             size=10,
@@ -384,6 +386,7 @@ schema = Schema((
     LinesField(
         name='recordItemHistoryStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="RecordItemHistoryStates",
             description_msgid="record_item_history_states_descr",
             label='Recorditemhistorystates',
@@ -400,6 +403,7 @@ schema = Schema((
     LinesField(
         name='usedMeetingAttributes',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="UsedMeetingAttributes",
             description_msgid="used_meeting_attributes_descr",
             size=10,
@@ -417,6 +421,7 @@ schema = Schema((
     LinesField(
         name='historizedMeetingAttributes',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="HistorizedMeetingAttributes",
             description_msgid="historized_meeting_attrs_descr",
             size=10,
@@ -434,6 +439,7 @@ schema = Schema((
     LinesField(
         name='recordMeetingHistoryStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="RecordMeetingHistoryStates",
             description_msgid="record_meeting_history_states_descr",
             label='Recordmeetinghistorystates',
@@ -576,6 +582,7 @@ schema = Schema((
     LinesField(
         name='xhtmlTransformFields',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="XhtmlTransformFields",
             description_msgid="xhtml_transform_fields_descr",
             label='Xhtmltransformfields',
@@ -592,6 +599,7 @@ schema = Schema((
     LinesField(
         name='xhtmlTransformTypes',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="XhtmlTransformTypes",
             description_msgid="xhtml_transform_types_descr",
             label='Xhtmltransformtypes',
@@ -767,6 +775,7 @@ schema = Schema((
     LinesField(
         name='itemDecidedStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemDecidedStates",
             description_msgid="item_decided_states_descr",
             label='Itemdecidedstates',
@@ -783,6 +792,7 @@ schema = Schema((
     LinesField(
         name='workflowAdaptations',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="WorkflowAdaptations",
             description_msgid="workflow_adaptations_descr",
             label='Workflowadaptations',
@@ -799,6 +809,7 @@ schema = Schema((
     LinesField(
         name='transitionsToConfirm',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="TransitionsToConfirm",
             description_msgid="transitions_to_confirm_descr",
             label='Transitionstoconfirm',
@@ -816,6 +827,7 @@ schema = Schema((
         name='transitionsForPresentingAnItem',
         default=defValues.transitionsForPresentingAnItem,
         widget=InAndOutWidget(
+            format="checkbox",
             description="TransitionsForPresentingAnItem",
             description_msgid="transitions_for_presenting_an_item_descr",
             label='Transitionsforpresentinganitem',
@@ -863,6 +875,7 @@ schema = Schema((
     LinesField(
         name='meetingPresentItemWhenNoCurrentMeetingStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="meetingPresentItemWhenNoCurrentMeetingStates",
             description_msgid="meeting_present_item_when_no_current_meeting_states_descr",
             label='Meetingpresentitemwhennocurrentmeetingstates',
@@ -906,6 +919,7 @@ schema = Schema((
     LinesField(
         name='itemColumns',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemColumns",
             description_msgid="item_columns_descr",
             label='Itemcolumns',
@@ -922,6 +936,7 @@ schema = Schema((
     LinesField(
         name='meetingColumns',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="MeetingColumns",
             description_msgid="meeting_columns_descr",
             label='Meetingcolumns',
@@ -938,6 +953,7 @@ schema = Schema((
     LinesField(
         name='itemsListVisibleColumns',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemsListVisibleColumns",
             description_msgid="items_list_visible_columns_descr",
             label='Itemslistvisiblecolumns',
@@ -954,6 +970,7 @@ schema = Schema((
     LinesField(
         name='itemsListVisibleFields',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemsListVisibleFields",
             description_msgid="items_list_visible_fields_descr",
             label='Itemslistvisiblefields',
@@ -990,9 +1007,9 @@ schema = Schema((
     LinesField(
         name='dashboardItemsListingsFilters',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="DashboardItemsListingsFilters",
             description_msgid="dashboard_items_listings_filters_descr",
-            format="checkbox",
             label='Dashboarditemslistingsfilters',
             label_msgid='PloneMeeting_label_dashboardItemsListingsFilters',
             i18n_domain='PloneMeeting',
@@ -1116,6 +1133,7 @@ schema = Schema((
     LinesField(
         name='mailItemEvents',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="MailItemEvents",
             description_msgid="mail_item_events_descr",
             label='Mailitemevents',
@@ -1132,6 +1150,7 @@ schema = Schema((
     LinesField(
         name='mailMeetingEvents',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="MailMeetingEvents",
             description_msgid="mail_meeting_events",
             label='Mailmeetingevents',
@@ -1161,6 +1180,7 @@ schema = Schema((
     LinesField(
         name='itemAdviceStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemAdviceStates",
             description_msgid="item_advice_states_descr",
             label='Itemadvicestates',
@@ -1177,6 +1197,7 @@ schema = Schema((
     LinesField(
         name='itemAdviceEditStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemAdviceEditStates",
             description_msgid="item_advice_edit_states_descr",
             label='Itemadviceeditstates',
@@ -1193,6 +1214,7 @@ schema = Schema((
     LinesField(
         name='itemAdviceViewStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemAdviceViewStates",
             description_msgid="item_advice_view_states_descr",
             label='Itemadviceviewstates',
@@ -1268,6 +1290,7 @@ schema = Schema((
     LinesField(
         name='itemAdviceInvalidateStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemAdviceInvalidateStates",
             description_msgid="item_advice_invalidate_states",
             label='Itemadviceinvalidatestates',
@@ -1344,6 +1367,7 @@ schema = Schema((
     LinesField(
         name='itemPowerObserversStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemPowerObserversStates",
             description_msgid="item_powerobservers_states_descr",
             label='Itempowerobserversstates',
@@ -1360,6 +1384,7 @@ schema = Schema((
     LinesField(
         name='meetingPowerObserversStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="meetingPowerObserversStates",
             description_msgid="meeting_powerobservers_states_descr",
             label='Meetingpowerobserversstates',
@@ -1376,6 +1401,7 @@ schema = Schema((
     LinesField(
         name='itemRestrictedPowerObserversStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemRestrictedPowerObserversStates",
             description_msgid="item_restricted_powerobservers_states_descr",
             label='Itemrestrictedpowerobserversstates',
@@ -1392,6 +1418,7 @@ schema = Schema((
     LinesField(
         name='meetingRestrictedPowerObserversStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="meetingRestrictedPowerObserversStates",
             description_msgid="meeting_restricted_powerobservers_states_descr",
             label='Meetingrestrictedpowerobserversstates',
@@ -1408,6 +1435,7 @@ schema = Schema((
     LinesField(
         name='itemBudgetInfosStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemBudgetInfosStates",
             description_msgid="item_budget_infos_states_descr",
             label='Itembudgetinfosstates',
@@ -1424,6 +1452,7 @@ schema = Schema((
     LinesField(
         name='powerAdvisersGroups',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="PowerAdvisersGroups",
             description_msgid="power_advisers_groups_descr",
             size=10,
@@ -1453,6 +1482,7 @@ schema = Schema((
     LinesField(
         name='selectableCopyGroups',
         widget=MultiSelectionWidget(
+            format="checkbox",
             size=20,
             description="SelectableCopyGroups",
             description_msgid="selectable_copy_groups_descr",
@@ -1469,6 +1499,7 @@ schema = Schema((
     LinesField(
         name='itemCopyGroupsStates',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="ItemCopyGroupsStates",
             description_msgid="item_copygroups_states_descr",
             label='Itemcopygroupsstates',
@@ -1524,7 +1555,7 @@ schema = Schema((
     LinesField(
         name='annexConfidentialFor',
         widget=MultiSelectionWidget(
-            format="select",
+            format="checkbox",
             description="AnnexConfidentialFor",
             description_msgid="annex_confidential_for_descr",
             label='Annexconfidentialfor',
@@ -1569,7 +1600,7 @@ schema = Schema((
         widget=MultiSelectionWidget(
             description="AdviceConfidentialFor",
             description_msgid="advice_confidential_for_descr",
-            format="select",
+            format="checkbox",
             label='Adviceconfidentialfor',
             label_msgid='PloneMeeting_label_adviceConfidentialFor',
             i18n_domain='PloneMeeting',

@@ -629,7 +629,7 @@ schema = Schema((
             description="OptionalAdvisersItem",
             description_msgid="optional_advisers_item_descr",
             condition='python:here.isAdvicesEnabled() and len(here.listOptionalAdvisers())',
-            format="select",
+            format="checkbox",
             size=10,
             label='Optionaladvisers',
             label_msgid='PloneMeeting_label_optionalAdvisers',
@@ -843,6 +843,7 @@ schema = Schema((
     LinesField(
         name='copyGroups',
         widget=MultiSelectionWidget(
+            format="checkbox",
             size=10,
             condition='python:here.isCopiesEnabled()',
             description="CopyGroupsItems",

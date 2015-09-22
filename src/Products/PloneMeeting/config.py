@@ -249,10 +249,10 @@ MAX_FILE_SIZE_WARNING = 5000000
 DEFAULT_USER_PASSWORD = 'Meeting_12'
 
 # columns that will be automatically selected for item related DashboardCollections
-DEFAULT_ITEM_COLUMNS = ({'position': 0, 'name': u'pretty_link'},
-                        {'position': 99, 'name': u'check_box_item'}, )
+DEFAULT_ITEM_COLUMNS = ({'position': 0, 'name': 'pretty_link'},
+                        {'position': 99, 'name': 'check_box_item'}, )
 # columns that will be automatically selected for meeting related DashboardCollections
-DEFAULT_MEETING_COLUMNS = ({'position': 0, 'name': u'pretty_link'}, )
+DEFAULT_MEETING_COLUMNS = ({'position': 0, 'name': 'pretty_link'}, )
 
 
 def registerClasses():

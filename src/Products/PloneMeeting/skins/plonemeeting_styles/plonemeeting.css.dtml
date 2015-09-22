@@ -921,8 +921,25 @@ div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
     display: none;
 }
 
-/* skin disabled options in the select showing optionalAdvisers */
-select#optionalAdvisers option[disabled] {
+/* make sure multiselect fields displayed on the item_view are not too long */
+div#archetypes-fieldname-categoryMappingsWhenCloningToOtherMC,
+div#archetypes-fieldname-copyGroups,
+div#archetypes-fieldname-optionalAdvisers,
+div#archetypes-fieldname-otherMCCorrespondences,
+div#archetypes-fieldname-powerAdvisersGroups,
+div#archetypes-fieldname-selectableCopyGroups,
+div#archetypes-fieldname-usingGroups {
+    max-height: 300px;
+    max-width: 500px;
+    overflow-x: auto;
+}
+/* hide some options in the select showing optionalAdvisers */
+div#optionalAdvisers input[value="not_selectable_value_delay_aware_optional_advisers"],
+div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_advisers"] {
+    display: none;
+}
+div#optionalAdvisers input[value="not_selectable_value_delay_aware_optional_advisers"] + label,
+div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_advisers"] + label {
     color: grey;
     font-style: italic;
 }
@@ -1223,6 +1240,15 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
     font-style: italic;
     text-decoration: underline;
 }
+
+/* align pod templates correctly */
+div#doc-generation-view {
+    text-align: right;
+}
+div#doc-generation-view ul.pod-template {
+    display: inline-block;
+}
+
 
 /* </dtml-with> */
 

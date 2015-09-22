@@ -27,13 +27,8 @@
              id="plonemeetingpopups.js"
              inline="False"/>
 
- <javascript cacheable="True"
-             compression="safe"
-             cookable="True"
-             enabled="True"
-             expression=""
-             id="plonemeetingnasties.js"
-             inline="False"/>
+ <javascript remove="True" id="plonemeetingnasties.js" />
+
  <javascript id="plonemeeting_javascript_variables.js" />
 
  <!-- ##/code-section jsregistry.xml -->

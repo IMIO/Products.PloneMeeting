@@ -47,6 +47,7 @@ schema = Schema((
     LinesField(
         name='usingGroups',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="UsingGroups",
             description_msgid="category_using_groups_descr",
             label='Usinggroups',
@@ -61,6 +62,7 @@ schema = Schema((
     LinesField(
         name='categoryMappingsWhenCloningToOtherMC',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="CategoryMappingsWhenCloningToOtherMC",
             description_msgid="category_mapping_when_cloning_to_other_mc_descr",
             label='Categorymappingswhencloningtoothermc',

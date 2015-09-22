@@ -75,6 +75,7 @@ schema = Schema((
     LinesField(
         name='otherMCCorrespondences',
         widget=MultiSelectionWidget(
+            format="checkbox",
             description="OtherMCCorrespondences",
             description_msgid="other_mc_correspondences_descr",
             size=10,
