@@ -174,7 +174,7 @@
 
     <configure package="imio.dashboard">
         <browser:page
-            for="*"
+            for="OFS.interfaces.IItem"
             name="render_collection_widget_term_portlet"
             class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
             template="browser/templates/term.pt"
