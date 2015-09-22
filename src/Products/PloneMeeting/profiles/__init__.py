@@ -129,7 +129,7 @@ class MeetingFileTypeDescriptor(Descriptor):
 
 
 class PodTemplateDescriptor(Descriptor):
-    multiSelectFields = ('pod_formats', )
+    multiSelectFields = ('pod_formats', 'pod_portal_types')
 
     def __init__(self, id, title, description='', enabled=True):
         self.id = id
@@ -139,6 +139,7 @@ class PodTemplateDescriptor(Descriptor):
         # "templates" folder of a profile.
         self.odt_file = None
         self.pod_formats = ['odt', ]
+        self.pod_portal_types = []
         self.tal_condition = ''
         #self.freezeEvent = ''
         #self.mailingLists = ''
