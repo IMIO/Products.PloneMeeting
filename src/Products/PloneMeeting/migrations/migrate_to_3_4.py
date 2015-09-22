@@ -335,53 +335,61 @@ class Migrate_To_3_4(Migrator):
     def _adaptAppForCollectiveDocumentGenerator(self):
         """Move own PodTemplates to ConfigurablePODTemplates of collective.documentgenerator."""
         logger.info('Moving to collective.documentgenerator...')
-        wft = getToolByName(self.portal, 'portal_workflow')
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            templatesFolder = cfg.podtemplates
-            templatesFolder.setLocallyAllowedTypes(['ConfigurablePODTemplate', ])
-            templatesFolder.setImmediatelyAddableTypes(['ConfigurablePODTemplate', ])
-            for template in templatesFolder.objectValues('PodTemplate'):
-                templateId = template.getId()
-                podFile = template.getPodTemplate()
-                # try to migrate the tal_condition to use the 'pod_portal_type'
-                # to filter out generable templates
-                condition = template.getPodCondition()
-                pod_portal_types = []
-                if "(here.meta_type==\"Meeting\") and " in condition or \
-                   "(here.meta_type=='Meeting') and " in condition or \
-                   "here.meta_type==\"Meeting\" and " in condition or \
-                   "here.meta_type=='Meeting' and " in condition:
-                    condition = condition.replace("(here.meta_type==\"Meeting\") and ", "")
-                    condition = condition.replace("(here.meta_type=='Meeting') and ", "")
-                    condition = condition.replace("here.meta_type==\"Meeting\" and ", "")
-                    condition = condition.replace("here.meta_type=='Meeting' and ", "")
-                    pod_portal_types.append(cfg.getMeetingTypeName())
-                if "(here.meta_type==\"MeetingItem\") and " in condition or \
-                   "(here.meta_type=='MeetingItem') and " in condition or \
-                   "here.meta_type==\"MeetingItem\" and " in condition or \
-                   "here.meta_type=='MeetingItem' and " in condition:
-                    condition = condition.replace("(here.meta_type==\"MeetingItem\") and ", "")
-                    condition = condition.replace("(here.meta_type=='MeetingItem') and ", "")
-                    condition = condition.replace("here.meta_type==\"MeetingItem\" and ", "")
-                    condition = condition.replace("here.meta_type=='MeetingItem' and ", "")
-                    pod_portal_types.append(cfg.getItemTypeName())
 
-                data = {'title': template.Title(),
-                        'description': template.Description(),
-                        'odt_file': NamedBlobFile(
-                            data=podFile.data,
-                            contentType='applications/odt',
-                            filename=safe_unicode(podFile.filename)),
-                        'pod_portal_types': pod_portal_types,
-                        'enabled': wft.getInfoFor(template, 'review_state') == 'active' and True or False,
-                        'pod_formats': [template.getPodFormat(), ],
-                        'tal_condition': condition,
-                        }
-                # remove the old template before creating the new so we can use the same id
-                templatesFolder.manage_delObjects(ids=[templateId, ])
-                templatesFolder.invokeFactory('ConfigurablePODTemplate', id=templateId, **data)
-                newTemplate = getattr(templatesFolder, templateId)
-                newTemplate.reindexObject()
+        # remove the 'PodTemplate' portal_type, if no more there, already migrated
+        types = self.portal.portal_types
+        if 'PodTemplate' in types:
+            # remove the 'PodTemplate' portal_type
+            types.manage_delObjects(ids=['PodTemplate', ])
+
+            # migration the PodTemplates to ConfigurablePODTemplates
+            wft = getToolByName(self.portal, 'portal_workflow')
+            for cfg in self.tool.objectValues('MeetingConfig'):
+                templatesFolder = cfg.podtemplates
+                templatesFolder.setLocallyAllowedTypes(['ConfigurablePODTemplate', ])
+                templatesFolder.setImmediatelyAddableTypes(['ConfigurablePODTemplate', ])
+                for template in templatesFolder.objectValues('PodTemplate'):
+                    templateId = template.getId()
+                    podFile = template.getPodTemplate()
+                    # try to migrate the tal_condition to use the 'pod_portal_type'
+                    # to filter out generable templates
+                    condition = template.getPodCondition()
+                    pod_portal_types = []
+                    if "(here.meta_type==\"Meeting\") and " in condition or \
+                       "(here.meta_type=='Meeting') and " in condition or \
+                       "here.meta_type==\"Meeting\" and " in condition or \
+                       "here.meta_type=='Meeting' and " in condition:
+                        condition = condition.replace("(here.meta_type==\"Meeting\") and ", "")
+                        condition = condition.replace("(here.meta_type=='Meeting') and ", "")
+                        condition = condition.replace("here.meta_type==\"Meeting\" and ", "")
+                        condition = condition.replace("here.meta_type=='Meeting' and ", "")
+                        pod_portal_types.append(cfg.getMeetingTypeName())
+                    if "(here.meta_type==\"MeetingItem\") and " in condition or \
+                       "(here.meta_type=='MeetingItem') and " in condition or \
+                       "here.meta_type==\"MeetingItem\" and " in condition or \
+                       "here.meta_type=='MeetingItem' and " in condition:
+                        condition = condition.replace("(here.meta_type==\"MeetingItem\") and ", "")
+                        condition = condition.replace("(here.meta_type=='MeetingItem') and ", "")
+                        condition = condition.replace("here.meta_type==\"MeetingItem\" and ", "")
+                        condition = condition.replace("here.meta_type=='MeetingItem' and ", "")
+                        pod_portal_types.append(cfg.getItemTypeName())
+
+                    data = {'title': template.Title(),
+                            'description': template.Description(),
+                            'odt_file': NamedBlobFile(
+                                data=podFile.data,
+                                contentType='applications/odt',
+                                filename=safe_unicode(podFile.filename)),
+                            'pod_portal_types': pod_portal_types,
+                            'enabled': wft.getInfoFor(template, 'review_state') == 'active' and True or False,
+                            'pod_formats': [template.getPodFormat(), ],
+                            'tal_condition': condition,
+                            }
+                    # remove the old template before creating the new so we can use the same id
+                    templatesFolder.manage_delObjects(ids=[templateId, ])
+                    templatesFolder.invokeFactory('ConfigurablePODTemplate', id=templateId, **data)
+                    newTemplate = getattr(templatesFolder, templateId)
+                    newTemplate.reindexObject()
         logger.info('Done.')
 
     def _updateAnnexIndex(self):
