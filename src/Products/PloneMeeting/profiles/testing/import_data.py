@@ -89,6 +89,11 @@ itemTemplate.odt_file = 'Item.odt'
 itemTemplate.pod_portal_types = ['MeetingItemPma']
 itemTemplate.tal_condition = ''
 
+dashboardTemplate = PodTemplateDescriptor('dashboardTemplate', 'Dashboard summary')
+dashboardTemplate.odt_file = 'Dashboard.odt'
+dashboardTemplate.pod_portal_types = ['Folder']
+dashboardTemplate.tal_condition = 'python: context.absolute_url().endswith("/searches_items")'
+
 # Test users and groups
 pmManager = UserDescriptor('pmManager', [], email="pmmanager@plonemeeting.org", fullname='M. PMManager')
 pmCreator1 = UserDescriptor('pmCreator1', [], email="pmcreator1@plonemeeting.org", fullname='M. PMCreator One')
@@ -284,7 +289,7 @@ meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'clo
 meetingPma.useVotes = True
 meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
                            cadranel_signer, muser_voter1, muser_voter2]
-meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate]
+meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',
                                        'trigger_workflow_transitions_until': '__nothing__'}, ]
