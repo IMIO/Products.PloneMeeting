@@ -434,7 +434,8 @@ def migrate(context):
        7) Move item templates and recurring items to their own portal_type;
        8) Make sure no layout is defined on users MeetingFolders;
        9) Reindex annexIndex;
-       10) Refresh catalogs.
+       10) Move to collective.documentgenerator;
+       11) Refresh catalogs.
     '''
     Migrate_To_3_4(context).run()
 # ------------------------------------------------------------------------------
