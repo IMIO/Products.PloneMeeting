@@ -7,6 +7,7 @@
 # GNU General Public License (GPL)
 #
 
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.annotation import IAnnotations
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
@@ -25,8 +26,6 @@ from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.dashboard.browser.overrides import IDDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.history.browser.views import IHDocumentBylineViewlet
-
-from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent

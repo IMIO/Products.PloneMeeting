@@ -2898,22 +2898,31 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviserId = "%s__rowid__%s" % \
                             (delayAwareAdviser['meetingGroupId'],
                              delayAwareAdviser['row_id'])
-                value_to_display = "%s - %s" % (delayAwareAdviser['meetingGroupName'],
-                                                translate('delay_of_x_days',
-                                                          domain='PloneMeeting',
-                                                          mapping={'delay': delayAwareAdviser['delay']},
-                                                          default='Delay of ${delay} days',
-                                                          context=self.REQUEST).encode('utf-8'),)
-                if delayAwareAdviser['delay_label']:
-                    value_to_display = "%s (%s)" % (value_to_display, delayAwareAdviser['delay_label'])
+                delay = safe_unicode(delayAwareAdviser['delay'])
+                delay_label = safe_unicode(delayAwareAdviser['delay_label'])
+                group_name = safe_unicode(delayAwareAdviser['meetingGroupName'])
+                if delay_label:
+                    value_to_display = translate('advice_delay_with_label',
+                                                 domain='PloneMeeting',
+                                                 mapping={'group_name': group_name,
+                                                          'delay': delay,
+                                                          'delay_label': delay_label},
+                                                 default='${group_name} - ${delay} day(s) (${delay_label})',
+                                                 context=self.REQUEST).encode('utf-8')
+                else:
+                    value_to_display = translate('advice_delay_without_label',
+                                                 domain='PloneMeeting',
+                                                 mapping={'group_name': group_name,
+                                                          'delay': delay},
+                                                 default='${group_name} - ${delay} day(s)',
+                                                 context=self.REQUEST).encode('utf-8')
                 resDelayAwareAdvisers.append((adviserId, value_to_display))
 
         resNonDelayAwareAdvisers = []
         # only let select groups for which there is at least one user in
         nonEmptyMeetingGroups = tool.getMeetingGroups(notEmptySuffix='advisers')
-        if nonEmptyMeetingGroups:
-            for mGroup in nonEmptyMeetingGroups:
-                resNonDelayAwareAdvisers.append((mGroup.getId(), mGroup.getName()))
+        for mGroup in nonEmptyMeetingGroups:
+            resNonDelayAwareAdvisers.append((mGroup.getId(), mGroup.getName()))
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it

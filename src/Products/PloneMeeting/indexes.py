@@ -17,6 +17,9 @@ from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 
+REAL_GROUP_ID_PATTERN = 'real_group_id_{0}'
+DELAYAWARE_REAL_GROUP_ID_PATTERN = 'delay_real_group_id__{0}'
+
 
 @indexer(IMeeting)
 def sortable_title(obj):
@@ -235,13 +238,15 @@ def indexAdvisers(obj):
         # compute suffix
         suffix = _computeSuffixFor(groupId, advice)
 
-        # we also index the groupId so we can query who we asked
+        # we also index the 'real_group_id_' so we can query who we asked
         # advice to, without passing the advice state
-        res.append('real_group_id_' + groupId)
-
         if isDelayAware:
             res.append('delay__' + groupId + suffix)
+            # 'real_group_id_'
+            res.append(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'], groupId))
         else:
             res.append(groupId + suffix)
+            # 'real_group_id_'
+            res.append(REAL_GROUP_ID_PATTERN.format(groupId))
     res.sort()
     return res

@@ -476,7 +476,7 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers(('developers', 'vendors__rowid__unique_id_123', ))
         item.updateAdvices()
         # no advice to give as item is 'itemcreated'
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['real_group_id_vendors',
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay__vendors_advice_not_giveable',
                                                                   'real_group_id_developers',
                                                                   'developers_advice_not_giveable']))
@@ -484,7 +484,7 @@ class testAdvices(PloneMeetingTestCase):
         item.reindexObject()
         self.changeUser('pmAdviser1')
         # now advice are giveable but not given
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['real_group_id_vendors',
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay__vendors_advice_not_given',
                                                                   'real_group_id_developers',
                                                                   'developers_advice_not_given']))
@@ -492,7 +492,7 @@ class testAdvices(PloneMeetingTestCase):
         brains = self.portal.portal_catalog(indexAdvisers='developers_advice_not_given')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
-        brains = self.portal.portal_catalog(indexAdvisers='delay__vendors_advice_not_given')
+        brains = self.portal.portal_catalog(indexAdvisers='delay_real_group_id__unique_id_123')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         advice = createContentInContainer(item,
@@ -501,7 +501,7 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_type': u'positive',
                                              'advice_comment': RichTextValue(u'My comment')})
         # now that an advice has been given for the developers group, the indexAdvisers has been updated
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['real_group_id_vendors',
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay__vendors_advice_not_given',
                                                                   'real_group_id_developers',
                                                                   'developers_advice_under_edit']))
@@ -512,7 +512,7 @@ class testAdvices(PloneMeetingTestCase):
         advice.advice_group = self.portal.portal_plonemeeting.vendors.getId()
         # notify modified
         notify(ObjectModifiedEvent(advice))
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['real_group_id_vendors',
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay__vendors_advice_under_edit',
                                                                   'real_group_id_developers',
                                                                   'developers_advice_not_given']))
@@ -523,29 +523,29 @@ class testAdvices(PloneMeetingTestCase):
         # put the item in a state where given advices are not editable anymore
         self.changeUser('pmReviewer1')
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['real_group_id_vendors',
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay__vendors_advice_given',
                                                                   'real_group_id_developers',
                                                                   'developers_advice_not_giveable']))
         # ask a given advice again
         self.changeUser('pmCreator1')
         advice.restrictedTraverse('@@change-advice-asked-again')()
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay__vendors_advice_not_giveable',
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay__vendors_advice_not_giveable',
                                                                   'developers_advice_not_giveable',
-                                                                  'real_group_id_developers',
-                                                                  'real_group_id_vendors']))
+                                                                  'real_group_id_developers']))
 
         # put it back to a state where it is editable
         self.proposeItem(item)
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay__vendors_advice_asked_again',
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay__vendors_advice_asked_again',
                                                                   'developers_advice_not_given',
-                                                                  'real_group_id_developers',
-                                                                  'real_group_id_vendors']))
+                                                                  'real_group_id_developers']))
 
         # delete the advice
         self.changeUser('pmAdviser1')
         item.restrictedTraverse('@@delete_givenuid')(advice.UID())
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['real_group_id_vendors',
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay__vendors_advice_not_given',
                                                                   'real_group_id_developers',
                                                                   'developers_advice_not_given']))
@@ -558,7 +558,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(brains[0].UID, itemUID)
         # if a delay-aware advice delay is exceeded, it is indexed with an ending '2'
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 01, 01)
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['real_group_id_vendors',
+        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay__vendors_advice_delay_exceeded',
                                                                   'real_group_id_developers',
                                                                   'developers_advice_not_given']))

@@ -2,6 +2,7 @@
 
 from operator import attrgetter
 
+from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.vocabulary import SimpleVocabulary
@@ -14,6 +15,8 @@ from plone import api
 from plone.memoize.instance import memoize
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
+from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
+from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
 
 
 class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
@@ -196,18 +199,79 @@ MeetingDatesVocabularyFactory = MeetingDatesVocabulary()
 class AskedAdvicesVocabulary(object):
     implements(IVocabularyFactory)
 
+    def _getAdvisers(self):
+        """ """
+        res = []
+        # customAdvisers
+        customAdvisers = self.cfg.getCustomAdvisers()
+        for customAdviser in customAdvisers:
+            if customAdviser['delay']:
+                # build using DELAYAWARE_REAL_GROUP_ID_PATTERN
+                res.append(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(customAdviser['row_id'],
+                                                                   customAdviser['group']))
+            else:
+                # build using REAL_GROUP_ID_PATTERN
+                res.append(REAL_GROUP_ID_PATTERN.format(customAdviser['group']))
+
+        # classic advisers
+        for mGroup in self.tool.getMeetingGroups(notEmptySuffix='advisers'):
+            formatted = REAL_GROUP_ID_PATTERN.format(mGroup.getId())
+            if formatted not in res:
+                res.append(REAL_GROUP_ID_PATTERN.format(mGroup.getId()))
+        return res
+
     def __call__(self, context):
         """ """
         res = []
-        catalog = getToolByName(context, 'portal_catalog')
-        tool = getToolByName(context, 'portal_plonemeeting')
-        advisers = catalog.uniqueValuesFor('indexAdvisers')
-        # keep values beginning with 'real_group_id_'
+        # in case we have no REQUEST, it means that we are editing a DashboardCollection
+        # for which when this vocabulary is used for the 'indexAdvisers' queryField used
+        # on a DashboardCollection (when editing the DashboardCollection), the context
+        # is portal_registry without a REQUEST...  Get the DashboardCollection as context
+        if not hasattr(context, 'REQUEST'):
+            # sometimes, the DashboardCollection is the first parent in the REQUEST.PARENTS...
+            portal = getSite()
+            context = portal.REQUEST['PARENTS'][0]
+            if not context.portal_type == 'DashboardCollection':
+                # if not first parent, try to get it from HTTP_REFERER
+                referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
+                referer = referer.replace('/edit', '')
+                context = portal.restrictedTraverse(referer)
+                if not context.portal_type == 'DashboardCollection':
+                    return SimpleVocabulary(res)
+
+        self.tool = getToolByName(context, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+        advisers = self._getAdvisers()
         for adviser in advisers:
-            if adviser.startswith('real_group_id_'):
+            termTitle = None
+            if adviser.startswith(REAL_GROUP_ID_PATTERN.format('')):
+                termTitle = getattr(self.tool, adviser.split(REAL_GROUP_ID_PATTERN.format(''))[-1]).getName()
+            elif adviser.startswith(DELAYAWARE_REAL_GROUP_ID_PATTERN.format('')):
+                row_id = adviser.split(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(''))[-1]
+                delayAwareAdviser = self.cfg._dataForCustomAdviserRowId(row_id)
+                delay = safe_unicode(delayAwareAdviser['delay'])
+                delay_label = safe_unicode(delayAwareAdviser['delay_label'])
+                group_name = safe_unicode(getattr(self.tool, delayAwareAdviser['group']).getName())
+                if delay_label:
+                    termTitle = translate('advice_delay_with_label',
+                                          domain='PloneMeeting',
+                                          mapping={'group_name': group_name,
+                                                   'delay': delay,
+                                                   'delay_label': delay_label},
+                                          default='${group_name} - ${delay} day(s) (${delay_label})',
+                                          context=context.REQUEST).encode('utf-8')
+                else:
+                    termTitle = translate('advice_delay_without_label',
+                                          domain='PloneMeeting',
+                                          mapping={'group_name': group_name,
+                                                   'delay': delay},
+                                          default='${group_name} - ${delay} day(s)',
+                                          context=context.REQUEST).encode('utf-8')
+
+            if termTitle:
                 res.append(SimpleTerm(adviser,
                                       adviser,
-                                      safe_unicode(getattr(tool, adviser.split('real_group_id_')[-1]).getName()))
+                                      safe_unicode(termTitle))
                            )
         res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
