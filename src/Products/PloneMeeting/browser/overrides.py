@@ -24,6 +24,7 @@ from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDDocumentGenerationView
 from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.dashboard.browser.overrides import IDDocumentGeneratorLinksViewlet
+from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.history.browser.views import IHDocumentBylineViewlet
 
@@ -145,8 +146,8 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                                                   showActions=False)
 
 
-class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
-    """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
+class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinksViewlet):
+    """ """
 
     def get_all_pod_templates(self):
         tool = getToolByName(self.context, 'portal_plonemeeting')
@@ -159,6 +160,11 @@ class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
 
         return pod_templates
+
+
+class PMDocumentGeneratorLinksViewlet(PMDashboardDocumentGeneratorLinksViewlet,
+                                      IDDocumentGeneratorLinksViewlet):
+    """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):
