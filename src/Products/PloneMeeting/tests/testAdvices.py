@@ -1589,10 +1589,17 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
         # for now 'advice_hide_during_redaction' is False
         self.assertFalse(advice.advice_hide_during_redaction)
+        # 'asked_again' term is not in advice_type_vocabulary as it is not selectable manually
+        factory = queryUtility(IVocabularyFactory, u'Products.PloneMeeting.content.advice.advice_type_vocabulary')
+        vocab = factory(advice)
+        self.assertFalse('asked_again' in vocab)
         # right, ask advice again
         changeView()
         # advice is asked_again and previous advice was historized
         self.assertTrue(advice.advice_type == 'asked_again')
+        # now it is available in vocabulary
+        vocab = factory(advice)
+        self.assertTrue('asked_again' in vocab)
         pr = self.portal.portal_repository
         # version 0 was saved
         self.assertTrue(pr.getHistoryMetadata(advice)._available == [0])
