@@ -60,7 +60,8 @@ class AnnexableAdapter(object):
         if relatedTo == 'item_decision' and \
            not checkPermission("PloneMeeting: Write decision annex", self.context):
             raise Unauthorized
-        elif not checkPermission("PloneMeeting: Add annex", self.context):
+        elif (not relatedTo == 'item_decision' and
+              not checkPermission("PloneMeeting: Add annex", self.context)):
             # we use the "PloneMeeting: Add annex" permission for item normal annexes and advice annexes
             raise Unauthorized
 
