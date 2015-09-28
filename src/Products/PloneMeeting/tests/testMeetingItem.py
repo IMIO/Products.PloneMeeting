@@ -1479,9 +1479,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setDecision('<p>A decision</p>')
         # until the item is not in a meeting, the call to
-        # getItemNumber will return None
-        self.assertIsNone(item.getItemNumber(relativeTo='meeting'))
-        self.assertIsNone(item.getItemNumber(relativeTo='meetingConfig'))
+        # getItemNumber will return 0
+        self.assertEquals(item.getItemNumber(relativeTo='meeting'), 0)
+        self.assertEquals(item.getItemNumber(relativeTo='meetingConfig'), 0)
         # so insert the item in a meeting
         # create a meeting with items
         meeting = self._createMeetingWithItems()

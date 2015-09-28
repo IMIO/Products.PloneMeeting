@@ -151,13 +151,18 @@ class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
     """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
 
     def get_all_pod_templates(self):
+        """Query by MeetingConfig."""
         tool = getToolByName(self.context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         if not cfg:
             return []
         catalog = getToolByName(self.context, 'portal_catalog')
-        brains = catalog.unrestrictedSearchResults(object_provides=IPODTemplate.__identifier__,
-                                                   path={'query': '/'.join(cfg.getPhysicalPath())})
+        brains = catalog.unrestrictedSearchResults(
+            object_provides={'query': IPODTemplate.__identifier__,
+                             'not': IDashboardPODTemplate.__identifier__},
+            # PloneMeeting, just added following line
+            path={'query': '/'.join(cfg.getPhysicalPath())}
+        )
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
 
         return pod_templates
@@ -172,8 +177,11 @@ class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinks
         if not cfg:
             return []
         catalog = getToolByName(self.context, 'portal_catalog')
-        brains = catalog.unrestrictedSearchResults(object_provides=IDashboardPODTemplate.__identifier__,
-                                                   path={'query': '/'.join(cfg.getPhysicalPath())})
+        brains = catalog.unrestrictedSearchResults(
+            object_provides=IDashboardPODTemplate.__identifier__,
+            # PloneMeeting, just added following line
+            path={'query': '/'.join(cfg.getPhysicalPath())}
+        )
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
 
         return pod_templates
@@ -209,7 +217,8 @@ class PMFacetedContainerView(FacetedContainerView):
            to it's own pmFolder if it is on the pmFolder of another user."""
         if not check_zope_admin():
             if self.context.getProperty('meeting_config') and \
-               not self.context.getOwner().getId() == getToolByName(self.context, 'portal_membership').getAuthenticatedMember():
+               (not self.context.getOwner().getId() ==
+               getToolByName(self.context, 'portal_membership').getAuthenticatedMember()):
                 tool = getToolByName(self.context, 'portal_plonemeeting')
                 userPMFolder = tool.getPloneMeetingFolder(self.context.getProperty('meeting_config'))
                 self.request.RESPONSE.redirect(userPMFolder.absolute_url())

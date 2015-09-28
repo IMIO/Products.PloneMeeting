@@ -1629,7 +1629,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              p_relativeTo="meetingConfig"'''
         # this method is only relevant if the item is in a meeting
         if not self.hasMeeting():
-            return None
+            return 0
 
         res = self.getField('itemNumber').get(self, **kwargs)
         if relativeTo == 'meeting':
@@ -4558,7 +4558,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def downOrUpWorkflowAgain(self):
         """Was current item already in same review_state before?
            And if so, is it up or down the workflow?"""
-        res = None
+        res = ''
         if not self.hasMeeting() and \
            not self.queryState() == 'validated' and \
            not self.isDefinedInTool():

@@ -127,6 +127,7 @@
            provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- Indexes -->
+  <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
   <adapter name="Description" factory=".indexes.Description" />
   <adapter name="getDeliberation" factory=".indexes.getDeliberation" />
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />

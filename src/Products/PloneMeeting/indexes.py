@@ -65,6 +65,18 @@ def Description(obj):
     return obj.Description(mimetype='text/plain')
 
 
+@indexer(IItem)
+def getRawClassifier(obj):
+    """
+      Make sure this returns not 'None' because ZCatalog 3
+      does not want to index a 'None'...
+    """
+    classifier = obj.getRawClassifier()
+    if classifier is None:
+        classifier = []
+    return classifier
+
+
 @indexer(IMeetingItem)
 def getDeliberation(obj):
     """

@@ -978,11 +978,12 @@
       <fieldset>
         <legend>
          <span i18n:translate="PodTemplates"></span>
-         <input type="image" style="cursor:pointer" class="imageInput"
-                tal:attributes="onClick python: 'href: window.location=\'%s/podtemplates/++add++ConfigurablePODTemplate\'' % context.absolute_url();
-                                src string: $portal_url/plus.png"
-                title="add_object" i18n:attributes="title"
-                tal:condition="isRealManager"/>
+         <a href="#"
+            class="link-overlay-pm"
+            tal:condition="isRealManager"
+            tal:attributes="href string:${context/podtemplates/absolute_url}/folder_factories">
+          <img src="#" tal:attributes="src string: $portal_url/plus.png;" />
+         </a>
         </legend>
         <p class="discreet" i18n:translate="pod_templates_descr"></p><br />
         <table class="listing nosort" align="right" width="100%"
