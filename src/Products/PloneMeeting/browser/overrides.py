@@ -26,6 +26,7 @@ from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.dashboard.browser.overrides import IDDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
+from imio.dashboard.content.pod_template import IDashboardPODTemplate
 from imio.history.browser.views import IHDocumentBylineViewlet
 
 from Products.CMFCore.utils import getToolByName
@@ -146,8 +147,8 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                                                   showActions=False)
 
 
-class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinksViewlet):
-    """ """
+class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
+    """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
 
     def get_all_pod_templates(self):
         tool = getToolByName(self.context, 'portal_plonemeeting')
@@ -162,9 +163,20 @@ class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinks
         return pod_templates
 
 
-class PMDocumentGeneratorLinksViewlet(PMDashboardDocumentGeneratorLinksViewlet,
-                                      IDDocumentGeneratorLinksViewlet):
-    """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
+class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinksViewlet):
+    """ """
+
+    def get_all_pod_templates(self):
+        tool = getToolByName(self.context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if not cfg:
+            return []
+        catalog = getToolByName(self.context, 'portal_catalog')
+        brains = catalog.unrestrictedSearchResults(object_provides=IDashboardPODTemplate.__identifier__,
+                                                   path={'query': '/'.join(cfg.getPhysicalPath())})
+        pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
+
+        return pod_templates
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):
