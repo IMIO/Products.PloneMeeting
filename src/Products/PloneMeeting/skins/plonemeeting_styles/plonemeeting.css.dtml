@@ -1250,7 +1250,7 @@ div#doc-generation-view ul.pod-template {
 }
 
 /* in dashboard, move the links to document-generator next to the dashboard title */
-body.template-facetednavigation_view.portaltype-folder div#doc-generation-view {
+body.template-facetednavigation_view.portaltype-folder div#faceted-results div#doc-generation-view {
     float: right;
     margin-top: -28px;
     position: absolute;
