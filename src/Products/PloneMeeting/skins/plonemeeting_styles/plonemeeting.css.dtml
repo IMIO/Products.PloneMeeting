@@ -1241,21 +1241,6 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
     text-decoration: underline;
 }
 
-/* align pod templates correctly */
-div#doc-generation-view {
-    text-align: right;
-}
-div#doc-generation-view ul.pod-template {
-    display: inline-block;
-}
-
-/* in dashboard, move the links to document-generator next to the dashboard title */
-body.template-facetednavigation_view.portaltype-folder div#faceted-results div#doc-generation-view {
-    float: right;
-    margin-top: -28px;
-    position: absolute;
-    right: 24px;
-}
 
 /* </dtml-with> */
 

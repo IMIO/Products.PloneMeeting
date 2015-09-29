@@ -621,16 +621,17 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             'meetingConfig': cfg,
             'itemUids': {},
             'user': currentUser,
-            'podTemplate': self.pod_template,
+            'podTemplate': self.get_pod_template(),
             # give ability to access annexes related methods
             'IAnnexable': IAnnexable,
             # make methods defined in utils available
             'utils': pm_utils
         }
+        import ipdb; ipdb.set_trace()
         return specific_context
 
-    def get_generation_context(self, helper_view):
+    def _get_generation_context(self, helper_view):
         """We backwardly use 'itemUids' instead of 'uids' for list of uids..."""
-        generation_context = super(PMDocumentGenerationView, self).get_generation_context(helper_view)
+        generation_context = super(PMDocumentGenerationView, self)._get_generation_context(helper_view)
         generation_context['itemUids'] = generation_context['uids']
         return generation_context
