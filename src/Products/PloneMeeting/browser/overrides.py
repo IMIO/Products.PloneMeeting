@@ -627,7 +627,6 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             # make methods defined in utils available
             'utils': pm_utils
         }
-        import ipdb; ipdb.set_trace()
         return specific_context
 
     def _get_generation_context(self, helper_view):
