@@ -19,6 +19,7 @@ from plone.memoize.view import memoize_contextless
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from eea.facetednavigation.browser.app.view import FacetedContainerView
+from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDDocumentGenerationView
@@ -150,6 +151,16 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
 class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
     """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
 
+    def available(self):
+        """
+        Exclude this viewlet from faceted contexts except IMeeting.
+        """
+        # warning, we take super of IDDocumentGeneratorLinksViewlet
+        available = super(IDDocumentGeneratorLinksViewlet, self).available()
+        # we accept IMeeting (that is a faceted...) or elements that are not a faceted
+        no_faceted_context = IMeeting.providedBy(self.context) or not IFacetedNavigable.providedBy(self.context)
+        return no_faceted_context and available
+
     def get_all_pod_templates(self):
         """Query by MeetingConfig."""
         tool = getToolByName(self.context, 'portal_plonemeeting')
@@ -161,9 +172,12 @@ class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
             object_provides={'query': IPODTemplate.__identifier__,
                              'not': IDashboardPODTemplate.__identifier__},
             # PloneMeeting, just added following line
-            path={'query': '/'.join(cfg.getPhysicalPath())}
+            path={'query': '/'.join(cfg.getPhysicalPath())},
+            sort_on='getObjPositionInParent'
         )
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
+        # we display templates 'float:right' ...
+        pod_templates.reverse()
 
         return pod_templates
 
@@ -180,9 +194,12 @@ class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinks
         brains = catalog.unrestrictedSearchResults(
             object_provides=IDashboardPODTemplate.__identifier__,
             # PloneMeeting, just added following line
-            path={'query': '/'.join(cfg.getPhysicalPath())}
+            path={'query': '/'.join(cfg.getPhysicalPath())},
+            sort_on='getObjPositionInParent'
         )
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
+        # we display templates 'float:right' ...
+        pod_templates.reverse()
 
         return pod_templates
 
