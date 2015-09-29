@@ -337,6 +337,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'UID': self.UID(),
                'meetingFileTypeObjectUID': fileTypeData['meetingFileTypeObjectUID'],
                'mftId': fileTypeData['id'],
+               'mftTitle': fileTypeData['name'],
                'id': self.getId(),
                'iconUrl': self.getIcon(),
                'relatedTo': self.findRelatedTo(),

@@ -26,11 +26,13 @@
         <tal:comment replace="nothing">Several annexes of this type are present</tal:comment>
         <dl class="actionMenuAX"
             tal:define="imgUrl python:portal_url + '/' + annexesGroup[0]['iconUrl'];
+                        mftTitle python: annexesGroup[0]['mftTitle'];
                         global count python:count+1"
             tal:attributes="id python:'annexesMenu_' + str(count) + '_' + context.UID() + '_' + str(view.relatedTo)">
             <dt class="actionMenuHeaderAX pmLinks">
                 <a href="#" class="#" tal:attributes="class extra_css_class">
-                    <img tal:attributes="src imgUrl" />
+                    <img tal:attributes="src imgUrl;
+                                         title mftTitle;" />
                     <b tal:content="python: len(annexesGroup)" id="pmNoNewContent">
                     </b>
                 </a>

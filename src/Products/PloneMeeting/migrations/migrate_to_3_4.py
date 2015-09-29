@@ -393,7 +393,7 @@ class Migrate_To_3_4(Migrator):
         logger.info('Done.')
 
     def _updateAnnexIndex(self):
-        '''The annexIndex changed (removed key 'modification_date'),
+        '''The annexIndex changed (removed key 'modification_date', added 'mftTitle'),
            we need to update it on every items and advices.'''
         logger.info('Updating annexIndex...')
         self.tool.reindexAnnexes()
