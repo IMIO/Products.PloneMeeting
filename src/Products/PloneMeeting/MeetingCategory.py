@@ -47,9 +47,9 @@ schema = Schema((
     LinesField(
         name='usingGroups',
         widget=MultiSelectionWidget(
-            format="checkbox",
             description="UsingGroups",
             description_msgid="category_using_groups_descr",
+            format="checkbox",
             label='Usinggroups',
             label_msgid='PloneMeeting_label_usingGroups',
             i18n_domain='PloneMeeting',
@@ -62,9 +62,9 @@ schema = Schema((
     LinesField(
         name='categoryMappingsWhenCloningToOtherMC',
         widget=MultiSelectionWidget(
-            format="checkbox",
             description="CategoryMappingsWhenCloningToOtherMC",
             description_msgid="category_mapping_when_cloning_to_other_mc_descr",
+            format="checkbox",
             label='Categorymappingswhencloningtoothermc',
             label_msgid='PloneMeeting_label_categoryMappingsWhenCloningToOtherMC',
             i18n_domain='PloneMeeting',

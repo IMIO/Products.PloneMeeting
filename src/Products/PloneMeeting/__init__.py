@@ -116,6 +116,7 @@ for valid in baseValidators:
 def initialize(context):
     """initialize product (called by zope)"""
     ##code-section custom-init-top #fill in your manual code here
+    import PodTemplate
     ##/code-section custom-init-top
 
     # imports packages and types for registration
@@ -128,7 +129,6 @@ def initialize(context):
     import MeetingFileType
     import MeetingFile
     import MeetingGroup
-    import PodTemplate
     import MeetingUser
 
     # Initialize portal tools

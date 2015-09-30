@@ -75,10 +75,10 @@ schema = Schema((
     LinesField(
         name='otherMCCorrespondences',
         widget=MultiSelectionWidget(
-            format="checkbox",
             description="OtherMCCorrespondences",
             description_msgid="other_mc_correspondences_descr",
             size=10,
+            format="checkbox",
             label='Othermccorrespondences',
             label_msgid='PloneMeeting_label_otherMCCorrespondences',
             i18n_domain='PloneMeeting',

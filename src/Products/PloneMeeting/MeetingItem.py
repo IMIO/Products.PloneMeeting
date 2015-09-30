@@ -843,11 +843,11 @@ schema = Schema((
     LinesField(
         name='copyGroups',
         widget=MultiSelectionWidget(
-            format="checkbox",
             size=10,
             condition='python:here.isCopiesEnabled()',
             description="CopyGroupsItems",
             description_msgid="copy_groups_item_descr",
+            format="checkbox",
             label='Copygroups',
             label_msgid='PloneMeeting_label_copyGroups',
             i18n_domain='PloneMeeting',
