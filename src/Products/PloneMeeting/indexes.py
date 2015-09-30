@@ -10,6 +10,7 @@
 from OFS.interfaces import IItem
 
 from plone.indexer import indexer
+from Products.PluginIndexes.common.UnIndex import _marker
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeeting
@@ -49,7 +50,7 @@ def previous_review_state(obj):
     # there is more than one action triggered, or we are in the initial state and
     # previous action is None...
     if wfName not in wh or not len(wh[wfName]) > 1:
-        return ''
+        return _marker
 
     # action [-1] is last triggered action, but we want the previous one...
     previous_action = wh[wfName][-2]['review_state']
@@ -73,7 +74,7 @@ def getRawClassifier(obj):
     """
     classifier = obj.getRawClassifier()
     if classifier is None:
-        classifier = []
+        return _marker
     return classifier
 
 
@@ -99,7 +100,7 @@ def linkedMeetingUID(obj):
     """
       Store the linked meeting UID.
     """
-    res = ''
+    res = _marker
     meeting = obj.getMeeting()
     if meeting:
         res = meeting.UID()
@@ -111,7 +112,7 @@ def linkedMeetingDate(obj):
     """
       Store the linked meeting date.
     """
-    res = ''
+    res = _marker
     meeting = obj.getMeeting()
     if meeting:
         res = meeting.getDate()
@@ -123,7 +124,7 @@ def getPreferredMeetingDate(obj):
     """
       Store the preferredMeeting date.
     """
-    res = ''
+    res = _marker
     preferredMeetingUID = obj.getPreferredMeeting()
     if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
         # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
@@ -143,7 +144,7 @@ def sentToInfos(obj):
       An item that does not have to be send to another meetingConfig
       will receive the 'not_to_be_cloned_to' value so we can filter it out.
     """
-    res = []
+    res = _marker
     clonableTo = obj.getOtherMeetingConfigsClonableTo()
     clonedTo = obj._getOtherMeetingConfigsImAmClonedIn()
     for cfgId in clonableTo:
@@ -195,7 +196,7 @@ def templateUsingGroups(obj):
     elif obj.portal_type == 'Folder':
         return ('__folder_in_itemtemplates__', )
     else:
-        return ()
+        return _marker
 
 
 @indexer(IMeetingItem)
@@ -214,7 +215,7 @@ def indexAdvisers(obj):
            no more giveable because of delay exceeded;
     """
     if not hasattr(obj, 'adviceIndex'):
-        return ''
+        return _marker
 
     def _computeSuffixFor(groupId, advice):
         '''
