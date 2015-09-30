@@ -176,8 +176,6 @@ class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
             sort_on='getObjPositionInParent'
         )
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
-        # we display templates 'float:right' ...
-        pod_templates.reverse()
 
         return pod_templates
 
@@ -198,8 +196,6 @@ class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinks
             sort_on='getObjPositionInParent'
         )
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
-        # we display templates 'float:right' ...
-        pod_templates.reverse()
 
         return pod_templates
 
