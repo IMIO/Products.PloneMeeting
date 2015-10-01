@@ -42,8 +42,10 @@ from OFS.ObjectManager import BeforeDeleteException
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
+from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
+from zope.schema.interfaces import IVocabularyFactory
 from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import Expression, createExprContext
@@ -2565,7 +2567,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if insertMethod == 'on_list_type':
             # 2 default listTypes, 'normal' and 'late' and
             # extraListTypes defined in the MeetingConfig
-            return len(self.listListTypes())
+            factory = queryUtility(IVocabularyFactory, u'Products.PloneMeeting.vocabularies.listtypesvocabulary')
+            return len(factory(self))
         elif insertMethod == 'on_categories':
             return len(cfg.getCategories(onlySelectable=False))
         elif insertMethod in ('on_proposing_groups', 'on_all_groups'):
@@ -2596,7 +2599,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         res = ''
         if insertMethod == 'on_list_type':
-            values = self.listListTypes().keys()
+            factory = queryUtility(IVocabularyFactory, u'Products.PloneMeeting.vocabularies.listtypesvocabulary')
+            vocab = factory(self)
+            values = [term.token for term in vocab]
             return values.index(self.getListType())
         elif insertMethod == 'on_categories':
             # get the category order, pass onlySelectable to False so disabled categories
