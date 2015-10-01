@@ -489,21 +489,15 @@
         for="*"
         permission="zope2.View"/>
 
-    <!-- document-generation view for items and meetings -->
+    <!-- document-generation view -->
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        for="Products.Archetypes.interfaces.base.IBaseObject"
         name="document-generation"
         class=".overrides.PMDocumentGenerationView"
         permission="zope2.View"
         />
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        name="document-generation"
-        class=".overrides.PMDocumentGenerationView"
-        permission="zope2.View"
-        />
-    <browser:page
-        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        for="plone.dexterity.interfaces.IDexterityContainer"
         name="document-generation"
         class=".overrides.PMDocumentGenerationView"
         permission="zope2.View"

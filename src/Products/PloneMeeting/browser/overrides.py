@@ -612,7 +612,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         currentUser = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
         specific_context = {
             'self': self.context,
-            'adap': self.context.adapted(),
+            'adap': hasattr(self.context, 'adapted') and self.context.adapted() or None,
             'tool': tool,
             'meetingConfig': cfg,
             'itemUids': {},
