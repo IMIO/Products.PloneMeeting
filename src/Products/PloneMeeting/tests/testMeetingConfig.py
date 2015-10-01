@@ -39,6 +39,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
+from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -972,6 +973,52 @@ class testMeetingConfig(PloneMeetingTestCase):
         values = ({'meeting_config': '%s' % cfg2Id,
                    'trigger_workflow_transitions_until': '%s.present' % cfg2Id},)
         self.failIf(cfg.validate_meetingConfigsToCloneTo(values))
+
+    def test_pm_Validate_listTypes(self):
+        '''Test the MeetingConfig.listTypes validation.'''
+        cfg = self.meetingConfig
+
+        # default listTypes must be present
+        values = list(DEFAULT_LIST_TYPES)
+        # validates
+        self.failIf(cfg.validate_listTypes(values))
+        values.remove(DEFAULT_LIST_TYPES[0])
+        missing_default_msg = _('error_list_types_missing_default')
+        self.assertEquals(cfg.validate_listTypes(values), missing_default_msg)
+
+        # used one may not be removed
+        values = list(DEFAULT_LIST_TYPES)
+        valuesWithExtra = list(values)
+        valuesWithExtra.append({'identifier': 'extra',
+                                'label': 'Extra'})
+        self.failIf(cfg.validate_listTypes(valuesWithExtra))
+        cfg.setListTypes(valuesWithExtra)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setListType('extra')
+        item.reindexObject()
+        already_used_msg = _('error_list_types_identifier_removed_already_used')
+        self.assertEquals(cfg.validate_listTypes(values), already_used_msg)
+        self.failIf(cfg.validate_listTypes(valuesWithExtra))
+        # if no more used, removeable
+        self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
+        self.changeUser('siteadmin')
+        self.failIf(cfg.validate_listTypes(values))
+        self.failIf(cfg.validate_listTypes(valuesWithExtra))
+
+        # wrong format for identifier
+        valuesWithWrongFormat = list(values)
+        valuesWithWrongFormat.append({'identifier': 'extra wrong',
+                                      'label': 'Extra wrong'})
+        wrong_format_msg = _('error_list_types_wrong_identifier_format')
+        self.assertEquals(cfg.validate_listTypes(valuesWithWrongFormat), wrong_format_msg)
+
+        # already used identifier
+        valuesWithDouble = list(values)
+        valuesWithDouble.append(values[0])
+        double_msg = _('error_list_types_same_identifier')
+        self.assertEquals(cfg.validate_listTypes(valuesWithDouble), double_msg)
+        self.failIf(cfg.validate_listTypes(values))
 
     def test_pm_AddingExistingSearchDoesNotBreak(self):
         '''

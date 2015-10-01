@@ -254,6 +254,12 @@ DEFAULT_ITEM_COLUMNS = ({'position': 0, 'name': 'pretty_link'},
 # columns that will be automatically selected for meeting related DashboardCollections
 DEFAULT_MEETING_COLUMNS = ({'position': 0, 'name': 'pretty_link'}, )
 
+# default listTypes
+DEFAULT_LIST_TYPES = [
+    {'identifier': 'normal', 'label': 'normal'},
+    {'identifier': 'late', 'label': 'late'}
+]
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

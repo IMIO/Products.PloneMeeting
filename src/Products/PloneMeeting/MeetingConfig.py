@@ -579,6 +579,23 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
+    DataGridField(
+        name='listTypes',
+        widget=DataGridField._properties['widget'](
+            description="ListTypes",
+            description_msgid="list_types_descr",
+            columns={'identifier': Column("List type identifier", col_description="Enter an internal identifier, use only lowercase letters."), 'label': Column("List type label", col_description="Enter a short label that will be displayed in the application.  This will be translated by the application if possible.  If you want to colorrize this new list type on the meeting view, you will need to do this using CSS like it is the case for 'late' items."), },
+            label='Listtypes',
+            label_msgid='PloneMeeting_label_listTypes',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        default=defValues.listTypes,
+        allow_oddeven=True,
+        write_permission="PloneMeeting: Write risky config",
+        columns=('identifier', 'label'),
+        allow_empty_rows=False,
+    ),
     LinesField(
         name='xhtmlTransformFields',
         widget=MultiSelectionWidget(
@@ -706,6 +723,7 @@ schema = Schema((
             size=70,
             description="ItemConditionsInterface",
             description_msgid="item_conditions_interface_descr",
+            format="checkbox",
             label='Itemconditionsinterface',
             label_msgid='PloneMeeting_label_itemConditionsInterface',
             i18n_domain='PloneMeeting',
@@ -829,7 +847,6 @@ schema = Schema((
         widget=InAndOutWidget(
             description="TransitionsForPresentingAnItem",
             description_msgid="transitions_for_presenting_an_item_descr",
-            format="checkbox",
             label='Transitionsforpresentinganitem',
             label_msgid='PloneMeeting_label_transitionsForPresentingAnItem',
             i18n_domain='PloneMeeting',
@@ -2214,6 +2231,37 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             except:
                 return _('error_certified_signatures_invalid_dates',
                          mapping={'row_number': row_number})
+
+    security.declarePrivate('validate_listTypes')
+    def validate_listTypes(self, value):
+        '''Validate the 'listTypes' field, check that :
+           - default are there (normal, late);
+           - already used may not be removed;
+           - extra provided 'identifier' are strict letter lowercase and not defined twice.'''
+        identifiers = [v['identifier'] for v in value]
+        defaultListTypes = [dlt['identifier'] for dlt in DEFAULT_LIST_TYPES]
+        if set(defaultListTypes).difference(set(identifiers)):
+            return _('error_list_types_missing_default')
+
+        for listType in value:
+            # bypass 'template_row_marker'
+            if 'orderindex_' in listType and listType['orderindex_'] == 'template_row_marker':
+                continue
+            identifier = listType['identifier']
+            # same identifier defined several times?
+            if identifiers.count(identifier) > 1:
+                return _('error_list_types_same_identifier')
+            # wrong identifier format?
+            if not identifier.lower() == identifier or \
+               not identifier.isalpha():
+                return _('error_list_types_wrong_identifier_format')
+
+        # already used listType may not be removed
+        removedIdentifiers = [v['identifier'] for v in self.getListTypes() if v['identifier'] not in identifiers]
+        catalog = getToolByName(self, 'portal_catalog')
+        for removedIdentifier in removedIdentifiers:
+            if catalog(portal_type=self.getItemTypeName(), listType=removedIdentifier):
+                return _('error_list_types_identifier_removed_already_used')
 
     security.declarePrivate('validate_transitionsForPresentingAnItem')
     def validate_transitionsForPresentingAnItem(self, values):
@@ -4303,6 +4351,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             query['getDate'] = {'query': DateTime(), 'range': 'min'}
 
         return catalog.unrestrictedSearchResults(**query)
+
 
 
 registerType(MeetingConfig, PROJECTNAME)

@@ -181,6 +181,8 @@
            name="Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary" />
   <utility component=".vocabularies.DownOrUpWorkflowAgainVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
+  <utility component=".vocabularies.ListTypesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
 
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"

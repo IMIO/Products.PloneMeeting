@@ -569,7 +569,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         enforceVocabulary=True,
-        vocabulary='listListTypes',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.listtypesvocabulary'
     ),
     StringField(
         name='emergency',
@@ -1933,16 +1933,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
-    security.declarePublic('listListTypes')
-    def listListTypes(self):
-        '''Types of list : 'normal' or 'late'.'''
-        d = 'PloneMeeting'
-        res = DisplayList((
-            ("normal", translate('normal', domain=d, context=self.REQUEST)),
-            ("late", translate('late', domain=d, context=self.REQUEST)),
-        ))
-        return res
-
     security.declarePublic('listEmergencies')
     def listEmergencies(self):
         '''Vocabulary for the 'emergency' field.'''
@@ -2573,7 +2563,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if insertMethod == 'on_list_type':
-            # by default, 2 listTypes, 'normal' and 'late'
+            # 2 default listTypes, 'normal' and 'late' and
+            # extraListTypes defined in the MeetingConfig
             return len(self.listListTypes())
         elif insertMethod == 'on_categories':
             return len(cfg.getCategories(onlySelectable=False))

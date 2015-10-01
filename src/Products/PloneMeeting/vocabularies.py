@@ -357,3 +357,23 @@ class DownOrUpWorkflowAgainVocabulary(object):
         return SimpleVocabulary(res)
 
 DownOrUpWorkflowAgainVocabularyFactory = DownOrUpWorkflowAgainVocabulary()
+
+
+class ListTypesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        tool = getToolByName(context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        res = []
+        for listType in cfg.getListTypes():
+            res.append(SimpleTerm(listType['identifier'],
+                                  listType['identifier'],
+                                  translate(listType['label'],
+                                            domain='PloneMeeting',
+                                            context=context.REQUEST))
+                       )
+        return SimpleVocabulary(res)
+
+ListTypesVocabularyFactory = ListTypesVocabulary()

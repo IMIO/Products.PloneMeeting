@@ -20,25 +20,22 @@ table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_late,
 table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_late {
     background-color: #ed0000;
 }
-table.listing tr.odd td.meeting_item_listType_late,
-table.listing tr.even td.meeting_item_listType_late,
-table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_late,
-table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_late,
-table.listing tr.odd td.meeting_item_listType_normal,
-table.listing tr.even td.meeting_item_listType_normal,
-table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_normal,
-table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_normal {
+
+table.listing tr.odd td[class^='meeting_item_listType_'],
+table.listing tr.even td[class^='meeting_item_listType_'],
+table.listing tr.odd.meeting_item_privacy_secret td[class^='meeting_item_listType_'],
+table.listing tr.even.meeting_item_privacy_secret td[class^='meeting_item_listType_'] {
     padding: 0em;
     border-right: 0px;
     height: 100%;
 }
 
 /* hide div of the ColorColumn for normal items */
-.meeting_item_listType_normal > div {
+td.meeting_item_listType_normal > div {
     display: none;
 }
-/* show div of the ColorColumn for late items */
-.meeting_item_listType_late > div {
+/* show div of the ColorColumn for other listTypes */
+td[class^='meeting_item_listType_'] > div {
     height: 100%;
     width: 100%;
     cursor: help;
@@ -612,9 +609,6 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 }
 /* CSS for MeetingItem.listType */
 /* While displayed as a single item (meetingitem_view) */
-.item_listType_normal {
-    color: green;
-}
 .item_listType_late {
     color: red;
 }

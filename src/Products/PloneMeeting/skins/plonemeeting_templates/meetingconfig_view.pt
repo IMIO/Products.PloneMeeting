@@ -253,13 +253,15 @@
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('listTypes')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('xhtmlTransformFields')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('xhtmlTransformTypes')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('publishDeadlineDefault')">

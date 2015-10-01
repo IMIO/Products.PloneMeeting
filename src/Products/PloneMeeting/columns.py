@@ -146,10 +146,17 @@ class ItemPreferredMeetingColumn(ItemLinkedMeetingColumn):
     meeting_uid_attr = 'getPreferredMeeting'
 
 
-class ItemListTypeColumn(ColorColumn):
-    """A column that display the MeetingItem.listType as a color."""
+class ItemListTypeColumn(VocabularyColumn, ColorColumn):
+    """A column that display the MeetingItem.listType as a color.
+       We use a mix of VocabularyColumn and ColorColumn."""
     i18n_domain = "PloneMeeting"
     cssClassPrefix = 'meeting_item'
+    vocabulary = u'Products.PloneMeeting.vocabularies.listtypesvocabulary'
+
+    def renderCell(self, item):
+        """Display a message."""
+        term_value = super(ItemListTypeColumn, self).renderCell(item)
+        return u'<div title="{0}">&nbsp;</div>'.format(term_value)
 
 
 class ItemNumberColumn(BrowserViewCallColumn):

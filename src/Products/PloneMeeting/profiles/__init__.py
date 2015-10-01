@@ -20,7 +20,7 @@
 
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
-
+from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 
 class Descriptor:
     '''This abstract class represents Python data that will be used for
@@ -237,8 +237,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates',
                          'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'customAdvisers',
                          'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates', 'decisionTopicStates',
-                         'xhtmlTransformFields', 'xhtmlTransformTypes', 'usedVoteValues', 'insertingMethodsOnAddItem'
-                         )
+                         'listTypes', 'xhtmlTransformFields', 'xhtmlTransformTypes',
+                         'usedVoteValues', 'insertingMethodsOnAddItem')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -331,6 +331,8 @@ class MeetingConfigDescriptor(Descriptor):
         # a string.
         # Must we sort the tags in alphabetic order ?
         self.sortAllItemTags = False
+        # used for MeetingItem.listType vocabulary
+        self.listTypes = DEFAULT_LIST_TYPES
         # What rich text fields must undergo a transform ?
         self.xhtmlTransformFields = []
         # What kind(s) of transform(s) must be applied to these fields ?

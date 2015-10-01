@@ -268,9 +268,9 @@
 
             <tal:comment replace="nothing">List type</tal:comment>
             <div class="discreet" tal:condition="python: meeting">
-              <span tal:attributes="class string:item_attribute_label item_listType_${context/getListType}"
-                    tal:content="context/getListType"
-                    i18n:translate="" />
+              <span tal:attributes="class string:item_attribute_label item_listType_${context/getListType}" i18n:translate="">
+                <metal:listType use-macro="python: here.widget('listType', mode='view')" />
+              </span>
             </div>
 
             <tal:comment replace="nothing">Send to authority?</tal:comment>
