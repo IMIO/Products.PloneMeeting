@@ -28,6 +28,7 @@ from AccessControl import Unauthorized
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.utils import getToolByName
 from plone.app.textfield.value import RichTextValue
+from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -339,8 +340,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                 self.failIf(firstLevelElement.Title() == 'Site')
                 secondLevelElements = firstLevelElement.objectValues()
                 for secondLevelElement in secondLevelElements:
-                    # ConfigurablePODTemplate elements are DX and does not have a _at_creation_flag
-                    if secondLevelElement.portal_type == 'ConfigurablePODTemplate':
+                    # Deterity do not have a _at_creation_flag
+                    if IDexterityContent.providedBy(secondLevelElement):
                         continue
                     self.failIf(secondLevelElement._at_creation_flag)
                     self.failIf(secondLevelElement.Title() == 'Site')
