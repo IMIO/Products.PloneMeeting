@@ -100,11 +100,11 @@ def linkedMeetingUID(obj):
     """
       Store the linked meeting UID.
     """
-    res = _marker
+    res = []
     meeting = obj.getMeeting()
     if meeting:
         res = meeting.UID()
-    return res
+    return res or _marker
 
 
 @indexer(IMeetingItem)
@@ -112,11 +112,11 @@ def linkedMeetingDate(obj):
     """
       Store the linked meeting date.
     """
-    res = _marker
+    res = []
     meeting = obj.getMeeting()
     if meeting:
         res = meeting.getDate()
-    return res
+    return res or _marker
 
 
 @indexer(IMeetingItem)
@@ -124,14 +124,14 @@ def getPreferredMeetingDate(obj):
     """
       Store the preferredMeeting date.
     """
-    res = _marker
+    res = []
     preferredMeetingUID = obj.getPreferredMeeting()
     if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
         # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
         # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
         uid_catalog = getToolByName(obj, 'uid_catalog')
         res = uid_catalog(UID=preferredMeetingUID)[0].getObject().getDate()
-    return res
+    return res or _marker
 
 
 @indexer(IItem)
@@ -144,7 +144,7 @@ def sentToInfos(obj):
       An item that does not have to be send to another meetingConfig
       will receive the 'not_to_be_cloned_to' value so we can filter it out.
     """
-    res = _marker
+    res = []
     clonableTo = obj.getOtherMeetingConfigsClonableTo()
     clonedTo = obj._getOtherMeetingConfigsImAmClonedIn()
     for cfgId in clonableTo:
@@ -154,7 +154,7 @@ def sentToInfos(obj):
         res.append(cfgId + '__cloned_to')
     if not clonableTo and not clonedTo:
         res.append('not_to_be_cloned_to')
-    return res
+    return res or _marker
 
 
 @indexer(IMeetingItem)
@@ -162,12 +162,12 @@ def SearchableText(obj):
     """
       Contained annex title is indexed in the item's SearachableText.
     """
-    data = []
-    data.append(obj.SearchableText())
+    res = []
+    res.append(obj.SearchableText())
     for annex in IAnnexable(obj).getAnnexes():
-        data.append(annex.SearchableText())
-    data = ' '.join(data)
-    return data
+        res.append(annex.SearchableText())
+    res = ' '.join(res)
+    return res or _marker
 
 
 @indexer(IMeetingItem)
@@ -195,8 +195,7 @@ def templateUsingGroups(obj):
         return templateUsingGroups and templateUsingGroups or ('__nothing_selected__', )
     elif obj.portal_type == 'Folder':
         return ('__folder_in_itemtemplates__', )
-    else:
-        return _marker
+    return _marker
 
 
 @indexer(IMeetingItem)
