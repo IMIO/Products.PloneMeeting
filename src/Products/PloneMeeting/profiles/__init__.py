@@ -129,9 +129,9 @@ class MeetingFileTypeDescriptor(Descriptor):
 
 
 class PodTemplateDescriptor(Descriptor):
-    multiSelectFields = ('pod_formats', 'pod_portal_types')
+    multiSelectFields = ('pod_formats', 'pod_portal_types', 'dashboard_collections_ids')
 
-    def __init__(self, id, title, description='', enabled=True):
+    def __init__(self, id, title, description='', enabled=True, dashboard=False):
         self.id = id
         self.title = title
         self.description = description
@@ -140,10 +140,13 @@ class PodTemplateDescriptor(Descriptor):
         self.odt_file = None
         self.pod_formats = ['odt', ]
         self.pod_portal_types = []
+        # ids of DashboardCollections to restrict the DashboardPODTemplate to
+        self.dashboard_collections_ids = []
         self.tal_condition = ''
         #self.freezeEvent = ''
         #self.mailingLists = ''
         self.enabled = enabled
+        self.dashboard = dashboard
 
 
 class PloneGroupDescriptor(Descriptor):

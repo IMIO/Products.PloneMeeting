@@ -342,12 +342,14 @@ class Migrate_To_3_4(Migrator):
             # remove the 'PodTemplate' portal_type
             types.manage_delObjects(ids=['PodTemplate', ])
 
-            # migration the PodTemplates to ConfigurablePODTemplates
+            # migrate the PodTemplates to ConfigurablePODTemplates
             wft = getToolByName(self.portal, 'portal_workflow')
             for cfg in self.tool.objectValues('MeetingConfig'):
                 templatesFolder = cfg.podtemplates
-                templatesFolder.setLocallyAllowedTypes(['ConfigurablePODTemplate', ])
-                templatesFolder.setImmediatelyAddableTypes(['ConfigurablePODTemplate', ])
+                templatesFolder.setLocallyAllowedTypes(['ConfigurablePODTemplate',
+                                                        'DashboardPODTemplate'])
+                templatesFolder.setImmediatelyAddableTypes(['ConfigurablePODTemplate',
+                                                            'DashboardPODTemplate'])
                 for template in templatesFolder.objectValues('PodTemplate'):
                     templateId = template.getId()
                     podFile = template.getPodTemplate()

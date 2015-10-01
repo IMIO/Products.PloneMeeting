@@ -1769,7 +1769,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  ()
                                  ),
         TOOL_FOLDER_POD_TEMPLATES: ('Document templates',
-                                    ('ConfigurablePODTemplate', ),
+                                    ('ConfigurablePODTemplate', 'DashboardPODTemplate'),
                                     ()
                                     ),
         TOOL_FOLDER_MEETING_USERS: ('Meeting users',
@@ -4051,7 +4051,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         )
         f.close()
         data = pt.getData(odt_file=odt_file)
-        folder.invokeFactory('ConfigurablePODTemplate', **data)
+        podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
+
+        if podType == 'DashboardPODTemplate':
+            # manage dashboard_collections from dashboard_collection_ids
+            # we have ids and we need UIDs
+            res = []
+            for coll_id in data['dashboard_collections_ids']:
+                collection = getattr(self.searches.searches_items, coll_id)
+                res.append(collection.UID())
+            data['dashboard_collections'] = res
+        folder.invokeFactory(podType, **data)
         podTemplate = getattr(folder, pt.id)
         podTemplate.processForm(values={'dummy': None})
         return podTemplate

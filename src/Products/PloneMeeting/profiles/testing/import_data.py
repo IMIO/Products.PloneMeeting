@@ -89,7 +89,7 @@ itemTemplate.odt_file = 'Item.odt'
 itemTemplate.pod_portal_types = ['MeetingItemPma']
 itemTemplate.tal_condition = ''
 
-dashboardTemplate = PodTemplateDescriptor('dashboardTemplate', 'Dashboard summary')
+dashboardTemplate = PodTemplateDescriptor('dashboardTemplate', 'Dashboard summary', dashboard=True)
 dashboardTemplate.odt_file = 'Dashboard.odt'
 dashboardTemplate.pod_portal_types = ['Folder']
 dashboardTemplate.tal_condition = 'python: context.absolute_url().endswith("/searches_items")'
