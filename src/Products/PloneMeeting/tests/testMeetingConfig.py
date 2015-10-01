@@ -997,7 +997,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setListType('extra')
         item.reindexObject()
-        already_used_msg = _('error_list_types_identifier_removed_already_used')
+        already_used_msg = _('error_list_types_identifier_removed_already_used',
+                             mapping={'url': item.absolute_url()})
         self.assertEquals(cfg.validate_listTypes(values), already_used_msg)
         self.failIf(cfg.validate_listTypes(valuesWithExtra))
         # if no more used, removeable

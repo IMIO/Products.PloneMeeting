@@ -2260,8 +2260,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         removedIdentifiers = [v['identifier'] for v in self.getListTypes() if v['identifier'] not in identifiers]
         catalog = getToolByName(self, 'portal_catalog')
         for removedIdentifier in removedIdentifiers:
-            if catalog(portal_type=self.getItemTypeName(), listType=removedIdentifier):
-                return _('error_list_types_identifier_removed_already_used')
+            brains = catalog(portal_type=self.getItemTypeName(), listType=removedIdentifier)
+            if brains:
+                return _('error_list_types_identifier_removed_already_used',
+                         mapping={'url': brains[0].getURL()})
 
     security.declarePrivate('validate_transitionsForPresentingAnItem')
     def validate_transitionsForPresentingAnItem(self, values):
@@ -2324,6 +2326,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         previousRow = None
         for customAdviser in value:
+            # 'is_linked_to_previous_row' must be '0' or '1'
+            # this could not be case when filling this value from an import_data
+            if not customAdviser['is_linked_to_previous_row'] in self.listBooleanVocabulary().keys():
+                raise Exception('A value is required for \'is_linked_to_previous_row\'!')
             # a row_id, even empty is required
             if not 'row_id' in customAdviser:
                 raise Exception('A row_id is required!')
