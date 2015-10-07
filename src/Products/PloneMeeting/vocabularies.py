@@ -13,8 +13,11 @@ from Products.CMFPlone.utils import safe_unicode
 
 from plone import api
 from plone.memoize.instance import memoize
+from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from eea.facetednavigation.interfaces import IFacetedNavigable
+from imio.dashboard.content.dashboardcollection import IDashboardCollection
 from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
+from imio.dashboard.vocabulary import DashboardCollectionsVocabulary
 from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
 from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
 
@@ -377,3 +380,58 @@ class ListTypesVocabulary(object):
         return SimpleVocabulary(res)
 
 ListTypesVocabularyFactory = ListTypesVocabulary()
+
+
+class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
+    """
+    Vocabulary factory for 'pod_portal_types' field, make it MeetingConfig aware.
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = getToolByName(context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        res = []
+        if cfg:
+            # available for item, meeting and advice
+            itemTypeName = cfg.getItemTypeName()
+            res.append(SimpleTerm(itemTypeName, itemTypeName, translate(itemTypeName,
+                                                                        domain="plone",
+                                                                        context=context.REQUEST)))
+            meetingTypeName = cfg.getMeetingTypeName()
+            res.append(SimpleTerm(meetingTypeName, meetingTypeName, translate(meetingTypeName,
+                                                                              domain="plone",
+                                                                              context=context.REQUEST)))
+            res.append(SimpleTerm('meetingadvice', 'meetingadvice', translate('MeetingAdvice',
+                                                                              domain="PloneMeeting",
+                                                                              context=context.REQUEST)))
+            return SimpleVocabulary(res)
+        else:
+            return super(PMPortalTypesVocabulary, self).__call__(context)
+
+PMPortalTypesVocabularyFactory = PMPortalTypesVocabulary()
+
+
+class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
+    """
+    Vocabulary factory for 'dashboard_collections' field of DashboardPODTemplate.
+    """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        catalog = api.portal.get_tool('portal_catalog')
+        tool = getToolByName(context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        query = {}
+        query['object_provides'] = IDashboardCollection.__identifier__
+        if cfg:
+            query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
+            query['sort_on'] = 'sortable_title'
+        collection_brains = catalog(**query)
+        vocabulary = SimpleVocabulary(
+            [SimpleTerm(b.UID, b.UID, b.Title) for b in collection_brains]
+        )
+        return vocabulary
+
+PMDashboardCollectionsVocabularyFactory = PMDashboardCollectionsVocabulary()

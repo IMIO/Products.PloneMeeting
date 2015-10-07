@@ -1009,7 +1009,9 @@
             <td align="center"><img tal:repeat="fmt obj/pod_formats"
                                     tal:attributes="src string: $portal_url/++resource++collective.documentgenerator/$fmt.png"/></td>
             <td>
-                <a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a>
+                <a tal:attributes="href obj/absolute_url;
+                                   class python: obj.portal_type == 'DashboardPODTemplate' and 'contenttype-dashboardpodtemplate' or ''"
+                   tal:content="obj/Title"></a>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     define="context python: obj;

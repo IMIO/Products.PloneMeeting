@@ -46,6 +46,9 @@
   <type type_id="ConfigurablePODTemplate">
    <bound-workflow workflow_id="" />
   </type>
+  <type type_id="DashboardPODTemplate">
+   <bound-workflow workflow_id="" />
+  </type>
   <type type_id="MeetingFile">
    <bound-workflow workflow_id="" />
   </type>

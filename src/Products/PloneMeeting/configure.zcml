@@ -183,6 +183,10 @@
            name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
   <utility component=".vocabularies.ListTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
+  <utility component=".vocabularies.PMPortalTypesVocabularyFactory"
+           name="collective.documentgenerator.PortalTypes" />
+  <utility component=".vocabularies.PMDashboardCollectionsVocabularyFactory"
+           name="imio.dashboard.collectionsvocabulary" />
 
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"
