@@ -30,6 +30,26 @@ def sortable_title(obj):
     return obj.getDate().strftime('%Y%m%d%H%M')
 
 
+def _compute_sortable_itemNumber(itemNumber):
+    """
+      Compute the sortable_itemNumber, received p_itemNumber
+      is a string with float format, like "12.2" or "5.0"
+    """
+    integer, decimal = str(float(itemNumber)).split('.')
+    formatted = '{0}.{1}'.format(integer, decimal.zfill(5))
+    return float(formatted)
+
+
+@indexer(IMeetingItem)
+def sortable_itemNumber(obj):
+    """
+      As MeetingItem.itemNumber is a float, it can contains values like :
+      - 12.2; 12.5; 12.15; ...
+      As the meeting is sorted using the itemNumber, we need to make sure 12.15 is > 12.5...
+    """
+    return float(_compute_sortable_itemNumber(obj.getItemNumber()))
+
+
 @indexer(IMeetingItem)
 def title_or_id(obj):
     """

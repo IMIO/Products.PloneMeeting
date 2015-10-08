@@ -1,7 +1,7 @@
 <div class="navigateItem" i18n:domain="PloneMeeting" tal:condition="mayView"
                tal:define="meeting context/getMeeting;
                            mayView python: view.tool.checkMayView(meeting);
-                           itemNumber python: context.getItemNumber(relativeTo='meeting');
+                           itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True);
                            totalNbOfItems python: meeting.numberOfItems();
                            firstItemNumber python:context.getSiblingItemNumber('first');
                            previousItemNumber python:context.getSiblingItemNumber('previous');
@@ -15,14 +15,14 @@
     </a>
 
     <tal:comment replace="nothing">Go to the first item</tal:comment>
-    <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:int=${firstItemNumber}">
+    <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:float=${firstItemNumber}">
         <img tal:condition="python: itemNumber != firstItemNumber"
              style="cursor:pointer" title="pm_goto_first" i18n:attributes="title"
              tal:attributes="src string: ${view/portal_url}/arrowLeftDouble.png;"/>
     </a>
 
     <tal:comment replace="nothing">Go to the previous item</tal:comment>
-    <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:int=${previousItemNumber}">
+    <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:float=${previousItemNumber}">
         <img tal:condition="previousItemNumber" style="cursor:pointer"
              title="pm_goto_previous" i18n:attributes="title"
              tal:attributes="src string: ${view/portal_url}/arrowLeftSimple.png;"/>
@@ -36,14 +36,14 @@
     </span>
 
     <tal:comment replace="nothing">Go to the next item</tal:comment>
-    <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:int=${nextItemNumber}">
+    <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:float=${nextItemNumber}">
         <img tal:condition="nextItemNumber" style="cursor:pointer"
              title="pm_goto_next" i18n:attributes="title"
              tal:attributes="src string: ${view/portal_url}/arrowRightSimple.png;"/>
     </a>
 
     <tal:comment replace="nothing">Go to the last item</tal:comment>
-    <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:int=${lastItemNumber}">
+    <a href="#" tal:attributes="href string:${context/absolute_url}/@@object_goto?itemNumber:float=${lastItemNumber}">
         <img tal:condition="python: itemNumber != lastItemNumber"
              style="cursor:pointer" title="pm_goto_last" i18n:attributes="title"
              tal:attributes="src string: ${view/portal_url}/arrowRightDouble.png;"/>

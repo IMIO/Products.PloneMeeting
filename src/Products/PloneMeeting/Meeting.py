@@ -41,6 +41,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.indexes import _compute_sortable_itemNumber
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
@@ -693,7 +694,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getSort_on')
     def getSort_on(self):
         """ """
-        return 'getItemNumber'
+        return 'sortable_itemNumber'
 
     security.declarePublic('getCustomViewFields')
     def getCustomViewFields(self):
@@ -1041,7 +1042,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 res = [item for item in res if item.getListType() == listType]
             if ordered:
                 # Sort items according to item number
-                res.sort(key=lambda x: x.getItemNumber())
+                res.sort(key=lambda x: _compute_sortable_itemNumber(x.getItemNumber()))
         return res
 
     security.declarePublic('getItemsInOrder')
@@ -1056,11 +1057,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getItemByNumber')
     def getItemByNumber(self, number):
         '''Gets the item thas has number p_number.'''
-        items = self.getItems(ordered=True)
-        res = None
-        if number <= len(items):
-            return items[number-1]
-        return res
+        catalog = getToolByName(self, 'portal_catalog')
+        sortable_itemNumber = _compute_sortable_itemNumber(number)
+        brains = catalog(linkedMeetingUID=self.UID(), sortable_itemNumber=sortable_itemNumber)
+        if not brains:
+            return None
+        return brains[0].getObject()
 
     def getBeforeFrozenStates_cachekey(method, self):
         '''cachekey method for self.getBeforeFrozenStates.'''
@@ -1134,12 +1136,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     # continue to visit the items in order to increment their
                     # number.
                     anItem.setItemNumber(anItem.getItemNumber()+1)
-                    anItem.reindexObject(idxs=['getItemNumber', ])
+                    anItem.reindexObject(idxs=['sortable_itemNumber', ])
                 elif anItem.adapted().getInsertOrder(insertMethods) > itemOrder:
                     higherItemFound = True
                     insertIndex = anItem.getItemNumber()-1
                     anItem.setItemNumber(anItem.getItemNumber()+1)
-                    anItem.reindexObject(idxs=['getItemNumber', ])
+                    anItem.reindexObject(idxs=['sortable_itemNumber', ])
             if higherItemFound:
                 items.insert(insertIndex, item)
                 item.setItemNumber(insertIndex+1)
@@ -1154,7 +1156,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # reindex getItemNumber when item is in the meeting or getItemNumber returns None
-        item.reindexObject(idxs=['getItemNumber', 'listType'])
+        item.reindexObject(idxs=['sortable_itemNumber', 'listType'])
         # meeting is considered modified
         self.notifyModified()
 

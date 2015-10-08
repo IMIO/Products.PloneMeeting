@@ -10,6 +10,7 @@ from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
+from Products.PloneMeeting.indexes import _compute_sortable_itemNumber
 
 
 class PloneMeetingAjaxView(BrowserView):
@@ -281,7 +282,8 @@ class ObjectGoToView(BrowserView):
         """
         catalog = getToolByName(self.context, 'portal_catalog')
         meeting = self.context.getMeeting()
-        brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=itemNumber)
+        brains = catalog(linkedMeetingUID=meeting.UID(),
+                         sortable_itemNumber=_compute_sortable_itemNumber(itemNumber))
         if not brains:
             self.context.plone_utils.addPortalMessage(
                 translate(msgid='item_number_not_accessible',
@@ -299,6 +301,15 @@ class ChangeItemOrderView(BrowserView):
       Manage the functionnality that change item order on a meeting.
       Change one level up/down or to a given p_moveNumber.
     """
+
+    def _compute_value_to_add(self, itemNumber):
+        """ """
+        if itemNumber.is_integer():
+            return 1
+        else:
+            # XXX to be changed
+            return 0.1
+
     def __call__(self, moveType, moveNumber=None):
         """
           Change the items order on a meeting.
@@ -314,11 +325,12 @@ class ChangeItemOrderView(BrowserView):
         if not meeting.wfConditions().mayChangeItemsOrder():
             raise Unauthorized
 
+        itemNumber = self.context.getItemNumber()
+
         # Move the item up (-1), down (+1) or at a given position ?
         if moveType == 'number':
-            isDelta = False
             try:
-                move = int(moveNumber)
+                moveNumber = float(moveNumber)
                 # In this case, moveNumber specifies the new position where
                 # the item must be moved.
             except (ValueError, TypeError):
@@ -328,26 +340,20 @@ class ChangeItemOrderView(BrowserView):
                               context=self.request),
                     type='warning')
                 return
-        else:
-            isDelta = True
-            if moveType == 'up':
-                move = -1
-            elif moveType == 'down':
-                move = 1
 
         nbOfItems = len(meeting.getRawItems())
 
         # Calibrate and validate moveValue
-        if not isDelta:
+        if moveType == 'number':
             # Is this move allowed ?
-            if move == self.context.getItemNumber():
+            if moveNumber == itemNumber:
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_did_not_move',
                               domain='PloneMeeting',
                               context=self.request),
                     type='warning')
                 return
-            if (move < 1) or (move > nbOfItems):
+            if (moveNumber < 1) or (moveNumber > nbOfItems):
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_move',
                               mapping={'nbOfItems': nbOfItems},
@@ -355,45 +361,180 @@ class ChangeItemOrderView(BrowserView):
                               context=self.request),
                     type='warning')
                 return
+            # we are using a decimal (like 1.1 or 12.4) check that it is allowed
+            # if we specified "3.1", item number "3" must exist,
+            # if we specified "3.3", item number "3.2" must exist
+            if not moveNumber.is_integer():
+                newInteger, newDecimal = str(moveNumber).split('.')
+                newDecimal = str(int(newDecimal) - 1)
+                newInteger = int(newInteger)
+                newDecimal = int(newDecimal)
+                previousItemNumber = float('{0}.{1}'.format(newInteger, newDecimal))
+                previousItem = meeting.getItemByNumber(previousItemNumber)
+                if not previousItem or previousItem == self.context:
+                    self.context.plone_utils.addPortalMessage(
+                        translate(msgid='item_illegal_decimal',
+                                  domain='PloneMeeting',
+                                  context=self.request),
+                        type='warning')
+                    return
 
         # Move the item
         if nbOfItems >= 2:
-            if isDelta:
-                # Move the item with a delta of +1 or -1
+            if not moveType == 'number':
+                # switch the items
                 oldIndex = self.context.getItemNumber()
-                newIndex = oldIndex + move
-                if (newIndex >= 1) and (newIndex <= nbOfItems):
-                    for item in meeting.getItems():
-                        if item.getItemNumber() == newIndex:
-                            item.setItemNumber(oldIndex)
-                            item.reindexObject(idxs=['getItemNumber'])
-                            break
-                    self.context.setItemNumber(newIndex)
-                    self.context.reindexObject(idxs=['getItemNumber'])
+                if moveType == 'up':
+                    if oldIndex == 1:
+                        # moving first item 'up', does not change anything
+                        # actually it is not possible in the UI because the 'up'
+                        # icon is not displayed on the first item
+                        return
+                    otherNumber = self.context.getSiblingItemNumber('previous')
+                else:
+                    # moveType == 'down'
+                    otherNumber = self.context.getSiblingItemNumber('next')
+                otherItem = meeting.getItemByNumber(otherNumber)
+                self.context.setItemNumber(otherItem.getItemNumber())
+                self.context.reindexObject(idxs=['sortable_itemNumber'])
+                otherItem.setItemNumber(oldIndex)
+                otherItem.reindexObject(idxs=['sortable_itemNumber'])
             else:
                 # Move the item to an absolute position
                 oldIndex = self.context.getItemNumber()
                 itemsList = meeting.getItems()
-                if move < oldIndex:
+                if moveNumber < oldIndex:
                     # We must move the item closer to the first items (up)
-                    for item in itemsList:
-                        itemNumber = item.getItemNumber()
-                        if (itemNumber < oldIndex) and (itemNumber >= move):
-                            item.setItemNumber(itemNumber+1)
-                            item.reindexObject(idxs=['getItemNumber'])
-                        elif itemNumber == oldIndex:
-                            item.setItemNumber(move)
-                            item.reindexObject(idxs=['getItemNumber'])
+                    if moveNumber.is_integer() and oldIndex.is_integer():
+                        for item in itemsList:
+                            itemNumber = round(item.getItemNumber(), 5)
+                            if (itemNumber < oldIndex) and (itemNumber >= moveNumber):
+                                item.setItemNumber(itemNumber+1)
+                                item.reindexObject(idxs=['sortable_itemNumber'])
+                            elif itemNumber == oldIndex:
+                                item.setItemNumber(moveNumber)
+                                item.reindexObject(idxs=['sortable_itemNumber'])
+                    elif not moveNumber.is_integer() and oldIndex.is_integer():
+                        # moving "13" to "12.1" or "12.5"
+                        for item in itemsList:
+                            itemNumber = round(item.getItemNumber(), 5)
+                            integer, decimal = str(itemNumber).split('.')
+                            integer = int(integer)
+                            decimal = int(decimal)
+                            if itemNumber == oldIndex:
+                                item.setItemNumber(moveNumber)
+                                item.reindexObject(idxs=['sortable_itemNumber'])
+                            elif itemNumber >= moveNumber:
+                                # an itemNumber with decimal using same integer as moveNumber?
+                                if integer == newInteger:
+                                    item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
+                                elif itemNumber >= oldIndex:
+                                    # use same integer as
+                                    item.setItemNumber(itemNumber - 1)
+                                item.reindexObject(idxs=['sortable_itemNumber'])
+                    elif moveNumber.is_integer() and not oldIndex.is_integer():
+                        # moving "12.1" to "10" or "5"
+                        oldInteger, oldDecimal = str(oldIndex).split('.')
+                        oldInteger = int(oldInteger)
+                        oldDecimal = int(oldDecimal)
+                        for item in itemsList:
+                            itemNumber = round(item.getItemNumber(), 5)
+                            integer, decimal = str(itemNumber).split('.')
+                            integer = int(integer)
+                            decimal = int(decimal)
+                            if itemNumber == oldIndex:
+                                item.setItemNumber(moveNumber)
+                                item.reindexObject(idxs=['sortable_itemNumber'])
+                            elif itemNumber >= moveNumber:
+                                # like "12.2" that needs to become "12.1"
+                                # special case when moving "7.2" to "7", just update the "7 and 7.x"
+                                if moveNumber == oldInteger:
+                                    if not integer == oldInteger:
+                                        continue
+                                    if itemNumber < oldIndex:
+                                        item.setItemNumber(itemNumber + self._compute_value_to_add(oldIndex))
+                                    else:
+                                        item.setItemNumber(itemNumber - self._compute_value_to_add(oldIndex))
+                                elif integer == oldInteger and decimal > oldDecimal:
+                                    item.setItemNumber(itemNumber + 1 - self._compute_value_to_add(itemNumber))
+                                else:
+                                    item.setItemNumber(itemNumber + 1)
+                                item.reindexObject(idxs=['sortable_itemNumber'])
+                    elif not moveNumber.is_integer() and not oldIndex.is_integer():
+                        # moving "12.2" to "4.1" or "4.3"
+                        oldInteger, oldDecimal = str(oldIndex).split('.')
+                        oldInteger = int(oldInteger)
+                        oldDecimal = int(oldDecimal)
+                        newInteger, newDecimal = str(moveNumber).split('.')
+                        newInteger = int(newInteger)
+                        newDecimal = int(newDecimal)
+                        for item in itemsList:
+                            itemNumber = round(item.getItemNumber(), 5)
+                            integer, decimal = str(itemNumber).split('.')
+                            integer = int(integer)
+                            decimal = int(decimal)
+                            if itemNumber == oldIndex:
+                                item.setItemNumber(moveNumber)
+                                item.reindexObject(idxs=['sortable_itemNumber'])
+                            elif itemNumber >= moveNumber:
+                                # like "12.2" that needs to become "12.1"
+                                if integer == oldInteger and decimal > oldDecimal:
+                                    item.setItemNumber(itemNumber - self._compute_value_to_add(itemNumber))
+                                elif integer == newInteger:
+                                    item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
+                                item.reindexObject(idxs=['sortable_itemNumber'])
                 else:
-                    # We must move the item closer to the last items (down)
-                    for item in itemsList:
-                        itemNumber = item.getItemNumber()
-                        if itemNumber == oldIndex:
-                            item.setItemNumber(move)
-                            item.reindexObject(idxs=['getItemNumber'])
-                        elif (itemNumber > oldIndex) and (itemNumber <= move):
-                            item.setItemNumber(itemNumber-1)
-                            item.reindexObject(idxs=['getItemNumber'])
+                    if moveNumber.is_integer() and oldIndex.is_integer():
+                        # We must move the item closer to the last items (down)
+                        movingMasterElement = bool(meeting.getItemByNumber(oldIndex + 0.1))
+                        for item in itemsList:
+                            itemNumber = round(item.getItemNumber(), 5)
+                            integer, decimal = str(itemNumber).split('.')
+                            integer = int(integer)
+                            decimal = int(decimal)
+                            if movingMasterElement:
+                                if itemNumber == oldIndex:
+                                    item.setItemNumber(moveNumber)
+                                    item.reindexObject(idxs=['sortable_itemNumber'])
+                                elif integer == oldIndex:
+                                    # if we moved the first element of subelements
+                                    # (like '2' and there is '2.1', '2.2')
+                                    # we need to remove 0.1 to following elements...
+                                    item.setItemNumber(itemNumber - self._compute_value_to_add(itemNumber))
+                                    item.reindexObject(idxs=['sortable_itemNumber'])
+                                elif itemNumber >= moveNumber:
+                                    item.setItemNumber(itemNumber + 1)
+                                    item.reindexObject(idxs=['sortable_itemNumber'])
+                            else:
+                                if itemNumber == oldIndex:
+                                    item.setItemNumber(moveNumber)
+                                    item.reindexObject(idxs=['sortable_itemNumber'])
+                                elif (itemNumber > oldIndex) and (itemNumber <= moveNumber):
+                                    item.setItemNumber(itemNumber - 1)
+                                    item.reindexObject(idxs=['sortable_itemNumber'])
+                    elif not moveNumber.is_integer() and oldIndex.is_integer():
+                        # moving "4" to "12.1" or "12.5"
+                        # special case, moving
+                        for item in itemsList:
+                            itemNumber = round(item.getItemNumber(), 5)
+                            newInteger, newDecimal = str(moveNumber).split('.')
+                            newInteger = int(newInteger)
+                            newDecimal = int(newDecimal)
+                            if itemNumber == oldIndex:
+                                item.setItemNumber(moveNumber)
+                                item.reindexObject(idxs=['sortable_itemNumber'])
+                            # take every items before, including every 12.x
+                            elif itemNumber > oldIndex:
+                                if itemNumber == newInteger:
+                                    if itemNumber <= moveNumber:
+                                        item.setItemNumber(itemNumber - self._compute_value_to_add(itemNumber))
+                                    else:
+                                        item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
+                                else:
+                                    # use same integer as
+                                    item.setItemNumber(itemNumber - 1)
+                                item.reindexObject(idxs=['sortable_itemNumber'])
+
 
         # when items order on meeting changed, it is considered modified
         meeting.notifyModified()

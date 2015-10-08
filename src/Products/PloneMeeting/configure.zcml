@@ -139,6 +139,7 @@
   <adapter name="title_or_id" factory=".indexes.title_or_id" />
   <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
+  <adapter name="sortable_itemNumber" factory=".indexes.sortable_itemNumber" />
   <adapter name="sortable_title" factory=".indexes.sortable_title" />
   <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
   <adapter name="SearchableText" factory=".indexes.SearchableText" />

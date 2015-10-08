@@ -435,9 +435,9 @@ InitializeClass(MeetingItemWorkflowActions)
 
 schema = Schema((
 
-    IntegerField(
+    FloatField(
         name='itemNumber',
-        widget=IntegerField._properties['widget'](
+        widget=FloatField._properties['widget'](
             visible=False,
             label='Itemnumber',
             label_msgid='PloneMeeting_label_itemNumber',
@@ -469,6 +469,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
+        searchable=True,
         default_output_type="text/x-html-safe",
         optional=True,
     ),
@@ -1622,21 +1623,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('getItemNumber')
-    def getItemNumber(self, relativeTo='meeting', **kwargs):
+    def getItemNumber(self, relativeTo='meeting', for_display=False, **kwargs):
         '''This accessor for 'itemNumber' field is overridden in order to allow
            to get the item number in various flavours:
            - the item number relative to the whole meeting (no matter the item
              being "normal" or "late"): p_relativeTo="meeting";
            - the item number relative to the whole meeting config:
-             p_relativeTo="meetingConfig"'''
+             p_relativeTo="meetingConfig".
+           If p_for_display is True, it will return a displayable value where '1.0' is '1'
+           and '1.2' is still '1.2'.'''
         # this method is only relevant if the item is in a meeting
         if not self.hasMeeting():
             return 0
 
         res = self.getField('itemNumber').get(self, **kwargs)
-        if relativeTo == 'meeting':
-            return res
-        elif relativeTo == 'meetingConfig':
+        if relativeTo == 'meetingConfig':
             meeting = self.getMeeting()
             meetingFirstItemNumber = meeting.getFirstItemNumber()
             if meetingFirstItemNumber != -1:
@@ -1653,6 +1654,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # the theorical current meeting first number, we can compute current item
                 # number that is this number + current item number relativeTo the meeting - 1
                 res = currentMeetingComputedFirstNumber + self.getItemNumber(relativeTo='meeting') - 1
+        # we want '1' instead of '1.0'
+        if for_display:
+            if int(res) == res:
+                return int(res)
         return res
 
     security.declarePublic('getDefaultToDiscuss')

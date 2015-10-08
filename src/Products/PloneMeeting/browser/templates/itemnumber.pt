@@ -1,5 +1,5 @@
 <tal:defines define="mayChangeOrder view/mayChangeOrder;
-                     itemNumber context/getItemNumber;">
+                     itemNumber python: context.getItemNumber(for_display=True);">
   <table class="no-style-table" cellspacing="0" cellpadding="0"
          tal:condition="mayChangeOrder">
     <tr>
