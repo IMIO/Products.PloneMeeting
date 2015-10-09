@@ -605,6 +605,9 @@ function initRichTextField(rq, hook) {
     }
     // Initialize CKeditor if it is the used editor
     if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
+    // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
+    var tool = window.onbeforeunload && window.onbeforeunload.tool;
+    tool.addForms.apply(tool, $('form.enableUnloadProtection').get());
   }
 }
 function getRichTextContent(rq, params) {

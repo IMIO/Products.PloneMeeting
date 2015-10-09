@@ -9,7 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 3.4 (unreleased)
 ----------------
-- Moved to Plone 4.3.6
+- Moved to Plone 4.3.7
 - Moved to collective.documentviewer 3.0.3
 - Rely on beautifulsoup4, Products.CPUtils
 - Replaced own PODTemplate by the ConfigurablePODTemplate of collective.documentgenerator
@@ -88,6 +88,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed overrides of DataGridField CheckBoxColumn and MultiSelectColumn now that we use newer
   versions of relevant package where this has been integrated
 - Added possibility to generate a PodTemplate on an advice
+- Enabled unload protection for CKEditor fields, this way if a change is made in a rich text field, a warning
+  message is displayed to warn the user. Quick edit fields (rich text fields on item and meeting views) are
+  protected as well
 
 3.3 (2015-02-27)
 ----------------
