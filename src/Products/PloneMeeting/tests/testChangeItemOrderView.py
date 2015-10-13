@@ -66,6 +66,56 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item3.getItemNumber(), 3)
         self.assertEquals(item4.getItemNumber(), 4)
 
+    def _setupOrderedItems(self):
+        """ """
+        meeting = self._createMeetingWithItems()
+        # 7 items are created
+        items = meeting.getItems(ordered=True)
+        item1 = items[0]
+        item2 = items[1]
+        item3 = items[2]
+        item4 = items[3]
+        item5 = items[4]
+        item6 = items[5]
+        item7 = items[6]
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 300, 400, 500, 600, 700])
+        return meeting, item1, item2, item3, item4, item5, item6, item7
+
+    def test_pm_ChangeItemOrderMoveUpIntegerToInteger(self):
+        '''Test while moving up an integer item to another integer position (from 4 to 2).'''
+        self.changeUser('pmManager')
+        meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
+        view = item4.restrictedTraverse('@@change-item-order')
+        view('number', '2')
+        self.assertEquals(item1.getItemNumber(), 100)
+        self.assertEquals(item2.getItemNumber(), 300)
+        self.assertEquals(item3.getItemNumber(), 400)
+        self.assertEquals(item4.getItemNumber(), 200)
+        self.assertEquals(item5.getItemNumber(), 500)
+        self.assertEquals(item6.getItemNumber(), 600)
+        self.assertEquals(item7.getItemNumber(), 700)
+        # ordered items are still right
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 300, 400, 500, 600, 700])
+
+    def test_pm_ChangeItemOrderMoveUpMasterIntegerToInteger(self):
+        '''Test while moving up a master integer item to another integer position (from 4 having a 4.1 and 4.2 to 2).
+           Moved integer should be alone and first subnumber (4.1) is now the master having a 5.1.'''
+        self.changeUser('pmManager')
+        meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
+        item5.setItemNumber(401)
+        item5.reindexObject(idxs=['getItemNumber'])
+        item6.setItemNumber(402)
+        item6.reindexObject(idxs=['getItemNumber'])
+        item7.setItemNumber(500)
+        item7.reindexObject(idxs=['getItemNumber'])
+        view = item4.restrictedTraverse('@@change-item-order')
+        view('number', '2')
+        import ipdb; ipdb.set_trace()
+
+
+
     def test_pm_ChangeItemOrderMoveAtGivenNumber(self):
         '''Test the ChangeItemOrderView :
            - we can change an item to a given p_moveNumber.'''

@@ -66,7 +66,7 @@ from Products.PloneMeeting.utils import \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields, signatureNotAlone,\
     forceHTMLContentTypeForEmptyRichFields, workday, networkdays, cleanMemoize, \
-    toHTMLStrikedContent
+    toHTMLStrikedContent, _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -435,7 +435,7 @@ InitializeClass(MeetingItemWorkflowActions)
 
 schema = Schema((
 
-    FloatField(
+    IntegerField(
         name='itemNumber',
         widget=FloatField._properties['widget'](
             visible=False,
@@ -1654,10 +1654,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # the theorical current meeting first number, we can compute current item
                 # number that is this number + current item number relativeTo the meeting - 1
                 res = currentMeetingComputedFirstNumber + self.getItemNumber(relativeTo='meeting') - 1
-        # we want '1' instead of '1.0'
+        # we want '1' instead of '100' and '2.15' instead of 215
         if for_display:
-            if int(res) == res:
-                return int(res)
+            return _storedItemNumber_to_itemNumber(res)
         return res
 
     security.declarePublic('getDefaultToDiscuss')
@@ -2554,7 +2553,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if res is None:
             raise PloneMeetingError(INSERT_ITEM_ERROR)
-        return res
+        return res * 100
 
     def _findOneLevelFor_cachekey(method, self, insertMethod):
         '''cachekey method for self._findOneLevelFor.'''

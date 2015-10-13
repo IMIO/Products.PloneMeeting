@@ -41,7 +41,6 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.indexes import _compute_sortable_itemNumber
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
@@ -694,7 +693,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getSort_on')
     def getSort_on(self):
         """ """
-        return 'sortable_itemNumber'
+        return 'getItemNumber'
 
     security.declarePublic('getCustomViewFields')
     def getCustomViewFields(self):
@@ -1042,7 +1041,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 res = [item for item in res if item.getListType() == listType]
             if ordered:
                 # Sort items according to item number
-                res.sort(key=lambda x: _compute_sortable_itemNumber(x.getItemNumber()))
+                res.sort(key=lambda x: x.getItemNumber())
         return res
 
     security.declarePublic('getItemsInOrder')
@@ -1058,8 +1057,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def getItemByNumber(self, number):
         '''Gets the item thas has number p_number.'''
         catalog = getToolByName(self, 'portal_catalog')
-        sortable_itemNumber = _compute_sortable_itemNumber(number)
-        brains = catalog(linkedMeetingUID=self.UID(), sortable_itemNumber=sortable_itemNumber)
+        brains = catalog(linkedMeetingUID=self.UID(), getItemNumber=number)
         if not brains:
             return None
         return brains[0].getObject()
@@ -1135,28 +1133,28 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     # Ok I already know where to insert the item. I just
                     # continue to visit the items in order to increment their
                     # number.
-                    anItem.setItemNumber(anItem.getItemNumber()+1)
-                    anItem.reindexObject(idxs=['sortable_itemNumber', ])
+                    anItem.setItemNumber(anItem.getItemNumber() + 100)
+                    anItem.reindexObject(idxs=['getItemNumber', ])
                 elif anItem.adapted().getInsertOrder(insertMethods) > itemOrder:
                     higherItemFound = True
-                    insertIndex = anItem.getItemNumber()-1
-                    anItem.setItemNumber(anItem.getItemNumber()+1)
-                    anItem.reindexObject(idxs=['sortable_itemNumber', ])
+                    insertIndex = anItem.getItemNumber() - 100
+                    anItem.setItemNumber(anItem.getItemNumber() + 100)
+                    anItem.reindexObject(idxs=['getItemNumber', ])
             if higherItemFound:
-                items.insert(insertIndex, item)
-                item.setItemNumber(insertIndex+1)
+                items.insert(0, item)
+                item.setItemNumber(insertIndex + 100)
             else:
                 insertAtTheEnd = True
         if insertMethods[0]['insertingMethod'] == 'at_the_end' or insertAtTheEnd:
             # Add the item at the end of the items list
             items.append(item)
-            item.setItemNumber(len(items))
+            item.setItemNumber(len(items) * 100)
 
         self.setItems(items)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # reindex getItemNumber when item is in the meeting or getItemNumber returns None
-        item.reindexObject(idxs=['sortable_itemNumber', 'listType'])
+        item.reindexObject(idxs=['getItemNumber', 'listType'])
         # meeting is considered modified
         self.notifyModified()
 

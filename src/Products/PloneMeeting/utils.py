@@ -1278,6 +1278,47 @@ def formatXhtmlFieldForAppy(value):
         value = ''.join(res)
     return value
 # ------------------------------------------------------------------------------
+
+
+def _itemNumber_to_storedItemNumber(number):
+    """This will transform a displayed itemNumber to a real form the itemNumber is stored :
+       - 1 -> 100;
+       - 2 --> 200;
+       - 2.1 --> 201;
+       - 2.9 --> 209;
+       - 2.10 --> 210;
+       - 2.22 --> 222;
+       """
+    if '.' in number:
+        newInteger, newDecimal = number.split('.')
+        newInteger = newInteger
+        newDecimal = newDecimal.zfill(2)
+        realMoveNumber = int('{0}{1}'.format(newInteger, newDecimal))
+    else:
+        realMoveNumber = int(number) * 100
+    return realMoveNumber
+# ------------------------------------------------------------------------------
+
+
+def _storedItemNumber_to_itemNumber(number, withDecimal=True):
+    """This will transform a stored itemNumber to a dispayable itemNumber :
+       - 100 -> 1;
+       - 200 --> 2;
+       - 201 --> 2.1;
+       - 209 --> 2.9;
+       - 210 --> 2.10;
+       - 222 --> 2.22;
+       If p_withDecimal is True, we will return a decimal, no matter it is '0'.
+       """
+    firstPart = int(number / 100)
+    secondPart = number % 100
+    if secondPart or withDecimal:
+        return '{0}.{1}'.format(firstPart, secondPart)
+    else:
+        return str(firstPart)
+# ------------------------------------------------------------------------------
+
+
 # taken from http://mscerts.programming4.us/fr/639402.aspx
 # adapted to fit our needs
 
