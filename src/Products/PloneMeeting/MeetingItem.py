@@ -1656,7 +1656,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res = currentMeetingComputedFirstNumber + self.getItemNumber(relativeTo='meeting') - 1
         # we want '1' instead of '100' and '2.15' instead of 215
         if for_display:
-            return _storedItemNumber_to_itemNumber(res)
+            return _storedItemNumber_to_itemNumber(res, forceShowDecimal=False)
         return res
 
     security.declarePublic('getDefaultToDiscuss')

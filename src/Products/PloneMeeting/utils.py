@@ -1300,7 +1300,7 @@ def _itemNumber_to_storedItemNumber(number):
 # ------------------------------------------------------------------------------
 
 
-def _storedItemNumber_to_itemNumber(number, withDecimal=True):
+def _storedItemNumber_to_itemNumber(number, forceShowDecimal=True):
     """This will transform a stored itemNumber to a dispayable itemNumber :
        - 100 -> 1;
        - 200 --> 2;
@@ -1308,11 +1308,11 @@ def _storedItemNumber_to_itemNumber(number, withDecimal=True):
        - 209 --> 2.9;
        - 210 --> 2.10;
        - 222 --> 2.22;
-       If p_withDecimal is True, we will return a decimal, no matter it is '0'.
+       If p_forceShowDecimal is True, we will return a decimal, no matter it is '0'.
        """
     firstPart = int(number / 100)
     secondPart = number % 100
-    if secondPart or withDecimal:
+    if secondPart or forceShowDecimal:
         return '{0}.{1}'.format(firstPart, secondPart)
     else:
         return str(firstPart)

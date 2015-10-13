@@ -63,10 +63,10 @@ class testMeeting(PloneMeetingTestCase):
             if meetingConfig == self.meetingConfig.getId():
                 # There are 2 recurring items in self.meetingConfig
                 expected = ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6']
-                expectedInsertOrderIndexes = [0, 0, 0, 0, 4, 4, 4]
+                expectedInsertOrderIndexes = [0, 0, 0, 0, 400, 400, 400]
             else:
                 expected = ['o3', 'o4', 'o5', 'o6', 'o2']
-                expectedInsertOrderIndexes = [18, 18, 27, 27, 36]
+                expectedInsertOrderIndexes = [1800, 1800, 2700, 2700, 3600]
             self.setMeetingConfig(meetingConfig)
             meeting = self._createMeetingWithItems()
             self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],

@@ -413,7 +413,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             return config_actions_panel.renderArrows()
         showArrows = self.kwargs.get('showArrows', False)
         if showArrows and self.mayChangeOrder():
-            self.totalNbOfItems = self.kwargs['totalNbOfItems']
+            self.lastItemUID = self.kwargs['lastItemUID']
             return ViewPageTemplateFile("templates/actions_panel_arrows.pt")(self)
         return ''
 

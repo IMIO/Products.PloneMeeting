@@ -2,7 +2,6 @@ from AccessControl import Unauthorized
 from zope.i18n import translate
 from Products.Five import BrowserView
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
-from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 
 
 class ChangeItemOrderView(BrowserView):
@@ -11,9 +10,21 @@ class ChangeItemOrderView(BrowserView):
       Change one level up/down or to a given p_moveNumber.
     """
 
+    def _is_part_of_same_set(self, oldIndex, itemNumber):
+        """Is p_itemNumber part of same set that p_oldIndex?
+           A set is like :
+           - 200 is in same set as 300, 400 or 500 but not as 301;
+           - 201 is in same set as 202, 203 or 212 but not 300 or 302;
+        """
+        oldIndexIsInteger = not bool(oldIndex % 100)
+        itemNumberIsInteger = not bool(itemNumber % 100)
+        if oldIndexIsInteger and itemNumberIsInteger:
+            return True
+
     def _compute_value_to_add(self, itemNumber):
         """ """
-        if float(itemNumber / 100).is_integer():
+        itemNumberIsInteger = not bool(itemNumber % 100)
+        if itemNumberIsInteger:
             return 100
         else:
             # XXX to be changed
@@ -73,19 +84,6 @@ class ChangeItemOrderView(BrowserView):
                               context=self.request),
                     type='warning')
                 return
-            # we are using a decimal (like 1.1 or 12.4) check that it is allowed
-            # if we specified "3.1", item number "3" must exist,
-            # if we specified "3.3", item number "3.2" must exist
-            if bool(moveNumber % 100):
-                previousItemNumber = moveNumber - 1
-                previousItem = meeting.getItemByNumber(previousItemNumber)
-                if not previousItem or previousItem == self.context:
-                    self.context.plone_utils.addPortalMessage(
-                        translate(msgid='item_illegal_decimal',
-                                  domain='PloneMeeting',
-                                  context=self.request),
-                        type='warning')
-                    return
 
         # Move the item
         if nbOfItems >= 2:
@@ -93,7 +91,7 @@ class ChangeItemOrderView(BrowserView):
             if not moveType == 'number':
                 # switch the items
                 if moveType == 'up':
-                    if oldIndex == 1:
+                    if oldIndex == 100:
                         # moving first item 'up', does not change anything
                         # actually it is not possible in the UI because the 'up'
                         # icon is not displayed on the first item
@@ -109,200 +107,30 @@ class ChangeItemOrderView(BrowserView):
                 otherItem.reindexObject(idxs=['getItemNumber'])
             else:
                 # Move the item to an absolute position
-                # are oldIndex and moveNumber, integer numbers or subnumbers?
-                oldIndexIsInteger = not bool(oldIndex % 100)
-                moveNumberIsInteger = not bool(moveNumber % 100)
-                if not moveNumberIsInteger:
-                    newInteger, newDecimal = str(wishedNumber).split('.')
-                    newInteger = int(newInteger)
-                    newDecimal = int(newDecimal.ljust(2, '0'))
+                oldIndex = self.context.getItemNumber()
+                itemsList = meeting.getItems(ordered=True)
                 if moveNumber < oldIndex:
                     # We must move the item closer to the first items (up)
-                    if oldIndexIsInteger and moveNumberIsInteger:
-                        movingMasterElement = bool(meeting.getItemByNumber(oldIndex + 1))
-                        movingToMasterElement = bool(meeting.getItemByNumber(moveNumber + 1))
-                        for item in items:
-                            itemNumber = item.getItemNumber()
-                            integer = itemNumber % 100
-                            if itemNumber == oldIndex:
-                                item.setItemNumber(moveNumber)
+                    for item in itemsList:
+                        itemNumber = item.getItemNumber()
+                        if (itemNumber < oldIndex) and (itemNumber >= moveNumber):
+                            if self._is_part_of_same_set(oldIndex, itemNumber):
+                                item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
                                 item.reindexObject(idxs=['getItemNumber'])
-                            elif integer == oldIndex:
-                                # if we moved the first element of subelements
-                                # (like '2' and there is '2.1', '2.2')
-                                # we need to remove 0.1 to following elements...
-                                if movingToMasterElement:
-                                    itemNumber += 100
+                        elif itemNumber == oldIndex:
+                            item.setItemNumber(moveNumber)
+                            item.reindexObject(idxs=['getItemNumber'])
+                else:
+                    # We must move the item closer to the last items (down)
+                    for item in itemsList:
+                        itemNumber = item.getItemNumber()
+                        if itemNumber == oldIndex:
+                            item.setItemNumber(moveNumber)
+                            item.reindexObject(idxs=['getItemNumber'])
+                        elif (itemNumber > oldIndex) and (itemNumber <= moveNumber):
+                            if self._is_part_of_same_set(oldIndex, itemNumber):
                                 item.setItemNumber(itemNumber - self._compute_value_to_add(itemNumber))
                                 item.reindexObject(idxs=['getItemNumber'])
-                            elif itemNumber >= moveNumber:
-                                item.setItemNumber(itemNumber + 100)
-                                item.reindexObject(idxs=['getItemNumber'])
-                    elif oldIndexIsInteger and not moveNumberIsInteger:
-                        # moving "13" to "12.1" or "12.5"
-                        for item in items:
-                            itemNumber = item.getItemNumber()
-                            integer, decimal = _storedItemNumber_to_itemNumber(itemNumber).split('.')
-                            integer = int(integer)
-                            decimal = int(decimal)
-                            if itemNumber == oldIndex:
-                                item.setItemNumber(moveNumber)
-                                item.reindexObject(idxs=['getItemNumber'])
-                            elif itemNumber >= moveNumber:
-                                # an itemNumber with decimal using same integer as moveNumber?
-                                if integer == newInteger:
-                                    item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber) - 1)
-                                    item.reindexObject(idxs=['getItemNumber'])
-                                elif itemNumber >= oldIndex:
-                                    item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
-                    elif not oldIndexIsInteger and moveNumberIsInteger:
-                        # moving "12.1" to "10" or "5"
-                        oldInteger, oldDecimal = _storedItemNumber_to_itemNumber(oldIndex).split('.')
-                        oldInteger = int(oldInteger)
-                        oldDecimal = int(oldDecimal)
-                        # moving "7.3" to "7"
-                        movingToSelfMaster = bool(oldInteger == moveNumber)
-                        movingToMasterElement = bool(meeting.getItemByNumber(moveNumber + 1))
-                        for item in items:
-                            itemNumber = item.getItemNumber()
-                            integer, decimal = _storedItemNumber_to_itemNumber(itemNumber).split('.')
-                            integer = int(integer)
-                            decimal = int(decimal)
-                            if itemNumber == oldIndex:
-                                item.setItemNumber(moveNumber)
-                                item.reindexObject(idxs=['getItemNumber'])
-                            elif movingToSelfMaster:
-                                if moveNumber == oldInteger and integer == oldInteger and itemNumber < oldIndex:
-                                    item.setItemNumber(itemNumber + self._compute_value_to_add(oldIndex))
-                                    item.reindexObject(idxs=['getItemNumber'])
-                            elif itemNumber >= moveNumber:
-                                # like "12.2" that needs to become "12.1"
-                                # special case when moving "7.2" to "7", just update the "7 and 7.x"
-                                if moveNumber == oldInteger and integer == oldInteger:
-                                    if itemNumber < oldIndex:
-                                        item.setItemNumber(itemNumber + self._compute_value_to_add(oldIndex))
-                                elif integer == oldInteger and decimal > oldDecimal:
-                                    item.setItemNumber(itemNumber + 100 - self._compute_value_to_add(itemNumber))
-                                else:
-                                    item.setItemNumber(itemNumber + 100)
-                                item.reindexObject(idxs=['getItemNumber'])
-                    elif not oldIndexIsInteger and not moveNumberIsInteger:
-                        # moving "4.2" to "2.1" or "12.4" to "12.2"
-                        oldInteger, oldDecimal = _storedItemNumber_to_itemNumber(oldIndex).split('.')
-                        oldInteger = int(oldInteger)
-                        oldDecimal = int(oldDecimal)
-                        # in case we move "2.3" to "2.1"
-                        movingSelfElement = bool(oldInteger == newInteger)
-                        for item in items:
-                            itemNumber = item.getItemNumber()
-                            integer, decimal = str(itemNumber).split('.')
-                            integer = int(integer)
-                            decimal = int(decimal)
-                            if itemNumber == oldIndex:
-                                item.setItemNumber(moveNumber)
-                                item.reindexObject(idxs=['getItemNumber'])
-                            elif itemNumber >= moveNumber:
-                                if movingSelfElement:
-                                    if integer == newInteger and decimal < oldDecimal and decimal >= newDecimal:
-                                        item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
-                                else:
-                                    # origin
-                                    if integer == oldInteger and decimal > oldDecimal:
-                                        item.setItemNumber(itemNumber - self._compute_value_to_add(itemNumber))
-                                    # destination
-                                    elif integer == newInteger and decimal >= newDecimal:
-                                        item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
-                else:
-                    if oldIndexIsInteger and moveNumberIsInteger:
-                        # We must move the item closer to the last items (down)
-                        movingMasterElement = bool(meeting.getItemByNumber(oldIndex + 100))
-                        movingToMasterElement = bool(meeting.getItemByNumber(moveNumber + 100))
-                        for item in items:
-                            itemNumber = item.getItemNumber()
-                            if itemNumber == oldIndex:
-                                item.setItemNumber(moveNumber)
-                                item.reindexObject(idxs=['getItemNumber'])
-                            elif (itemNumber > oldIndex) and (itemNumber <= moveNumber):
-                                item.setItemNumber(itemNumber - 100)
-                                item.reindexObject(idxs=['getItemNumber'])
-                    elif oldIndexIsInteger and not moveNumberIsInteger:
-                        # moving "4" to "12.1" or "12.5"
-                        # here the problem is that if we move a "4" that has no subnumbers
-                        # to "12.2", "12.2" will actually become "11.2"...
-                        # we need to know if it has subnumbers
-                        movingMasterElement = bool(meeting.getItemByNumber(oldIndex + 1))
-                        oldInteger, oldDecimal = _storedItemNumber_to_itemNumber(oldIndex).split('.')
-                        oldInteger = int(oldInteger)
-                        oldDecimal = int(oldDecimal)
-                        for item in items:
-                            itemNumber = item.getItemNumber()
-                            integer, decimal = str(itemNumber).split('.')
-                            integer = int(integer)
-                            decimal = int(decimal)
-                            if not movingMasterElement:
-                                # we need to decrease number of every following elements
-                                if itemNumber == oldIndex:
-                                    item.setItemNumber(moveNumber - 1)
-                                    item.reindexObject(idxs=['getItemNumber'])
-                                # take every items before, including every 12.x
-                                elif itemNumber > oldIndex:
-                                    if integer == newInteger and decimal >= newDecimal:
-                                        item.setItemNumber(itemNumber - 100 + self._compute_value_to_add(itemNumber))
-                                    else:
-                                        # use same integer as
-                                        item.setItemNumber(itemNumber - 100)
-                                    item.reindexObject(idxs=['getItemNumber'])
-                            else:
-                                # changing this item will not affect number of any other items
-                                # that the subitems in which the item is inserted and from which it is sent
-                                if itemNumber == oldIndex:
-                                    item.setItemNumber(moveNumber)
-                                    item.reindexObject(idxs=['getItemNumber'])
-                                elif itemNumber > oldIndex:
-                                    if integer == newInteger and decimal >= newDecimal:
-                                        item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
-                                    elif integer == oldInteger and decimal > oldDecimal:
-                                        # use same integer as
-                                        item.setItemNumber(itemNumber - self._compute_value_to_add(itemNumber))
-                                    item.reindexObject(idxs=['getItemNumber'])
-                    elif not oldIndexIsInteger and moveNumberIsInteger:
-                        # moving "2.1" to "10" or "5"
-                        oldInteger, oldDecimal = _storedItemNumber_to_itemNumber(oldIndex).split('.')
-                        oldInteger = int(oldInteger)
-                        oldDecimal = int(oldDecimal)
-                        # are we replacing a master item, aka an item having subnumered items?
-                        for item in items:
-                            itemNumber = item.getItemNumber()
-                            integer, decimal = _storedItemNumber_to_itemNumber(itemNumber).split('.')
-                            integer = int(integer)
-                            decimal = int(decimal)
-                            if itemNumber == oldIndex:
-                                item.setItemNumber(moveNumber)
-                            elif integer == oldInteger and decimal > oldDecimal:
-                                item.setItemNumber(itemNumber - self._compute_value_to_add(oldIndex))
-                            elif itemNumber >= moveNumber:
-                                item.setItemNumber(itemNumber + 100)
-                            item.reindexObject(idxs=['getItemNumber'])
-                    elif not oldIndexIsInteger and not moveNumberIsInteger:
-                        # moving "2.2" to "2.4" or "2.3" to "6.3"
-                        oldInteger, oldDecimal = _storedItemNumber_to_itemNumber(oldIndex).split('.')
-                        oldInteger = int(oldInteger)
-                        oldDecimal = int(oldDecimal)
-                        for item in items:
-                            itemNumber = item.getItemNumber()
-                            integer, decimal = _storedItemNumber_to_itemNumber(itemNumber).split('.')
-                            integer = int(integer)
-                            decimal = int(decimal)
-                            if itemNumber == oldIndex:
-                                item.setItemNumber(moveNumber)
-                                item.reindexObject(idxs=['getItemNumber'])
-                            elif itemNumber >= oldIndex:
-                                if integer == oldInteger and decimal > oldDecimal:
-                                    item.setItemNumber(itemNumber - self._compute_value_to_add(itemNumber))
-                                elif integer == newInteger and decimal >= newDecimal:
-                                    item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
+
         # when items order on meeting changed, it is considered modified
         meeting.notifyModified()

@@ -749,7 +749,7 @@ function onImageButtonFocus(itemNumber) {
 // ajax call managing the @@change-item-order view
 function moveItem(baseUrl, moveType, tag) {
   // if moveType is 'number', get the number from the input tag
-  moveNumber = '';
+  wishedNumber = '';
   if (moveType === 'number') {
     wishedNumber = tag.attr('value');
   }
