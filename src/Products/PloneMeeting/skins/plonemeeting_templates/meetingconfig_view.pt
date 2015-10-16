@@ -1015,7 +1015,7 @@
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     define="context python: obj;
-                            excludedFields python: ('odt_file', 'pod_formats', 'enabled', 'style_template', 'merge_templates')">
+                            excludedFields python: ('pod_formats', 'enabled', 'style_template', 'merge_templates')">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                 </tal:additionalInformations>
             </td>
