@@ -1,5 +1,3 @@
-from AccessControl import Unauthorized
-
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 
@@ -10,6 +8,7 @@ from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
+from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 
 
 class PloneMeetingAjaxView(BrowserView):
@@ -177,6 +176,10 @@ class ItemNumberView(BrowserView):
     def mayChangeOrder(self):
         """ """
         return self.context.getMeeting().wfConditions().mayChangeItemsOrder()
+
+    def is_integer(self, number):
+        """ """
+        return _is_integer(number)
 
 
 class ItemToDiscussView(BrowserView):

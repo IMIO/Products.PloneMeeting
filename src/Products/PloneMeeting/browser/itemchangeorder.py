@@ -4,6 +4,30 @@ from Products.Five import BrowserView
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 
 
+def _to_integer(number):
+    """
+      Return the entire value of p_number :
+      - 200 is 200;
+      - 202 is 200;
+      - 305 is 300.
+    """
+    return number / 100 * 100
+
+
+def _is_integer(number):
+    """Is p_number an integer item number or a subnumber?"""
+    return not bool(number % 100)
+
+
+def _compute_value_to_add(number):
+    """ """
+    number_is_integer = _is_integer(number)
+    if number_is_integer:
+        return 100
+    else:
+        return 1
+
+
 class ChangeItemOrderView(BrowserView):
     """
       Manage the functionnality that change item order on a meeting.
@@ -16,19 +40,10 @@ class ChangeItemOrderView(BrowserView):
            - 200 is in same set as 300, 400 or 500 but not as 301;
            - 201 is in same set as 202, 203 or 212 but not 300 or 302;
         """
-        oldIndexIsInteger = not bool(oldIndex % 100)
-        itemNumberIsInteger = not bool(itemNumber % 100)
+        oldIndexIsInteger = _is_integer(oldIndex)
+        itemNumberIsInteger = _is_integer(itemNumber)
         if oldIndexIsInteger and itemNumberIsInteger:
             return True
-
-    def _compute_value_to_add(self, itemNumber):
-        """ """
-        itemNumberIsInteger = not bool(itemNumber % 100)
-        if itemNumberIsInteger:
-            return 100
-        else:
-            # XXX to be changed
-            return 1
 
     def __call__(self, moveType, wishedNumber=None):
         """
@@ -108,29 +123,60 @@ class ChangeItemOrderView(BrowserView):
             else:
                 # Move the item to an absolute position
                 oldIndex = self.context.getItemNumber()
-                itemsList = meeting.getItems(ordered=True)
+                self.context.setItemNumber(moveNumber)
+                self.context.reindexObject(idxs=['getItemNumber'])
+                # get items again now that context number was updated
+                # we do another query to Meeting.getItems than previous one
+                # because it use memoize
+                items = meeting.getItems(ordered=True, **{'dummy': True})
                 if moveNumber < oldIndex:
                     # We must move the item closer to the first items (up)
-                    for item in itemsList:
+                    previousNumber = 0
+                    for item in items:
                         itemNumber = item.getItemNumber()
-                        if (itemNumber < oldIndex) and (itemNumber >= moveNumber):
-                            if self._is_part_of_same_set(oldIndex, itemNumber):
-                                item.setItemNumber(itemNumber + self._compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
-                        elif itemNumber == oldIndex:
-                            item.setItemNumber(moveNumber)
+                        if item == self.context:
+                            if previousNumber > moveNumber:
+                                # we already passed by other item having same number but that was increased...
+                                continue
+                        elif itemNumber == moveNumber:
+                            item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
                             item.reindexObject(idxs=['getItemNumber'])
+                        else:
+                            itemNumberIsInteger = _is_integer(itemNumber)
+                            if (itemNumberIsInteger and itemNumber != _to_integer(previousNumber) + 100) or \
+                               (not itemNumberIsInteger and itemNumber != previousNumber + 1):
+                                if itemNumberIsInteger:
+                                    item.setItemNumber(_to_integer(previousNumber) +
+                                                       _compute_value_to_add(itemNumber))
+                                else:
+                                    item.setItemNumber(previousNumber + _compute_value_to_add(itemNumber))
+                                item.reindexObject(idxs=['getItemNumber'])
+                        previousNumber = item.getItemNumber()
                 else:
-                    # We must move the item closer to the last items (down)
-                    for item in itemsList:
+                    # We must move the item closer to the first items (up)
+                    previousNumber = 0
+                    for item in items:
                         itemNumber = item.getItemNumber()
-                        if itemNumber == oldIndex:
-                            item.setItemNumber(moveNumber)
-                            item.reindexObject(idxs=['getItemNumber'])
-                        elif (itemNumber > oldIndex) and (itemNumber <= moveNumber):
-                            if self._is_part_of_same_set(oldIndex, itemNumber):
-                                item.setItemNumber(itemNumber - self._compute_value_to_add(itemNumber))
+                        itemNumberIsInteger = _is_integer(itemNumber)
+                        if item == self.context:
+                            # moving 2.1 to 4.2
+                            if not _is_integer(moveNumber) and not itemNumberIsInteger:
+                                item.setItemNumber(moveNumber - 100)
                                 item.reindexObject(idxs=['getItemNumber'])
+                        elif itemNumber == moveNumber:
+                            item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
+                            item.reindexObject(idxs=['getItemNumber'])
+                            continue
+                        else:
+                            if (itemNumberIsInteger and itemNumber != _to_integer(previousNumber) + 100) or \
+                               (not itemNumberIsInteger and itemNumber != previousNumber + 1):
+                                if itemNumberIsInteger:
+                                    item.setItemNumber(_to_integer(previousNumber) +
+                                                       _compute_value_to_add(itemNumber))
+                                else:
+                                    item.setItemNumber(previousNumber + _compute_value_to_add(itemNumber))
+                                item.reindexObject(idxs=['getItemNumber'])
+                        previousNumber = item.getItemNumber()
 
         # when items order on meeting changed, it is considered modified
         meeting.notifyModified()

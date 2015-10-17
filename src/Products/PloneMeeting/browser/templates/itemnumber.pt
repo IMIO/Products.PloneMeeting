@@ -8,6 +8,7 @@
          Javascript expressions will fail.</tal:comment>
       <td><input type="text" size="1" name="moveValue"
                  tal:attributes="id string:value_moveAction_${itemNumber};
+                                 class python: view.is_integer(context.getItemNumber()) and 'number' or 'subnumber';
                                  value itemNumber;
                                  onFocus string:onImageButtonFocus(${itemNumber});
                                  onKeyPress string:if (event.keyCode==13) moveItem(baseUrl='${context/absolute_url}', moveType='number', $$(this));"/>
