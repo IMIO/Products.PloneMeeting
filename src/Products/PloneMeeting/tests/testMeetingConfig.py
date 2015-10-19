@@ -1212,7 +1212,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         newMeetingColId = searches.searches_meetings.invokeFactory('DashboardCollection', id='newMeetingCol')
         newMeetingCol = getattr(searches.searches_meetings, newMeetingColId)
         meetingColumns = list(cfg.getMeetingColumns())
-        for position, name in DEFAULT_MEETING_COLUMNS:
+        for column in DEFAULT_MEETING_COLUMNS:
             meetingColumns.insert(column['position'], column['name'])
         self.assertEquals(newMeetingCol.getCustomViewFields(), tuple(meetingColumns))
         # decision related collection
