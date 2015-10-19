@@ -3077,8 +3077,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              will use same columns.'''
         # update item related collections
         itemColumns = list(self.getItemColumns())
-        for column in DEFAULT_ITEM_COLUMNS:
-            itemColumns.insert(column['position'], column['name'])
+        for iColumn in DEFAULT_ITEM_COLUMNS:
+            itemColumns.insert(iColumn['position'], iColumn['name'])
         for collection in self.searches.searches_items.objectValues('DashboardCollection'):
             # available customViewFieldIds, as done in an adapter, we compute it for each collection
             customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
@@ -3086,8 +3086,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             collection.setCustomViewFields(tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds]))
         # update meeting related collections
         meetingColumns = list(self.getMeetingColumns())
-        for position, name in DEFAULT_MEETING_COLUMNS:
-            meetingColumns.insert(column['position'], column['name'])
+        for mColumn in DEFAULT_MEETING_COLUMNS:
+            meetingColumns.insert(mColumn['position'], mColumn['name'])
         for collection in (self.searches.searches_meetings.objectValues('DashboardCollection') +
                            self.searches.searches_decisions.objectValues('DashboardCollection')):
             # available customViewFieldIds, as done in an adapter, we compute it for each collection
