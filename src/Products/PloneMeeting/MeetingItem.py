@@ -1641,7 +1641,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting = self.getMeeting()
             meetingFirstItemNumber = meeting.getFirstItemNumber()
             if meetingFirstItemNumber != -1:
-                res = meetingFirstItemNumber + self.getItemNumber(relativeTo='meeting') - 1
+                res = meetingFirstItemNumber * 100 + self.getItemNumber(relativeTo='meeting') - 100
             else:
                 # here we need to know what is the "base number" to compute the item number on :
                 # we call findBaseNumberRelativeToMeetingConfig, see docstring there
@@ -1653,7 +1653,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # now that we have the currentMeetingComputedFirstNumber, that is
                 # the theorical current meeting first number, we can compute current item
                 # number that is this number + current item number relativeTo the meeting - 1
-                res = currentMeetingComputedFirstNumber + self.getItemNumber(relativeTo='meeting') - 1
+                res = currentMeetingComputedFirstNumber * 100 + self.getItemNumber(relativeTo='meeting') - 100
         # we want '1' instead of '100' and '2.15' instead of 215
         if for_display:
             return _storedItemNumber_to_itemNumber(res, forceShowDecimal=False)

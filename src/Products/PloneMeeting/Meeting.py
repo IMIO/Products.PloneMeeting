@@ -1179,7 +1179,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # Update item numbers
         for anItem in items:
             if anItem.getItemNumber() > itemNumber:
-                anItem.setItemNumber(anItem.getItemNumber()-1)
+                anItem.setItemNumber(anItem.getItemNumber()-100)
                 anItem.reindexObject(idxs=['getItemNumber', ])
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')

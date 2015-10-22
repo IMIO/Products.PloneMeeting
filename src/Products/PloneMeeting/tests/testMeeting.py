@@ -1070,7 +1070,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(isinstance(itemsInOrder[0], MeetingItem))
         # items are ordered
         self.assertEquals([item.getItemNumber() for item in itemsInOrder],
-                          [1, 2, 3, 4, 5, 6, 7])
+                          [100, 200, 300, 400, 500, 600, 700])
         itemUids = [item.UID() for item in itemsInOrder]
 
         # remove some items UID then pass it to getItems
@@ -1090,7 +1090,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(isinstance(brainsInOrder[0], AbstractCatalogBrain))
         # items are ordered
         self.assertEquals([brain.getItemNumber for brain in brainsInOrder],
-                          [1, 2, 3, 4, 5, 6, 7])
+                          [100, 200, 300, 400, 500, 600, 700])
         self.assertTrue(len(meeting.getItems(uids=itemUids, useCatalog=True)) == 4)
         # we can specify the listType
         self.assertTrue(len(meeting.getItems(listType='normal', useCatalog=True)) == 7)
@@ -1106,10 +1106,10 @@ class testMeeting(PloneMeetingTestCase):
         itemsInOrder = meeting.getItems(ordered=True)
         self.assertTrue(len(itemsInOrder) == 7)
         itemUids = [item.UID() for item in itemsInOrder]
-        self.assertTrue(meeting.getItemByNumber(2).UID() == itemUids[1])
-        self.assertTrue(meeting.getItemByNumber(1).UID() == itemUids[0])
-        self.assertTrue(meeting.getItemByNumber(5).UID() == itemUids[4])
-        self.assertTrue(not meeting.getItemByNumber(8))
+        self.assertTrue(meeting.getItemByNumber(200).UID() == itemUids[1])
+        self.assertTrue(meeting.getItemByNumber(100).UID() == itemUids[0])
+        self.assertTrue(meeting.getItemByNumber(500).UID() == itemUids[4])
+        self.assertTrue(not meeting.getItemByNumber(800))
         # it also take late items into account
         self.freezeMeeting(meeting)
         lateItem = self.create('MeetingItem')
@@ -1117,7 +1117,7 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(lateItem)
         # if we ask 8th item, so the late item, it works
         self.assertTrue(lateItem.isLate())
-        self.assertTrue(meeting.getItemByNumber(8).UID() == lateItem.UID())
+        self.assertTrue(meeting.getItemByNumber(800).UID() == lateItem.UID())
 
     def test_pm_RemoveWholeMeeting(self):
         '''Test the 'remove whole meeting' functionnality, so removing a meeting
