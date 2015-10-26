@@ -369,14 +369,14 @@ class testMeetingItem(PloneMeetingTestCase):
                 item,
                 'meetingadvice',
                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
-                'advice_type': u'positive',
-                'advice_comment': RichTextValue(u'My comment')})
+                   'advice_type': u'positive',
+                   'advice_comment': RichTextValue(u'My comment')})
             vendors_advice = createContentInContainer(
                 item,
                 'meetingadvice',
                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
-                'advice_type': u'negative',
-                'advice_comment': RichTextValue(u'My comment')})
+                   'advice_type': u'negative',
+                   'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmReviewer1')
         self.validateItem(item)
         self.changeUser('pmManager')
@@ -1807,8 +1807,8 @@ class testMeetingItem(PloneMeetingTestCase):
             item,
             'meetingadvice',
             **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
-            'advice_type': u'positive',
-            'advice_comment': RichTextValue(u'My comment')})
+               'advice_type': u'positive',
+               'advice_comment': RichTextValue(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
         self.assertTrue(item.validate_optionalAdvisers(()), can_not_unselect_msg)
 
@@ -1835,8 +1835,8 @@ class testMeetingItem(PloneMeetingTestCase):
             item,
             'meetingadvice',
             **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
-            'advice_type': u'positive',
-            'advice_comment': RichTextValue(u'My comment')})
+               'advice_type': u'positive',
+               'advice_comment': RichTextValue(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
         self.assertTrue(item.validate_optionalAdvisers(()), can_not_unselect_msg)
 
@@ -2018,8 +2018,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item4.getDecision(keepWithNext=False) == '<p>My decision that will not be touched.</p>')
         # a portal_message is displayed to the user that triggered the transition
         messages = IStatusMessage(self.request).show()
-        self.assertTrue(messages[-1].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % ('decision',
-                                                                                         "'some_wrong_tal_expression'"))
+        self.assertTrue(messages[-1].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
+                        ('decision', "'some_wrong_tal_expression'"))
 
     def test_pm_TakenOverBy(self):
         '''Test the view that manage the MeetingItem.takenOverBy toggle.
