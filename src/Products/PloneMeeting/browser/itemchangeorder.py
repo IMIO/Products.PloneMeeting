@@ -76,6 +76,7 @@ class ChangeItemOrderView(BrowserView):
 
         nbOfItems = len(meeting.getRawItems())
         items = meeting.getItems(ordered=True)
+        oldIndex = self.context.getItemNumber()
 
         # Calibrate and validate moveValue
         if moveType == 'number':
@@ -93,11 +94,14 @@ class ChangeItemOrderView(BrowserView):
             # check that moveNumber is not < 1 or not > next possible item
             # check that the moveNumber is valid, aka integer (4) or max 2 decimal number (4.1 or 4.13)
             # check also that if we use a subnumber, the previous exists (22.2 exists if we specified 22.3)
-            # check finally
+            # check finally that if we are moving an item to a subnumber,
+            # the master exists (moving to 12.1, 12 has to exist)
             if (moveNumber < 100) or \
                (moveNumber > _to_integer(items[-1].getItemNumber()) + 100) or \
                (not moveNumberIsInteger and len(wishedNumber.split('.')[1]) > 2) or \
-               (not moveNumberIsInteger and not meeting.getItemByNumber(moveNumber - 1)):
+               (not moveNumberIsInteger and
+                (not meeting.getItemByNumber(moveNumber - 1)
+                 or moveNumber - 1 == oldIndex)):
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_move',
                               domain='PloneMeeting',
@@ -107,7 +111,6 @@ class ChangeItemOrderView(BrowserView):
 
         # Move the item
         if nbOfItems >= 2:
-            oldIndex = self.context.getItemNumber()
             if not moveType == 'number':
                 # switch the items
                 if moveType == 'up':
@@ -183,7 +186,7 @@ class ChangeItemOrderView(BrowserView):
                             elif (not oldIndexIsInteger and moveNumberIsInteger) and itemNumber > moveNumber:
                                 # subnumbers of oldIndex (4.2, 4.3, ...) must be decreased of 0.1
                                 if _use_same_integer(itemNumber, oldIndex) and itemNumber > oldIndex:
-                                    item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
+                                    item.setItemNumber(itemNumber + 100 - _compute_value_to_add(itemNumber))
                                     item.reindexObject(idxs=['getItemNumber'])
                                 else:
                                     item.setItemNumber(itemNumber + 100)
@@ -253,9 +256,14 @@ class ChangeItemOrderView(BrowserView):
                                 item.setItemNumber(itemNumber - 100)
                                 item.reindexObject(idxs=['getItemNumber'])
                             # moving 2.1 to 4
-                            elif (not oldIndexIsInteger and moveNumberIsInteger) and itemNumber > moveNumber:
-                                item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
+                            elif (not oldIndexIsInteger and moveNumberIsInteger) and itemNumber > oldIndex:
+                                # decrease elements having same subnumber as oldIndex
+                                if (_use_same_integer(itemNumber, oldIndex)):
+                                    item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
+                                    item.reindexObject(idxs=['getItemNumber'])
+                                elif itemNumber > moveNumber:
+                                    item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
+                                    item.reindexObject(idxs=['getItemNumber'])
                             # moving 2 to 4.2
                             elif (oldIndexIsInteger and not moveNumberIsInteger) and itemNumber > oldIndex:
                                 # decrease from 1 but add + 0.1 to subnumbers > moveNumber
