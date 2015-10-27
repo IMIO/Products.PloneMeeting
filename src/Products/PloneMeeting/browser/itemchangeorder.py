@@ -180,7 +180,7 @@ class ChangeItemOrderView(BrowserView):
                             # moving 4 to 2
                             if (oldIndexIsInteger and moveNumberIsInteger) and \
                                (itemNumber < oldIndex and itemNumber > moveNumber):
-                                item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
+                                item.setItemNumber(itemNumber + 100)
                                 item.reindexObject(idxs=['getItemNumber'])
                             # moving 4.1 to 2
                             elif (not oldIndexIsInteger and moveNumberIsInteger) and itemNumber > moveNumber:
