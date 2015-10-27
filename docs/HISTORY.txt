@@ -88,6 +88,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed overrides of DataGridField CheckBoxColumn and MultiSelectColumn now that we use newer
   versions of relevant package where this has been integrated
 - Added possibility to generate a PodTemplate on an advice
+- Make MeetingItem.detailedDescription searchable
 - Added possibility to use subnumber on items of the meeting so it is possible to use 1, 1.1, 1.2, ...
   for numbering items on the meeting, this way we may manage items "without a number"
 - When redefining item assembly/excused/absents, show what is strored on the meeting for each fields
