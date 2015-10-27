@@ -245,6 +245,23 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item6.getItemNumber(), 200)
         self.assertEquals(item7.getItemNumber(), 700)
 
+        # check with 2 groups of items with subnumbers
+        item1.setItemNumber(100)
+        item2.setItemNumber(200)
+        item3.setItemNumber(201)
+        item4.setItemNumber(300)
+        item5.setItemNumber(400)
+        item6.setItemNumber(500)
+        item7.setItemNumber(501)
+        for item in meeting.getItems():
+            item.reindexObject(idxs=['getItemNumber'])
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 201, 300, 400, 500, 501])
+        view = item3.restrictedTraverse('@@change-item-order')
+        view('number', '3')
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 300, 400, 500, 600, 601])
+
     def test_pm_ChangeItemOrderMoveSubnumberToSubnumber(self):
         '''Test while moving up or down a subnumber to a subnumber (from 4.1 to 2.1 and 3.1 to 5.1 for example).'''
         self.changeUser('pmManager')
