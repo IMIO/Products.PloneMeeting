@@ -184,21 +184,20 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item7.getItemNumber(), 402)
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 300, 400, 401, 402, 500])
+
+        # move up between 2 subnumbers
+        # move 5 to 4.1
+        view = item3.restrictedTraverse('@@change-item-order')
+        view('number', '4.1')
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 300, 400, 401, 402, 403])
+
         # move down to an existing subnumber
         # move 2 to 4.1
         view = item4.restrictedTraverse('@@change-item-order')
         view('number', '4.1')
-        self.assertEquals(item1.getItemNumber(), 100)
-        self.assertEquals(item2.getItemNumber(), 302)
-        # master moved, subnumber becomes subnumber of previous item
-        self.assertEquals(item3.getItemNumber(), 400)
-        # does not have a master anymore, takes previous one
-        self.assertEquals(item4.getItemNumber(), 301)
-        self.assertEquals(item5.getItemNumber(), 200)
-        self.assertEquals(item6.getItemNumber(), 300)
-        self.assertEquals(item7.getItemNumber(), 303)
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 301, 302, 303, 400])
+                          [100, 200, 300, 301, 302, 303, 304])
 
     def test_pm_ChangeItemOrderMoveSubnumberToInteger(self):
         '''Test while moving up or down a subnumber to a subnumber (from 4.1 to 2 and 3.1 to 5 for example).'''

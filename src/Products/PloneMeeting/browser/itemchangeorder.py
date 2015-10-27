@@ -197,6 +197,10 @@ class ChangeItemOrderView(BrowserView):
                                 if _use_same_integer(itemNumber, oldIndex):
                                     item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
                                     item.reindexObject(idxs=['getItemNumber'])
+                                # increase subnumbers > moveNumber
+                                if _use_same_integer(itemNumber, moveNumber) and itemNumber > moveNumber:
+                                    item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
+                                    item.reindexObject(idxs=['getItemNumber'])
                                 # decrease every number > oldIndex if oldIndex was not a master number
                                 elif not oldIndexHasSubnumbers and itemNumber > oldIndex:
                                     item.setItemNumber(itemNumber - 100)
