@@ -108,6 +108,17 @@ class ChangeItemOrderView(BrowserView):
                               context=self.request),
                     type='warning')
                 return
+        else:
+            # down, must not be last
+            # up, must not be first
+            if (moveType == 'down' and self.context == items[-1]) or \
+               (moveType == 'up' and self.context == items[0]):
+                self.context.plone_utils.addPortalMessage(
+                    translate(msgid='item_illegal_move',
+                              domain='PloneMeeting',
+                              context=self.request),
+                    type='warning')
+                return
 
         # Move the item
         if nbOfItems >= 2:
