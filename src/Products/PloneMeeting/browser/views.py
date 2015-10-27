@@ -9,6 +9,8 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
+from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 
 
 class PloneMeetingAjaxView(BrowserView):
@@ -32,6 +34,10 @@ class ItemNavigationWidgetView(BrowserView):
     def __call__(self):
         """Memoize as this widget is displayed identically at the top and the bottom of the item view."""
         return super(ItemNavigationWidgetView, self).__call__()
+
+    def display_number(self, itemNumber):
+        """Show the displayable version of the p_itemNumber."""
+        return _storedItemNumber_to_itemNumber(itemNumber, forceShowDecimal=False)
 
 
 class ItemMoreInfosView(BrowserView):
@@ -195,7 +201,9 @@ class ItemToDiscussView(BrowserView):
     def mayEdit(self):
         """ """
         member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
-        return member.has_permission(self.context.getField('toDiscuss').write_permission, self.context) and self.context.showToDiscuss()
+        toDiscuss_write_perm = self.context.getField('toDiscuss').write_permission
+        return member.has_permission(toDiscuss_write_perm, self.context) and \
+            self.context.showToDiscuss()
 
     @memoize_contextless
     def userIsReviewer(self):
@@ -284,6 +292,7 @@ class ObjectGoToView(BrowserView):
         """
         catalog = getToolByName(self.context, 'portal_catalog')
         meeting = self.context.getMeeting()
+        itemNumber = _itemNumber_to_storedItemNumber(itemNumber)
         brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=itemNumber)
         if not brains:
             self.context.plone_utils.addPortalMessage(

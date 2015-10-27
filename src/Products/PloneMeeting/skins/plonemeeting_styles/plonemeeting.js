@@ -202,11 +202,11 @@ function toggleMenu(menuId){
 }
 
 var wrongTextInput = '#ff934a none';
-function gotoItem(tag, totalNbOfItems) {
+function gotoItem(tag, lastItemNumber) {
   tag = tag[0];
   itemNumber = tag.value;
-  if(Math.floor(itemNumber) == itemNumber && $.isNumeric(itemNumber) && (parseInt(itemNumber)>=1) && (parseInt(itemNumber)<=totalNbOfItems))  {
-      document.location.href = document.baseURI + '@@object_goto?itemNumber:int=' + itemNumber;
+  if((parseInt(itemNumber)>=1) && (parseInt(itemNumber)<=lastItemNumber))  {
+      document.location.href = document.baseURI + '@@object_goto?itemNumber=' + itemNumber;
     }
   else tag.style.background = wrongTextInput;
 }

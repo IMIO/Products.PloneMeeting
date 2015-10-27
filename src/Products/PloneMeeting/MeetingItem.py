@@ -437,7 +437,7 @@ schema = Schema((
 
     IntegerField(
         name='itemNumber',
-        widget=FloatField._properties['widget'](
+        widget=IntegerField._properties['widget'](
             visible=False,
             label='Itemnumber',
             label_msgid='PloneMeeting_label_itemNumber',
