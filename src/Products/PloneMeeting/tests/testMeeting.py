@@ -1521,6 +1521,35 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals(itemBrain.linkedMeetingDate, meeting.getDate())
         self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
 
+    def test_pm_GetFirstItemNumberIgnoresSubnumbers(self):
+        """When computing the firstItemNumber of a meeting,
+           it will ignores subnumbers of previous meetings."""
+        self.changeUser('pmManager')
+        meeting1 = self._createMeetingWithItems(meetingDate=DateTime('2012/05/05'))
+        self.assertEquals(len(meeting1.getItems()), 7)
+        meeting2 = self._createMeetingWithItems(meetingDate=DateTime('2012/06/06'))
+        self.assertEquals(len(meeting2.getItems()), 7)
+        meeting3 = self._createMeetingWithItems(meetingDate=DateTime('2012/07/07'))
+        self.assertEquals(len(meeting3.getItems()), 7)
+
+        # all normal numbered items
+        unrestricted_view = meeting3.restrictedTraverse('@@pm_unrestricted_methods')
+        self.assertEquals(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 15)
+
+        # put some subnumbers for meeting1
+        meeting1_item2 = meeting1.getItems(ordered=True)[1]
+        meeting1_item7 = meeting1.getItems(ordered=True)[6]
+        change_order_view = meeting1_item2.restrictedTraverse('@@change-item-order')
+        change_order_view('number', '1.1')
+        change_order_view = meeting1_item7.restrictedTraverse('@@change-item-order')
+        change_order_view('number', '5.1')
+        self.assertEquals([item.getItemNumber() for item in meeting1.getItems(ordered=True)],
+                          [100, 101, 200, 300, 400, 500, 501])
+        # call to 'findFirstItemNumberForMeeting' is memoized
+        self.cleanMemoize()
+        # now meeting1 last number is considered 5
+        self.assertEquals(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 13)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -50,7 +50,7 @@ class UnrestrictedMethodsView(BrowserView):
         # we need to make an unrestricted search because previous meetings
         # could be unaccessible to the current user, for example by default a
         # meeting in state 'created' is not viewable by items creators
-        brains = catalog.unrestrictedSearchResults(Type=cfg.getMeetingTypeName(),
+        brains = catalog.unrestrictedSearchResults(portal_type=cfg.getMeetingTypeName(),
                                                    getDate={'query': meeting.getDate(),
                                                             'range': 'max'},
                                                    sort_on='getDate',
@@ -69,7 +69,10 @@ class UnrestrictedMethodsView(BrowserView):
             # either we have a firstItemNumber defined on the meeting
             # or -1, in this last case, we save number of items of the meeting
             # and we continue to the previous meeting
-            numberOfItemsBefore += meetingObj.numberOfItems()
+            # divide lastItem itemNumber by 100 so we are sure to ignore subnumbers
+            # 308 will become 3 or 1400 will become 14
+            lastItemNumber = meetingObj.getItems(ordered=True)[-1].getItemNumber() / 100
+            numberOfItemsBefore += lastItemNumber
             if not meetingObj.getFirstItemNumber() == -1:
                 previousFirstItemNumber = meetingObj.getFirstItemNumber()
                 break

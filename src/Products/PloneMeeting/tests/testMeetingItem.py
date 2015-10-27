@@ -1505,15 +1505,15 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # now create a meeting BEFORE meeting so meeting will not be considered as only meeting
         # in the meetingConfig and relativeTo='meeting' behaves normally
-        meeting2 = self._createMeetingWithItems(meetingDate=DateTime('2012/05/05 12:00'))
-        # we have 7 items in meeting2 and firstItemNumber is not set
-        self.assertTrue(meeting2.numberOfItems() == 7)
-        self.assertTrue(meeting2.getFirstItemNumber() == -1)
-        self.assertTrue(meeting2.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig') == 700)
+        meeting_before = self._createMeetingWithItems(meetingDate=DateTime('2012/05/05 12:00'))
+        # we have 7 items in meeting_before and firstItemNumber is not set
+        self.assertTrue(meeting_before.numberOfItems() == 7)
+        self.assertTrue(meeting_before.getFirstItemNumber() == -1)
+        self.assertTrue(meeting_before.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig') == 700)
         # itemNumber relativeTo itemsList/meeting does not change but relativeTo meetingConfig changed
         # for the normal item
         # make sure it is the same result for non MeetingManagers as previous
-        # meeting2 is not viewable by common users by default as in state 'created'
+        # meeting_before is not viewable by common users by default as in state 'created'
         for memberId in ('pmManager', 'pmCreator1'):
             self.changeUser(memberId)
             self.assertTrue(item.getItemNumber(relativeTo='meeting') == 500)
@@ -1521,13 +1521,13 @@ class testMeetingItem(PloneMeetingTestCase):
             # for the late item
             self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 600)
             self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (600+700))
-        # now set firstItemNumber for meeting2
+        # now set firstItemNumber for meeting_before
         self.changeUser('pmManager')
-        self.closeMeeting(meeting2)
+        self.closeMeeting(meeting_before)
         self.cleanMemoize()
-        self.assertTrue(meeting2.queryState(), 'closed')
-        self.assertTrue(meeting2.getFirstItemNumber() == 1)
-        self.assertTrue(meeting2.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig') == 700)
+        self.assertTrue(meeting_before.queryState(), 'closed')
+        self.assertTrue(meeting_before.getFirstItemNumber() == 1)
+        self.assertTrue(meeting_before.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig') == 700)
         # getItemNumber is still behaving the same
         # for item
         self.assertTrue(item.getItemNumber(relativeTo='meeting') == 500)
