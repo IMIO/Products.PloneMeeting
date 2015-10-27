@@ -4467,7 +4467,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     del ann[annotation_key]
             # manage_beforeDelete is called before the IObjectWillBeRemovedEvent
             # in IObjectWillBeRemovedEvent references are already broken, we need to remove
-            # the item from a meeting if it is inserted in here...
+            # the item from a meeting if it is inserted in there...
             if item.hasMeeting():
                 item.getMeeting().removeItem(item)
         BaseFolder.manage_beforeDelete(self, item, container)
