@@ -25,9 +25,20 @@ table.listing tr[class][class] td[class^='meeting_item_listType_'] {
 }
 
 /* grey the items with a subnumber itemnumber input */
-td input.subnumber {
+td input.subnumber,
+td span.subnumber {
     background-color: lightgray;
     border-radius: 5px;
+}
+td span.subnumber {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+table.listing tr.odd td.itemnumber,
+table.listing tr.even td.itemnumber {
+    text-align: center;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
 }
 
 /* hide div of the ColorColumn for normal items */

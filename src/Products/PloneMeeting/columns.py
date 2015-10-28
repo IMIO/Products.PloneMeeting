@@ -172,7 +172,8 @@ class ItemNumberColumn(BrowserViewCallColumn):
         # for TR
         trCSSClasses = []
         trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
-        return {'tr': ' '.join(trCSSClasses)}
+        return {'tr': ' '.join(trCSSClasses),
+                'td': 'itemnumber'}
 
 
 class ItemCheckBoxColumn(CheckBoxColumn):
