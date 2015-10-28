@@ -1632,8 +1632,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              being "normal" or "late"): p_relativeTo="meeting";
            - the item number relative to the whole meeting config:
              p_relativeTo="meetingConfig".
-           If p_for_display is True, it will return a displayable value where '1.0' is '1'
-           and '1.2' is still '1.2'.'''
+           If p_for_display is True, it will return a displayable value :
+           - 100 is displayed '1';
+           - 102 is displayed '1.2';
+           - 111 is displayed '1.11'.'''
         # this method is only relevant if the item is in a meeting
         if not self.hasMeeting():
             return 0
