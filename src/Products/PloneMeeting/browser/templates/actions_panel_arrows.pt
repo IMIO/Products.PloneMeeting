@@ -3,7 +3,7 @@
   <table class="no-style-table" cellspacing="0" cellpadding="0"
          tal:define="dummy view/saveHasActions;">
     <tr>
-      <td tal:condition="python: context.getItemNumber() &gt; 1" class="noPadding">
+      <td tal:condition="python: context.getItemNumber() &gt; 100" class="noPadding">
         <img name="moveUp"
              title="move_item_up"
              i18n:domain="PloneMeeting"
@@ -11,7 +11,7 @@
              tal:attributes="src string: $portal_url/arrowUp.png;
                              onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='up', this);"/>
       </td>
-      <td tal:condition="python: context.getItemNumber() &lt; view.totalNbOfItems" class="noPadding">
+      <td tal:condition="python: context.UID() != view.lastItemUID" class="noPadding">
         <img name="moveDown"
              title="move_item_down"
              i18n:domain="PloneMeeting"

@@ -1,5 +1,3 @@
-from AccessControl import Unauthorized
-
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 
@@ -10,6 +8,9 @@ from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
+from Products.PloneMeeting.browser.itemchangeorder import _is_integer
+from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 
 
 class PloneMeetingAjaxView(BrowserView):
@@ -33,6 +34,10 @@ class ItemNavigationWidgetView(BrowserView):
     def __call__(self):
         """Memoize as this widget is displayed identically at the top and the bottom of the item view."""
         return super(ItemNavigationWidgetView, self).__call__()
+
+    def display_number(self, itemNumber):
+        """Show the displayable version of the p_itemNumber."""
+        return _storedItemNumber_to_itemNumber(itemNumber, forceShowDecimal=False)
 
 
 class ItemMoreInfosView(BrowserView):
@@ -178,6 +183,10 @@ class ItemNumberView(BrowserView):
         """ """
         return self.context.getMeeting().wfConditions().mayChangeItemsOrder()
 
+    def is_integer(self, number):
+        """ """
+        return _is_integer(number)
+
 
 class ItemToDiscussView(BrowserView):
     """
@@ -192,7 +201,9 @@ class ItemToDiscussView(BrowserView):
     def mayEdit(self):
         """ """
         member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
-        return member.has_permission(self.context.getField('toDiscuss').write_permission, self.context) and self.context.showToDiscuss()
+        toDiscuss_write_perm = self.context.getField('toDiscuss').write_permission
+        return member.has_permission(toDiscuss_write_perm, self.context) and \
+            self.context.showToDiscuss()
 
     @memoize_contextless
     def userIsReviewer(self):
@@ -281,6 +292,7 @@ class ObjectGoToView(BrowserView):
         """
         catalog = getToolByName(self.context, 'portal_catalog')
         meeting = self.context.getMeeting()
+        itemNumber = _itemNumber_to_storedItemNumber(itemNumber)
         brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=itemNumber)
         if not brains:
             self.context.plone_utils.addPortalMessage(
@@ -292,111 +304,6 @@ class ObjectGoToView(BrowserView):
         else:
             obj = brains[0].getObject()
             return self.request.RESPONSE.redirect(obj.absolute_url())
-
-
-class ChangeItemOrderView(BrowserView):
-    """
-      Manage the functionnality that change item order on a meeting.
-      Change one level up/down or to a given p_moveNumber.
-    """
-    def __call__(self, moveType, moveNumber=None):
-        """
-          Change the items order on a meeting.
-          This is an unrestricted method so a MeetingManager can change items
-          order even if some items are no more movable because decided
-          (and so no more 'Modify portal content' on it).
-          We double check that current user can actually mayChangeItemsOrder.
-          Anyway, this method move an item, one level up/down or at a given position.
-        """
-        # we do this unrestrictively but anyway respect the Meeting.mayChangeItemsOrder
-        meeting = self.context.getMeeting()
-
-        if not meeting.wfConditions().mayChangeItemsOrder():
-            raise Unauthorized
-
-        # Move the item up (-1), down (+1) or at a given position ?
-        if moveType == 'number':
-            isDelta = False
-            try:
-                move = int(moveNumber)
-                # In this case, moveNumber specifies the new position where
-                # the item must be moved.
-            except (ValueError, TypeError):
-                self.context.plone_utils.addPortalMessage(
-                    translate(msgid='item_number_invalid',
-                              domain='PloneMeeting',
-                              context=self.request),
-                    type='warning')
-                return
-        else:
-            isDelta = True
-            if moveType == 'up':
-                move = -1
-            elif moveType == 'down':
-                move = 1
-
-        nbOfItems = len(meeting.getRawItems())
-
-        # Calibrate and validate moveValue
-        if not isDelta:
-            # Is this move allowed ?
-            if move == self.context.getItemNumber():
-                self.context.plone_utils.addPortalMessage(
-                    translate(msgid='item_did_not_move',
-                              domain='PloneMeeting',
-                              context=self.request),
-                    type='warning')
-                return
-            if (move < 1) or (move > nbOfItems):
-                self.context.plone_utils.addPortalMessage(
-                    translate(msgid='item_illegal_move',
-                              mapping={'nbOfItems': nbOfItems},
-                              domain='PloneMeeting',
-                              context=self.request),
-                    type='warning')
-                return
-
-        # Move the item
-        if nbOfItems >= 2:
-            if isDelta:
-                # Move the item with a delta of +1 or -1
-                oldIndex = self.context.getItemNumber()
-                newIndex = oldIndex + move
-                if (newIndex >= 1) and (newIndex <= nbOfItems):
-                    for item in meeting.getItems():
-                        if item.getItemNumber() == newIndex:
-                            item.setItemNumber(oldIndex)
-                            item.reindexObject(idxs=['getItemNumber'])
-                            break
-                    self.context.setItemNumber(newIndex)
-                    self.context.reindexObject(idxs=['getItemNumber'])
-            else:
-                # Move the item to an absolute position
-                oldIndex = self.context.getItemNumber()
-                itemsList = meeting.getItems()
-                if move < oldIndex:
-                    # We must move the item closer to the first items (up)
-                    for item in itemsList:
-                        itemNumber = item.getItemNumber()
-                        if (itemNumber < oldIndex) and (itemNumber >= move):
-                            item.setItemNumber(itemNumber+1)
-                            item.reindexObject(idxs=['getItemNumber'])
-                        elif itemNumber == oldIndex:
-                            item.setItemNumber(move)
-                            item.reindexObject(idxs=['getItemNumber'])
-                else:
-                    # We must move the item closer to the last items (down)
-                    for item in itemsList:
-                        itemNumber = item.getItemNumber()
-                        if itemNumber == oldIndex:
-                            item.setItemNumber(move)
-                            item.reindexObject(idxs=['getItemNumber'])
-                        elif (itemNumber > oldIndex) and (itemNumber <= move):
-                            item.setItemNumber(itemNumber-1)
-                            item.reindexObject(idxs=['getItemNumber'])
-
-        # when items order on meeting changed, it is considered modified
-        meeting.notifyModified()
 
 
 class UpdateDelayAwareAdvicesView(BrowserView):

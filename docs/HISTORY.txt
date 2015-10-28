@@ -91,6 +91,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Enabled unload protection for CKEditor fields, this way if a change is made in a rich text field, a warning
   message is displayed to warn the user. Quick edit fields (rich text fields on item and meeting views) are
   protected as well
+- Make MeetingItem.detailedDescription searchable
+- Added possibility to use subnumber on items of the meeting so it is possible to use 1, 1.1, 1.2, ...
+  for numbering items on the meeting, this way we may manage items "without a number"
+- When redefining item assembly/excused/absents, show what is strored on the meeting for each fields
 
 3.3 (2015-02-27)
 ----------------

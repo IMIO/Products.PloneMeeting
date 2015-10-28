@@ -202,11 +202,11 @@ function toggleMenu(menuId){
 }
 
 var wrongTextInput = '#ff934a none';
-function gotoItem(tag, totalNbOfItems) {
+function gotoItem(tag, lastItemNumber) {
   tag = tag[0];
   itemNumber = tag.value;
-  if(Math.floor(itemNumber) == itemNumber && $.isNumeric(itemNumber) && (parseInt(itemNumber)>=1) && (parseInt(itemNumber)<=totalNbOfItems))  {
-      document.location.href = document.baseURI + '@@object_goto?itemNumber:int=' + itemNumber;
+  if((parseInt(itemNumber)>=1) && (parseInt(itemNumber)<=lastItemNumber))  {
+      document.location.href = document.baseURI + '@@object_goto?itemNumber=' + itemNumber;
     }
   else tag.style.background = wrongTextInput;
 }
@@ -752,15 +752,15 @@ function onImageButtonFocus(itemNumber) {
 // ajax call managing the @@change-item-order view
 function moveItem(baseUrl, moveType, tag) {
   // if moveType is 'number', get the number from the input tag
-  moveNumber = '';
+  wishedNumber = '';
   if (moveType === 'number') {
-    moveNumber = tag.attr('value');
+    wishedNumber = tag.attr('value');
   }
   $.ajax({
     url: baseUrl + "/@@change-item-order",
     dataType: 'html',
     data: {'moveType': moveType,
-           'moveNumber': moveNumber},
+           'wishedNumber': wishedNumber},
     cache: false,
     async: false,
     success: function(data) {

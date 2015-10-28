@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2013 by Imio.be
+# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -34,15 +34,18 @@ from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
+from plone import api
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
+from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 
 
 def item_assembly_default():
     """
       Returns the itemAssembly of the item.
-      As from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
-      does not seem to work, we have to get current context manually...
+      As from zope.schema._bootstrapinterfaces import
+      IContextAwareDefaultFactory does not seem to work,
+      we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
     itemAssembly = context.getRawItemAssembly(content_type='text/plain')
@@ -52,57 +55,85 @@ def item_assembly_default():
 def item_excused_default():
     """
       Returns the itemAssemblyExcused of the item.
-      As from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
-      does not seem to work, we have to get current context manually...
+      As from zope.schema._bootstrapinterfaces import
+      IContextAwareDefaultFactory does not seem to work,
+      we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyExcused = context.getRawItemAssemblyExcused(content_type='text/plain')
+    itemAssemblyExcused = \
+        context.getRawItemAssemblyExcused(content_type='text/plain')
     return safe_unicode(itemAssemblyExcused)
 
 
 def item_absents_default():
     """
       Returns the itemAssemblyAbsents of the item.
-      As from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
-      does not seem to work, we have to get current context manually...
+      As from zope.schema._bootstrapinterfaces import
+      IContextAwareDefaultFactory does not seem to work,
+      we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyAbsents = context.getRawItemAssemblyAbsents(content_type='text/plain')
+    itemAssemblyAbsents = \
+        context.getRawItemAssemblyAbsents(content_type='text/plain')
     return safe_unicode(itemAssemblyAbsents)
 
 
+def validate_apply_until_item_number(value):
+    '''This method does validate the 'apply_until_item_number' field.
+       It will check that given number is a number among existing item numbers
+       using a correct format.'''
+    try:
+        _itemNumber_to_storedItemNumber(value)
+    except ValueError:
+        raise interface.Invalid(_(u'Please provide a valid number.'))
+    return True
+
+
 class IManageItemAssembly(interface.Interface):
-    item_assembly = schema.Text(title=_(u"Item assembly to apply"),
-                                description=_(u"Enter the item assembly to be applied.  The value displayed "
-                                              u"by default is the value of the current item.  Add [[ ]] around absent "
-                                              u"people (like [[Mister Sample Peter]])."),
-                                defaultFactory=item_assembly_default,
-                                required=False,)
-    item_excused = schema.Text(title=_(u"Item excused to apply"),
-                               description=_(u"Enter the item excused to be applied.  The value "
-                                             u"displayed by default is the value of the current item."),
-                               defaultFactory=item_excused_default,
-                               required=False,)
-    item_absents = schema.Text(title=_(u"Item absents to apply"),
-                               description=_(u"Enter the item absents to be applied.  The value "
-                                             u"displayed by default is the value of the current item."),
-                               defaultFactory=item_absents_default,
-                               required=False,)
-    apply_until_item_number = schema.Int(title=_(u"Apply until item number"),
-                                         description=_(u"If you specify a number, the item assembly entered here "
-                                                       u"above will be applied from current item to the item number "
-                                                       u"entered.  Leave empty to only apply for current item."),
-                                         required=False,)
+    item_assembly = schema.Text(
+        title=_(u"Item assembly to apply"),
+        description=_(u"Enter the item assembly to be applied.  "
+                      u"The value displayed by default is the value of the "
+                      u"current item.  Add [[ ]] around absent people (like "
+                      u"[[Mister Sample Peter]])."),
+        defaultFactory=item_assembly_default,
+        required=False,)
+    item_excused = schema.Text(
+        title=_(u"Item excused to apply"),
+        description=_(u"Enter the item excused to be applied.  The value "
+                      u"displayed by default is the value of the current "
+                      u"item."),
+        defaultFactory=item_excused_default,
+        required=False,)
+    item_absents = schema.Text(
+        title=_(u"Item absents to apply"),
+        description=_(u"Enter the item absents to be applied.  The value "
+                      u"displayed by default is the value of the current "
+                      u"item."),
+        defaultFactory=item_absents_default,
+        required=False,)
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"If you specify a number, the item assembly entered "
+                      u"here above will be applied from current item to the "
+                      u"item number entered.  Leave empty to only apply for "
+                      u"current item."),
+        required=False,
+        constraint=validate_apply_until_item_number,)
 
 
 class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
     """
-      This ContentProvider will just display the assembly defined on the linked meeting.
+      This ContentProvider will just display
+      the assembly defined on the linked meeting.
     """
-    template = ViewPageTemplateFile('templates/display_assembly_from_meeting.pt')
+    template = \
+        ViewPageTemplateFile('templates/display_assembly_from_meeting.pt')
 
     def __init__(self, context, request, view):
-        super(DisplayAssemblyFromMeetingProvider, self).__init__(context, request, view)
+        super(DisplayAssemblyFromMeetingProvider, self).__init__(context,
+                                                                 request,
+                                                                 view)
         self.__parent__ = view
 
     def getMeetingAssembly(self):
@@ -114,7 +145,8 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
 
     def get_msgid_assembly_or_attendees(self):
         """
-          Return the msgid to translate, either 'Assembly' or 'Attendees' defined on the meeting.
+          Return the msgid to translate, either 'Assembly' or
+          'Attendees' defined on the meeting.
         """
         tool = getToolByName(self.context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
@@ -129,10 +161,62 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
         return self.template()
 
 
+class DisplayExcusedFromMeetingProvider(ContentProviderBase):
+    """
+      This ContentProvider will just display
+      the excused defined on the linked meeting.
+    """
+    template = \
+        ViewPageTemplateFile('templates/display_excused_from_meeting.pt')
+
+    def __init__(self, context, request, view):
+        super(DisplayExcusedFromMeetingProvider, self).__init__(context,
+                                                                request,
+                                                                view)
+        self.__parent__ = view
+
+    def getAssemblyExcused(self):
+        """
+          Return Meeting.assemblyExcused
+        """
+        meeting = self.context.getMeeting()
+        return meeting.getAssemblyExcused() or '-'
+
+    def render(self):
+        return self.template()
+
+
+class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
+    """
+      This ContentProvider will just display
+      the absents defined on the linked meeting.
+    """
+    template = \
+        ViewPageTemplateFile('templates/display_absents_from_meeting.pt')
+
+    def __init__(self, context, request, view):
+        super(DisplayAbsentsFromMeetingProvider, self).__init__(context,
+                                                                request,
+                                                                view)
+        self.__parent__ = view
+
+    def getAssemblyAbsents(self):
+        """
+          Return Meeting.assemblyAbsents
+        """
+        meeting = self.context.getMeeting()
+        return meeting.getAssemblyAbsents() or '-'
+
+    def render(self):
+        return self.template()
+
+
 class ManageItemAssemblyForm(form.Form):
     """
-      This form will help MeetingManagers manage itemAssembly by being able to redefine it on a single
-      item without having to use the edit form and to apply redefined value until the item number he wants.
+      This form will help MeetingManagers manage itemAssembly
+      by being able to redefine it on a single
+      item without having to use the edit form and to apply
+      redefined value until the item number he wants.
     """
     implements(IFieldsAndContentProvidersForm)
 
@@ -140,9 +224,13 @@ class ManageItemAssemblyForm(form.Form):
     ignoreContext = True  # don't use context to get widget data
 
     contentProviders = ContentProviders()
-    contentProviders['meetingAssembly'] = DisplayAssemblyFromMeetingProvider
-    # put the 'meetingAssembly' content provider in first position
-    contentProviders['meetingAssembly'].position = 0
+    contentProviders['assembly'] = DisplayAssemblyFromMeetingProvider
+    contentProviders['assembly'].position = 0
+    contentProviders['excused'] = DisplayExcusedFromMeetingProvider
+    contentProviders['excused'].position = 2
+    contentProviders['absents'] = DisplayAbsentsFromMeetingProvider
+    contentProviders['absents'].position = 2
+
     label = _(u"Manage item assembly")
     description = u''
     _finishedSent = False
@@ -161,11 +249,15 @@ class ManageItemAssemblyForm(form.Form):
             self.status = self.formErrorsMessage
             return
         # do adapt item assembly
-        self.item_assembly = self.request.form.get('form.widgets.item_assembly')
-        self.item_excused = self.request.form.get('form.widgets.item_excused')
-        self.item_absents = self.request.form.get('form.widgets.item_absents')
-        self.apply_until_item_number = self.request.form.get('form.widgets.apply_until_item_number') and \
-            int(self.request.form.get('form.widgets.apply_until_item_number')) or 0
+        form = self.request.form
+        self.item_assembly = form.get('form.widgets.item_assembly')
+        self.item_excused = form.get('form.widgets.item_excused')
+        self.item_absents = form.get('form.widgets.item_absents')
+        # we receive '5' or '5.2' but we want 500 or 502
+        self.apply_until_item_number = \
+            _itemNumber_to_storedItemNumber(
+                form.get('form.widgets.apply_until_item_number') or u'0'
+                )
         self._doApplyItemAssembly()
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
@@ -175,7 +267,8 @@ class ManageItemAssemblyForm(form.Form):
     def update(self):
         """ """
         # raise Unauthorized if current user can not manage itemAssembly
-        if not self.context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True):
+        if not self.context.mayQuickEdit('itemAssembly',
+                                         bypassWritePermissionCheck=True):
             raise Unauthorized
 
         super(ManageItemAssemblyForm, self).update()
@@ -198,10 +291,12 @@ class ManageItemAssemblyForm(form.Form):
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_absents'].mode = 'input'
         if changeItemAssemblyTitleAndDescr:
-            self.fields['item_assembly'].field.title = _('Item attendees to apply')
-            self.fields['item_assembly'].field.description = _(u"Enter the item attendees to be applied.  "
-                                                               u"The value displayed by default is the value "
-                                                               u"of the current item.")
+            self.fields['item_assembly'].field.title = \
+                _('Item attendees to apply')
+            self.fields['item_assembly'].field.description = \
+                _(u"Enter the item attendees to be applied.  "
+                  u"The value displayed by default is the value "
+                  u"of the current item.")
         form.Form.updateWidgets(self)
 
     def render(self):
@@ -215,12 +310,14 @@ class ManageItemAssemblyForm(form.Form):
           The method actually do the job, set the itemAssembly on self.context
           and following items if defined
         """
-        if not self.context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True):
+        if not self.context.mayQuickEdit('itemAssembly',
+                                         bypassWritePermissionCheck=True):
             raise Unauthorized
 
         def _itemsToUpdate():
             """
-              Return items we want to update regarding the number defined in apply_until_item_number
+              Return items we want to update regarding the number
+              defined in apply_until_item_number
             """
             currentItemNumber = self.context.getItemNumber(relativeTo='meeting')
             if not self.apply_until_item_number or \
@@ -228,7 +325,14 @@ class ManageItemAssemblyForm(form.Form):
                 return [self.context, ]
             else:
                 meeting = self.context.getMeeting()
-                return meeting.getItems(ordered=True)[currentItemNumber-1:self.apply_until_item_number]
+                catalog = api.portal.get_tool('portal_catalog')
+                brains = catalog(
+                    linkedMeetingUID=meeting.UID(),
+                    getItemNumber={'query': (currentItemNumber,
+                                             self.apply_until_item_number),
+                                   'range': 'minmax'},
+                    sort_on='getItemNumber')
+                return [brain.getObject() for brain in brains]
 
         for itemToUpdate in _itemsToUpdate():
             itemToUpdate.setItemAssembly(self.item_assembly)

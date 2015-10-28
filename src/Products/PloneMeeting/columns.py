@@ -114,10 +114,11 @@ class PMActionsColumn(ActionsColumn):
         # activate arrows while displaying meeting presented items
         if self.context.meta_type == 'Meeting' and not self.context._displayingAvailableItems():
             self.params['showArrows'] = True
+            self.params['lastItemUID'] = self.context.getItems(ordered=True, useCatalog=True)[-1].UID
             self.params['totalNbOfItems'] = self.context.numberOfItems()
         else:
             self.params['showArrows'] = False
-            self.params['totalNbOfItems'] = 0
+            self.params['lastItemUID'] = 0
         return super(ActionsColumn, self).renderCell(item)
 
 
@@ -171,7 +172,8 @@ class ItemNumberColumn(BrowserViewCallColumn):
         # for TR
         trCSSClasses = []
         trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
-        return {'tr': ' '.join(trCSSClasses)}
+        return {'tr': ' '.join(trCSSClasses),
+                'td': 'itemnumber'}
 
 
 class ItemCheckBoxColumn(CheckBoxColumn):

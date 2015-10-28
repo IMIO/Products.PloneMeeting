@@ -188,7 +188,8 @@ class Migrate_To_3_4(Migrator):
             if action and not action.url_expr.endswith(' + "/searches_items"'):
                 action.url_expr = action.url_expr + ' + "/searches_items"'
 
-            logger.info('Moving to imio.dashboard : adding "on list type" as first value of "insertingMethodsOnAddItem"...')
+            logger.info('Moving to imio.dashboard : adding '
+                        '"on list type" as first value of "insertingMethodsOnAddItem"...')
             insertingMethodsOnAddItem = list(cfg.getInsertingMethodsOnAddItem())
             if not insertingMethodsOnAddItem[0]['insertingMethod'] == 'on_list_type':
                 insertingMethodsOnAddItem.insert(0, {'insertingMethod': 'on_list_type', 'reverse': '0'})
@@ -206,7 +207,8 @@ class Migrate_To_3_4(Migrator):
             available_views.remove('meetingfolder_redirect_view')
             folderType.manage_changeProperties(view_methods=available_views)
 
-        logger.info('Moving to imio.dashboard : removing action "toggleDescriptions" from document_actions...')
+        logger.info('Moving to imio.dashboard : removing action '
+                    '"toggleDescriptions" from document_actions...')
         dactions = self.portal.portal_actions.document_actions
         if 'toggleDescriptions' in dactions.objectIds():
             dactions.manage_delObjects(ids=['toggleDescriptions'])
@@ -295,8 +297,10 @@ class Migrate_To_3_4(Migrator):
             if policy.getChainFor(itemType):
                 policy.delChain(itemType)
             # update item templates portal_type
-            brainTemplates = self.portal.portal_catalog(meta_type='MeetingItem',
-                                                        path={'query': '/'.join(cfg.getPhysicalPath()) + '/itemtemplates'})
+            brainTemplates = self.portal.portal_catalog(
+                meta_type='MeetingItem',
+                path={'query': '/'.join(cfg.getPhysicalPath()) + '/itemtemplates'}
+                )
             itemTemplateType = cfg.getItemTypeName(configType='MeetingItemTemplate')
             for brainTemplate in brainTemplates:
                 itemTemplate = brainTemplate.getObject()
@@ -394,6 +398,20 @@ class Migrate_To_3_4(Migrator):
                     newTemplate.reindexObject()
         logger.info('Done.')
 
+    def _adaptMeetingItemsNumber(self):
+        '''The MeetingItem.itemNumber is now 100 instead of 1.'''
+        logger.info('Updating every meetings linked items itemNumber...')
+        brains = self.portal.portal_catalog(meta_type='Meeting')
+        for brain in brains:
+            meeting = brain.getObject()
+            for item in meeting.getItems(ordered=True):
+                # already migrated?
+                if item.getItemNumber() == 100:
+                    break
+                item.setItemNumber(item.getItemNumber() * 100)
+                item.reindexObject(idxs=['getItemNumber', ])
+        logger.info('Done.')
+
     def _updateAnnexIndex(self):
         '''The annexIndex changed (removed key 'modification_date', added 'mftTitle'),
            we need to update it on every items and advices.'''
@@ -414,6 +432,7 @@ class Migrate_To_3_4(Migrator):
         self._moveToItemTemplateRecurringOwnPortalTypes()
         self._cleanMeetingFolderLayout()
         self._adaptAppForCollectiveDocumentGenerator()
+        self._adaptMeetingItemsNumber()
         self._updateAnnexIndex()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"

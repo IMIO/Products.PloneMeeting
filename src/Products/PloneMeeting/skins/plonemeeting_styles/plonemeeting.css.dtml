@@ -14,20 +14,31 @@ table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #ffff99;
 }
 
-table.listing tr.odd td.meeting_item_listType_late,
-table.listing tr.even td.meeting_item_listType_late,
-table.listing tr.odd.meeting_item_privacy_secret td.meeting_item_listType_late,
-table.listing tr.even.meeting_item_privacy_secret td.meeting_item_listType_late {
+table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: #ed0000;
 }
 
-table.listing tr.odd td[class^='meeting_item_listType_'],
-table.listing tr.even td[class^='meeting_item_listType_'],
-table.listing tr.odd.meeting_item_privacy_secret td[class^='meeting_item_listType_'],
-table.listing tr.even.meeting_item_privacy_secret td[class^='meeting_item_listType_'] {
+table.listing tr[class][class] td[class^='meeting_item_listType_'] {
     padding: 0em;
     border-right: 0px;
     height: 100%;
+}
+
+/* grey the items with a subnumber itemnumber input */
+td input.subnumber,
+td span.subnumber {
+    background-color: lightgray;
+    border-radius: 5px;
+}
+td span.subnumber {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+table.listing tr.odd td.itemnumber,
+table.listing tr.even td.itemnumber {
+    text-align: center;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
 }
 
 /* hide div of the ColorColumn for normal items */

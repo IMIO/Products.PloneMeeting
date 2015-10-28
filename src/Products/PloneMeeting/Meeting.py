@@ -41,6 +41,10 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
+from Products.PloneMeeting.browser.itemchangeorder import _to_integer
+from Products.PloneMeeting.browser.itemchangeorder import _is_integer
+from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
@@ -1056,11 +1060,11 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getItemByNumber')
     def getItemByNumber(self, number):
         '''Gets the item thas has number p_number.'''
-        items = self.getItems(ordered=True)
-        res = None
-        if number <= len(items):
-            return items[number-1]
-        return res
+        catalog = getToolByName(self, 'portal_catalog')
+        brains = catalog(linkedMeetingUID=self.UID(), getItemNumber=number)
+        if not brains:
+            return None
+        return brains[0].getObject()
 
     def getBeforeFrozenStates_cachekey(method, self):
         '''cachekey method for self.getBeforeFrozenStates.'''
@@ -1128,28 +1132,37 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             itemOrder = item.adapted().getInsertOrder(insertMethods)
             higherItemFound = False
             insertIndex = 0  # That's where I will insert the item
+            insertIndexIsSubnumber = False
             for anItem in items:
+                itemNumber = anItem.getItemNumber()
                 if higherItemFound:
                     # Ok I already know where to insert the item. I just
-                    # continue to visit the items in order to increment their
-                    # number.
-                    anItem.setItemNumber(anItem.getItemNumber()+1)
-                    anItem.reindexObject(idxs=['getItemNumber', ])
+                    # continue to visit the  next items in order to increment their number.
+                    if not insertIndexIsSubnumber or \
+                       (insertIndexIsSubnumber and _use_same_integer(itemNumber, insertIndex)):
+                        anItem.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
+                        anItem.reindexObject(idxs=['getItemNumber', ])
                 elif anItem.adapted().getInsertOrder(insertMethods) > itemOrder:
                     higherItemFound = True
-                    insertIndex = anItem.getItemNumber()-1
-                    anItem.setItemNumber(anItem.getItemNumber()+1)
+                    insertIndex = itemNumber
+                    # we will only update next items of same subnumber?
+                    insertIndexIsSubnumber = not _is_integer(itemNumber)
+                    anItem.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
                     anItem.reindexObject(idxs=['getItemNumber', ])
             if higherItemFound:
-                items.insert(insertIndex, item)
-                item.setItemNumber(insertIndex+1)
+                item.setItemNumber(insertIndex)
             else:
                 insertAtTheEnd = True
         if insertMethods[0]['insertingMethod'] == 'at_the_end' or insertAtTheEnd:
+            # insert it as next integer number
+            if items:
+                item.setItemNumber(_to_integer(items[-1].getItemNumber()) + 100)
+            else:
+                # first added item
+                item.setItemNumber(100)
             # Add the item at the end of the items list
-            items.append(item)
-            item.setItemNumber(len(items))
 
+        items.append(item)
         self.setItems(items)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
@@ -1177,9 +1190,15 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             pass
         self.setItems(items)
         # Update item numbers
+        # in case itemNumber was a subnumber (or a master having subnumber),
+        # we will just update subnumbers of the same integer
+        itemNumberIsSubnumber = not _is_integer(itemNumber) or bool(self.getItemByNumber(itemNumber + 1))
         for anItem in items:
-            if anItem.getItemNumber() > itemNumber:
-                anItem.setItemNumber(anItem.getItemNumber()-1)
+            anItemNumber = anItem.getItemNumber()
+            if anItemNumber > itemNumber and \
+               (not itemNumberIsSubnumber or (itemNumberIsSubnumber and
+                                              _use_same_integer(itemNumber, anItemNumber))):
+                anItem.setItemNumber(anItem.getItemNumber() - _compute_value_to_add(anItemNumber))
                 anItem.reindexObject(idxs=['getItemNumber', ])
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')

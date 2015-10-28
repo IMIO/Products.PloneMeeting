@@ -33,15 +33,20 @@ from z3c.form.contentprovider import ContentProviders
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
+from plone import api
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
+from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
+from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 
 
 def item_signatures_default():
     """
       Returns the itemSignatures of the item.
-      As from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
-      does not seem to work, we have to get current context manually...
+      As from zope.schema._bootstrapinterfaces import
+      IContextAwareDefaultFactory
+      does not seem to work,
+      we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
     itemSignatures = context.getRawItemSignatures(content_type='text/plain')
@@ -51,26 +56,35 @@ def item_signatures_default():
 
 
 class IManageItemSignatures(interface.Interface):
-    item_signatures = schema.Text(title=_(u"Item signatures to apply"),
-                                  description=_(u"Enter the item signatures to be applied.  The value displayed "
-                                                u"by default is the value of the current item."),
-                                  defaultFactory=item_signatures_default,
-                                  required=False,)
-    apply_until_item_number = schema.Int(title=_(u"Apply until item number"),
-                                         description=_(u"If you specify a number, the item signatures entered "
-                                                       u"here above will be applied from current item to the item "
-                                                       u"number entered.  Leave empty to only apply for current item."),
-                                         required=False,)
+    item_signatures = schema.Text(
+        title=_(u"Item signatures to apply"),
+        description=_(u"Enter the item signatures to be applied.  "
+                      u"The value displayed by default is the value "
+                      u"of the current item."),
+        defaultFactory=item_signatures_default,
+        required=False,)
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"If you specify a number, the item signatures entered "
+                      u"here above will be applied from current item to the "
+                      u"item number entered.  Leave empty to only apply for "
+                      u"current item."),
+        required=False,
+        constraint=validate_apply_until_item_number,)
 
 
 class DisplaySignaturesFromMeetingProvider(ContentProviderBase):
     """
-      This ContentProvider will just display the signatures defined on the linked meeting.
+      This ContentProvider will just display
+      the signatures defined on the linked meeting.
     """
-    template = ViewPageTemplateFile('templates/display_signatures_from_meeting.pt')
+    template = \
+        ViewPageTemplateFile('templates/display_signatures_from_meeting.pt')
 
     def __init__(self, context, request, view):
-        super(DisplaySignaturesFromMeetingProvider, self).__init__(context, request, view)
+        super(DisplaySignaturesFromMeetingProvider, self).__init__(context,
+                                                                   request,
+                                                                   view)
         self.__parent__ = view
 
     def getMeetingSignatures(self):
@@ -86,8 +100,10 @@ class DisplaySignaturesFromMeetingProvider(ContentProviderBase):
 
 class ManageItemSignaturesForm(form.Form):
     """
-      This form will help MeetingManagers manage itemSignatures by being able to redefine it on a single
-      item without having to use the edit form and to apply redefined value until the item number he wants.
+      This form will help MeetingManagers manage itemSignatures
+      by being able to redefine it on a single
+      item without having to use the edit form and to apply
+      redefined value until the item number he wants.
     """
     implements(IFieldsAndContentProvidersForm)
 
@@ -116,9 +132,12 @@ class ManageItemSignaturesForm(form.Form):
             self.status = self.formErrorsMessage
             return
         # do adapt item signatures
-        self.item_signatures = self.request.form.get('form.widgets.item_signatures')
-        self.apply_until_item_number = self.request.form.get('form.widgets.apply_until_item_number') and \
-            int(self.request.form.get('form.widgets.apply_until_item_number')) or 0
+        form = self.request.form
+        self.item_signatures = form.get('form.widgets.item_signatures')
+        self.apply_until_item_number = \
+            _itemNumber_to_storedItemNumber(
+                form.get('form.widgets.apply_until_item_number') or u'0'
+                )
         self._doApplyItemSignatures()
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
@@ -147,15 +166,16 @@ class ManageItemSignaturesForm(form.Form):
 
     def _doApplyItemSignatures(self):
         """
-          The method actually do the job, set the itemSignatures on self.context
-          and following items if defined
+          The method actually do the job, set the itemSignatures
+          on self.context and following items if defined
         """
         if not self.context.mayQuickEdit('itemAssembly'):
             raise Unauthorized
 
         def _itemsToUpdate():
             """
-              Return items we want to update regarding the number defined in apply_until_item_number
+              Return items we want to update regarding the number
+              defined in apply_until_item_number
             """
             currentItemNumber = self.context.getItemNumber(relativeTo='meeting')
             if not self.apply_until_item_number or \
@@ -163,7 +183,14 @@ class ManageItemSignaturesForm(form.Form):
                 return [self.context, ]
             else:
                 meeting = self.context.getMeeting()
-                return meeting.getItems(ordered=True)[currentItemNumber-1:self.apply_until_item_number]
+                catalog = api.portal.get_tool('portal_catalog')
+                brains = catalog(
+                    linkedMeetingUID=meeting.UID(),
+                    getItemNumber={'query': (currentItemNumber,
+                                             self.apply_until_item_number),
+                                   'range': 'minmax'},
+                    sort_on='getItemNumber')
+                return [brain.getObject() for brain in brains]
 
         for itemToUpdate in _itemsToUpdate():
             itemToUpdate.setItemSignatures(self.item_signatures)

@@ -66,7 +66,7 @@ from Products.PloneMeeting.utils import \
     getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
     setFieldFromAjax, transformAllRichTextFields, signatureNotAlone,\
     forceHTMLContentTypeForEmptyRichFields, workday, networkdays, cleanMemoize, \
-    toHTMLStrikedContent
+    toHTMLStrikedContent, _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -1625,25 +1625,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('getItemNumber')
-    def getItemNumber(self, relativeTo='meeting', **kwargs):
+    def getItemNumber(self, relativeTo='meeting', for_display=False, **kwargs):
         '''This accessor for 'itemNumber' field is overridden in order to allow
            to get the item number in various flavours:
            - the item number relative to the whole meeting (no matter the item
              being "normal" or "late"): p_relativeTo="meeting";
            - the item number relative to the whole meeting config:
-             p_relativeTo="meetingConfig"'''
+             p_relativeTo="meetingConfig".
+           If p_for_display is True, it will return a displayable value where '1.0' is '1'
+           and '1.2' is still '1.2'.'''
         # this method is only relevant if the item is in a meeting
         if not self.hasMeeting():
             return 0
 
         res = self.getField('itemNumber').get(self, **kwargs)
-        if relativeTo == 'meeting':
-            return res
-        elif relativeTo == 'meetingConfig':
+        if relativeTo == 'meetingConfig':
             meeting = self.getMeeting()
             meetingFirstItemNumber = meeting.getFirstItemNumber()
             if meetingFirstItemNumber != -1:
-                res = meetingFirstItemNumber + self.getItemNumber(relativeTo='meeting') - 1
+                res = meetingFirstItemNumber * 100 + self.getItemNumber(relativeTo='meeting') - 100
             else:
                 # here we need to know what is the "base number" to compute the item number on :
                 # we call findBaseNumberRelativeToMeetingConfig, see docstring there
@@ -1655,7 +1655,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # now that we have the currentMeetingComputedFirstNumber, that is
                 # the theorical current meeting first number, we can compute current item
                 # number that is this number + current item number relativeTo the meeting - 1
-                res = currentMeetingComputedFirstNumber + self.getItemNumber(relativeTo='meeting') - 1
+                res = currentMeetingComputedFirstNumber * 100 + self.getItemNumber(relativeTo='meeting') - 100
+        # we want '1' instead of '100' and '2.15' instead of 215
+        if for_display:
+            return _storedItemNumber_to_itemNumber(res, forceShowDecimal=False)
         return res
 
     security.declarePublic('getDefaultToDiscuss')
@@ -2552,7 +2555,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if res is None:
             raise PloneMeetingError(INSERT_ITEM_ERROR)
-        return res
+        return res * 100
 
     def _findOneLevelFor_cachekey(method, self, insertMethod):
         '''cachekey method for self._findOneLevelFor.'''
@@ -4466,7 +4469,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     del ann[annotation_key]
             # manage_beforeDelete is called before the IObjectWillBeRemovedEvent
             # in IObjectWillBeRemovedEvent references are already broken, we need to remove
-            # the item from a meeting if it is inserted in here...
+            # the item from a meeting if it is inserted in there...
             if item.hasMeeting():
                 item.getMeeting().removeItem(item)
         BaseFolder.manage_beforeDelete(self, item, container)

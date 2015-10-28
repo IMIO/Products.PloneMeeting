@@ -71,7 +71,8 @@ indexInfos = {
     'indexExtractedText': ('ZCTextIndex', {}),
     # MeetingUser-related indexes
     'getConfigId': ('FieldIndex', {}),
-    'indexUsages': ('KeywordIndex', {}), }
+    'indexUsages': ('KeywordIndex', {}),
+    'getItemNumber': ('FieldIndex', {})}
 # Metadata to create in portal_catalog
 columnInfos = ('getTitle2', 'getDate', 'getProposingGroup',
                'getPreferredMeeting', 'getPreferredMeetingDate',

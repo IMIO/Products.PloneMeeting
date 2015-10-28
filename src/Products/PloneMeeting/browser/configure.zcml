@@ -433,7 +433,7 @@
 
     <browser:page
         name="change-item-order"
-        class=".views.ChangeItemOrderView"
+        class=".itemchangeorder.ChangeItemOrderView"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         permission="zope2.View" />
 
