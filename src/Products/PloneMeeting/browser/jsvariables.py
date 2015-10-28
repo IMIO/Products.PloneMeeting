@@ -8,6 +8,7 @@ var sure_to_remove_selected_items = "%(sure_to_remove_selected_items)s";
 var sure_to_present_selected_items = "%(sure_to_present_selected_items)s";
 var sure_to_cancel_edit = "%(sure_to_cancel_edit)s";
 var are_you_sure = "%(are_you_sure)s";
+var sure_to_take_over = "%(sure_to_take_over)s";
 """
 
 
@@ -35,6 +36,9 @@ class JSVariables(BrowserView):
         are_you_sure = translate('are_you_sure',
                                  domain='PloneMeeting',
                                  context=self.request)
+        sure_to_take_over = translate('sure_to_take_over',
+                                      domain='PloneMeeting',
+                                      context=self.request)
 
         return TEMPLATE % dict(
             plonemeeting_delete_meeting_confirm_message=plonemeeting_delete_meeting_confirm_message,
@@ -43,4 +47,5 @@ class JSVariables(BrowserView):
             sure_to_present_selected_items=sure_to_present_selected_items,
             sure_to_cancel_edit=sure_to_cancel_edit,
             are_you_sure=are_you_sure,
+            sure_to_take_over=sure_to_take_over
         )

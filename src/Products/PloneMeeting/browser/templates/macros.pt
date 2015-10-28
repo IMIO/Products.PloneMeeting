@@ -262,9 +262,11 @@ document.location.reload(true);
           tal:condition="takenOverBy"
           title="taken_over_by_yes_edit"
           i18n:attributes="title"
-          tal:attributes="onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_taken_over_by?takenOverByFrom='+takenOverBy+'\', baseSelector=\'#marker_toggle_takenoverby_\')';
+          tal:define="onClickPattern python: memberId != takenOverBy and 'if (confirm(sure_to_take_over)) {%s};;' or '%s';
+                      onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_taken_over_by?takenOverByFrom='+takenOverBy+'\', baseSelector=\'#marker_toggle_takenoverby_\')';"
+          tal:attributes="onClick python: onClickPattern % onClick;
                           class python: 'takenOverByEditable ' + (takenOverByCurrentUser and 'takenOverByCurrentUser' or 'takenOverByOtherUser')"
-          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: context.portal_plonemeeting.getUserName(takenOverBy)">
+          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: tool.getUserName(takenOverBy)">
           Full name</span>
     </span>
 
@@ -284,7 +286,7 @@ document.location.reload(true);
           title="taken_over_by_yes"
           i18n:attributes="title"
           tal:attributes="class python: takenOverByCurrentUser and 'takenOverByCurrentUser' or 'takenOverByOtherUser'"
-          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: context.portal_plonemeeting.getUserName(takenOverBy)">
+          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: tool.getUserName(takenOverBy)">
           Full name</span>
     </span>
     <span class="takenOverByNobody"
