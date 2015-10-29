@@ -198,24 +198,8 @@ def templateUsingGroups(obj):
     return _marker
 
 
-@indexer(IMeetingItem)
-def indexAdvisers(obj):
-    """
-      Build the index specifying advices to give.
-      Values are different if it is a delay-aware or not advice :
-      Delay-aware advice is like "delay__developers_advice_not_given":
-      - delay__ specifies that it is a delay-aware advice;
-      - developers is the name of the group the advice is asked to;
-      Non delay-aware advice is like "developers_advice_not_given".
-      In both cases (delay-aware or not), we have a suffix :
-        - '_advice_not_giveable' for advice not given and not giveable;
-        - '_advice_not_given' for advice not given/asked again but giveable;
-        - '_advice_delay_exceeded' for delay-aware advice not given but
-           no more giveable because of delay exceeded;
-    """
-    if not hasattr(obj, 'adviceIndex'):
-        return _marker
-
+def _to_coded_adviser_index(obj, groupId, advice):
+    """Build an 'index' version of the adviser state so it is searchable and so on."""
     def _computeSuffixFor(groupId, advice):
         '''
           Compute the suffix that will be appended depending on advice state.
@@ -245,20 +229,42 @@ def indexAdvisers(obj):
             return '_%s' % advice.queryState()
 
     res = []
-    for groupId, advice in obj.adviceIndex.iteritems():
-        isDelayAware = obj.adviceIndex[groupId]['delay'] and True or False
-        # compute suffix
-        suffix = _computeSuffixFor(groupId, advice)
+    isDelayAware = obj.adviceIndex[groupId]['delay'] and True or False
+    # compute suffix
+    suffix = _computeSuffixFor(groupId, advice)
+    # we also index the 'real_group_id_' so we can query who we asked
+    # advice to, without passing the advice state
+    if isDelayAware:
+        res.append('delay__' + groupId + suffix)
+        # 'real_group_id_'
+        res.append(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'], groupId))
+    else:
+        res.append(groupId + suffix)
+        # 'real_group_id_'
+        res.append(REAL_GROUP_ID_PATTERN.format(groupId))
+    return res
 
-        # we also index the 'real_group_id_' so we can query who we asked
-        # advice to, without passing the advice state
-        if isDelayAware:
-            res.append('delay__' + groupId + suffix)
-            # 'real_group_id_'
-            res.append(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'], groupId))
-        else:
-            res.append(groupId + suffix)
-            # 'real_group_id_'
-            res.append(REAL_GROUP_ID_PATTERN.format(groupId))
+
+@indexer(IMeetingItem)
+def indexAdvisers(obj):
+    """
+      Build the index specifying advices to give.
+      Values are different if it is a delay-aware or not advice :
+      Delay-aware advice is like "delay__developers_advice_not_given":
+      - delay__ specifies that it is a delay-aware advice;
+      - developers is the name of the group the advice is asked to;
+      Non delay-aware advice is like "developers_advice_not_given".
+      In both cases (delay-aware or not), we have a suffix :
+        - '_advice_not_giveable' for advice not given and not giveable;
+        - '_advice_not_given' for advice not given/asked again but giveable;
+        - '_advice_delay_exceeded' for delay-aware advice not given but
+           no more giveable because of delay exceeded;
+    """
+    if not hasattr(obj, 'adviceIndex'):
+        return _marker
+
+    res = []
+    for groupId, advice in obj.adviceIndex.iteritems():
+        res += _to_coded_adviser_index(obj, groupId, advice)
     res.sort()
     return res
