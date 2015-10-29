@@ -67,13 +67,12 @@
         </tr>
         <tr valign="top">
           <td>
-            <metal:edit use-macro="python:here.widget('openAnnexesInSeparateWindows', mode='edit', use_label=1)" />
-          </td>
-          <td>
             <metal:edit use-macro="python:here.widget('mailMeetingEvents', mode='edit', use_label=1)" />
           </td>
           <td>
             <metal:edit use-macro="python:here.widget('mailItemEvents', mode='edit', use_label=1)" />
+          </td>
+          <td>
           </td>
         </tr>
       </table>

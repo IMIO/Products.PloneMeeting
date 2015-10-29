@@ -183,7 +183,7 @@ class IPodTemplate(Interface):
     """
 
 
-class IMeetingUser(Interface):
+class IMeetingUser(IConfigElement):
     """Marker interface for .MeetingUser.MeetingUser
     """
 

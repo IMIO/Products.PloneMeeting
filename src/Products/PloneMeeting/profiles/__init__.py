@@ -439,8 +439,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.maxShownListings = "20"
         self.maxShownAvailableItems = "20"
         self.maxShownMeetingItems = "40"
-        # When opening annexes, some users want to get them in separate windows.
-        self.openAnnexesInSeparateWindows = False
 
         # Mail-related parameters -----------------------------------------------
         # Mail mode can be: activated, deactivated, test.

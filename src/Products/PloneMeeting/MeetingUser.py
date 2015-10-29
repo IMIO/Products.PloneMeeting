@@ -207,18 +207,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='openAnnexesInSeparateWindows',
-        widget=BooleanField._properties['widget'](
-            description="OpenAnnexesInSeparateWindows",
-            description_msgid="open_annexes_in_separate_windows_descr",
-            label='Openannexesinseparatewindows',
-            label_msgid='PloneMeeting_label_openAnnexesInSeparateWindows',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-        default_method="getOpenAnnexesDefaultValue",
-    ),
     LinesField(
         name='mailItemEvents',
         widget=MultiSelectionWidget(
@@ -351,12 +339,11 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         '''Returns list of possible usages (for what will this user be useful
            in voting process: "assembly member", "signer" or "voter").'''
         d = 'PloneMeeting'
-        _ = self.translate
         res = DisplayList((
-            ("assemblyMember", _('meeting_user_usage_assemblyMember', domain=d, context=self.REQUEST)),
-            ("signer", _('meeting_user_usage_signer', domain=d, context=self.REQUEST)),
-            ("voter", _("meeting_user_usage_voter", domain=d, context=self.REQUEST)),
-            ("asker", _("meeting_user_usage_asker", domain=d, context=self.REQUEST)),
+            ("assemblyMember", translate('meeting_user_usage_assemblyMember', domain=d, context=self.REQUEST)),
+            ("signer", translate('meeting_user_usage_signer', domain=d, context=self.REQUEST)),
+            ("voter", translate("meeting_user_usage_voter", domain=d, context=self.REQUEST)),
+            ("asker", translate("meeting_user_usage_asker", domain=d, context=self.REQUEST)),
         ))
         return res
 
@@ -427,9 +414,6 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
 
     def getDefaultMeetingColumns(self):
         return self.config().getMeetingColumns()
-
-    def getOpenAnnexesDefaultValue(self):
-        return self.config().getOpenAnnexesInSeparateWindows()
 
     def listItemEvents(self):
         config = self.config()

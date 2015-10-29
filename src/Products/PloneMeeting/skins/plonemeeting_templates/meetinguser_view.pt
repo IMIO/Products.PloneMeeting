@@ -65,24 +65,17 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('openAnnexesInSeparateWindows')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td tal:define="field python:here.getField('mailMeetingEvents')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('mailItemEvents')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td>
+          </td>
         </tr>
       </table>
     </fieldset>
-  </div>
-  <div metal:define-macro="folderlisting">
-    <tal:transitions define="member context/portal_plonemeeting/getUser"
-                     condition="python: member.has_role('Manager')">
-      <div metal:use-macro="here/@@pm-macros/showTransitions"></div>
-    </tal:transitions>
   </div>
 </body>
 </html>

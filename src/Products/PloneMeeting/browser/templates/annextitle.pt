@@ -2,19 +2,20 @@
                      tool python: view.tool;
                      cfg python: view.cfg;
                      previewEnabled tool/getEnableAnnexPreview;
-                     target python: cfg.getUserParam('openAnnexesInSeparateWindows', view.request) and '_blank' or '';
+                     target string:_blank;
                      portal_url view/portal_url;
                      annexInfo python: view.annexInfo;">
     <tal:withPreview define="isRealManager python: tool.isManager(context, realManagers=True);"
                      condition="previewEnabled">
        <a href="#"
-          tal:attributes="href string:${portal_url}/${annexInfo/absolute_url}/download"
+          tal:attributes="href string:${portal_url}/${annexInfo/absolute_url}/download;
+                          target target"
           title="Download annex"
           i18n:domain="PloneMeeting"
           i18n:attributes="title">
           <img style="float: right;"
                src="download_icon.png"
-               tal:attributes="src string:${portal_url}/download_icon.png" />
+               tal:attributes="src string:${portal_url}/download_icon.png;" />
        </a>
        <div class="annexTitle" tal:condition="python: conversionStatus == 'successfully_converted'">
          <span tal:replace="structure python: tool.getColoredLink(context,

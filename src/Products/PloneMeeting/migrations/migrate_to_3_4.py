@@ -412,6 +412,27 @@ class Migrate_To_3_4(Migrator):
                 item.reindexObject(idxs=['getItemNumber', ])
         logger.info('Done.')
 
+    def _cleanMeetingConfigs(self):
+        """Clean MeetingConfigs :
+           - remove attribute 'openAnnexesInSeparateWindows'.
+        """
+        logger.info('Cleaning MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if hasattr(cfg, 'openAnnexesInSeparateWindows'):
+                delattr(cfg, 'openAnnexesInSeparateWindows')
+        logger.info('Done.')
+
+    def _cleanMeetingUsers(self):
+        """Clean MeetingUsers :
+           - remove attribute 'openAnnexesInSeparateWindows'.
+        """
+        logger.info('Cleaning MeetingUsers...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for user in cfg.meetingusers.objectValues('MeetingUser'):
+                if hasattr(user, 'openAnnexesInSeparateWindows'):
+                    delattr(user, 'openAnnexesInSeparateWindows')
+        logger.info('Done.')
+
     def _updateAnnexIndex(self):
         '''The annexIndex changed (removed key 'modification_date', added 'mftTitle'),
            we need to update it on every items and advices.'''
@@ -433,6 +454,8 @@ class Migrate_To_3_4(Migrator):
         self._cleanMeetingFolderLayout()
         self._adaptAppForCollectiveDocumentGenerator()
         self._adaptMeetingItemsNumber()
+        self._cleanMeetingConfigs()
+        self._cleanMeetingUsers()
         self._updateAnnexIndex()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"

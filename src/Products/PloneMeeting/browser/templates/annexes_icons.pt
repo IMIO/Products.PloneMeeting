@@ -11,7 +11,7 @@
     <tr valign="top"
         tal:define="DateTime python: modules['DateTime'];
                     now python: DateTime.DateTime();
-                    target python: view.cfg.getUserParam('openAnnexesInSeparateWindows', context.REQUEST) and '_blank' or '';
+                    target string:_blank;
                     cssClasses python: 'contentActionsAX no-style-table';
                     global count python:0;
                     portal_url context/@@plone_portal_state/portal_url;
