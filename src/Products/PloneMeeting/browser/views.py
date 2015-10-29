@@ -7,6 +7,7 @@ from plone.memoize.view import memoize_contextless
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
+from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
@@ -363,3 +364,19 @@ class DeleteHistoryEventView(BrowserView):
         tool = getToolByName(self.context, 'portal_plonemeeting')
         tool.deleteHistoryEvent(obj, event_time)
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+
+class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
+    """ """
+
+
+class FolderDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+    """ """
+
+
+class MeetingDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+    """ """
+
+
+class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+    """ """

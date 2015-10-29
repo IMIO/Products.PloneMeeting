@@ -563,4 +563,26 @@
         class=".jsvariables.JSVariables"
         permission="zope.Public" />
 
+    <!-- collective.documentgenerator helper view for Folder -->
+    <browser:page
+        for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
+        class=".views.FolderDocumentGenerationHelperView"
+        permission="zope2.View"
+        name="document_generation_helper_view"
+     />
+    <!-- collective.documentgenerator helper view for Meeting -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        class=".views.MeetingDocumentGenerationHelperView"
+        permission="zope2.View"
+        name="document_generation_helper_view"
+     />
+    <!-- collective.documentgenerator helper view for MeetingItem -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        class=".views.ItemDocumentGenerationHelperView"
+        permission="zope2.View"
+        name="document_generation_helper_view"
+     />
+
 </configure>
