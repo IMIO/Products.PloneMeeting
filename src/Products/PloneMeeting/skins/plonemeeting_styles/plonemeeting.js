@@ -3,14 +3,14 @@ var ploneMeetingSelectBoxes = new Object();
 function displayPloneMeetingSelectBox(selectName) {
   var box = document.getElementById(ploneMeetingSelectBoxes[selectName]["box"]);
   var button = document.getElementById(ploneMeetingSelectBoxes[selectName]["button"]);
-  if (box.style.display!="block") {
+  box_is_visible = $(box).is(':visible');
+  $(box).fadeToggle('fast');
+  if (!box_is_visible) {
     /* Button seems pressed */
     button.style.borderStyle = "inset";
-    box.style.display = "block";
   }
   else {
     button.style.borderStyle = "outset";
-    box.style.display= "none";
   }
 }
 
@@ -189,16 +189,14 @@ registerPloneFunction(initializeMenusAX);
 
 /* used in configuration to show/hide documentation */
 function toggleDoc(id) {
-  var elem = document.getElementById(id);
-  if (elem.style.display == 'none') { elem.style.display = ''; }
-  else { elem.style.display = 'none'; }
+  elem = $('#' + id);
+  elem.fadeToggle();
 }
 
 function toggleMenu(menuId){
-  var menu = document.getElementById("pm_menu_"+menuId);
-  var displayValue = menu.style.display;
-  if (displayValue == "block") menu.style.display = "none";
-  else menu.style.display = "block";
+  menu = $('#pm_menu_' + menuId);
+  menu.fadeToggle(100);
+  return
 }
 
 var wrongTextInput = '#ff934a none';
