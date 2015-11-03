@@ -1,3 +1,27 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2015 by Imio.be
+#
+# GNU General Public License (GPL)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+#
+
+import json
+
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 
@@ -7,11 +31,13 @@ from plone.memoize.view import memoize_contextless
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
+from eea.facetednavigation.interfaces import ICriteria
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
+from Products.PloneMeeting.indexes import _to_coded_adviser_index
 
 
 class PloneMeetingAjaxView(BrowserView):
@@ -373,8 +399,46 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
 class FolderDocumentGenerationHelperView(PMDocumentGenerationHelperView):
     """ """
 
+    def selected_indexAdvisers_data(self, brains):
+        """Compute advices data depending on what is selected in the current
+           faceted regarding the 'indexAdvisers' index."""
+        # get selected 'indexAdvisers' by finding the right faceted criterion
+        criteria = ICriteria(self.real_context)._criteria()
+        # get the 'indexAdvisers' value where adviser ids are stored
+        advisers = []
+        for criterion in criteria:
+            if criterion.index == 'indexAdvisers':
+                facetedQuery = json.loads(self.request.get('facetedQuery', '{}'))
+                advisers = facetedQuery[criterion.__name__]
 
-class MeetingDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+        # now build data
+        # we will build following structure :
+        # - a list of lists where :
+        #   - first element is item;
+        #   - next elements are a list of relevant advices data.
+        # [
+        #   [MeetingItemObject1, ['adviser_data_1', 'adviser_data_2', ]],
+        #   [MeetingItemObject2, ['adviser_data_1', ]],
+        #   ...
+        # ]
+        res = []
+        for brain in brains:
+            subres = {}
+            item = brain.getObject()
+            subres['item'] = item
+            advisers_data = []
+            # only keep relevant adviser data and keep order also
+            for adviser in advisers:
+                for groupId, advice in item.adviceIndex.iteritems():
+                    if adviser in _to_coded_adviser_index(item, groupId, advice):
+                        # we must keep this adviser
+                        advisers_data.append(item.getAdviceDataFor(item, groupId))
+            subres['advices'] = advisers_data
+            res.append(subres)
+        return res
+
+
+class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
     """ """
 
 

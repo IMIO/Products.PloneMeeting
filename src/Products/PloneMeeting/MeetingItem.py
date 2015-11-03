@@ -3466,6 +3466,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['not_asked'] = False
                 d['id'] = groupId
                 d['name'] = getattr(tool, groupId).getName().decode('utf-8')
+                d['comment'] = None
                 d['delay'] = adviceInfo['delay']
                 d['delay_left_alert'] = adviceInfo['delay_left_alert']
                 d['delay_label'] = adviceInfo['delay_label']

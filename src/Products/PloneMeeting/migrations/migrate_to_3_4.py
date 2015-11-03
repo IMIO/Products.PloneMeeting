@@ -440,6 +440,13 @@ class Migrate_To_3_4(Migrator):
         self.tool.reindexAnnexes()
         logger.info('Done.')
 
+    def _updateAdvices(self):
+        '''The 'comment' is always available in the adviceIndex now,
+           even on still not given advices.'''
+        logger.info('Updating advices...')
+        self.tool._updateAllAdvices()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -457,6 +464,7 @@ class Migrate_To_3_4(Migrator):
         self._cleanMeetingConfigs()
         self._cleanMeetingUsers()
         self._updateAnnexIndex()
+        self._updateAdvices()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed

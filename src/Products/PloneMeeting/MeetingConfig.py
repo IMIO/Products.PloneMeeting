@@ -860,7 +860,7 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="OnTransitionFieldTransforms",
             description_msgid="on_transition_field_transforms_descr",
-            columns={'transition': SelectColumn("On transition field transform transition", vocabulary="listEveryItemTransitions", col_description="The transition that will trigger the field transform."), 'field_name': SelectColumn("On transition field transform field name", vocabulary="listItemRichTextFields", col_description='The item field that will be transformed.'), 'tal_expression': Column("On transition field transform TAL expression", col_description='The TAL expression.  Element \'here\' represent the item.'), },
+            columns={'transition': SelectColumn("On transition field transform transition", vocabulary="listEveryItemTransitions", col_description="The transition that will trigger the field transform."), 'field_name': SelectColumn("On transition field transform field name", vocabulary="listItemRichTextFields", col_description='The item field that will be transformed.'), 'tal_expression': Column("On transition field transform TAL expression", col_description='The TAL expression.  Element \'here\' represent the item.  This expression MUST return valid HTML or it will not behave properly on the item.'), },
             label='Ontransitionfieldtransforms',
             label_msgid='PloneMeeting_label_onTransitionFieldTransforms',
             i18n_domain='PloneMeeting',
