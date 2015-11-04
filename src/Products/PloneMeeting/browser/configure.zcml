@@ -293,7 +293,7 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="change-advice-delay"
-        class=".advicechangedelay.ChangeAdviceDelayView"
+        class=".advicechangedelay.AdviceChangeDelayView"
         template="templates/advicedelayschange.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
@@ -302,7 +302,7 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="advice-delay-changes-history"
-        class=".advicechangedelay.ChangeAdviceDelayHistoryView"
+        class=".advicechangedelay.AdviceChangeDelayHistoryView"
         template="templates/advicedelayshistory.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
@@ -360,6 +360,17 @@
         template="templates/itemcompletenesshistory.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
+
+    <!-- the view that show MeetingItem.listType on the meetingitem_view -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-listtype"
+        class=".itemlisttype.ItemListTypeView"
+        template="templates/itemlisttype.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+
 
     <!-- the view that display moreInfos about item in the PrettyLink column -->
     <browser:page

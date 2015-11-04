@@ -105,7 +105,7 @@ class AdviceDelaysView(BrowserView):
             return False
 
 
-class ChangeAdviceDelayView(BrowserView):
+class AdviceChangeDelayView(BrowserView):
     '''This manage the overlay popup displayed to enter a comment when the delay is changed.'''
 
     def __init__(self, context, request):
@@ -185,7 +185,7 @@ class ChangeAdviceDelayView(BrowserView):
         return self.index()
 
 
-class ChangeAdviceDelayHistoryView(BrowserView):
+class AdviceChangeDelayHistoryView(BrowserView):
     '''Display history of advice delay value changes.'''
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)

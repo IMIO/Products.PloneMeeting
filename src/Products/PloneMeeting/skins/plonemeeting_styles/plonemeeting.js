@@ -194,7 +194,9 @@ function toggleDoc(id) {
 }
 
 function toggleMenu(menuId){
-  menu = $('#pm_menu_' + menuId);
+  /* we may have '.' in the id and it fails while using directly $(selector)
+   * because it thinks we are using a CSS class selector so use getElementById */
+  menu = $(document.getElementById('pm_menu_' + menuId));
   menu.fadeToggle(100);
   return
 }

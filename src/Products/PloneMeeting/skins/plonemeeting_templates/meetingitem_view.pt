@@ -270,6 +270,7 @@
             <div class="discreet" tal:condition="python: meeting">
               <span tal:attributes="class string:item_attribute_label item_listType_${context/getListType}" i18n:translate="">
                 <metal:listType use-macro="python: here.widget('listType', mode='view')" />
+                <tal:itemListType replace="structure here/@@item-listtype/index" />
               </span>
             </div>
 
