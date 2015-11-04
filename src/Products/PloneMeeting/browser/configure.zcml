@@ -370,7 +370,13 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
-
+    <!-- the view that change MeetingItem.listType value then refresh page -->
+    <browser:view
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="change-item-listtype"
+        class=".itemlisttype.ChangeItemListTypeView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
 
     <!-- the view that display moreInfos about item in the PrettyLink column -->
     <browser:page

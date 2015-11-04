@@ -41,10 +41,6 @@ table.listing tr.even td.itemnumber {
     padding-right: 0.2em;
 }
 
-/* hide div of the ColorColumn for normal items */
-td.meeting_item_listType_normal > div {
-    display: none;
-}
 /* show div of the ColorColumn for other listTypes */
 td[class^='meeting_item_listType_'] > div {
     height: 100%;
@@ -576,6 +572,15 @@ legend .pmLanguage {top: -0.3em; right: 5px;}
 #pm_menu_item_emergency.pmDropdown {
     left: 70px;
 }
+/* listType displayed on meetingitem_view */
+div[id^="pm_menu_item_listType"].pmDropdown {
+    right: 10px;
+}
+/* listType displayed on meeting_view */
+td[class^="meeting_item_listType_"] div[id^="pm_menu_item_listType"].pmDropdown {
+    right: inherit;
+}
+
 div[id^="pm_menu_advice_change_delay"].pmDropdown {
     right: 25px;
     margin-top: -1px;
@@ -1002,6 +1007,20 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     color: black;
     font-weight: bold;
 }
+.item_listType_normal,
+#content a.item_listType_normal:link,
+#content a.item_listType_normal:visited {
+    vertical-align: middle;
+    display: inline;
+    color: &dtml-discreetColor;;
+}
+.item_listType_late,
+#content a.item_listType_late:link,
+#content a.item_listType_late:visited {
+    vertical-align: middle;
+    display: inline;
+    color: red;;
+}
 
 .item_completeness_incomplete,
 #content a.item_completeness_incomplete:link,
@@ -1051,16 +1070,13 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
 .transition-completeness_evaluation_asked_again {
     color: &dtml-discreetColor;;
 }
-a.item_completeness_incomplete,
-a.item_completeness_complete,
-a.item_completeness_not_yet_evaluated,
-a.item_completeness_evaluation_asked_again,
-a.item_completeness_evaluation_not_required,
+a[class^="item_completeness_"],
 a.item_no_emergency,
-a.item_emergency_asked,
-a.item_emergency_accepted,
-a.item_emergency_refused {
+a[class^="item_emergency_"],
+a[class^="item_listType_"] {
     padding-right: 50px;
+    float: left;
+    font-weight: normal;
 }
 /* need to set !important because used in the advice popup where actionMenuAX defines padding */
 div a.advice_delay_change_value {
@@ -1100,10 +1116,20 @@ div a.advice_delay_change_value {
 .item_emergency_asked.Editable,
 .item_emergency_accepted.Editable,
 .item_emergency_refused.Editable,
+.item_listType.Editable,
 .advice_change_delay.Editable {
     border-bottom: 1px dotted;
     cursor: pointer;
 }
+div.item_listType.Editable {
+    float: right;
+}
+td[class^="meeting_item_listType_"] div.item_listType.Editable {
+    width: 100%;
+    height: 100%;
+    border-right: 1px dotted;
+}
+
 .advice_change_delay.Editable {
     font-style: italic;
 }

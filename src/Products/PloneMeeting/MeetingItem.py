@@ -567,7 +567,8 @@ schema = Schema((
         name='listType',
         default='normal',
         widget=SelectionWidget(
-            condition="python: here.hasMeeting() and here.portal_plonemeeting.isManager(here)",
+            visible=False,
+            condition="python: here.adapted().mayChangeListType()",
             label='Listtype',
             label_msgid='PloneMeeting_label_listType',
             i18n_domain='PloneMeeting',
@@ -1285,6 +1286,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(item, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         return cfg.getItemDecidedStates()
+
+    security.declarePublic('mayChangeListType')
+    def mayChangeListType(self):
+        '''Condition for editing 'listType' field.'''
+        item = self.getSelf()
+        tool = getToolByName(item, 'portal_plonemeeting')
+        if item.hasMeeting() and tool.isManager(item):
+            return True
+        return False
 
     security.declarePublic('maySignItem')
     def maySignItem(self):

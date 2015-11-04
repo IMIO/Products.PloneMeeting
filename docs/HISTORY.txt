@@ -66,7 +66,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added possibility to display the item reference in the item dashboards
 - Added MeetingItem.listType attribute that defines the fact that the item is 'normal' or 'late'.  Also added
   a 'on_list_type' item insertion method into a meeting.  These 'list types' are defined in the MeetingConfig, default
-  listTypes ('normal' and 'late') may not be removed but other types of list may be added and order may be changed
+  listTypes ('normal' and 'late') may not be removed but other types of list may be added and order may be changed.
+  Moreover the MeetingItem.listType may be quick edited thru the item or meeting view
 - Updated the navigation widget on items to move to be able to move to the next viewable item even if it is not
   the very next item of the meeting
 - Added possibility to print a meeting showing filtered items, like for example only "accepted" items

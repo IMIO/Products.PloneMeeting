@@ -27,6 +27,11 @@ class IItemAfterTransitionEvent(IObjectEvent):
     """
 
 
+class IItemListTypeChangedEvent(IObjectEvent):
+    """
+    """
+
+
 class IAdviceAfterAddEvent(IObjectEvent):
     """
     """

@@ -1,30 +1,42 @@
-<tal:defines define="selectableListType python: view.listListTypes().items();
-                     currentListType context/getListType;">
-    <span class="#"
-          onclick="javascript:toggleMenu('item_listType')"
-          tal:attributes="class python: selectableListType and ('item_%s Editable' % currentListType) or ('item_%s' % currentListType)"
-          tal:content="python: context.displayValue(context.listCompleteness(), currentListType)">Completeness</span>
-    <span class="discreet"> — <a href="item-completeness-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
-    <div id="pm_menu_item_listType"
-         name="pm_menu_item_listType"
-         class="pmDropdown"
-         tal:condition="selectableListType">
-        <div style="clear: left;" tal:repeat="listType python: selectableListType">
-            <tal:block tal:condition="python: listType[0] != currentListType">
-                <img style="float: left; padding-right: 0.3em;"
-                     src="blue_arrow.gif"
-                     tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
-                <a href="#"
-                   tal:attributes="href python: '%s/@@change-item-listtype?new_listtype_value=%s' % (context.absolute_url(),
-                                                                                    listType[0]);
-                                   class python: 'link-overlay-pm item_%s' % listType[0]"
-                   tal:content="python: listType[1]">Completeness</a>
-            </tal:block>
-        </div>
-        <div style="text-align: right;" onclick="javascript:toggleMenu('item_listType')">
-            <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
-                 src="pb_close_small.png"
-                 tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
+<tal:defines define="selectableListTypes view/selectableListTypes;
+                     currentListType context/getListType;
+                     currentListTypeTitle view/currentListTypeTitle;
+                     displayCurrentListType view/displayCurrentListType;">
+    <div class="#"
+         tal:attributes="class python: (selectableListTypes and not displayCurrentListType) and ('item_listType Editable') or ('item_listType');
+                         onclick python: selectableListTypes and 'javascript:toggleMenu(\'item_listType_%s\')' % context.UID() or ''">
+        <span tal:condition="displayCurrentListType"
+              tal:attributes="class python: selectableListTypes and ('item_listType Editable') or ('item_listType');"
+              tal:content="currentListTypeTitle">List type</span>
+        
+        <div id="pm_menu_item_listType"
+             name="pm_menu_item_listType"
+             class="pmDropdown"
+             tal:attributes="id string:pm_menu_item_listType_${context/UID};
+                             name string:pm_menu_item_listType_${context/UID};"
+             tal:condition="selectableListTypes">
+            <div style="clear: left;" tal:repeat="listType selectableListTypes">
+                <tal:block tal:condition="python: listType.value != currentListType">
+                    <img style="float: left; padding-right: 0.3em;"
+                         src="blue_arrow.gif"
+                         tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
+                    <a href="#"
+                       onclick="#"
+                       tal:attributes="onclick string:event.preventDefault();;callViewAndReload(base_url='${context/absolute_url}',
+                                                                                                view_name='@@change-item-listtype',
+                                                                                                tag=this,
+                                                                                                    params={'new_value': '${listType/value}'});;;
+                                       class python: 'item_listType_%s' % listType.value"
+                       tal:content="listType/title">List type</a>
+                </tal:block>
+            </div>
+            <div style="text-align: right;">
+                <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
+                     src="pb_close_small.png"
+                     tal:attributes="src string:${view/portal_url}/pb_close_small.png;
+                                     onclick string:javascript:event.stopPropagation();;toggleMenu('item_listType_${context/UID}')" />
+            </div>
         </div>
     </div>
 </tal:defines>
+<div style="clear: both;"></div>

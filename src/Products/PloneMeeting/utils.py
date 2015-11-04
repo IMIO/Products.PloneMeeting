@@ -52,10 +52,24 @@ from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import TOOL_ID
-from Products.PloneMeeting.interfaces import IMeetingItemCustom, IMeetingCustom, IMeetingCategoryCustom, \
-    IMeetingConfigCustom, IMeetingFileCustom, IMeetingFileTypeCustom, IMeetingGroupCustom, \
-    IToolPloneMeetingCustom, IMeetingUserCustom, IAnnexable, IAdvicesUpdatedEvent, IItemDuplicatedEvent, \
-    IItemDuplicatedFromConfigEvent, IItemAfterTransitionEvent, IAdviceAfterAddEvent, IAdviceAfterModifyEvent
+from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
+from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
+from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
+from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.interfaces import IItemAfterTransitionEvent
+from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
+from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
+from Products.PloneMeeting.interfaces import IItemListTypeChangedEvent
+from Products.PloneMeeting.interfaces import IMeetingCategoryCustom
+from Products.PloneMeeting.interfaces import IMeetingConfigCustom
+from Products.PloneMeeting.interfaces import IMeetingCustom
+from Products.PloneMeeting.interfaces import IMeetingFileCustom
+from Products.PloneMeeting.interfaces import IMeetingFileTypeCustom
+from Products.PloneMeeting.interfaces import IMeetingGroupCustom
+from Products.PloneMeeting.interfaces import IMeetingItemCustom
+from Products.PloneMeeting.interfaces import IMeetingUserCustom
+from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
+
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -126,8 +140,7 @@ def getWorkflowAdapter(obj, conditions):
         interfaceMethod += 'Conditions'
     else:
         interfaceMethod += 'Actions'
-    interfaceLongName = None
-    exec 'interfaceLongName = meetingConfig.%sInterface()' % interfaceMethod
+    interfaceLongName = getattr(meetingConfig, '%sInterface' % interfaceMethod)()
     return getInterface(interfaceLongName)(obj)
 
 
@@ -1417,6 +1430,14 @@ class ItemDuplicatedFromConfigEvent(ObjectEvent):
     def __init__(self, object, usage):
         self.object = object
         self.usage = usage
+
+
+class ItemListTypeChangedEvent(ObjectEvent):
+    implements(IItemListTypeChangedEvent)
+
+    def __init__(self, object, old_listType):
+        self.object = object
+        self.old_listType = old_listType
 
 
 class ItemAfterTransitionEvent(ObjectEvent):

@@ -1,6 +1,8 @@
 # encoding: utf-8
 from zope.i18n import translate
 
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeeting
 
@@ -157,7 +159,13 @@ class ItemListTypeColumn(VocabularyColumn, ColorColumn):
     def renderCell(self, item):
         """Display a message."""
         term_value = super(ItemListTypeColumn, self).renderCell(item)
-        return u'<div title="{0}">&nbsp;</div>'.format(term_value)
+        # display the menu to change listType if current user may edit the meeting
+        if _checkPermission(ModifyPortalContent, self.context):
+            obj = self._getObject(item)
+            renderedChangeListTypeView = obj.restrictedTraverse('@@item-listtype').index()
+            return u'<div title="{0}" style="display: inline-block;">{1}</div>'.format(term_value, renderedChangeListTypeView)
+        else:
+            return u'<div title="{0}" style="display: inline-block;"></div>'.format(term_value)
 
 
 class ItemNumberColumn(BrowserViewCallColumn):

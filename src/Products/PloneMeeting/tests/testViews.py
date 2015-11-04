@@ -22,6 +22,11 @@
 # 02110-1301, USA.
 #
 
+from DateTime import DateTime
+from AccessControl import Unauthorized
+from Products.Five import zcml
+
+from Products import PloneMeeting as products_plonemeeting
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -161,6 +166,37 @@ class testViews(PloneMeetingTestCase):
         view = self.portal.restrictedTraverse('plonemeeting_javascript_variables.js')
         # calling the view will produce a unicode string containing javascript...
         self.assertTrue(isinstance(view(), unicode))
+
+    def test_pm_ChangeListTypeView(self):
+        '''Test the item-change-listtype view and relevant methods in MeetingItem.'''
+        # only MeetingManager may change listType once item is in a meeting
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', title='Item title')
+        view = item.restrictedTraverse('@@change-item-listtype')
+        self.assertFalse(item.adapted().mayChangeListType())
+        self.assertRaises(Unauthorized, view, new_value='late')
+        self.create('Meeting', date=DateTime())
+        self.presentItem(item)
+        # now listType may be changed
+        self.assertTrue(item.adapted().mayChangeListType())
+        # new_value is verified
+        self.assertRaises(KeyError, view, new_value='some_wrong_value')
+        # right, change listType value
+        self.assertEquals(item.getListType(), u'normal')
+        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
+        view('late')
+        # value changed and item reindexed
+        self.assertEquals(item.getListType(), u'late')
+        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'late'))
+        # a specific subscriber is triggered when listType value changed
+        # register a subscriber that will actually change item title
+        # and set it to 'old_listType - new_listType'
+        zcml.load_config('tests/testing-subscribers.zcml', products_plonemeeting)
+        self.assertEquals(item.Title(), 'Item title')
+        view('normal')
+        self.assertEquals(item.Title(), 'late - normal')
+        # cleanUp zmcl.load_config because it impact other tests
+        zcml.cleanUp()
 
 
 def test_suite():
