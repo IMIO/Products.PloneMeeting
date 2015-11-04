@@ -2,11 +2,12 @@ from AccessControl import Unauthorized
 from zope.component import queryUtility
 from zope.event import notify
 from zope.schema.interfaces import IVocabularyFactory
-
 from Products.Five.browser import BrowserView
-from Products.CMFCore.utils import getToolByName
+
+from plone import api
 
 from Products.PloneMeeting.utils import ItemListTypeChangedEvent
+from Products.PloneMeeting import PloneMeetingError
 
 
 class ItemListTypeView(BrowserView):
@@ -16,7 +17,8 @@ class ItemListTypeView(BrowserView):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self, 'portal_url').getPortalObject().absolute_url()
+        self.portal = api.portal.get_tool('portal_url').getPortalObject()
+        self.portal_url = self.portal.absolute_url()
         factory = queryUtility(IVocabularyFactory,
                                'Products.PloneMeeting.vocabularies.listtypesvocabulary')
         self.vocab = factory(self.context)
@@ -70,4 +72,11 @@ class ChangeItemListTypeView(BrowserView):
         old_listType = self.context.getListType()
         self.context.setListType(new_value)
         self.context.reindexObject(idxs=['listType', ])
-        notify(ItemListTypeChangedEvent(self.context, old_listType))
+        try:
+            notify(ItemListTypeChangedEvent(self.context, old_listType))
+        except PloneMeetingError, msg:
+            # back to original state
+            self.context.setListType(old_listType)
+            self.context.reindexObject(idxs=['listType', ])
+            plone_utils = api.portal.get_tool('plone_utils')
+            plone_utils.addPortalMessage(msg, type='warning')

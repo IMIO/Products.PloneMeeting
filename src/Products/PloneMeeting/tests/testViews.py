@@ -25,9 +25,12 @@
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from Products.Five import zcml
+from Products.statusmessages.interfaces import IStatusMessage
 
 from Products import PloneMeeting as products_plonemeeting
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+
+SAMPLE_ERROR_MESSAGE = u'This is the error message!'
 
 
 class testViews(PloneMeetingTestCase):
@@ -195,6 +198,18 @@ class testViews(PloneMeetingTestCase):
         self.assertEquals(item.Title(), 'Item title')
         view('normal')
         self.assertEquals(item.Title(), 'late - normal')
+        self.assertEquals(item.getListType(), u'normal')
+        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
+        # if title is 'late - normal' call to subscriber will raise an error
+        # this way, we test that when an error occur in the event, the listType is not changed
+        view('late')
+        # not changed and a portal_message is added
+        self.assertEquals(item.Title(), 'late - normal')
+        self.assertEquals(item.getListType(), u'normal')
+        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
+        messages = IStatusMessage(self.request).show()
+        self.assertEquals(messages[-1].message,
+                          SAMPLE_ERROR_MESSAGE)
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
 
