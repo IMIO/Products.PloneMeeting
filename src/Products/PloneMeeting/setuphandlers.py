@@ -286,8 +286,6 @@ def postInstall(context):
     # configure collective.documentviewer
     from collective.documentviewer.settings import GlobalSettings
     viewer_settings = GlobalSettings(site)._metadata
-    viewer_settings['storage_type'] = 'File'
-    viewer_settings['storage_location'] = 'var/converted_annexes'
     viewer_settings['auto_layout_file_types'] = ['pdf', 'photoshop', 'image',
                                                  'palm', 'ppt', 'txt', 'ps',
                                                  'word', 'rft', 'excel', 'html',
