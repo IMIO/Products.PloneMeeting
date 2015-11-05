@@ -4336,7 +4336,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
                             review_states=(initial_state, ),
                             inTheFuture=True)
-                        # we only keep meetings that are in the
                         if not meetingsAcceptingItems:
                             plone_utils.addPortalMessage(
                                 _('could_not_present_item_no_meeting_accepting_items',
