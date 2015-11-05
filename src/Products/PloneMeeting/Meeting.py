@@ -41,6 +41,8 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import getToolByName
+from plone import api
+from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
@@ -635,6 +637,14 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     # Methods
 
     # Manually created methods
+
+    security.declarePublic('getPrettyLink')
+    def getPrettyLink(self):
+        """Return the IPrettyLink version of the title."""
+        adapted = IPrettyLink(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        adapted.contentValue = tool.formatMeetingDate(self, withHour=True, prefixed=True)
+        return adapted.getLink()
 
     security.declarePublic('getRawQuery')
     def getRawQuery(self):

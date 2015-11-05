@@ -53,6 +53,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
+from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
@@ -1069,6 +1070,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getName(self, force=None):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
+
+    security.declarePublic('getPrettyLink')
+    def getPrettyLink(self):
+        """Return the IPrettyLink version of the title."""
+        return IPrettyLink(self).getLink()
 
     security.declarePublic('getMotivation')
     def getMotivation(self, **kwargs):

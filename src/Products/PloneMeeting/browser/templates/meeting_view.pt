@@ -21,8 +21,7 @@
   <metal:title fill-slot="content-title">
   <tal:comment replace="nothing">Title, with number of items</tal:comment>
   <h1 class="documentFirstHeading">
-    <span tal:content="python: context.portal_plonemeeting.formatMeetingDate(context, withHour=True, prefixed=True)"
-          tal:omit-tag="">Meeting title</span>&nbsp;-
+    <span tal:replace="structure context/getPrettyLink">Meeting title</span>&nbsp;-
     <span tal:condition="python:not here.adapted().isDecided()"
           i18n:translate="agenda">Agenda</span>
     <span tal:condition="python:here.adapted().isDecided()"

@@ -1209,6 +1209,10 @@ dl.portlet.portletWidgetCollection div.widget-portlet li a {
 td.pretty_link table.contentActionsAX {
     float: right;
 }
+/* align pretty_link icons when displayed in the element's title */
+h1.documentFirstHeading span.pretty_link_icons {
+    vertical-align: inherit;
+}
 
 /* skin element that will trigger the show/hide item details */
 #content th span.showHideDetails,

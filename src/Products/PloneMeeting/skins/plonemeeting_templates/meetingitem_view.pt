@@ -8,8 +8,7 @@
       i18n:domain="PloneMeeting">
 
   <body>
-  <metal:title fill-slot="content-title"
-               tal:define="itemNumber python: context.getItemNumber(relativeTo='meeting')">
+  <metal:title fill-slot="content-title">
    <metal:header use-macro="here/@@pm-macros/itemHeader"/>
   </metal:title>
   <metal:description fill-slot="content-description">
