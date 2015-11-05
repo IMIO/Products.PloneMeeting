@@ -96,6 +96,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added possibility to use subnumber on items of the meeting so it is possible to use 1, 1.1, 1.2, ...
   for numbering items on the meeting, this way we may manage items "without a number"
 - When redefining item assembly/excused/absents, show what is strored on the meeting for each fields
+- Display the 'pretty link' instead of the title on the item and meeting view so we have the enriched
+  informations and we have the same rendering as on the dashboards
 
 3.3 (2015-02-27)
 ----------------
