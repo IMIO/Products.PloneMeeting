@@ -839,7 +839,7 @@ This works for an AT and for a DX.</tal:comment>
     <tal:loop
         repeat="field python: obj.Schema().filterFields(isMetadata=False)">
         <span class="discreet"
-              tal:condition="python: not field.getName() in excludedFields and field.getAccessor(obj)()">
+              tal:condition="python: not field.getName() in excludedFields and (field.getAccessor(obj)() or field.type == 'boolean')">
           <metal:field use-macro="context/widgets/field/macros/view" />
         </span>
     </tal:loop>
