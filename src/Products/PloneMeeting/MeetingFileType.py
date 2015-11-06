@@ -30,6 +30,8 @@ from Products.PloneMeeting.config import *
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
+from plone import api
 from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
 from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
@@ -277,6 +279,17 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
            used for the subTypes.otherMCCorrespondence column.
            This will only appear for the 'item' and 'item_decision' relatedTo
            MeetingFileType as advices are not transfered to another MC.'''
+        uid_catalog = api.portal.get_tool('uid_catalog')
+        def _findLabelFor(fileType, fileTypes):
+            """This method will find the label to display in the vocabulary,
+               especially when we are displaying a sub_type for which we need
+               to prepend the master type label."""
+            # subtype?
+            if '__subtype__' in fileType['id']:
+                mft = uid_catalog(UID=fileType['meetingFileTypeObjectUID'])[0].getObject()
+                return "{0} ({1})".format(mft.Title(), fileType['name'])
+            else:
+                return fileType['name']
         # display also inactive MeetingConfigs because during configuration
         # we can define thses values before activating the new meetingConfig
         # and we do not have to manage inactive meetingConfigs consistency
@@ -292,9 +305,9 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
             fileTypes = fileTypes + cfg.getFileTypes(relatedTo='item_decision')
             for fileType in fileTypes:
                 res.append(('%s__filetype__%s' % (cfg.getId(), fileType['id']),
-                            u'%s -> %s -> %s' % (unicode(cfg.Title(), 'utf-8'),
+                            u'%s -> %s -> %s' % (safe_unicode(cfg.Title()),
                                                  self.displayValue(relatedToVocab, fileType['relatedTo']),
-                                                 unicode(fileType['name'], 'utf-8'))))
+                                                 safe_unicode(_findLabelFor(fileType, fileTypes)))))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listRelatedTo')
