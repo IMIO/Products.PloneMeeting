@@ -117,13 +117,14 @@ class MeetingFileTypeDescriptor(Descriptor):
 
     def __init__(self, id, title, theIcon, predefinedTitle,
                  relatedTo='item', otherMCCorrespondences=(),
-                 active=True, subTypes=()):
+                 active=True, subTypes=(), isConfidentialDefault=False):
         self.id = id
         self.setBilingual('title', title)
         self.theIcon = theIcon
         self.setBilingual('predefinedTitle', predefinedTitle)
         self.relatedTo = relatedTo
         self.subTypes = subTypes
+        self.isConfidentialDefault = isConfidentialDefault
         self.active = active
         self.otherMCCorrespondences = otherMCCorrespondences
 
