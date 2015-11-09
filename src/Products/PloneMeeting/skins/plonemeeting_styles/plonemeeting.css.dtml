@@ -1283,7 +1283,7 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
 }
 
 #archetypes-fieldname-otherMeetingConfigsClonableToEmergency {
-    display: inline;
+    display: inherit;
 }
 #otherMeetingConfigsClonableToEmergency div.formQuestion.label {
     font-size: 80%;
