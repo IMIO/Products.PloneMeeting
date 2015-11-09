@@ -1280,9 +1280,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('showOtherMeetingConfigsClonableToEmergency')
     def showOtherMeetingConfigsClonableToEmergency(self):
-        '''Widget condition used for field 'otherMeetingConfigsClonableToEmergency'.'''
+        '''Widget condition used for field 'otherMeetingConfigsClonableToEmergency'.
+           Show it if:
+           - is clonable to other MC;
+           - isManager;
+           - or if it was selected so if a MeetingManager selects the emergency for a destination,
+             another user editing the item after may not remove 'otherMeetingConfigsClonableTo' without
+             removing the 'otherMeetingConfigsClonableToEmergency'.
+        '''
         tool = getToolByName(self, 'portal_plonemeeting')
-        return self.isClonableToOtherMeetingConfigs() and tool.portal_plonemeeting.isManager(self)
+        hasStoredEmergencies = self.getOtherMeetingConfigsClonableToEmergency()
+        return (self.isClonableToOtherMeetingConfigs() and tool.portal_plonemeeting.isManager(self)) or \
+            hasStoredEmergencies
 
     security.declarePublic('showToDiscuss')
     def showToDiscuss(self):
