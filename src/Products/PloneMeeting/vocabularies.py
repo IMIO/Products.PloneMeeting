@@ -301,7 +301,8 @@ class SentToInfosVocabulary(object):
             cfgId = cfgInfo['meeting_config']
             cfgTitle = getattr(tool, cfgId).getName()
             # add 'clonable to' and 'cloned to' options
-            for suffix in ('__clonable_to', '__cloned_to'):
+            for suffix in ('__clonable_to', '__clonable_to_emergency',
+                           '__cloned_to', '__cloned_to_emergency'):
                 termId = cfgId + suffix
                 res.append(SimpleTerm(termId,
                                       termId,

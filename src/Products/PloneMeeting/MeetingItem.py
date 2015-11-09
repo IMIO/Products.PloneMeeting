@@ -917,6 +917,19 @@ schema = Schema((
         multiValued=1,
         vocabulary='listOtherMeetingConfigsClonableTo',
     ),
+    LinesField(
+        name='otherMeetingConfigsClonableToEmergency',
+        widget=MultiSelectionWidget(
+            condition="python: here.showOtherMeetingConfigsClonableToEmergency()",
+            format="checkbox",
+            label="Pouvoir envoyer dans une séance qui n'est plus 'en création'",
+            label_msgid='PloneMeeting_label_otherMeetingConfigsClonableToEmergency',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=True,
+        multiValued=1,
+        vocabulary='listOtherMeetingConfigsClonableToEmergency',
+    ),
     BooleanField(
         name='sendToAuthority',
         default=False,
@@ -1264,6 +1277,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultMeetingItemMotivation()
+
+    security.declarePublic('showOtherMeetingConfigsClonableToEmergency')
+    def showOtherMeetingConfigsClonableToEmergency(self):
+        '''Widget condition used for field 'otherMeetingConfigsClonableToEmergency'.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        return self.isClonableToOtherMeetingConfigs() and tool.portal_plonemeeting.isManager(self)
 
     security.declarePublic('showToDiscuss')
     def showToDiscuss(self):
@@ -1871,6 +1890,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for meetingConfigId in otherMeetingConfigsClonableTo:
                 if meetingConfigId not in otherMeetingConfigsClonableToInVocab:
                     res.append((meetingConfigId, getattr(tool, meetingConfigId).Title()))
+        return DisplayList(tuple(res))
+
+    security.declarePublic('listOtherMeetingConfigsClonableToEmergency')
+    def listOtherMeetingConfigsClonableToEmergency(self):
+        '''Lists the possible other meetingConfigs the item can be cloned to.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
+        res = []
+        translated_msg = translate('Emergency while presenting in other MC',
+                                   domain='PloneMeeting',
+                                   context=self.REQUEST)
+        for mctct in meetingConfig.getMeetingConfigsToCloneTo():
+            res.append((mctct['meeting_config'], translated_msg))
+        # make sure otherMeetingConfigsClonableToEmergency actually stored have their corresponding
+        # term in the vocabulary, if not, add it
+        otherMCsClonableToEmergency = self.getOtherMeetingConfigsClonableToEmergency()
+        if otherMCsClonableToEmergency:
+            otherMeetingConfigsClonableToEmergencyInVocab = [term[0] for term in res]
+            for meetingConfigId in otherMCsClonableToEmergency:
+                if meetingConfigId not in otherMeetingConfigsClonableToEmergencyInVocab:
+                    res.append((meetingConfigId, translated_msg))
         return DisplayList(tuple(res))
 
     security.declarePublic('listProposingGroups')
@@ -3163,6 +3203,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         }
         return res
 
+    security.declarePublic('displayOtherMeetingConfigsClonableTo')
+    def displayOtherMeetingConfigsClonableTo(self):
+        '''Display otherMeetingConfigsClonableTo with eventual emergency informations.'''
+        vocab = self.listOtherMeetingConfigsClonableTo()
+        translated_msg = translate('Emergency while presenting in other MC',
+                                   domain='PloneMeeting',
+                                   context=self.REQUEST)
+        res = []
+        for otherMC in self.getOtherMeetingConfigsClonableTo():
+            tmp = vocab.getValue(otherMC)
+            if otherMC in self.getOtherMeetingConfigsClonableToEmergency():
+                tmp = u'{0} ({1})'.format(tmp, translated_msg)
+            res.append(tmp)
+        return ','.join(res) or '-'
+
     security.declarePublic('displayAdvices')
     def displayAdvices(self):
         '''Is there at least one advice that needs to be (or has already been)
@@ -4331,11 +4386,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # that needs a meeting as 'PUBLISHED' object to work
                     if tr == 'present':
                         # find next meeting accepting items, only query meetings that
-                        # are in the initial workflow state
-                        initial_state = wfTool[destMeetingConfig.getMeetingWorkflow()].initial_state
-                        meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
-                            review_states=(initial_state, ),
-                            inTheFuture=True)
+                        # are in the initial workflow state if not otherMeetingConfigsClonableToEmergency
+                        if destMeetingConfigId in self.getOtherMeetingConfigsClonableToEmergency():
+                            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+                                inTheFuture=True)
+                        else:
+                            initial_state = wfTool[destMeetingConfig.getMeetingWorkflow()].initial_state
+                            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+                                review_states=(initial_state, ),
+                                inTheFuture=True)
                         if not meetingsAcceptingItems:
                             plone_utils.addPortalMessage(
                                 _('could_not_present_item_no_meeting_accepting_items',
@@ -4345,8 +4404,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                       context=self.REQUEST)}),
                                 'warning')
                             break
-                        meeting = meetingsAcceptingItems[0]
-                        newItem.REQUEST['PUBLISHED'] = meeting.getObject()
+                        meeting = meetingsAcceptingItems[0].getObject()
+                        newItem.setPreferredMeeting(meeting.UID())
+                        newItem.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
+                        newItem.REQUEST['PUBLISHED'] = meeting
 
                     wfTool.doActionFor(newItem, tr, comment=wf_comment)
                 except WorkflowException:

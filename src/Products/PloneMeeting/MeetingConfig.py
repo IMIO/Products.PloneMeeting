@@ -2603,7 +2603,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # there is a 'item will be send' icon and a 'item is sent' icon
             configId = mctct['meeting_config']
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
-            iconnames = ('%s.png' % actionId, 'will_be_%s.png' % actionId)
+            actionIdEmergency = self._getCloneToOtherMCActionId(configId, self.getId(), emergency=True)
+            iconnames = ('%s.png' % actionId, 'will_be_%s.png' % actionId,
+                         '%s.png' % actionIdEmergency, 'will_be_%s.png' % actionIdEmergency)
             for iconname in iconnames:
                 # try to get the icon in portal_skins
                 if not getattr(self.portal_skins, iconname, None):
@@ -3213,10 +3215,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
             collection.reindexObject()
 
-    def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId):
-        '''Returns the name of the action used for the cloneToOtherMC
-           functionnality'''
-        return '%s%s_from_%s' % (CLONE_TO_OTHER_MC_ACTION_SUFFIX,
+    def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId, emergency=False):
+        '''Returns the name of the action used for the cloneToOtherMC functionnality.'''
+        suffix = CLONE_TO_OTHER_MC_ACTION_SUFFIX
+        if emergency:
+            suffix = CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX
+        return '%s%s_from_%s' % (suffix,
                                  destMeetingConfigId,
                                  meetingConfigId)
 

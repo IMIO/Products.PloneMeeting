@@ -521,7 +521,9 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
             # the msgid and the mapping as a dict
             # if item sent to the other mc is inserted into a meeting,
             # we display the meeting date
-            msg = translate('sentto_othermeetingconfig',
+            emergency = clonedToOtherMCId in self.context.getOtherMeetingConfigsClonableToEmergency()
+            msgid = emergency and 'sentto_othermeetingconfig_emergency' or 'sentto_othermeetingconfig'
+            msg = translate(msgid,
                             mapping={'meetingConfigTitle': safe_unicode(getattr(tool,
                                                                         clonedToOtherMCId).Title())},
                             domain="PloneMeeting",
@@ -534,7 +536,9 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                 long_format = clonedBrain.linkedMeetingDate.hour() and True or False
                 msg = msg + u' ({0})'.format(toLocalizedTime(clonedBrain.linkedMeetingDate, long_format=long_format))
             res.append(("%s.png" %
-                        cfg._getCloneToOtherMCActionId(clonedToOtherMCId, cfg.getId()),
+                        cfg._getCloneToOtherMCActionId(clonedToOtherMCId,
+                                                       cfg.getId(),
+                                                       emergency=emergency),
                         msg))
 
         # if not already cloned to another mc, maybe it will be?
@@ -543,13 +547,16 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
             for otherMeetingConfigClonableTo in otherMeetingConfigsClonableTo:
                 # Append a tuple with name of the icon and a list containing
                 # the msgid and the mapping as a dict
+                emergency = otherMeetingConfigClonableTo in self.context.getOtherMeetingConfigsClonableToEmergency()
+                msgid = emergency and 'will_be_sentto_othermeetingconfig_emergency' or \
+                    'will_be_sentto_othermeetingconfig'
                 res.append(("will_be_%s.png" %
-                            cfg._getCloneToOtherMCActionId(otherMeetingConfigClonableTo, cfg.getId()),
-                            translate('will_be_sentto_othermeetingconfig',
-                                      mapping={
-                                          'meetingConfigTitle': safe_unicode(
-                                          getattr(tool, otherMeetingConfigClonableTo).Title())
-                                      },
+                            cfg._getCloneToOtherMCActionId(otherMeetingConfigClonableTo,
+                                                           cfg.getId(),
+                                                           emergency=emergency),
+                            translate(msgid,
+                                      mapping={'meetingConfigTitle': safe_unicode(
+                                               getattr(tool, otherMeetingConfigClonableTo).Title())},
                                       domain="PloneMeeting",
                                       context=self.request)))
 

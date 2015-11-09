@@ -232,6 +232,7 @@ MEETING_STATES_ACCEPTING_ITEMS = ('created', 'frozen', 'published', 'decided')
 # Keys used in annotations
 SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY = 'PloneMeeting-sent_to_other_meetingconfig_'
 CLONE_TO_OTHER_MC_ACTION_SUFFIX = 'clone_to_other_mc_'
+CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX = 'clone_to_other_mc_emergency_'
 
 # Value added in the CKeditor menuStyles to specify that it has been customized
 CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG = '/* Styles have been customized, do not remove this line! */'

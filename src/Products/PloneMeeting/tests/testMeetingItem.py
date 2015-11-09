@@ -668,6 +668,87 @@ class testMeetingItem(PloneMeetingTestCase):
         # the item could not be presented
         self.assertTrue(newItem.queryState() == 'presented')
 
+    def test_pm_SendItemToOtherMCUsingEmergency(self):
+        '''Test when sending an item to another MeetingConfig and emergency is asked,
+           when item will be sent and presented to the other MC, it will be presented
+           as a 'late' item if emergency was asked.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        # field 'otherMeetingConfigsClonableToEmergency' is
+        # only available to MeetingManagers if item will be presented
+        # while it is sent to the other MC
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': '%s.%s' %
+                                         (cfg2.getId(), 'present')},))
+        # use insertion on groups for cfg2
+        cfg2.setUseGroupsAsCategories(True)
+        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, ))
+
+        # setup, create item, meeting
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        item = self.create('MeetingItem')
+        item.setDecision('<p>My decision</p>', mimetype='text/html')
+        item.setOtherMeetingConfigsClonableTo((cfg2.getId(),))
+        self.assertFalse(item.showOtherMeetingConfigsClonableToEmergency())
+        # right, change user to a MeetingManager
+        self.changeUser('pmManager')
+        self.assertTrue(item.showOtherMeetingConfigsClonableToEmergency())
+
+        # first test while emergency not set, the item will be presented
+        # in the next 'created' meeting, no matter a 'frozen' is happening in the future but before
+        now = DateTime()
+        # create 2 meetings in cfg2
+        frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
+        # must contains at least an item to be frozen
+        dummyItem = self.create('MeetingItem', meetingConfig=cfg2)
+        self.presentItem(dummyItem)
+        self.freezeMeeting(frozenMeeting)
+        self.assertEquals(frozenMeeting.queryState(), 'frozen')
+        createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
+        # create the meeting in cfg
+        meeting = self.create('Meeting', date=now)
+        self.presentItem(item)
+        # presented in 'meeting'
+        self.assertTrue(item in meeting.getItems())
+        self.decideMeeting(meeting)
+        self.do(item, 'accept')
+        # has been sent and presented in createMeeting
+        sentItem = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertEquals(sentItem.getMeeting(), createdMeeting)
+
+        # now ask emergency on item and send it again
+        # it will be presented to the frozenMeeting
+        self.portal.restrictedTraverse('@@delete_givenuid')(sentItem.UID())
+        item.setOtherMeetingConfigsClonableToEmergency((cfg2.getId(),))
+        item.cloneToOtherMeetingConfig(cfg2Id)
+        item.getItemClonedToOtherMC(cfg2Id)
+        sentItem = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertEquals(sentItem.getMeeting(), frozenMeeting)
+
+        # if emergency is asked, the item is presented to the next
+        # available meeting, no matter it's state, so if it is a 'created'
+        # meeting, it is presented into it
+        self.portal.restrictedTraverse('@@delete_givenuid')(sentItem.UID())
+        # before frozenMeeting
+        createdMeeting.setDate(now+1)
+        createdMeeting.reindexObject(idxs=['getDate'])
+        item.cloneToOtherMeetingConfig(cfg2Id)
+        item.getItemClonedToOtherMC(cfg2Id)
+        sentItem = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertEquals(sentItem.getMeeting(), createdMeeting)
+
+        # only presented in a meeting in the future
+        self.portal.restrictedTraverse('@@delete_givenuid')(sentItem.UID())
+        createdMeeting.setDate(now-1)
+        createdMeeting.reindexObject(idxs=['getDate'])
+        item.cloneToOtherMeetingConfig(cfg2Id)
+        item.getItemClonedToOtherMC(cfg2Id)
+        sentItem = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertEquals(sentItem.getMeeting(), frozenMeeting)
+
     def test_pm_SendItemToOtherMCWithMappedCategories(self):
         '''Test when sending an item to another MeetingConfig and both using
            categories, a mapping can be defined for a category in original meetingConfig
@@ -2557,7 +2638,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          'meetingTransitionInsertingMe', 'observations',
                          'predecessor', 'preferredMeeting', 'proposingGroup',
                          'questioners', 'takenOverBy', 'templateUsingGroups',
-                         'toDiscuss', 'votesAreSecret']
+                         'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency']
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
         copiedFields = set(neutralFields +

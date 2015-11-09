@@ -146,12 +146,19 @@ def sentToInfos(obj):
     """
     res = []
     clonableTo = obj.getOtherMeetingConfigsClonableTo()
+    clonableToEmergency = obj.getOtherMeetingConfigsClonableToEmergency()
     clonedTo = obj._getOtherMeetingConfigsImAmClonedIn()
     for cfgId in clonableTo:
         if cfgId not in clonedTo:
-            res.append(cfgId + '__clonable_to')
+            term_suffix = '__clonable_to'
+            if cfgId in clonableToEmergency:
+                term_suffix = '__clonable_to_emergency'
+            res.append(cfgId + term_suffix)
     for cfgId in clonedTo:
-        res.append(cfgId + '__cloned_to')
+        term_suffix = '__cloned_to'
+        if cfgId in clonableToEmergency:
+            term_suffix = '__cloned_to_emergency'
+        res.append(cfgId + term_suffix)
     if not clonableTo and not clonedTo:
         res.append('not_to_be_cloned_to')
     return res or _marker

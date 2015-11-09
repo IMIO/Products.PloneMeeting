@@ -98,6 +98,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - When redefining item assembly/excused/absents, show what is strored on the meeting for each fields
 - Display the 'pretty link' instead of the title on the item and meeting view so we have the enriched
   informations and we have the same rendering as on the dashboards
+- While an item is sent to another meeting configuration and it is specified in the configuration that
+  the sent item must be automatically presented in a next available meeting, make it possible to define
+  emergency for the sent item so it can be inserted in a meeting in the future that is no more in 'created' state.
+  Added also relevant leading icons to show an item 'to send' with emergency
 
 3.3 (2015-02-27)
 ----------------

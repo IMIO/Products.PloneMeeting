@@ -286,7 +286,7 @@
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>:&nbsp;&nbsp;
                 <tal:displayOtherMeetingConfigsClonableTo tal:condition="otherMCs">
-                    <span metal:use-macro="python: here.widget('otherMeetingConfigsClonableTo', mode='view')" />
+                    <span tal:content="context/displayOtherMeetingConfigsClonableTo">Other mc clonable to (Emergency)</span>
                 </tal:displayOtherMeetingConfigsClonableTo>
                 <span tal:condition="not: otherMCs">-</span>
             </div>

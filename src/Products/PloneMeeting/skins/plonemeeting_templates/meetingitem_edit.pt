@@ -91,14 +91,51 @@
     </table>
     <tal:comment replace="nothing">Preferred meeting, item keywords, privacy</tal:comment>
     <table cellpadding="0" cellspacing="0">
-      <tr valign="top">
-        <td><metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/></td>
-        <td><metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/></td>
-        <td><metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/></td>
-        <td><metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/></td>
-        <td><metal:field use-macro="python:here.widget('privacy', mode='edit')"/></td>
-        <td><metal:field use-macro="python:here.widget('listType', mode='edit')"/></td>
-      </tr>
+        <tr valign="top">
+           <td><metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/></td>
+           <td><metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/></td>
+           <td><metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/></td>
+           <td><metal:field use-macro="python:here.widget('privacy', mode='edit')"/></td>
+           <td><metal:field use-macro="python:here.widget('listType', mode='edit')"/></td>
+        </tr>
+        <tr>
+            <td colspan="5"
+                tal:define="showOtherMeetingConfigsClonableToEmergency context/showOtherMeetingConfigsClonableToEmergency"
+                tal:attributes="style python: showOtherMeetingConfigsClonableToEmergency and 'border: 1px solid lightgrey;; min-width: 600px;;' or ''">
+                <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/>
+                <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToEmergency', mode='edit', label=0)"/>
+                <tal:scriptForOtherMeetingConfigsClonableToEmergency condition="showOtherMeetingConfigsClonableToEmergency">
+                <script type="text/javascript">
+                    $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
+                        {
+                         $(this).bind("click", function() {
+                            number = this.id.split('_')[1]
+                            otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
+                            if (this.checked) {
+                                otherMCEmergencyField.attr('disabled', false);
+                            }
+                            else {
+                                otherMCEmergencyField.attr('checked', false);
+                                otherMCEmergencyField.attr('disabled', true);
+                            };
+                            });
+                        });
+    
+                    jQuery(document).ready(function($) {
+                    $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
+                        {
+                        if (!$(this).attr('checked')) {
+                            number = this.id.split('_')[1]
+                            otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
+                            otherMCEmergencyField.attr('checked', false);
+                            otherMCEmergencyField.attr('disabled', true);
+                            };
+                        });
+                    });
+                </script>
+                </tal:scriptForOtherMeetingConfigsClonableToEmergency>
+            </td>
+        </tr>
     </table>
 
     <tal:comment replace="nothing">Budget-related information</tal:comment>

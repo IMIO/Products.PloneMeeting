@@ -1277,6 +1277,18 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
     text-decoration: underline;
 }
 
+#archetypes-fieldname-otherMeetingConfigsClonableTo {
+    display: inline;
+    float: left;
+}
+
+#archetypes-fieldname-otherMeetingConfigsClonableToEmergency {
+    display: inline;
+}
+#otherMeetingConfigsClonableToEmergency div.formQuestion.label {
+    font-size: 80%;
+    color: &dtml-discreetColor;;
+}
 
 /* </dtml-with> */
 
