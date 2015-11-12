@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2008 by PloneGov
+# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -21,6 +21,7 @@
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
+
 
 class Descriptor:
     '''This abstract class represents Python data that will be used for
@@ -235,6 +236,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
                          'onTransitionFieldTransforms', 'onMeetingTransitionItemTransitionToTrigger',
                          'meetingPresentItemWhenNoCurrentMeetingStates',
+                         'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates',
                          'mailItemEvents', 'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates',
                          'itemDecidedStates', 'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
                          'powerAdvisersGroups', 'itemPowerObserversStates', 'meetingPowerObserversStates',
@@ -394,6 +396,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.onTransitionFieldTransforms = []
         self.onMeetingTransitionItemTransitionToTrigger = []
         self.meetingPresentItemWhenNoCurrentMeetingStates = []
+        self.itemAutoSentToOtherMCStates = ['accepted', ]
+        self.itemManualSentToOtherMCStates = []
         self.useCopies = False
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]

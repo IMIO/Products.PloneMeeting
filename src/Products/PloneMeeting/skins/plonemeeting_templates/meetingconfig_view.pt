@@ -278,11 +278,19 @@
           <td tal:define="field python:here.getField('useUserReplacements')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('meetingConfigsToCloneTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
-        </tr>
+          <td tal:define="field python:here.getField('itemAutoSentToOtherMCStates')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('itemManualSentToOtherMCStates')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
       </table>
 
       <tal:comment replace="nothing">Annex types</tal:comment>

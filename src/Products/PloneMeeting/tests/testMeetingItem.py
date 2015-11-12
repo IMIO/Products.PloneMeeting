@@ -50,6 +50,7 @@ from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import getFieldVersion
+from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 
 
@@ -154,8 +155,9 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test the send an item to another meetingConfig functionnality'''
         # Activate the functionnality
         self.changeUser('admin')
-        self.meetingConfig.setUseGroupsAsCategories(False)
-        meetingConfigId = self.meetingConfig.getId()
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        meetingConfigId = cfg.getId()
         otherMeetingConfigId = self.meetingConfig2.getId()
         # the item is sendable if it is 'accepted', the user is a MeetingManager,
         # the destMeetingConfig is selected in the MeetingItem.otherMeetingConfigsClonableTo
@@ -199,17 +201,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # if not activated in the config, it is not sendable anymore
         self.changeUser('admin')
-        self.meetingConfig.setMeetingConfigsToCloneTo(())
-        self.meetingConfig.at_post_edit_script()
+        cfg.setMeetingConfigsToCloneTo(())
+        cfg.at_post_edit_script()
         self.changeUser('pmManager')
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         self.assertTrue(not item.isClonableToOtherMeetingConfigs())
 
         # ok, activate it and send it!
         self.changeUser('admin')
-        self.meetingConfig.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
-                                                        'trigger_workflow_transitions_until': '__nothing__'}, ))
-        self.meetingConfig.at_post_edit_script()
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
+                                         'trigger_workflow_transitions_until': '__nothing__'}, ))
+        cfg.at_post_edit_script()
         self.assertTrue(item.isClonableToOtherMeetingConfigs())
         self.changeUser('pmManager')
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -279,7 +281,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # now check that the item is sent to another meetingConfig for each
         # item.itemPositiveDecidedStates() state
         # by default, the only positive state is 'accepted'
-        for state in item.adapted().itemPositiveDecidedStates():
+        for state in cfg.getItemAutoSentToOtherMCStates():
             # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
             self.changeUser('admin')
             self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
@@ -775,6 +777,41 @@ class testMeetingItem(PloneMeetingTestCase):
         originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
         newItem = originalItem.getBRefs('ItemPredecessor')[0].getObject()
         self.assertTrue(newItem.getCategory() == catIdOfMC2Mapped)
+
+    def test_pm_SendItemToOtherMCManually(self):
+        '''An item may be sent automatically or manually to another MC
+           depending on what is defined in the MeetingConfig.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setUseGroupsAsCategories(True)
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': '%s.%s' %
+                                         (self.meetingConfig2.getId(), 'validate')},))
+        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
+                                              'validated'))
+
+        # an 'itemcreated' item may not be send
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        item = self.create('MeetingItem')
+        item.setDecision('<p>My decision</p>', mimetype='text/html')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        self.assertFalse(item.mayCloneToOtherMeetingConfig(cfg2Id))
+        self.proposeItem(item)
+        # not sendable because not editable
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        # sendable because editable and in itemManualSentToOtherMCStates
+        self.changeUser('pmReviewer1')
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(item.queryState() in cfg.getItemManualSentToOtherMCStates())
+        self.assertTrue(item.mayCloneToOtherMeetingConfig(cfg2Id))
+        # if we send it, every other things works like if it was sent automatically
+        # sent item has been automatically validated
+        # send it as 'pmManager' so clonedItem may be 'validated'
+        self.changeUser('pmManager')
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEquals(clonedItem.queryState(), 'validated')
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
@@ -3089,6 +3126,13 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_DownOrUpWorkflowAgain(self):
         """Test the MeetingItem.downOrUpWorkflowAgain behavior."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setItemManualSentToOtherMCStates(('itemcreated',
+                                              self.WF_STATE_NAME_MAPPINGS['proposed']))
+
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         itemUID = item.UID()
@@ -3100,16 +3144,35 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.downOrUpWorkflowAgain())
         self.proposeItem(item)
         self.assertFalse(item.downOrUpWorkflowAgain())
+
         # it will be 'down' if sent back to 'itemcreated'
         self.backToState(item, 'itemcreated')
         self.assertEquals(item.downOrUpWorkflowAgain(), 'down')
         self.assertEquals(catalog(downOrUpWorkflowAgain='down')[0].UID, itemUID)
         self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
+        # test when a non WF-related action is inserted in the workflow_history
+        # it is the case for example while sending item to other meetingConfig
+        self.changeUser('pmManager')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        newItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        clonedActionId = translate(
+            cfg2._getCloneToOtherMCActionTitle(cfg2Id, cfg.getId()),
+            domain="plone",
+            context=self.portal.REQUEST)
+        self.assertEquals(getLastEvent(item)['action'], clonedActionId)
+        self.assertEquals(item.downOrUpWorkflowAgain(), 'down')
+
         # it will be 'up' if proposed again
         self.proposeItem(item)
         self.assertEquals(item.downOrUpWorkflowAgain(), 'up')
         self.assertEquals(catalog(downOrUpWorkflowAgain='up')[0].UID, itemUID)
         self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
+        # insert non WF-related event
+        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEquals(getLastEvent(item)['action'], clonedActionId)
+        self.assertEquals(item.downOrUpWorkflowAgain(), 'up')
+
         # no more when item is validated and +
         self.validateItem(item)
         self.assertFalse(item.downOrUpWorkflowAgain())

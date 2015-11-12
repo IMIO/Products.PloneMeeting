@@ -295,7 +295,7 @@ class BaseActionsPanelView(ActionsPanelView):
     """
     def __init__(self, context, request):
         super(BaseActionsPanelView, self).__init__(context, request)
-        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste',
+        self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste', 'rename',
                                   'faceted.disable', 'faceted.enable',
                                   'faceted.search.disable', 'faceted.search.enable')
 
@@ -392,6 +392,10 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
           Redefined to add ram.cache...
         """
+        # hide 'duplicate' actions when showing icons
+        if useIcons:
+            self.IGNORABLE_ACTIONS += ('duplicate_and_keep_link', )
+
         return super(MeetingItemActionsPanelView, self).\
             __call__(useIcons=useIcons,
                      showTransitions=showTransitions,

@@ -103,9 +103,9 @@ class testMeeting(PloneMeetingTestCase):
                           ['developers', 'developers', 'developers', 'developers',
                            'vendors', 'vendors', 'vendors'])
         # insert a new item
-        item1 = self.create('MeetingItem')
-        self.presentItem(item1)
-        self.assertEquals(item1.getItemNumber(), 400)
+        newItem1 = self.create('MeetingItem')
+        self.presentItem(newItem1)
+        self.assertEquals(newItem1.getItemNumber(), 400)
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 101, 200, 300, 400, 500, 600, 700])
         self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
@@ -114,20 +114,20 @@ class testMeeting(PloneMeetingTestCase):
 
         # change 400 to 301 then insert a new item
         # insert a new item
-        view = item1.restrictedTraverse('@@change-item-order')
+        view = newItem1.restrictedTraverse('@@change-item-order')
         view('number', '3.1')
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 101, 200, 300, 301, 400, 500, 600])
-        item2 = self.create('MeetingItem')
-        self.presentItem(item2)
+        newItem2 = self.create('MeetingItem')
+        self.presentItem(newItem2)
         # the item will take very next integer value
-        self.assertEquals(item2.getItemNumber(), 400)
+        self.assertEquals(newItem2.getItemNumber(), 400)
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 101, 200, 300, 301, 400, 500, 600, 700])
 
         # now do new item inserted between suite of subnumbers
         # it should insert itself in this suite
-        view = item2.restrictedTraverse('@@change-item-order')
+        view = newItem2.restrictedTraverse('@@change-item-order')
         view('number', '3.2')
         item400 = meeting.getItemByNumber(400)
         view = item400.restrictedTraverse('@@change-item-order')
@@ -139,10 +139,10 @@ class testMeeting(PloneMeetingTestCase):
                           'developers')
         self.assertEquals(meeting.getItemByNumber(303).getProposingGroup(),
                           'vendors')
-        item3 = self.create('MeetingItem')
-        self.presentItem(item3)
+        newItem3 = self.create('MeetingItem')
+        self.presentItem(newItem3)
         # has been inserted before in place of item number 303 that is now 304
-        self.assertEquals(item3.getItemNumber(), 303)
+        self.assertEquals(newItem3.getItemNumber(), 303)
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 101, 200, 300, 301, 302, 303, 304, 400, 500])
 
@@ -184,11 +184,27 @@ class testMeeting(PloneMeetingTestCase):
                            'developers', 'developers', 'developers',
                            'vendors', 'vendors', 'vendors'])
         # insert a new item, it will be inserted between 700 and 701
-        item4 = self.create('MeetingItem')
-        self.presentItem(item4)
+        newItem4 = self.create('MeetingItem')
+        self.presentItem(newItem4)
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 700, 701, 702, 703, 704])
-        self.assertEquals(item4.getItemNumber(), 701)
+        self.assertEquals(newItem4.getItemNumber(), 701)
+
+        # insert an item that will take an integer number and there are subnumbers after
+        # insert an item that will place itself on position 300, turn current 300 proposingGroup to 'vendors'
+        self.assertEquals(item3.getItemNumber(), 300)
+        item3.setProposingGroup('vendors')
+        item3.reindexObject()
+        newItem5 = self.create('MeetingItem')
+        self.assertEquals(newItem5.getProposingGroup(), 'developers')
+        self.presentItem(newItem5)
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 300, 400, 500, 600, 700, 800, 801, 802, 803, 804])
+        self.assertEquals(newItem5.getItemNumber(), 300)
+        self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
+                          ['developers', 'developers', 'developers', 'vendors',
+                           'developers', 'developers', 'developers', 'developers', 'developers',
+                           'vendors', 'vendors', 'vendors'])
 
     def test_pm_InsertItemOnListTypeThenProposingGroup(self):
         '''Test inserting an item using the "on_list_type" then "on_proposing_group" sorting methods.'''

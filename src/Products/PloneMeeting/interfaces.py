@@ -355,9 +355,6 @@ class IMeetingItemDocumentation:
            the cloned item.  The parameter p_cloned_to_same_mc is True if current item
            will be cloned to the same meeting config, and is False if item is
            actually sent to another meeting config.'''
-    def itemPositiveDecidedStates():
-        '''Return a tuple containing item states considered as 'positive'
-           like 'accepted' for example.'''
     def getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=False):
         '''Gets the certified signatures for this item.
            Either use signatures defined on the proposing MeetingGroup if exists,

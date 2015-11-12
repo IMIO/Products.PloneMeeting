@@ -1147,10 +1147,15 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 itemNumber = anItem.getItemNumber()
                 if higherItemFound:
                     # Ok I already know where to insert the item. I just
-                    # continue to visit the  next items in order to increment their number.
-                    if not insertIndexIsSubnumber or \
-                       (insertIndexIsSubnumber and _use_same_integer(itemNumber, insertIndex)):
-                        anItem.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
+                    # continue to visit the next items in order to increment their number.
+                    # we inserted an integer numer, we need to add '1' to every next items
+                    if not insertIndexIsSubnumber:
+                        anItem.setItemNumber(itemNumber + 100)
+                        anItem.reindexObject(idxs=['getItemNumber', ])
+                    elif (insertIndexIsSubnumber and _use_same_integer(itemNumber, insertIndex) and
+                          itemNumber > insertIndex):
+                        # we inserted a subnumber, we need to update subnumber of same integer
+                        anItem.setItemNumber(itemNumber + 1)
                         anItem.reindexObject(idxs=['getItemNumber', ])
                 elif anItem.adapted().getInsertOrder(insertMethods) > itemOrder:
                     higherItemFound = True
