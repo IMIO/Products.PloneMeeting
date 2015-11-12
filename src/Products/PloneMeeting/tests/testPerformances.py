@@ -36,6 +36,52 @@ class testPerformances(PloneMeetingTestCase):
         # call parent setUp
         PloneMeetingTestCase.setUp(self)
 
+    def _setupForDelayingItems(self, number_of_items, number_of_annexes):
+        """ """
+        meeting, uids = self._setupMeetingItemsWithAnnexes(number_of_items, number_of_annexes)
+        for brain in self.portal.portal_catalog(UID=uids):
+            item = brain.getObject()
+            # present the item
+            self.presentItem(item)
+            # set the meeting in the 'decided' state
+            self.decideMeeting(meeting)
+            # in some wfs, deciding a meeting will accept every items...
+            # set back items to the 'itemfrozen' state
+            for itemInMeeting in meeting.getItems():
+                if itemInMeeting.queryState() == 'itemfrozen':
+                    break
+                self.do(itemInMeeting, 'backToItemFrozen')
+        return meeting, uids
+
+    def _setupMeetingItemsWithAnnexes(self, number_of_items, number_of_annexes, with_meeting=True):
+        self.changeUser('pmManager')
+        meeting = None
+        if with_meeting:
+            # create a meeting
+            meeting = self.create('Meeting', date='2007/12/11 09:00:00')
+        data = {}
+        uids = []
+        logger_threshold = 10
+        created_items = 0
+        total_created_items = 0
+        for i in range(number_of_items):
+            # display message in logger while creating many items
+            created_items += 1
+            total_created_items += 1
+            if created_items == logger_threshold:
+                pm_logger.info('Created %d out of %d' % (total_created_items, number_of_items))
+                created_items = 0
+
+            # create the item
+            data['title'] = 'Item number %d' % i
+            item = self.create('MeetingItem', **data)
+            uids.append(item.UID())
+            item.setDecision('<p>A decision</p>')
+            # add annexes
+            for j in range(number_of_annexes):
+                self.addAnnex(item, annexTitle="Annex number %d" % j)
+        return meeting, uids
+
     def test_pm_Delay5ItemsWith0Annexes(self):
         '''While delaying an item, it is cloned with annexes.'''
         meeting, uids = self._setupForDelayingItems(5, 0)
@@ -72,37 +118,54 @@ class testPerformances(PloneMeetingTestCase):
         pm_logger.info('Delay %d items containing %d annexes in each.' % (10, 10))
         self._delaySeveralItems(meeting, uids)
 
-    def _setupForDelayingItems(self, number_of_items, number_of_annexes):
-        self.changeUser('pmManager')
-        # create a meeting
-        meeting = self.create('Meeting', date='2007/12/11 09:00:00')
-        data = {}
-        uids = []
-        for i in range(number_of_items):
-            data['title'] = 'Item number %d' % i
-            item = self.create('MeetingItem', **data)
-            uids.append(item.UID())
-            item.setDecision('<p>A decision</p>')
-            # add annexes
-            for j in range(number_of_annexes):
-                self.addAnnex(item, annexTitle="Annex number %d" % j)
-            # present the item
-            self.presentItem(item)
-            # set the meeting in the 'decided' state
-            self.decideMeeting(meeting)
-            # in some wfs, deciding a meeting will accept every items...
-            # set back items to the 'itemfrozen' state
-            for itemInMeeting in meeting.getItems():
-                if itemInMeeting.queryState() == 'itemfrozen':
-                    break
-                self.do(itemInMeeting, 'backToItemFrozen')
-        return meeting, uids
+    def test_pm_Present50ItemsWithoutAnnexesSeveralTimes(self):
+        '''While presenting items, these items are inserted in a given order.
+           In this test, as every items use same 'proposingGroup', same 'privacy'
+           and same 'listType' every items are evaluated each time and
+           every new is finally added at the end of the meeting.
+           We present 50 by 50 items successively in same meeting'''
+        pm_logger.info('Presenting %d items without annexes in an meeting containing %d items.' % (50, 0))
+        # use 'complex' inserting method
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
+                                                          'reverse': '0'},
+                                                         {'insertingMethod': 'on_privacy',
+                                                          'reverse': '0'},
+                                                         {'insertingMethod': 'on_proposing_groups',
+                                                          'reverse': '0'},))
+        meeting, uids = self._setupMeetingItemsWithAnnexes(50, 0)
+        items = [brain.getObject() for brain in self.portal.portal_catalog(UID=uids)]
+        # called when no item in the meeting
+        self._presentSeveralItems(items)
+        # called second times whith items in the meeting
+        pm_logger.info('Presenting %d items without annexes in an meeting containing %d items.'
+                       % (50, len(meeting.getRawItems())))
+        dummy_meeting, uids = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False)
+        items = [brain.getObject() for brain in self.portal.portal_catalog(UID=uids)]
+        self._presentSeveralItems(items)
+        # called third times whith items in the meeting
+        pm_logger.info('Presenting %d items without annexes in an meeting containing %d items.'
+                       % (50, len(meeting.getRawItems())))
+        dummy_meeting, uids = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False)
+        items = [brain.getObject() for brain in self.portal.portal_catalog(UID=uids)]
+        self._presentSeveralItems(items)
+        # called fourth times whith items in the meeting
+        pm_logger.info('Presenting %d items without annexes in an meeting containing %d items.'
+                       % (50, len(meeting.getRawItems())))
+        dummy_meeting, uids = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False)
+        items = [brain.getObject() for brain in self.portal.portal_catalog(UID=uids)]
+        self._presentSeveralItems(items)
 
     @timecall
     def _delaySeveralItems(self, meeting, uids):
         '''Helper method that actually delays the items.'''
         decideView = meeting.restrictedTraverse('@@decide-several-items')
         decideView(uids=uids, transition='delay')
+
+    @timecall
+    def _presentSeveralItems(self, items):
+        '''Present the p_items in p_meeting.'''
+        for item in items:
+            self.presentItem(item)
 
     def test_pm_ComputeItemNumberWithSeveralNotClosedMeetings(self):
         '''Check performances while looking for the current item number using
