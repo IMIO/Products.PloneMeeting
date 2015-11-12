@@ -394,7 +394,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
         # hide 'duplicate' actions when showing icons
         if useIcons:
-            self.IGNORABLE_ACTIONS += ('duplicate_and_keep_link', )
+            self.IGNORABLE_ACTIONS += ('duplicate', 'duplicate_and_keep_link', )
 
         return super(MeetingItemActionsPanelView, self).\
             __call__(useIcons=useIcons,
