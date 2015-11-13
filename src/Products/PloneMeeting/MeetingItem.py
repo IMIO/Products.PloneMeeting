@@ -1284,15 +1284,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Widget condition used for field 'otherMeetingConfigsClonableToEmergency'.
            Show it if:
            - is clonable to other MC;
+           - item cloned to the other MC will be automatically presented in an available meeting;
            - isManager;
            - or if it was selected so if a MeetingManager selects the emergency for a destination,
              another user editing the item after may not remove 'otherMeetingConfigsClonableTo' without
              removing the 'otherMeetingConfigsClonableToEmergency'.
         '''
         tool = getToolByName(self, 'portal_plonemeeting')
+        # item will be 'presented' while sent to the other MC?
+        cfg = tool.getMeetingConfig(self)
+        presentAfterSend = False
+        for otherMC in cfg.getMeetingConfigsToCloneTo():
+            if otherMC['trigger_workflow_transitions_until'] != NO_TRIGGER_WF_TRANSITION_UNTIL and \
+               otherMC['trigger_workflow_transitions_until'].split('.')[1] == 'present':
+                presentAfterSend = True
+                break
         hasStoredEmergencies = self.getOtherMeetingConfigsClonableToEmergency()
-        return (self.isClonableToOtherMeetingConfigs() and tool.portal_plonemeeting.isManager(self)) or \
-            hasStoredEmergencies
+        return hasStoredEmergencies or \
+            (presentAfterSend and self.isClonableToOtherMeetingConfigs() and tool.isManager(self))
 
     security.declarePublic('showToDiscuss')
     def showToDiscuss(self):
@@ -4371,12 +4380,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
-        triggerUntil = '__nothing__'
+        triggerUntil = NO_TRIGGER_WF_TRANSITION_UNTIL
         for mctct in cfg.getMeetingConfigsToCloneTo():
             if mctct['meeting_config'] == destMeetingConfigId:
                 triggerUntil = mctct['trigger_workflow_transitions_until']
         # if transitions to trigger, trigger them!
-        if not triggerUntil == '__nothing__':
+        if not triggerUntil == NO_TRIGGER_WF_TRANSITION_UNTIL:
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]
             wfTool = getToolByName(self, 'portal_workflow')

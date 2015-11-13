@@ -43,6 +43,7 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
@@ -416,10 +417,11 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # check that 'is_linked_to_previous_row'
         # can not be set on the first row
-        first_row_msg = translate('custom_adviser_first_row_can_not_be_linked_to_previous',
-                                  domain='PloneMeeting',
-                                  mapping={'groupName': groupName},
-                                  context=self.portal.REQUEST)
+        first_row_msg = translate(
+            'custom_adviser_first_row_can_not_be_linked_to_previous',
+            domain='PloneMeeting',
+            mapping={'groupName': groupName},
+            context=self.portal.REQUEST)
         customAdvisers[0]['is_linked_to_previous_row'] = '1'
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           first_row_msg)
@@ -441,10 +443,11 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # check that 'is_linked_to_previous_row'
         # can only be set on a row that is actually a delay-aware row
-        row_not_delay_aware_msg = translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser',
-                                            domain='PloneMeeting',
-                                            mapping={'groupName': groupName},
-                                            context=self.portal.REQUEST)
+        row_not_delay_aware_msg = translate(
+            'custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser',
+            domain='PloneMeeting',
+            mapping={'groupName': groupName},
+            context=self.portal.REQUEST)
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           row_not_delay_aware_msg)
 
@@ -453,10 +456,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         # make second row a delay aware row, first row is not delay aware
         customAdvisers[1]['delay'] = '5'
         self.assertTrue(customAdvisers[0]['delay'] == '')
-        previous_row_not_delay_aware_msg = translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser_previous_row',
-                                                     domain='PloneMeeting',
-                                                     mapping={'groupName': groupName},
-                                                     context=self.portal.REQUEST)
+        previous_row_not_delay_aware_msg = translate(
+            'custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser_previous_row',
+            domain='PloneMeeting',
+            mapping={'groupName': groupName},
+            context=self.portal.REQUEST)
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           previous_row_not_delay_aware_msg)
 
@@ -465,10 +469,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         customAdvisers[0]['delay'] = '10'
         customAdvisers[0]['group'] = 'developers'
         self.assertTrue(not customAdvisers[0]['group'] == customAdvisers[1]['group'])
-        previous_row_not_same_group_msg = translate('custom_adviser_can_not_is_linked_to_previous_row_with_other_group',
-                                                    domain='PloneMeeting',
-                                                    mapping={'groupName': groupName},
-                                                    context=self.portal.REQUEST)
+        previous_row_not_same_group_msg = translate(
+            'custom_adviser_can_not_is_linked_to_previous_row_with_other_group',
+            domain='PloneMeeting',
+            mapping={'groupName': groupName},
+            context=self.portal.REQUEST)
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           previous_row_not_same_group_msg)
 
@@ -949,9 +954,9 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # check that we can not select several times same meeting config to clone to
         values = ({'meeting_config': '%s' % cfg2Id,
-                   'trigger_workflow_transitions_until': '__nothing__'},
+                   'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},
                   {'meeting_config': '%s' % cfg2Id,
-                   'trigger_workflow_transitions_until': '__nothing__'})
+                   'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL})
         two_rows_error_msg = _('can_not_define_two_rows_for_same_meeting_config')
         self.assertTrue(cfg.validate_meetingConfigsToCloneTo(values) == two_rows_error_msg)
 

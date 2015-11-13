@@ -262,6 +262,8 @@ DEFAULT_LIST_TYPES = [
     {'identifier': 'late', 'label': 'late'}
 ]
 
+NO_TRIGGER_WF_TRANSITION_UNTIL = '__nothing__'
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

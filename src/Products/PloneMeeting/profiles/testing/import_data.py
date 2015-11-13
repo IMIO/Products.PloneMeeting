@@ -19,6 +19,7 @@
 # 02110-1301, USA.
 
 from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.profiles import CategoryDescriptor
 from Products.PloneMeeting.profiles import GroupDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
@@ -292,7 +293,7 @@ meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',
-                                       'trigger_workflow_transitions_until': '__nothing__'}, ]
+                                       'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ]
 
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(

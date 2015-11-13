@@ -40,6 +40,7 @@ from imio.helpers.cache import cleanRamCacheFor
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
+from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -669,7 +670,7 @@ class testMeeting(PloneMeetingTestCase):
         cfg2Id = self.meetingConfig2.getId()
         self.assertTrue(self.meetingConfig.getMeetingConfigsToCloneTo(),
                         ({'meeting_config': '%s' % cfg2Id,
-                          'trigger_workflow_transitions_until': '__nothing__'}, ))
+                          'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.changeUser('pmManager')
         self._removeConfigObjectsFor(self.meetingConfig)
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
@@ -696,8 +697,9 @@ class testMeeting(PloneMeetingTestCase):
     def test_pm_InsertItemOnCategoriesThenOnToOtherMCToCloneTo(self):
         '''Sort method tested here is "on_categories" then "on_other_mc_to_clone_to".'''
         # use meetingConfig2 for wich categories are configured
-        self.meetingConfig2.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig.getId(),
-                                                         'trigger_workflow_transitions_until': '__nothing__'}, ))
+        self.meetingConfig2.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % self.meetingConfig.getId(),
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_categories',
                                                            'reverse': '0'},
                                                           {'insertingMethod': 'on_other_mc_to_clone_to',
@@ -706,7 +708,7 @@ class testMeeting(PloneMeetingTestCase):
         cfg1Id = self.meetingConfig.getId()
         self.assertTrue(self.meetingConfig2.getMeetingConfigsToCloneTo(),
                         ({'meeting_config': cfg1Id,
-                          'trigger_workflow_transitions_until': '__nothing__'}, ))
+                          'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.changeUser('pmManager')
         self._removeConfigObjectsFor(self.meetingConfig)
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))

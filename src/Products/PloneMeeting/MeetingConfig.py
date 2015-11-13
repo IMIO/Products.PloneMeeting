@@ -2630,7 +2630,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if mctct.get('orderindex_', None) == 'template_row_marker':
                 continue
             # first make sure the selected transition correspond to the selected meeting_config
-            if not mctct['trigger_workflow_transitions_until'] == '__nothing__' and \
+            if not mctct['trigger_workflow_transitions_until'] == NO_TRIGGER_WF_TRANSITION_UNTIL and \
                not mctct['trigger_workflow_transitions_until'].startswith(mctct['meeting_config']):
                 return translate('transition_not_from_selected_meeting_config',
                                  domain='PloneMeeting',
@@ -3639,9 +3639,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            This will let us set an item cloned to another meetingConfig to any state until 'presented'.
            We list every item transitions of every available meetingConfigs.'''
         # we do not use an empty '' but '__nothing__' because of a bug in DataGridField SelectColumn...
-        res = [('__nothing__', translate('let_item_in_initial_state',
-                                         domain='PloneMeeting',
-                                         context=self.REQUEST)), ]
+        res = [(NO_TRIGGER_WF_TRANSITION_UNTIL,
+                translate('let_item_in_initial_state',
+                          domain='PloneMeeting',
+                          context=self.REQUEST)), ]
         tool = getToolByName(self, 'portal_plonemeeting')
         for cfg in tool.getActiveConfigs():
             # only show other meetingConfigs than self

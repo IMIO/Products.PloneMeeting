@@ -25,6 +25,7 @@
 from OFS.ObjectManager import BeforeDeleteException
 
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -75,8 +76,9 @@ class testMeetingCategory(PloneMeetingTestCase):
         # still not enough...
         self.assertTrue(not aCatInMC2.listCategoriesOfOtherMCs())
         # ... we must also specify that elements of self.meetingConfig2 can be sent to self.meetingConfig
-        self.meetingConfig2.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig.getId(),
-                                                        'trigger_workflow_transitions_until': '__nothing__'}, ))
+        self.meetingConfig2.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % self.meetingConfig.getId(),
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.assertTrue(aCatInMC2.listCategoriesOfOtherMCs())
 
     def test_pm_Validate_categoryMappingsWhenCloningToOtherMC(self):

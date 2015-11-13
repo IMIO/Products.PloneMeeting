@@ -43,6 +43,7 @@ from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
+from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
@@ -210,7 +211,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # ok, activate it and send it!
         self.changeUser('admin')
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
-                                         'trigger_workflow_transitions_until': '__nothing__'}, ))
+                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         cfg.at_post_edit_script()
         self.assertTrue(item.isClonableToOtherMeetingConfigs())
         self.changeUser('pmManager')
@@ -314,8 +315,9 @@ class testMeetingItem(PloneMeetingTestCase):
         #... nor in portal_actionicons
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
         # let's activate the functionnality again and test
-        self.meetingConfig.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
-                                                        'trigger_workflow_transitions_until': '__nothing__'}, ))
+        self.meetingConfig.setMeetingConfigsToCloneTo(
+            ({'meeting_config': otherMeetingConfigId,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.meetingConfig.at_post_edit_script()
         # an action is created
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
@@ -568,7 +570,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(newItem.queryState() == item_initial_state)
         self.assertTrue(cfg.getMeetingConfigsToCloneTo() ==
                         ({'meeting_config': '%s' % self.meetingConfig2.getId(),
-                          'trigger_workflow_transitions_until': '__nothing__'},))
+                          'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         # remove the items and define that we want the item to be 'validated' when sent
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig2.getId(),
                                          'trigger_workflow_transitions_until': '%s.%s' %
