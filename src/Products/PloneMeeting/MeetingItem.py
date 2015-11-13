@@ -1088,7 +1088,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getPrettyLink')
     def getPrettyLink(self):
         """Return the IPrettyLink version of the title."""
-        return IPrettyLink(self).getLink()
+        adapted = IPrettyLink(self)
+        adapted.showContentIcon = True
+        return adapted.getLink()
 
     security.declarePublic('getMotivation')
     def getMotivation(self, **kwargs):
@@ -4644,21 +4646,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def displayLinkedItem(self, item):
         '''Return a HTML structure to display a linked item.'''
         tool = getToolByName(self, 'portal_plonemeeting')
-        meeting = item.getMeeting()
+        meeting = item.hasMeeting()
         # display the meeting date if the item is linked to a meeting
         if meeting:
             title = item.Title(withMeetingDate=True)
         else:
             title = item.Title()
         title = safe_unicode(title)
-        # show the meetingConfig type of the linked item, no matter
-        # it is from same portal_type of current item or not
-        title = u"<img src='{0}' title='{1}' />&nbsp;{2}".format(item.getIcon(),
-                                                                 translate(item.portal_type,
-                                                                           domain='plone',
-                                                                           context=self.REQUEST),
-                                                                 title)
-        return tool.getColoredLink(item, showColors=True, contentValue=title)
+        return tool.getColoredLink(item,
+                                   showColors=True,
+                                   showContentIcon=True,
+                                   contentValue=title)
 
     security.declarePrivate('downOrUpWorkflowAgain')
     def downOrUpWorkflowAgain(self):

@@ -644,6 +644,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         adapted = IPrettyLink(self)
         tool = api.portal.get_tool('portal_plonemeeting')
         adapted.contentValue = tool.formatMeetingDate(self, withHour=True, prefixed=True)
+        adapted.showContentIcon = True
         return adapted.getLink()
 
     security.declarePublic('getRawQuery')

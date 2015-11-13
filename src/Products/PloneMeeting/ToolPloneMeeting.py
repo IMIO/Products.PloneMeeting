@@ -924,7 +924,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getColoredLink')
-    def getColoredLink(self, obj, showColors=True, showIcon=False, contentValue='',
+    def getColoredLink(self, obj, showColors=True, showContentIcon=False, contentValue='',
                        target='_self', maxLength=0, inMeeting=True,
                        meeting=None, appendToUrl='', additionalCSSClasses='',
                        tag_title=None, annexInfo=False):
@@ -954,7 +954,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         adapted = IPrettyLink(obj)
         adapted.showColors = showColors
-        adapted.showContentIcon = showIcon
+        adapted.showContentIcon = showContentIcon
         adapted.contentValue = contentValue
         adapted.target = target
         adapted.maxLength = maxLength
