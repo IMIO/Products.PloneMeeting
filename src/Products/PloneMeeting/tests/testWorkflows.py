@@ -139,8 +139,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 1)
         # Now, remove things in the good order. Remove the item and check
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
-        self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
+        self.deleteAsManager(item.UID())
         self.changeUser('pmManager')
         self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 0)
         self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 1)

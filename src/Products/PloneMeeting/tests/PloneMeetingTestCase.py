@@ -298,6 +298,14 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         self.assertNotEquals(theAnnex.size(), 0)
         return theAnnex
 
+    def deleteAsManager(self, uid):
+        """When we want to remove an item the current user does not have permission to,
+           but we are not testing delete permission, do it as a 'Manager'."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        self.portal.restrictedTraverse('@@delete_givenuid')(uid)
+        self.changeUser(currentUser)
+
     def cleanMemoize(self):
         """
           Remove every memoized informations

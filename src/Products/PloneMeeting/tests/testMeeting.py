@@ -773,8 +773,7 @@ class testMeeting(PloneMeetingTestCase):
         # delete a linked item
         item4 = getattr(meeting, 'o4')
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
-        self.changeUser('admin')
-        meeting.restrictedTraverse('@@delete_givenuid')(item4.UID())
+        self.deleteAsManager(item4.UID())
         self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
                           ['recItem1', 'recItem2', 'o3', 'o2', 'o6'])
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
@@ -1343,9 +1342,7 @@ class testMeeting(PloneMeetingTestCase):
         # if trying to remove a meeting containing items as non Manager, it will raise Unauthorized
         self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), meeting.UID())
         # as a Manager, the meeting including items will be removed
-        self.changeUser('admin')
-        # now if we remove the meeting, every items will be removed as well
-        meeting.restrictedTraverse('@@delete_givenuid')(meeting.UID())
+        self.deleteAsManager(meeting.UID())
         # nothing left in the folder but the searches_* folders
         self.assertFalse([folderId for folderId in meetingParentFolder.objectIds()
                           if not folderId.startswith('searches_')])

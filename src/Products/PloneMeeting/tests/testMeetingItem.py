@@ -252,9 +252,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # if we remove the newItem, the reference in the original item annotation is removed
         # and the original item is sendable again
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
-        self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
-        self.changeUser('pmManager')
+        self.deleteAsManager(newUID)
         self.failIf(annotationKey in annotations)
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # An item is automatically sent to the other meetingConfigs when it is 'accepted'
@@ -280,13 +278,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals([action['action'] for action in newItem.workflow_history[itemWorkflow]],
                           [None, 'create_to_%s_from_%s' % (otherMeetingConfigId, meetingConfigId)])
         # now check that the item is sent to another meetingConfig for each
-        # item.itemPositiveDecidedStates() state
+        # cfg.getItemAutoSentToOtherMCStates() state
         # by default, the only positive state is 'accepted'
         for state in cfg.getItemAutoSentToOtherMCStates():
             # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
-            self.changeUser('admin')
-            self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
-            self.changeUser('pmManager')
+            self.deleteAsManager(newUID)
             self.do(item, 'backToItemFrozen')
             self.failIf(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
             self.assertFalse(item.getItemClonedToOtherMC(otherMeetingConfigId))
@@ -575,11 +571,9 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig2.getId(),
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (self.meetingConfig2.getId(), 'validate')},))
-        self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
-        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
-        self.changeUser('pmManager')
+        self.deleteAsManager(originalItem.UID())
 
         # if it fails to trigger transitions until defined one, we have a portal_message
         # and the newItem is not in the required state
@@ -604,11 +598,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                                           'reverse': '0'}, ))
         # remove items and try again
-        self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
-        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
-        self.changeUser('pmManager')
+        self.deleteAsManager(originalItem.UID())
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         self.assertTrue(newItem.queryState() == 'validated')
@@ -617,11 +609,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # to next available meeting in it's initial_state
         # first, if no meeting available, newItem will stop to previous
         # state, aka 'validated' and a status message is added
-        self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
-        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
-        self.changeUser('pmManager')
+        self.deleteAsManager(originalItem.UID())
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig2.getId(),
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (self.meetingConfig2.getId(), 'present')},))
@@ -648,11 +638,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.create('Meeting',
                     date=DateTime('2008/06/12 08:00:00'),
                     meetingConfig=self.meetingConfig2)
-        self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
-        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
-        self.changeUser('pmManager')
+        self.deleteAsManager(originalItem.UID())
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # the item could not be presented
@@ -662,11 +650,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.create('Meeting',
                     date=futureDate,
                     meetingConfig=self.meetingConfig2)
-        self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
-        self.portal.restrictedTraverse('@@delete_givenuid')(originalItem.UID())
-        self.changeUser('pmManager')
+        self.deleteAsManager(originalItem.UID())
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # the item could not be presented
@@ -725,7 +711,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # now ask emergency on item and send it again
         # it will be presented to the frozenMeeting
-        self.portal.restrictedTraverse('@@delete_givenuid')(sentItem.UID())
+        self.deleteAsManager(sentItem.UID())
         item.setOtherMeetingConfigsClonableToEmergency((cfg2.getId(),))
         item.cloneToOtherMeetingConfig(cfg2Id)
         item.getItemClonedToOtherMC(cfg2Id)
@@ -735,7 +721,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # if emergency is asked, the item is presented to the next
         # available meeting, no matter it's state, so if it is a 'created'
         # meeting, it is presented into it
-        self.portal.restrictedTraverse('@@delete_givenuid')(sentItem.UID())
+        self.deleteAsManager(sentItem.UID())
         # before frozenMeeting
         createdMeeting.setDate(now+1)
         createdMeeting.reindexObject(idxs=['getDate'])
@@ -745,7 +731,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(sentItem.getMeeting(), createdMeeting)
 
         # only presented in a meeting in the future
-        self.portal.restrictedTraverse('@@delete_givenuid')(sentItem.UID())
+        self.deleteAsManager(sentItem.UID())
         createdMeeting.setDate(now-1)
         createdMeeting.reindexObject(idxs=['getDate'])
         item.cloneToOtherMeetingConfig(cfg2Id)
@@ -773,9 +759,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                                                   catIdOfMC2Mapped), ))
         # delete newItem and send originalItem again
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
-        self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
-        self.changeUser('pmManager')
+        self.deleteAsManager(newItem.UID())
         originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
         newItem = originalItem.getBRefs('ItemPredecessor')[0].getObject()
         self.assertTrue(newItem.getCategory() == catIdOfMC2Mapped)
@@ -2819,9 +2803,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig2.setToDiscussDefault(False)
         # remove the item sent to cfg2 so we can send item again
         # use 'admin' to be sure that item will be removed
-        self.changeUser('admin')
-        self.portal.restrictedTraverse('@@delete_givenuid')(clonedItem.UID())
-        self.changeUser('pmManager')
+        self.deleteAsManager(clonedItem.UID())
         item.setToDiscuss(True)
         item.cloneToOtherMeetingConfig(cfg2Id)
         clonedItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -3170,7 +3152,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(catalog(downOrUpWorkflowAgain='up')[0].UID, itemUID)
         self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
         # insert non WF-related event
-        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        self.deleteAsManager(newItem.UID())
         item.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEquals(getLastEvent(item)['action'], clonedActionId)
         self.assertEquals(item.downOrUpWorkflowAgain(), 'up')

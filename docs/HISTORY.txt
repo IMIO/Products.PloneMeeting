@@ -102,6 +102,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   the sent item must be automatically presented in a next available meeting, make it possible to define
   emergency for the sent item so it can be inserted in a meeting in the future that is no more in 'created' state.
   Added also relevant leading icons to show an item 'to send' with emergency
+- Added possibility to manually clone an item to another config.  It is now possible to define states in
+  which an item may be sent manually and states in which an item will be sent automatically
 
 3.3 (2015-02-27)
 ----------------
@@ -260,8 +262,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed properties 'meetingRole' and 'meetingGroupId' from Plone groups created when adding
   a MeetingGroup, we use MEETINGROLES and MEETING_GROUP_SUFFIXES now
 - Highlight lines that are empty at the end of a rich text field on the meeting and item view
-- Added possibility to manually clone an item to another config.  It is now possible to define states in
-  which an item may be sent manually and states in which an item will be sent automatically
 
 3.2.0.1 (2014-03-06)
 --------------------
