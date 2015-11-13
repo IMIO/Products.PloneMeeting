@@ -41,6 +41,19 @@ class Migrator(BaseMigrator):
             self.cfgsAdvicesInvalidation[cfg.getId()] = cfg.getEnableAdviceInvalidation()
             cfg.setEnableAdviceInvalidation(False)
 
+    def upgradeDependencies(self):
+        """Upgrade every dependencies."""
+        self.upgradeProfile(u'collective.ckeditor:default')
+        self.upgradeProfile(u'collective.documentviewer:default')
+        self.upgradeProfile(u'collective.iconifieddocumentactions:default')
+        self.upgradeProfile(u'collective.js.fancytree:default')
+        self.upgradeProfile(u'collective.js.iframeresizer:default')
+        self.upgradeProfile(u'communesplone.layout:default')
+        self.upgradeProfile(u'plonetheme.imioapps:plonemeetingskin')
+        self.upgradeProfile(u'Products.DataGridField:default')
+        self.upgradeProfile(u'Products.PasswordStrength:default')
+        self.upgradeProfile(u'Products.cron4plone:default')
+
     def run(self):
         '''Must be overridden. This method does the migration job.'''
         raise 'You should have overridden me darling.'''

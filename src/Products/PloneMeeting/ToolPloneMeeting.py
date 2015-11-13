@@ -48,8 +48,9 @@ from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from plone.memoize import ram
+from plone import api
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
-from Products.CMFCore.utils import getToolByName, _checkPermission
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.ATContentTypes import permission as ATCTPermissions
@@ -420,7 +421,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                This returns an item_url if the date is already in use, nothing otherwise.'''
             # we are setting another field, it is not permitted if
             # the rule is in use, check every items if the rule is used
-            catalog = getToolByName(self, 'portal_catalog')
+            catalog = api.portal.get_tool('portal_catalog')
             cfgs = self.objectValues('MeetingConfig')
             brains = catalog(Type=[cfg.getItemTypeName() for cfg in cfgs])
             year, month, day = date.split('/')
@@ -593,7 +594,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the folder, within the member area, that corresponds to
            p_meetingConfigId. If this folder and its parent folder ("My
            meetings" folder) do not exist, they are created.'''
-        portal = getToolByName(self, 'portal_url').getPortalObject()
+        portal = api.portal.get_tool('portal_url').getPortalObject()
         home_folder = portal.portal_membership.getHomeFolder(userId)
         if home_folder is None:  # Necessary for the admin zope user
             return portal
@@ -664,7 +665,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             mu.setUsages(oldUsages)
             mu.reindexObject()
         # manage MeetingManagers
-        groupsTool = getToolByName(self, 'portal_groups')
+        groupsTool = api.portal.get_tool('portal_groups')
         for userId in configData.meetingManagers:
             groupsTool.addPrincipalToGroup(userId, '{0}_{1}'.format(cfg.getId(),
                                                                     MEETINGMANAGERS_GROUP_SUFFIX))
@@ -676,7 +677,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def createMeetingConfigFolder(self, meetingConfigId, userId):
         '''Creates, within the "My meetings" folder, the sub-folder
            corresponding to p_meetingConfigId'''
-        portal = getToolByName(self, 'portal_url').getPortalObject()
+        portal = api.portal.get_tool('portal_url').getPortalObject()
         root_folder = getattr(portal.portal_membership.getHomeFolder(userId),
                               ROOT_FOLDER)
         cfg = getattr(self, meetingConfigId)
@@ -834,10 +835,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Is the current user a 'MeetingManager' on context?  If p_realManagers is True,
            only returns True if user has role Manager/Site Administrator, either
            (by default) MeetingManager is also considered as a 'Manager'?'''
-        user = self.portal_membership.getAuthenticatedMember()
-        return user.has_role('Manager', context) or \
-            user.has_role('Site Administrator', context) or \
-            (not realManagers and user.has_role('MeetingManager', context))
+        membershipTool = api.portal.get_tool('portal_membership')
+        user = membershipTool.getAuthenticatedMember()
+        userRoles = user.getRolesInContext(context)
+        return 'Manager' in userRoles or \
+            'Site Administrator' in userRoles or \
+            (not realManagers and 'MeetingManager' in userRoles)
 
     def isPowerObserverForCfg_cachekey(method, self, cfg, isRestricted=False):
         '''cachekey method for self.isPowerObserverForCfg.'''
@@ -898,7 +901,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getUser')
     def getUser(self, userId=None):
         '''Returns the Zope User object for user having p_userId.'''
-        membershipTool = getToolByName(self, 'portal_membership')
+        membershipTool = api.portal.get_tool('portal_membership')
         if not userId:
             return membershipTool.getAuthenticatedMember()
         else:
@@ -1002,7 +1005,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         objectUid = self.REQUEST.get('objectUid')
         mailingList = self.REQUEST.get('mailingList', None)
         facetedQuery = self.REQUEST.get('facetedQuery', None)
-        catalog = getToolByName(self, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=objectUid)
         if not brains:
             # The object for which the document must be generated has been
@@ -1039,7 +1042,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 response = self.REQUEST.RESPONSE
                 # Set a correct name for the returned file.
-                mr = getToolByName(self, 'mimetypes_registry')
+                mr = api.portal.get_tool('mimetypes_registry')
                 mimetype = mr.lookup(doc.content_type)[0]
                 response.setHeader('Content-Type', mimetype.normalized())
                 response.setHeader('Content-Disposition',
@@ -1219,7 +1222,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not newOwnerId:
             # The new owner will become the currently logged user
             newOwnerId = loggedUserId
-        wftool = getToolByName(self, 'portal_workflow')
+        wftool = api.portal.get_tool('portal_workflow')
         res = []
         i = -1
         for itemId in pasteResult:
@@ -1294,7 +1297,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                IAnnexable(newItem).getAnnexes() and \
                not destMeetingConfig.getFileTypes():
                 noMeetingFileTypes = True
-                plone_utils = getToolByName(self, 'plone_utils')
+                plone_utils = api.portal.get_tool('plone_utils')
                 msg = translate('annexes_not_kept_because_no_available_mft_warning',
                                 mapping={'cfg': safe_unicode(destMeetingConfig.Title())},
                                 domain='PloneMeeting',
@@ -1380,7 +1383,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mcFromMftUID = annex.getMeetingFileType()
         isSubType = bool('__subtype__' in mcFromMftUID)
         # get the MeetingFileType
-        uid_catalog = getToolByName(self, 'uid_catalog')
+        uid_catalog = api.portal.get_tool('uid_catalog')
         row_id = None
         if isSubType:
             mcFromMftUID, row_id = mcFromMftUID.split('__subtype__')
@@ -1508,8 +1511,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            tool based on p_groups which is a list of GroupDescriptor instances.
            if p_usersOutsideGroups is not empty, it is a list of UserDescriptor
            instances that will serve to create the corresponding Plone users.'''
-        plone_utils = getToolByName(self, 'plone_utils')
-        groupsTool = getToolByName(self, 'portal_groups')
+        plone_utils = api.portal.get_tool('plone_utils')
+        groupsTool = api.portal.get_tool('portal_groups')
         # if we are in dev, we use DEFAULT_USER_PASSWORD, else we will generate a
         # password that is compliant with the current password policy...
         if is_develop_environment():
@@ -1624,7 +1627,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def findSecondLanguage(self):
         '''The second language used is the second language in portal_languages.supported_langs
            that is not the defaultLanguage considered as the 'first language'.'''
-        languagesTool = getToolByName(self, 'portal_languages')
+        languagesTool = api.portal.get_tool('portal_languages')
         supported_langs = languagesTool.getSupportedLanguages()
         res = None
         if len(supported_langs) == 2:
@@ -1676,7 +1679,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         user = self.portal_membership.getAuthenticatedMember()
         if not user.has_role('Manager'):
             raise Unauthorized
-        catalog = getToolByName(self, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         # update items and advices
         brains = catalog(meta_type=('MeetingItem', ))
         brains = brains + catalog(portal_type=('meetingadvice', ))
@@ -1705,7 +1708,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.plone_utils.addPortalMessage(msg, 'warning')
         else:
             from Products.PloneMeeting.MeetingFile import convertToImages
-            catalog = getToolByName(self, 'portal_catalog')
+            catalog = api.portal.get_tool('portal_catalog')
             # update annexes in items and advices
             for brain in catalog(meta_type='MeetingItem') + catalog(portal_type='meetingadvice'):
                 obj = brain.getObject()
@@ -1728,7 +1731,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Update adviceIndex for every items.
            If a p_query is given, it will be used by the portal_catalog query
            we do to restrict update of advices to some subsets of items...'''
-        catalog = getToolByName(self, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         if 'meta_type' not in query:
             query['meta_type'] = 'MeetingItem'
         brains = catalog(**query)
@@ -1750,7 +1753,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            and PowerObservers for every meetings and items.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
-        catalog = getToolByName(self, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(meta_type=('Meeting', 'MeetingItem'))
         numberOfBrains = len(brains)
         i = 1
