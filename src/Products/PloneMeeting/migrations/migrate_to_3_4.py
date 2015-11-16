@@ -404,10 +404,14 @@ class Migrate_To_3_4(Migrator):
         brains = self.portal.portal_catalog(meta_type='Meeting')
         for brain in brains:
             meeting = brain.getObject()
+            check_already_migrated = False
             for item in meeting.getItems(ordered=True):
-                # already migrated?
-                if item.getItemNumber() == 100:
-                    break
+                # already migrated? check first number
+                if not check_already_migrated and item.getItemNumber() == 100:
+                    logger.info('Done.')
+                    return
+                else:
+                    check_already_migrated = True
                 item.setItemNumber(item.getItemNumber() * 100)
                 item.reindexObject(idxs=['getItemNumber', ])
         logger.info('Done.')
