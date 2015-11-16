@@ -1211,11 +1211,13 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         itemNumberIsSubnumber = not _is_integer(itemNumber) or bool(self.getItemByNumber(itemNumber + 1))
         for anItem in items:
             anItemNumber = anItem.getItemNumber()
-            if anItemNumber > itemNumber and \
-               (not itemNumberIsSubnumber or (itemNumberIsSubnumber and
-                                              _use_same_integer(itemNumber, anItemNumber))):
-                anItem.setItemNumber(anItem.getItemNumber() - _compute_value_to_add(anItemNumber))
-                anItem.reindexObject(idxs=['getItemNumber', ])
+            if anItemNumber > itemNumber:
+                if not itemNumberIsSubnumber:
+                    anItem.setItemNumber(anItem.getItemNumber() - 100)
+                    anItem.reindexObject(idxs=['getItemNumber', ])
+                elif itemNumberIsSubnumber and _use_same_integer(itemNumber, anItemNumber):
+                    anItem.setItemNumber(anItem.getItemNumber() - _compute_value_to_add(anItemNumber))
+                    anItem.reindexObject(idxs=['getItemNumber', ])
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # meeting is considered modified

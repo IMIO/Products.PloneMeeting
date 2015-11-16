@@ -823,6 +823,34 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 300])
 
+    def test_pm_RemoveItemWithSubnumbersRemovedItemBeforeSubnumbers(self):
+        '''Test removing items using subnumbers if removed item is before items with subnumbers.
+           So we will have 100, 200, 300, 301, 302, 400, 500 and we will remove 200.'''
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        item1, item2, item3, item4, item5, item6, item7 = meeting.getItems(ordered=True)
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 300, 400, 500, 600, 700])
+
+        # create 301 and 302
+        # move 400 to 301
+        self.assertEquals(item4.getItemNumber(), 400)
+        view = item4.restrictedTraverse('@@change-item-order')
+        view('number', '3.1')
+        self.assertEquals(item4.getItemNumber(), 301)
+        # move new 400 to 302
+        self.assertEquals(item5.getItemNumber(), 400)
+        view = item5.restrictedTraverse('@@change-item-order')
+        view('number', '3.2')
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 300, 301, 302, 400, 500])
+
+        # no remove item with number 200
+        self.assertEquals(item2.getItemNumber(), 200)
+        self.do(item2, 'backToValidated')
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 201, 202, 300, 400])
+
     def test_pm_MeetingNumbers(self):
         '''Tests that meetings receive correctly their numbers from the config
            when they are published.'''
