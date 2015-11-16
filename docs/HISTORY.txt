@@ -105,6 +105,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   Added also relevant leading icons to show an item 'to send' with emergency
 - Added possibility to manually clone an item to another config.  It is now possible to define states in
   which an item may be sent manually and states in which an item will be sent automatically
+- Added adaptable method MeetingItem._isViewableByPowerObservers that makes it possible to refine
+  (restricted) power observers access to an item in addition to
+  check on MeetingConfig.item(Restricted)PowerObserversStates
 
 3.3 (2015-02-27)
 ----------------

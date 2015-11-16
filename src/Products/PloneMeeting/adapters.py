@@ -240,8 +240,8 @@ class AnnexableAdapter(object):
         # if confidentiality is used and annex is marked as confidential,
         # annexes could be hidden to power observers and/or restricted power observers
         if cfg.getEnableAnnexConfidentiality() and annexInfo['isConfidential'] and \
-           ((isPowerObserver and 'power_observers' in cfg.getAnnexConfidentialFor()) or
-           (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAnnexConfidentialFor())):
+            ((isPowerObserver and 'power_observers' in cfg.getAnnexConfidentialFor()) or
+             (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAnnexConfidentialFor())):
             return False
         return True
 
@@ -374,7 +374,8 @@ class AnnexableAdapter(object):
           Status can be :
           - not_convertable : the MeetingFile is not convertable by collective.documentviewer
           - under_conversion : or awaiting conversion, the MeetingFile is convertable but is not yet converted
-          - conversion_error : there was an error during MeetingFile conversion.  Manager have access in the UI to more infos
+          - conversion_error : there was an error during MeetingFile conversion.
+                               Manager have access in the UI to more infos.
           - successfully_converted : the MeetingFile is converted correctly
         """
         annotations = IAnnotations(self.context)

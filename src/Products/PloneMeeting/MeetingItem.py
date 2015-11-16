@@ -4094,22 +4094,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def updatePowerObserversLocalRoles(self):
         '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
            to the corresponding MeetingConfig 'powerobservers/restrictedpowerobservers' group.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
         # First, remove 'power observer' local roles granted to (restricted) powerobservers.
-        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove=READER_USECASES['powerobservers'],
-                                                          suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
-        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove=READER_USECASES['restrictedpowerobservers'],
-                                                          suffixes=[RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX, ])
+        tool.removeGivenLocalRolesFor(self,
+                                      role_to_remove=READER_USECASES['powerobservers'],
+                                      suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
+        tool.removeGivenLocalRolesFor(self,
+                                      role_to_remove=READER_USECASES['restrictedpowerobservers'],
+                                      suffixes=[RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX, ])
         # Then, add local roles for powerobservers.
         itemState = self.queryState()
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
-        if itemState in cfg.getItemPowerObserversStates():
+        cfg = tool.getMeetingConfig(self)
+        if itemState in cfg.getItemPowerObserversStates() and self.adapted()._isViewableByPowerObservers():
             powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
             self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
-        if itemState in cfg.getItemRestrictedPowerObserversStates():
+        if itemState in cfg.getItemRestrictedPowerObserversStates() and \
+           self.adapted()._isViewableByPowerObservers(restrictedPowerObservers=True):
             restrictedPowerObserversGroupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
             self.manage_addLocalRoles(restrictedPowerObserversGroupId, (READER_USECASES['restrictedpowerobservers'],))
+
+    def _isViewableByPowerObservers(self, restrictedPowerObservers=False):
+        '''See doc in interfaces.py.'''
+        return True
 
     def updateBudgetImpactEditorsLocalRoles(self):
         '''Configure local role for use case 'budget_impact_reviewers' to the corresponding
