@@ -225,3 +225,27 @@ class PloneMeetingTestingHelpers:
             # we are using meetingConfig2
             return 2
         return 1
+
+    def _removeAllMembers(self, group, members):
+        """Allow to remove all members from a group.
+           Overrided to do it as 'Manager' to be able not
+           to change permissions ever lines"""
+        from plone.app.testing.helpers import setRoles
+        currentMember = self.portal.portal_membership.getAuthenticatedMember()
+        currentMemberRoles = currentMember.getRoles()
+        setRoles(self.portal, currentMember.getId(), currentMemberRoles + ['Manager', ])
+        for member in members:
+            group.removeMember(member)
+        setRoles(self.portal, currentMember.getId(), currentMemberRoles)
+
+    def _addAllMembers(self, group, members):
+        """Allow to add again all the members from a group.
+           Overrided to do it as 'Manager' to be able not
+           to change permissions ever lines"""
+        from plone.app.testing.helpers import setRoles
+        currentMember = self.portal.portal_membership.getAuthenticatedMember()
+        currentMemberRoles = currentMember.getRoles()
+        setRoles(self.portal, currentMember.getId(), currentMemberRoles + ['Manager', ])
+        for member in members:
+            group.addMember(member)
+        setRoles(self.portal, currentMember.getId(), currentMemberRoles)

@@ -114,6 +114,14 @@ class MeetingItemWorkflowConditions:
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
+    def _groupIsNotEmpty(self, suffix):
+        '''Is there any user in the group?'''
+        groupId = self.context.getProposingGroup()
+        group = groupId + '_' + suffix
+        pg = api.portal.get_tool('portal_groups')
+        if pg.getGroupById(group).getGroupMemberIds():
+            return True
+
     security.declarePublic('mayPropose')
     def mayPropose(self):
         '''We may propose an item if the workflow permits it and if the

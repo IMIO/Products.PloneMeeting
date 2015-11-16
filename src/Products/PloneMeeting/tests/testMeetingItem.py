@@ -3163,6 +3163,18 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
         self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
 
+    def test_pm_groupIsNotEmpty(self):
+        '''Test the groupIsNotEmpty method.'''
+        pg = self.portal.portal_groups
+        dcGroup = pg.getGroupById('developers_creators')
+        dcMembers = dcGroup.getMemberIds()
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setCategory('development')
+        self.assertTrue(item.wfConditions()._groupIsNotEmpty('creators'))
+        self._removeAllMembers(dcGroup, dcMembers)
+        self.assertFalse(item.wfConditions()._groupIsNotEmpty('creators'))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
