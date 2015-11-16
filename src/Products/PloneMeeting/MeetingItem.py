@@ -3977,10 +3977,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([user.getId()])
         self.manage_addLocalRoles(user.getId(), ('Owner',))
         self.updateLocalRoles()
-        # Update '(restricted) power observers' and 'budget impact reviewers' local roles given to the
-        # corresponding MeetingConfig powerobsevers/budgetimpacteditors group in case the 'initial_wf_state'
-        # is selected in MeetingConfig.itemPowerObserversStates or MeetingConfig.itemBudgetInfosStates
-        self.updatePowerObserversLocalRoles()
+        # Update 'budget impact reviewers' local roles given to the
+        # corresponding MeetingConfig budgetimpacteditors group in case the 'initial_wf_state'
+        # is selected in MeetingConfig.itemBudgetInfosStates
         self.updateBudgetImpactEditorsLocalRoles()
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
@@ -4068,6 +4067,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Update advices after updateLocalRoles because updateLocalRoles
         # reinitialize existing local roles
         self.updateAdvices(invalidate=self.willInvalidateAdvices())
+        # Update '(restricted) power observers' local roles given to the
+        # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
+        # is selected in MeetingConfig.item(Restricted)PowerObserversStates
+        # we do this each time the element is edited because of the MeetingItem._isViewableByPowerObservers
+        # method that could change access of power observers depending on a particular value
+        self.updatePowerObserversLocalRoles()
 
     security.declarePublic('updateCopyGroupsLocalRoles')
     def updateCopyGroupsLocalRoles(self):
