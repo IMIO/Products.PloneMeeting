@@ -114,7 +114,25 @@ class ChangeItemOrderView(BrowserView):
             if (moveType == 'down' and self.context == items[-1]) or \
                (moveType == 'up' and self.context == items[0]):
                 self.context.plone_utils.addPortalMessage(
-                    translate(msgid='item_illegal_move',
+                    translate(msgid='item_illegal_switch',
+                              domain='PloneMeeting',
+                              context=self.request),
+                    type='warning')
+                return
+            # 'down' or 'up' may not switch an integer and a subnumber
+            currentIsInteger = _is_integer(self.context.getItemNumber())
+            illegal_swtich = False
+            if moveType == 'down':
+                nextIsInteger = _is_integer(self.context.getSiblingItemNumber('next'))
+                if (currentIsInteger and not nextIsInteger) or (not currentIsInteger and nextIsInteger):
+                    illegal_swtich = True
+            elif moveType == 'up':
+                previousIsInteger = _is_integer(self.context.getSiblingItemNumber('previous'))
+                if (currentIsInteger and not previousIsInteger) or (not currentIsInteger and previousIsInteger):
+                    illegal_swtich = True
+            if illegal_swtich:
+                self.context.plone_utils.addPortalMessage(
+                    translate(msgid='item_illegal_switch',
                               domain='PloneMeeting',
                               context=self.request),
                     type='warning')

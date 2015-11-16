@@ -93,6 +93,49 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item6.getItemNumber(), 600)
         self.assertEquals(item7.getItemNumber(), 700)
 
+    def test_pm_ChangeItemOrderMoveUpDownWithSubnumbers(self):
+        '''Test the ChangeItemOrderView :
+           - we may change subnumbers between them up/down but not between interger and subnumbers.'''
+        self.changeUser('pmManager')
+        meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
+        # move 300 to 201 and 400 to 202
+        view = item3.restrictedTraverse('@@change-item-order')
+        view('number', '2.1')
+        view = item4.restrictedTraverse('@@change-item-order')
+        view('number', '2.2')
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 200, 201, 202, 300, 400, 500])
+        # right, try to switch numbers 202 (item4) to 300
+        self.assertEquals(item4.getItemNumber(), 202)
+        view('down')
+        self.assertEquals(item4.getItemNumber(), 202)
+        # same while trying to change 201 with 200
+        view = item3.restrictedTraverse('@@change-item-order')
+        self.assertEquals(item3.getItemNumber(), 201)
+        view('up')
+        self.assertEquals(item3.getItemNumber(), 201)
+
+        # may not switch neither 'interger' to 'subnumber'
+        # trying to switch 300 and 202 will not change anything
+        view = item5.restrictedTraverse('@@change-item-order')
+        self.assertEquals(item5.getItemNumber(), 300)
+        view('up')
+        self.assertEquals(item5.getItemNumber(), 300)
+        # no more trying to switch 200 and 201
+        view = item2.restrictedTraverse('@@change-item-order')
+        self.assertEquals(item2.getItemNumber(), 200)
+        view('down')
+        self.assertEquals(item2.getItemNumber(), 200)
+
+        # but switching subnumbers between them works
+        # switch 201 and 202
+        view = item3.restrictedTraverse('@@change-item-order')
+        self.assertEquals(item3.getItemNumber(), 201)
+        self.assertEquals(item4.getItemNumber(), 202)
+        view('down')
+        self.assertEquals(item3.getItemNumber(), 202)
+        self.assertEquals(item4.getItemNumber(), 201)
+
     def test_pm_ChangeItemOrderMoveIntegerToInteger(self):
         '''Test while moving up or down an integer item to another
            integer position (from 4 to 2 and 2 to 6 for example).'''
@@ -526,6 +569,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
                     # if mayChangeItemsOrder is False, trying to change
                     # order will raise an Unauthorized
                     self.assertRaises(Unauthorized, view, 'up')
+                    self.assertRaises(Unauthorized, view, 'down')
 
 
 def test_suite():
