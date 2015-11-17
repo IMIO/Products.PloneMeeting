@@ -415,10 +415,11 @@ class MeetingItemWorkflowActions:
           Most of times we do nothing, but in some case, we check the old/new state and
           do some specific treatment.
         """
-        # If we go back to "validated" we must remove the item from a meeting
-        if stateChange.new_state.id == "validated":
-            # We may have to send a mail.
+        # If we go back to "validated" check if we were in a meeting
+        if stateChange.new_state.id == "validated" and self.context.hasMeeting():
+            # We may have to send a mail
             self.context.sendMailIfRelevant('itemUnpresented', 'Owner', isRole=True)
+            # remove the item from the meeting
             self.context.getMeeting().removeItem(self.context)
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
