@@ -54,6 +54,9 @@ from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 
+import logging
+logger = logging.getLogger('PloneMeeting: testing')
+
 
 class testMeetingItem(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
@@ -280,17 +283,25 @@ class testMeetingItem(PloneMeetingTestCase):
         # now check that the item is sent to another meetingConfig for each
         # cfg.getItemAutoSentToOtherMCStates() state
         # by default, the only positive state is 'accepted'
+        needToBackToFrozen = True
         for state in cfg.getItemAutoSentToOtherMCStates():
-            # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
-            self.deleteAsManager(newUID)
-            self.do(item, 'backToItemFrozen')
-            self.failIf(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
-            self.assertFalse(item.getItemClonedToOtherMC(otherMeetingConfigId))
-            self.do(item, self._getTransitionToReachState(item, state))
+            if needToBackToFrozen:
+                # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
+                self.deleteAsManager(newUID)
+                self.do(item, 'backToItemFrozen')
+                self.failIf(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
+                self.assertFalse(item.getItemClonedToOtherMC(otherMeetingConfigId))
+            transition = self._getTransitionToReachState(item, state)
+            if not transition:
+                logger.info("Could not test if item is sent to other meeting config in state '%s' !" % state)
+                needToBackToFrozen = False
+                continue
+            self.do(item, transition)
             self.failUnless(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
             self.assertTrue(item.getItemClonedToOtherMC(otherMeetingConfigId))
             self.failUnless(otherMeetingConfigId in item._getOtherMeetingConfigsImAmClonedIn())
             newUID = annotations[annotationKey]
+            needToBackToFrozen = True
 
     def test_pm_SendItemToOtherMCActions(self):
         '''Test how actions are managed in portal_actions when sendItemToOtherMC functionnality is activated.'''
