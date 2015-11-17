@@ -22,8 +22,6 @@
 # 02110-1301, USA.
 #
 
-import logging
-
 from DateTime.DateTime import DateTime
 
 from Products.CMFCore.permissions import DeleteObjects
@@ -35,6 +33,9 @@ from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED, \
     RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+
+import logging
+logger = logging.getLogger('PloneMeeting: testing')
 
 
 class testWFAdaptations(PloneMeetingTestCase):
@@ -73,7 +74,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._no_publication_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_publication')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_publication_active()
 
@@ -109,7 +109,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._no_proposal_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_proposal')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_proposal_active()
 
@@ -139,7 +138,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._pre_validation_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('pre_validation')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         # define pmManager as a prereviewer
         self._turnUserIntoPrereviewer(self.member)
@@ -179,7 +177,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._pre_validation_keep_reviewer_permissions_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('pre_validation_keep_reviewer_permissions')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         # define pmManager as a prereviewer
         self._turnUserIntoPrereviewer(self.member)
@@ -220,7 +217,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._creator_initiated_decisions_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('creator_initiated_decisions')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._creator_initiated_decisions_active()
 
@@ -246,7 +242,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._items_come_validated_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('items_come_validated')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._items_come_validated_active()
 
@@ -273,7 +268,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._archiving_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('archiving')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._archiving_active()
 
@@ -304,7 +298,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._only_creator_may_delete_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('only_creator_may_delete')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._only_creator_may_delete_active()
 
@@ -354,7 +347,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._no_global_observation_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('no_global_observation')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._no_global_observation_active()
 
@@ -464,7 +456,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._everyone_reads_all_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('everyone_reads_all')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._everyone_reads_all_active()
 
@@ -560,7 +551,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._creator_edits_unless_closed_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('creator_edits_unless_closed')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._creator_edits_unless_closed_active()
 
@@ -635,7 +625,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._return_to_proposing_group_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('return_to_proposing_group')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self.logger = logger
         # test what should happen to the wf (added states and transitions)
@@ -842,7 +831,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._hide_decisions_when_under_writing_inactive()
         # activate the wfAdaptation and check
         self.meetingConfig.setWorkflowAdaptations('hide_decisions_when_under_writing')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         self._hide_decisions_when_under_writing_active()
         # test also for the meetingConfig2 if it uses a different workflow
@@ -851,7 +839,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.meetingConfig = self.meetingConfig2
         self._hide_decisions_when_under_writing_inactive()
         self.meetingConfig.setWorkflowAdaptations('hide_decisions_when_under_writing')
-        logger = logging.getLogger('PloneMeeting: testing')
         performWorkflowAdaptations(self.portal, self.meetingConfig, logger)
         # check while the wfAdaptation is not activated
         self._hide_decisions_when_under_writing_active()
