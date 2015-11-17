@@ -608,6 +608,9 @@ function initRichTextField(rq, hook) {
     // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
     var tool = window.onbeforeunload && window.onbeforeunload.tool;
     tool.addForms.apply(tool, $('form.enableUnloadProtection').get());
+    // enable UnlockHandler so element is correctly unlocked after edit
+    plone.UnlockHandler.init()
+    
   }
 }
 function getRichTextContent(rq, params) {
