@@ -49,6 +49,7 @@ from Products.CMFCore.Expression import Expression
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.utils import safe_unicode
+from plone import api
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
@@ -713,7 +714,7 @@ schema = Schema((
         ),
         schemata="data",
         multiValued=1,
-        vocabulary='listItemStates',
+        vocabulary='listItemAutoSentToOtherMCStates',
         default=defValues.itemAutoSentToOtherMCStates,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -3672,6 +3673,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listItemStates')
     def listItemStates(self):
         return DisplayList(tuple(self.listStates('Item'))).sortedByValue()
+
+    security.declarePublic('listItemAutoSentToOtherMCStates')
+    def listItemAutoSentToOtherMCStates(self):
+        """Vocabulary for the 'itemAutoSentToOtherMCStates' field, every states excepted initial state."""
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWorkflow = getattr(wfTool, self.getItemWorkflow())
+        initialState = itemWorkflow.states[itemWorkflow.initial_state]
+        states = self.listStates('Item', excepted=initialState.id)
+        return DisplayList(tuple(states)).sortedByValue()
 
     security.declarePublic('listMeetingStates')
     def listMeetingStates(self):
