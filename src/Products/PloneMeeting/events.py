@@ -414,6 +414,5 @@ def onDashboardCollectionAdded(collection, event):
     # we update customViewFields to fit the MeetingConfig
     tool = getToolByName(collection, 'portal_plonemeeting')
     cfg = tool.getMeetingConfig(collection)
-    import ipdb; ipdb.set_trace()
     if cfg:
         cfg.updateCollectionColumns()
