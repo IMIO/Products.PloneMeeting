@@ -238,6 +238,7 @@ class AskedAdvicesVocabulary(object):
                 # if not first parent, try to get it from HTTP_REFERER
                 referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
                 referer = referer.replace('/edit', '')
+                referer = referer.replace('?pageName=gui', '')
                 context = portal.restrictedTraverse(referer)
                 if not context.portal_type == 'DashboardCollection':
                     return SimpleVocabulary(res)
@@ -306,10 +307,10 @@ class SentToInfosVocabulary(object):
                 termId = cfgId + suffix
                 res.append(SimpleTerm(termId,
                                       termId,
-                                      safe_unicode(translate('sent_to_other_mc_term' + suffix,
-                                                             mapping={'meetingConfigTitle': cfgTitle},
-                                                             domain='PloneMeeting',
-                                                             context=context.REQUEST)))
+                                      translate('sent_to_other_mc_term' + suffix,
+                                                mapping={'meetingConfigTitle': safe_unicode(cfgTitle)},
+                                                domain='PloneMeeting',
+                                                context=context.REQUEST))
                            )
         return SimpleVocabulary(res)
 

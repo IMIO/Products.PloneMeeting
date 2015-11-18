@@ -5,7 +5,7 @@
            i18n_domain="PloneMeeting">
 
   <subscriber for=".interfaces.IMeetingItem
-                   zope.container.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onItemAdded"/>
 
   <subscriber for=".interfaces.IMeetingItem
@@ -29,7 +29,7 @@
               handler=".events.onItemEditBegun"/>
 
   <subscriber for=".interfaces.IMeeting
-                   zope.container.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onMeetingAdded"/>
 
   <subscriber for=".interfaces.IMeeting
@@ -62,7 +62,7 @@
               handler=".events.onAdviceEditFinished"/>
 
   <subscriber for=".content.advice.IMeetingAdvice
-                   zope.container.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onAdviceAdded"/>
 
   <subscriber for=".content.advice.IMeetingAdvice
@@ -85,7 +85,7 @@
               handler=".MeetingFile.checkAfterConversion" />
 
   <subscriber for=".interfaces.IMeetingFile
-                   zope.container.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onAnnexAdded"/>
 
   <subscriber for=".interfaces.IMeetingFile
@@ -94,7 +94,7 @@
 
   <!-- DashboardCollection events -->
   <subscriber for="imio.dashboard.interfaces.IDashboardCollection
-                   zope.container.interfaces.IObjectAddedEvent"
+                   Products.Archetypes.interfaces.IObjectInitializedEvent"
               handler=".events.onDashboardCollectionAdded"/>
 
 </configure>
