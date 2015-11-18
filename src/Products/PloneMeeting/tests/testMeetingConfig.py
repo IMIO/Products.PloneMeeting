@@ -1209,6 +1209,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # item related collection
         newItemColId = searches.searches_items.invokeFactory('DashboardCollection', id='newItemCol')
         newItemCol = getattr(searches.searches_items, newItemColId)
+        newItemCol.processForm(values={'dummy': None})
         itemColumns = list(cfg.getItemColumns())
         for column in DEFAULT_ITEM_COLUMNS:
             itemColumns.insert(column['position'], column['name'])
@@ -1216,6 +1217,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # meeting related collection
         newMeetingColId = searches.searches_meetings.invokeFactory('DashboardCollection', id='newMeetingCol')
         newMeetingCol = getattr(searches.searches_meetings, newMeetingColId)
+        newMeetingCol.processForm(values={'dummy': None})
         meetingColumns = list(cfg.getMeetingColumns())
         for column in DEFAULT_MEETING_COLUMNS:
             meetingColumns.insert(column['position'], column['name'])
@@ -1223,6 +1225,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # decision related collection
         newDecisionColId = searches.searches_decisions.invokeFactory('DashboardCollection', id='newDecisionCol')
         newDecisionCol = getattr(searches.searches_decisions, newDecisionColId)
+        newDecisionCol.processForm(values={'dummy': None})
         self.assertEquals(newDecisionCol.getCustomViewFields(), tuple(meetingColumns))
 
 

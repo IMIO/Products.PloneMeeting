@@ -3242,6 +3242,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             container.invokeFactory('DashboardCollection', collectionId, **collectionData)
             collection = getattr(container, collectionId)
+            collection.processForm(values={'dummy': None})
             # update query so it is stored correctly because we pass a dict
             # but it is actually stored as instances of ZPublisher.HTTPRequest.record
             collection.setQuery(collection.query)
