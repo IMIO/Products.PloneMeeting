@@ -92,6 +92,8 @@ def onItemTransition(item, event):
         action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
     else:
         action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
+    do(action, event)
+
     # check if we need to send the item to another meetingConfig
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(item)
@@ -102,7 +104,7 @@ def onItemTransition(item, event):
             # if the item is accepted, corrected then accepted again
             if not item._checkAlreadyClonedToOtherMC(otherMC):
                 item.cloneToOtherMeetingConfig(otherMC)
-    do(action, event)
+
     # update local roles regarding copyGroups when changing item's state
     item.updateCopyGroupsLocalRoles()
     # if 'takenOverBy' is used, it is automatically set after a transition
