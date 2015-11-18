@@ -1290,6 +1290,10 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
     color: &dtml-discreetColor;;
 }
 
+ul.item-predecessors span.pretty_link_content {
+    vertical-align: text-top;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
