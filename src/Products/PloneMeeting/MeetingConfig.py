@@ -2073,7 +2073,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
                         {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['created', 'frozen', 'published']},
                     ],
-                    'sort_on': u'getDate',
+                    'sort_on': u'sortable_title',
                     'sort_reversed': True,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -2088,7 +2088,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['decided', 'closed']},
                         {'i': 'getDate', 'o': 'plone.app.querystring.operation.date.largerThanRelativeDate', 'v': '60'},
                     ],
-                    'sort_on': u'getDate',
+                    'sort_on': u'sortable_title',
                     'sort_reversed': True,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -2102,7 +2102,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [meetingType, ]},
                         {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['decided', 'closed']},
                     ],
-                    'sort_on': u'getDate',
+                    'sort_on': u'sortable_title',
                     'sort_reversed': True,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
