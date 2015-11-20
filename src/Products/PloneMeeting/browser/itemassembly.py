@@ -141,7 +141,7 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
           Return Meeting.assembly
         """
         meeting = self.context.getMeeting()
-        return meeting.getAssembly()
+        return meeting.getAssembly() or '-'
 
     def get_msgid_assembly_or_attendees(self):
         """
@@ -249,14 +249,13 @@ class ManageItemAssemblyForm(form.Form):
             self.status = self.formErrorsMessage
             return
         # do adapt item assembly
-        form = self.request.form
-        self.item_assembly = form.get('form.widgets.item_assembly')
-        self.item_excused = form.get('form.widgets.item_excused')
-        self.item_absents = form.get('form.widgets.item_absents')
+        self.item_assembly = data.get('item_assembly')
+        self.item_excused = data.get('item_excused')
+        self.item_absents = data.get('item_absents')
         # we receive '5' or '5.2' but we want 500 or 502
         self.apply_until_item_number = \
             _itemNumber_to_storedItemNumber(
-                form.get('form.widgets.apply_until_item_number') or u'0'
+                data.get('apply_until_item_number') or u'0'
                 )
         self._doApplyItemAssembly()
 

@@ -1456,10 +1456,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.getItemAssemblyAbsents(real=True))
         self.assertFalse(item.getItemAssemblyExcused(real=True))
         # now use the form to change the item assembly/signatures
-        self.request.form['form.widgets.item_assembly'] = u'Item assembly'
-        self.request.form['form.widgets.item_absents'] = u'Item assembly absents'
-        self.request.form['form.widgets.item_excused'] = u'Item assembly excused'
-        self.request.form['form.widgets.item_signatures'] = u'Item signatures'
+        self.request['form.widgets.item_assembly'] = u'Item assembly'
+        self.request['form.widgets.item_absents'] = u'Item assembly absents'
+        self.request['form.widgets.item_excused'] = u'Item assembly excused'
+        self.request['form.widgets.item_signatures'] = u'Item signatures'
         formAssembly.handleApplyItemAssembly(formAssembly, None)
         formSignatures.handleApplyItemSignatures(formSignatures, None)
         self.assertNotEquals(item.getItemAssembly(), meeting.getAssembly())
@@ -1499,9 +1499,9 @@ class testMeetingItem(PloneMeetingTestCase):
         formAssembly.update()
         formSignatures = item2.restrictedTraverse('@@manage_item_signatures_form').form_instance
         formSignatures.update()
-        self.request.form['form.widgets.item_assembly'] = u'Item assembly 2'
-        self.request.form['form.widgets.item_signatures'] = u'Item signatures 2'
-        self.request.form['form.widgets.apply_until_item_number'] = u'4'
+        self.request['form.widgets.item_assembly'] = u'Item assembly 2'
+        self.request['form.widgets.item_signatures'] = u'Item signatures 2'
+        self.request['form.widgets.apply_until_item_number'] = u'4'
         # now apply, relevant items must have been updated
         formAssembly.handleApplyItemAssembly(formAssembly, None)
         formSignatures.handleApplyItemSignatures(formSignatures, None)
@@ -1521,9 +1521,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item5.getItemSignatures(), 'Meeting signatures')
         self.assertEquals(item6.getItemSignatures(), 'Meeting signatures')
         # now update to the end
-        self.request.form['form.widgets.item_assembly'] = u'Item assembly 3'
-        self.request.form['form.widgets.item_signatures'] = u'Item signatures 3'
-        self.request.form['form.widgets.apply_until_item_number'] = u'99'
+        self.request['form.widgets.item_assembly'] = u'Item assembly 3'
+        self.request['form.widgets.item_signatures'] = u'Item signatures 3'
+        self.request['form.widgets.apply_until_item_number'] = u'99'
         # Apply
         formAssembly.handleApplyItemAssembly(formAssembly, None)
         formSignatures.handleApplyItemSignatures(formSignatures, None)
@@ -1563,9 +1563,9 @@ class testMeetingItem(PloneMeetingTestCase):
             self.assertEquals(elt.getItemAssembly(), '<p>Meeting assembly</p>')
             self.assertEquals(elt.getItemSignatures(), 'Meeting signatures')
         # now update including first lateItem
-        self.request.form['form.widgets.item_assembly'] = u'Item assembly 3'
-        self.request.form['form.widgets.item_signatures'] = u'Item signatures 3'
-        self.request.form['form.widgets.apply_until_item_number'] = u'7'
+        self.request['form.widgets.item_assembly'] = u'Item assembly 3'
+        self.request['form.widgets.item_signatures'] = u'Item signatures 3'
+        self.request['form.widgets.apply_until_item_number'] = u'7'
         # Apply
         formAssembly.handleApplyItemAssembly(formAssembly, None)
         formSignatures.handleApplyItemSignatures(formSignatures, None)

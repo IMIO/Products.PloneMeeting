@@ -132,11 +132,10 @@ class ManageItemSignaturesForm(form.Form):
             self.status = self.formErrorsMessage
             return
         # do adapt item signatures
-        form = self.request.form
-        self.item_signatures = form.get('form.widgets.item_signatures')
+        self.item_signatures = data.get('item_signatures')
         self.apply_until_item_number = \
             _itemNumber_to_storedItemNumber(
-                form.get('form.widgets.apply_until_item_number') or u'0'
+                data.get('apply_until_item_number') or u'0'
                 )
         self._doApplyItemSignatures()
 
