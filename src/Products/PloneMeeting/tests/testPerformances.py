@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from DateTime import DateTime
 from profilehooks import timecall
 
 from Products.CMFCore.utils import getToolByName
@@ -38,22 +39,19 @@ class testPerformances(PloneMeetingTestCase):
 
     def _setupForDelayingItems(self, number_of_items, number_of_annexes):
         """ """
-        meeting, uids = self._setupMeetingItemsWithAnnexes(number_of_items, number_of_annexes)
-        for brain in self.portal.portal_catalog(UID=uids):
-            item = brain.getObject()
-            # present the item
-            self.presentItem(item)
-            # set the meeting in the 'decided' state
-            self.decideMeeting(meeting)
-            # in some wfs, deciding a meeting will accept every items...
-            # set back items to the 'itemfrozen' state
-            for itemInMeeting in meeting.getItems():
-                if itemInMeeting.queryState() == 'itemfrozen':
-                    break
-                self.do(itemInMeeting, 'backToItemFrozen')
+        meeting, uids = self._setupMeetingItemsWithAnnexes(number_of_items, number_of_annexes, present_items=True)
+        # set the meeting in the 'decided' state
+        self.decideMeeting(meeting)
+        # in some wfs, deciding a meeting will accept every items...
+        # set back items to the 'itemfrozen' state
+        for itemInMeeting in meeting.getItems():
+            if itemInMeeting.queryState() == 'itemfrozen':
+                break
+            self.do(itemInMeeting, 'backToItemFrozen')
+
         return meeting, uids
 
-    def _setupMeetingItemsWithAnnexes(self, number_of_items, number_of_annexes, with_meeting=True):
+    def _setupMeetingItemsWithAnnexes(self, number_of_items, number_of_annexes, with_meeting=True, present_items=False):
         self.changeUser('pmManager')
         meeting = None
         if with_meeting:
@@ -80,6 +78,8 @@ class testPerformances(PloneMeetingTestCase):
             # add annexes
             for j in range(number_of_annexes):
                 self.addAnnex(item, annexTitle="Annex number %d" % j)
+            if present_items:
+                self.presentItem(item)
         return meeting, uids
 
     def test_pm_Delay5ItemsWith0Annexes(self):
@@ -155,6 +155,43 @@ class testPerformances(PloneMeetingTestCase):
         items = [brain.getObject() for brain in self.portal.portal_catalog(UID=uids)]
         self._presentSeveralItems(items)
 
+    def test_pm_SendSeveralItemsWithAnnexesToAnotherMC(self):
+        '''We will freeze a meeting containing 50 items from which 25 need to be send
+           to another MC.  Every items contain 5 annexes.'''
+        pm_logger.info('Freezing a meeting containing %d items and sending %d items to another MC.' % (50, 25))
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(True)
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                           'reverse': '0'}, ))
+        cfg2 = self.meetingConfig2
+        cfg2.setUseGroupsAsCategories(True)
+        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, ))
+        cfg2Id = cfg2.getId()
+        # make items sent to config2 automatically presented in the next meeting
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': '%s.%s' %
+                                         (cfg2Id, 'present')},))
+        cfg.setItemAutoSentToOtherMCStates((u'itemfrozen', ))
+        meeting, uids = self._setupMeetingItemsWithAnnexes(50, 5, present_items=True)
+        items = meeting.getItems()
+        # make 50 items sendable to another MC
+        for item in items[0:25]:
+            item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
+            item.reindexObject(idxs=['sentToInfos', ])
+
+        # create meeting in cfg2 in which items will be presented
+        self.setMeetingConfig(cfg2Id)
+        now = DateTime()
+        meeting2 = self.create('Meeting', date=now + 1)
+        self.assertFalse(meeting2.getItems())
+
+        # freeze the meeting, this will do the job
+        self._freezeMeetingAndSendItemsToAnotherMC(meeting)
+
+        # make sure meeting2 has items
+        self.assertEquals(len(meeting2.getItems()), 25)
+
     @timecall
     def _delaySeveralItems(self, meeting, uids):
         '''Helper method that actually delays the items.'''
@@ -166,6 +203,11 @@ class testPerformances(PloneMeetingTestCase):
         '''Present the p_items in p_meeting.'''
         for item in items:
             self.presentItem(item)
+
+    @timecall
+    def _freezeMeetingAndSendItemsToAnotherMC(self, meeting):
+        '''Freeze given p_meeting.'''
+        self.freezeMeeting(meeting)
 
     def test_pm_ComputeItemNumberWithSeveralNotClosedMeetings(self):
         '''Check performances while looking for the current item number using

@@ -4097,7 +4097,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if itemState not in cfg.getItemCopyGroupsStates():
             return
         # Add the local roles corresponding to the selected copyGroups.
-        # We give the 'power observer' role to the selected groups.
+        # We give the 'Reader' role to the selected groups.
         # This will give them a read-only access to the item.
         copyGroups = self.getCopyGroups()
         if copyGroups:
