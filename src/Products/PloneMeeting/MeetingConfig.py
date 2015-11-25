@@ -599,8 +599,8 @@ schema = Schema((
                                "CSS like it is the case for 'late' items."),
                      'used_in_inserting_method':
                         CheckboxColumn("List type used_in_inserting_method",
-                                       col_description="If the inserting method 'on list types' is used, will "
-                                       "this list type be taken into account while inserting the item in the meeting?"),
+                                       col_description="If the inserting method \"on list types\" is used, will this "
+                                       "list type be taken into account while inserting the item in the meeting?"),
                      },
             label='Listtypes',
             label_msgid='PloneMeeting_label_listTypes',
