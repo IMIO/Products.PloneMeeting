@@ -38,6 +38,7 @@ from zope.component import getAdapter
 from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.interface import implements
+from plone import api
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
@@ -1141,7 +1142,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
         tal_expr = transform['tal_expression'].strip()
         if transform['transition'] == transitionId and \
            transform['field_name'].split('.')[0] == obj.meta_type and \
-           transform['tal_expression'].strip():
+           tal_expr:
             from Products.CMFCore.Expression import Expression, createExprContext
             portal_url = getToolByName(obj, 'portal_url')
             portal = portal_url.getPortalObject()
@@ -1149,9 +1150,10 @@ def applyOnTransitionFieldTransform(obj, transitionId):
             try:
                 res = Expression(tal_expr)(ctx)
             except Exception, e:
-                obj.plone_utils.addPortalMessage(PloneMeetingError(ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
-                                                                   (transform['field_name'].split('.')[1], str(e))),
-                                                 type='warning')
+                plone_utils = api.portal.get_tool('plone_utils')
+                plone_utils.addPortalMessage(PloneMeetingError(ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
+                                                               (transform['field_name'].split('.')[1], str(e))),
+                                             type='warning')
                 return
             field = obj.getField(transform['field_name'].split('.')[1])
             field.set(obj, res, mimetype='text/html')

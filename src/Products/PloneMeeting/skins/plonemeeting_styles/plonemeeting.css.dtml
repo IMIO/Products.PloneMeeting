@@ -153,7 +153,9 @@ table.listing tbody tr {
 body.template-plonemeeting_topic_view label.formQuestion > span,
 body.template-plonemeeting_topic_view label.formQuestion,
 body.template-meeting_view label.formQuestion > span,
-body.template-meeting_view label.formQuestion {
+body.template-meeting_view label.formQuestion,
+body.template-meeting_available_items_view label.formQuestion > span,
+body.template-meeting_available_items_view label.formQuestion {
     font-style: italic;
     color: &dtml-discreetColor;;
 }

@@ -2656,13 +2656,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           We use it in the algorythm that calculate item order
           when inserting it in a meeting.
         '''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if insertMethod == 'on_list_type':
             # 2 default listTypes, 'normal' and 'late' and
             # extraListTypes defined in the MeetingConfig
-            factory = queryUtility(IVocabularyFactory, u'Products.PloneMeeting.vocabularies.listtypesvocabulary')
-            return len(factory(self))
+            # only keep listTypes for which 'used_in_inserting_method' == '1'
+            listTypes = cfg.getListTypes()
+            return len([listType for listType in listTypes if listType['used_in_inserting_method'] == '1'])
         elif insertMethod == 'on_categories':
             return len(cfg.getCategories(onlySelectable=False))
         elif insertMethod in ('on_proposing_groups', 'on_all_groups'):
@@ -2693,10 +2694,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         res = ''
         if insertMethod == 'on_list_type':
-            factory = queryUtility(IVocabularyFactory, u'Products.PloneMeeting.vocabularies.listtypesvocabulary')
-            vocab = factory(self)
-            values = [term.token for term in vocab]
-            return values.index(self.getListType())
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            listTypes = cfg.getListTypes()
+            keptListTypes = [listType['identifier'] for listType in listTypes if listType['used_in_inserting_method'] == '1']
+            currentListType = self.getListType()
+            # if it is not a listType used in the inserting_method
+            # return 0 so elements using this listType will always have
+            # a lower index and will be passed
+            if currentListType not in keptListTypes:
+                return 0
+            else:
+                return keptListTypes.index(currentListType) + 1
         elif insertMethod == 'on_categories':
             # get the category order, pass onlySelectable to False so disabled categories
             # are taken into account also, so we avoid problems with freshly disabled categories

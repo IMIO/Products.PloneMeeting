@@ -22,6 +22,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 from Products.DataGridField import DataGridField, DataGridWidget
 from Products.DataGridField.Column import Column
+from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from Products.DataGridField.SelectColumn import SelectColumn
 
 from Products.PloneMeeting.config import *
@@ -587,7 +588,20 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="ListTypes",
             description_msgid="list_types_descr",
-            columns={'identifier': Column("List type identifier", col_description="Enter an internal identifier, use only lowercase letters."), 'label': Column("List type label", col_description="Enter a short label that will be displayed in the application.  This will be translated by the application if possible.  If you want to colorrize this new list type on the meeting view, you will need to do this using CSS like it is the case for 'late' items."), },
+            columns={'identifier':
+                        Column("List type identifier",
+                               col_description="Enter an internal identifier, use only lowercase letters."),
+                     'label':
+                        Column("List type label",
+                               col_description="Enter a short label that will be displayed in the application.  "
+                               "This will be translated by the application if possible.  If you want to "
+                               "colorrize this new list type on the meeting view, you will need to do this using "
+                               "CSS like it is the case for 'late' items."),
+                     'used_in_inserting_method':
+                        CheckboxColumn("List type used_in_inserting_method",
+                                       col_description="If the inserting method 'on list types' is used, will "
+                                       "this list type be taken into account while inserting the item in the meeting?"),
+                     },
             label='Listtypes',
             label_msgid='PloneMeeting_label_listTypes',
             i18n_domain='PloneMeeting',
@@ -596,7 +610,7 @@ schema = Schema((
         default=defValues.listTypes,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
-        columns=('identifier', 'label'),
+        columns=('identifier', 'label', 'used_in_inserting_method'),
         allow_empty_rows=False,
     ),
     LinesField(

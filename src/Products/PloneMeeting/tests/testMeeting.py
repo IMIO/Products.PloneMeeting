@@ -37,6 +37,7 @@ from plone.dexterity.utils import createContentInContainer
 
 from imio.helpers.cache import cleanRamCacheFor
 
+from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
@@ -206,6 +207,77 @@ class testMeeting(PloneMeetingTestCase):
                           ['developers', 'developers', 'developers', 'vendors',
                            'developers', 'developers', 'developers', 'developers', 'developers',
                            'vendors', 'vendors', 'vendors'])
+
+    def test_pm_InsertItemOnListTypes(self):
+        '''Test inserting an item using the "on_list_type" sorting methods.
+           With default listTypes and additional listTypes with 'used_in_inserting_method' or not.'''
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
+                                           'reverse': '0'}, ))
+        # additional listType, not used in inserting_method
+        cfg.setListTypes(DEFAULT_LIST_TYPES + [{'identifier': 'addendum',
+                                                'label': 'Addendum',
+                                                'used_in_inserting_method': '0'}, ])
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEquals([item.getId() for item in orderedItems],
+                          ['recItem1', 'recItem2', 'o2', 'o3', 'o4', 'o5', 'o6'])
+        # all these items are 'normal' items
+        self.assertEquals([item.getListType() for item in orderedItems],
+                          ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal'])
+        # set listType of '03' to 'addendum' then add a normal item
+        o3 = orderedItems[3]
+        o3.setListType('addendum')
+        o3.reindexObject(idxs=['listType', ])
+        self.assertEquals([item.getListType() for item in orderedItems],
+                          ['normal', 'normal', 'normal', 'addendum', 'normal', 'normal', 'normal'])
+        normalItem = self.create('MeetingItem')
+        self.presentItem(normalItem)
+        # inserted at the end
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEquals(orderedItems[-1], normalItem)
+
+        # insert a late item
+        lateItem = self.create('MeetingItem')
+        lateItem.setPreferredMeeting(meeting.UID())
+        self.freezeMeeting(meeting)
+        self.presentItem(lateItem)
+        # inserted at the end
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEquals(orderedItems[-1], lateItem)
+
+        # but if we 'used_in_inserting_method' for 'addendum', then the new item is inserted before
+        cfg.setListTypes(DEFAULT_LIST_TYPES + [{'identifier': 'addendum',
+                                                'label': 'Addendum',
+                                                'used_in_inserting_method': '1'}, ])
+        lateItem2 = self.create('MeetingItem')
+        lateItem2.setPreferredMeeting(meeting.UID())
+        self.presentItem(lateItem2)
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEquals(orderedItems[3], lateItem2)
+        self.assertEquals([item.getListType() for item in orderedItems],
+                          ['normal', 'normal', 'normal', 'late', 'addendum',
+                           'normal', 'normal', 'normal', 'normal', 'late'])
+        self.assertEquals([item.getId() for item in orderedItems],
+                          ['recItem1', 'recItem2', 'o2', 'o9', 'o3', 'o4', 'o5', 'o6', 'o7', 'o8'])
+
+        # does not break if none of the listTypes 'used_in_inserting_method'
+        listTypes = cfg.getListTypes()
+        for listType in listTypes:
+            listType['used_in_inserting_method'] = ''
+        cfg.setListTypes(listTypes)
+        # insert a normal item, it will be simply inserted at the end
+        self.backToState(meeting, 'created')
+        normalItem2 = self.create('MeetingItem')
+        self.presentItem(normalItem2)
+        # inserted at the end
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEquals(orderedItems[-1], normalItem2)
+        self.assertEquals(normalItem2.getListType(), 'normal')
+        self.assertEquals([item.getListType() for item in orderedItems],
+                          ['normal', 'normal', 'normal', 'late', 'addendum',
+                           'normal', 'normal', 'normal', 'normal', 'late', 'normal'])
 
     def test_pm_InsertItemOnListTypeThenProposingGroup(self):
         '''Test inserting an item using the "on_list_type" then "on_proposing_group" sorting methods.'''
