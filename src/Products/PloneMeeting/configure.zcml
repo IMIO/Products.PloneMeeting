@@ -5,6 +5,8 @@
            i18n_domain="PloneMeeting">
 
   <!-- ##code-section configure.zcml.header -->
+  <!-- load "imio.pm.locales" first so translations are overrided -->
+  <include package="imio.pm.locales"/>
   <include package="Products.PasswordStrength" />
   <include package="collective.ckeditor"/>
   <include package="collective.documentviewer"/>
@@ -14,7 +16,6 @@
   <include package="collective.js.jqueryui"/>
   <include package="collective.messagesviewlet"/>
   <include package="communesplone.layout"/>
-  <include package="imio.pm.locales"/>
   <include package="imio.dashboard"/>
   <include package="plone.app.dexterity" />
   <include package="plone.directives.form" file="meta.zcml" />

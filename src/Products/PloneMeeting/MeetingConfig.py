@@ -1850,7 +1850,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators')",
+                    'tal_condition': "python: tool.userIsAmong('creators')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my groups
@@ -1864,7 +1864,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'created',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getGroupsForUser()",
+                    'tal_condition': "python: tool.getGroupsForUser()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items I take over
@@ -1878,9 +1878,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
-                                     "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or "
-                                     "here.portal_plonemeeting.isManager(here))",
+                    'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
+                                     "and (tool.getGroupsForUser(omittedSuffixes=['observers', ]) or "
+                                     "tool.isManager(here))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All (visible) items
@@ -1908,8 +1908,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
+                    'tal_condition': "python: cfg.getUseCopies() and not tool.userIsAmong('powerobservers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to prevalidate
@@ -1926,8 +1925,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
-                                     "'pre_validation' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
+                    'tal_condition': "python: tool.userIsAmong('prereviewers') and "
+                                     "'pre_validation' in cfg.getWorkflowAdaptations()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to validate
@@ -1941,7 +1940,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here).userIsAReviewer()",
+                    'tal_condition': "python: cfg.userIsAReviewer()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Validable items
@@ -1955,7 +1954,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here).userIsAReviewer()",
+                    'tal_condition': "python: cfg.userIsAReviewer()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice
@@ -1969,8 +1968,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice without delay
@@ -1984,8 +1982,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with delay
@@ -1999,8 +1996,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with exceeded delay
@@ -2014,8 +2010,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Every advised items
@@ -2029,8 +2024,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Advised items with delay
@@ -2044,8 +2038,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
-                                     "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to correct
@@ -2062,8 +2055,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators') and "
-                                     "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
+                    'tal_condition': "python: tool.userIsAmong('creators') and "
+                                     "'return_to_proposing_group' in cfg.getWorkflowAdaptations()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Corrected items
@@ -2080,13 +2073,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'tal_condition': "python: here.portal_plonemeeting.isManager(here) and 'return_to_proposing_group' "
-                                     "in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
+                    'tal_condition': "python: tool.isManager(here) and "
+                                     "'return_to_proposing_group' in cfg.getWorkflowAdaptations()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Decided items
-                ('searchdecideditems',
-                {
+                ('searchdecideditems', {
                     'subFolderId': 'searches_items',
                     'query':
                     [
@@ -2100,8 +2092,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All not-yet-decided meetings
-                ('searchallmeetings',
-                {
+                ('searchallmeetings', {
                     'subFolderId': 'searches_meetings',
                     'query':
                     [
@@ -2118,8 +2109,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Last decided meetings
-                ('searchlastdecisions',
-                {
+                ('searchlastdecisions', {
                     'subFolderId': 'searches_decisions',
                     'query':
                     [
@@ -2139,8 +2129,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All decided meetings
-                ('searchalldecisions',
-                {
+                ('searchalldecisions', {
                     'subFolderId': 'searches_decisions',
                     'query':
                     [

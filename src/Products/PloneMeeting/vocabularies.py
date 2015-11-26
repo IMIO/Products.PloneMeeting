@@ -51,6 +51,12 @@ class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
         return redirect_to
         # XXX end change
 
+    def _extra_expr_ctx(self):
+        """Define some values that will be available in the TALCondition expression."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return {'tool': tool, 'cfg': cfg}
+
 PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
 
 
