@@ -14,17 +14,23 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
-from Products.Archetypes.atapi import *
+from Products.Archetypes.atapi import AttributeStorage
+from Products.Archetypes.atapi import BaseContent
+from Products.Archetypes.atapi import BaseSchema
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import LinesField
+from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import StringField
 from zope.interface import implements
 import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
-from Products.DataGridField import DataGridField, DataGridWidget
+from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 from Products.DataGridField.SelectColumn import SelectColumn
-
-from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 import logging
@@ -33,6 +39,9 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from imio.helpers.cache import cleanVocabularyCacheFor
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
@@ -114,7 +123,24 @@ schema = Schema((
     DataGridField(
         name='certifiedSignatures',
         widget=DataGridField._properties['widget'](
-            columns={'signatureNumber': SelectColumn("Certified signatures signature number", vocabulary="listSignatureNumbers", col_description="Select the signature number, keep signatures ordered by number."), 'name': Column("Certified signatures signatory name", col_description="Name of the signatory (for example 'Mister John Doe')."), 'function': Column("Certified signatures signatory function", col_description="Function of the signatory (for example 'Mayor')."), 'date_from': Column("Certified signatures valid from (included)", col_description="Enter valid from date, use following format : YYYY/MM/DD, leave empty so it is always valid."), 'date_to': Column("Certified signatures valid to (included)", col_description="Enter valid to date, use following format : YYYY/MM/DD, leave empty so it is always valid."), },
+            columns={'signatureNumber':
+                     SelectColumn("Certified signatures signature number",
+                                  vocabulary="listSignatureNumbers",
+                                  col_description="Select the signature number, keep signatures ordered by number."),
+                     'name':
+                     Column("Certified signatures signatory name",
+                            col_description="Name of the signatory (for example 'Mister John Doe')."),
+                     'function':
+                     Column("Certified signatures signatory function",
+                            col_description="Function of the signatory (for example 'Mayor')."),
+                     'date_from':
+                     Column("Certified signatures valid from (included)",
+                            col_description="Enter valid from date, use following format : YYYY/MM/DD, "
+                                            "leave empty so it is always valid."),
+                     'date_to':
+                     Column("Certified signatures valid to (included)",
+                            col_description="Enter valid to date, use following format : YYYY/MM/DD, "
+                                            "leave empty so it is always valid."), },
             label_msgid="PloneMeeting_label_group_certifiedSignatures",
             description="GroupCertifiedSignatures",
             description_msgid="group_certified_signatures_descr",
@@ -152,6 +178,7 @@ for field in MeetingGroup_schema.getSchemataFields('metadata'):
     field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
+
 class MeetingGroup(BaseContent, BrowserDefaultMixin):
     """
     """
@@ -171,16 +198,19 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     # Manually created methods
 
     security.declarePublic('getName')
+
     def getName(self, force=None):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
     security.declarePublic('queryState')
+
     def queryState(self):
         '''In what state am I ?'''
         return self.portal_workflow.getInfoFor(self, 'review_state')
 
     security.declarePrivate('listSignatureNumbers')
+
     def listSignatureNumbers(self):
         '''Vocabulary for column 'signatureNumber' of MeetingGroup.certifiedSignatures.'''
         res = []
@@ -189,6 +219,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePublic('listItemStates')
+
     def listItemStates(self):
         '''Lists the states of the item workflow for each MeetingConfig.'''
         tool = getToolByName(self, 'portal_plonemeeting')
@@ -274,6 +305,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         return i
 
     security.declarePrivate('at_post_create_script')
+
     def at_post_create_script(self):
         '''Creates the corresponding Plone groups.
            by default :
@@ -300,6 +332,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)  # Call product-specific code
 
     security.declarePrivate('at_post_edit_script')
+
     def at_post_edit_script(self):
         for groupSuffix in MEETING_GROUP_SUFFIXES:
             self._createOrUpdatePloneGroup(groupSuffix, update=True)
@@ -310,6 +343,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('manage_beforeDelete')
+
     def manage_beforeDelete(self, item, container):
         '''Checks if the current meetingGroup can be deleted:
           - it can not be linked to an existing meetingItem;
@@ -382,21 +416,25 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         BaseContent.manage_beforeDelete(self, item, container)
 
     security.declarePublic('getSelf')
+
     def getSelf(self):
         if self.__class__.__name__ != 'MeetingGroup':
             return self.context
         return self
 
     security.declarePublic('adapted')
+
     def adapted(self):
         return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
+
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
 
     security.declarePublic('getItemAdviceStates')
+
     def getItemAdviceStates(self, cfg=None, **kwargs):
         '''This is an overridden version of the Archetypes accessor for field
            "itemAdviceStates". When called by Archetypes (with no arg), it
@@ -420,6 +458,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         return tuple(res)
 
     security.declarePublic('getItemAdviceEditStates')
+
     def getItemAdviceEditStates(self, cfg=None, **kwargs):
         '''See docstring of method MeetingGroup.getItemAdviceStates.'''
         res = self.getField('itemAdviceEditStates').get(self, **kwargs)
@@ -435,6 +474,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         return tuple(res)
 
     security.declarePublic('getItemAdviceViewStates')
+
     def getItemAdviceViewStates(self, cfg=None, **kwargs):
         '''See docstring of method MeetingGroup.getItemAdviceStates.'''
         res = self.getField('itemAdviceViewStates').get(self, **kwargs)
@@ -450,6 +490,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         return tuple(res)
 
     security.declarePublic('getCertifiedSignatures')
+
     def getCertifiedSignatures(self, computed=False, context=None, **kwargs):
         '''Overrides field 'certifiedSignatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
@@ -466,7 +507,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 computedSignatures = cfg.getCertifiedSignatures(computed=True)
             signatures = computedSignatures
         return signatures
-
 
 
 registerType(MeetingGroup, PROJECTNAME)
