@@ -14,21 +14,36 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
-from Products.Archetypes.atapi import *
+from Products.Archetypes.atapi import BaseFolder
+from Products.Archetypes.atapi import BooleanField
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import InAndOutWidget
+from Products.Archetypes.atapi import IntegerField
+from Products.Archetypes.atapi import LinesField
+from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import OrderedBaseFolderSchema
+from Products.Archetypes.atapi import OrderedBaseFolder
+from Products.Archetypes.atapi import ReferenceField
+from Products.Archetypes.atapi import RichWidget
+from Products.Archetypes.atapi import StringField
+from Products.Archetypes.atapi import SelectionWidget
+from Products.Archetypes.atapi import TextField
+from Products.Archetypes.atapi import TextAreaWidget
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.atapi import Schema
+
 from zope.interface import implements
-import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
-from Products.DataGridField import DataGridField, DataGridWidget
+from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from Products.DataGridField.SelectColumn import SelectColumn
 
-from Products.PloneMeeting.config import *
-
 ##code-section module-header #fill in your manual code here
 import os
+from collections import OrderedDict
 from AccessControl import Unauthorized
 from DateTime import DateTime
 from OFS.Image import File
@@ -55,7 +70,40 @@ from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PMMessageFactory as _
-from Products.PloneMeeting.interfaces import *
+from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_ACTION_SUFFIX
+from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX
+from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
+from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
+from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
+from Products.PloneMeeting.config import ITEM_ICON_COLORS
+from Products.PloneMeeting.config import ITEM_INSERT_METHODS
+from Products.PloneMeeting.config import MEETING_CONFIG
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ROOT_FOLDER
+from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
+from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
+from Products.PloneMeeting.config import TOOL_FOLDER_FILE_TYPES
+from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
+from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
+from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
+from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
+from Products.PloneMeeting.config import TOOL_FOLDER_MEETING_USERS
+from Products.PloneMeeting.config import WriteRiskyConfig
+from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.interfaces import IMeetingConfig
+from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
+from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
+from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
     getCustomSchemaFields, getFieldContent, forceHTMLContentTypeForEmptyRichFields, \
     computeCertifiedSignatures
@@ -145,7 +193,24 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="CertifiedSignatures",
             description_msgid="certified_signatures_descr",
-            columns={'signatureNumber': SelectColumn("Certified signatures signature number", vocabulary="listSignatureNumbers", col_description="Select the signature number, keep signatures ordered by number."), 'name': Column("Certified signatures signatory name", col_description="Name of the signatory (for example 'Mister John Doe')."), 'function': Column("Certified signatures signatory function", col_description="Function of the signatory (for example 'Mayor')."), 'date_from': Column("Certified signatures valid from (included)", col_description="Enter valid from date, use following format : YYYY/MM/DD, leave empty so it is always valid."), 'date_to': Column("Certified signatures valid to (included)", col_description="Enter valid to date, use following format : YYYY/MM/DD, leave empty so it is always valid."), },
+            columns={'signatureNumber':
+                        SelectColumn("Certified signatures signature number",
+                                     vocabulary="listSignatureNumbers",
+                                     col_description="Select the signature number, keep signatures ordered by number."),
+                     'name':
+                        Column("Certified signatures signatory name",
+                               col_description="Name of the signatory (for example 'Mister John Doe')."),
+                     'function':
+                        Column("Certified signatures signatory function",
+                               col_description="Function of the signatory (for example 'Mayor')."),
+                     'date_from':
+                        Column("Certified signatures valid from (included)",
+                               col_description="Enter valid from date, use following format : YYYY/MM/DD, "
+                                               "leave empty so it is always valid."),
+                     'date_to':
+                        Column("Certified signatures valid to (included)",
+                               col_description="Enter valid to date, use following format : YYYY/MM/DD, "
+                                               "leave empty so it is always valid."), },
             label='Certifiedsignatures',
             label_msgid='PloneMeeting_label_certifiedSignatures',
             i18n_domain='PloneMeeting',
@@ -542,7 +607,16 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="insertingMethodsOnAddItem",
             description_msgid="inserting_methods_on_add_item_descr",
-            columns={'insertingMethod': SelectColumn("Inserting method", vocabulary="listInsertingMethods", col_description="Select the inserting method, methods will be applied in given order, you can not select twice same inserting method."), 'reverse': SelectColumn("Reverse inserting method?", vocabulary="listBooleanVocabulary", col_description="Reverse order of selected inserting method?", default='0')},
+            columns={'insertingMethod':
+                        SelectColumn("Inserting method",
+                                     vocabulary="listInsertingMethods",
+                                     col_description="Select the inserting method, methods will be applied in given "
+                                                     "order, you can not select twice same inserting method."),
+                     'reverse':
+                        SelectColumn("Reverse inserting method?",
+                                     vocabulary="listBooleanVocabulary",
+                                     col_description="Reverse order of selected inserting method?",
+                                     default='0')},
             label='Insertingmethodsonadditem',
             label_msgid='PloneMeeting_label_insertingMethodsOnAddItem',
             i18n_domain='PloneMeeting',
@@ -704,7 +778,18 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="MeetingConfigsToCloneTo",
             description_msgid="meeting_configs_to_clone_to_descr",
-            columns={'meeting_config': SelectColumn("Meeting config to clone to Meeting config", vocabulary="listMeetingConfigsToCloneTo", col_description="The meeting config the item of this meeting config will be sendable to."), 'trigger_workflow_transitions_until': SelectColumn("Meeting config to clone to Trigger workflow transitions until", vocabulary="listTransitionsUntilPresented", col_description='While sent, the new item is in the workflow initial state, some transitions can be automatically triggered for the new item, select until wich transition it will be done (selected transition will also be triggered).'), },
+            columns={'meeting_config':
+                        SelectColumn("Meeting config to clone to Meeting config",
+                                     vocabulary="listMeetingConfigsToCloneTo",
+                                     col_description="The meeting config the item of this meeting config "
+                                                     "will be sendable to."),
+                     'trigger_workflow_transitions_until':
+                        SelectColumn("Meeting config to clone to Trigger workflow transitions until",
+                                     vocabulary="listTransitionsUntilPresented",
+                                     col_description="While sent, the new item is in the workflow initial state, "
+                                                     "some transitions can be automatically triggered for the new "
+                                                     "item, select until wich transition it will be done (selected "
+                                                     "transition will also be triggered)."), },
             label='Meetingconfigstocloneto',
             label_msgid='PloneMeeting_label_meetingConfigsToCloneTo',
             i18n_domain='PloneMeeting',
@@ -911,7 +996,19 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="OnTransitionFieldTransforms",
             description_msgid="on_transition_field_transforms_descr",
-            columns={'transition': SelectColumn("On transition field transform transition", vocabulary="listEveryItemTransitions", col_description="The transition that will trigger the field transform."), 'field_name': SelectColumn("On transition field transform field name", vocabulary="listItemRichTextFields", col_description='The item field that will be transformed.'), 'tal_expression': Column("On transition field transform TAL expression", col_description='The TAL expression.  Element \'here\' represent the item.  This expression MUST return valid HTML or it will not behave properly on the item.'), },
+            columns={'transition':
+                        SelectColumn("On transition field transform transition",
+                                     vocabulary="listEveryItemTransitions",
+                                     col_description="The transition that will trigger the field transform."),
+                     'field_name':
+                        SelectColumn("On transition field transform field name",
+                                     vocabulary="listItemRichTextFields",
+                                     col_description='The item field that will be transformed.'),
+                     'tal_expression':
+                        Column("On transition field transform TAL expression",
+                               col_description="The TAL expression.  Element 'here' represent the item.  "
+                                               "This expression MUST return valid HTML or it will not behave properly "
+                                               "on the item."), },
             label='Ontransitionfieldtransforms',
             label_msgid='PloneMeeting_label_onTransitionFieldTransforms',
             i18n_domain='PloneMeeting',
@@ -928,7 +1025,15 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="OnMeetingTransitionItemTransitionToTrigger",
             description_msgid="on_meeting_transition_item_transition_to_trigger_descr",
-            columns={'meeting_transition': SelectColumn("On meeting transition item transition to trigger meeting transition", vocabulary="listEveryMeetingTransitions", col_description="The transition triggered on the meeting."), 'item_transition': SelectColumn("On meeting transition item transition to trigger item transition", vocabulary="listEveryItemTransitions", col_description="The transition that will be triggered on every items of the meeting."), },
+            columns={'meeting_transition':
+                        SelectColumn("On meeting transition item transition to trigger meeting transition",
+                                     vocabulary="listEveryMeetingTransitions",
+                                     col_description="The transition triggered on the meeting."),
+                     'item_transition':
+                        SelectColumn("On meeting transition item transition to trigger item transition",
+                                     vocabulary="listEveryItemTransitions",
+                                     col_description="The transition that will be triggered on "
+                                                     "every items of the meeting."), },
             label='Onmeetingtransitionitemtransitiontotrigger',
             label_msgid='PloneMeeting_label_onMeetingTransitionItemTransitionToTrigger',
             i18n_domain='PloneMeeting',
@@ -1407,7 +1512,43 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="CustomAdvisers",
             description_msgid="custom_advisers_descr",
-            columns={'row_id': Column("Custom adviser row id", visible=False), 'group': SelectColumn("Custom adviser group", vocabulary="listActiveMeetingGroupsForCustomAdvisers"), 'gives_auto_advice_on': Column("Custom adviser gives automatic advice on", col_description="gives_auto_advice_on_col_description"), 'gives_auto_advice_on_help_message': Column("Custom adviser gives automatic advice on help message", col_description="gives_auto_advice_on_help_message_col_description"), 'for_item_created_from': Column("Rule activated for item created from", col_description="for_item_created_from_col_description", default=DateTime().strftime('%Y/%m/%d'), required=True), 'for_item_created_until': Column("Rule activated for item created until", col_description="for_item_created_until_col_description"), 'delay': Column("Delay for giving advice", col_description="delay_col_description"), 'delay_left_alert': Column("Delay left alert", col_description="delay_left_alert_col_description"), 'delay_label': Column("Custom adviser delay label", col_description="delay_label_col_description"), 'available_on': Column("Available on", col_description="available_on_col_description"), 'is_linked_to_previous_row': SelectColumn("Is linked to previous row?", vocabulary="listBooleanVocabulary", col_description="Is linked to previous row description", default='0')},
+            columns={'row_id':
+                        Column("Custom adviser row id",
+                               visible=False),
+                     'group':
+                        SelectColumn("Custom adviser group",
+                                     vocabulary="listActiveMeetingGroupsForCustomAdvisers"),
+                     'gives_auto_advice_on':
+                        Column("Custom adviser gives automatic advice on",
+                               col_description="gives_auto_advice_on_col_description"),
+                     'gives_auto_advice_on_help_message':
+                        Column("Custom adviser gives automatic advice on help message",
+                               col_description="gives_auto_advice_on_help_message_col_description"),
+                     'for_item_created_from':
+                        Column("Rule activated for item created from",
+                               col_description="for_item_created_from_col_description",
+                               default=DateTime().strftime('%Y/%m/%d'),
+                               required=True),
+                     'for_item_created_until':
+                        Column("Rule activated for item created until",
+                               col_description="for_item_created_until_col_description"),
+                     'delay':
+                        Column("Delay for giving advice",
+                               col_description="delay_col_description"),
+                     'delay_left_alert':
+                        Column("Delay left alert",
+                               col_description="delay_left_alert_col_description"),
+                     'delay_label':
+                        Column("Custom adviser delay label",
+                               col_description="delay_label_col_description"),
+                     'available_on':
+                        Column("Available on",
+                               col_description="available_on_col_description"),
+                     'is_linked_to_previous_row':
+                        SelectColumn("Is linked to previous row?",
+                                     vocabulary="listBooleanVocabulary",
+                                     col_description="Is linked to previous row description",
+                                     default='0')},
             label='Customadvisers',
             label_msgid='PloneMeeting_label_customAdvisers',
             i18n_domain='PloneMeeting',
@@ -1416,7 +1557,9 @@ schema = Schema((
         default=defValues.customAdvisers,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
-        columns=('row_id', 'group', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message', 'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert', 'delay_label', 'available_on', 'is_linked_to_previous_row'),
+        columns=('row_id', 'group', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message',
+                 'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert',
+                 'delay_label', 'available_on', 'is_linked_to_previous_row'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -1763,11 +1906,12 @@ for field in MeetingConfig_schema.getSchemataFields('metadata'):
     field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
+
 class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-    implements(interfaces.IMeetingConfig)
+    implements(IMeetingConfig)
 
     meta_type = 'MeetingConfig'
     _at_rename_after_creation = True
@@ -2156,11 +2300,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return infos
 
     security.declarePublic('getName')
+
     def getName(self, force=None):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
     security.declarePrivate('setAllItemTagsField')
+
     def setAllItemTagsField(self):
         '''Sets the correct value for the field "allItemTags".'''
         tags = [t.strip() for t in self.getAllItemTags().split('\n')]
@@ -2169,6 +2315,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.setAllItemTags('\n'.join(tags))
 
     security.declareProtected(WriteRiskyConfig, 'setCustomAdvisers')
+
     def setCustomAdvisers(self, value, **kwargs):
         '''Overrides the field 'customAdvisers' mutator to manage
            the 'row_id' column manually.  If empty, we need to add a
@@ -2184,6 +2331,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.getField('customAdvisers').set(self, value, **kwargs)
 
     security.declarePrivate('listAttributes')
+
     def listAttributes(self, schema, optionalOnly=False):
         res = []
         for field in schema.fields():
@@ -2205,22 +2353,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('listUsedItemAttributes')
+
     def listUsedItemAttributes(self):
         return self.listAttributes(MeetingItem.schema, optionalOnly=True)
 
     security.declarePrivate('listItemAttributes')
+
     def listItemAttributes(self):
         return self.listAttributes(MeetingItem.schema)
 
     security.declarePrivate('listUsedMeetingAttributes')
+
     def listUsedMeetingAttributes(self):
         return self.listAttributes(Meeting.schema, optionalOnly=True)
 
     security.declarePrivate('listMeetingAttributes')
+
     def listMeetingAttributes(self):
         return self.listAttributes(Meeting.schema)
 
     security.declarePrivate('listDashboardItemsListingsFilters')
+
     def listDashboardItemsListingsFilters(self):
         """Vocabulary for 'dashboardItemsListingsFilters',
            'dashboardMeetingAvailableItemsFilters'
@@ -2236,6 +2389,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('listResultsPerPage')
+
     def listResultsPerPage(self):
         """Vocabulary for 'maxShownListings',
            'maxShownAvailableItems'
@@ -2246,6 +2400,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('validate_shortName')
+
     def validate_shortName(self, value):
         '''Checks that the short name is unique among all configs.'''
         tool = getToolByName(self, 'portal_plonemeeting')
@@ -2254,6 +2409,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return DUPLICATE_SHORT_NAME % value
 
     security.declarePrivate('validate_certifiedSignatures')
+
     def validate_certifiedSignatures(self, value):
         '''Validate the 'certifiedSignatures' field, check that provided dates
            (date_from and date_to) respect correct format and that signatures are
@@ -2295,6 +2451,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          mapping={'row_number': row_number})
 
     security.declarePrivate('validate_listTypes')
+
     def validate_listTypes(self, value):
         '''Validate the 'listTypes' field, check that :
            - default are there (normal, late);
@@ -2328,6 +2485,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          mapping={'url': brains[0].getURL()})
 
     security.declarePrivate('validate_transitionsForPresentingAnItem')
+
     def validate_transitionsForPresentingAnItem(self, values):
         '''Validate the transitionsForPresentingAnItem field.
            Check that the given sequence of transition if starting
@@ -2367,6 +2525,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return _('last_transition_must_result_in_presented_state')
 
     security.declarePrivate('validate_customAdvisers')
+
     def validate_customAdvisers(self, value):
         '''We have several things to check, do lighter checks first :
            - check column contents respect required format :
@@ -2529,11 +2688,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         if customAdviser['row_id'] == storedRow['row_id']:
                             # we found the corresponding row, check if previous row is the same
                             if not previousCustomAdviserRowId == previousStoredRow['row_id']:
-                                return translate('custom_adviser_can_not_change_row_order_of_used_row_linked_to_previous',
-                                                 domain='PloneMeeting',
-                                                 mapping={'item_url': an_item_url,
-                                                          'adviser_group': group.getName(), },
-                                                 context=self.REQUEST)
+                                return translate(
+                                    'custom_adviser_can_not_change_row_order_of_used_row_linked_to_previous',
+                                    domain='PloneMeeting',
+                                    mapping={'item_url': an_item_url,
+                                             'adviser_group': group.getName(), },
+                                    context=self.REQUEST)
                         previousCustomAdviserRowId = customAdviser['row_id']
 
         # check also that if we removed some row_id, it was not in use neither
@@ -2570,10 +2730,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             # 1) first check if it is not the 'for_item_created_until' value
                             #    for wich we are setting a value for the first time (aka is empty in the stored value)
                             # 2) or a 'non logical field', those fields we can change the value of
-                            # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser that is not permitted
+                            # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser
+                            # that is not permitted
                             if not (k == 'for_item_created_until' and not v) and \
                                not k in ['gives_auto_advice_on_help_message', 'delay_left_alert', 'delay_label', ] and \
-                               not (k == 'is_linked_to_previous_row' and (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):
+                               not (k == 'is_linked_to_previous_row' and
+                                    (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):
                                 # we are setting another field, it is not permitted if
                                 # the rule is in use, check every items if the rule is used
                                 # _checkIfConfigIsUsed will return an item absolute_url using this configuration
@@ -2602,19 +2764,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                         an_item_url = _checkIfConfigIsUsed(linkedRow['row_id'])
                                         if an_item_url:
                                             tool = getToolByName(self, 'portal_plonemeeting')
-                                            groupName = unicode(getattr(tool, customAdviser['group']).getName(), 'utf-8')
+                                            group = getattr(tool, customAdviser['group'])
+                                            groupName = safe_unicode(group.getName())
                                             columnName = self.Schema()['customAdvisers'].widget.columns[k].label
-                                            return translate('custom_adviser_can_not_change_is_linked_to_previous_row_isolating_used_rows',
-                                                             domain='PloneMeeting',
-                                                             mapping={'item_url': an_item_url,
-                                                                      'adviser_group': groupName,
-                                                                      'column_name': translate(columnName,
-                                                                                               domain='datagridfield',
-                                                                                               context=self.REQUEST),
-                                                                      'column_old_data': v, },
-                                                             context=self.REQUEST)
+                                            return translate(
+                                                'custom_adviser_can_not_change_is_linked_'
+                                                'to_previous_row_isolating_used_rows',
+                                                domain='PloneMeeting',
+                                                mapping={'item_url': an_item_url,
+                                                         'adviser_group': groupName,
+                                                         'column_name': translate(columnName,
+                                                                                  domain='datagridfield',
+                                                                                  context=self.REQUEST),
+                                                         'column_old_data': v, },
+                                                context=self.REQUEST)
 
     security.declarePrivate('validate_usedMeetingAttributes')
+
     def validate_usedMeetingAttributes(self, newValue):
         '''Some attributes on a meeting are mutually exclusive. This validator
            ensures that wrong combinations aren't used.'''
@@ -2631,34 +2797,40 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return translate('no_assembly_and_attendees', domain=pm, context=self.REQUEST)
 
     security.declarePrivate('validate_itemConditionsInterface')
+
     def validate_itemConditionsInterface(self, value):
         '''Validates the item conditions interface.'''
         iwf = IMeetingItemWorkflowConditions
         return WorkflowInterfacesValidator(IMeetingItem, iwf).validate(value)
 
     security.declarePrivate('validate_itemActionsInterface')
+
     def validate_itemActionsInterface(self, value):
         '''Validates the item actions interface.'''
         iwf = IMeetingItemWorkflowActions
         return WorkflowInterfacesValidator(IMeetingItem, iwf).validate(value)
 
     security.declarePrivate('validate_meetingConditionsInterface')
+
     def validate_meetingConditionsInterface(self, value):
         '''Validates the meeting conditions interface.'''
         iwf = IMeetingWorkflowConditions
         return WorkflowInterfacesValidator(IMeeting, iwf).validate(value)
 
     security.declarePrivate('validate_meetingActionsInterface')
+
     def validate_meetingActionsInterface(self, value):
         '''Validates the meeting actions interface.'''
         iwf = IMeetingWorkflowActions
         return WorkflowInterfacesValidator(IMeeting, iwf).validate(value)
 
     security.declarePrivate('validate_meetingConfigsToCloneTo')
+
     def validate_meetingConfigsToCloneTo(self, values):
         '''Validates the meetingConfigsToCloneTo.'''
         # first check that we did not defined to rows for the same meetingConfig
-        meetingConfigs = [v['meeting_config'] for v in values if not v.get('orderindex_', None) == 'template_row_marker']
+        meetingConfigs = [v['meeting_config'] for v in values
+                          if not v.get('orderindex_', None) == 'template_row_marker']
         for meetingConfig in meetingConfigs:
             if meetingConfigs.count(meetingConfig) > 1:
                 return translate('can_not_define_two_rows_for_same_meeting_config',
@@ -2690,6 +2862,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      context=self.REQUEST)
 
     security.declarePrivate('validate_workflowAdaptations')
+
     def validate_workflowAdaptations(self, values):
         '''This method ensures that the combination of used workflow
            adaptations is valid.'''
@@ -2714,6 +2887,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return msg
 
     security.declarePrivate('validate_itemAdviceEditStates')
+
     def validate_itemAdviceEditStates(self, values):
         '''This method ensures that the value given in itemAdviceEditStates
            is a superset of what is given for itemAdviceStates, so a value in itemAdviceState
@@ -2741,6 +2915,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         pass
 
     security.declarePrivate('validate_insertingMethodsOnAddItem')
+
     def validate_insertingMethodsOnAddItem(self, values):
         '''This method validate the 'insertingMethodsOnAddItem' DataGridField :
            - if sortingMethod 'at_the_end' is selected, no other sorting method can be selected;
@@ -2812,7 +2987,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # is not linked the current row, return nothing
         if not currentRowData['is_linked_to_previous_row'] == '1' and \
            (currentRowIndex == len(self.getCustomAdvisers()) - 1 or not
-           self.getCustomAdvisers()[currentRowIndex + 1]['is_linked_to_previous_row'] == '1'):
+                self.getCustomAdvisers()[currentRowIndex + 1]['is_linked_to_previous_row'] == '1'):
             return isAutomaticAdvice, res
         res.append(currentRowData)
 
@@ -2844,6 +3019,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return isAutomaticAdvice, res
 
     security.declarePrivate('listWorkflowAdaptations')
+
     def listWorkflowAdaptations(self):
         '''Lists the available workflow changes.'''
         res = []
@@ -2853,6 +3029,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('listSignatureNumbers')
+
     def listSignatureNumbers(self):
         '''Vocabulary for column 'signatureNumber' of MeetingConfig.certifiedSignatures.'''
         res = []
@@ -2861,6 +3038,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemIconColors')
+
     def listItemIconColors(self):
         '''Vocabulary for field 'itemIconColor'.'''
         res = [("default", translate('icon_color_default',
@@ -2873,6 +3051,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listItemRelatedColumns')
+
     def listItemRelatedColumns(self):
         '''Lists all the attributes that can be used as columns for displaying
            information about an item.'''
@@ -2910,6 +3089,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('listItemsListVisibleColumns')
+
     def listItemsListVisibleColumns(self):
         res = self.listItemRelatedColumns()
         return DisplayList(tuple(res))
@@ -2921,6 +3101,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemColumns')
+
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
         res.insert(-1, ('linkedMeetingDate', translate('header_linkedMeetingDate',
@@ -2932,6 +3113,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingColumns')
+
     def listMeetingColumns(self):
         d = 'collective.eeafaceted.z3ctable'
         res = [
@@ -2943,6 +3125,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('listVotesEncoders')
+
     def listVotesEncoders(self):
         d = "PloneMeeting"
         res = DisplayList((
@@ -2952,6 +3135,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('listAdviceTypes')
+
     def listAdviceTypes(self):
         d = "PloneMeeting"
         res = DisplayList((
@@ -2964,6 +3148,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('listAdviceStyles')
+
     def listAdviceStyles(self):
         d = "PloneMeeting"
         res = DisplayList((
@@ -2973,6 +3158,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('listTransitions')
+
     def listTransitions(self, objectType, meetingConfig=None):
         '''Lists the possible transitions for the p_objectType ("Item" or
            "Meeting") used in the given p_meetingConfig meeting config.'''
@@ -2993,6 +3179,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('listTransitionsReinitializingDelays')
+
     def listTransitionsReinitializingDelays(self):
         '''Vocabulary for the MeetingConfig.transitionsReinitializingDelays field.'''
         # we only consider back transitions
@@ -3007,6 +3194,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listActiveMeetingGroupsForPowerAdvisers')
+
     def listActiveMeetingGroupsForPowerAdvisers(self):
         """
           Vocabulary for the powerAdvisersGroups field.
@@ -3028,6 +3216,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listActiveMeetingGroupsForCustomAdvisers')
+
     def listActiveMeetingGroupsForCustomAdvisers(self):
         """
           Vocabulary for the customAdvisers.group DatagridField attribute.
@@ -3059,6 +3248,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('listAllVoteValues')
+
     def listAllVoteValues(self):
         d = "PloneMeeting"
         res = DisplayList((
@@ -3085,6 +3275,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('listConfidentialFor')
+
     def listConfidentialFor(self):
         '''
           Vocabulary for the 'annexConfidentialFor' and 'adviceConfidentialFor' fields.
@@ -3100,11 +3291,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('isVotable')
+
     def isVotable(self, item):
-        exec 'condition = %s' % self.getVoteCondition()
-        return condition
+        #exec 'condition = %s' % self.getVoteCondition()
+        return True
 
     security.declarePrivate('listDefaultSignatories')
+
     def listDefaultSignatories(self):
         '''Lists the available signatories.'''
         # Get every meeting user and check if signer is in their usages
@@ -3114,6 +3307,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res)
 
     security.declarePublic('deadlinesAreEnabled')
+
     def deadlinesAreEnabled(self):
         '''Are deadlines enabled ?'''
         for field in self.getUsedMeetingAttributes():
@@ -3129,6 +3323,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return iconName
 
     security.declarePrivate('updateCollectionColumns')
+
     def updateCollectionColumns(self):
         '''Update customViewFields defined on DashboardCollection
            from what is defined in self.itemColumns and self.meetingColumns:
@@ -3160,6 +3355,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             collection.setCustomViewFields(tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds]))
 
     security.declarePrivate('updatePortalTypes')
+
     def updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
         typesTool = getToolByName(self, 'portal_types')
@@ -3217,6 +3413,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self._updateCloneToOtherMCActions()
 
     security.declarePrivate('registerPortalTypes')
+
     def registerPortalTypes(self):
         '''Registers, into portal_types, specific item and meeting types
            corresponding to this meeting config.'''
@@ -3247,7 +3444,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
                 portalType.global_allow = True
                 # Associate a workflow for this new portal type.
-                exec 'workflowName = self.get%sWorkflow()' % self.metaNames[i]
+                workflowName = 'get%sWorkflow' % self.metaNames[i]
+                workflowName = getattr(self, workflowName)()
                 # because of reinstallation problems, we MUST trust given workflow name and use
                 # it.  For example, while reinstalling an external profile, the workflow
                 # could not exist at this time but we need to set it nevertheless
@@ -3268,6 +3466,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
 
     security.declarePrivate('createSearches')
+
     def createSearches(self, searchesInfo):
         '''Adds a bunch of collections in the 'searches' sub-folder.'''
         for collectionId, collectionData in searchesInfo.items():
@@ -3332,6 +3531,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        visible=True)
 
     security.declarePrivate('updateIsDefaultFields')
+
     def updateIsDefaultFields(self):
         '''If this config becomes the default one, all the others must not be
            default meetings.'''
@@ -3357,6 +3557,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 self.plone_utils.addPortalMessage(msg)
 
     security.declarePrivate('createTab')
+
     def createTab(self):
         '''Creates the action tab that corresponds to this meeting config.'''
         actionIds = self.portal_actions.portal_tabs.objectIds()
@@ -3397,6 +3598,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return groupId, wasCreated
 
     security.declarePrivate('createPowerObserversGroup')
+
     def createPowerObserversGroup(self):
         '''Creates Plone groups to manage (restricted) power observers.'''
         tool = getToolByName(self, 'portal_plonemeeting')
@@ -3412,12 +3614,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 self.manage_addLocalRoles(groupId, (READER_USECASES[grpSuffix],))
 
     security.declarePrivate('createBudgetImpactEditorsGroup')
+
     def createBudgetImpactEditorsGroup(self):
         '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
            local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
         self._createSuffixedGroup(suffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX)
 
     security.declarePrivate('createMeetingManagersGroup')
+
     def createMeetingManagersGroup(self):
         '''Creates a Plone group that will be used to apply the 'MeetingManager'
            local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
@@ -3433,6 +3637,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(groupId, ('MeetingManager',))
 
     security.declarePrivate('at_post_create_script')
+
     def at_post_create_script(self):
         '''Create the sub-folders of a meeting config, that will contain
            categories, recurring items, etc., and create the tab that
@@ -3466,6 +3671,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
 
     security.declarePrivate('at_post_edit_script')
+
     def at_post_edit_script(self):
         ''' '''
         # invalidateAll ram.cache
@@ -3579,6 +3785,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.setAnnexDecisionToPrintDefault(False)
 
     security.declarePublic('getItemTypeName')
+
     def getItemTypeName(self, configType=None):
         '''Gets the name of the portal_type of the meeting item for this
            config.'''
@@ -3598,12 +3805,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return 'plonemeeting_activity_managers_workflow'
 
     security.declarePublic('getMeetingTypeName')
+
     def getMeetingTypeName(self):
         '''Gets the name of the portal_type of the meeting for this
            config.'''
         return 'Meeting%s' % self.getShortName()
 
     security.declarePublic('userIsAReviewer')
+
     def userIsAReviewer(self):
         '''Is current user a reviewer?  So is current user among groups of MEETINGREVIEWERS?'''
         member = self.portal_membership.getAuthenticatedMember()
@@ -3622,6 +3831,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return reviewSuffix
 
     security.declarePublic('listWorkflows')
+
     def listWorkflows(self):
         '''Lists the workflows registered in portal_workflow.'''
         res = []
@@ -3634,14 +3844,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return (self.modified(), objectType, excepted)
 
     security.declarePublic('listStates')
+
     @ram.cache(listStates_cachekey)
     def listStates(self, objectType, excepted=None):
         '''Lists the possible states for the p_objectType ("Item" or "Meeting")
            used in this meeting config. State name specified in p_excepted will
            be ommitted from the result.'''
+        wfTool = api.portal.get_tool('portal_workflow')
         res = []
-        exec 'workflowName = self.get%sWorkflow()' % objectType
-        workflow = getattr(self.portal_workflow, workflowName)
+        workflowName = 'get%sWorkflow' % objectType
+        workflowName = getattr(self, workflowName)()
+        workflow = getattr(wfTool, workflowName)
         for state in workflow.states.objectValues():
             if excepted and (state.id == excepted):
                 continue
@@ -3649,6 +3862,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('listAllTransitions')
+
     def listAllTransitions(self):
         '''Lists the possible transitions for items as well as for meetings.'''
         res = []
@@ -3662,6 +3876,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listMeetingConfigsToCloneTo')
+
     def listMeetingConfigsToCloneTo(self):
         '''List available meetingConfigs to clone items to.'''
         res = []
@@ -3673,6 +3888,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('listTransitionsUntilPresented')
+
     def listTransitionsUntilPresented(self):
         '''List available workflow transitions until the 'present' transition included.
            We base this on the MeetingConfig.transitionsForPresentingAnItem field.
@@ -3700,20 +3916,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listEveryItemTransitions')
+
     def listEveryItemTransitions(self):
         '''Vocabulary that list every item WF transitions.'''
         return DisplayList(self.listTransitions('Item')).sortedByValue()
 
     security.declarePrivate('listEveryMeetingTransitions')
+
     def listEveryMeetingTransitions(self):
         '''Vocabulary that list every meeting WF transitions.'''
         return DisplayList(self.listTransitions('Meeting')).sortedByValue()
 
     security.declarePublic('listItemStates')
+
     def listItemStates(self):
         return DisplayList(tuple(self.listStates('Item'))).sortedByValue()
 
     security.declarePublic('listItemAutoSentToOtherMCStates')
+
     def listItemAutoSentToOtherMCStates(self):
         """Vocabulary for the 'itemAutoSentToOtherMCStates' field, every states excepted initial state."""
         wfTool = api.portal.get_tool('portal_workflow')
@@ -3723,10 +3943,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(states)).sortedByValue()
 
     security.declarePublic('listMeetingStates')
+
     def listMeetingStates(self):
         return DisplayList(tuple(self.listStates('Meeting'))).sortedByValue()
 
     security.declarePublic('listAllRichTextFields')
+
     def listAllRichTextFields(self):
         '''Lists all rich-text fields belonging to classes MeetingItem and
            Meeting.'''
@@ -3734,6 +3956,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePublic('listItemRichTextFields')
+
     def listItemRichTextFields(self):
         '''Lists all rich-text fields belonging to MeetingItem schema.'''
         res = self._listRichTextFieldFor(MeetingItem)
@@ -3753,6 +3976,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('listTransformTypes')
+
     def listTransformTypes(self):
         '''Lists the possible transform types on a rich text field.'''
         d = 'PloneMeeting'
@@ -3762,6 +3986,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('listMailModes')
+
     def listMailModes(self):
         '''Lists the available modes for email notifications.'''
         d = 'PloneMeeting'
@@ -3773,6 +3998,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('listMailFormats')
+
     def listMailFormats(self):
         '''Lists the available formats for email notifications.'''
         d = 'PloneMeeting'
@@ -3783,6 +4009,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('listItemEvents')
+
     def listItemEvents(self):
         '''Lists the events related to items that will trigger a mail being
            sent.'''
@@ -3842,6 +4069,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
 
     security.declarePublic('listMeetingEvents')
+
     def listMeetingEvents(self):
         '''Lists the events related to meetings that will trigger a mail being
            sent.'''
@@ -3855,6 +4083,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res).sortedByValue()
 
     security.declarePublic('getCertifiedSignatures')
+
     def getCertifiedSignatures(self, computed=False, **kwargs):
         '''Overrides field 'certifiedSignatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
@@ -3878,6 +4107,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 self.meetingfiletypes._tree._p_mtime, relatedTo, typesIds, onlySelectable, includeSubTypes)
 
     security.declarePublic('getFileTypes')
+
     @ram.cache(getFileTypes_cachekey)
     def getFileTypes(self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
         '''Gets the relatedTo-related meeting file types. If
@@ -3906,6 +4136,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getCategories')
+
     def getCategories(self, classifiers=False, onlySelectable=True, userId=None, caching=True):
         '''Returns the categories defined for this meeting config or the
            classifiers if p_classifiers is True. If p_onlySelectable is True,
@@ -3946,6 +4177,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return data
 
     security.declarePublic('listInsertingMethods')
+
     def listInsertingMethods(self):
         '''Return a list of available inserting methods when
            adding a item to a meeting'''
@@ -3958,6 +4190,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePublic('listSelectableCopyGroups')
+
     def listSelectableCopyGroups(self):
         '''Returns a list of groups that can be selected on an item as copy for
            the item.'''
@@ -3971,21 +4204,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePublic('getSelf')
+
     def getSelf(self):
         if self.__class__.__name__ != 'MeetingConfig':
             return self.context
         return self
 
     security.declarePublic('adapted')
+
     def adapted(self):
         return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
+
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
 
     security.declarePrivate('manage_beforeDelete')
+
     def manage_beforeDelete(self, item, container):
         '''Checks if the current meetingConfig can be deleted :
           - no Meeting and MeetingItem linked to this config can exist
@@ -4039,15 +4276,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         BaseFolder.manage_beforeDelete(self, item, container)
 
     security.declarePublic('getCustomFields')
+
     def getCustomFields(self, cols):
         return getCustomSchemaFields(schema, self.schema, cols)
 
     security.declarePublic('isUsingMeetingUsers')
+
     def isUsingMeetingUsers(self):
         ''' Returns True if we are currently using MeetingUsers.'''
         return bool('attendees' in self.getUsedMeetingAttributes())
 
     security.declarePublic('getMeetingUsers')
+
     def getMeetingUsers(self, usages=('assemblyMember',), onlyActive=True, theObjects=True):
         '''Returns the MeetingUsers having at least one usage among
            p_usage.  if p_onlyActive is True, only active MeetingUsers are returned.'''
@@ -4064,6 +4304,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return [b.getObject() for b in brains]
 
     security.declarePrivate('addCategory')
+
     def addCategory(self, descr, classifier=False):
         '''Creates a category or a classifier (depending on p_classifier) from
            p_descr, a CategoryDescriptor instance.'''
@@ -4081,6 +4322,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return cat
 
     security.declarePrivate('addItemToConfig')
+
     def addItemToConfig(self, descr, isRecurring=True):
         '''Adds a recurring item or item template
            from a RecurringItemDescriptor or a ItemTemplateDescriptor
@@ -4100,6 +4342,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return item
 
     security.declarePrivate('addFileType')
+
     def addFileType(self, ft, source):
         '''Adds a file type from a FileTypeDescriptor p_ft.'''
         folder = getattr(self, TOOL_FOLDER_FILE_TYPES)
@@ -4120,6 +4363,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return fileType
 
     security.declarePrivate('addPodTemplate')
+
     def addPodTemplate(self, pt, source):
         '''Adds a POD template from p_pt (a PodTemplateDescriptor instance).'''
         folder = getattr(self, TOOL_FOLDER_POD_TEMPLATES)
@@ -4150,6 +4394,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return podTemplate
 
     security.declarePrivate('addMeetingUser')
+
     def addMeetingUser(self, mud, source):
         '''Adds a meeting user from a MeetingUserDescriptor instance p_mud.'''
         folder = getattr(self, TOOL_FOLDER_MEETING_USERS)
@@ -4185,11 +4430,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return meetingUser
 
     security.declarePublic('getMeetingUserFromPloneUser')
+
     def getMeetingUserFromPloneUser(self, userId):
         '''Returns the Meeting user that corresponds to p_userId.'''
         return getattr(self.meetingusers.aq_base, userId, None)
 
     security.declarePublic('getRecurringItems')
+
     def getRecurringItems(self, onlyActive=True):
         '''Gets the recurring items defined in the configuration.
            If p_onlyActive is True, only returns 'active' items.'''
@@ -4220,6 +4467,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return query
 
     security.declarePublic('getItemTemplates')
+
     def getItemTemplates(self, as_brains=True, onlyActive=True, filtered=False):
         '''Gets the item templates defined in the configuration.
            If p_as_brains is True, return brains.
@@ -4242,6 +4490,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('createUser')
+
     def createUser(self, userId):
         '''Creates, in folder self.meetingusers, a new MeetingUser instance.'''
         self.meetingusers.invokeFactory('MeetingUser', id=userId)
@@ -4250,6 +4499,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return meetingUser
 
     security.declarePublic('gotoPreferences')
+
     def gotoPreferences(self):
         '''Redirects the logged user to is preferences = the view of its
            MeetingUser instance. If this instance does not exist, it is
@@ -4261,6 +4511,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return self.REQUEST.RESPONSE.redirect(meetingUser.absolute_url())
 
     security.declarePublic('addUser')
+
     def addUser(self):
         '''Creates a new MeetingUser instance from a userid which is (or should
            be) in the request.'''
@@ -4291,6 +4542,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return (param, str(request._debug), userId)
 
     security.declarePublic('getUserParam')
+
     @ram.cache(getUserName_cachekey)
     def getUserParam(self, param, request, userId=None, caching=True):
         '''Gets the value of the user-specific p_param, for p_userId if given,
@@ -4311,6 +4563,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return getattr(obj, methodName)()
 
     security.declarePublic('listTransitionsDecidingItem')
+
     def listTransitionsDecidingItem(self):
         '''Vocabulary used to get every transitions from the item workflow that will make an item 'decided'.
            This is used by the panel of transitions available at the bottom of a decided meeting to
@@ -4326,6 +4579,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res).sortedByValue()
 
     security.declarePublic('updateAnnexConfidentiality')
+
     def updateAnnexConfidentiality(self):
         '''Update the confidentiality of existing annexes regarding default value
            for confidentiality defined in the corresponding annex type.'''
@@ -4356,6 +4610,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateAdviceConfidentiality')
+
     def updateAdviceConfidentiality(self):
         '''Update the confidentiality of existing advices regarding default value
            in MeetingConfig.adviceConfidentialityDefault.'''
@@ -4450,7 +4705,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             query['getDate'] = {'query': DateTime(), 'range': 'min'}
 
         return catalog.unrestrictedSearchResults(**query)
-
 
 
 registerType(MeetingConfig, PROJECTNAME)
