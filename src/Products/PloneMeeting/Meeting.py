@@ -14,13 +14,25 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
-from Products.Archetypes.atapi import *
 from zope.interface import implements
 import interfaces
 
-from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
+from Products.Archetypes.atapi import BaseContent
+from Products.Archetypes.atapi import BaseSchema
+from Products.Archetypes.atapi import DateTimeField
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import IntegerField
+from Products.Archetypes.atapi import LinesField
+from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import ReferenceField
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.atapi import RichWidget
+from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import StringField
+from Products.Archetypes.atapi import TextAreaWidget
+from Products.Archetypes.atapi import TextField
 
-from Products.PloneMeeting.config import *
+from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 ##code-section module-header #fill in your manual code here
 import os
@@ -47,6 +59,13 @@ from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
+from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
+from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
@@ -99,12 +118,14 @@ class MeetingWorkflowConditions:
                 return True
 
     security.declarePublic('mayAcceptItems')
+
     def mayAcceptItems(self):
         if checkPermission(ReviewPortalContent, self.context) and \
            (self.context.queryState() in self.acceptItemsStates):
             return True
 
     security.declarePublic('mayPublish')
+
     def mayPublish(self):
         if not checkPermission(ReviewPortalContent, self.context):
             return False
@@ -115,6 +136,7 @@ class MeetingWorkflowConditions:
         return True
 
     security.declarePublic('mayPublishDecisions')
+
     def mayPublishDecisions(self):
         '''Used when 'hide_decisions_when_under_writing' wfAdaptation is active.'''
         res = False
@@ -124,10 +146,12 @@ class MeetingWorkflowConditions:
         return res
 
     security.declarePublic('mayFreeze')
+
     def mayFreeze(self):
         return self.mayPublish()
 
     security.declarePublic('mayDecide')
+
     def mayDecide(self):
         '''May decisions on this meeting be taken?'''
         if checkPermission(ReviewPortalContent, self.context):
@@ -150,6 +174,7 @@ class MeetingWorkflowConditions:
         return False
 
     security.declarePublic('mayCorrect')
+
     def mayCorrect(self):
         if not checkPermission(ReviewPortalContent, self.context):
             return
@@ -164,21 +189,25 @@ class MeetingWorkflowConditions:
             return True
 
     security.declarePublic('mayClose')
+
     def mayClose(self):
         if checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayArchive')
+
     def mayArchive(self):
         if checkPermission(ReviewPortalContent, self.context) and \
            self._decisionsAreArchivable():
             return True
 
     security.declarePublic('mayRepublish')
+
     def mayRepublish(self):
         return False
 
     security.declarePublic('mayChangeItemsOrder')
+
     def mayChangeItemsOrder(self):
         if not checkPermission(ModifyPortalContent, self.context):
             return
@@ -205,6 +234,7 @@ class MeetingWorkflowActions:
         self.context = meeting
 
     security.declarePrivate('initSequenceNumber')
+
     def initSequenceNumber(self):
         '''When a meeting is published (or frozen, depending on workflow
            adaptations), we attribute him a sequence number.'''
@@ -226,21 +256,25 @@ class MeetingWorkflowActions:
         cfg.setLastMeetingNumber(meetingNumber)
 
     security.declarePrivate('doPublish')
+
     def doPublish(self, stateChange):
         '''When publishing the meeting, initialize the sequence number.'''
         self.initSequenceNumber()
 
     security.declarePrivate('doFreeze')
+
     def doFreeze(self, stateChange):
         '''When freezing the meeting, we initialize sequence number.'''
         self.initSequenceNumber()
 
     security.declarePrivate('doDecide')
+
     def doDecide(self, stateChange):
         ''' '''
         pass
 
     security.declarePrivate('doClose')
+
     def doClose(self, stateChange):
         ''' '''
         # Set the firstItemNumber
@@ -249,31 +283,37 @@ class MeetingWorkflowActions:
         self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumberForMeeting(self.context))
 
     security.declarePrivate('doPublish_decisions')
+
     def doPublish_decisions(self, stateChange):
         '''When the wfAdaptation 'hide_decisions_when_under_writing' is activated.'''
         pass
 
     security.declarePrivate('doArchive')
+
     def doArchive(self, stateChange):
         ''' '''
         pass
 
     security.declarePrivate('doRepublish')
+
     def doRepublish(self, stateChange):
         pass
 
     security.declarePrivate('doBackToCreated')
+
     def doBackToCreated(self, stateChange):
         ''' '''
         pass
 
     security.declarePrivate('doBackToDecided')
+
     def doBackToDecided(self, stateChange):
         # Oups when closing a meeting we have updated the firsItemNumber
         # we need to reverse our action
         self.context.setFirstItemNumber(-1)
 
     security.declarePrivate('doBackToPublished')
+
     def doBackToPublished(self, stateChange):
         wfTool = getToolByName(self.context, 'portal_workflow')
         for item in self.context.getItems():
@@ -284,15 +324,18 @@ class MeetingWorkflowActions:
                     # This way we "hide" again all late items.
 
     security.declarePrivate('doBackToDecisionsPublished')
+
     def doBackToDecisionsPublished(self, stateChange):
         '''When the wfAdaptation 'hide_decisions_when_under_writing' is activated.'''
         pass
 
     security.declarePrivate('doBackToFrozen')
+
     def doBackToFrozen(self, stateChange):
         pass
 
     security.declarePrivate('doBackToClosed')
+
     def doBackToClosed(self, stateChange):
         # Every item must go back to its previous state: confirmed, delayed or
         # refused.
@@ -620,6 +663,7 @@ Meeting_schema = BaseSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 ##/code-section after-schema
 
+
 class Meeting(BaseContent, BrowserDefaultMixin):
     """ A meeting made of items """
     security = ClassSecurityInfo()
@@ -639,6 +683,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     # Manually created methods
 
     security.declarePublic('getPrettyLink')
+
     def getPrettyLink(self):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
@@ -648,6 +693,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return adapted.getLink()
 
     security.declarePublic('getRawQuery')
+
     def getRawQuery(self):
         """ """
         tool = getToolByName(self, 'portal_plonemeeting')
@@ -662,12 +708,12 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     'v': cfg.getItemTypeName()},
                    {'i': 'linkedMeetingUID',
                     'o': 'plone.app.querystring.operation.selection.is',
-                    'v': self.UID()},]
+                    'v': self.UID()}, ]
         return res
 
     def _displayingAvailableItems(self):
         """Is the meeting view displaying available items?"""
-        return bool("@@meeting_available_items_view" in self.REQUEST['HTTP_REFERER'] or \
+        return bool("@@meeting_available_items_view" in self.REQUEST['HTTP_REFERER'] or
                     "@@meeting_available_items_view" in self.REQUEST['URL'])
 
     def _availableItemsQuery(self):
@@ -706,11 +752,13 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getSort_on')
+
     def getSort_on(self):
         """ """
         return 'getItemNumber'
 
     security.declarePublic('getCustomViewFields')
+
     def getCustomViewFields(self):
         """ """
         tool = getToolByName(self, 'portal_plonemeeting')
@@ -726,6 +774,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return itemsListVisibleColumns
 
     security.declarePrivate('validate_date')
+
     def validate_date(self, value):
         '''There can't be several meetings with the same date and hour.'''
         tool = getToolByName(self, 'portal_plonemeeting')
@@ -744,6 +793,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     return self.i18n('meeting_with_same_date_exists')
 
     security.declarePrivate('validate_place')
+
     def validate_place(self, value):
         '''If "other" is selected, field "place_other" must contain
            something.'''
@@ -752,12 +802,14 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return self.i18n('place_other_required')
 
     security.declarePublic('listAssemblyMembers')
+
     def listAssemblyMembers(self):
         '''Returns the active MeetingUsers having usage "assemblyMember".'''
         res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(includeAllActive=True))
         return DisplayList(res)
 
     security.declarePublic('listSignatories')
+
     def listSignatories(self):
         '''Returns the active MeetingUsers having usage "signer".'''
         res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(usages=['signer', ],
@@ -765,6 +817,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return DisplayList(res)
 
     security.declarePublic('getAllUsedMeetingUsers')
+
     def getAllUsedMeetingUsers(self, usages=['assemblyMember', ], includeAllActive=False):
         '''This will return every used MeetingUsers no matter they are
            active or not.  This make it possible to deactivate a MeetingUser
@@ -789,6 +842,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return [mUser for mUser in allMeetingUsers if mUser.getId() in mUserIds]
 
     security.declarePublic('getDefaultAttendees')
+
     def getDefaultAttendees(self):
         '''The default attendees are the active MeetingUsers in the
            corresponding meeting configuration.'''
@@ -797,6 +851,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return [u.id for u in cfg.getMeetingUsers()]
 
     security.declarePublic('getDefaultSignatories')
+
     def getDefaultSignatories(self):
         '''The default signatories are the active MeetingUsers having usage
            "signer" and whose "signatureIsDefault" is True.'''
@@ -809,6 +864,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getAttendees')
+
     def getAttendees(self, theObjects=False, includeDeleted=True,
                      includeReplacements=False):
         '''Returns the attendees in this meeting. When used by Archetypes,
@@ -828,16 +884,19 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                                meetingForRepls=meetingForRepls)
 
     security.declarePublic('getExcused')
+
     def getExcused(self, theObjects=False):
         '''See docstring in previous method.'''
         return getMeetingUsers(self, 'excused', theObjects, True)
 
     security.declarePublic('getAbsents')
+
     def getAbsents(self, theObjects=False):
         '''See docstring in previous method.'''
         return getMeetingUsers(self, 'absents', theObjects, True)
 
     security.declarePublic('getItemAbsents')
+
     def getItemAbsents(self):
         '''Returns a dict. Keys are meeting user IDs; every value is the list
            of items for which this user is noted as 'itemAbsent' in the field
@@ -853,11 +912,13 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getLateAttendees')
+
     def getLateAttendees(self, theObjects=False):
         '''See docstring in previous method.'''
         return getMeetingUsers(self, 'lateAttendees', theObjects, True)
 
     security.declarePublic('getEntranceItem')
+
     def getEntranceItem(self, userId):
         '''p_userId represents a special user that was not present in the
            meeting since its beginning (=a late attendee). This method returns,
@@ -868,6 +929,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return self.entrances[userId]
 
     security.declarePublic('hasEntrance')
+
     def hasEntrance(self, item, when='after'):
         '''Is there at least one people that entered this meeting after (or
            before, if p_when is "before") discussion on p_item?'''
@@ -881,6 +943,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 return True
 
     security.declarePublic('getEntrances')
+
     def getEntrances(self, item, when='after', theObjects=False):
         '''Gets the list of people that entered this meeting after (or
            before, if p_when is "before" or during if p_when is "during") discussion on p_item.'''
@@ -902,6 +965,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getDepartureItem')
+
     def getDepartureItem(self, userId):
         '''p_userId represents a special user that left the meeting BEFORE
            having discussed some item. This method returns, if known, the number
@@ -910,6 +974,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return self.departures[userId]
 
     security.declarePublic('hasDeparture')
+
     def hasDeparture(self, item, when='after'):
         '''Is there at least one people that left this meeting after (or
            before, if p_when is "before") discussion on p_item?'''
@@ -923,6 +988,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 return True
 
     security.declarePublic('getDepartures')
+
     def getDepartures(self, item, when='after', theObjects=False,
                       alsoEarlier=False):
         '''Gets the list of people that left the meeting after (or
@@ -950,6 +1016,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getSignatories')
+
     def getSignatories(self, theObjects=False, includeDeleted=True,
                        includeReplacements=False):
         '''See docstring in previous method.
@@ -965,6 +1032,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declareProtected('Modify portal content', 'setDate')
+
     def setDate(self, value, **kwargs):
         '''Overrides the field 'date' mutator so we reindex every linked
            items if date value changed.'''
@@ -989,6 +1057,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
     security.declarePublic('showObs')
+
     def showObs(self, name):
         '''When must field named p_name be shown? p_name can be "observations"
            or "preObservations".'''
@@ -997,6 +1066,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePrivate('validate_preMeetingDate')
+
     def validate_preMeetingDate(self, value):
         '''Checks that the preMeetingDate comes before the meeting date.'''
         if not value or not self.attributeIsUsed('preMeetingDate'):
@@ -1018,6 +1088,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return (self, str(self.REQUEST._debug), uids, listType, ordered, useCatalog, kwargs, self.modified())
 
     security.declarePublic('getItems')
+
     @ram.cache(getItems_cachekey)
     def getItems(self, uids=[], listType=None, ordered=False, useCatalog=False, **kwargs):
         '''Overrides the Meeting.items accessor.
@@ -1060,6 +1131,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getItemsInOrder')
+
     def getItemsInOrder(self, late=False, uids=[]):
         """Deprecated, use Meeting.getItems instead."""
         logger.warn('Meeting.getItemsInOrder is deprecated, use Meeting.getItems(ordered=True) instead.')
@@ -1069,6 +1141,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return self.getItems(uids=uids, listType=listType, ordered=True)
 
     security.declarePublic('getItemByNumber')
+
     def getItemByNumber(self, number):
         '''Gets the item thas has number p_number.'''
         catalog = getToolByName(self, 'portal_catalog')
@@ -1108,6 +1181,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declareProtected("Modify portal content", 'insertItem')
+
     def insertItem(self, item, forceNormal=False):
         '''Inserts p_item into my list of "normal" items or my list of "late"
            items. If p_forceNormal is True, and the item should be inserted as
@@ -1188,6 +1262,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.notifyModified()
 
     security.declareProtected("Modify portal content", 'removeItem')
+
     def removeItem(self, item):
         '''Removes p_item from me.'''
         # Remember the item number now; once the item will not be in the meeting
@@ -1224,12 +1299,14 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.notifyModified()
 
     security.declarePrivate('getDefaultAssembly')
+
     def getDefaultAssembly(self):
         if self.attributeIsUsed('assembly'):
             return self.portal_plonemeeting.getMeetingConfig(self).getAssembly()
         return ''
 
     security.declarePublic('getStrikedAssembly')
+
     def getStrikedAssembly(self, groupByDuty=True):
         '''
           Generates a HTML version of the assembly :
@@ -1287,6 +1364,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
 
     security.declarePrivate('getDefaultSignatures')
+
     def getDefaultSignatures(self):
         if self.attributeIsUsed('signatures'):
             cfg = self.portal_plonemeeting.getMeetingConfig(self)
@@ -1294,6 +1372,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return ''
 
     security.declarePrivate('updateTitle')
+
     def updateTitle(self):
         '''The meeting title is generated by this method, based on the meeting
            date.'''
@@ -1317,6 +1396,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             self.setTitle(tool.formatMeetingDate(self))
 
     security.declarePrivate('updatePlace')
+
     def updatePlace(self):
         '''Updates the place if it comes from special request field
            "place_other".'''
@@ -1325,6 +1405,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             self.setPlace(rq.get('place_other', ''))
 
     security.declarePrivate('computeDates')
+
     def computeDates(self):
         '''Computes, for this meeting, the dates which are derived from the
            meeting date when relevant.'''
@@ -1357,6 +1438,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 self.setPreMeetingDate(getDateFromDelta(meetingDate, '-' + delta))
 
     security.declarePublic('getUserReplacements')
+
     def getUserReplacements(self):
         '''Gets the dict storing user replacements.'''
         if not hasattr(self.aq_base, 'userReplacements'):
@@ -1364,6 +1446,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return self.userReplacements
 
     security.declarePrivate('updateMeetingUsers')
+
     def updateMeetingUsers(self):
         '''After a meeting has been created or edited, we update here the info
            related to meeting users implied in the meeting: attendees,
@@ -1434,6 +1517,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             self.userReplacements = replacements
 
     security.declarePrivate('at_post_create_script')
+
     def at_post_create_script(self):
         '''Initializes the meeting title and inserts recurring items if
            relevant.'''
@@ -1466,6 +1550,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         logger.info('Meeting at %s created by "%s".' % (self.absolute_url_path(), userId))
 
     security.declarePrivate('at_post_edit_script')
+
     def at_post_edit_script(self):
         '''Updates the meeting title.'''
         self.updateTitle()
@@ -1489,6 +1574,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         logger.info('Meeting at %s edited by "%s".' % (self.absolute_url_path(), userId))
 
     security.declarePublic('updatePowerObserversLocalRoles')
+
     def updatePowerObserversLocalRoles(self):
         '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
            to the corresponding MeetingConfig 'powerobservers/restrictedpowerobservers' group.'''
@@ -1510,16 +1596,19 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             self.manage_addLocalRoles(restrictedPowerObserversGroupId, (READER_USECASES['restrictedpowerobservers'],))
 
     security.declareProtected('Modify portal content', 'transformRichTextField')
+
     def transformRichTextField(self, fieldName, richContent):
         '''See doc in interfaces.py.'''
         return richContent
 
     security.declareProtected('Modify portal content', 'onEdit')
+
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
 
     security.declarePublic('wfConditions')
+
     def wfConditions(self):
         '''Returns the adapter that implements the interface that proposes
            methods for use as conditions in the workflow associated with this
@@ -1527,6 +1616,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return getWorkflowAdapter(self, conditions=True)
 
     security.declarePublic('wfActions')
+
     def wfActions(self):
         '''Returns the adapter that implements the interface that proposes
            methods for use as actions in the workflow associated with this
@@ -1534,22 +1624,26 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return getWorkflowAdapter(self, conditions=False)
 
     security.declarePublic('adapted')
+
     def adapted(self):
         '''Gets the "adapted" version of myself. If no custom adapter is found,
            this method returns me.'''
         return getCustomAdapter(self)
 
     security.declarePublic('hasHistory')
+
     def hasHistory(self, fieldName=None):
         '''See doc in utils.py.'''
         return hasHistory(self, fieldName)
 
     security.declarePublic('getHistory')
+
     def getHistory(self, *args, **kwargs):
         '''See doc in utils.py.'''
         return getHistory(self, *args, **kwargs)
 
     security.declarePublic('attributeIsUsed')
+
     def attributeIsUsed(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
@@ -1560,6 +1654,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return self.workflow_history
 
     security.declarePublic('queryState')
+
     @ram.cache(queryState_cachekey)
     def queryState(self):
         '''In what state am I ?'''
@@ -1567,6 +1662,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return wfTool.getInfoFor(self, 'review_state')
 
     security.declarePublic('getWorkflowName')
+
     def getWorkflowName(self):
         '''What is the name of my workflow ?'''
         tool = getToolByName(self, 'portal_plonemeeting')
@@ -1574,16 +1670,19 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return cfg.getMeetingWorkflow()
 
     security.declarePublic('getLastEvent')
+
     def getLastEvent(self, transition=None):
         '''Check doc in called function in utils.py.'''
         return getLastEvent(self, transition=transition)
 
     security.declarePublic('getObject')
+
     def getObject(self):
         '''Some macros must work with either an object or a brain as input.'''
         return self
 
     security.declarePublic('getSelf')
+
     def getSelf(self):
         '''Similar to MeetingItem.getSelf. Check MeetingItem.py for more
            info.'''
@@ -1593,41 +1692,49 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('setFieldFromAjax')
+
     def setFieldFromAjax(self, fieldName, fieldValue):
         '''See doc in utils.py.'''
         return setFieldFromAjax(self, fieldName, fieldValue)
 
     security.declarePublic('getFieldVersion')
+
     def getFieldVersion(self, fieldName, changes=False):
         '''See doc in utils.py.'''
         return getFieldVersion(self, fieldName, changes)
 
     security.declarePublic('isDecided')
+
     def isDecided(self):
         meeting = self.getSelf()
         return meeting.queryState() in ('decided', 'closed', 'archived', 'decisions_published', )
 
     security.declarePublic('i18n')
+
     def i18n(self, msg, domain="PloneMeeting"):
         '''Shortcut for translating p_msg in domain PloneMeeting.'''
         return translate(msg, domain=domain, context=self.REQUEST)
 
     security.declarePublic('getSpecificDocumentContext')
+
     def getSpecificDocumentContext(self):
         '''See doc in interfaces.py.'''
         return {}
 
     security.declarePublic('getSpecificMailContext')
+
     def getSpecificMailContext(self, event, translationMapping):
         '''See doc in interfaces.py.'''
         return None
 
     security.declarePublic('includeMailRecipient')
+
     def includeMailRecipient(self, event, userId):
         '''See doc in interfaces.py.'''
         return True
 
     security.declarePrivate('addRecurringItems')
+
     def addRecurringItems(self, recurringItems):
         '''Inserts into this meeting some p_recurringItems. The newly created
            items are copied from recurring items (contained in the meeting
@@ -1650,16 +1757,19 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 newItem.reindexObject()
 
     security.declarePublic('fieldIsEmpty')
+
     def fieldIsEmpty(self, name):
         '''Is field named p_name empty ?'''
         return fieldIsEmpty(name, self)
 
     security.declarePublic('numberOfItems')
+
     def numberOfItems(self):
         '''How much items in this meeting ?'''
         return len(self.getRawItems())
 
     security.declarePrivate('manage_beforeDelete')
+
     def manage_beforeDelete(self, item, container):
         '''This is a workaround to avoid a Plone design problem where it is
            possible to remove a folder containing objects you can not remove.'''
@@ -1679,6 +1789,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         BaseContent.manage_beforeDelete(self, item, container)
 
     security.declarePublic('showVotes')
+
     def showVotes(self):
         '''See doc in interfaces.py.'''
         res = False
@@ -1695,6 +1806,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getFrozenDocuments')
+
     def getFrozenDocuments(self):
         '''Gets the documents related to this meeting that were frozen.'''
         res = []
@@ -1712,6 +1824,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getPreviousMeeting')
+
     def getPreviousMeeting(self, searchMeetingsInterval=60):
         '''Gets the previous meeting based on meeting date. We only search among
            meetings in the previous p_searchMeetingsInterval, which is a number
@@ -1724,7 +1837,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # find every meetings before searchMeetingsInterval days before self
         brains = catalog(portal_type=meetingTypeName,
                          getDate={'query': meetingDate - searchMeetingsInterval,
-                         'range': 'min'}, sort_on='getDate',
+                                  'range': 'min'}, sort_on='getDate',
                          sort_order='reverse')
         res = None
         for brain in brains:
@@ -1736,6 +1849,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getNextMeeting')
+
     def getNextMeeting(self):
         '''Gets the next meeting based on meeting date.'''
         meetingDate = self.getDate()
@@ -1757,6 +1871,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declareProtected(ModifyPortalContent, 'processForm')
+
     def processForm(self, *args, **kwargs):
         '''We override this method because we may need to remember previous
            values of historized fields.'''
@@ -1765,6 +1880,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         return BaseContent.processForm(self, *args, **kwargs)
 
     security.declarePublic('showRemoveSelectedItemsAction')
+
     def showRemoveSelectedItemsAction(self):
         '''See doc in interfaces.py.'''
         meeting = self.getSelf()
@@ -1773,6 +1889,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     not meeting.queryState() in meeting.meetingClosedStates)
 
     security.declarePublic('getLabelAssembly')
+
     def getLabelAssembly(self):
         '''
           Depending on the fact that we use 'assembly' alone or
@@ -1787,7 +1904,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             return _('PloneMeeting_label_attendees')
         else:
             return _('meeting_assembly')
-
 
 
 registerType(Meeting, PROJECTNAME)
