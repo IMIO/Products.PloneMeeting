@@ -45,6 +45,10 @@
               handler=".events.onGroupTransition"/>
 
   <subscriber for=".interfaces.IMeetingGroup
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onGroupWillBeRemoved"/>
+
+  <subscriber for=".interfaces.IMeetingGroup
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onGroupRemoved"/>
 
