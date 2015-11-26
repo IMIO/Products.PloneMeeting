@@ -235,7 +235,7 @@ class Migrate_To_3_4(Migrator):
             meeting = brain.getObject()
             self.tool._enableFacetedDashboardFor(meeting,
                                                  xmlpath=os.path.dirname(__file__) +
-                                                 '/faceted_conf/default_dashboard_widgets.xml')
+                                                 '/../faceted_conf/default_dashboard_widgets.xml')
             meeting.setLayout('meeting_view')
 
         logger.info('Done.')
