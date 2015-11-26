@@ -1992,7 +1992,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'Creator',
                          'o': 'plone.app.querystring.operation.string.currentUser'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: tool.userIsAmong('creators')",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -2006,7 +2006,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          'o': 'plone.app.querystring.operation.compound.is',
                          'v': 'items-of-my-groups'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: tool.getGroupsForUser()",
                     'roles_bypassing_talcondition': ['Manager', ]
