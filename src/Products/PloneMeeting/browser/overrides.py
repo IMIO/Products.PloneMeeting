@@ -9,6 +9,7 @@
 
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.annotation import IAnnotations
+from plone import api
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
@@ -230,9 +231,8 @@ class PMFacetedContainerView(FacetedContainerView):
            to it's own pmFolder if it is on the pmFolder of another user."""
         if not check_zope_admin():
             if self.context.getProperty('meeting_config') and \
-               (not self.context.getOwner().getId() ==
-               getToolByName(self.context, 'portal_membership').getAuthenticatedMember()):
-                tool = getToolByName(self.context, 'portal_plonemeeting')
+               (not self.context.getOwner().getId() == api.user.get_current().getId()):
+                tool = api.portal.get_tool('portal_plonemeeting')
                 userPMFolder = tool.getPloneMeetingFolder(self.context.getProperty('meeting_config'))
                 self.request.RESPONSE.redirect(userPMFolder.absolute_url())
         return super(PMFacetedContainerView, self).__call__()
