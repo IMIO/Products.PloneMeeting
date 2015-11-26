@@ -283,10 +283,3 @@ def registerClasses():
             del Products.Archetypes.ATToolModule._types[key]
         registerType(klass, PROJECTNAME)
 ##/code-section config-bottom
-
-
-# Load custom configuration not managed by archgenxml
-try:
-    from Products.PloneMeeting.AppConfig import *
-except ImportError:
-    pass

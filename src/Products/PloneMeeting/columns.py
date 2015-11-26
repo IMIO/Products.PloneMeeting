@@ -163,7 +163,8 @@ class ItemListTypeColumn(VocabularyColumn, ColorColumn):
         if _checkPermission(ModifyPortalContent, self.context):
             obj = self._getObject(item)
             renderedChangeListTypeView = obj.restrictedTraverse('@@item-listtype').index()
-            return u'<div title="{0}" style="display: inline-block;">{1}</div>'.format(term_value, renderedChangeListTypeView)
+            return u'<div title="{0}" style="display: inline-block;">{1}</div>'.format(term_value,
+                                                                                       renderedChangeListTypeView)
         else:
             return u'<div title="{0}" style="display: inline-block;"></div>'.format(term_value)
 

@@ -41,18 +41,16 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 logger.debug('Installing Product')
 
-import os
-import os.path
-from Globals import package_home
-import Products.CMFPlone.interfaces
 from Products.Archetypes import listTypes
-from Products.Archetypes.atapi import *
-from Products.Archetypes.utils import capitalize
+from Products.Archetypes.atapi import process_types
 from Products.CMFCore import DirectoryView
-from Products.CMFCore import permissions as cmfpermissions
 from Products.CMFCore import utils as cmfutils
 from Products.CMFPlone.utils import ToolInit
-from config import *
+from config import ADD_CONTENT_PERMISSIONS
+from config import DEFAULT_ADD_CONTENT_PERMISSION
+from config import product_globals
+from config import PROJECTNAME
+
 
 DirectoryView.registerDirectory('skins', product_globals)
 
@@ -133,10 +131,9 @@ def initialize(context):
 
     # Initialize portal tools
     tools = [ToolPloneMeeting.ToolPloneMeeting]
-    ToolInit( PROJECTNAME +' Tools',
-                tools = tools,
-                icon='tool.gif'
-                ).initialize( context )
+    ToolInit(PROJECTNAME + ' Tools',
+             tools=tools,
+             icon='tool.gif').initialize(context)
 
     # Initialize portal content
     all_content_types, all_constructors, all_ftis = process_types(
@@ -145,21 +142,21 @@ def initialize(context):
 
     cmfutils.ContentInit(
         PROJECTNAME + ' Content',
-        content_types      = all_content_types,
-        permission         = DEFAULT_ADD_CONTENT_PERMISSION,
-        extra_constructors = all_constructors,
-        fti                = all_ftis,
+        content_types=all_content_types,
+        permission=DEFAULT_ADD_CONTENT_PERMISSION,
+        extra_constructors=all_constructors,
+        fti=all_ftis,
         ).initialize(context)
 
     # Give it some extra permissions to control them on a per class limit
-    for i in range(0,len(all_content_types)):
-        klassname=all_content_types[i].__name__
+    for i in range(0, len(all_content_types)):
+        klassname = all_content_types[i].__name__
         if not klassname in ADD_CONTENT_PERMISSIONS:
             continue
 
-        context.registerClass(meta_type   = all_ftis[i]['meta_type'],
-                              constructors= (all_constructors[i],),
-                              permission  = ADD_CONTENT_PERMISSIONS[klassname])
+        context.registerClass(meta_type=all_ftis[i]['meta_type'],
+                              constructors=(all_constructors[i],),
+                              permission=ADD_CONTENT_PERMISSIONS[klassname])
 
     ##code-section custom-init-bottom #fill in your manual code here
     from AccessControl import allow_module
