@@ -1872,7 +1872,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'my-items-taken-over'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: 'takenOverBy' in here.portal_plonemeeting.getMeetingConfig(here).getUsedItemAttributes() "
                                      "and (here.portal_plonemeeting.getGroupsForUser(omittedSuffixes=['observers', ]) or "
@@ -1887,7 +1887,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -1900,7 +1900,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-in-copy'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseCopies() and not here.portal_plonemeeting.userIsAmong('powerobservers')",
@@ -1915,7 +1915,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
                         {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['proposed']}
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.userIsAmong('prereviewers') and "
                                      "'pre_validation' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
@@ -1931,7 +1931,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          'o': 'plone.app.querystring.operation.compound.is',
                          'v': 'items-to-validate-of-highest-hierarchic-level'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here).userIsAReviewer()",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -1946,7 +1946,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          'o': 'plone.app.querystring.operation.compound.is',
                          'v': 'items-to-validate-of-every-reviewer-levels-and-lower-levels'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here).userIsAReviewer()",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -1959,7 +1959,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
@@ -1973,7 +1973,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-without-delay'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
@@ -1987,7 +1987,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-delay'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
@@ -2001,7 +2001,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'items-to-advice-with-exceeded-delay'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
@@ -2015,7 +2015,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
@@ -2029,7 +2029,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'advised-items-with-delay'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.getMeetingConfig(here)."
                                      "getUseAdvices() and here.portal_plonemeeting.userIsAmong('advisers')",
@@ -2044,7 +2044,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
                         {'i': 'review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['returned_to_proposing_group']}
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.userIsAmong('creators') and "
                                      "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
@@ -2059,7 +2059,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'portal_type', 'o': 'plone.app.querystring.operation.selection.is', 'v': [itemType, ]},
                         {'i': 'previous_review_state', 'o': 'plone.app.querystring.operation.selection.is', 'v': ['returned_to_proposing_group']}
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': "python: here.portal_plonemeeting.isManager(here) and "
                                      "'return_to_proposing_group' in here.portal_plonemeeting.getMeetingConfig(here).getWorkflowAdaptations()",
@@ -2073,7 +2073,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion', 'o': 'plone.app.querystring.operation.compound.is', 'v': 'decided-items'},
                     ],
-                    'sort_on': u'created',
+                    'sort_on': u'modified',
                     'sort_reversed': True,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
