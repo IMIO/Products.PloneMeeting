@@ -14,20 +14,28 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
-from Products.Archetypes.atapi import *
 from zope.interface import implements
+from Products.Archetypes.atapi import AttributeStorage
+from Products.Archetypes.atapi import BaseContent
+from Products.Archetypes.atapi import BaseSchema
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import LinesField
+from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import StringField
 import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-
-from Products.PloneMeeting.config import *
 
 ##code-section module-header #fill in your manual code here
 from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.utils import getToolByName
 from imio.helpers.cache import cleanVocabularyCacheFor
-from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
 from Products.PloneMeeting import PMMessageFactory
+from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import WriteRiskyConfig
+from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
 ##/code-section module-header
 
 schema = Schema((
@@ -100,6 +108,7 @@ for field in MeetingCategory_schema.getSchemataFields('metadata'):
     field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
+
 class MeetingCategory(BaseContent, BrowserDefaultMixin):
     """
     """
@@ -119,6 +128,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     # Manually created methods
 
     security.declarePublic('getName')
+
     def getName(self, force=None):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
@@ -149,18 +159,21 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         return i
 
     security.declarePrivate('at_post_create_script')
+
     def at_post_create_script(self):
         # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
         cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")
         self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
+
     def at_post_edit_script(self):
         # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
         cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('manage_beforeDelete')
+
     def manage_beforeDelete(self, item, container):
         '''Checks if the current meetingCategory can be deleted:
           - it can not be linked to an existing meetingItem.'''
@@ -187,21 +200,25 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         BaseContent.manage_beforeDelete(self, item, container)
 
     security.declarePublic('getSelf')
+
     def getSelf(self):
         if self.__class__.__name__ != 'MeetingCategory':
             return self.context
         return self
 
     security.declarePublic('adapted')
+
     def adapted(self):
         return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
+
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
 
     security.declarePublic('isSelectable')
+
     def isSelectable(self, userId):
         '''See documentation in interfaces.py.'''
         cat = self.getSelf()
@@ -220,6 +237,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         return isUsing and state == 'active'
 
     security.declarePublic('listUsingGroups')
+
     def listUsingGroups(self):
         '''Returns a list of groups that will restrict the use of this category
            for.'''
@@ -232,6 +250,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePublic('listCategoriesOfOtherMCs')
+
     def listCategoriesOfOtherMCs(self):
         '''Vocabulary for 'categoryMappingsWhenCloningToOtherMC' field, it returns
            a list of available categories by available MC the items of the current MC
@@ -258,6 +277,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('validate_categoryMappingsWhenCloningToOtherMC')
+
     def validate_categoryMappingsWhenCloningToOtherMC(self, values):
         '''This method does validate the 'categoryMappingsWhenCloningToOtherMC'.
            We can only select one single value (category) for a given MC.'''
@@ -267,7 +287,6 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
             if MCValue.startswith(previousMCValue):
                 return PMMessageFactory(u'error_can_not_select_several_cat_for_same_mc')
             previousMCValue = MCValue
-
 
 
 registerType(MeetingCategory, PROJECTNAME)
