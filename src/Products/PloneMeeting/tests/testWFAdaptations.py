@@ -693,8 +693,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEquals(cloned_state_permission_with_meetingmanager,
                               new_state_permissions[permission])
             # Permission acquisition is also cloned
-            self.assertEquals(itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].getPermissionInfo(permission)['acquired'],
-                              itemWF.states['returned_to_proposing_group'].getPermissionInfo(permission)['acquired'])
+            self.assertEquals(
+                itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].getPermissionInfo(permission)['acquired'],
+                itemWF.states['returned_to_proposing_group'].getPermissionInfo(permission)['acquired'])
 
     def _return_to_proposing_group_active_custom_permissions(self):
         '''Helper method to test 'return_to_proposing_group' wfAdaptation regarding the
@@ -708,7 +709,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         # we will change the 'PloneMeeting: Write item observations' but for now, it is the same permissions than
         # in the permissions cloned from the defined state to clone
         CUSTOM_PERMISSION = 'PloneMeeting: Write item observations'
-        if not 'MeetingManager' in itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION]:
+        if not 'MeetingManager' in \
+           itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION]:
             if isinstance(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION], tuple):
                 tmp_list = list(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
                 tmp_list.remove('MeetingManager')
@@ -719,7 +721,8 @@ class testWFAdaptations(PloneMeetingTestCase):
             itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION],
             itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
         # we will add the 'MeetingMember' role, make sure it is not already there...
-        if 'MeetingMember' in itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION]:
+        if 'MeetingMember' in \
+           itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION]:
             tmp_list = list(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
             tmp_list.remove('MeetingMember')
             itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION] = tuple(tmp_list)
