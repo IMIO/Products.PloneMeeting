@@ -21,6 +21,7 @@
 #
 
 import json
+import lxml
 
 from zope.component import getMultiAdapter
 from zope.i18n import translate
@@ -395,6 +396,12 @@ class DeleteHistoryEventView(BrowserView):
 class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
     """ """
 
+    def printHistory(self):
+        """Return the history view for templates. """
+        historyView = self.context.restrictedTraverse('historyview')()
+        historyViewRendered = lxml.html.fromstring(historyView)
+        return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
+
 
 class FolderDocumentGenerationHelperView(PMDocumentGenerationHelperView):
     """ """
@@ -443,4 +450,8 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
 
 
 class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+    """ """
+
+
+class AdviceDocumentGenerationHelperView(PMDocumentGenerationHelperView):
     """ """

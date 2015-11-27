@@ -529,7 +529,7 @@
         permission="zope2.View"
       />
 
-    <!-- Form that manage item signtures -->
+    <!-- Form that manage item signatures -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
@@ -598,6 +598,14 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         class=".views.ItemDocumentGenerationHelperView"
+        permission="zope2.View"
+        name="document_generation_helper_view"
+     />
+
+    <!-- collective.documentgenerator helper view for MeetingAdvice -->
+    <browser:page
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        class=".views.AdviceDocumentGenerationHelperView"
         permission="zope2.View"
         name="document_generation_helper_view"
      />
