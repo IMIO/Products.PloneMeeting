@@ -108,6 +108,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added adaptable method MeetingItem._isViewableByPowerObservers that makes it possible to refine
   (restricted) power observers access to an item in addition to
   check on MeetingConfig.item(Restricted)PowerObserversStates
+- For the workflowAdaptation "return_to_proposing_group", the custom workflow permissions defined in
+  RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS are now defined by item workflow, so it is possible
+  to use different values for different item workflows
 
 3.3 (2015-02-27)
 ----------------

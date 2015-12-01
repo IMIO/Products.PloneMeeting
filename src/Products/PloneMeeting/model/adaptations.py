@@ -10,6 +10,7 @@ from Products.Archetypes.atapi import RichWidget
 from Products.Archetypes.atapi import TextAreaWidget
 
 from Products.CMFCore.permissions import DeleteObjects
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.config import ReadDecision, WriteDecision
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
@@ -31,8 +32,10 @@ RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
 # with a RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE, the permissions defined here under in
 # RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS will override and be applied after cloned permissions
 # a valid value is something like :
-# {'Modify portal content': ('Manager', 'MeetingManager', 'MeetingMember', 'MeetingReviewer', ),
-#  'Review portal content': ('Manager', 'MeetingManager', 'MeetingReviewer', ),}
+# {'my_item_workflow': {'Modify portal content': ('Manager', 'MeetingManager', 'MeetingMember', 'MeetingReviewer', ),
+#                       'Review portal content': ('Manager', 'MeetingManager', 'MeetingReviewer', ),},
+# }
+# values are defined "by item workflow" so different values may be used for different item workflows
 # this way, MeetingMembers can edit the item but only MeetingReviewer can send it back to the
 # meeting managers and the other permissions are kept from the state to clone permissions defined
 # in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
@@ -40,7 +43,7 @@ RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
 # if roles for a permission is a tuple, it means that it is not acquired and if it is a list,
 # it means that is is acquired... so most of times, use tuples to define roles
 # For example :
-# {'PloneMeeting: Write item observations': ('Manager', 'MeetingManager', 'MeetingMember', )}
+# {'my_item_workflow': {'PloneMeeting: Write item observations': ('Manager', 'MeetingManager', 'MeetingMember', )}, }
 RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}
 # states of the meeting from wich an item can be 'returned_to_proposing_group'
 RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
@@ -424,7 +427,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 continue
             # Grant write access to item creator
             state = wf.states[stateName]
-            grantPermission(state, 'Modify portal content', 'MeetingMember')
+            grantPermission(state, ModifyPortalContent, 'MeetingMember')
             grantPermission(state, WriteDecision, 'MeetingMember')
         logger.info(WF_APPLIED % ("creator_edits_unless_closed", meetingConfig.getId()))
 
@@ -436,6 +439,8 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             # add the 'returned_to_proposing_group' state and clone the
             # permissions from RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
             # and apply permissions defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
+            # RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS contains custom permissions by workflow
+            customPermissions = RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS.get(itemWorkflow.getId(), {})
             itemWorkflow.states.addState('returned_to_proposing_group')
             newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
             # clone the permissions of the given RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE if it exists
@@ -454,14 +459,16 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                     if not 'MeetingManager' in cloned_permissions[permission]:
                         cloned_permissions_with_meetingmanager[permission].append('MeetingManager')
                     if not acquired:
-                        cloned_permissions_with_meetingmanager[permission] = tuple(cloned_permissions_with_meetingmanager[permission])
-            # now apply custom permissions defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
-            cloned_permissions_with_meetingmanager.update(RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS)
+                        cloned_permissions_with_meetingmanager[permission] = \
+                            tuple(cloned_permissions_with_meetingmanager[permission])
+
+            # now apply custom permissions defined in customPermissions
+            cloned_permissions_with_meetingmanager.update(customPermissions)
 
             # if we are cloning an existing state permissions, make sure DeleteObjects
             # is only be availble to ['Manager', 'MeetingManager']
             # if custom permissions are defined, keep what is defined in it
-            if not DeleteObjects in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS:
+            if not DeleteObjects in customPermissions:
                 del_obj_perm = stateToClone.getPermissionInfo(DeleteObjects)
                 if del_obj_perm['acquired']:
                     cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', ]
@@ -510,9 +517,10 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
                 transitions=newTransitionNames)
         logger.info(WF_APPLIED % ("return_to_proposing_group", meetingConfig.getId()))
 
-    # "hide_decisions_when_under_writing" add state 'decisions_published' in the meeting workflow between the 'decided' and
-    # the 'closed' states.  The idea is to hide the decisions to non MeetingManagers when the meeting is 'decided'
-    # and to let everyone (that can see the item) access the decision when the meeting state is 'decisions_published'.
+    # "hide_decisions_when_under_writing" add state 'decisions_published' in the meeting workflow
+    # between the 'decided' and the 'closed' states.  The idea is to hide the decisions to non
+    # MeetingManagers when the meeting is 'decided' and to let everyone (that can see the item) access
+    # the decision when the meeting state is 'decisions_published'.
     # To do so, we take this wfAdaptation into account in the MeetingItem.getDecision that hides it
     # for non MeetingManagers
     if 'hide_decisions_when_under_writing' in wfAdaptations:
@@ -633,10 +641,10 @@ additions = {
 
     # Additional fields for Meeting
     "Meeting": (cf('observations', type='rich',
-                condition="python: here.showObs('observations')",
-                label='PloneMeeting_meetingObservations'),
+                   condition="python: here.showObs('observations')",
+                   label='PloneMeeting_meetingObservations'),
                 cf('preObservations', type='rich',
-                condition="python: here.showObs('preObservations')",)),
+                   condition="python: here.showObs('preObservations')",)),
 
     # Additional fields for other types
     "MeetingCategory":     (cf('title'), cf('description', type='text')),
@@ -646,7 +654,7 @@ additions = {
     "MeetingConfig":       (cf('title'),),
     "MeetingUser":
     (cf('duty', condition="python: here.isManager(here)"),
-    cf('replacementDuty', condition="python: here.isManager(here)")),
+     cf('replacementDuty', condition="python: here.isManager(here)")),
 }
 
 

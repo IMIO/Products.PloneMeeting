@@ -170,7 +170,8 @@ def initializeTool(context):
        profile.'''
     # This method is called by several profiles: testing, archive. Because of a bug
     # in portal_setup, the method can be wrongly called by the default profile.
-    if not isTestOrArchiveProfile(context): return
+    if not isTestOrArchiveProfile(context):
+        return
     # Installs PloneMeeting if not already done
     pqi = context.getSite().portal_quickinstaller
     # Now that we do not run this profile from elsewhere than portal_setup

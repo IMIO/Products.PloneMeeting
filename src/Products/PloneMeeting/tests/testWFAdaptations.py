@@ -701,6 +701,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Helper method to test 'return_to_proposing_group' wfAdaptation regarding the
            RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS defined value.'''
         itemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
+        itemWFId = itemWF.getId()
         # now test the RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS, if some custom permissions are defined,
         # it will override the permissions coming from the state to clone permissions
         from Products.PloneMeeting.model import adaptations
@@ -728,8 +729,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION] = tuple(tmp_list)
         self.failIf('MeetingMember' in itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
         # we define the custom permissions and we run the wfAdaptation again...
-        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {'PloneMeeting: Write item observations':
-                                                                    ('Manager', 'MeetingManager', 'MeetingMember', )}
+        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[itemWFId] = \
+            {'PloneMeeting: Write item observations':
+             ('Manager', 'MeetingManager', 'MeetingMember', )}
         self._reApplyWFAdaptationReturnToProposingGroup(itemWF)
         # now our custom permission must be taken into account but other permissions should be the same than
         # the ones defined in the state to clone permissions of
@@ -746,7 +748,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             # here check if we are treating our custom permission
             if permission == CUSTOM_PERMISSION:
                 cloned_state_permission_with_meetingmanager = \
-                    adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[CUSTOM_PERMISSION]
+                    adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[itemWFId][CUSTOM_PERMISSION]
             # 'Delete objects' is only given to ['Manager', 'MeetingManager']
             # if it was not defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
             if permission == DeleteObjects:
@@ -757,7 +759,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                               new_state_permissions[permission])
         # if 'Delete objects' was defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
         # the defined permissions are kept.  For example, give 'Delete objects' to 'Manager' and 'MeetingManager'
-        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[DeleteObjects] = ('Manager', 'MeetingManager')
+        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[itemWFId][DeleteObjects] = \
+            ('Manager', 'MeetingManager')
         self._reApplyWFAdaptationReturnToProposingGroup(itemWF)
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         self.assertEquals(('Manager', 'MeetingManager', ),
