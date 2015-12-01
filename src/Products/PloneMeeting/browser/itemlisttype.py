@@ -80,3 +80,8 @@ class ChangeItemListTypeView(BrowserView):
             self.context.reindexObject(idxs=['listType', ])
             plone_utils = api.portal.get_tool('plone_utils')
             plone_utils.addPortalMessage(msg, type='warning')
+
+        # an item's listType has been changed, notify meeting
+        if self.context.hasMeeting():
+            meeting = self.context.getMeeting()
+            meeting.notifyModified()
