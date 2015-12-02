@@ -475,7 +475,7 @@ class Migrate_To_3_4(Migrator):
             # check if already migrated
             if not check_already_migrated:
                 field = itemOrMeeting.getField('notes')
-                if field.getContentType(itemOrMeeting) == 'text/html':
+                if field.getContentType(itemOrMeeting, fromBaseUnit=False) == 'text/html':
                     break
                 check_already_migrated = True
             # not already migrated, do it...
