@@ -382,6 +382,13 @@ class Migrate_To_3_4(Migrator):
                         condition = condition.replace("here.meta_type=='MeetingItem' and ", "")
                         pod_portal_types.append(cfg.getItemTypeName())
 
+                    # avoid use of here.portal_plonemeeting and here.portal_plonemeeting.getMeetingConfig(here)
+                    # use 'tool' and 'cfg' instead
+                    if "here.portal_plonemeeting.getMeetingConfig(here)" in condition:
+                        condition = condition.replace("here.portal_plonemeeting.getMeetingConfig(here)", "cfg")
+                    if "here.portal_plonemeeting" in condition:
+                        condition = condition.replace("here.portal_plonemeeting", "tool")
+
                     data = {'title': template.Title(),
                             'description': template.Description(),
                             'odt_file': NamedBlobFile(
