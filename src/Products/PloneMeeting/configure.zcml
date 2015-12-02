@@ -26,6 +26,7 @@
   <include package="Products.DataGridField" />
   <include package=".browser" />
   <include package=".content" />
+  <include package=".documentgenerator" />
 
   <include file="columns.zcml" />
   <include file="events.zcml" />
