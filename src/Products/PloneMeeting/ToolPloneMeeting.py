@@ -84,29 +84,6 @@ defValues = PloneMeetingConfiguration.get()
 schema = Schema((
 
     StringField(
-        name='unoEnabledPython',
-        default=defValues.unoEnabledPython,
-        widget=StringField._properties['widget'](
-            size=60,
-            label="Path of a UNO-enabled Python interpreter (ie /usr/bin/python)",
-            description="UnoEnabledPython",
-            description_msgid="uno_enabled_python",
-            label_msgid='PloneMeeting_label_unoEnabledPython',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
-    IntegerField(
-        name='openOfficePort',
-        default=defValues.openOfficePort,
-        widget=IntegerField._properties['widget'](
-            description="OpenOfficePort",
-            description_msgid="open_office_port",
-            label='Openofficeport',
-            label_msgid='PloneMeeting_label_openOfficePort',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
-    StringField(
         name='meetingFolderTitle',
         default=defValues.meetingFolderTitle,
         widget=StringField._properties['widget'](
@@ -365,27 +342,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         # give the "PloneMeeting: Add MeetingUser" permission to MeetingObserverGlobal role
         self.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingUser'], ('Manager', 'MeetingObserverGlobal'))
-
-    security.declarePrivate('validate_unoEnabledPython')
-    def validate_unoEnabledPython(self, value):
-        '''Checks if the given Python interpreter exists and is uno-enabled.'''
-        if not value:
-            return
-        if not os.path.exists(value):
-            return 'Path "%s" was not found.' % value
-        if not os.path.isfile(value):
-            return 'Path "%s" is not a file. Please specify a file ' \
-                   'corresponding to a Python interpreter (ie ' \
-                   '"/usr/bin/python").' % value
-        if not os.path.basename(value).startswith('python'):
-            return 'Name "%s" does not starts with "python". Please specify a '\
-                   'file corresponding to a Python interpreter (ie ' \
-                   '"/usr/bin/python").' % value
-        if os.system('%s -c "import uno"' % value):
-            return '"%s" is not a UNO-enabled Python interpreter. To check if '\
-                   'a Python interpreter is UNO-enabled, launch it and type ' \
-                   '"import uno". If you have no ImportError exception it ' \
-                   'is ok.' % value
 
     security.declarePrivate('validate_holidays')
     def validate_holidays(self, values):

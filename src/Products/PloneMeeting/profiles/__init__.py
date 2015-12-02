@@ -519,8 +519,6 @@ class PloneMeetingConfiguration(Descriptor):
 
     def __init__(self, meetingFolderTitle, meetingConfigs, groups):
         self.meetingFolderTitle = meetingFolderTitle
-        self.unoEnabledPython = ''
-        self.openOfficePort = 2002
         self.functionalAdminEmail = ''
         self.functionalAdminName = ''
         self.restrictUsers = False

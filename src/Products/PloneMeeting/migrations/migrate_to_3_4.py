@@ -5,6 +5,7 @@ logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
 from Products.CMFCore.utils import getToolByName
+from plone import api
 from plone.namedfile.file import NamedBlobFile
 from Products.CMFPlone.utils import safe_unicode
 from imio.dashboard.utils import _updateDefaultCollectionFor
@@ -396,6 +397,17 @@ class Migrate_To_3_4(Migrator):
                     templatesFolder.invokeFactory('ConfigurablePODTemplate', id=templateId, **data)
                     newTemplate = getattr(templatesFolder, templateId)
                     newTemplate.reindexObject()
+
+        # migrate parameters from portal_plonemeeting to the registry
+        if hasattr(self.tool, 'unoEnabledPython'):
+            api.portal.set_registry_record(
+                'collective.documentgenerator.browser.controlpanel.IDocumentGeneratorControlPanelSchema.uno_path',
+                self.tool.unoEnabledPython)
+            api.portal.set_registry_record(
+                'collective.documentgenerator.browser.controlpanel.IDocumentGeneratorControlPanelSchema.oo_port',
+                self.tool.openOfficePort)
+            delattr(self.tool, 'unoEnabledPython')
+            delattr(self.tool, 'openOfficePort')
         logger.info('Done.')
 
     def _adaptMeetingItemsNumber(self):
@@ -490,9 +502,14 @@ def migrate(context):
        6) Clean pm_modification_date on items and annexes;
        7) Move item templates and recurring items to their own portal_type;
        8) Make sure no layout is defined on users MeetingFolders;
-       9) Reindex annexIndex;
-       10) Move to collective.documentgenerator;
-       11) Refresh catalogs.
+       9) Move to collective.documentgenerator;
+       10) Adapt every items itemNumber;
+       11) Clean MeetingConfigs from unused attributes;
+       12) Clean MeetingUsers from unused attributes;
+       13) Reindex annexIndex;
+       14) Reindex adviceIndex;
+       15) Init new HTML fields;
+       16) Refresh catalogs.
     '''
     Migrate_To_3_4(context).run()
 # ------------------------------------------------------------------------------

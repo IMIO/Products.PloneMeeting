@@ -127,17 +127,7 @@
         <legend>
            <span i18n:translate="oo_config"></span>
         </legend>
-        <p class="discreet" i18n:translate="oo_config_descr"></p><br />
-        <table width="100%">
-          <tr valign="top">
-            <td tal:define="field python:here.getField('unoEnabledPython')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
-            <td tal:define="field python:here.getField('openOfficePort')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
-          </tr>
-        </table>
+        <p class="discreet" i18n:translate="oo_config_descr">These parameters are now managed in the <a i18n:name="docgen_url" tal:attributes="href string:${portal_url}/@@collective.documentgenerator-controlpanel">collective.documentgenerator</a> control panel.</p><br />
       </fieldset>
 
       <!-- Misc -->
