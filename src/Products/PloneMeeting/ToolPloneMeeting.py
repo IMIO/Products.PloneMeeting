@@ -14,26 +14,32 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
-from Products.Archetypes.atapi import *
 from zope.interface import implements
 import interfaces
 
+from Products.Archetypes.atapi import BooleanField
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import LinesField
+from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import OrderedBaseFolder
+from Products.Archetypes.atapi import OrderedBaseFolderSchema
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import SelectionWidget
+from Products.Archetypes.atapi import StringField
+from Products.Archetypes.atapi import TextAreaWidget
+from Products.Archetypes.atapi import TextField
+
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
-from Products.DataGridField import DataGridField, DataGridWidget
+from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
-from Products.DataGridField.SelectColumn import SelectColumn
-
-from Products.PloneMeeting.config import *
-
 
 from Products.CMFCore.utils import UniqueObject
 
 
 ##code-section module-header #fill in your manual code here
 import json
-import os
-import os.path
 import re
 import OFS.Moniker
 from datetime import datetime
@@ -54,22 +60,37 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.ATContentTypes import permission as ATCTPermissions
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.security import is_develop_environment
+from imio.helpers.security import generate_password
+from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import ADD_CONTENT_PERMISSIONS
+from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
+from Products.PloneMeeting.config import MEETING_CONFIG
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
+from Products.PloneMeeting.config import ploneMeetingRoles
+from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
+from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ROOT_FOLDER
+from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.interfaces import IAnnexable, IMeetingFile
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
     monthsIds, weekdaysIds, getCustomSchemaFields, workday
 from Products.PloneMeeting.model.adaptations import performModelAdaptations, performWorkflowAdaptations
+
 import logging
 logger = logging.getLogger('PloneMeeting')
-from imio.actionspanel.utils import unrestrictedRemoveGivenObject
-from imio.helpers.security import is_develop_environment
-from imio.helpers.security import generate_password
-from imio.prettylink.interfaces import IPrettyLink
 
 # Some constants ---------------------------------------------------------------
 MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
@@ -289,6 +310,7 @@ ToolPloneMeeting_schema = OrderedBaseFolderSchema.copy() + \
 ##code-section after-schema #fill in your manual code here
 ##/code-section after-schema
 
+
 class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
@@ -313,37 +335,26 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     vhRex = re.compile('\d+(.*)')
     ##/code-section class-header
 
-
     # tool-constructors have no id argument, the id is fixed
     def __init__(self, id=None):
-        OrderedBaseFolder.__init__(self,'portal_plonemeeting')
+        OrderedBaseFolder.__init__(self, 'portal_plonemeeting')
         self.setTitle('PloneMeeting')
-
-        ##code-section constructor-footer #fill in your manual code here
-        ##/code-section constructor-footer
-
 
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):
         self.unindexObject()
-
-        ##code-section post-edit-method-footer #fill in your manual code here
         performModelAdaptations(self)
         self.adapted().onEdit(isCreated=False)
-        ##/code-section post-edit-method-footer
-
-
-    # Methods
-
-    # Manually created methods
 
     security.declarePrivate('at_post_create_script')
+
     def at_post_create_script(self):
         self.adapted().onEdit(isCreated=True)
         # give the "PloneMeeting: Add MeetingUser" permission to MeetingObserverGlobal role
         self.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingUser'], ('Manager', 'MeetingObserverGlobal'))
 
     security.declarePrivate('validate_holidays')
+
     def validate_holidays(self, values):
         '''Checks if encoded holidays are correct :
            - dates must respect format YYYY/MM/DD;
@@ -412,10 +423,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST)
 
     security.declarePublic('getCustomFields')
+
     def getCustomFields(self, cols):
         return getCustomSchemaFields(schema, self.schema, cols)
 
     security.declarePublic('getMeetingGroup')
+
     def getMeetingGroup(self, ploneGroupId):
         '''Returns the MeetingGroup linked to the Plone group with id
             p_ploneGroupId.'''
@@ -425,6 +438,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 return getattr(self.aq_base, mGroupId, None)
 
     security.declarePublic('getMeetingGroups')
+
     def getMeetingGroups(self, notEmptySuffix=None, onlyActive=True, caching=True):
         '''Gets the MeetingGroups, if p_notEmptySuffix is True, we check that group
            suffixes passed as argument are not empty. If it is the case, we do
@@ -459,6 +473,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return data
 
     security.declarePublic('getActiveConfigs')
+
     def getActiveConfigs(self):
         '''Gets the active meeting configurations.'''
         res = []
@@ -475,6 +490,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return (str(self.REQUEST._debug), userId, active, suffix, zope, omittedSuffixes)
 
     security.declarePublic('getGroupsForUser')
+
     @ram.cache(getGroupsForUser_cachekey)
     def getGroupsForUser(self, userId=None, active=True, suffix=None, zope=False, omittedSuffixes=[]):
         '''Gets the groups p_userId belongs to. If p_userId is None, we use the
@@ -510,6 +526,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getSelectableGroups')
+
     def getSelectableGroups(self, onlySelectable=True, userId=None):
         """
           Returns the selectable groups for given p_userId or currently connected user.
@@ -527,6 +544,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('userIsAmong')
+
     def userIsAmong(self, suffix, onlyActive=True):
         '''Check if the currently logged user is in a p_suffix-related Plone
            group.
@@ -546,6 +564,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     return True
 
     security.declarePublic('getPloneMeetingFolder')
+
     def getPloneMeetingFolder(self, meetingConfigId, userId=None):
         '''Returns the folder, within the member area, that corresponds to
            p_meetingConfigId. If this folder and its parent folder ("My
@@ -569,6 +588,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return getattr(root_folder, meetingConfigId)
 
     security.declarePublic('createMeetingConfig')
+
     def createMeetingConfig(self, configData, source):
         '''Creates a new meeting configuration from p_configData which is a
            MeetingConfigDescriptor instance. p_source is a string that
@@ -630,6 +650,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return cfg
 
     security.declarePublic('createMeetingConfigFolder')
+
     def createMeetingConfigFolder(self, meetingConfigId, userId):
         '''Creates, within the "My meetings" folder, the sub-folder
            corresponding to p_meetingConfigId'''
@@ -678,6 +699,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.creatorsvocabulary")
 
     security.declarePublic('getMeetingConfig')
+
     def getMeetingConfig(self, context, caching=True):
         '''Based on p_context's portal type, we get the corresponding meeting
            config.'''
@@ -723,6 +745,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return data
 
     security.declarePublic('getDefaultMeetingConfig')
+
     def getDefaultMeetingConfig(self):
         '''Gets the default meeting config.'''
         res = None
@@ -746,6 +769,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('checkMayView')
+
     def checkMayView(self, value):
         '''Check if we have the 'View' permission on p_value which can be an
            object or a brain. We use this because checkPermission('View',
@@ -762,6 +786,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return getSecurityManager().checkPermission(View, obj)
 
     security.declarePublic('isPloneMeetingUser')
+
     def isPloneMeetingUser(self):
         '''Is the current user a PloneMeeting user (ie, does it have at least
            one of the roles used in PloneMeeting ?'''
@@ -786,6 +811,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return (str(self.REQUEST._debug), context, realManagers)
 
     security.declarePublic('isManager')
+
     @ram.cache(isManager_cachekey)
     def isManager(self, context, realManagers=False):
         '''Is the current user a 'MeetingManager' on context?  If p_realManagers is True,
@@ -804,6 +830,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return (str(self.REQUEST._debug), cfg, isRestricted)
 
     security.declarePublic('isPowerObserverForCfg')
+
     @ram.cache(isPowerObserverForCfg_cachekey)
     def isPowerObserverForCfg(self, cfg, isRestricted=False):
         """
@@ -824,6 +851,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('isInPloneMeeting')
+
     def isInPloneMeeting(self, context, inTool=False):
         '''Is the user 'in' PloneMeeting (ie somewhere in PloneMeeting-related
            folders that are created within member folders)? If p_inTool is True,
@@ -844,6 +872,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('showPloneMeetingTab')
+
     def showPloneMeetingTab(self, meetingConfigId):
         '''I show the PloneMeeting tabs (corresponding to meeting configs) if
            the user has one of the PloneMeeting roles and if the meeting config
@@ -855,6 +884,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return True
 
     security.declarePublic('getUser')
+
     def getUser(self, userId=None):
         '''Returns the Zope User object for user having p_userId.'''
         membershipTool = api.portal.get_tool('portal_membership')
@@ -864,6 +894,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return membershipTool.getMemberById(userId)
 
     security.declarePublic('getUserName')
+
     def getUserName(self, userId):
         '''Returns the full name of user having id p_userId.'''
         res = userId
@@ -880,6 +911,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getColoredLink')
+
     def getColoredLink(self, obj, showColors=True, showContentIcon=False, contentValue='',
                        target='_self', maxLength=0, inMeeting=True,
                        meeting=None, appendToUrl='', additionalCSSClasses='',
@@ -942,15 +974,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if annexInfo['warnSize']:
                 adapted.contentValue += \
                     "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
-                    translate("annex_size_warning",
-                              domain="PloneMeeting",
-                              context=self.REQUEST,
-                              default="Annex size is huge, it could be difficult to be downloaded!").encode('utf-8'),
-                    annexInfo['friendlySize'])
+                        translate("annex_size_warning",
+                                  domain="PloneMeeting",
+                                  context=self.REQUEST,
+                                  default="Annex size is huge, it could be difficult "
+                                  "to be downloaded!").encode('utf-8'),
+                        annexInfo['friendlySize'])
 
         return adapted.getLink()
 
     security.declarePublic('generateDocument')
+
     def generateDocument(self):
         '''Generates the document from a template specified in the request
            for a given item or meeting whose UID is also in the request. If the
@@ -1026,6 +1060,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 return res
 
     security.declarePublic('listOcrLanguages')
+
     def listOcrLanguages(self):
         '''Return the list of OCR languages supported by Tesseract.'''
         res = []
@@ -1034,6 +1069,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePublic('listModelAdaptations')
+
     def listModelAdaptations(self):
         d = 'PloneMeeting'
         res = (
@@ -1058,6 +1094,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(res)
 
     security.declarePublic('listWeekDays')
+
     def listWeekDays(self):
         '''Method returning list of week days used in vocabularies.'''
         res = DisplayList()
@@ -1077,6 +1114,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return (self.modified())
 
     security.declarePublic('getNonWorkingDayNumbers')
+
     @ram.cache(getNonWorkingDayNumbers_cachekey)
     def getNonWorkingDayNumbers(self):
         '''Return non working days, aka weekends.'''
@@ -1090,6 +1128,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return (self.modified())
 
     security.declarePublic('getHolidaysAs_datetime')
+
     @ram.cache(getHolidaysAs_datetime_cachekey)
     def getHolidaysAs_datetime(self):
         '''Return the holidays but as datetime objects.'''
@@ -1105,6 +1144,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return (self.modified())
 
     security.declarePublic('getUnavailableWeekDaysNumbers')
+
     @ram.cache(getUnavailableWeekDaysNumbers_cachekey)
     def getUnavailableWeekDaysNumbers(self):
         '''Return unavailable days numbers, aka self.getDelayUnavailableEndDays as numbers.'''
@@ -1113,6 +1153,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return [PY_DATETIME_WEEKDAYS.index(unavailable_day) for unavailable_day in unavailable_days]
 
     security.declarePublic('showMeetingView')
+
     def showMeetingView(self):
         '''If PloneMeeting is in "Restrict users" mode, the "Meeting view" page
            must not be shown to some users: users that do not have role
@@ -1129,6 +1170,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getBackUrl')
+
     def getBackUrl(self, context):
         '''Computes the URL for "back" links in the tool or in a config.'''
         url = ''
@@ -1147,6 +1189,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return url
 
     security.declarePrivate('pasteItems')
+
     def pasteItems(self, destFolder, copiedData, copyAnnexes=False,
                    newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
                    newPortalType=None, keepProposingGroup=False):
@@ -1377,26 +1420,31 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return True
 
     security.declarePublic('getSelf')
+
     def getSelf(self):
         if self.__class__.__name__ != 'ToolPloneMeeting':
             return self.context
         return self
 
     security.declarePublic('adapted')
+
     def adapted(self):
         return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
+
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
 
     security.declarePublic('getSpecificMailContext')
+
     def getSpecificMailContext(self, event, translationMapping):
         '''See doc in interfaces.py.'''
         pass
 
     security.declarePublic('readCookie')
+
     def readCookie(self, key):
         '''Returns the cookie value at p_key.'''
         httpCookie = self.REQUEST.get('HTTP_COOKIE', '')
@@ -1410,6 +1458,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('addUser')
+
     def addUser(self, userData):
         '''Adds a new Plone user from p_userData which is a UserDescriptor
            instance if it does not already exist.'''
@@ -1434,6 +1483,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             groupsTool.addPrincipalToGroup(userData.id, groupDescr.id)
 
     security.declarePublic('getMailRecipient')
+
     def getMailRecipient(self, userIdOrInfo, enc='utf-8'):
         '''This method returns the mail recipient (=string based on email and
            fullname if present) from a user id or UserInfo retrieved from a
@@ -1455,6 +1505,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res.encode(enc)
 
     security.declarePublic('addUsersOutsideGroups')
+
     def addUsersOutsideGroups(self, usersOutsideGroups):
         '''Create users that are outside any PloneMeeting group (like WebDAV
            users or users that are in groups created by MeetingConfigs).'''
@@ -1462,6 +1513,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.addUser(userDescr)
 
     security.declarePublic('addUsersAndGroups')
+
     def addUsersAndGroups(self, groups, usersOutsideGroups=[]):
         '''Creates MeetingGroups (and potentially Plone users in it) in the
            tool based on p_groups which is a list of GroupDescriptor instances.
@@ -1507,6 +1559,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 self.portal_workflow.doActionFor(group, 'deactivate')
 
     security.declarePublic('attributeIsUsed')
+
     def attributeIsUsed(self, objectType, attrName):
         '''Returns True if attribute named p_attrName is used for at least
            one meeting config for p_objectType.'''
@@ -1535,6 +1588,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('formatMeetingDate')
+
     def formatMeetingDate(self, meeting, lang=None, short=False,
                           withHour=False, prefixed=False):
         '''Returns p_meeting.getDate as formatted by the user-defined date format defined
@@ -1580,6 +1634,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('findSecondLanguage')
+
     def findSecondLanguage(self):
         '''The second language used is the second language in portal_languages.supported_langs
            that is not the defaultLanguage considered as the 'first language'.'''
@@ -1595,6 +1650,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('showTogglePersons')
+
     def showTogglePersons(self, context):
         '''Under what circumstances must action 'toggle persons' be shown?'''
         # If we are on a meeting return True
@@ -1611,6 +1667,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return res
 
     security.declarePublic('getUserLanguage')
+
     def getUserLanguage(self):
         '''Gets the language (code) of the current user.'''
         # Try first the "LANGUAGE" key from the request
@@ -1630,6 +1687,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     security.declarePublic('reindexAnnexes')
+
     def reindexAnnexes(self):
         '''Reindexes all annexes.'''
         user = self.portal_membership.getAuthenticatedMember()
@@ -1652,6 +1710,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('convertAnnexes')
+
     def convertAnnexes(self):
         '''Convert all annexes using collective.documentviewer.'''
         user = self.portal_membership.getAuthenticatedMember()
@@ -1675,6 +1734,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateAllAdvicesAction')
+
     def updateAllAdvicesAction(self):
         '''UI action that calls _updateAllAdvices.'''
         if not self.isManager(self, realManagers=True):
@@ -1704,6 +1764,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             item.reindexObject(idxs=['allowedRolesAndUsers', 'indexAdvisers', ])
 
     security.declarePublic('updatePowerObservers')
+
     def updatePowerObservers(self):
         '''Update local_roles regarging the RestrictedPowerObservers
            and PowerObservers for every meetings and items.'''
@@ -1728,6 +1789,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateBudgetImpactEditors')
+
     def updateBudgetImpactEditors(self):
         '''Update local_roles regarging the BudgetImpactEditors for every items.'''
         if not self.isManager(self, realManagers=True):
@@ -1739,6 +1801,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateCopyGroups')
+
     def updateCopyGroups(self):
         '''Update local_roles regarging the copyGroups for every items.'''
         if not self.isManager(self, realManagers=True):
@@ -1752,6 +1815,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('deleteHistoryEvent')
+
     def deleteHistoryEvent(self, obj, eventToDelete):
         '''Deletes an p_event in p_obj's history.'''
         history = []
@@ -1764,6 +1828,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         obj.workflow_history[obj.getWorkflowName()] = tuple(history)
 
     security.declarePublic('removeGivenLocalRolesFor')
+
     def removeGivenLocalRolesFor(self, obj, role_to_remove, suffixes=[], notForGroups=[]):
         '''Remove the p_role_to_remove local roles on p_obj for the given p_suffixes
            suffixed groups but not for given p_notForGroups groups.
@@ -1803,7 +1868,3 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)
-# end of class ToolPloneMeeting
-
-##code-section module-footer #fill in your manual code here
-##/code-section module-footer
