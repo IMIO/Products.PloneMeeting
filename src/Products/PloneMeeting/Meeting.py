@@ -540,6 +540,34 @@ schema = Schema((
         searchable=True,
     ),
     TextField(
+        name='inAndOutMoves',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('inAndOutMoves')",
+            label_msgid="PloneMeeting_inAndOutMoves",
+            rows=15,
+            label='Inandoutmoves',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
+        name='notes',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('notes')",
+            label_msgid="PloneMeeting_notes",
+            rows=15,
+            label='Notes',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
         name='observations',
         allowable_content_types=('text/html',),
         widget=RichWidget(

@@ -1122,8 +1122,9 @@ def signatureNotAlone(xhtmlContent):
 # ------------------------------------------------------------------------------
 def forceHTMLContentTypeForEmptyRichFields(obj):
     '''
-      Will saving a empty Rich field ('text/html'), the contentType is set back to 'text/plain'...
-      Force it to 'text/html' if the field is empty
+      While saving an empty Rich field ('text/html'),
+      the contentType is set back to 'text/plain'...
+      Force it to 'text/html' if the field is empty.
     '''
     for field in obj.Schema().filterFields(default_content_type='text/html'):
         if not field.getRaw(obj):

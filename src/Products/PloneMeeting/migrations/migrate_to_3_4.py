@@ -13,6 +13,7 @@ from imio.helpers.catalog import removeIndexes
 
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import updateCollectionCriterion
+from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 
 
 # The migration class ----------------------------------------------------------
@@ -463,6 +464,24 @@ class Migrate_To_3_4(Migrator):
         self.tool._updateAllAdvices()
         logger.info('Done.')
 
+    def _initNewHTMLFields(self):
+        '''The MeetingItem and Meeting receive to new HTML fields 'notes' and 'inAndOutMoves',
+           make sure the content_type is correctly set to 'text/html'.'''
+        logger.info('Initializing new HTML fields on meeting and items...')
+        brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem', ))
+        check_already_migrated = False
+        for brain in brains:
+            itemOrMeeting = brain.getObject()
+            # check if already migrated
+            if not check_already_migrated:
+                field = itemOrMeeting.getField('notes')
+                if field.getContentType(itemOrMeeting) == 'text/html':
+                    break
+                check_already_migrated = True
+            # not already migrated, do it...
+            forceHTMLContentTypeForEmptyRichFields(itemOrMeeting)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -482,6 +501,7 @@ class Migrate_To_3_4(Migrator):
         self._cleanMeetingUsers()
         self._updateAnnexIndex()
         self._updateAdvices()
+        self._initNewHTMLFields()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
