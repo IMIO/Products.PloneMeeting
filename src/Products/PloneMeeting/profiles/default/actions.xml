@@ -85,6 +85,12 @@
 
   <!-- Manage object actions. -->
   <object name="object" meta_type="CMF Action Category">
+   <object name="documentviewer_settings" meta_type="CMF Action">
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+    <property name="visible">False</property>
+   </object>
    <object name="folderContents" meta_type="CMF Action">
     <property name="permissions">
      <element value="Manage portal"/>
