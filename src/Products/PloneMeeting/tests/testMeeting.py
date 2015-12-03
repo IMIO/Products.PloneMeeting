@@ -1102,6 +1102,54 @@ class testMeeting(PloneMeetingTestCase):
             self.assertEquals(item.queryState(), 'presented')
             self.assertTrue(item.hasMeeting())
 
+    def test_pm_PresentSeveralItemsWithAutoSendToOtherMCUntilPresented(self):
+        """Test that while presenting several items and some of the items
+           are automatically sent to another meeting when 'presented' works.
+           What we test here is a bug we had that items where presented in the
+           wrong meeting, items that should be presented in cfg1 were presented
+           in a meeting of cfg2 because REQUEST['PUBLISHED'] changed!"""
+        # configure
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(True)
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                           'reverse': '0'},))
+        cfgId = cfg.getId()
+        cfg2 = self.meetingConfig2
+        cfg2.setUseGroupsAsCategories(True)
+        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'},))
+        cfg2Id = cfg2.getId()
+        # when items are sent to cfg2, it will be 'presented'
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % cfg2.getId(),
+              'trigger_workflow_transitions_until': '%s.%s' % (cfg2Id, 'present')}, ))
+        # items of cfg1 are automatically sent to cfg2 when in state 'presented'
+        cfg.setItemAutoSentToOtherMCStates(('presented', ))
+
+        # create a meeting with items, unpresent presented items
+        self.changeUser('pmManager')
+        # create first cfg2 meeting
+        self.setMeetingConfig(cfg2Id)
+        meetingCfg2 = self.create('Meeting', date=DateTime('2015/12/14'))
+        # then continue with cfg1
+        self.setMeetingConfig(cfgId)
+        item1 = self.create('MeetingItem')
+        item1.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        self.validateItem(item1)
+        item2 = self.create('MeetingItem')
+        self.validateItem(item2)
+        meetingCfg1 = self.create('Meeting', date=DateTime('2015/12/12'))
+        presentView = meetingCfg1.restrictedTraverse('@@present-several-items')
+        # we can present one single item...
+        presentView([item1.UID(), item2.UID()])
+
+        # item1 and item2 are in meetingCfg1
+        self.assertTrue(item1 in meetingCfg1.getItems())
+        self.assertTrue(item2 in meetingCfg1.getItems())
+        # item1 was sent to cfg2 and this sent item was presented into meetingCfg2
+        item1SentToCfg2 = item1.getItemClonedToOtherMC(cfg2Id)
+        self.assertTrue(item1SentToCfg2 in meetingCfg2.getItems())
+
     def test_pm_RemoveSeveralItems(self):
         """
           Test the functionnality to remove several items at once from a meeting.

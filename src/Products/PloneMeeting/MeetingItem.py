@@ -4653,16 +4653,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]
             wfTool = getToolByName(self, 'portal_workflow')
-            stopAfter = False
             wf_comment = translate('transition_auto_triggered_item_sent_to_this_config',
                                    domain='PloneMeeting',
                                    context=self.REQUEST)
+            # save original published object in case we are presenting
+            # several items in a meeting and some are sent to another MC then presented
+            # to a meeting of this other MB
+            originalPublishedObject = self.REQUEST.get('PUBLISHED')
             for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
-                if stopAfter:
-                    break
-                # if we are on the triggerUntil transition, we will stop at next loop
-                if tr == triggerUntil:
-                    stopAfter = True
                 try:
                     # special handling for the 'present' transition
                     # that needs a meeting as 'PUBLISHED' object to work
@@ -4701,6 +4699,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                            context=self.REQUEST),
                                                  type='warning')
                     break
+                                # if we are on the triggerUntil transition, we will stop at next loop
+                if tr == triggerUntil:
+                    break
+            # set back originally PUBLISHED object
+            self.REQUEST.set('PUBLISHED', originalPublishedObject)
 
         newItem.reindexObject()
         # Save that the element has been cloned to another meetingConfig
