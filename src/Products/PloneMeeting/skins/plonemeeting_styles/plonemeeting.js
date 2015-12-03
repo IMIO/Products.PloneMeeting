@@ -578,7 +578,7 @@ function initRichTextField(rq, hook) {
   /* Check that we can actually edit the field, indeed the object
    * could have been locked in between (concurrent edit) */
   is_locked = $.ajax({
-     async: false,
+     async: true,
      type: 'GET',
      url: '@@plone_lock_info/is_locked_for_current_user',
      success: function(data) {
@@ -653,7 +653,7 @@ function presentSelectedItems(baseUrl) {
             dataType: 'html',
             data: params,
             cache: false,
-            async: false,
+            async: true,
             success: function(data) {
                 // update number of items
                 updateNumberOfItems();
@@ -690,7 +690,7 @@ function removeSelectedItems(baseUrl) {
             dataType: 'html',
             data: params,
             cache: false,
-            async: false,
+            async: true,
             success: function(data) {
                 // update number of items
                 updateNumberOfItems();
@@ -724,7 +724,7 @@ function decideSelectedItems(baseUrl,tag){
             dataType: 'html',
             data: params,
             cache: false,
-            async: false,
+            async: true,
             success: function(data) {
                 // reload the faceted page
                 Faceted.URLHandler.hash_changed();
@@ -765,7 +765,7 @@ function moveItem(baseUrl, moveType, tag) {
     data: {'moveType': moveType,
            'wishedNumber': wishedNumber},
     cache: false,
-    async: false,
+    async: true,
     success: function(data) {
         // reload the faceted page
         Faceted.URLHandler.hash_changed();
@@ -788,7 +788,7 @@ function callViewAndReload(baseUrl, view_name, tag, params) {
     data: params,
     dataType: 'html',
     cache: false,
-    async: false,
+    async: true,
     success: function(data) {
         // reload the faceted page if we are on it, refresh current if not
         if ((redirect === '0') && !(data)) {
