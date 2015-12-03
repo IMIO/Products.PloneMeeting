@@ -22,10 +22,12 @@ groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
 
 # for the 'return_to_proposing_group' wfAdaptation, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
 # is the state to clone regarding permissions that will have the state 'returned_to_proposing_group',
-# the state must exist in used workflow. If none of the state existing in the default workflow
+# the state must exist in used workflow. If none of the state existing in item workflows
 # fit our need, you can still add an arbitrary workflowState to the workflow called for example
 # 'state_for_return_to_proposing_group' where you will define custom permissions for this wfAdaptation...
-RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = 'itemcreated'
+# values can be different by workflow, moreover me may also take a state from another item workflow,
+# so it could be {'meetingitem_workflow': 'anothermeetingitem_workflow.itemcreated', }
+RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = {'meetingitem_workflow': 'meetingitem_workflow.itemcreated', }
 # if a state to clone defined here above in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE is not enough
 # to manage permissions of the new state 'returned_to_proposing_group', we can define a full or partial
 # custom permissions dict that will update permissions that will be set.  This can be use together
@@ -445,8 +447,17 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
             # clone the permissions of the given RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE if it exists
             cloned_permissions_with_meetingmanager = {}
-            if hasattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE):
-                stateToClone = getattr(itemWorkflow.states, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE)
+            # state to clone contains the state to clone and the workflow_id where this state is
+            stateToCloneInfos = RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE.get(itemWorkflow.getId(), {})
+            stateToCloneWFId = ''
+            stateToCloneStateId = ''
+            if stateToCloneInfos:
+                # stateToCloneInfos is like 'meetingitem_workflow.itemcreated'
+                stateToCloneWFId, stateToCloneStateId = stateToCloneInfos.split('.')
+            stateToCloneWF = getattr(site.portal_workflow, stateToCloneWFId, None)
+            stateToClone = None
+            if stateToCloneWF and hasattr(stateToCloneWF.states, stateToCloneStateId):
+                stateToClone = getattr(stateToCloneWF.states, stateToCloneStateId)
                 # we must make sure the MeetingManagers still may access this item
                 # so add MeetingManager role to every cloned permissions
                 cloned_permissions = dict(stateToClone.permission_roles)
@@ -468,7 +479,7 @@ def performWorkflowAdaptations(site, meetingConfig, logger, specificAdaptation=N
             # if we are cloning an existing state permissions, make sure DeleteObjects
             # is only be availble to ['Manager', 'MeetingManager']
             # if custom permissions are defined, keep what is defined in it
-            if not DeleteObjects in customPermissions:
+            if not DeleteObjects in customPermissions and stateToClone:
                 del_obj_perm = stateToClone.getPermissionInfo(DeleteObjects)
                 if del_obj_perm['acquired']:
                     cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', ]

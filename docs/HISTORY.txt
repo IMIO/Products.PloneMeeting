@@ -112,7 +112,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   check on MeetingConfig.item(Restricted)PowerObserversStates
 - For the workflowAdaptation "return_to_proposing_group", the custom workflow permissions defined in
   RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS are now defined by item workflow, so it is possible
-  to use different values for different item workflows
+  to use different values for different item workflows.  Likewise, the RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+  is also defined by item workflow and the state_to_clone may come from another existing item workflow,
+  not mandatorily from workflow the workflowAdaptation is applied on
 - Added new richText field 'Meeting.inAndOutMoves/MeetingItem.inAndOutMoves' to be able to specifically
   encode in and out assembly members movements on an item or on a meeting
 - Added new richText field 'Meeting.notes/MeetingItem.notes' to be able to specifically

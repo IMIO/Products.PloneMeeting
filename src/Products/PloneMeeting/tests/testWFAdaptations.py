@@ -673,7 +673,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         # this has only sense if using it, aka no RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
         # this could be the case if a subproduct (MeetingXXX) calls this test...
         itemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
-        cloned_state_permissions = itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles
+        state_to_clone_id = RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE.get(itemWF.getId()).split('.')[1]
+        cloned_state_permissions = itemWF.states[state_to_clone_id].permission_roles
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         for permission in cloned_state_permissions:
             cloned_state_permission_with_meetingmanager = []
@@ -694,7 +695,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                               new_state_permissions[permission])
             # Permission acquisition is also cloned
             self.assertEquals(
-                itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].getPermissionInfo(permission)['acquired'],
+                itemWF.states[state_to_clone_id].getPermissionInfo(permission)['acquired'],
                 itemWF.states['returned_to_proposing_group'].getPermissionInfo(permission)['acquired'])
 
     def _return_to_proposing_group_active_custom_permissions(self):
@@ -710,8 +711,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # we will change the 'PloneMeeting: Write item observations' but for now, it is the same permissions than
         # in the permissions cloned from the defined state to clone
         CUSTOM_PERMISSION = 'PloneMeeting: Write item observations'
+        state_to_clone_id = RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE.get(itemWF.getId()).split('.')[1]
         if not 'MeetingManager' in \
-           itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION]:
+           itemWF.states[state_to_clone_id].permission_roles[CUSTOM_PERMISSION]:
             if isinstance(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION], tuple):
                 tmp_list = list(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
                 tmp_list.remove('MeetingManager')
@@ -719,11 +721,11 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION].remove('MeetingManager')
         self.assertEquals(
-            itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION],
+            itemWF.states[state_to_clone_id].permission_roles[CUSTOM_PERMISSION],
             itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
         # we will add the 'MeetingMember' role, make sure it is not already there...
         if 'MeetingMember' in \
-           itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles[CUSTOM_PERMISSION]:
+           itemWF.states[state_to_clone_id].permission_roles[CUSTOM_PERMISSION]:
             tmp_list = list(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
             tmp_list.remove('MeetingMember')
             itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION] = tuple(tmp_list)
@@ -735,7 +737,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._reApplyWFAdaptationReturnToProposingGroup(itemWF)
         # now our custom permission must be taken into account but other permissions should be the same than
         # the ones defined in the state to clone permissions of
-        cloned_state_permissions = itemWF.states[RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE].permission_roles
+        cloned_state_permissions = itemWF.states[state_to_clone_id].permission_roles
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         for permission in cloned_state_permissions:
             cloned_state_permission_with_meetingmanager = []
