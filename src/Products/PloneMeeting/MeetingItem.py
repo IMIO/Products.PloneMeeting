@@ -2433,8 +2433,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = ''
         item = self.getSelf()
         if item.hasMeeting():
-            meetingConfig = item.portal_plonemeeting.getMeetingConfig(item)
-            itemRefFormat = meetingConfig.getItemReferenceFormat()
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            itemRefFormat = cfg.getItemReferenceFormat()
             if itemRefFormat.strip():
                 portal = item.portal_url.getPortalObject()
                 ctx = createExprContext(item.getParentNode(), portal, item)
