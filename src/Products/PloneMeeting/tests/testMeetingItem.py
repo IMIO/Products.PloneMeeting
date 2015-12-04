@@ -2251,17 +2251,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setTakenOverBy('pmReviewer1', **{'wf_state': arbitraryKey})
         self.assertTrue(arbitraryKey in item.takenOverByInfos)
 
-    def test_pm_ItemActionsPanelCaching(self):
-        '''For performance, actions panel is cached,
-           check that cache is correctly invalidated.
-           Actions panel is invalidated when :
-           - item is modified;
-           - item state changed;
-           - linked meeting changed;
-           - item is validated and isPresentable/no more presentable;
-           - user changed;
-           - user groups changed;
-           - user roles changed.'''
+    def _setupItemActionsPanelInvalidation(self):
+        """Setup for every test_pm_ItemActionsPanelCachingXXX tests."""
         # use categories
         self.meetingConfig.setUseGroupsAsCategories(False)
         # create an item
@@ -2269,7 +2260,11 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         actions_panel = item.restrictedTraverse('@@actions_panel')
         rendered_actions_panel = actions_panel()
+        return item, actions_panel, rendered_actions_panel
 
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenItemModified(self):
+        """Actions panel cache is invalidated when an item is modified."""
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when item edited
         # an item can not be proposed if no selected category
         # remove selected category and notify edited
@@ -2287,14 +2282,22 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(not no_category_rendered_actions_panel ==
                         rendered_actions_panel)
 
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenItemStateChanged(self):
+        """Actions panel cache is invalidated when an item state changed."""
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when item state changed
         self.proposeItem(item)
         proposedItemForCreator_rendered_actions_panel = actions_panel()
         self.assertTrue(not rendered_actions_panel ==
                         proposedItemForCreator_rendered_actions_panel)
 
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenUserChanged(self):
+        """Actions panel cache is invalidated when user changed."""
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when user changed
         # 'pmReviewer1' may validate the item, the rendered panel will not be the same
+        self.proposeItem(item)
+        proposedItemForCreator_rendered_actions_panel = actions_panel()
         self.changeUser('pmReviewer1')
         proposedItemForReviewer_rendered_actions_panel = actions_panel()
         self.assertTrue(not proposedItemForCreator_rendered_actions_panel ==
@@ -2304,21 +2307,36 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(not proposedItemForReviewer_rendered_actions_panel ==
                         validatedItemForReviewer_rendered_actions_panel)
 
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenItemTurnsToPresentable(self):
+        """Actions panel cache is invalidated when the item turns to presentable."""
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when item turns to 'presentable'
         # so create a meeting, item will be presentable and panel is invalidated
+        self.validateItem(item)
+        validatedItem_rendered_actions_panel = actions_panel()
         self.changeUser('pmManager')
-        meeting = self._createMeetingWithItems(meetingDate=DateTime() + 2)
+        self._createMeetingWithItems(meetingDate=DateTime() + 2)
         # unset current meeting so we check with the getMeetingToInsertIntoWhenNoCurrentMeetingObject
         item.REQUEST['PUBLISHED'] = item
         # here item is presentable
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         self.assertTrue(item.wfConditions().mayPresent())
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
-        self.assertTrue(not validatedItemForReviewer_rendered_actions_panel ==
+        self.assertTrue(not validatedItem_rendered_actions_panel ==
                         validatedItemCreatedMeeting_rendered_actions_panel)
 
-        # invalidated when item is not more presentable
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenItemTurnsToNoMorePresentable(self):
+        """Actions panel cache is invalidated when the item turns to no more presentable.
+           We check here the 'present' button on the item view when it is not the meeting that
+           is the 'PUBLISHED' object."""
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
+        # invalidated when item is no more presentable
         # here for example, if we freeze the meeting, the item is no more presentable
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems(meetingDate=DateTime() + 2)
+        self.request['PUBLISHED'] = item
+        self.validateItem(item)
+        validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
         self.freezeMeeting(meeting)
         # here item is no more presentable
         self.assertFalse(item.wfConditions().mayPresent())
@@ -2326,12 +2344,23 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(not validatedItemCreatedMeeting_rendered_actions_panel ==
                         validatedItemFrozenMeeting_rendered_actions_panel)
 
-        # invalidated when linked meeting changed
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenLinkedMeetingIsEdited(self):
+        """Actions panel cache is invalidated when the linked meeting is edited."""
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems(meetingDate=DateTime() + 2)
+        self.validateItem(item)
+
+        # invalidated when linked meeting is edited
         # MeetingManager is another user with other actions, double check...
         validatedItemForManager_rendered_actions_panel = actions_panel()
+        self.changeUser('pmReviewer1')
+        validatedItemForReviewer_rendered_actions_panel = actions_panel()
         self.assertTrue(not validatedItemForReviewer_rendered_actions_panel ==
                         validatedItemForManager_rendered_actions_panel)
+
         # present the item as normal item
+        self.changeUser('pmManager')
         self.backToState(meeting, 'created')
         self.presentItem(item)
 
@@ -2360,6 +2389,20 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue('dummy' in object_buttons)
         # and actions panel has been invalidated
         self.assertTrue(not beforeMeetingEdit_rendered_actions_panel == actions_panel())
+
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenMeetingConfigEdited(self):
+        """Actions panel cache is invalidated when the MeetingConfig is edited."""
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
+        # activate transition confirmation popup for 'propose' transition
+        cfg = self.meetingConfig
+        self.assertTrue('MeetingItem.propose' not in cfg.getTransitionsToConfirm())
+        cfg.setTransitionsToConfirm(('MeetingItem.propose', ))
+        beforeMCEdit_rendered_actions_panel = actions_panel()
+        cfg.at_post_edit_script()
+        # browser/overrides.py:BaseActionsPanelView._transitionsToConfirm is memoized
+        self.cleanMemoize()
+        afterMCEdit_rendered_actions_panel = actions_panel()
+        self.assertNotEquals(beforeMCEdit_rendered_actions_panel, afterMCEdit_rendered_actions_panel)
 
     def test_pm_HistoryCommentViewability(self):
         '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter
