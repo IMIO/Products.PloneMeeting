@@ -2395,8 +2395,11 @@ class testMeetingItem(PloneMeetingTestCase):
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # activate transition confirmation popup for 'propose' transition
         cfg = self.meetingConfig
-        self.assertTrue('MeetingItem.propose' not in cfg.getTransitionsToConfirm())
-        cfg.setTransitionsToConfirm(('MeetingItem.propose', ))
+        # get a transition available on current item
+        firstTransition = self.transitions(item)[0]
+        firstTrToConfirm = 'MeetingItem.%s' % firstTransition
+        self.assertTrue(firstTrToConfirm not in cfg.getTransitionsToConfirm())
+        cfg.setTransitionsToConfirm((firstTrToConfirm, ))
         beforeMCEdit_rendered_actions_panel = actions_panel()
         cfg.at_post_edit_script()
         # browser/overrides.py:BaseActionsPanelView._transitionsToConfirm is memoized
