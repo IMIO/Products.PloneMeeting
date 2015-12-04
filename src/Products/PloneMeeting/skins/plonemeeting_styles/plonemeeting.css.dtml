@@ -934,7 +934,7 @@ div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
     display: none;
 }
 
-/* make sure multiselect fields displayed on the item_view are not too long */
+/* make sure multiselect fields displayed on the edit form are not too long */
 div#archetypes-fieldname-categoryMappingsWhenCloningToOtherMC,
 div#archetypes-fieldname-copyGroups,
 div#archetypes-fieldname-optionalAdvisers,
