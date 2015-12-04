@@ -48,7 +48,7 @@ def item_assembly_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssembly = context.getRawItemAssembly(content_type='text/plain')
+    itemAssembly = context.getItemAssembly(mimetype='text/plain')
     return safe_unicode(itemAssembly)
 
 
@@ -60,8 +60,7 @@ def item_excused_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyExcused = \
-        context.getRawItemAssemblyExcused(content_type='text/plain')
+    itemAssemblyExcused = context.getItemAssemblyExcused(mimetype='text/plain')
     return safe_unicode(itemAssemblyExcused)
 
 
@@ -73,8 +72,7 @@ def item_absents_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyAbsents = \
-        context.getRawItemAssemblyAbsents(content_type='text/plain')
+    itemAssemblyAbsents = context.getItemAssemblyAbsents(mimetype='text/plain')
     return safe_unicode(itemAssemblyAbsents)
 
 
@@ -92,32 +90,36 @@ def validate_apply_until_item_number(value):
 class IManageItemAssembly(interface.Interface):
     item_assembly = schema.Text(
         title=_(u"Item assembly to apply"),
-        description=_(u"Enter the item assembly to be applied.  "
-                      u"The value displayed by default is the value of the "
-                      u"current item.  Add [[ ]] around absent people (like "
-                      u"[[Mister Sample Peter]])."),
+        description=_(u"Enter the item assembly to be applied. "
+                      u"By default, the value of the field is what is defined on the meeting. "
+                      u"If you do not change this value, nothing will be applied on the item. "
+                      u"If you already edited this field before and you want to fallback to meeting value, "
+                      u"remove the entire value.  You may add [[ ]] "
+                      u"around absent people (like [[Mister Sample Peter]])."),
         defaultFactory=item_assembly_default,
         required=False,)
     item_excused = schema.Text(
         title=_(u"Item excused to apply"),
-        description=_(u"Enter the item excused to be applied.  The value "
-                      u"displayed by default is the value of the current "
-                      u"item."),
+        description=_(u"Enter the item excused to be applied. "
+                      u"By default, the value of the field is what is defined on the meeting. "
+                      u"If you do not change this value, nothing will be applied on the item. "
+                      u"If you already edited this field before and you want to fallback to meeting value, "
+                      u"remove the entire value."),
         defaultFactory=item_excused_default,
         required=False,)
     item_absents = schema.Text(
         title=_(u"Item absents to apply"),
-        description=_(u"Enter the item absents to be applied.  The value "
-                      u"displayed by default is the value of the current "
-                      u"item."),
+        description=_(u"Enter the item absents to be applied. "
+                      u"By default, the value of the field is what is defined on the meeting. "
+                      u"If you do not change this value, nothing will be applied on the item. "
+                      u"If you already edited this field before and you want to fallback to meeting value, "
+                      u"remove the entire value."),
         defaultFactory=item_absents_default,
         required=False,)
     apply_until_item_number = schema.TextLine(
         title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, the item assembly entered "
-                      u"here above will be applied from current item to the "
-                      u"item number entered.  Leave empty to only apply for "
-                      u"current item."),
+        description=_(u"If you specify a number, the values entered here above will be applied from current "
+                      u"item to the item number entered. Leave empty to only apply for current item."),
         required=False,
         constraint=validate_apply_until_item_number,)
 
@@ -293,9 +295,11 @@ class ManageItemAssemblyForm(form.Form):
             self.fields['item_assembly'].field.title = \
                 _('Item attendees to apply')
             self.fields['item_assembly'].field.description = \
-                _(u"Enter the item attendees to be applied.  "
-                  u"The value displayed by default is the value "
-                  u"of the current item.")
+                _(u"Enter the item attendees to be applied. "
+                  u"By default, the value of the field is what is defined on the meeting. "
+                  u"If you do not change this value, nothing will be applied on the item. "
+                  u"If you already edited this field before and you want to fallback to meeting value, "
+                  u"remove the entire value.")
         form.Form.updateWidgets(self)
 
     def render(self):
@@ -313,6 +317,8 @@ class ManageItemAssemblyForm(form.Form):
                                          bypassWritePermissionCheck=True):
             raise Unauthorized
 
+        meeting = self.context.getMeeting()
+
         def _itemsToUpdate():
             """
               Return items we want to update regarding the number
@@ -323,7 +329,6 @@ class ManageItemAssemblyForm(form.Form):
                self.apply_until_item_number < currentItemNumber:
                 return [self.context, ]
             else:
-                meeting = self.context.getMeeting()
                 catalog = api.portal.get_tool('portal_catalog')
                 brains = catalog(
                     linkedMeetingUID=meeting.UID(),
@@ -333,10 +338,18 @@ class ManageItemAssemblyForm(form.Form):
                     sort_on='getItemNumber')
                 return [brain.getObject() for brain in brains]
 
+        # only update if default proposed value was changed
+        item_assembly_def = item_assembly_default()
+        item_excused_def = item_excused_default()
+        item_absents_def = item_absents_default()
         for itemToUpdate in _itemsToUpdate():
-            itemToUpdate.setItemAssembly(self.item_assembly)
-            itemToUpdate.setItemAssemblyExcused(self.item_excused)
-            itemToUpdate.setItemAssemblyAbsents(self.item_absents)
+            # only update if we changed default value
+            if self.item_assembly != item_assembly_def:
+                itemToUpdate.setItemAssembly(self.item_assembly)
+            if self.item_excused != item_excused_def:
+                itemToUpdate.setItemAssemblyExcused(self.item_excused)
+            if self.item_absents != item_absents_def:
+                itemToUpdate.setItemAssemblyAbsents(self.item_absents)
 
         plone_utils = getToolByName(self.context, 'plone_utils')
         plone_utils.addPortalMessage(_("Item assemblies have been updated."))

@@ -39,6 +39,8 @@ from Products.statusmessages.interfaces import IStatusMessage
 
 from imio.helpers.cache import cleanRamCacheFor
 
+from Products.PloneMeeting.browser.itemassembly import item_assembly_default
+from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
@@ -1455,6 +1457,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.getItemAssembly(real=True))
         self.assertFalse(item.getItemAssemblyAbsents(real=True))
         self.assertFalse(item.getItemAssemblyExcused(real=True))
+
+        # default field values are current value or value of meeting
+        # if we apply value of meeting, nothing changes
+        self.request['form.widgets.item_assembly'] = item_assembly_default()
+        self.request['form.widgets.item_signatures'] = item_signatures_default()
+        formAssembly.handleApplyItemAssembly(formAssembly, None)
+        formSignatures.handleApplyItemSignatures(formSignatures, None)
+        # nothing changed
+        self.assertFalse(item.getItemAssembly(real=True))
+        self.assertFalse(item.getItemSignatures(real=True))
+
         # now use the form to change the item assembly/signatures
         self.request['form.widgets.item_assembly'] = u'Item assembly'
         self.request['form.widgets.item_absents'] = u'Item assembly absents'
@@ -1566,7 +1579,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['form.widgets.item_assembly'] = u'Item assembly 3'
         self.request['form.widgets.item_signatures'] = u'Item signatures 3'
         self.request['form.widgets.apply_until_item_number'] = u'7'
-        # Apply
         formAssembly.handleApplyItemAssembly(formAssembly, None)
         formSignatures.handleApplyItemSignatures(formSignatures, None)
         self.assertEquals(lateItem1.getItemAssembly(), '<p>Item assembly 3</p>')
@@ -1575,6 +1587,18 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(lateItem1.getItemSignatures(), 'Item signatures 3')
         self.assertEquals(lateItem2.getItemSignatures(), 'Meeting signatures')
         self.assertEquals(lateItem3.getItemSignatures(), 'Meeting signatures')
+
+        # Apply an empty value will fall back to meeting's value
+        self.assertTrue(formAssembly.context.getItemAssembly(real=True))
+        self.assertTrue(formAssembly.context.getItemSignatures(real=True))
+        self.request['form.widgets.item_assembly'] = u''
+        self.request['form.widgets.item_signatures'] = u''
+        self.request['form.widgets.apply_until_item_number'] = u''
+        formAssembly.handleApplyItemAssembly(formAssembly, None)
+        formSignatures.handleApplyItemSignatures(formSignatures, None)
+        self.assertFalse(formAssembly.context.getItemAssembly(real=True))
+        self.assertFalse(formAssembly.context.getItemSignatures(real=True))
+
         # if the linked meeting is considered as closed, the items are not editable anymore
         self.closeMeeting(meeting)
         self.assertRaises(Unauthorized, formAssembly.update)

@@ -98,7 +98,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Make MeetingItem.detailedDescription searchable
 - Added possibility to use subnumber on items of the meeting so it is possible to use 1, 1.1, 1.2, ...
   for numbering items on the meeting, this way we may manage items "without a number"
-- When redefining item assembly/excused/absents, show what is strored on the meeting for each fields
+- When redefining item assembly/excused/absents, show what is strored on the meeting for each fields, moreover,
+  the default value of the field is now either the redefined value or the value defined on the meeting so a user
+  does not have to copy/paste meeting's value to change it
 - Display the 'pretty link' instead of the title on the item and meeting view so we have the enriched
   informations and we have the same rendering as on the dashboards
 - While an item is sent to another meeting configuration and it is specified in the configuration that

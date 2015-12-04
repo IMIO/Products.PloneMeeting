@@ -33,6 +33,7 @@ from z3c.form.contentprovider import ContentProviders
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
@@ -49,26 +50,23 @@ def item_signatures_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemSignatures = context.getRawItemSignatures(content_type='text/plain')
-    if not isinstance(itemSignatures, unicode):
-        itemSignatures = unicode(itemSignatures, 'utf-8')
-    return itemSignatures
+    itemSignatures = context.getItemSignatures(mimetype='text/plain')
+    return safe_unicode(itemSignatures)
 
 
 class IManageItemSignatures(interface.Interface):
     item_signatures = schema.Text(
         title=_(u"Item signatures to apply"),
-        description=_(u"Enter the item signatures to be applied.  "
-                      u"The value displayed by default is the value "
-                      u"of the current item."),
+        description=_(u"Enter the item signatures to be applied. By default, the value of the field is what is "
+                      u"defined on the meeting. If you do not change this value, nothing will be applied on the item. "
+                      u"If you already edited this field before and you want to fallback to meeting value, "
+                      u"remove the entire value."),
         defaultFactory=item_signatures_default,
         required=False,)
     apply_until_item_number = schema.TextLine(
         title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, the item signatures entered "
-                      u"here above will be applied from current item to the "
-                      u"item number entered.  Leave empty to only apply for "
-                      u"current item."),
+        description=_(u"If you specify a number, the values entered here above will be applied from current "
+                      "item to the item number entered. Leave empty to only apply for current item."),
         required=False,
         constraint=validate_apply_until_item_number,)
 
@@ -191,8 +189,11 @@ class ManageItemSignaturesForm(form.Form):
                     sort_on='getItemNumber')
                 return [brain.getObject() for brain in brains]
 
-        for itemToUpdate in _itemsToUpdate():
-            itemToUpdate.setItemSignatures(self.item_signatures)
+        # only apply if different from meeting
+        item_signatures_def = item_signatures_default()
+        if self.item_signatures != item_signatures_def:
+            for itemToUpdate in _itemsToUpdate():
+                itemToUpdate.setItemSignatures(self.item_signatures)
 
         plone_utils = getToolByName(self.context, 'plone_utils')
         plone_utils.addPortalMessage(_("Item signatures have been updated."))

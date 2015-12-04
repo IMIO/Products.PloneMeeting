@@ -2534,7 +2534,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().getAssembly()
+            res = self.getMeeting().getAssembly(**kwargs)
         return res
 
     security.declarePublic('getItemAssemblyExcused')
@@ -2546,7 +2546,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().getAssemblyExcused()
+            res = self.getMeeting().getAssemblyExcused(**kwargs)
         return res
 
     security.declarePublic('getItemAssemblyAbsents')
@@ -2558,7 +2558,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().getAssemblyAbsents()
+            res = self.getMeeting().getAssemblyAbsents(**kwargs)
         return res
 
     security.declarePublic('getStrikedItemAssembly')
