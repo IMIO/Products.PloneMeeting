@@ -119,6 +119,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   encode in and out assembly members movements on an item or on a meeting
 - Added new richText field 'Meeting.notes/MeetingItem.notes' to be able to specifically
   encode notes to be used in document generation (for example) on an item or on a meeting
+- Every caches are invalidated when a MeetingConfig is edited so changing a parameter
+  will invalidate caches for actions_panel, faceted filters vocabularies, ...
 
 3.3 (2015-02-27)
 ----------------
