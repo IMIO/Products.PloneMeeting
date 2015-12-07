@@ -783,7 +783,10 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     def getSort_on(self):
         """ """
-        return 'getItemNumber'
+        if self._displayingAvailableItems():
+            return 'getProposingGroup'
+        else:
+            return 'getItemNumber'
 
     security.declarePublic('getCustomViewFields')
 
