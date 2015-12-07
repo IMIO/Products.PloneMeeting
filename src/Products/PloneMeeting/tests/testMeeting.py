@@ -971,8 +971,8 @@ class testMeeting(PloneMeetingTestCase):
     def _checkAvailableItems(self):
         """Helper method for test_pm_AvailableItems."""
         catalog = self.portal.portal_catalog
-        #create 3 meetings
-        #we can do every steps as a MeetingManager
+        # create 3 meetings
+        # we can do every steps as a MeetingManager
         self.changeUser('pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
         m1 = self.create('Meeting', date=meetingDate)
@@ -980,10 +980,10 @@ class testMeeting(PloneMeetingTestCase):
         m2 = self.create('Meeting', date=meetingDate)
         meetingDate = DateTime('2008/06/26 08:00:00')
         m3 = self.create('Meeting', date=meetingDate)
-        #create 3 items
-        #one with no preferredMeeting
-        #one with m2 preferredMeeting
-        #one with m3 as preferredMeeting
+        # create 3 items
+        # one with no preferredMeeting
+        # one with m2 preferredMeeting
+        # one with m3 as preferredMeeting
         i1 = self.create('MeetingItem')
         i1.setTitle('i1')
         i1.setDecision('<p>Decision item 1</p>')
@@ -1017,29 +1017,23 @@ class testMeeting(PloneMeetingTestCase):
         # validate the items
         for item in (i1, i2, i3):
             self.validateItem(item)
-        #now, check that available items have some respect
-        #the first meeting has only one item, the one with no preferred meeting selected
-        itemTitles = []
+        # now, check that available items have some respect
+        # the first meeting has only one item, the one with no preferred meeting selected
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
-        for brain in catalog(m1_query):
-            itemTitles.append(brain.Title)
+        itemTitles = [brain.Title for brain in catalog(m1_query)]
         self.assertEquals(itemTitles, ['i1', ])
-        #the second meeting has 2 items, the no preferred meeting one and the i2
-        #for wich we selected this meeting as preferred
-        itemTitles = []
+        # the second meeting has 2 items, the no preferred meeting one and the i2
+        # for wich we selected this meeting as preferred
         m2_query = queryparser.parseFormquery(m2, m2.adapted()._availableItemsQuery())
-        for brain in catalog(m2_query):
-            itemTitles.append(brain.Title)
-        self.assertEquals(itemTitles, ['i1', 'i2', ])
-        #the third has 3 items
-        #--> no preferred meeting item
-        #--> the second item because the meeting date is in the future
-        #--> the i3 where we selected m3 as preferred meeting
-        itemTitles = []
+        itemTitles = [brain.Title for brain in catalog(m2_query)]
+        self.assertEquals(set(itemTitles), set(['i1', 'i2', ]))
+        # the third has 3 items
+        # --> no preferred meeting item
+        # --> the second item because the meeting date is in the future
+        # --> the i3 where we selected m3 as preferred meeting
         m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
-        for brain in catalog(m3_query):
-            itemTitles.append(brain.Title)
-        self.assertEquals(itemTitles, ['i1', 'i2', 'i3', ])
+        itemTitles = [brain.Title for brain in catalog(m3_query)]
+        self.assertEquals(set(itemTitles), set(['i1', 'i2', 'i3', ]))
 
         # if a meeting is frozen, it will only accept late items
         # to be able to freeze a meeting, it must contains at least one item...
