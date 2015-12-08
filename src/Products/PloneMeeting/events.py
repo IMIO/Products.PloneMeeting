@@ -54,15 +54,9 @@ def do(action, event):
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
     actionMethod(event)
-    # Update power observers local roles given to the
-    # corresponding MeetingConfig powerobsevers group, necessary if event.object
-    # is a Meeting or an Item
-    event.object.updatePowerObserversLocalRoles()
     if objectType == 'MeetingItem':
-        # Update the local roles linked to advices if relevant
-        event.object.updateAdvices(triggered_by_transition=event.transition.id)
-        # Update local roles given to budget impact editors
-        event.object.updateBudgetImpactEditorsLocalRoles()
+        # Update every local roles : advices, copyGroups, powerObservers, budgetImpactEditors, ...
+        event.object.updateLocalRoles(triggered_by_transition=event.transition.id)
         # Send mail regarding advices to give if relevant
         event.object.sendAdviceToGiveMailIfRelevant(event.old_state.id, event.new_state.id)
         # Send mail if relevant
@@ -70,6 +64,10 @@ def do(action, event):
         # apply on transition field transform if any
         applyOnTransitionFieldTransform(event.object, event.transition.id)
     elif objectType == 'Meeting':
+        # update every local roles
+        event.object.updateLocalRoles()
+        # update powerObservers local roles
+        event.object._updatePowerObserversLocalRoles()
         # Add recurring items to the meeting if relevant
         addRecurringItemsIfRelevant(event.object, event.transition.id)
         # Send mail if relevant
@@ -107,8 +105,6 @@ def onItemTransition(item, event):
             if not item._checkAlreadyClonedToOtherMC(otherMC):
                 item.cloneToOtherMeetingConfig(otherMC)
 
-    # update local roles regarding copyGroups when changing item's state
-    item.updateCopyGroupsLocalRoles()
     # if 'takenOverBy' is used, it is automatically set after a transition
     # to last user that was taking the item over or to nothing
     wf_state = "%s__wfstate__%s" % (event.workflow.getId(), event.new_state.getId())
@@ -432,7 +428,7 @@ def onItemEditBegun(item, event):
        an fresh item not from an item template.  Do not check this for items added to the
        configuration (recurring items and item templates).'''
     if item._at_creation_flag and not item.isDefinedInTool():
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         if cfg.getItemCreatedOnlyUsingTemplate():
             raise Unauthorized
@@ -446,8 +442,8 @@ def onMeetingAdded(meeting, event):
        workflow adaptations are enabled. So here
        we grant role 'Owner' to the currently logged user that allows him,
        in every case, to create the meeting.'''
-    user = meeting.portal_membership.getAuthenticatedMember()
-    meeting.manage_addLocalRoles(user.getId(), ('Owner',))
+    userId = api.user.get_current().getId()
+    meeting.manage_addLocalRoles(userId, ('Owner',))
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 

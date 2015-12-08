@@ -98,7 +98,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Make MeetingItem.detailedDescription searchable
 - Added possibility to use subnumber on items of the meeting so it is possible to use 1, 1.1, 1.2, ...
   for numbering items on the meeting, this way we may manage items "without a number"
-- When redefining item assembly/excused/absents, show what is strored on the meeting for each fields, moreover,
+- When redefining item assembly/excused/absents, show what is stored on the meeting for each fields, moreover,
   the default value of the field is now either the redefined value or the value defined on the meeting so a user
   does not have to copy/paste meeting's value to change it
 - Display the 'pretty link' instead of the title on the item and meeting view so we have the enriched
@@ -123,6 +123,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   encode notes to be used in document generation (for example) on an item or on a meeting
 - Every caches are invalidated when a MeetingConfig is edited so changing a parameter
   will invalidate caches for actions_panel, faceted filters vocabularies, ...
+- Refactored the way localRoles are updated on item and meeting, do no more manage various cases,
+  just one single call to updateLocalRoles that will update every relevant localRoles each time
+  (copyGroups, powerObservers, advices, ...). This way we added a ItemLocalRolesUpdatedEvent to which
+  a plugin may subscribe to adapt localRoles if needed
 
 3.3 (2015-02-27)
 ----------------

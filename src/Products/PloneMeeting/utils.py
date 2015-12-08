@@ -61,6 +61,7 @@ from Products.PloneMeeting.interfaces import IItemAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.interfaces import IItemListTypeChangedEvent
+from Products.PloneMeeting.interfaces import IItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IMeetingCategoryCustom
 from Products.PloneMeeting.interfaces import IMeetingConfigCustom
 from Products.PloneMeeting.interfaces import IMeetingCustom
@@ -1419,6 +1420,18 @@ class AdvicesUpdatedEvent(ObjectEvent):
         self.old_adviceIndex = old_adviceIndex
 
 
+class ItemAfterTransitionEvent(ObjectEvent):
+    '''
+      Event triggered at the end of the onItemTransition,
+      so we are sure that subplugins registering to this event
+      will be called after.
+    '''
+    implements(IItemAfterTransitionEvent)
+
+    def __init__(self, object):
+        self.object = object
+
+
 class ItemDuplicatedEvent(ObjectEvent):
     implements(IItemDuplicatedEvent)
 
@@ -1443,13 +1456,8 @@ class ItemListTypeChangedEvent(ObjectEvent):
         self.old_listType = old_listType
 
 
-class ItemAfterTransitionEvent(ObjectEvent):
-    '''
-      Event triggered at the end of the onItemTransition,
-      so we are sure that subplugins registering to this event
-      will be called after.
-    '''
-    implements(IItemAfterTransitionEvent)
+class ItemLocalRolesUpdatedEvent(ObjectEvent):
+    implements(IItemLocalRolesUpdatedEvent)
 
     def __init__(self, object):
         self.object = object

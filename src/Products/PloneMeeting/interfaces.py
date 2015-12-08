@@ -32,6 +32,11 @@ class IItemListTypeChangedEvent(IObjectEvent):
     """
 
 
+class IItemLocalRolesUpdatedEvent(IObjectEvent):
+    """
+    """
+
+
 class IAdviceAfterAddEvent(IObjectEvent):
     """
     """

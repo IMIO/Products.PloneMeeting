@@ -1564,12 +1564,9 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
-        # Update 'power observers' local roles given to the
-        # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
-        # is selected as viewable by 'powerobservers'
-        self.updatePowerObserversLocalRoles()
+        self.updateLocalRoles()
         # activate the faceted navigation
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         tool._enableFacetedDashboardFor(self,
                                         xmlpath=os.path.dirname(__file__) +
                                         '/faceted_conf/default_dashboard_widgets.xml')
@@ -1577,7 +1574,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
-        userId = self.portal_membership.getAuthenticatedMember().getId()
+        userId = api.user.get_current().getId()
         logger.info('Meeting at %s created by "%s".' % (self.absolute_url_path(), userId))
 
     security.declarePrivate('at_post_edit_script')
@@ -1601,24 +1598,27 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.reindexObject()
         # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
         cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
-        userId = self.portal_membership.getAuthenticatedMember().getId()
+        userId = api.user.get_current().getId()
         logger.info('Meeting at %s edited by "%s".' % (self.absolute_url_path(), userId))
 
-    security.declarePublic('updatePowerObserversLocalRoles')
+    def updateLocalRoles(self, **kwargs):
+        """Update various local roles."""
+        self._updatePowerObserversLocalRoles()
 
-    def updatePowerObserversLocalRoles(self):
+    def _updatePowerObserversLocalRoles(self):
         '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
            to the corresponding MeetingConfig 'powerobservers/restrictedpowerobservers' group.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
         # First, remove 'power observer' local roles granted to (restricted) powerobservers.
-        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove=READER_USECASES['powerobservers'],
-                                                          suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
-        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove=READER_USECASES['restrictedpowerobservers'],
-                                                          suffixes=[RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX, ])
+        tool.removeGivenLocalRolesFor(self,
+                                      role_to_remove=READER_USECASES['powerobservers'],
+                                      suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
+        tool.removeGivenLocalRolesFor(self,
+                                      role_to_remove=READER_USECASES['restrictedpowerobservers'],
+                                      suffixes=[RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX, ])
         # Then, add local roles for powerobservers.
         meetingState = self.queryState()
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        cfg = tool.getMeetingConfig(self)
         if meetingState in cfg.getMeetingPowerObserversStates():
             powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
             self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))

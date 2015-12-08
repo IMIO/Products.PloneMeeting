@@ -289,8 +289,8 @@ class testAdvices(PloneMeetingTestCase):
         developers_advice = createContentInContainer(item,
                                                      'meetingadvice',
                                                      **{'advice_group': 'developers',
-                                                     'advice_type': u'positive',
-                                                     'advice_comment': RichTextValue(u'My comment')})
+                                                        'advice_type': u'positive',
+                                                        'advice_comment': RichTextValue(u'My comment')})
         # can view/edit/delete is own advice
         self.assertTrue(self.hasPermission(View, developers_advice))
         self.assertTrue(self.hasPermission('Modify portal content', developers_advice))
@@ -304,8 +304,8 @@ class testAdvices(PloneMeetingTestCase):
         vendors_advice = createContentInContainer(item,
                                                   'meetingadvice',
                                                   **{'advice_group': 'vendors',
-                                                  'advice_type': u'positive',
-                                                  'advice_comment': RichTextValue(u'My comment')})
+                                                     'advice_type': u'positive',
+                                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmAdviser1')
         # can view
         self.assertTrue(self.hasPermission(View, vendors_advice))
@@ -383,16 +383,16 @@ class testAdvices(PloneMeetingTestCase):
                                  **{'advice_group': 'vendors',
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
-        # login as an user that can actually edit the item
+        # login as an user that can actually edit the item because not 'validated'
         self.changeUser('pmReviewer1')
         self.failUnless(self.hasPermission('Modify portal content', item))
-        # modifying the item will not invalidate the advices
+        # modifying the item will not invalidate the advices because not 'validated'
         self.failIf(item.willInvalidateAdvices())
         item.setDecision(item.getDecision() + '<p>New line</p>')
         item.at_post_edit_script()
         # check that advices are still there
         self.failUnless(item.hasAdvices())
-        # adding an annex or editing a field thru ajax does not invalidate the item
+        # adding an annex or editing a field thru ajax does not invalidate the item because not 'validated'
         annex1 = self.addAnnex(item)
         self.failUnless(item.hasAdvices())
         item.setFieldFromAjax('decision', item.getDecision() + '<p>Another new line</p>')
@@ -1451,8 +1451,8 @@ class testAdvices(PloneMeetingTestCase):
         developers_advice = createContentInContainer(item,
                                                      'meetingadvice',
                                                      **{'advice_group': 'developers',
-                                                     'advice_type': u'positive',
-                                                     'advice_comment': RichTextValue(u'My comment')})
+                                                        'advice_type': u'positive',
+                                                        'advice_comment': RichTextValue(u'My comment')})
         # if powerobserver tries to access the Title of the confidential advice
         # displayed in particular on the advice view, it raises Unauthorized
         self.changeUser('powerobserver1')

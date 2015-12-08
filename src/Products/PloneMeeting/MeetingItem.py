@@ -98,7 +98,10 @@ from Products.PloneMeeting.utils import \
     setFieldFromAjax, transformAllRichTextFields, signatureNotAlone,\
     forceHTMLContentTypeForEmptyRichFields, workday, networkdays, cleanMemoize, \
     toHTMLStrikedContent, _storedItemNumber_to_itemNumber
-from Products.PloneMeeting.utils import AdvicesUpdatedEvent, ItemDuplicatedEvent
+from Products.PloneMeeting.utils import AdvicesUpdatedEvent
+from Products.PloneMeeting.utils import ItemDuplicatedEvent
+from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
+
 import logging
 logger = logging.getLogger('PloneMeeting')
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
@@ -3517,9 +3520,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            configuration.'''
         if self.isTemporary():
             return False
-        mConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        if mConfig.getEnableAdviceInvalidation() and self.hasAdvices() \
-           and (self.queryState() in mConfig.getItemAdviceInvalidateStates()):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if cfg.getEnableAdviceInvalidation() and self.hasAdvices() \
+           and (self.queryState() in cfg.getItemAdviceInvalidateStates()):
             return True
         return False
 
@@ -3715,7 +3719,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Invalidate advices if needed
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
-            userId = self.portal_membership.getAuthenticatedMember().getId()
+            userId = api.user.get_current().getId()
             for advice in self.adviceIndex.itervalues():
                 if 'actor' in advice and (advice['actor'] != userId):
                     # Send a mail to the guy that gave the advice.
@@ -4206,10 +4210,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([user.getId()])
         self.manage_addLocalRoles(user.getId(), ('Owner',))
         self.updateLocalRoles()
-        # Update 'budget impact reviewers' local roles given to the
-        # corresponding MeetingConfig budgetimpacteditors group in case the 'initial_wf_state'
-        # is selected in MeetingConfig.itemBudgetInfosStates
-        self.updateBudgetImpactEditorsLocalRoles()
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
@@ -4227,7 +4227,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # because specific localRoles are given to copyGroups
         if self.isCopiesEnabled():
             self.addAutoCopyGroups(isCreated=False)
-        self.updateLocalRoles()
+        self.updateLocalRoles(invalidate=self.willInvalidateAdvices())
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
@@ -4239,7 +4239,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # notify modified
         notify(ObjectEditedEvent(self))
         self.reindexObject()
-        userId = self.portal_membership.getAuthenticatedMember().getId()
+        userId = api.user.get_current().getId()
         logger.info('Item at %s edited by "%s".' %
                     (self.absolute_url_path(), userId))
 
@@ -4264,10 +4264,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected('Modify portal content', 'updateLocalRoles')
 
-    def updateLocalRoles(self):
+    def updateLocalRoles(self, **kwargs):
         '''Updates the local roles of this item, regarding the proposing
            group.'''
-        tool = self.portal_plonemeeting
+        tool = api.portal.get_tool('portal_plonemeeting')
         # Remove first all local roles previously set on the item
         allRelevantGroupIds = []
         for meetingGroup in tool.objectValues('MeetingGroup'):
@@ -4295,26 +4295,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 self.manage_addLocalRoles(groupId, (MEETINGROLES[groupSuffix],))
         # update local roles regarding copyGroups
-        self.updateCopyGroupsLocalRoles()
+        self._updateCopyGroupsLocalRoles()
         # Update advices after updateLocalRoles because updateLocalRoles
         # reinitialize existing local roles
-        self.updateAdvices(invalidate=self.willInvalidateAdvices())
+        triggered_by_transition = kwargs.get('triggered_by_transition', None)
+        invalidate = kwargs.get('invalidate', False)
+        self.updateAdvices(invalidate=invalidate,
+                           triggered_by_transition=triggered_by_transition)
         # Update '(restricted) power observers' local roles given to the
         # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
         # is selected in MeetingConfig.item(Restricted)PowerObserversStates
         # we do this each time the element is edited because of the MeetingItem._isViewableByPowerObservers
         # method that could change access of power observers depending on a particular value
-        self.updatePowerObserversLocalRoles()
+        self._updatePowerObserversLocalRoles()
+        # update budget impact editors local roles
+        # actually it could be enough to do in in the onItemTransition but as it is
+        # always done after updateLocalRoles, we do it here as it is trivial
+        self._updateBudgetImpactEditorsLocalRoles()
+        # notify that localRoles have been updated
+        notify(ItemLocalRolesUpdatedEvent(self))
 
-    security.declarePublic('updateCopyGroupsLocalRoles')
-
-    def updateCopyGroupsLocalRoles(self):
+    def _updateCopyGroupsLocalRoles(self):
         '''Give the 'Reader' local role to the copy groups
            depending on what is defined in the corresponding meetingConfig.'''
         if not self.isCopiesEnabled():
             return
-        tool = getToolByName(self, 'portal_plonemeeting')
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         # First, remove 'power observers' local roles granted to
         # MEETING_GROUP_SUFFIXES suffixed groups.  As this is the case also for
         # advisers, we do not remove this role for advisers
@@ -4336,9 +4343,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for copyGroup in copyGroups:
                 self.manage_addLocalRoles(copyGroup, (READER_USECASES['copy_groups'],))
 
-    security.declarePublic('updatePowerObserversLocalRoles')
-
-    def updatePowerObserversLocalRoles(self):
+    def _updatePowerObserversLocalRoles(self):
         '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
            to the corresponding MeetingConfig 'powerobservers/restrictedpowerobservers' group.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -4364,16 +4369,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True
 
-    def updateBudgetImpactEditorsLocalRoles(self):
+    def _updateBudgetImpactEditorsLocalRoles(self):
         '''Configure local role for use case 'budget_impact_reviewers' to the corresponding
            MeetingConfig 'budgetimpacteditors' group.'''
         # First, remove 'MeetingBudgetImpactEditors' local roles granted to budgetimpacteditors.
-        self.portal_plonemeeting.removeGivenLocalRolesFor(self,
-                                                          role_to_remove='MeetingBudgetImpactEditor',
-                                                          suffixes=[BUDGETIMPACTEDITORS_GROUP_SUFFIX, ])
+        tool = api.portal.get_tool('portal_plonemeeting')
+        tool.removeGivenLocalRolesFor(self,
+                                      role_to_remove='MeetingBudgetImpactEditor',
+                                      suffixes=[BUDGETIMPACTEDITORS_GROUP_SUFFIX, ])
         # Then, add local roles for bugetimpacteditors.
         itemState = self.queryState()
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        cfg = tool.getMeetingConfig(self)
         if itemState not in cfg.getItemBudgetInfosStates():
             return
         budgetImpactEditorsGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
