@@ -953,7 +953,7 @@ class testMeetingItem(PloneMeetingTestCase):
         i1 = self.create('MeetingItem')
         # add developers in optionalAdvisers
         i1.setOptionalAdvisers('developers')
-        i1.updateAdvices()
+        i1.updateLocalRoles()
         for principalId, localRoles in i1.get_local_roles():
             if principalId.endswith('_advisers'):
                 self.failUnless(READER_USECASES['advices'] in localRoles)
@@ -962,7 +962,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.setUseCopies(True)
         i1.setCopyGroups(('developers_advisers', 'vendors_advisers'))
         i1.updateLocalRoles()
-        i1.updateAdvices()
         # first make sure that we still have 'developers_advisers' in local roles
         # because it is specified by copyGroups
         self.failUnless('developers_advisers' in i1.__ac_local_roles__)
@@ -976,7 +975,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf('Contributor' in i1.__ac_local_roles__['vendors_advisers'])
         # now, remove developers in optionalAdvisers
         i1.setOptionalAdvisers(())
-        i1.updateAdvices()
+        i1.updateLocalRoles()
         # the 'copy groups' corresponding local role is still assigned because of copyGroups...
         for principalId, localRoles in i1.get_local_roles():
             if principalId == 'developers_advisers':

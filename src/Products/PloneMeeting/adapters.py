@@ -113,7 +113,7 @@ class AnnexableAdapter(object):
                                        decisionRelated=(relatedTo == 'item_decision'))
             # Invalidate advices if needed and adding a normal annex
             if relatedTo == 'item' and self.context.willInvalidateAdvices():
-                self.context.updateAdvices(invalidate=True)
+                self.context.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
             if self.context.wfConditions().meetingIsPublished():

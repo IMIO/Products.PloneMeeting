@@ -1759,7 +1759,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                                                       numberOfBrains,
                                                                       '/'.join(item.getPhysicalPath())))
             i = i + 1
-            item.updateAdvices()
+            item.updateLocalRoles()
             # Update security as local_roles are set by updateAdvices
             item.reindexObject(idxs=['allowedRolesAndUsers', 'indexAdvisers', ])
 
@@ -1782,7 +1782,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            itemOrMeeting._updatePowerObserversLocalRoles()
+            itemOrMeeting.updateLocalRoles()
             # Update security
             itemOrMeeting.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
@@ -1796,7 +1796,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         for b in self.portal_catalog(meta_type=('MeetingItem')):
             obj = b.getObject()
-            obj._updateBudgetImpactEditorsLocalRoles()
+            obj.updateLocalRoles()
         self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
@@ -1808,7 +1808,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         for b in self.portal_catalog(meta_type=('MeetingItem', )):
             obj = b.getObject()
-            obj._updateCopyGroupsLocalRoles()
+            obj.updateLocalRoles()
             # Update security
             obj.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')

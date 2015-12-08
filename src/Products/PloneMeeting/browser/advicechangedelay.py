@@ -172,7 +172,7 @@ class AdviceChangeDelayView(BrowserView):
             else:
                 # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
                 self.context.adviceIndex[currentAdviceData['group']]['delay_for_automatic_adviser_changed_manually'] = True
-            self.context.updateAdvices()
+            self.context.updateLocalRoles()
             # add a line to the item's emergency_change_history
             membershipTool = getToolByName(self.context, 'portal_membership')
             member = membershipTool.getAuthenticatedMember()

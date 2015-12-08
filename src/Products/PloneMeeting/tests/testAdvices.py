@@ -474,7 +474,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('developers', 'vendors__rowid__unique_id_123', ))
-        item.updateAdvices()
+        item.updateLocalRoles()
         # no advice to give as item is 'itemcreated'
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay__vendors_advice_not_giveable',
@@ -895,14 +895,14 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddAdvice, item))
         # now make the delay exceeded and check again
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
-        item.updateAdvices()
+        item.updateLocalRoles()
         # if delay is negative, we show complete delay
         self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] == 5)
         self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
         self.assertTrue(not self.hasPermission(AddAdvice, item))
         # recover delay, add the advice and check the 'edit' behaviour
         item.adviceIndex['vendors']['delay_started_on'] = datetime.now()
-        item.updateAdvices()
+        item.updateLocalRoles()
         self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] > 0)
         self.assertTrue(self.hasPermission(AddAdvice, item))
         # add the advice
@@ -917,7 +917,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
         # now make sure the advice is no more editable when delay is exceeded
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
-        item.updateAdvices()
+        item.updateLocalRoles()
         # when delay is exceeded, left_delay is complete delay so we show it in red
         # we do not show the exceeded delay because it could be very large (-654?)
         # and represent nothing...
@@ -1037,7 +1037,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('admin')
         self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'vendors_advisers')
         self.meetingConfig.setPowerAdvisersGroups(('developers', 'vendors', ))
-        item.updateAdvices()
+        item.updateLocalRoles()
         # now as pmAdviser1 is adviser for vendors and vendors is a PowerAdviser,
         # he can add an advice for vendors
         self.changeUser('pmAdviser1')
@@ -1086,7 +1086,7 @@ class testAdvices(PloneMeetingTestCase):
         while not delay_started_on.weekday() == 0:
             delay_started_on = delay_started_on - timedelta(1)
         item.adviceIndex['vendors']['delay_started_on'] = delay_started_on
-        item.updateAdvices()
+        item.updateLocalRoles()
         self.assertTrue(item.adviceIndex['vendors']['delay_started_on'].weekday() == 0)
         # for now, weekends are days 5 and 6, so saturday and sunday
         self.assertTrue(self.tool.getNonWorkingDayNumbers() == [5, 6])
@@ -1099,7 +1099,7 @@ class testAdvices(PloneMeetingTestCase):
         # the method is ram.cached, check that it is correct when changed
         self.tool.setModificationDate(DateTime())
         self.assertTrue(self.tool.getNonWorkingDayNumbers() == [6, ])
-        item.updateAdvices()
+        item.updateLocalRoles()
         # this will decrease delay of one day
         self.assertTrue(limit_date_9_days - timedelta(1) ==
                         item.adviceIndex['vendors']['delay_infos']['limit_date'])
@@ -1117,7 +1117,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(self.tool.getHolidaysAs_datetime() == [datetime(2012, 5, 6),
                                                                datetime(int(year), int(month), int(day)), ])
         # this should increase delay of one day, so as original limit_date_9_days
-        item.updateAdvices()
+        item.updateLocalRoles()
         self.assertTrue(limit_date_9_days == item.adviceIndex['vendors']['delay_infos']['limit_date'])
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
 
@@ -1128,7 +1128,7 @@ class testAdvices(PloneMeetingTestCase):
         # the method getUnavailableWeekDaysNumbers is ram.cached, check that it is correct when changed
         self.tool.setModificationDate(DateTime())
         self.assertTrue(self.tool.getUnavailableWeekDaysNumbers() == [2, ])
-        item.updateAdvices()
+        item.updateLocalRoles()
         # this increase limit_date of one day, aka next available day
         self.assertTrue(limit_date_9_days + timedelta(1) == item.adviceIndex['vendors']['delay_infos']['limit_date'])
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
@@ -1143,13 +1143,13 @@ class testAdvices(PloneMeetingTestCase):
         self.tool.setModificationDate(DateTime())
         # change 'delay_started_on' manually and check that last day, the advice is 'still_giveable'
         item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(7)
-        item.updateAdvices()
+        item.updateLocalRoles()
         # we are the last day
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'].day == datetime.now().day)
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'still_time')
         # one day more and it is not giveable anymore...
         item.adviceIndex['vendors']['delay_started_on'] = datetime.now() - timedelta(8)
-        item.updateAdvices()
+        item.updateLocalRoles()
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['limit_date'] < datetime.now())
         self.assertTrue(item.adviceIndex['vendors']['delay_infos']['delay_status'] == 'timed_out')
 

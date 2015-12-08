@@ -289,7 +289,7 @@ def onAdviceAdded(advice, event):
     advice.alreadyUsedAnnexNames = PersistentList()
 
     item = advice.getParentNode()
-    item.updateAdvices()
+    item.updateLocalRoles()
     # make the entire _advisers group able to edit the meetingadvice
     advice.manage_addLocalRoles('%s_advisers' % advice.advice_group, ('Editor', ))
 
@@ -314,7 +314,7 @@ def onAdviceModified(advice, event):
     advice._updateAdviceRowId()
 
     item = advice.getParentNode()
-    item.updateAdvices()
+    item.updateLocalRoles()
 
     # notify our own PM event so we are sure that this event is called
     # after the onAviceModified event
@@ -329,7 +329,7 @@ def onAdviceModified(advice, event):
 def onAdviceEditFinished(advice, event):
     '''Called when a meetingadvice is edited and we are at the end of the editing process.'''
     item = advice.getParentNode()
-    item.updateAdvices()
+    item.updateLocalRoles()
 
     # redirect to referer after edit if it is not the edit form
     http_referer = item.REQUEST['HTTP_REFERER']
@@ -349,7 +349,7 @@ def onAdviceRemoved(advice, event):
         return
 
     try:
-        item.updateAdvices()
+        item.updateLocalRoles()
     except TypeError:
         # while removing an advice, if it was not anymore in the advice index
         # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
@@ -381,7 +381,7 @@ def onAnnexRemoved(annex, event):
                        annex,
                        decisionRelated=annex.findRelatedTo() == 'item_decision' and True or False)
     if item.willInvalidateAdvices():
-        item.updateAdvices(invalidate=True)
+        item.updateLocalRoles(invalidate=True)
 
     # update item modification date and SearchableText
     item.setModificationDate(DateTime())

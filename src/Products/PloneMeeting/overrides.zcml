@@ -207,12 +207,6 @@
     </configure>
 
     <configure package="collective.eeafaceted.z3ctable">
-        <browser:view
-            for="plone.app.collection.interfaces.ICollection"
-            name="faceted-table-view"
-            class="Products.PloneMeeting.browser.overrides.MeetingFacetedTableView"
-            permission="zope2.View"
-        />
         <adapter
            for="zope.interface.Interface
                 zope.publisher.interfaces.browser.IBrowserRequest

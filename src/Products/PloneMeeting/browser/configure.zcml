@@ -610,4 +610,13 @@
         name="document_generation_helper_view"
      />
 
+    <configure package="collective.eeafaceted.z3ctable">
+        <browser:view
+            for="Products.PloneMeeting.interfaces.IMeeting"
+            name="faceted-table-view"
+            class=".overrides.MeetingFacetedTableView"
+            permission="zope2.View"
+        />
+    </configure>
+
 </configure>

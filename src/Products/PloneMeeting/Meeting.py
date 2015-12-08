@@ -1603,22 +1603,19 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     def updateLocalRoles(self, **kwargs):
         """Update various local roles."""
+        # remove every localRoles then recompute
+        self.__ac_local_roles__.clear()
+        # add 'Owner' local role
+        self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
+        # add powerObservers local roles
         self._updatePowerObserversLocalRoles()
 
     def _updatePowerObserversLocalRoles(self):
         '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
            to the corresponding MeetingConfig 'powerobservers/restrictedpowerobservers' group.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        # First, remove 'power observer' local roles granted to (restricted) powerobservers.
-        tool.removeGivenLocalRolesFor(self,
-                                      role_to_remove=READER_USECASES['powerobservers'],
-                                      suffixes=[POWEROBSERVERS_GROUP_SUFFIX, ])
-        tool.removeGivenLocalRolesFor(self,
-                                      role_to_remove=READER_USECASES['restrictedpowerobservers'],
-                                      suffixes=[RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX, ])
-        # Then, add local roles for powerobservers.
-        meetingState = self.queryState()
         cfg = tool.getMeetingConfig(self)
+        meetingState = self.queryState()
         if meetingState in cfg.getMeetingPowerObserversStates():
             powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
             self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
