@@ -185,7 +185,12 @@ class DisplayExcusedFromMeetingProvider(ContentProviderBase):
         return meeting.getAssemblyExcused() or '-'
 
     def render(self):
-        return self.template()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if 'assemblyExcused' in cfg.getUsedMeetingAttributes():
+            return self.template()
+        else:
+            return ''
 
 
 class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
@@ -210,7 +215,12 @@ class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
         return meeting.getAssemblyAbsents() or '-'
 
     def render(self):
-        return self.template()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if 'assemblyAbsents' in cfg.getUsedMeetingAttributes():
+            return self.template()
+        else:
+            return ''
 
 
 class ManageItemAssemblyForm(form.Form):
