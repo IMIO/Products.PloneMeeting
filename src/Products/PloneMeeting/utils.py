@@ -1459,8 +1459,9 @@ class ItemListTypeChangedEvent(ObjectEvent):
 class ItemLocalRolesUpdatedEvent(ObjectEvent):
     implements(IItemLocalRolesUpdatedEvent)
 
-    def __init__(self, object):
+    def __init__(self, object, old_local_roles):
         self.object = object
+        self.old_local_roles = old_local_roles
 
 
 class AdviceAfterAddEvent(ObjectEvent):
