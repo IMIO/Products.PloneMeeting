@@ -1776,39 +1776,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 history.append(event)
         obj.workflow_history[obj.getWorkflowName()] = tuple(history)
 
-    security.declarePublic('removeGivenLocalRolesFor')
-
-    def removeGivenLocalRolesFor(self, obj, role_to_remove, suffixes=[], notForGroups=[]):
-        '''Remove the p_role_to_remove local roles on p_obj for the given p_suffixes
-           suffixed groups but not for given p_notForGroups groups.
-           This method is used to remove specific local roles before adding
-           it with a particular way that depends on the functionnality.'''
-        toRemove = []
-        # prepend a '_' before suffix name, because 'observers' and 'powerobservers'
-        # for example end with same part...
-        suffixes = ['_%s' % suffix for suffix in suffixes]
-        for principalId, localRoles in obj.get_local_roles():
-            considerSuffix = False
-            # check if we have to take current principalId into
-            # accound regarding his suffix and p_suffixes
-            if suffixes:
-                for suffix in suffixes:
-                    if principalId.endswith(suffix):
-                        considerSuffix = True
-                        break
-            else:
-                considerSuffix = True
-            if considerSuffix and principalId not in notForGroups:
-                # Only remove 'role_to_remove' as the groups could
-                # have other local roles given by other functionnalities
-                if len(localRoles) > 1 and role_to_remove in localRoles:
-                    existingLocalRoles = list(localRoles)
-                    existingLocalRoles.remove(role_to_remove)
-                    obj.manage_setLocalRoles(principalId, existingLocalRoles)
-                elif role_to_remove in localRoles:
-                    toRemove.append(principalId)
-        obj.manage_delLocalRoles(toRemove)
-
     def _enableFacetedDashboardFor(self, obj, xmlpath=None):
         """ """
         self.REQUEST.set('enablingFacetedDashboard', True)
